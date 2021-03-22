@@ -447,6 +447,8 @@
 
 <body
   style="box-sizing:border-box;margin:0;padding:0;width:100%;word-break:break-word;-webkit-font-smoothing:antialiased;">
+  <div class="content">
+  <div id="layoutBody">
   <div style="display:none;font-size:0;line-height:0;">
     <!-- Add your preheader text here -->
   </div>
@@ -801,6 +803,8 @@
   </td>
   </tr>
   </table>
+  </div>
+  </div>
 </body>
 
 </html>

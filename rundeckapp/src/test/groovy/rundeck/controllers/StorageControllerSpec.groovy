@@ -135,7 +135,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
                 }
             }
         }
-        0 * controller.storageService._(*_)
+        1 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
     }
 
@@ -187,7 +187,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasResource(_, '/keys/monkey') >> true
         1 * controller.storageService.delResource(_, '/keys/monkey') >> true
-        0 * controller.storageService._(*_)
+        1 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
     }
 
@@ -205,26 +205,34 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         params.inputType = 'text'
         params.fileName = 'monkey'
         params.uploadText = 'abc'
+        params.project = project
         setupFormTokens(controller)
         request.method = 'POST'
         def result = controller.keyStorageUpload()
 
         then:
         response.status == 302
-        response.redirectedUrl=='/menu/storage/keys/monkey'
+        response.redirectedUrl==expect
         1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasResource(_, 'keys/monkey') >> false
         1 * controller.storageService.hasPath(_, 'keys/monkey') >> false
         1 * controller.storageService.createResource(_, 'keys/monkey',_,_) >> true
-        0 * controller.storageService._(*_)
+        1 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
+        where:
+            project | expect
+            null    | '/menu/storage/keys/monkey'
+            'disco' | '/menu/storage/keys/monkey?project=disco'
     }
+
     @Unroll
     def "require sub path param for #method request"() {
         given:
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
+        controller.storageService = Mock(StorageService)
         controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+
         when:
         request.method = method
         def result = controller.apiKeys()
@@ -233,7 +241,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         then:
         response.status == 400
         1 * controller.apiService.requireApi(*_) >> true
-        1 * controller.apiService.requireVersion(*_) >> true
+        1 * controller.apiService.requireApi(*_) >> true
         1 * controller.apiService.renderErrorFormat(
                 _,
                 { arg -> arg.status == 400 && arg.code == 'api.error.invalid.request' }
@@ -262,7 +270,7 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         then:
         response.status == 200
         1 * controller.apiService.requireApi(*_) >> true
-        1 * controller.apiService.requireVersion(*_) >> true
+        1 * controller.apiService.requireApi(*_) >> true
         1 * controller.storageService.hasPath(_, '/keys/') >> true
         1 * controller.storageService.getResource(_, '/keys/') >> Mock(Resource) {
             isDirectory()>>true

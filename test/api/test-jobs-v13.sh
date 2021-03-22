@@ -3,20 +3,20 @@
 #test output from /api/jobs
 
 DIR=$(cd `dirname $0` && pwd)
-API_VERSION=13
+API_VERSION=14
 source $DIR/include.sh
 
 # now submit req
-runurl="${APIURL}/jobs"
-
 proj="test"
+runurl="${APIURL}/project/${proj}/jobs"
+
+
 
 echo "Listing RunDeck Jobs for project ${proj}..."
 
-params="project=${proj}"
 
 # get listing
-docurl ${runurl}?${params} > $DIR/curl.out
+docurl ${runurl} > $DIR/curl.out
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request"
     exit 2
@@ -25,7 +25,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "" == "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -37,9 +37,8 @@ echo "OK"
 #load two jobs with similar names
 ###
 
-#produce job.xml content corresponding to the dispatch request
 cat > $DIR/temp.out <<END
-- 
+-
   project: test
   loglevel: INFO
   sequence:
@@ -53,24 +52,11 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
+uploadJob "$DIR/temp.out" "$proj" 1 "format=yaml&dupeOption=skip"
 
-params="format=yaml&dupeOption=skip"
-
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-
-# get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 cat > $DIR/temp.out <<END
-- 
+-
   project: test
   loglevel: INFO
   sequence:
@@ -83,26 +69,11 @@ cat > $DIR/temp.out <<END
   group: api/test-jobs/sub-group
 END
 
-# now submit req
-runurl="${APIURL}/jobs/import"
-
-params="format=yaml&dupeOption=skip"
-
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-
-# get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+uploadJob "$DIR/temp.out" "$proj" 1 "format=yaml&dupeOption=skip"
 
 # load a top-level job not in a group
 cat > $DIR/temp.out <<END
-- 
+-
   project: test
   loglevel: INFO
   sequence:
@@ -115,21 +86,7 @@ cat > $DIR/temp.out <<END
 END
 
 # now submit req
-runurl="${APIURL}/jobs/import"
-
-params="format=yaml&dupeOption=skip"
-
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-
-# get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+uploadJob "$DIR/temp.out" "$proj" 1 "format=yaml&dupeOption=skip"
 
 ###
 # test query with match filter and exact filter
@@ -137,9 +94,9 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 echo "Test inexact jobs query.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobFilter=test-jobs&groupPath=api/test-jobs"
+params="jobFilter=test-jobs&groupPath=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -151,7 +108,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "2" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -164,9 +121,9 @@ rm $DIR/curl.out
 
 echo "Test inexact jobs query, exact group.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobFilter=test-jobs&groupPathExact=api/test-jobs"
+params="jobFilter=test-jobs&groupPathExact=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -178,7 +135,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -191,9 +148,9 @@ rm $DIR/curl.out
 
 echo "Test inexact jobs query, exact name.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs&groupPath=api/test-jobs"
+params="jobExactFilter=test-jobs&groupPath=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -205,7 +162,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -218,9 +175,9 @@ rm $DIR/curl.out
 
 echo "Test inexact jobs query, group only.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&groupPath=api/test-jobs"
+params="groupPath=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -232,7 +189,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "2" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -244,9 +201,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
+params="jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -258,7 +215,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -270,9 +227,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs+another+job&groupPathExact=api/test-jobs/sub-group"
+params="jobExactFilter=test-jobs+another+job&groupPathExact=api/test-jobs/sub-group"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -284,7 +241,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -297,9 +254,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group 2.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
+params="jobExactFilter=test-jobs&groupPathExact=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -311,7 +268,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -323,9 +280,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group, no match.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs+another&groupPathExact=api/test-jobs"
+params="jobExactFilter=test-jobs+another&groupPathExact=api/test-jobs"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -337,7 +294,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "0" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -349,9 +306,9 @@ rm $DIR/curl.out
 
 echo "Test exact name, exact group, no match 2.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobExactFilter=test-jobs&groupPathExact=api/test-jobs/sub-group"
+params="jobExactFilter=test-jobs&groupPathExact=api/test-jobs/sub-group"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -363,7 +320,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "0" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -375,9 +332,9 @@ rm $DIR/curl.out
 
 echo "Test match name, exact group, top level.."
 
-runurl="${APIURL}/jobs"
+runurl="${APIURL}/project/${proj}/jobs"
 
-params="project=${proj}&jobFilter=test-jobs&groupPathExact=-"
+params="jobFilter=test-jobs&groupPathExact=-"
 
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
@@ -389,7 +346,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"

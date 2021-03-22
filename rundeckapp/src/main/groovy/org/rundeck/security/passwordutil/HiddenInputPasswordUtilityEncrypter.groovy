@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
 import org.eclipse.jetty.util.security.Credential
 import org.eclipse.jetty.util.security.Password
+import org.rundeck.jaas.jetty.BcryptCredentialProvider
 
 
 class HiddenInputPasswordUtilityEncrypter implements PasswordUtilityEncrypter {
@@ -48,6 +49,7 @@ class HiddenInputPasswordUtilityEncrypter implements PasswordUtilityEncrypter {
         if(!pwdCheck) returnVal.put("Error","Password Verification value is null");
         if(!pwd.equals(pwdCheck)) returnVal.put("Error","Password and Password Verification values do not match");
         if(!returnVal.isEmpty()) return returnVal;
+        returnVal.put("bcrypt", BcryptCredentialProvider.BcryptCredential.encodePassword(pwd));
         returnVal.put("obfuscate", Password.obfuscate(pwd));
         returnVal.put("md5", Credential.MD5.digest(pwd));
         if(un) returnVal.put("crypt", Credential.Crypt.crypt(un,pwd));

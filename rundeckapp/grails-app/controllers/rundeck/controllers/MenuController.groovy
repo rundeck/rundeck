@@ -964,7 +964,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     }
     def storage(){
-
+        boolean showProjects = params.project ? false : true
+        [showProjects: showProjects]
     }
 
     def projectExport() {
@@ -2546,7 +2547,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
             summary[project.name].description= description
-            def eventAuth=rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthorizationUtil.resourceType('event'), [AuthConstants.ACTION_READ], project.name)
+            def projectAuth = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project.name)
+            def eventAuth = rundeckAuthContextProcessor.
+                authorizeProjectResourceAll(
+                    projectAuth,
+                    AuthConstants.RESOURCE_TYPE_EVENT,
+                    [AuthConstants.ACTION_READ],
+                    project.name
+                )
             if(!eventAuth){
                 summary[project.name].putAll([ execCount: 0, failedCount: 0,userSummary: [], userCount: 0])
             }
@@ -2560,12 +2568,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     scheduledExecutionService.isRundeckProjectScheduleEnabled(project)
                 //authorization
                 summary[project.name].auth = [
-                        jobCreate: rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                                AuthConstants.ACTION_CREATE, project.name),
-                        admin: rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                                rundeckAuthContextProcessor.authResourceForProject(project.name),
-                                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                        AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
+                        jobCreate: rundeckAuthContextProcessor.authorizeProjectResource(
+                            projectAuth,
+                            AuthConstants.RESOURCE_TYPE_JOB,
+                            AuthConstants.ACTION_CREATE,
+                            project.name
+                        ),
+                        admin: rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                            projectAuth,
+                            rundeckAuthContextProcessor.authResourceForProject(project.name),
+                            [
+                                AuthConstants.ACTION_CONFIGURE,
+                                AuthConstants.ACTION_ADMIN,
+                                AuthConstants.ACTION_IMPORT,
+                                AuthConstants.ACTION_EXPORT,
+                                AuthConstants.ACTION_DELETE
+                            ]
+                        ),
                 ]
             }
             durs<<(System.currentTimeMillis()-sumstart)
@@ -2618,7 +2637,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      */
 
     def apiLogstorageInfo() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -2672,7 +2691,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def apiLogstorageListIncompleteExecutions(BaseQuery query) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
         query.validate()
@@ -2778,7 +2797,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def apiResumeIncompleteLogstorage() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -2815,68 +2834,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     /**
      * API: /api/jobs, version 1
      */
-    def apiJobsList (ScheduledExecutionQuery query){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-        if(!params.project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
-
-        }
-
-        query.projFilter = params.project
-        //test valid project
-
-        if (!apiService.requireExists(
-            response,
-            frameworkService.existsFrameworkProject(params.project),
-            ['project', params.project]
-        )) {
-            return
-        }
-        if(query.groupPathExact || query.jobExactFilter){
-            //these query inputs require API version 2
-            if (!apiService.requireVersion(request,response,ApiVersions.V2)) {
-                return
-            }
-        }
-        if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
-            if (!apiService.requireVersion(request,response,ApiVersions.V17)) {
-                return
-            }
-        }
-        if(null!=query.scheduleEnabledFilter || null!=query.executionEnabledFilter){
-            if (!apiService.requireVersion(request,response,ApiVersions.V18)) {
-                return
-            }
-        }
-
-        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.item.unsupported-format',
-                    args: [response.format]
-            ])
-        }
-        if(query.hasErrors()){
-            return apiService.renderErrorFormat(response,
-                                                [
-                                                        status: HttpServletResponse.SC_BAD_REQUEST,
-                                                        code: "api.error.parameter.error",
-                                                        args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
-                                                ])
-        }
-        def results = jobsFragment(query)
-
-        respondApiJobsList(results.nextScheduled)
-    }
 
     /**
      * API: get job info: /api/18/job/{id}/info
      */
     def apiJobDetail() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V18)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V18)) {
             return
         }
 
@@ -2946,7 +2909,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 
     def apiJobForecast() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V31)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V31)) {
             return
         }
 
@@ -3159,7 +3122,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * @return
      */
     def apiSchedulerListJobs(String uuid, boolean currentServer) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
         if(currentServer) {
@@ -3204,28 +3167,64 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V2)){
+        if (!apiService.requireApi(request, response)) {
             return
         }
-        return apiJobsList(query)
+        if(!params.project){
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.parameter.required', args: ['project']])
+
+        }
+
+        query.projFilter = params.project
+        //test valid project
+
+        if (!apiService.requireExists(
+                response,
+                frameworkService.existsFrameworkProject(params.project),
+                ['project', params.project]
+        )) {
+            return
+        }
+        if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
+            if (!apiService.requireApi(request,response,ApiVersions.V17)) {
+                return
+            }
+        }
+        if(null!=query.scheduleEnabledFilter || null!=query.executionEnabledFilter){
+            if (!apiService.requireApi(request,response,ApiVersions.V18)) {
+                return
+            }
+        }
+
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
+            return apiService.renderErrorFormat(response,[
+                    status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code: 'api.error.item.unsupported-format',
+                    args: [response.format]
+            ])
+        }
+        if(query.hasErrors()){
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "api.error.parameter.error",
+                            args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                    ])
+        }
+        def results = jobsFragment(query)
+
+        respondApiJobsList(results.nextScheduled)
     }
 
     /**
      * API: /api/14/project/NAME/jobs/export
      */
     def apiJobsExportv14 (ScheduledExecutionQuery query){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiJobsExport(query)
-    }
-    /**
-     * API: /jobs/export, version 1, deprecated since v14
-     */
-    def apiJobsExport (ScheduledExecutionQuery query){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
+
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -3264,25 +3263,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /project/PROJECT/executions/running, version 14
      */
     def apiExecutionsRunningv14 (){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)) {
             return
         }
-        return apiExecutionsRunning()
-    }
 
-    /**
-     * API: /executions/running, version 1
-     */
-    def apiExecutionsRunning () {
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
         if (!params.project) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                            code  : 'api.error.parameter.required', args: ['project']])
         }
+
         //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
+        def allProjects = params.project == '*'
         //test valid project
         if (!allProjects) {
             if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
@@ -3316,12 +3307,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             projectNameAuthorized = params.project
         }
 
-        QueueQuery query = new QueueQuery(runningFilter: 'running', projFilter: projectNameAuthorized)
+        QueueQuery query = new QueueQuery(
+            considerPostponedRunsAsRunningFilter: false, // by default do not include scheduled or queued executions.
+            runningFilter: 'running',
+            projFilter: projectNameAuthorized)
         if (params.max) {
             query.max = params.int('max')
         }
         if (params.offset) {
             query.offset = params.int('offset')
+        }
+
+        if(params.includePostponed) {
+            query.considerPostponedRunsAsRunningFilter = true
         }
 
         if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {
@@ -3495,4 +3493,3 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
 }
-

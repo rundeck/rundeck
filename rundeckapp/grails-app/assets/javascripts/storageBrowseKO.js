@@ -20,6 +20,7 @@
 //= require knockout-onenter
 
 
+
 function StorageResource() {
     var self = this;
     self.meta = ko.observable({});
@@ -105,12 +106,6 @@ function StorageResource() {
         return "";
     };
 }
-function StorageDir(browser, path, data) {
-    var self = this;
-    self.load = function () {
-        browser.loadDir(self.name());
-    }
-}
 function StorageUpload(storage){
     var self = this;
     self.storage=storage;
@@ -153,7 +148,7 @@ function StorageUpload(storage){
     self.inputFullpath = ko.computed(function () {
         var name = self.fileName();
         var file = self.fileInputName();
-        var path = self.storage.absolutePath(self.storage.inputPath());
+        var path = self.storage.absolutePath(self.storage.inputBasePath());
         return (path ? (path.lastIndexOf('/') == path.length - 1 ? path : path + '/') : '') + (name?name: file);
     });
 
@@ -176,11 +171,13 @@ function StorageUpload(storage){
        }
     });
 }
-function StorageBrowser(baseUrl, rootPath, fileSelect) {
+function StorageBrowser(baseUrl, rootPath) {
     var self = this;
     self.baseUrl = baseUrl;
-    self.fileSelect=fileSelect;
     self.rootPath = ko.observable(rootPath);
+    self.basePath = ko.observable();
+    self.jumpLinks = ko.observableArray([]);
+    self.linksTitle = ko.observable('');
     self.staticRoot = ko.observable(false);
     self.errorMsg = ko.observable();
     self.path = ko.observable('');
@@ -232,6 +229,18 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         return _genUrl(appLinks.storageKeysBrowse + '/' + self.selectedPath());
     });
 
+    /**
+     * root + base path
+     */
+    self.rootBasePath=ko.pureComputed(function(){
+       return self.rootPath() +  (self.basePath()?'/' + self.basePath():'')
+    });
+    /**
+     * basePath + input Path
+     */
+    self.inputBasePath=ko.pureComputed(function(){
+        return (self.basePath() ? self.basePath() + '/' : '') + self.inputPath()
+    });
     //functions
 
     self.cleanPath = function (path) {
@@ -245,7 +254,9 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         return path;
     };
     self.relativePath = function (path) {
-        var root = self.rootPath();
+        return self.relativePathRoot(self.rootPath(),path);
+    };
+    self.relativePathRoot = function (root,path) {
         var statroot = self.staticRoot();
         if(!statroot){
             return path;
@@ -290,11 +301,11 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         }
     };
     self.upPath = ko.computed(function(){
-        if(self.path()!=self.rootPath() && self.path() != self.rootPath()+'/'){
+        if(self.path()!=self.rootBasePath() && self.path() != self.rootBasePath()+'/'){
             if(self.path().indexOf('/')>=0){
                 return self.path().substring(0,self.path().lastIndexOf('/'));
             }else{
-                return self.rootPath();
+                return self.rootBasePath();
             }
         }
         return null;
@@ -307,7 +318,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         self.path(path);
     }
     self.initialLoad = function () {
-        self.path(self.rootPath());
+        self.path(self.rootBasePath());
     }
     self.selectFile = function(res){
         if(self.allowSelection()){
@@ -326,7 +337,6 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.actionUploadModify=function(){
         if(self.selectedResource()){
             self.upload.fileName(self.selectedResource().name());
-            self.inputPath(self.relativePath(self.parentDirString(self.selectedResource().path())));
             self.upload.keyType(self.selectedResource().isPrivateKey()?'private': self.selectedResource().isPublicKey()?'public':'password');
             self.upload.modifyMode(true);
             // jQuery("#storageuploadkey").modal({backdrop:false});
@@ -391,7 +401,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         }).success(_createAjaxReceiveTokensHandler('storage_browser_token'));
     };
     self.browseToInputPath = function(){
-        self.path(self.absolutePath(self.inputPath()));
+        self.path(self.absolutePath(self.inputBasePath()));
     };
     self.pathNotFound=function(path){
         self.notFound(true);
@@ -402,7 +412,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             self.resources([]);
             var reload=false;
             self.selectedPath(null);
-            self.inputPath(self.relativePath(path));
+            self.inputPath(self.relativePathRoot(self.rootBasePath(), path))
             if(reload){
                 self.browseToInputPath();
             }
@@ -421,7 +431,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             }
         };
         self.loading(true);
-        self.inputPath(self.relativePath(val));
+        self.inputPath(self.relativePathRoot(self.rootBasePath(), val))
         jQuery.ajax({
             dataType: "json",
             url: _genUrl(self.baseUrl ,{relativePath: self.relativePath(val) } ),

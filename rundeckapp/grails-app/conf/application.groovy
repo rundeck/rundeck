@@ -46,8 +46,9 @@ environments {
         rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
-        rundeck.feature.uiNext.enabled = true
+        rundeck.feature.uiNext.enabled = false
         rundeck.feature.workflowDesigner.enabled = true
+        rundeck.feature.projectKeyStorage.enabled = true
 
         dataSource {
             dbCreate = "none" // one of 'create', 'create-drop','update'
@@ -99,7 +100,7 @@ environments {
         rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
-        rundeck.feature.uiNext.enabled = true
+        rundeck.feature.uiNext.enabled = false
         rundeck.feature.workflowDesigner.enabled = true
         grails.plugin.databasemigration.updateOnStart=true
 

@@ -190,9 +190,13 @@ search
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
 <tmpl:show scheduledExecution="${scheduledExecution}" crontab="${crontab}"/>
 <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
+</div>
+</div>
 </body>
 </html>
 

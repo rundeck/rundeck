@@ -6,15 +6,16 @@ DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
 # now submit req
-runurl="${APIURL}/jobs/export"
+
 proj=$2
 if [ "" == "$2" ] ; then
     proj="test"
 fi
+runurl="${APIURL}/project/${proj}/jobs/export"
 
 echo "TEST: export RunDeck Jobs in jobs.yaml format"
 
-params="project=${proj}&format=yaml"
+params="format=yaml"
 
 # get listing
 docurl -D $DIR/headers.out ${runurl}?${params} > $DIR/curl.out

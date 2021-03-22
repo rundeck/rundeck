@@ -1,6 +1,6 @@
 .btn,
 .navbar .navbar-nav>li>a.btn {
-  border-radius: $border-radius-btn-base;
+  // border-radius: $border-radius-btn-base;
   box-sizing: border-box;
   border-width: $border-thin;
   background-color: $transparent-bg;
@@ -25,7 +25,7 @@
   }
 
   &.btn-icon {
-    border-radius: 25px;
+    // border-radius: 25px;
     padding: 7px 10px;
 
     i {
@@ -47,11 +47,21 @@
 
 }
 
+.navbar .navbar-nav>li>a.btn.btn-primary,
+.btn-cta {
+  @include btn-styles($primary-color, $primary-states-color);
+}
+
 // Apply the mixin to the buttons
 //.btn-default { @include btn-styles($default-color, $default-states-color); }
 .navbar .navbar-nav>li>a.btn.btn-primary,
 .btn-primary {
   @include btn-styles($primary-color, $primary-states-color);
+}
+
+.navbar .navbar-nav>li>a.btn.btn-success,
+.btn-cta {
+  @include btn-styles($success-color, $success-states-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-success,
@@ -158,7 +168,7 @@
   font-weight: $font-weight-normal;
 
   &.btn-icon {
-    border-radius: 30px;
+    // border-radius: 30px;
     padding: 9px 16px;
   }
 }

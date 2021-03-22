@@ -181,7 +181,12 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckProjectManagerServiceConfig {
         ProjectCache projectCache;
+        FileCache fileCache;
 
+        @Data
+        public static class FileCache {
+            String spec;
+        }
         @Data
         public static class ProjectCache {
             String spec;
@@ -328,9 +333,10 @@ public class RundeckConfigBase {
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
         Enabled notificationsOwnThread = new Enabled();
-        Enabled uiNext = new Enabled(true);
+        Enabled uiNext = new Enabled(false);
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
+        Enabled projectKeyStorage = new Enabled(true);
 
         @Data
         public static class Enabled {

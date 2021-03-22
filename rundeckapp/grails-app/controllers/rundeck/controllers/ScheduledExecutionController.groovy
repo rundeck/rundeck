@@ -49,7 +49,6 @@ import org.apache.commons.httpclient.util.DateParseException
 import org.apache.commons.httpclient.util.DateUtil
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
-import org.quartz.Scheduler
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -181,12 +180,9 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobCreateSingle           : 'POST',
             apiJobRun                    : ['POST', 'GET'],
             apiJobFileUpload             : 'POST',
-            apiJobsImport                : 'POST',
             apiJobsImportv14             : 'POST',
             apiJobDelete                 : 'DELETE',
-            apiRunScript                 : 'POST',
             apiRunScriptv14              : 'POST',
-            apiRunScriptUrl              : ['POST', 'GET'],
             apiRunScriptUrlv14           : ['POST', 'GET'],
             apiRunCommand                : ['POST', 'GET'],
             apiRunCommandv14             : ['POST', 'GET'],
@@ -632,7 +628,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V34)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V34)) {
             return
         }
 
@@ -657,9 +653,13 @@ class ScheduledExecutionController  extends ControllerBase{
                 ),
                 AuthConstants.ACTION_VIEW, 'Job', params.id
         )) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                                                           code  : 'api.error.item.unauthorized', args: ['View', 'Job ' +
-                    'ID', jobid]]
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code  : 'api.error.item.unauthorized',
+                    args: ['View', 'Job ' + 'ID', params.id]
+                ]
             )
         }
         def maxDepth=3
@@ -1070,7 +1070,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
 
@@ -1122,7 +1122,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
 
@@ -1375,7 +1375,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     def apiFlipExecutionEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V16)){
+        if(!apiService.requireApi(request,response,ApiVersions.V16)){
             return
         }
         if (deleteRequest.hasErrors()) {
@@ -1454,7 +1454,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
     def apiFlipScheduleEnabledBulk(ApiBulkJobDeleteRequest deleteRequest) {
-        if(!apiService.requireVersion(request,response,ApiVersions.V16)){
+        if(!apiService.requireApi(request,response,ApiVersions.V16)){
             return
         }
         if (deleteRequest.hasErrors()) {
@@ -1533,161 +1533,6 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    /**
-     * POST a single job definition to a
-     * @return
-     */
-    def apiJobCreateSingle(){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-        log.debug("ScheduledExecutionController: apiJobUpdateSingle " + params)
-        def fileformat = params.format ?: 'xml'
-        def parseresult
-
-        if (!apiService.requireParameters(params, response, ['id'])) {
-            return
-        }
-        if(ScheduledExecution.getByIdOrUUID(params.id)){
-            //job already exists, cannot create
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_CONFLICT,
-                    code: 'api.error.jobs.create.exists', args: [params.id]])
-        }
-        if (request.contentType.contains('text/xml')) {
-            //read input stream
-            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), fileformat)
-        } else {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.jobs.import.missing-file', args: null])
-        }
-        if (parseresult.errorCode) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: parseresult.errorCode, args: parseresult.args])
-        }
-
-        if (parseresult.error) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.jobs.import.invalid', args: [fileformat, parseresult.error]])
-        }
-        def jobset = parseresult.jobset
-        if (jobset.size() != 1) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.jobs.update.incorrect-document-content'])
-        }
-        if (params.project) {
-            jobset.each{it.job.project = params.project}
-        }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
-
-        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                [AuthConstants.ACTION_CREATE], jobset[0].job.project)) {
-
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Create Job', 'Project', jobset[0].job.project]])
-        }
-
-        jobset.each{it.job.uuid = params.id}
-        def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
-        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadImportedJobs(jobset, 'create', 'preserve', changeinfo, authContext,
-                (params?.validateJobref=='true'))
-        scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
-
-        def jobs = loadresults.jobs
-        def jobsi = loadresults.jobsi
-        def msgs = loadresults.msgs
-        def errjobs = loadresults.errjobs
-        def skipjobs = loadresults.skipjobs
-
-        if (jobs) {
-            response.addHeader('Location', apiService.apiHrefForJob(jobs[0]))
-            return apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, false, request, response) {
-                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
-            }
-        } else {
-            return apiService.renderSuccessXml(HttpServletResponse.SC_BAD_REQUEST, false, request, response) {
-                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
-            }
-        }
-    }
-    /**
-     * Update a job via PUT
-     * @return
-     */
-    def apiJobUpdateSingle(){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-        log.debug("ScheduledExecutionController: apiJobUpdateSingle " + params)
-        def fileformat = params.format ?: 'xml'
-        def parseresult
-        if (!apiService.requireParameters(params, response, ['id'])) {
-            return
-        }
-        def scheduledExecution = ScheduledExecution.getByIdOrUUID(params.id)
-        if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
-            //job does not exist
-            return
-        }
-        def Framework framework = frameworkService.getRundeckFramework()
-        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE],
-                scheduledExecution.project)) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Update', 'Job ID', params.id]])
-        }
-        if(request.contentType.contains('text/xml')){
-            //read input stream
-            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), fileformat)
-        } else {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.jobs.import.missing-file', args: null])
-        }
-        if (parseresult.errorCode) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: parseresult.errorCode, args: parseresult.args])
-        }
-
-        if (parseresult.error) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.jobs.import.invalid', args: [fileformat, parseresult.error]])
-        }
-        def jobset = parseresult.jobset
-        if(jobset.size()!=1){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.jobs.update.incorrect-document-content'])
-        }
-        if (params.project) {
-            jobset.each{it.job.project = params.project}
-        }
-        jobset.each{it.job.uuid=params.id}
-        def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
-        String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadImportedJobs(jobset, 'update', 'preserve', changeinfo, authContext,
-                (params?.validateJobref=='true'))
-        scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
-
-        def jobs = loadresults.jobs
-        def jobsi = loadresults.jobsi
-        def msgs = loadresults.msgs
-        def errjobs = loadresults.errjobs
-        def skipjobs = loadresults.skipjobs
-
-
-        if (jobs) {
-            return apiService.renderSuccessXmlWrap(request,response) {
-                delegate.'link'(href: apiService.apiHrefForJob(jobs[0]), rel: 'get')
-                success {
-                    delegate.'message'(g.message(code: 'api.success.job.create.message', args: [params.id]))
-                }
-                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
-            }
-        } else {
-            return apiService.renderErrorXml(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response) {
-                renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
-            }
-        }
-    }
     /**
      * Delete a set of jobs as specified in the idlist parameter.
      * Only allowed via DELETE http method
@@ -1852,9 +1697,12 @@ class ScheduledExecutionController  extends ControllerBase{
             if(scheduledExecution.errors){
                 log.debug scheduledExecution.errors.allErrors.collect {g.message(error: it)}.join(", ")
             }
-            request.message="Error updating Job "
+            request.message="Error updating Job: "
             if(result.message){
-                request.message+=": "+result.message
+                request.message+="{"+result.message+"} "
+            }
+            if(result.validation){
+                request.message+= result.validation.toString() + " "
             }
 
 //            if(!scheduledExecution.isAttached()) {
@@ -2023,7 +1871,7 @@ class ScheduledExecutionController  extends ControllerBase{
         scheduledExecution.minute = String.valueOf(cal.get(java.util.Calendar.MINUTE))
         scheduledExecution.hour = String.valueOf(cal.get(java.util.Calendar.HOUR_OF_DAY))
         scheduledExecution.user = authContext.username
-        scheduledExecution.userRoleList = authContext.roles.join(",")
+        scheduledExecution.userRoles = authContext.roles as List<String>
         if(params.project ){
 
             if(!frameworkService.existsFrameworkProject(params.project) ) {
@@ -2129,7 +1977,7 @@ class ScheduledExecutionController  extends ControllerBase{
         params.jobName='Temporary_Job'
         params.groupPath='adhoc'
 
-        if (runAdhocRequest.asUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
+        if (runAdhocRequest.asUser) {
             //authorize RunAs User
             if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
                     AuthConstants.ACTION_RUNAS, runAdhocRequest.project)) {
@@ -2846,7 +2694,7 @@ class ScheduledExecutionController  extends ControllerBase{
             inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters',
                                                   'filter', 'nodeoverride', 'nodefilter']).findAll { it.value })
             inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
-                    it.key.startsWith('nodeExclude')}.findAll { it.value })
+                    it.key.startsWith('nodeExclude')}.findAll { it.value != null })
         }
 
         if (params.meta instanceof Map) {
@@ -3130,16 +2978,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: /api/14/project/NAME/jobs/import
      */
     def apiJobsImportv14(){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
-            return
-        }
-        return apiJobsImport()
-    }
-    /**
-     * API: /jobs/import, version 1, deprecated since v14
-     */
-    def apiJobsImport(){
-        if (!apiService.requireApi(request, response)) {
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         log.debug("ScheduledExecutionController: upload " + params)
@@ -3183,20 +3022,16 @@ class ScheduledExecutionController  extends ControllerBase{
                 return
             }
         }
-        if(request.api_version >= ApiVersions.V8){
             //v8 override project using parameter
-            if(params.project){
-                jobset.each{it.job.project=params.project}
-            }
+        if(params.project){
+            jobset.each{it.job.project=params.project}
         }
+
         def changeinfo = [user: session.user,method:'apiJobsImport']
         //nb: loadJobs will get correct project auth context
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def option = params.uuidOption
-        if (request.api_version < ApiVersions.V9) {
-            option = null
-        }
         def loadresults = scheduledExecutionService.loadImportedJobs(jobset,params.dupeOption, option, changeinfo, authContext,
                 (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
@@ -3213,8 +3048,10 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         withFormat{
             xml{
-                apiService.renderSuccessXmlWrap(request,response){
-                    renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+                apiService.renderSuccessXml(request, response) {
+                    delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                        renderJobsImportApiXML(jobs, jobsi, errjobs, skipjobs, delegate)
+                    }
                 }
             }
             json{
@@ -3333,7 +3170,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
         }
-        if(jobAsUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
+        if(jobAsUser) {
             // authorize RunAs User
             if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
                                                          scheduledExecution.project
@@ -3357,6 +3194,10 @@ class ScheduledExecutionController  extends ControllerBase{
         if (jobLoglevel) {
             inputOpts["loglevel"] = jobLoglevel
         }
+        if (!scheduledExecution.hasNodesSelectedByDefault()){
+            inputOpts['_replaceNodeFilters']='true'
+        }
+
         // convert api parameters to node filter parameters
         def filters = jobFilter?[filter:jobFilter]:FrameworkController.extractApiNodeFilterParams(params)
         if (filters) {
@@ -3424,7 +3265,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def apiJobRetry() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V24)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V24)) {
             return
         }
         String jobId = params.id
@@ -3500,7 +3341,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
 
@@ -3666,7 +3507,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
 
@@ -3703,7 +3544,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
 
@@ -3827,15 +3668,9 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run simple exec: /api/14/project/PROJECT/run/command
      */
     def apiRunCommandv14(ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
-        return apiRunCommand(runAdhocRequest)
-    }
-    /**
-     * API: run simple exec: /api/run/command, version 1
-     */
-    def apiRunCommand(ApiRunAdhocRequest runAdhocRequest){
         runAdhocRequest.validate()
         if(runAdhocRequest.hasErrors()){
             return apiService.renderErrorFormat(
@@ -3846,9 +3681,6 @@ class ScheduledExecutionController  extends ControllerBase{
                             args: [runAdhocRequest.errors.allErrors.collect { g.message(error: it) }.join("; ")]
                     ]
             )
-        }
-        if (!apiService.requireApi(request, response)) {
-            return
         }
         if (null==runAdhocRequest.exec || null==runAdhocRequest.project){
             if(!apiService.requireParameters(params, response, ['project','exec'])) {
@@ -3888,16 +3720,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run script: /api/14/project/PROJECT/run/script
      */
     def apiRunScriptv14(ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
-            return
-        }
-        return apiRunScript(runAdhocRequest)
-    }
-    /**
-     * API: run script: /api/run/script, version 1
-     */
-    def apiRunScript(ApiRunAdhocRequest runAdhocRequest){
-        if (!apiService.requireApi(request, response)) {
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         if(null==runAdhocRequest.project || null==runAdhocRequest.script) {
@@ -3998,11 +3821,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 xml{
 
                     return apiService.renderSuccessXml(request,response) {
-                        if (apiService.doWrapXmlResponse(request)) {
-                            delegate.'success' {
-                                message("Immediate execution scheduled (${results.id})")
-                            }
-                        }
                         delegate.'execution'(
                                 id: results.id,
                                 href: apiService.apiHrefForExecution(results.execution),
@@ -4028,20 +3846,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: run script: /api/14/project/PROJECT/run/url
      */
     def apiRunScriptUrlv14 (ApiRunAdhocRequest runAdhocRequest){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
-            return
-        }
-        return apiRunScriptUrl(runAdhocRequest)
-    }
-
-    /**
-     * API: run script: /api/run/url, version 4
-     */
-    def apiRunScriptUrl (ApiRunAdhocRequest runAdhocRequest){
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-        if (!apiService.requireVersion(request,response,ApiVersions.V4)) {
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         if(null==runAdhocRequest.project || null==runAdhocRequest.url) {
@@ -4184,7 +3989,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * API: /api/14/scheduler/takeover
      */
     def apiJobClusterTakeoverSchedule (){
-        if (!apiService.requireVersion(request,response,ApiVersions.V14)) {
+        if (!apiService.requireApi(request,response,ApiVersions.V14)) {
             return
         }
         def api17 = request.api_version >= ApiVersions.V17
@@ -4207,8 +4012,10 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!frameworkService.isClusterModeEnabled()) {
             withFormat {
                 xml {
-                    return apiService.renderSuccessXmlWrap(request, response) {
-                        delegate.'message'("No action performed, cluster mode is not enabled.")
+                    return apiService.renderSuccessXml(request, response) {
+                        delegate.'result'(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                            delegate.'message'("No action performed, cluster mode is not enabled.")
+                        }
                     }
                 }
                 json {
@@ -4299,17 +4106,9 @@ class ScheduledExecutionController  extends ControllerBase{
         withFormat {
             xml{
                 return apiService.renderSuccessXml(request,response) {
-                    if (apiService.doWrapXmlResponse(request)) {
-                        delegate.'message'(successMessage)
-                        delegate.'self'{
-                            delegate.'server'(uuid:frameworkService.getServerUUID())
-                        }
-                    }
                     delegate.'takeoverSchedule'{
-                        if(!apiService.doWrapXmlResponse(request)){
-                            delegate.'self' {
-                                delegate.'server'(uuid: frameworkService.getServerUUID())
-                            }
+                        delegate.'self' {
+                            delegate.'server'(uuid: frameworkService.getServerUUID())
                         }
                         if(!serverAll) {
                             delegate.'server'(uuid: serverUUID)

@@ -23,7 +23,7 @@ test_succeed
 
 EXPECT_STATUS=200
 TMPDIR=`mktemp -d -t test-run-url.XXX` || exit 1
-cat >$TMPDIR/test.sh <<END 
+cat >$TMPDIR/test.sh <<END
 #!/bin/bash
 
 echo this is a script
@@ -38,7 +38,7 @@ api_request $ENDPOINT $DIR/curl.out
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-assert_xml_notblank "/result/execution/@id" $DIR/curl.out
+assert_xml_notblank "//execution/@id" $DIR/curl.out
 
 test_succeed
 

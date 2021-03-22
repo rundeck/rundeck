@@ -118,35 +118,13 @@ cat > $DIR/temp.out <<END
 
 END
 
-# now submit req
-runurl="${APIURL}/project/$project/jobs/import"
-
-params=""
-
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-
-# get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+jobid=$(uploadJob "$DIR/temp.out" "$project"  4 "")
 if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
+  errorMsg "failed job upload"
+  exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#result will contain list of failed and succeeded jobs, in this
-#case there should only be 1 failed or 1 succeeded since we submit only 1
-
-succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
 jobid="06ba3dce-ba4f-4964-8ac2-349c3a2267bd"
-#$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-
-if [ "4" != "$succount" -o "" == "$jobid" ] ; then
-    errorMsg  "Upload was not successful."
-    exit 2
-fi
-
 
 ###
 # Run the chosen id, expect success message
@@ -167,8 +145,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
-execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
+execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
 
 if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
     :
@@ -187,7 +165,7 @@ echo "TEST: POST job/id/run should succeed $execid"
 api_waitfor_execution $execid true 40 || fail "Failed waiting for execution $execid to complete"
 
 # test execution status
-# 
+#
 runurl="${APIURL}/execution/${execid}"
 
 params=""
@@ -202,9 +180,9 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
 assert "1" "$itemcount" "execution count should be 1"
-status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out)
+status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
 assert "succeeded" "$status" "execution status should be succeeded"
 
 

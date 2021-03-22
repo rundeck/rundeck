@@ -510,12 +510,12 @@ search
           </div>
       </div>
 
-      <div class="" data-bind="if: !completed()" data-ko-bind="nodeflow">
+      <div class="" data-bind="if: !completed() " data-ko-bind="nodeflow">
           <g:if test="${scheduledExecution}">
           %{--progress bar--}%
               <div>
                   <section
-                          data-bind="if: !completed() && jobAverageDuration()>0">
+                          data-bind="if: !completed() && !queued() && jobAverageDuration()>0">
                       <g:set var="progressBind"
                              value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
                       <g:render template="/common/progressBar"
@@ -532,7 +532,14 @@ search
                                         progressBind    : progressBind,
                                 ]"/>
                   </section>
-
+                  <section data-bind="if: queued()">
+                      <div  class="progress progress-striped" style="height: 28px">
+                          <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+                               style="width: 100%;line-height: 28px">
+                              Queued
+                          </div>
+                      </div>
+                  </section>
               </div>
           </g:if>
           <g:if test="${isAdhoc}">
@@ -559,9 +566,9 @@ search
       </div>
 
   </content>
-    <div class="container-fluid">
-      <div>
-
+    <div class="content">
+    <div id="layoutBody">
+        <div class="container-fluid">
               <div class="row">
                   <div class="col-sm-12">
                       <div class="card card-plain " data-ko-bind="nodeflow">
@@ -955,6 +962,8 @@ search
 
 
   </div>
+    </div>
+    </div>
   <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 
@@ -1227,6 +1236,8 @@ search
                     '⏱︎ [TIMEOUT] ' :
                     val === 'FAILED' ?
                     '⛔︎ [FAILED] ' :
+                    val === 'QUEUED' ?
+                    '🔜 [QUEUED] ' :
                     ('✴️ [' + (val) + '] ')//🔶
                 );
                 updateTitle(prefix)

@@ -8,7 +8,7 @@ source $DIR/include.sh
 proj="test"
 
 # now submit req
-runurl="${APIURL}/run/script"
+runurl="${APIURL}/project/${proj}/run/script"
 
 #remove script.out if it exists
 
@@ -26,7 +26,7 @@ END
 [ -f $OUTF ] && rm $OUTF
 
 echo "TEST: /api/run/script with scriptInterpreter and interpreterArgsQuoted=true"
-params="project=${proj}&scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=true"
+params="scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=true"
 # make api request
 docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
@@ -36,7 +36,7 @@ fi
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" -n $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" -n $DIR/curl.out)
 if [ "" == "${execid}" ] ; then
     errorMsg "FAIL: expected execution id in result: ${execid}"
     exit 2
@@ -63,7 +63,7 @@ rm $OUTF
 
 
 echo "TEST: /api/run/script with scriptInterpreter and interpreterArgsQuoted=false"
-params="project=${proj}&scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=false"
+params="scriptInterpreter=bash+-c&argString=%24%7Bnode.name%7D&interpreterArgsQuoted=false"
 # make api request
 docurl -F scriptFile=@$SCRIPTF ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
@@ -73,7 +73,7 @@ fi
 
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" -n $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" -n $DIR/curl.out)
 if [ "" == "${execid}" ] ; then
     errorMsg "FAIL: expected execution id in result: ${execid}"
     exit 2

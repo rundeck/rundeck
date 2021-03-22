@@ -30,7 +30,7 @@ fi
 
 
 #Check projects list
-testapivers=$($XMLSTARLET sel -T -t -v "/system/rundeck/apiversion" $DIR/curl.out)
+testapivers=$(xmlsel "/system/rundeck/apiversion" $DIR/curl.out)
 assert "${API_VERSION}" "${testapivers}" "Expected latest api version"
 
 echo "OK"
@@ -50,7 +50,7 @@ fi
 
 
 #Check projects list
-testapivers=$($XMLSTARLET sel -T -t -v "/system/rundeck/apiversion" $DIR/curl.out)
+testapivers=$(xmlsel "/system/rundeck/apiversion" $DIR/curl.out)
 assert "${API_VERSION}" "${testapivers}" "Expected latest api version"
 
 echo "OK"
@@ -71,7 +71,7 @@ fi
 
 
 #Check projects list
-testapivers=$($XMLSTARLET sel -T -t -v "/system/rundeck/apiversion" $DIR/curl.out)
+testapivers=$(xmlsel "/system/rundeck/apiversion" $DIR/curl.out)
 assert "${API_VERSION}" "${testapivers}" "Expected latest api version"
 
 echo "OK"

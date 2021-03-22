@@ -9,6 +9,7 @@ export class NavBar {
 
     overflowItem: NavContainer = {
         id: 'overflow',
+        priority: 0,
         type: 'container',
         style: 'list',
         group: 'bottom',
@@ -18,30 +19,37 @@ export class NavBar {
     }
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
-        if (window._rundeck?.navbar) {
+        if (window._rundeck.navbar) {
             window._rundeck.navbar.items.forEach(i => {
                 this.items.push({...i, visible: true, container: i.container || 'root'})
             })
         }
     }
 
+    /** Returns items in proper sort order */
+    getItems() {
+        return this.items.slice().sort((a, b) => a.priority - b.priority)
+    }
+
+    @action
     addItems(items: Array<NavItem>) {
         items.forEach(i => this.items.push(i))
+        this.items.sort((a, b) => a.priority - b.priority)
     }
 
     containerGroupItems(container: string, group: string) {
-            const items = this.items.filter(i => i.group == group && i.container == container)
+            const items = this.getItems().filter(i => i.group == group && i.container == container)
             return items
     }
 
     containerItems(container: string) {
-        const items = this.items.filter(i => i.container == container)
+        const items = this.getItems().filter(i => i.container == container)
 
         return items
     }
 
     groupItems(group: string) {
-        const items = this.items.filter(i => i.group == group)
+        const items = this.getItems().filter(i => i.group == group)
         return items
     }
 
@@ -74,6 +82,7 @@ export class NavBar {
 
 export interface NavItem {
     id: string
+    priority: number
     class?: string
     label?: string
     container?: string

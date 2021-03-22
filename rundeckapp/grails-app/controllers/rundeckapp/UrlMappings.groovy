@@ -48,7 +48,7 @@ class UrlMappings {
 
 
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
-            action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
+            action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']
         }
         "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
 
@@ -186,22 +186,6 @@ class UrlMappings {
         }
         "/api/$api_version/scheduler/takeover"(controller: 'scheduledExecution', action: 'apiJobClusterTakeoverSchedule')
 
-        //////////
-        //BEGIN deprecated as of v14
-        "/api/$api_version/executions/running"(controller: 'menu', action: 'apiExecutionsRunning')
-        "/api/$api_version/executions"(controller: 'execution', action: 'apiExecutionsQuery')
-        "/api/$api_version/jobs"(controller: 'menu', action: 'apiJobsList')
-        "/api/$api_version/jobs/export"(controller: 'menu', action: 'apiJobsExport')
-        "/api/$api_version/jobs/import"(controller: 'scheduledExecution', action: 'apiJobsImport')
-        "/api/$api_version/history"(controller: 'reports', action: 'apiHistory')
-        "/api/$api_version/resources"(controller: 'framework', action: 'apiResources')
-        "/api/$api_version/resource/$name"(controller: 'framework', action: 'apiResource')
-        "/api/$api_version/run/command"(controller: 'scheduledExecution', action: 'apiRunCommand')
-        "/api/$api_version/run/script"(controller: 'scheduledExecution', action: 'apiRunScript')
-        "/api/$api_version/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrl')
-        //END deprecated
-        ///////////////
-
         "/api/$api_version/system/info"(controller: 'api', action: 'apiSystemInfo')
         "/api/$api_version/system/logstorage"(controller: 'menu', action: 'apiLogstorageInfo')
         "/api/$api_version/system/logstorage/incomplete/resume"(controller: 'menu', action: 'apiResumeIncompleteLogstorage')
@@ -237,15 +221,11 @@ class UrlMappings {
 
         "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
 
-        //promoted incubator endpoints
-        "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'api',action:'endpointMoved'){
-            moved_to="/api/${ApiVersions.API_CURRENT_VERSION}/scheduler/takeover"
-        }
-
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
         "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
 
+        "/api/$api_version"(controller: 'api', action: 'info')
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 

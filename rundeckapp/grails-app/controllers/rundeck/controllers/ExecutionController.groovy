@@ -346,7 +346,8 @@ class ExecutionController extends ControllerBase{
 
         def jobcomplete = e.dateCompleted != null
         def execState = e.executionState
-        def execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        def execDuration = (execState == ExecutionService.EXECUTION_QUEUED) ? -1L :
+            (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
         if (e.scheduledExecution && e.scheduledExecution.getAverageDuration() > 0) {
             jobAverage = e.scheduledExecution.getAverageDuration()
@@ -980,15 +981,11 @@ setTimeout(function(){
      * API: /api/execution/{id}/output, version 5
      */
     def apiExecutionOutput() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V5)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         params.stateOutput=false
 
-        if (request.api_version < ApiVersions.V9) {
-            params.nodename = null
-            params.stepctx = null
-        }
         if (request.api_version < ApiVersions.V21) {
             params.remove('compacted')
         }
@@ -1084,12 +1081,9 @@ setTimeout(function(){
                             datamap.log = datamap.log?.replaceAll(invalidXmlPattern, '')
                         }
                         //xml
-                        if (apiVersion <= ApiVersions.V5) {
-                            def text = datamap.remove('log')
-                            delegate.'entry'(datamap, text)
-                        } else {
-                            delegate.'entry'(datamap)
-                        }
+
+                        delegate.'entry'(datamap)
+
                     }
                 }
             }
@@ -1181,7 +1175,7 @@ setTimeout(function(){
      * API: /api/execution/{id}/output/state, version ?
      */
     def apiExecutionStateOutput() {
-        if (!apiService.requireVersion(request,response,ApiVersions.V10)) {
+        if (!apiService.requireApi(request,response)) {
             return
         }
         params.stateOutput = true
@@ -1243,9 +1237,8 @@ setTimeout(function(){
         def hasFailedNodes = e.failedNodeList ? true : false
         def execState = e.executionState
         def statusString = e.customStatusString
-        def execDuration = 0L
-        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted
-                                                                                                     .getTime()
+        def execDuration = (execState == ExecutionService.EXECUTION_QUEUED) ? -1L :
+            (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
 
         def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
                 frameworkService.getServerUUID()
@@ -1800,10 +1793,10 @@ setTimeout(function(){
         }
     }
     /**
-     * API: /api/execution/{id}/state , version 10
+     * API: /api/execution/{id}/state , version 11
      */
     def apiExecutionState(){
-        if (!apiService.requireVersion(request, response, ApiVersions.V10)) {
+        if (!apiService.requireApi(request, response)) {
             return
         }
         def Execution e = Execution.get(params.id)
@@ -1944,10 +1937,13 @@ setTimeout(function(){
         def ScheduledExecution se = e.scheduledExecution
         def user=session.user
         def killas=null
-        if (params.asUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
+        if (params.asUser) {
             //authorized within service call
             killas= params.asUser
         }
+
+
+
         abortresult = executionService.abortExecution(
                 se,
                 e,
@@ -1990,11 +1986,6 @@ setTimeout(function(){
         withFormat{
             xml{
                 apiService.renderSuccessXml(request,response) {
-                    if (apiService.doWrapXmlResponse(request)) {
-                        success {
-                            delegate.'message'("Execution status: ${abortresult.status ?: abortresult.jobstate}")
-                        }
-                    }
                     abort(reportstate) {
                         execution(id: params.id, status: abortresult.jobstate,
                                   href:apiService.apiHrefForExecution(e),
@@ -2020,7 +2011,7 @@ setTimeout(function(){
      * @return
      */
     def apiExecutionDelete (){
-        if (!apiService.requireVersion(request, response, ApiVersions.V12)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
         def Execution e = Execution.get(params.id)
@@ -2059,7 +2050,7 @@ setTimeout(function(){
      * @return
      */
     def apiExecutionDeleteBulk() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V12)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
         return executionDeleteBulk()
@@ -2123,17 +2114,7 @@ setTimeout(function(){
      * API: /api/14/project/NAME/executions
      */
     def apiExecutionsQueryv14(ExecutionQuery query){
-        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
-            return
-        }
-        return apiExecutionsQuery(query)
-    }
-
-    /**
-     * API: /api/5/executions query interface, deprecated since v14
-     */
-    def apiExecutionsQuery(ExecutionQuery query){
-        if (!apiService.requireVersion(request, response, ApiVersions.V5)) {
+        if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
         if(query?.hasErrors()){
@@ -2267,7 +2248,7 @@ setTimeout(function(){
      */
     def apiExecutionModeStatus() {
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V32)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V32)) {
             return
         }
 
@@ -2324,7 +2305,7 @@ setTimeout(function(){
      * @return
      */
     private def apiExecutionMode(boolean active) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -2364,7 +2345,7 @@ setTimeout(function(){
      * List input files for an execution
      */
     def apiExecutionInputFiles() {
-        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['id'])) {
@@ -2396,7 +2377,7 @@ setTimeout(function(){
      * API: /api/28/executions/metrics
      */
     def apiExecutionMetrics(ExecutionQuery query) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V29)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V29)) {
             return
         }
 

@@ -95,7 +95,7 @@ Requirements
 
 Java 8 (openjdk, oracle)
 
-[Pandoc](http://johnmacfarlane.net/pandoc/) (documentation build only)
+Node JS 12
 
 Documentation
 ======
@@ -110,7 +110,6 @@ Development
 Refer to the [IDE Development Environment](https://github.com/rundeck/rundeck/wiki/IDE-Development-Environment) to get set up using IntelliJ IDEA or Eclipse/STS.
 
 * [Issue tracker](https://github.com/rundeck/rundeck/issues) at github.com
-* [Fresh builds](http://build.rundeck.org) served by Jenkins
 
 Do you have changes to contribute? Please see the [Development](https://github.com/rundeck/rundeck/wiki/Development) wiki page.
 

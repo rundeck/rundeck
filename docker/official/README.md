@@ -136,7 +136,7 @@ the container.
 
 ### `RUNDECK_DATABASE_URL`
 
-Defaults to `jdbc:h2:file:/home/rundeck/server/data/grailsdb;MVCC=true`. The default configuration utilizes an h2 file for data storage.
+Defaults to `jdbc:h2:file:/home/rundeck/server/data/grailsdb;DB_CLOSE_ON_EXIT=FALSE`. The default configuration utilizes an h2 file for data storage.
 
 ### `RUNDECK_DATABASE_DRIVER`
 

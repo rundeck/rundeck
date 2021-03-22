@@ -44,10 +44,8 @@ import java.text.SimpleDateFormat
 import java.time.Clock
 
 class ApiService {
-    public static final String TEXT_XML_CONTENT_TYPE = 'text/xml'
     public static final String APPLICATION_XML_CONTENT_TYPE = 'application/xml'
     public static final String JSON_CONTENT_TYPE = 'application/json'
-    public static final String XML_API_RESPONSE_WRAPPER_HEADER = "X-Rundeck-API-XML-Response-Wrapper"
     def messageSource
     def grailsLinkGenerator
     AppAuthContextEvaluator rundeckAuthContextEvaluator
@@ -386,7 +384,7 @@ class ApiService {
     }
 
     def respondXml(HttpServletResponse response, Closure recall) {
-        return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderXml(recall))
+        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderXml(recall))
     }
 
     def renderXml(Closure recall) {
@@ -402,57 +400,6 @@ class ApiService {
 
     /**
      * Render xml response
-     * @param request
-     * @param response
-     * @param code
-     * @param args
-     */
-    def renderSuccessXml(HttpServletRequest request,HttpServletResponse response, String code, List args) {
-        return renderSuccessXmlWrap(request,response) {
-            success {
-                message(messageSource.getMessage(code, args as Object[], code, null))
-            }
-        }
-    }
-
-    /**
-     * Return true if the request indicates the XML response content should be wrapped in a '&lt;result&gt;'
-     * element.  Return true if:
-     * <ul>
-     * <li>less-than: "11", and {@value  #XML_API_RESPONSE_WRAPPER_HEADER} header is not "false"</li>
-     * <li>OR, greater-than: "10" AND {@value  #XML_API_RESPONSE_WRAPPER_HEADER} header is "true"</li>
-     * </ul>
-     * @param request
-     * @return
-     */
-    public boolean doWrapXmlResponse(HttpServletRequest request) {
-        if(request.api_version < ApiVersions.V11){
-            //require false to disable wrapper
-            return !"false".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
-        } else{
-            //require true to enable wrapper
-            return "true".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
-        }
-    }
-
-    def renderSuccessXml(HttpServletResponse response, String code, List args) {
-        return renderSuccessXml(null,response,code,args)
-    }
-    /**
-     * Render xml response, forces "&lt;result&gt;" wrapper
-     * @param status status code to send
-     * @param request
-     * @param response
-     * @param recall
-     * @return
-     */
-    def renderSuccessXmlWrap(HttpServletRequest request,
-                         HttpServletResponse response, Closure recall) {
-        return renderSuccessXml(0,true,request,response,recall)
-    }
-    /**
-     * Render xml response, provides "&lt;result&gt;" wrapper for api request older than v11,
-     * or if "X-Rundeck-api-xml-response-wrapper" header in request is "true".
      * @param status status code to send
      * @param request
      * @param response
@@ -461,16 +408,11 @@ class ApiService {
      */
     def renderSuccessXml(int status = 0, Boolean forceWrapper = false, HttpServletRequest request,
                              HttpServletResponse response, Closure recall) {
+
         if (status) {
             response.status = status
         }
-        if (!request || doWrapXmlResponse(request) || forceWrapper) {
-            response.setHeader(XML_API_RESPONSE_WRAPPER_HEADER,"true")
-            return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderSuccessXml(recall))
-        }else{
-            response.setHeader(XML_API_RESPONSE_WRAPPER_HEADER, "false")
-            return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderSuccessXmlUnwrapped(recall))
-        }
+        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderSuccessXmlUnwrapped(recall))
     }
     /**
      *
@@ -481,7 +423,7 @@ class ApiService {
      * @deprecated use {@link #renderSuccessXml(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, groovy.lang.Closure)}
      */
     def renderSuccessXml(int status=0,HttpServletResponse response, Closure recall) {
-       return renderSuccessXml (status,false,null,response,recall)
+       return renderSuccessXml (status,null,response,recall)
     }
     def renderSuccessXmlUnwrapped(Closure recall){
         return renderXml(recall)
@@ -665,14 +607,14 @@ class ApiService {
         def eformat = error.format
         def rformat = response.format
         def respFormat = eformat && resp[eformat] ? eformat :
-            rformat && resp[rformat] ? rformat : 'xml'
+            rformat && resp[rformat] ? rformat : 'json'
         return resp[respFormat](response,error)
     }
     def renderErrorXml(HttpServletResponse response, Map error){
         if(error.status){
             response.setStatus(error.status)
         }
-        return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderErrorXml(error, error.code))
+        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderErrorXml(error, error.code))
     }
     def renderErrorJson(HttpServletResponse response, Map error){
         if(error.status){
@@ -750,13 +692,17 @@ class ApiService {
      * @param response
      * @return false if it is not a valid API request. If false, then an error status response has already been sent
      */
-    def requireApi(request, HttpServletResponse response){
+    def requireApi(request, HttpServletResponse response, int min=ApiVersions.API_MIN_VERSION){
         if(!request.api_version){
             //not a /api URL
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
 
             return false
         }
+        if(!requireVersion(request, response, min)){
+            return false
+        }
+
         true
     }
     /**
@@ -768,9 +714,6 @@ class ApiService {
      * @return false if requirement is not met: response will already have been made
      */
     def requireVersion(request, HttpServletResponse response, int min, int max = 0){
-        if(!requireApi(request,response)){
-            return false
-        }
         if (request.api_version < min) {
             renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,

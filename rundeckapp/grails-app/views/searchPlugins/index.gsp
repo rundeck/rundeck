@@ -25,10 +25,14 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
   SEARCH PLUGINS
   <div id="plugin-search-vue"></div>
   <!-- VUE JS MODULES -->
   <asset:javascript src="static/pages/search-plugins.js"/>
   <!-- /VUE JS MODULES -->
+</div>
+</div>
 </body>
 </html>

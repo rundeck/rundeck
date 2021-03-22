@@ -38,11 +38,12 @@
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
   <asset:javascript src="jquery.js" />
+  <asset:javascript src="versionIdentity.js"/>
+  <g:render template="/common/css"/>
   <asset:javascript src="bootstrap.js" />
 </head>
 
-<body>
-  <div class="wrapper">
+<body id="four-oh-four-page">
     <div class="four-oh-four">
       <div class="nav-bar">
         <a
@@ -55,7 +56,7 @@
         <div>
           <div class="col-xs-12 col-sm-6 space-cat-container">
             <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
-              <img src="${resource(dir: 'images', file: 'spacecat/saucer-cat.png')}" class="img-responsive"
+              <asset:image src="spacecat/saucer-cat.png" class="img-responsive"
                 alt="Space Cat" />
             </g:if>
           </div>

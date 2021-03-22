@@ -329,43 +329,6 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         }
     }
 
-    void apiProjectGet_xml_noconfig_withwrapper() {
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(false, 'test1')
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                2 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>false
-            }
-        response.format = 'xml'
-        params.project = 'test1'
-        request.setAttribute('api_version', 10) // trigger xml <result> wrapper
-        controller.apiProjectGet()
-        then:
-        assert response.status == HttpServletResponse.SC_OK
-
-        //XML result has wrapper
-        assertEquals 'result', response.xml.name()
-        assertEquals 'true', response.xml.'@success'.text()
-        assertEquals ApiVersions.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
-
-        assertEquals 1, response.xml.projects.size()
-        assertEquals 0, response.xml.project.size()
-        assertEquals 1, response.xml.projects.size()
-        assertEquals 1, response.xml.projects.project.size()
-        when:
-        def project = response.xml.projects.project[0]
-
-        then:
-        //test project element
-        assertEquals 'test1', project.name.text()
-        assertEquals '', project.description.text()
-        assertEquals 0, project.config.size()
-    }
-
     void apiProjectGet_xml_noconfig_v11(){
         when:
         defineBeans {
@@ -403,45 +366,6 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     /**
      * apiversion {@literal <} 11 will result in no {@literal <config>} element, even if authorized
      */
-    void apiProjectGet_xml_withconfig_withwrapper(){
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(true, 'test1', ["test.property": "value1", "test.property2": "value2"])
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                2 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN])>>true
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN])>>true
-            }
-        response.format='xml'
-        params.project='test1'
-        request.setAttribute('api_version', 10) //do include <result> wrapper
-        controller.apiProjectGet()
-
-        then:
-        assert response.status==HttpServletResponse.SC_OK
-
-        //XML result has wrapper
-        assertEquals 'result', response.xml.name()
-        assertEquals 'true', response.xml.'@success'.text()
-        assertEquals ApiVersions.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
-
-        assertEquals 1, response.xml.projects.size()
-        assertEquals 0, response.xml.project.size()
-        assertEquals 1, response.xml.projects.size()
-        assertEquals 1, response.xml.projects.project.size()
-
-        when:
-        def project = response.xml.projects.project[0]
-
-        //test project element
-        then:
-        assertEquals 'test1', project.name.text()
-        assertEquals '', project.description.text()
-        assertEquals 0, project.config.size()
-    }
     /**
      * apiversion {@literal >=} 11 will result in {@literal <config>} element, if authorized
      */
@@ -943,30 +867,21 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
 
     }
 
-    void deleteProject_apiversion(){
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        request.method = 'DELETE'
-        request.setAttribute('api_version', 10) // require version 11
-        controller.apiProjectDelete()
-        then:
-        assert response.status == HttpServletResponse.SC_BAD_REQUEST
-        assertEquals "true",response.xml.'@error'.text()
-        assertEquals "api.error.api-version.unsupported",response.xml.error.'@code'.text()
-    }
-
     void deleteProject_xml_missingparam(){
+        given:
+            controller.apiService = Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        request.method = 'DELETE'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectDelete()
+
+            request.method = 'DELETE'
+            controller.apiProjectDelete()
         then:
-        assert response.status == HttpServletResponse.SC_BAD_REQUEST
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals "api.error.parameter.required", response.xml.error.'@code'.text()
+            1 * controller.apiService.requireApi(*_) >> true
+            1 * controller.apiService.renderErrorFormat(_,[
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code: "api.error.parameter.required",
+                args: ['project']
+            ])
+
     }
 
     void deleteProject_json_missingparam(){
@@ -1342,27 +1257,34 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
 
 
     void apiProjectConfigGet_apiversion(){
+        given:
+            controller.apiService = Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+
         controller.frameworkService= Mock(FrameworkService)
-        request.api_version=10
         controller.apiProjectConfigGet()
         then:
-        assertEquals HttpServletResponse.SC_BAD_REQUEST,response.status
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals "api.error.api-version.unsupported", response.xml.error.message.text()
+        1 * controller.apiService.requireApi(_,_)>>false
     }
 
     void apiProjectConfigGet_xml_missingparam(){
+        given:
+
+            controller.apiService=Mock(ApiService){
+                requireApi(_,_)>>true
+            }
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= Mock(FrameworkService)
-        request.api_version = 11
         controller.apiProjectConfigGet()
         then:
-        assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.parameter.required")
+
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(response,
+                                         [
+                                             status: HttpServletResponse.SC_BAD_REQUEST,
+                                             code: "api.error.parameter.required",
+                                             args: ['project']
+                                         ])
     }
 
     private void assertXmlError(GrailsMockHttpServletResponse response, int status, String code) {
@@ -1388,17 +1310,22 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
 
     void apiProjectConfigGet_xml_notfound(){
+        given:
+            controller.apiService = Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
         request.api_version = 11
         params.project='test1'
         controller.apiProjectConfigGet()
         then:
-        assertEquals HttpServletResponse.SC_NOT_FOUND, response.status
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals "api.error.item.doesnotexist", response.xml.error.message.text()
+
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(response,
+                                                        [
+                                                            status: HttpServletResponse.SC_NOT_FOUND,
+                                                            code: "api.error.item.doesnotexist",
+                                                            args: ['Project', 'test1']
+                                                        ])
     }
 
     void apiProjectConfigGet_json_notfound(){
@@ -1418,8 +1345,9 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
 
     void apiProjectConfigGet_xml_unauthorized(){
+        given:
+            controller.apiService=Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
 
@@ -1432,9 +1360,13 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         params.project='test1'
         controller.apiProjectConfigGet()
         then:
-        assertEquals HttpServletResponse.SC_FORBIDDEN, response.status
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals "api.error.item.unauthorized", response.xml.error.message.text()
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(_,
+                                             [
+                                                 status: HttpServletResponse.SC_FORBIDDEN,
+                                                 code: "api.error.item.unauthorized",
+                                                 args: ['configure', "Project", 'test1']
+                                             ])
     }
 
     void apiProjectConfigGet_json_unauthorized(){
@@ -1741,47 +1673,45 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
 
     }
 
-    void apiProjectExport_apiversion() {
+    void "apiProjectExport requires api"() {
+        given:
+            controller.apiService=Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream->
-                assertEquals 'test1',project.name
-                stream<<'some data'
-            }
-        }
-        request.api_version = 10
         params.project = 'test1'
         controller.apiProjectExport()
         then:
-        assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST,'api.error.api-version.unsupported')
+
+            1 * controller.apiService.requireApi(_,_)>>false
     }
 
     void apiProjectExport_notfound() {
+        given:
+            controller.apiService=Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(false, true, 'export',true,true)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream->
-                assertEquals 'test1',project.name
-                stream<<'some data'
-            }
-        }
-        request.api_version = 11
         params.project = 'test1'
+        controller.frameworkService=Mock(FrameworkService){
+            existsFrameworkProject('test1')>>false
+        }
         controller.apiProjectExport()
         then:
-        assertXmlError(response, HttpServletResponse.SC_NOT_FOUND,'api.error.item.doesnotexist')
+
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(_,
+                                                        [
+                                                            status: HttpServletResponse.SC_NOT_FOUND,
+                                                            code: "api.error.item.doesnotexist",
+                                                            args: ['Project', 'test1']
+                                                        ])
     }
 
     void apiProjectExport_unauthorized() {
+        given:
+            controller.apiService=Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, false, 'export',true,true)
+        controller.frameworkService = Mock(FrameworkService){
+            existsFrameworkProject('test1')>>true
+        }
         controller.projectService=mockWith(ProjectService){
             exportProjectToOutputStream{project,fwk,stream->
                 assertEquals 'test1',project.name
@@ -1791,59 +1721,79 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 authorizeApplicationResourceAny(_, _, ['export', AuthConstants.ACTION_ADMIN]) >> false
             }
-        request.api_version = 11
         params.project = 'test1'
         controller.apiProjectExport()
         then:
-        assertXmlError(response, HttpServletResponse.SC_FORBIDDEN,'api.error.item.unauthorized')
+
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(_,
+                                                        [
+                                                            status: HttpServletResponse.SC_FORBIDDEN,
+                                                            code: "api.error.item.unauthorized",
+                                                            args: ['export', "Project", 'test1']
+                                                        ])
     }
 
     void apiProjectImport_notfound() {
+        given:
+            controller.apiService=Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(false, true, 'import')
-        request.api_version = 11
+        controller.frameworkService = Mock(FrameworkService){
+            existsFrameworkProject('test1')>>false
+        }
         params.project = 'test1'
         request.format='blah'
         request.method='PUT'
         controller.apiProjectImport()
         then:
-        assertXmlError(response, HttpServletResponse.SC_NOT_FOUND, "api.error.item.doesnotexist")
+            2 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(_,
+                                                        [
+                                                            status: HttpServletResponse.SC_NOT_FOUND,
+                                                            code: "api.error.item.doesnotexist",
+                                                            args: ['Project', 'test1']
+                                                        ])
     }
 
     void apiProjectImport_unauthorized() {
+        given:
+            controller.apiService=Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, false, 'import')
+        controller.frameworkService = Mock(FrameworkService){
+            1 * existsFrameworkProject('test1')>>true
+        }
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> false
             }
-        request.api_version = 11
         params.project = 'test1'
         request.format='blah'
         request.method='PUT'
         controller.apiProjectImport()
         then:
-        assertXmlError(response, HttpServletResponse.SC_FORBIDDEN, "api.error.item.unauthorized")
+            2 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(_,
+                                                        [
+                                                            status: HttpServletResponse.SC_FORBIDDEN,
+                                                            code: "api.error.item.unauthorized",
+                                                            args: ['import', "Project", 'test1']
+                                                        ])
     }
 
     void apiProjectImport_invalidFormat() {
+        given:
+            controller.apiService=Mock(ApiService)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
                 authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
             }
-        request.api_version = 11
         params.project = 'test1'
         request.format='blah'
         request.method='PUT'
         controller.apiProjectImport()
         then:
-        assertXmlError(response, HttpServletResponse.SC_BAD_REQUEST, "api.error.invalid.request")
+            2 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>false
     }
 
     void apiProjectImport_xml_failure() {

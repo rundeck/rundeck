@@ -853,12 +853,20 @@ class UtilityTagLib{
         }
         def rdversion = grailsApplication.metadata.getProperty('info.app.version', String)
         def rdversionShort = rdversion.split('-')[0]
-        def helpBase='https://docs.rundeck.com/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversionShort )
+
+        def helpBase
         def helpUrl
         if(grailsApplication.config.rundeck?.gui?.helpLink){
             helpBase= grailsApplication.config.rundeck?.gui?.helpLink
             helpUrl=helpBase + path + fragment
         }else{
+            def docVersion = rdversion?.contains('SNAPSHOT')?'docs':rdversionShort
+
+            if (path)
+                helpBase="https://docs.rundeck.com/${docVersion}"
+            else
+                helpBase="https://docs.rundeck.com/${docVersion}/manual/02-getting-help.html"
+
             def helpParams = helpLinkParams(attrs,body)
             helpUrl= helpBase + path + '?' + helpParams + fragment
         }
@@ -1922,6 +1930,9 @@ ansi-bg-default'''))
         applicationContext.getBeansOfType(MenuItem).
                 findAll { it.value.type == menuType }.
                 findAll { checkEnabled.apply(it.value) }.
+                sort {a, b->
+                    a.value.priority <=> b.value.priority
+                }.
                 each { name, MenuItem item ->
                     out << body((var): item)
                 }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # common header for test scripts
-API_CURRENT_VERSION=38
+API_CURRENT_VERSION=39
 
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
@@ -51,11 +51,7 @@ if [ -n "$RDAUTH" ] ; then
 else
     CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
 fi
-
-if [ -z "$API_XML_NO_WRAPPER" ] ; then
-    CURLOPTS="$CURLOPTS -H X-Rundeck-API-XML-Response-Wrapper:true"
-fi
-
+export API_XML_NO_WRAPPER=true
 if [ -n "$DEBUG" ] ; then
     CURLOPTS="$CURLOPTS -v"
 fi
@@ -206,7 +202,7 @@ assert_xml_valid(){
 # assert_xml_value 'value' 'xpath' $file
 ##
 assert_xml_value(){
-    local value=$($XMLSTARLET sel -T -t -v "$2" $3)
+    local value=$(xmlsel "$2" $3)
     if [ $? != 0 -a -n "$1" ] ; then
         errorMsg "xmlstarlet failed: $!: $value, for $1 $2 $3"
         cat $3
@@ -219,7 +215,7 @@ assert_xml_value(){
     fi
 }
 assert_xml_notblank(){
-    local value=$($XMLSTARLET sel -T -t -v "$1" $2)
+    local value=$(xmlsel "$1" $2)
     if [ $? != 0 ] ; then
         errorMsg "Expected value for XPath $1, but select failed: $! (in file $2)"
         cat $2
@@ -297,4 +293,54 @@ assert_json_not_null(){
         cat $2
         exit 2
     fi
+}
+
+##
+# val=$(json_val  'jsonquery' $file)
+##
+json_val(){
+    local JQ=`which jq`
+
+    if [ -z "$JQ" ] ; then
+        errorMsg "FAIL: Can't test JSON format, install jq"
+        exit 2
+    fi
+    local propval=$($JQ -r "$1" < $2 )
+    if [ $? != 0 ] ; then
+        errorMsg "Json query invalid: $1: $!"
+        exit 2
+    fi
+    echo $propval
+}
+
+uploadJob(){
+    local file=$1;shift
+    local proj=$1;shift
+    local count=${1:-1};shift
+    local params=${1:-dupeOption=update};shift
+    local select=${1:-//succeeded/job/id};shift
+
+    # now submit req
+    runurl="${APIURL}/project/$proj/jobs/import"
+
+    # specify the file for upload with curl, named "xmlBatch"
+    local ulopts="-F xmlBatch=@$file -H Accept:application/xml"
+
+    # get listing
+    docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+    if [ 0 != $? ] ; then
+        errorMsg "ERROR: failed query request"
+        exit 2
+    fi
+
+    assert_xml_value "$count" '/result/succeeded/@count' $DIR/curl.out
+    local jobid
+    jobid=$(xmlsel "$select" $DIR/curl.out)
+
+    if [ "" == "$jobid" ] ; then
+        errorMsg  "Upload was not successful."
+        exit
+    fi
+
+    echo $jobid
 }

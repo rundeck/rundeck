@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#test /api/jobs/import
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -39,27 +38,12 @@ create_job(){
 </joblist>
 END
 
-    # now submit req
-    runurl="${APIURL}/project/$projname/jobs/import"
-    params=""
-    ulopts="-F xmlBatch=@$DIR/job_create.post"
-
-    # get listing
-    docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+    jobid=$(uploadJob "$DIR/job_create.post" "$projname"  1 "")
     if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed query request"
-        exit 2
+      errorMsg "failed job upload"
+      exit 2
     fi
-
-    jobId=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-    succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-
-    if [ "1" != "$succount" -o "" == "$jobId" ] ; then
-        errorMsg  "Upload was not successful."
-        $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
-        exit 2
-    fi
-    echo $jobId
+    echo $jobid
 }
 
 create_proj(){
@@ -107,7 +91,7 @@ delete_proj(){
 
 disable_execution_bulk(){
     jobset=$1
-    
+
     runurl="${APIURL}/jobs/execution/disable"
     params="idlist=$jobset"
 
@@ -120,7 +104,7 @@ disable_execution_bulk(){
 }
 enable_execution_bulk(){
     jobset=$1
-    
+
     runurl="${APIURL}/jobs/execution/enable"
     params="idlist=$jobset"
 
@@ -135,19 +119,25 @@ enable_execution_bulk(){
 execute_job(){
     jobname=$1
     succeed=$2
-    xmljob=$($XMLSTARLET esc "$jobname")
 
     runurl="${APIURL}/job/$jobname/run"
     params=""
 
     # get listing
-    docurl -X POST -H Content-Type:application/xml ${runurl}?${params} > $DIR/curl.out
+    docurl -D $DIR/headers.out -X POST -H Accept:application/xml ${runurl}?${params} > $DIR/curl.out
+
     if [ $succeed == 0 ] ; then
-        assert_xml_value 'true' '/result/@success' $DIR/curl.out
+      grep "HTTP/1.1 200" -q $DIR/headers.out
+      okheader=$?
+      if [ 0 != $okheader ] ; then
+          errorMsg "FAIL: Response was not $code"
+          grep 'HTTP/1.1' $DIR/headers.out
+          exit 2
+      fi
     else
         assert_xml_value 'true' '/result/@error' $DIR/curl.out
     fi
-    
+
     # allow execution to end
     sleep 6
 }
@@ -164,7 +154,7 @@ assert_job_execution_count(){
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-    assert $expectedcount $(xmlsel "/result/executions/@count" $DIR/curl.out) "Wrong number of executions"
+    assert $expectedcount $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
 }
 
 ####

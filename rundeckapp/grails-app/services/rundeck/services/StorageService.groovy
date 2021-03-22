@@ -17,6 +17,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.storage.AuthStorageContextProvider
 import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
@@ -29,7 +31,12 @@ import org.rundeck.storage.data.DataUtil
  */
 class StorageService {
     AuthStorageTree authRundeckStorageTree
+    AuthStorageContextProvider rundeckKeyStorageContextProvider
 
+    String getProjectPath(String path) {
+        def env = rundeckKeyStorageContextProvider.environmentForPath(PathUtil.asPath(path))
+        return FrameworkProject.getProjectEnvironment(env).orElse(null)
+    }
     def hasPath(AuthContext context, String path) {
         authRundeckStorageTree.hasPath(context, PathUtil.asPath(path))
     }

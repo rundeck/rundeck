@@ -10,9 +10,26 @@ implied. - See the License for the specific language governing permissions and -
   <div class="form-group col-sm-12" data-bind="css: invalid()?'has-error':'' ">
     <div class="input-group">
       <div class="input-group-addon" data-bind="if: staticRoot()">
-        <span data-bind="text: rootPath() + '/'"></span>
+        <span data-bind="text: rootBasePath()"></span>
       </div>
       <input type="text" class="form-control" style="padding-left:18px" data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath" placeholder="Enter a path"/>
+
+      <!-- ko if: jumpLinks().length>0 -->
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-default dropdown-toggle"
+                data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+          <span data-bind="text: linksTitle"></span>
+          <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right">
+          <li data-bind="foreach: jumpLinks()">
+            <a href="#" data-bind="click: function(){$root.loadDir($data.path)}, text: $data.name"></a>
+          </li>
+        </ul>
+      </div>
+      <!-- /ko -->
+
     </div>
   </div>
 </div>
@@ -24,7 +41,6 @@ implied. - See the License for the specific language governing permissions and -
         <i class="glyphicon glyphicon-arrow-up"></i>
         <span data-bind="text: upPath() ? $root.dirName(upPath()) : '' "></span>
       </button>
-
       <div class="btn-group" data-bind="if: browseMode()=='browse'">
         <button type="button" class="btn btn-sm dropdown-toggle" data-bind="css: { disabled: !selectedPath() }" data-toggle="dropdown">
           <g:message code="button.Action"/>

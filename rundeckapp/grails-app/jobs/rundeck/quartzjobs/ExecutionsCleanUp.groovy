@@ -169,10 +169,11 @@ class ExecutionsCleanUp implements InterruptableJob {
 
         Map jobList = executionService.queryExecutions(createCriteria(
                 project,
+                frameworkService.isClusterModeEnabled(),
                 maxDaysToKeep,
                 maximumDeletionSize,
-                frameworkService.isClusterModeEnabled()?serverUUID:null,
-                frameworkService.isClusterModeEnabled()?listDeadMembers:null,
+                serverUUID,
+                listDeadMembers,
                 removeNullServerUUID)
 
         )
@@ -239,7 +240,7 @@ class ExecutionsCleanUp implements InterruptableJob {
         return null != total ? total : 0
     }
 
-    private Closure createCriteria(String project, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500, String serverNodeUUID = null, List<String> deadMembers = null, boolean removeNullServerUUID = false){
+    private Closure createCriteria(String project, boolean isClusterEnabled, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500, String serverNodeUUID = null, List<String> deadMembers = null, boolean removeNullServerUUID = false){
         Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
         return {isCount ->
             if(!isCount){
@@ -249,7 +250,7 @@ class ExecutionsCleanUp implements InterruptableJob {
                 }
             }
 
-            if(serverNodeUUID){
+            if(isClusterEnabled){
                 if(!deadMembers){
                     eq('serverNodeUUID', serverNodeUUID)
                 }else{
@@ -265,15 +266,16 @@ class ExecutionsCleanUp implements InterruptableJob {
                     }
 
                 }
-            } else {
-                isNull('serverNodeUUID')
             }
 
             eq('project', project)
             le('dateCompleted', endDate)
             //remove running execution
             isNotNull('dateCompleted')
-            ne('status',ExecutionService.EXECUTION_SCHEDULED)
+            and{
+                ne('status',ExecutionService.EXECUTION_SCHEDULED)
+                ne('status', ExecutionService.EXECUTION_QUEUED)
+            }
             maxResults(maxDetetionSize)
             if (!isCount) {
                 and {

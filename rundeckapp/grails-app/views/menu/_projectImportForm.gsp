@@ -16,7 +16,7 @@
 
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
-
+<div class="row">
 <div class="col-xs-12">
   <g:form controller="project" action="importArchive" params="[project: params.project ?: request.project]" useToken="true" enctype="multipart/form-data" class="form">
     <div class="card" id="importform">
@@ -246,4 +246,5 @@
       </div>
     </div>
   </g:form>
+</div>
 </div>

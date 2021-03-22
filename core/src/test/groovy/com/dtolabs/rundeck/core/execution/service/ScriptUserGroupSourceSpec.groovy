@@ -45,10 +45,32 @@ class ScriptUserGroupSourceSpec extends Specification {
 
     }
 
+    def "GetGroups passing username to the script as argument"() {
+        when:
+
+        TestScriptUserGroupSourceProvider testProvider = new TestScriptUserGroupSourceProvider()
+        testProvider.scriptFile = File.createTempFile("user","groups")
+        testProvider.scriptFile.setExecutable(true,true)
+        testProvider.archiveFile = File.createTempFile("user","archive")
+        testProvider.contentsBaseDir = File.createTempDir()
+        testProvider.scriptArgs = "\${session.username}"
+        testProvider.scriptFile << """echo "==START_GROUPS=="
+                                    echo "\$1"
+                                    echo "==END_GROUPS==" """
+        ScriptUserGroupSource scriptOptionValues = new ScriptUserGroupSource(testProvider, Stub(ServiceProviderLoader))
+        def result = scriptOptionValues.getGroups("test",[:])
+
+        then:
+        result.size() == 1
+        result[0] == "test"
+
+    }
+
     class TestScriptUserGroupSourceProvider implements ScriptPluginProvider {
         File scriptFile
         File archiveFile
         File contentsBaseDir
+        String scriptArgs
 
         @Override
         String getName() {
@@ -72,7 +94,7 @@ class ScriptUserGroupSourceSpec extends Specification {
 
         @Override
         String getScriptArgs() {
-            return null
+            return scriptArgs
         }
 
         @Override

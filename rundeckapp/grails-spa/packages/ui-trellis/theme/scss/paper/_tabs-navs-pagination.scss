@@ -1,17 +1,23 @@
 /*             Navigation Tabs                 */
 .vue-tabs {
   .nav-tabs-navigation{
-    text-align: center;
-    border-bottom: 1px solid #F1EAE0;
-    margin-bottom: 30px;
-
-    .nav > li > a{
-      padding-bottom: 20px;
+    // Base line
+    &::before {
+      content: '';
+      width: 100%;
+      height: 2px;
+      background-color: #D6D6D6;
+      position: absolute;
+      bottom: 0;
     }
+
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
   }
   .nav-tabs-wrapper{
     display: inline-block;
-    margin-bottom: -6px;
+    margin-bottom: -5px;
     margin-left: 1.25%;
     margin-right: 1.25%;
     position: relative;
@@ -21,10 +27,33 @@
     }
   }
   .nav-tabs{
-    border-bottom: 0 none;
     font-size: $font-size-base;
     font-weight: $font-weight-bold;
+    border-bottom: 0;
+    &:hover{
+      li.active:before {
+        left: 0%;
+        content: '';
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid #F73F39;
+        width: 0%;
+        bottom: 1px;
+        border-radius: 1rem;
+      }
+      li.active:hover:before {
+        left: 0%;
+        content: '';
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid #F73F39;
+        width: 100%;
+        bottom: 1px;
+        border-radius: 1rem;
+      }
+    }
     > li{
+      transition: 0.3s cubic-bezier(0.55, 0, 0.1, 1);
       > a{
         border: 0 none;
         color: $other-medium-gray;
@@ -33,39 +62,64 @@
         color: $font-color;
       }
     }
+    li{
+      &.active:before {
+        left: 0%;
+        content: '';
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid #F73F39;
+        width: 100%;
+        bottom: 1px;
+        border-radius: 1rem;
+      }
+      &:active{
+        transition: none;
+      }
+      &:before{
+        left: 100%;
+        transition: 0.1s cubic-bezier(0.55, 0, 0.1, 1);
+        content: '';
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid #F73F39;
+        width: 0;
+        bottom: 1px;
+        border-radius: 1rem;
+      }
+      &:hover:before{
+        border-bottom-color: #F73F39;
+        width: 100%;
+        bottom: 1px;
+        transition-delay: 0.1s;
+        left: 0;
+      }
+    }
+    li:hover ~ li:before {
+      left: 0;
+    }
     > li.active, .el-tabs__item.is-active{
-      color: $font-color;
       position: relative;
-
       > a,
       > a:hover,
       > a:focus{
+        font-weight: $font-weight-bold;
+        color: #000;
         background-color: transparent;
         border: 0 none;
-        //height: 50px;
       }
 
-      & a:after{
-        border-bottom: 11px solid $white-color;
-        border-left: 11px solid rgba(0, 0, 0, 0);
-        border-right: 11px solid rgba(0, 0, 0, 0);
-        content: "";
-        display: inline-block;
-        position: absolute;
-        right: 40%;
-        bottom: 0;
-      }
-
-      & a:before{
-        border-bottom: 11px solid $medium-pale-bg;
-        border-left: 11px solid rgba(0, 0, 0, 0);
-        border-right: 11px solid rgba(0, 0, 0, 0);
-        content: "";
-        display: inline-block;
-        position: absolute;
-        right: 40%;
-        bottom: 1px;
-      }
+      // & a:after{
+      //   background-color:  #F73F39;
+      //   content: "";
+      //   display: inline-block;
+      //   position: absolute;
+      //   bottom: 1px;
+      //   left: 0;
+      //   width: 100%;
+      //   height: 3px;
+      //   border-radius: 2px;
+      // }
     }
   }
   .nav-stacked{
@@ -170,7 +224,7 @@
 .pagination > li > span{
     background-color: transparent;
     border: $border-thin solid $default-color;
-    border-radius: 20px;
+    border-radius: 5px;
     color: $default-color;
     height: $line-height;
     font-weight: $font-weight-bold;

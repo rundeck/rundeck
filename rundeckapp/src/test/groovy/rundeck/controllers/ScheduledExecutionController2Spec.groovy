@@ -1151,6 +1151,10 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded = false
         def svcMock = new MockFor(ApiService, true)
+        svcMock.demand.requireApi { req, resp, version ->
+            version=14
+            true
+        }
 
         svcMock.demand.renderErrorFormat { response, Map error ->
             assert error.status == 400
@@ -1158,7 +1162,8 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         }
 
         sec.apiService = svcMock.proxyInstance()
-        def result = sec.apiRunCommand(new ApiRunAdhocRequest(exec: 'blah'))
+
+        def result = sec.apiRunCommandv14(new ApiRunAdhocRequest(exec: 'blah'))
 
         then:
         assert !succeeded
@@ -1239,7 +1244,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         def sec = controller
 
         request.setAttribute("api_version", 14)
-        def result=sec.apiRunScript(new ApiRunAdhocRequest(script:'blah',project: 'test'))
+        def result=sec.apiRunScriptv14(new ApiRunAdhocRequest(script:'blah',project: 'test'))
         then:
         assert 405==response.status
     }
@@ -1317,20 +1322,9 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
-        def apiverslist=[14,4]
+        def apiverslist=[4,14]
         sec.apiService = mockWith(ApiService) {
-            requireVersion(1..1){ req, resp, apivers ->
-                def val=apiverslist.remove(0)
-                assert apivers == val
-                assert req.api_version==14
-                true
-            }
-            requireApi { req, resp ->
-                true
-            }
-            requireVersion(1..1){ req, resp, apivers ->
-                def val=apiverslist.remove(0)
-                assert apivers == val
+            requireApi(1..1){ req, resp, apivers ->
                 assert req.api_version==14
                 true
             }
@@ -1421,12 +1415,9 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         sec.apiService = mockWith(ApiService) {
-            requireVersion { req, resp, apivers ->
+            requireApi { req, resp, apivers ->
                 assert apivers == 14
                 assert req.api_version==14
-                true
-            }
-            requireApi { req, resp ->
                 true
             }
             requireExists { response, exists, args ->
@@ -1508,7 +1499,8 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp ->
+        svcMock.demand.requireApi { req, resp, version ->
+            version=14
             true
         }
         svcMock.demand.requireExists { response, exists, args ->
@@ -1520,7 +1512,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
             return true
         }
         sec.apiService = svcMock.proxyInstance()
-        def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
         then:
         assert succeeded
         assert null==view
@@ -1588,7 +1580,8 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp ->
+        svcMock.demand.requireApi { req, resp, version ->
+            version=14
             true
         }
         svcMock.demand.requireExists { response, exists, args ->
@@ -1600,7 +1593,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
             assertEquals(['disabled.execution.run'],data.args)
         }
         sec.apiService = svcMock.proxyInstance()
-        def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
         then:
         assert !succeeded
         assert null==view
@@ -1667,7 +1660,8 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp ->
+        svcMock.demand.requireApi { req, resp, version ->
+            version=14
             true
         }
         svcMock.demand.requireExists { response, exists, args ->
@@ -1687,7 +1681,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         }
         sec.apiService = svcMock.proxyInstance()
         sec.response.format='json'
-        def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
 
         then:
         assert !succeeded
@@ -1754,7 +1748,8 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
         def svcMock = new MockFor(ApiService, true)
-        svcMock.demand.requireApi { req, resp ->
+        svcMock.demand.requireApi { req, resp, version ->
+            version=14
             true
         }
         svcMock.demand.requireExists { response, exists, args ->
@@ -1767,7 +1762,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         }
         sec.apiService = svcMock.proxyInstance()
         sec.response.format='json'
-        def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
+        def result=sec.apiRunCommandv14(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
 
         then:
         assert succeeded
@@ -1833,7 +1828,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
         request.setAttribute("subject", subject)
-        request.setAttribute("api_version", 5)
+        request.setAttribute("api_version", 11)
 //        request.api_version = 5
 //        registerMetaClass(ExecutionController)
         ExecutionController.metaClass.renderApiExecutionListResultXML = { List execs ->
@@ -1845,15 +1840,12 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
 
         def svcMock = new MockFor(ApiService, true)
         def requireFailed = true
-        svcMock.demand.requireApi { req, resp ->
+        svcMock.demand.requireApi { req, resp, version ->
+            version=14
             true
         }
         svcMock.demand.requireExists { response, exists, args ->
             assertEquals(['project', 'test'], args)
-            return true
-        }
-        svcMock.demand.requireVersion { request,response, int min->
-            assertEquals(5, min)
             return true
         }
         svcMock.demand.renderSuccessXml { request, response, closure ->
@@ -1869,7 +1861,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
             return true
         }
         sec.apiService = svcMock.proxyInstance()
-        def result = sec.apiRunCommand()
+        def result = sec.apiRunCommandv14()
 
         then:
         assert succeeded

@@ -3,8 +3,7 @@
 #test output from /api/executions?queryparams
 
 DIR=$(cd `dirname $0` && pwd)
-API_VERSION=11
-API_XML_NO_WRAPPER=true
+API_VERSION=14
 source $DIR/include.sh
 
 sleep 3
@@ -16,65 +15,33 @@ startdate=$(date -u "$dformat")
 
 # set up a few executions
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+adhoc+execution+query"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+adhoc+execution+query"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-execid1=$($XMLSTARLET sel -T -t -v "/execution/@id" $DIR/curl.out)
+execid1=$(xmlsel "/execution/@id" $DIR/curl.out)
 [ -n "$execid1" ] || fail "Didn't see execid"
 
 
-runurl="${APIURL}/run/command"
 proj="test"
-params="project=${proj}&exec=echo+testing+adhoc+execution+query+should+fail;false"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+adhoc+execution+query+should+fail;false"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
 #sh $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-execid2=$($XMLSTARLET sel -T -t -v "/execution/@id" $DIR/curl.out)
+execid2=$(xmlsel "/execution/@id" $DIR/curl.out)
 [ -n "$execid2" ] || fail "Didn't see execid"
 
 ###
 # setup: create a new job and acquire the ID
 ###
 
-uploadJob(){
-    file=$1;shift
-
-    # now submit req
-    runurl="${APIURL}/jobs/import"
-
-    params="dupeOption=update&project=${proj}"
-
-    # specify the file for upload with curl, named "xmlBatch"
-    ulopts="-F xmlBatch=@$file"
-
-    # get listing
-    docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
-    if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed query request"
-        exit 2
-    fi
-
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-    #result will contain list of failed and succeeded jobs, in this
-    #case there should only be 1 failed or 1 succeeded since we submit only 1
-
-    succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-    jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-
-    if [ "1" != "$succount" -o "" == "$jobid" ] ; then
-        errorMsg  "Upload was not successful."
-        exit 
-    fi
-
-    echo $jobid
-}
 
 # job exec
 args="echo hello there"
@@ -117,8 +84,11 @@ cat > $DIR/temp.out <<END
 </joblist>
 
 END
-
-jobid=$(uploadJob "$DIR/temp.out")
+jobid=$(uploadJob "$DIR/temp.out" "$project" 1)
+if [ 0 != $? ] ; then
+  errorMsg "failed job upload"
+  exit 2
+fi
 
 
 #produce job.xml content corresponding to the dispatch request
@@ -151,7 +121,11 @@ cat > $DIR/temp.out <<END
 
 END
 
-jobid2=$(uploadJob "$DIR/temp.out")
+jobid2=$(uploadJob "$DIR/temp.out" "$project" 1)
+if [ 0 != $? ] ; then
+  errorMsg "failed job upload"
+  exit 2
+fi
 
 runJob(){
     jobid=$1;shift
@@ -167,8 +141,8 @@ runJob(){
 
     #get execid
 
-    execcount=$($XMLSTARLET sel -T -t -v "/executions/@count" $DIR/curl.out)
-    execid=$($XMLSTARLET sel -T -t -v "/executions/execution/@id" $DIR/curl.out)
+    execcount=$(xmlsel "/executions/@count" $DIR/curl.out)
+    execid=$(xmlsel "/executions/execution/@id" $DIR/curl.out)
 
     if [ "1" != "${execcount}" -o "" == "${execid}" ] ; then
         errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
@@ -204,18 +178,18 @@ api_waitfor_execution $execid4 false || {
 ###
 
 # now submit req
-runurl="${APIURL}/executions"
+
 proj=$2
 if [ "" == "$2" ] ; then
     proj="test"
 fi
-
+runurl="${APIURL}/project/${proj}/executions"
 
 testExecQuery(){
 
     desc=$1;shift
     xargs=$1;shift
-    params="project=${proj}&${xargs}"
+    params="${xargs}"
 
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out
@@ -227,10 +201,10 @@ testExecQuery(){
     #sh $SRC_DIR/api-test-success.sh $DIR/curl.out || (echo "${runurl}?${params}"; exit 2)
 
     #Check projects list
-    itemcount=$($XMLSTARLET sel -T -t -v "/executions/@count" $DIR/curl.out)
+    itemcount=$(xmlsel "/executions/@count" $DIR/curl.out)
     #echo "$itemcount executions"
     expect=$1;shift
-    if [ -n "${expect}" ] ; then 
+    if [ -n "${expect}" ] ; then
         if [ "${expect}" != "$itemcount" ] ; then
             errorMsg "FAIL: expected ${expect} but saw $itemcount results for test: $desc: $xargs, url: ${runurl}?${params}"
             cat $DIR/curl.out

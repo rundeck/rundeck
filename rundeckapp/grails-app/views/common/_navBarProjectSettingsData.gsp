@@ -51,6 +51,9 @@
                type: AuthConstants.TYPE_PROJECT_ACL,
                name: (params.project ?: request.project), context: "application"
        )}"/>
+<g:set var="projectKeyStorageEnabled"
+       value="${!(grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false'])}"/>
+
 <script type="text/javascript">
     [
         {
@@ -64,6 +67,19 @@
             active: false,
             enabled: ${authConfigure == true},
         },
+        <g:if test="${projectKeyStorageEnabled}">
+            {
+                type: 'link',
+                id: 'nav-project-settings-storage',
+                container: 'nav-project-settings',
+                group: 'main',
+                class: 'fas fa-key',
+                link: '${createLink(controller: "menu", action: "storage", params: [project: params.project])}',
+                label: '${g.message(code:"gui.menu.KeyStorage")}',
+                active: false,
+                enabled: ${authConfigure == true},
+            },
+        </g:if>
         {
             type: 'link',
             id: 'nav-project-settings-edit-nodes',
@@ -159,6 +175,7 @@
             id: 'nav-${item.title.toLowerCase().replace(' ', '-')}-link',
             container: 'nav-project-settings',
             group: 'plugins',
+            priority: '${enc(attr: item.priority)}',
             class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
             link: '${enc(attr: item.getProjectHref(projectName))}',
             label: '${g.message(code: item.titleCode, default: item.title)}',

@@ -1,5 +1,5 @@
 rundeck:
-  projectsStorageType: file
+  projectsStorageType: db
   grails:
     upload:
       maxsize: '50000000'

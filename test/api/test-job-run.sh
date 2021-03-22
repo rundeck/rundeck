@@ -46,37 +46,35 @@ cat > $DIR/temp.out <<END
         </command>
       </sequence>
    </job>
+   <job>
+      <name>cli job2</name>
+      <group>api-test/job-run</group>
+      <description></description>
+      <loglevel>INFO</loglevel>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>true</keepgoing>
+      </dispatch>
+      <nodefilters>
+        <filter>.*</filter>
+      </nodefilters>
+      <nodesSelectedByDefault>false</nodesSelectedByDefault>
+      <sequence>
+        <command>
+        <exec>$xmlargs</exec>
+        </command>
+      </sequence>
+   </job>
 </joblist>
 
 END
 
-# now submit req
-runurl="${APIURL}/project/$project/jobs/import"
-
-params=""
-
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-
-# get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+jobid=$(uploadJob "$DIR/temp.out" "$project"  2 "" "//succeeded/job[@index=1]/id")
 if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
+  errorMsg "failed job upload"
+  exit 2
 fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#result will contain list of failed and succeeded jobs, in this
-#case there should only be 1 failed or 1 succeeded since we submit only 1
-
-succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-
-if [ "1" != "$succount" -o "" == "$jobid" ] ; then
-    errorMsg  "Upload was not successful."
-    exit 
-fi
+jobid2=$(xmlsel "//succeeded/job[@index=2]/id" $DIR/curl.out)
 
 
 ###
@@ -98,8 +96,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
-execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
+execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
 
 if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
     :
@@ -113,7 +111,7 @@ fi
 api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
 
 # test execution status
-# 
+#
 runurl="${APIURL}/execution/${execid}"
 
 params=""
@@ -128,9 +126,121 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
 assert "1" "$itemcount" "execution count should be 1"
-status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out)
+status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
+assert "succeeded" "$status" "execution status should be succeeded"
+
+echo "OK"
+
+###
+# should fail if dont select any node and nodesSelectedByDefault is false
+###
+
+echo "TEST: POST job/id/run should fail"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid2}/run"
+params=""
+
+# get listing
+$CURL -H "$AUTHHEADER" -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#get execid
+
+execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+
+if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+    :
+else
+    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
+    exit 2
+fi
+
+#wait for execution to complete
+
+api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
+
+# test execution status
+#
+runurl="${APIURL}/execution/${execid}"
+
+params=""
+
+# get listing
+docurl ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#Check projects list
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+assert "1" "$itemcount" "execution count should be 1"
+status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
+assert "failed" "$status" "execution status should be failed"
+
+echo "OK"
+
+###
+# should succeeded if select any node and nodesSelectedByDefault is false
+###
+
+echo "TEST: POST job/id/run should fail"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid2}/run"
+params=""
+JSONDATA='{ "filter":"name: .*" }'
+
+# get listing
+$CURL -H "$AUTHHEADER" -X POST --data-binary "$JSONDATA" -H content-type:application/json \
+  -H accept:application/xml ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#get execid
+
+execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
+
+if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+    :
+else
+    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
+    exit 2
+fi
+
+#wait for execution to complete
+
+api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
+
+# test execution status
+#
+runurl="${APIURL}/execution/${execid}"
+
+params=""
+
+# get listing
+docurl ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#Check projects list
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+assert "1" "$itemcount" "execution count should be 1"
+status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
 assert "succeeded" "$status" "execution status should be succeeded"
 
 echo "OK"
@@ -157,8 +267,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
-execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
+execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
 
 if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
     :
@@ -172,7 +282,7 @@ fi
 api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
 
 # test execution status
-# 
+#
 runurl="${APIURL}/execution/${execid}"
 
 params=""
@@ -187,14 +297,14 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
 assert "1" "$itemcount" "execution count should be 1"
-status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out)
+status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
 assert "succeeded" "$status" "execution status should be succeeded"
 
-assert_xml_value "-opt1 xyz -opt2 def" "/result/executions/execution/argstring" $DIR/curl.out
-assert_xml_value "xyz" "/result/executions/execution/job/options/option[@name='opt1']/@value" $DIR/curl.out
-assert_xml_value "def" "/result/executions/execution/job/options/option[@name='opt2']/@value" $DIR/curl.out
+assert_xml_value "-opt1 xyz -opt2 def" "//executions/execution/argstring" $DIR/curl.out
+assert_xml_value "xyz" "//executions/execution/job/options/option[@name='opt1']/@value" $DIR/curl.out
+assert_xml_value "def" "//executions/execution/job/options/option[@name='opt2']/@value" $DIR/curl.out
 
 echo "OK"
 
@@ -219,8 +329,8 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #get execid
 
-execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
-execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
+execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
 
 if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
     :
@@ -234,7 +344,7 @@ fi
 api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
 
 # test execution status
-# 
+#
 runurl="${APIURL}/execution/${execid}"
 
 params=""
@@ -249,14 +359,14 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
 assert "1" "$itemcount" "execution count should be 1"
-status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out)
+status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
 assert "succeeded" "$status" "execution status should be succeeded"
 
-assert_xml_value "-opt1 xyz -opt2 a" "/result/executions/execution/argstring" $DIR/curl.out
-assert_xml_value "xyz" "/result/executions/execution/job/options/option[@name='opt1']/@value" $DIR/curl.out
-assert_xml_value "a" "/result/executions/execution/job/options/option[@name='opt2']/@value" $DIR/curl.out
+assert_xml_value "-opt1 xyz -opt2 a" "//executions/execution/argstring" $DIR/curl.out
+assert_xml_value "xyz" "//executions/execution/job/options/option[@name='opt1']/@value" $DIR/curl.out
+assert_xml_value "a" "//executions/execution/job/options/option[@name='opt2']/@value" $DIR/curl.out
 
 echo "OK"
 
@@ -277,10 +387,10 @@ $CURL -H "$AUTHHEADER" -D $DIR/headers.out -G --data-urlencode "argString=${exec
 ecode=405
 
 #expect header code
-grep "HTTP/1.1 ${ecode}" -q $DIR/headers.out 
+grep "HTTP/1.1 ${ecode}" -q $DIR/headers.out
 if [ 0 != $? ] ; then
     errorMsg "FAIL: expected ${ecode} message, but was:"
-    grep 'HTTP/1.1' $DIR/headers.out     
+    grep 'HTTP/1.1' $DIR/headers.out
     exit 2
 fi
 

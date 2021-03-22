@@ -153,13 +153,16 @@
             display: inline-block;
         }
 
+        // Space adjacent buttons as long as they are not in a button group
+        > .btn + .btn,
+        :not(.btn-group) > .btn + .btn {
+            margin-left: 10px;
+        }
     }
     .card-footer > .card-footer{
         margin-top: 10px;
     }
-    .btn ~ .btn{
-        margin-left: 10px;
-    }
+
     .text-warning{
         margin: 0 10px;
     }

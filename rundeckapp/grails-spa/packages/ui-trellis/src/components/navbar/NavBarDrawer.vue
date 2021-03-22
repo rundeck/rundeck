@@ -80,10 +80,10 @@ export default Vue.extend({
     padding: 10px;
     z-index: 100;
 
-          	opacity: 1;
-	animation-name: fadeInOpacity;
-	animation-iteration-count: 1;
-	animation-timing-function: ease-in;
-	animation-duration: .2s;
+    opacity: 1;
+    animation-name: fadeInOpacity;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in;
+    animation-duration: .2s;
 }
 </style>

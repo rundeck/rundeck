@@ -33,6 +33,7 @@ class ExecutionServiceTempSpec extends HibernateSpec {
     ExecutionService service
     def setup(){
         service = new ExecutionService()
+        service.executionValidatorService = new ExecutionValidatorService()
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
     }
@@ -179,6 +180,7 @@ class ExecutionServiceTempSpec extends HibernateSpec {
         given:
         ScheduledExecution job = new ScheduledExecution(
                 jobName: 'blue',
+                uuid: UUID.randomUUID().toString(),
                 project: 'AProject',
                 groupPath: 'some/where',
                 description: 'a job',
@@ -220,7 +222,7 @@ class ExecutionServiceTempSpec extends HibernateSpec {
         then:
         ExecutionServiceException e = thrown()
         e.code == 'conflict'
-        e.message ==~ /.*is currently being executed.*/
+        e.message ==~ /.*Limit of running executions has been reached.*/
 
 
         where:
