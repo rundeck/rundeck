@@ -4,7 +4,7 @@
       <div class="col-md-9 mb-6">
         
           <div class="splash-screen--title">
-            <RundeckVersion :edition="edition" :number="version.number" :tag="version.tag"/>
+            <!-- <RundeckVersion :edition="edition" :number="version.number" :tag="version.tag"/> -->
           </div>
           <div class="splash-screen--linkitems">
             <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>    
@@ -16,14 +16,14 @@
             </p>
             <p>
               <a href="/resources/createProject" class="btn  btn-cta btn-lg ">
-                  Create Project <b class="glyphicon glyphicon-plus"></b>
+                  Create New Project <b class="glyphicon glyphicon-plus"></b>
               </a>
             </p>
             <span class="text-small text-primary">
-                            You can see this message again by clicking the
-                            <a href="/menu/welcome">version number</a>
-                            in the page footer.
-                          </span>
+              You can see this message again by clicking the
+              <a href="/menu/welcome">version number</a>
+              in the page footer.
+            </span>
           </div>
 
       </div>
@@ -41,14 +41,14 @@
     </div>
   </div>
 </template>
+
 <script lang="ts">
 import Vue from 'vue'
 import { Observer } from 'mobx-vue'
 import {Component, Prop} from 'vue-property-decorator'
 
 import { VersionInfo, ServerInfo } from '../../stores/System'
-
-import {url} from '../../rundeckService'
+// import { VersionInfo, ServerInfo } from '/src/stores/System'
 
 import Copyright from '../version/Copyright.vue'
 import RundeckVersion from '../version/RundeckVersionDisplay.vue'
@@ -57,6 +57,11 @@ import ServerDisplay from '../version/ServerDisplay.vue'
 import { getAppLinks } from '../../../lib'
 import { AppLinks } from '../../../lib/interfaces/AppLinks'
 
+import { getRundeckContext } from '../../../lib/rundeckService'
+const rootStore = getRundeckContext().rootStore
+
+console.log(rootStore)
+
 @Observer
 @Component({components: {
     ServerDisplay,
@@ -64,21 +69,20 @@ import { AppLinks } from '../../../lib/interfaces/AppLinks'
     RundeckVersion,
     Copyright
 }})
-export default class RundeckInfoWidget extends Vue {
+export default class FirstRun extends Vue {
     @Prop({default: 'Community'})
     edition!: String
 
-    @Prop()
-    version!: VersionInfo
+    // @Prop()
+    // version!: VersionInfo
 
     @Prop()
     server!: ServerInfo
-    links!: AppLinks
+    
+    links = {}
+
     async created() {
       this.links = getAppLinks()
-    }
-    welcomeUrl() {
-        return url('menu/welcome').toString()
     }
 }
 </script>
