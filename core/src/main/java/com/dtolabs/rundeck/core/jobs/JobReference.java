@@ -20,10 +20,30 @@ package com.dtolabs.rundeck.core.jobs;
  * A handle for identifying a job
  */
 public interface JobReference {
+
+    /**
+     * @return Job's project name
+     */
     public String getProject();
+
+    /**
+     * Returns the job UUID, or the database assigned id if there is no uuid.
+     */
     public String getId();
+
+    /**
+     * @return The job name
+     */
     public String getJobName();
+
+    /**
+     * @return Job group path.
+     */
     public String getGroupPath();
+
+    /**
+     * @return Job and group path combined.
+     */
     public String getJobAndGroup();
 
     /**

@@ -450,48 +450,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             request.filterErrors=filterErrors
         }
 
-        //get list of running jobs organized by node.
-        /*def runningset=executionService.listNowRunning(framework,params.max?Math.max(Integer.parseInt(params.max),30):10)
-        runningset.nowrunning.each{ Execution e->
-            //determine project/node that the execution is running on
-            def proj=e.project
-            def dataset=nodesbyproject[proj]
-            if(e.adhocExecution || e.doNodedispatch){
-                def NodeSet nodeset = executionService.filtersAsNodeSet(e)
-                dataset.nodes.each{INodeEntry node->
-                    if(!nodeset.shouldExclude(node) || !e.doNodedispatch){
-                        if(!dataset.executions[node.getNodename()]){
-                            dataset.executions[node.getNodename()]=[e]
-                        }else{
-                            dataset.executions[node.getNodename()]<<e
-                        }
-                        allnodes[node.getNodename()].executions<<e
-                        if(!totalexecs[node.getNodename()]){
-                            totalexecs[node.getNodename()]=1
-                        }else{
-                            totalexecs[node.getNodename()]++
-                        }
-                    }
-                }
-            }else{
-                //job is executing locally on the framework server node
-                final String nodename = framework.getFrameworkNodeName()
-                if(!dataset.executions[nodename]){
-                    dataset.executions[nodename]=[e]
-                }else{
-                    dataset.executions[nodename]<<e
-                }
-                allnodes[nodename].executions<<e
-                if(!totalexecs[nodename]){
-                    totalexecs[nodename]=1
-                }else{
-                    totalexecs[nodename]++
-                }
-            }
-
-        }
-*/
-
         def parseExceptions= project.projectNodes.getResourceModelSourceExceptions()
 
         if(!query.filter){

@@ -104,6 +104,7 @@ import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.ExecutionValidatorService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
@@ -292,6 +293,7 @@ beans={
         quartzScheduler = ref('quartzScheduler')
     }
 
+    executionValidatorService(ExecutionValidatorService)
 
     localJobQueryService(LocalJobQueryService)
 

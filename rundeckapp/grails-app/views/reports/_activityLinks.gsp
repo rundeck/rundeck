@@ -313,7 +313,10 @@
                 <span data-bind="if: !dateCompleted() && status() == 'scheduled'">
                     Scheduled; starting <span data-bind="text: timeToStart()"></span>
                 </span>
-                <span data-bind="if: !dateCompleted() && jobPercentageFixed() >= 0 && status() != 'scheduled'">
+                <span data-bind="if: !dateCompleted() && status() == 'queued'">
+                    Queued
+                </span>
+                <span data-bind="if: !dateCompleted() && jobPercentageFixed() >= 0 && status() != 'scheduled' && status() != 'queued'">
                     <div data-bind="if: isAdhoc() || jobAverageDuration()==0">
                     <g:render template="/common/progressBar" model="${[
                             indefinite: true, title: 'Running', innerContent: 'Running', width: 120,

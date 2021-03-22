@@ -25,7 +25,9 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.fasterxml.jackson.core.JsonParseException
 import com.google.gson.Gson
+import grails.gorm.DetachedCriteria
 import groovy.json.JsonOutput
+import org.grails.datastore.mapping.query.api.BuildableCriteria
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
 
@@ -186,7 +188,19 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
             maxResults 1
             order 'dateStarted', 'desc'
         }
-	}
+    }
+
+    static DetachedCriteria<Execution> runningExecutionsCriteria = new DetachedCriteria<>(Execution).build {
+        isNotNull('dateStarted')
+        isNull('dateCompleted')
+        or {
+            isNull('status')
+            and{
+                ne('status', ExecutionService.EXECUTION_SCHEDULED)
+                ne('status', ExecutionService.EXECUTION_QUEUED)
+            }
+        }
+    }
 
 
     public String toString() {
@@ -224,15 +238,17 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
 
     public String getExecutionState() {
         return cancelled ? ExecutionService.EXECUTION_ABORTED :
+            (null == dateCompleted && status == ExecutionService.EXECUTION_QUEUED) ? ExecutionService.EXECUTION_QUEUED :
                 null != dateStarted && dateStarted.getTime() > System.currentTimeMillis() ? ExecutionService.EXECUTION_SCHEDULED :
                     null == dateCompleted ? ExecutionService.EXECUTION_RUNNING :
                         (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
-                                cancelled ? ExecutionService.EXECUTION_ABORTED :
-                                        willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
-                                                timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
-                                                    (status == 'missed') ? ExecutionService.EXECUTION_MISSED :
-                                                        (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
-                                                                isCustomStatusString(status)? ExecutionService.EXECUTION_STATE_OTHER : status.toLowerCase()
+                            cancelled ? ExecutionService.EXECUTION_ABORTED :
+                                willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
+                                    timedOut ? ExecutionService.EXECUTION_TIMEDOUT :
+                                        (status == 'missed') ? ExecutionService.EXECUTION_MISSED :
+                                            (status in ['false', 'failed']) ? ExecutionService.EXECUTION_FAILED :
+                                                isCustomStatusString(status) ? ExecutionService.EXECUTION_STATE_OTHER : status.toLowerCase()
+
     }
 
     public boolean hasExecutionEnabled() {
@@ -249,6 +265,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                                                  ExecutionService.EXECUTION_ABORTED,
                                                  ExecutionService.EXECUTION_SUCCEEDED,
                                                  ExecutionService.EXECUTION_FAILED,
+                                                 ExecutionService.EXECUTION_QUEUED,
                                                  ExecutionService.EXECUTION_SCHEDULED])
     }
 
