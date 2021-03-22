@@ -53,16 +53,21 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
+import rundeck.Storage
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * Manages scm integration
@@ -72,7 +77,10 @@ class ScmService {
     public static final String IMPORT = 'import'
     public static final String IMPORT_PREF = 'scm.import'
     public static final String EXPORT_PREF = 'scm.export'
+    public static final String STORAGE_NAME_IMPORT = 'scm-import'
+    public static final String STORAGE_NAME_EXPORT = 'scm-export'
     public static final Map<String, String> PREFIXES = [export: EXPORT_PREF, import: IMPORT_PREF]
+    public static final Map<String, String> STORAGE_NAMES = [export: STORAGE_NAME_EXPORT, import: STORAGE_NAME_IMPORT]
     public static final ArrayList<String> INTEGRATIONS = [EXPORT, IMPORT]
 
 
@@ -102,6 +110,7 @@ class ScmService {
             }
         }
     }
+
     boolean isScmInitDeferred(){
         if(grailsApplication.config.rundeck?.scm?.startup?.containsKey('initDeferred')) {
             return grailsApplication.config.rundeck?.scm?.startup?.initDeferred in [true, 'true']
@@ -116,9 +125,9 @@ class ScmService {
     def initProject(String project){
         for (String integration : INTEGRATIONS) {
             initProject(project, integration)
-            //TODO: refresh status of all jobs in project?
         }
     }
+
     def initProject(String project, String integration){
         synchronized (initedProjects) {
             if (initedProjects.contains(integration + '/' + project)) {
@@ -144,7 +153,12 @@ class ScmService {
 
         try {
             def context = scmOperationContext(username, roles, project)
-            initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
+            try{
+                initPlugin(integration, context, pluginConfig.type, pluginConfig.config)
+            }catch(ScmPluginException validationException){
+                log.error("Unable to initialize SCM for project ${project} for integration ${integration}", validationException)
+                return false
+            }
             return true
         } catch (Throwable e) {
             log.error(
@@ -424,9 +438,10 @@ class ScmService {
      * Create new plugin config and load it
      * @param context context
      * @param config
+     * @param modifiedListeners used when running validation, so it doesn't add the plugin to the listeners
      * @return
      */
-    def initPlugin(String integration, ScmOperationContext context, String type, Map config) {
+    def initPlugin(String integration, ScmOperationContext context, String type, Map config, modifiedListeners = true) {
         def validation = validatePluginSetup(integration, context.frameworkProject, type, config)
         if (!validation) {
             throw new ScmPluginException("Plugin could not be loaded: " + type)
@@ -448,6 +463,7 @@ class ScmService {
             changeListener = listenerForImportPlugin(plugin)
         }
         registerPlugin(integration, loaded, changeListener, context.frameworkProject)
+
         loaded.provider
     }
 
@@ -479,9 +495,9 @@ class ScmService {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
             if(event.eventType == JobChangeEvent.JobChangeEventType.CREATE){
-                def metadata = jobMetadataService.getJobPluginMeta(event.jobReference.project, event.jobReference.id, 'scm-import')
+                def metadata = jobMetadataService.getJobPluginMeta(event.jobReference.project, event.jobReference.id, STORAGE_NAME_IMPORT)
                 //generate "source" UUID in case the local UUID will not be exported
-                jobMetadataService.setJobPluginMeta(event.jobReference.project, event.jobReference.id, 'scm-import',[
+                jobMetadataService.setJobPluginMeta(event.jobReference.project, event.jobReference.id, STORAGE_NAME_IMPORT,[
                         srcId:(metadata?.srcId)?:UUID.randomUUID().toString()
                 ])
             }
@@ -681,9 +697,17 @@ class ScmService {
         }
 
         def context = scmOperationContext(auth, project)
-        def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config)
-        loaded?.provider?.totalClean()
 
+        try{
+            def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config)
+            try{
+                loaded?.provider?.totalClean()
+            }finally{
+                loaded?.close()
+            }
+        }catch (ScmPluginInvalidInput e) {
+            return [valid: false, message: e.message]
+        }
     }
 
 
@@ -928,7 +952,7 @@ class ScmService {
      * @return
      */
     private JobImportReference importJobRef(ScheduledExecution job) {
-        def metadata = jobMetadataService.getJobPluginMeta(job, 'scm-import')
+        def metadata = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
         new JobImportReferenceImpl(
                 jobRevReference(job),
                 metadata?.version != null ? metadata.version : -1L,
@@ -944,7 +968,7 @@ class ScmService {
      * @return JobScmReference
      */
     JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null) {
-        def metadata = jobMetadataService.getJobPluginMeta(job, 'scm-import')
+        def metadata = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
         def impl = new JobImportReferenceImpl(
                 jobRevReference(job),
                 metadata?.version != null ? metadata.version : -1L,
@@ -974,7 +998,7 @@ class ScmService {
      * @return JobScmReference
      */
     JobScmReference scmJobRef(JobRevReference reference, JobSerializer serializer) {
-        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, 'scm-import')
+        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, STORAGE_NAME_IMPORT)
         def impl = new JobImportReferenceImpl(
                 reference,
                 metadata?.version != null ? metadata.version : -1L,
@@ -1106,7 +1130,6 @@ class ScmService {
      * @return
      */
     Map<String, JobState> exportStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
-        def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
             def project = jobs.get(0).project
@@ -1114,7 +1137,18 @@ class ScmService {
                 fixExportStatus(auth, project, jobs)
             }
         }
+        def status = exportStatusForJobsWithoutClusterFix(auth, jobs)
 
+        status
+    }
+
+    /**
+     * Return a map of status for jobs (without cluster fix)
+     * @param jobs
+     * @return
+     */
+    Map<String, JobState> exportStatusForJobsWithoutClusterFix(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
+        def status = [:]
         exportjobRefsForJobs(jobs).each { jobReference ->
             def plugin = getLoadedExportPluginFor jobReference.project
             if (plugin) {
@@ -1123,6 +1157,7 @@ class ScmService {
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
         }
+
         status
     }
     /**
@@ -1225,13 +1260,13 @@ class ScmService {
             if (result && result.success && result.commit) {
                 //synch import commit info to exported commit data
                 jobs.each { job ->
-                    def orig = jobMetadataService.getJobPluginMeta(job, 'scm-import') ?: [:]
+                    def orig = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT) ?: [:]
 
-                    def newmeta = [version: job.version, pluginMeta: result.commit.asMap()]
+                    def newmeta = [version: job.version, pluginMeta: result.commit.asMap(), name: job.jobName, groupPath: job.groupPath]
 
                     jobMetadataService.setJobPluginMeta(
                             job,
-                            'scm-import',
+                            STORAGE_NAME_IMPORT,
                             orig + newmeta
                     )
                 }
@@ -1391,6 +1426,95 @@ class ScmService {
                 plugin?.clusterFixJobs(context, joblist, originalPaths)
             }
         }
+    }
+
+    // check if jobs has the SCM metadata stored in the DB
+    void checkStoredSCMStatus(String project, List<ScheduledExecution> jobs) {
+        def plugin = getLoadedExportPluginFor project
+
+        if (plugin) {
+            //synch import commit info to exported commit data
+            jobs.each { job ->
+                def jobReference = (JobScmReference)exportJobRef(job)
+
+                //need to save status in DB
+                if(jobReference.scmImportMetadata == null){
+                    def jobStatus = plugin.getJobStatus(jobReference)
+                    if(jobStatus.commit){
+                        def newmeta = [name: job.getJobName(),groupPath: job.getGroupPath(),version: job.version, pluginMeta: jobStatus.commit.asMap()]
+                        jobMetadataService.setJobPluginMeta(
+                                job,
+                                STORAGE_NAME_IMPORT,
+                                newmeta
+                        )
+                    }
+                }else{
+                    //check if the name is set
+                    def orig = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT) ?: [:]
+
+                    if(orig.name==null){
+                        def newmeta = [name: job.getJobName(), groupPath: job.getGroupPath()]
+                        jobMetadataService.setJobPluginMeta(
+                                job,
+                                STORAGE_NAME_IMPORT,
+                                orig + newmeta
+                        )
+                    }
+                }
+            }
+
+
+        }
+    }
+
+    def checkJobRenamed(String project, List<ScheduledExecution> jobs){
+        def plugin = getLoadedExportPluginFor project
+
+        if (plugin) {
+            //check if jobs has changed the name and are not registered
+            jobs.each { job ->
+
+                log.debug("check if job ${job.id} was renamed")
+
+                def orig = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT) ?: [:]
+                def jobReference = (JobScmReference)exportJobRef(job)
+
+                def jobFullName = job.generateFullName()
+                def origFullName = [orig.groupPath?:'',orig.name].join("/")
+
+                if( jobFullName != origFullName){
+
+                    log.debug("job ${job.groupPath}/${job.jobName} was renamed, previuos name: ${orig.groupPath}/${orig.name}" )
+
+                    boolean renameProcess = true
+                    if (renamedJobsCache && renamedJobsCache[project] && renamedJobsCache[project][jobReference.id] ){
+                        renameProcess = false
+                    }
+
+                    if(renameProcess){
+                        def origScmRef = (JobScmReference)exportJobRef(job)
+                        origScmRef.jobName = orig.name
+                        origScmRef.groupPath = orig.groupPath
+
+                        log.debug("reprocessing renamed job")
+
+                        //record original path for renamed job, if it is different
+                        def origpath = plugin.getRelativePathForJob(origScmRef)
+                        recordRenamedJob(project, origScmRef.id, origpath)
+
+                        plugin.jobChanged(
+                                new StoredJobChangeEvent(
+                                        eventType: JobChangeEvent.JobChangeEventType.MODIFY_RENAME,
+                                        originalJobReference: origScmRef,
+                                        jobReference: jobReference
+                                ),
+                                jobReference
+                        )
+                    }
+                }
+            }
+        }
+
     }
 
 }

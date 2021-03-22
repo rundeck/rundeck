@@ -244,4 +244,79 @@ class GitImportPluginSpec extends Specification {
         'remote-pull' | _
     }
 
+    def "getStatusInternal no action needed"(){
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+        plugin.importTracker = Mock(ImportTracker){
+            trackedPaths() >> ['job1-1234.xml']
+            getTrackedCommits() >> ['job1-1234.xml' : '123123']
+        }
+
+        when:
+        def result = plugin.getStatusInternal(context, false)
+        then:
+        result.state == ImportSynchState.CLEAN
+    }
+
+    def "getStatusInternal import needed"(){
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+        plugin.importTracker = Mock(ImportTracker){
+            trackedPaths() >> ['job1-123.xml']
+            getTrackedCommits() >> ['job1-123.xml' : '123123']
+        }
+
+        when:
+        def result = plugin.getStatusInternal(context, false)
+        then:
+        result.state == ImportSynchState.IMPORT_NEEDED
+    }
+
+    def "getStatusInternal delete needed"(){
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        git.close()
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+        plugin.importTracker = Mock(ImportTracker){
+            trackedPaths() >> ['job1-1231.xml']
+            getTrackedCommits() >> ['job1-123.xml' : '123123']
+        }
+
+        when:
+        def result = plugin.getStatusInternal(context, false)
+        then:
+        result.state == ImportSynchState.DELETE_NEEDED
+    }
+
 }

@@ -58,7 +58,7 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
     }
 
     List<Property> getSetupPropertiesForBasedir(File basedir) {
-        Common.addDirDefaultValue setupProperties, basedir
+        Common.addDirDefaultValue setupProperties, basedir, ServiceNameConstants.ScmImport
     }
 
 
@@ -78,4 +78,5 @@ class GitImportPluginFactory implements ScmImportPluginFactory, Describable {
         plugin.initialize context
         return plugin
     }
+
 }
