@@ -6,7 +6,12 @@
             <RundeckVersion :edition="system.versionInfo.edition" :number="system.versionInfo.number" :tag="system.versionInfo.tag"/>
           </div>
           <div class="splash-screen--linkitems">
-            <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>    
+            <div v-if="system.versionInfo.edition != 'Community' ">
+              <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>  
+            </div>
+            <div v-else>
+              <a href="https://github.com/rundeck/rundeck/issues" target="_blank" class="item"><i class="fab fa-github"></i> Issues </a>
+            </div>
             <a :href="links.help " target="_blank" class="item"><i class="fas fa-book"></i> Docs</a>
           </div>
           <div class="splash-screen--byline">
@@ -18,11 +23,6 @@
                   Create New Project <b class="glyphicon glyphicon-plus"></b>
               </a>
             </p>
-            <span class="text-small text-primary">
-              You can see this message again by clicking the
-              <a href="/menu/welcome">version number</a>
-              in the page footer.
-            </span>
           </div>
 
       </div>

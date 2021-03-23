@@ -5,7 +5,7 @@ import { getAppLinks } from '@rundeck/ui-trellis'
 
 import FirstRun from '@rundeck/ui-trellis/lib/components/first-run/FirstRun.vue'
 
-const appLinks = getAppLinks()
+// const appLinks = getAppLinks()
 const rootStore = getRundeckContext().rootStore
 
 window.addEventListener('DOMContentLoaded', init)
