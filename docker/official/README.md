@@ -150,6 +150,10 @@ Set this if using an alternative backend from h2.
 
 ### `RUNDECK_DATABASE_PASSWORD`
 
+### `RUNDECK_DATABASE_MIGRATE_ONSTART=true`
+
+Toggles database migrations on startup. Defaults to `true`.
+
 ### `RUNDECK_LOGGING_STRATEGY=CONSOLE`
 
 The default console strategy configures log4j to send all output to stdout
