@@ -386,8 +386,8 @@
                 <g:radio name="excludeFilterUncheck" value="true"
                          checked="${scheduledExecution.excludeFilterUncheck}"
                          data-bind="checked: excludeFilterUncheck"
-                         id="editableTrue"/>
-                <label for="editableTrue">
+                         id="excludeFilterTrue"/>
+                <label for="excludeFilterTrue">
                     <g:message code="yes"/>
                 </label>
             </div>
@@ -396,8 +396,8 @@
                 <g:radio value="false" name="excludeFilterUncheck"
                          checked="${!scheduledExecution.excludeFilterUncheck}"
                          data-bind="checked: excludeFilterUncheck"
-                         id="editableFalse"/>
-                <label for="editableFalse">
+                         id="excludeFilterFalse"/>
+                <label for="excludeFilterFalse">
                     <g:message code="no"/>
                 </label>
             </div>
