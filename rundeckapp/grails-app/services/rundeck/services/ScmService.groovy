@@ -699,7 +699,7 @@ class ScmService {
         def context = scmOperationContext(auth, project)
 
         try{
-            def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config)
+            def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config, false)
             try{
                 loaded?.provider?.totalClean()
             }finally{
@@ -798,12 +798,12 @@ class ScmService {
         }
     }
 
-    def loadPluginWithConfig(String integration, ScmOperationContext context, String type, Map config) {
+    def loadPluginWithConfig(String integration, ScmOperationContext context, String type, Map config, boolean initialize = true) {
         switch (integration) {
             case EXPORT:
-                return loadExportPluginWithConfig(context, type, config)
+                return loadExportPluginWithConfig(context, type, config, initialize)
             case IMPORT:
-                return loadImportPluginWithConfig(context, type, config)
+                return loadImportPluginWithConfig(context, type, config, initialize)
         }
 
     }
@@ -811,21 +811,23 @@ class ScmService {
     CloseableProvider<ScmExportPlugin> loadExportPluginWithConfig(
             ScmOperationContext context,
             String type,
-            Map config
+            Map config,
+            boolean initialize = true
     )
     {
         CloseableProvider<ScmExportPluginFactory> providerReference = pluginService.retainPlugin(
                 type,
                 scmExportPluginProviderService
         )
-        def plugin = providerReference.provider.createPlugin(context, config)
+        def plugin = providerReference.provider.createPlugin(context, config, initialize)
         return Closeables.closeableProvider(plugin, providerReference)
     }
 
     CloseableProvider<ScmImportPlugin> loadImportPluginWithConfig(
             ScmOperationContext context,
             String type,
-            Map config
+            Map config,
+            boolean initialize = true
     )
     {
         CloseableProvider<ScmImportPluginFactory> providerReference = pluginService.retainPlugin(
@@ -835,7 +837,7 @@ class ScmService {
 
         def list = loadInputTrackingItems(context.frameworkProject)
 
-        def plugin = providerReference.provider.createPlugin(context, config, list)
+        def plugin = providerReference.provider.createPlugin(context, config, list, initialize)
         return Closeables.closeableProvider(plugin, providerReference)
     }
 
