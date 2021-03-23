@@ -150,9 +150,10 @@ Set this if using an alternative backend from h2.
 
 ### `RUNDECK_DATABASE_PASSWORD`
 
-### `RUNDECK_DATABASE_MIGRATE_ONSTART=true`
+### `RUNDECK_DATABASE_MIGRATE_ONSTART`
 
-Toggles database migrations on startup. Defaults to `true`.
+Toggles database migrations on startup. Defaults to the Rundeck
+default. Can be `true` or `false`.
 
 ### `RUNDECK_LOGGING_STRATEGY=CONSOLE`
 
