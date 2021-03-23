@@ -67,9 +67,16 @@ class GitExportPluginFactory implements ScmExportPluginFactory, Describable {
 
     @Override
     ScmExportPlugin createPlugin(final ScmOperationContext context, final Map<String, String> input) {
+        return createPlugin(context, input, true)
+    }
+
+    @Override
+    ScmExportPlugin createPlugin(final ScmOperationContext context, final Map<String, String> input, boolean initialize) {
         def config = Config.create(Export, input)
         def plugin = new GitExportPlugin(config)
-        plugin.initialize(context)
+        if(initialize){
+            plugin.initialize(context)
+        }
         return plugin
     }
 }

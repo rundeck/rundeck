@@ -42,6 +42,22 @@ public interface ScmImportPluginFactory {
             throws ConfigurationException;
 
     /**
+     * Create the plugin
+     *
+     * @param context      context
+     * @param input        setup config
+     * @param trackedItems tracked items list
+     * @param initialize it indicates whether to initialize the plugin or not
+     * @return plugin instance
+     *
+     * @throws ConfigurationException if an error occurs
+     */
+    default ScmImportPlugin createPlugin(ScmOperationContext context, Map<String, String> input, List<String> trackedItems, boolean initialize)
+            throws ConfigurationException{
+        return createPlugin(context, input, trackedItems);
+    }
+
+    /**
      * Setup properties for the base directory
      *
      * @param basedir project base directory
