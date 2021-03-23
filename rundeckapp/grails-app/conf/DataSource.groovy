@@ -33,19 +33,19 @@ hibernate {
 environments {
 	development {
 		dataSource {
-			dbCreate = "create-drop" // one of 'create', 'create-drop','update'
+			dbCreate = "none" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:db/devDb"
         }
 	}
 	test {
 		dataSource {
-			dbCreate = "create-drop"
+			dbCreate = "none"
 			url = "jdbc:h2:file:./db/testDb"
 		}
 	}
 	production {
 		dataSource {
-			dbCreate = "update"
+			dbCreate = "none"
 			url = "jdbc:h2:file:rundeck/grailsh2"
 		}
 	}

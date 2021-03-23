@@ -27,6 +27,7 @@ import org.apache.commons.cli.ParseException
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 import rundeckapp.Application
 import rundeckapp.init.RundeckInitConfig
+import liquibase.util.StringUtils
 
 
 class CommandLineSetup {
@@ -80,7 +81,6 @@ class CommandLineSetup {
                                          .withArgName("PATH")
                                          .withDescription("The location of Rundeck's runtime data.")
                                          .create();
-
         Option projectDir =    OptionBuilder.withLongOpt("projectdir")
                                             .hasArg()
                                             .withArgName("PATH")
@@ -111,6 +111,11 @@ class CommandLineSetup {
                                          .hasArg()
                                          .withDescription("Encrypt a password for use in a property file using the specified service. Available services: " + encrypters.values().collect { it.name() }.join(", "))
                                          .create();
+        Option rollback =   OptionBuilder.withLongOpt("rollback")
+                .hasArg()
+                .withArgName("TAGNAME")
+                .withDescription("Down migrate or rollback to previous db versions.")
+                .create('r');
 
         options.addOption(baseDir);
         options.addOption(dataDir);
@@ -125,6 +130,7 @@ class CommandLineSetup {
         options.addOption(testauth);
         options.addOption(projectDir);
         options.addOption(encryptpwd);
+        options.addOption(rollback);
     }
 
     RundeckCliOptions runSetup(String[] args) {
@@ -169,6 +175,7 @@ class CommandLineSetup {
         cliOptions.skipInstall = cl.hasOption(FLAG_SKIPINSTALL)
         cliOptions.installOnly = cl.hasOption(FLAG_INSTALLONLY)
         cliOptions.testAuth = cl.hasOption(FLAG_TEST_AUTH)
+        cliOptions.tag = cl.getOptionValue('r', "")
 
         if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR) && cliOptions.baseDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, cliOptions.baseDir)
@@ -182,6 +189,8 @@ class CommandLineSetup {
         if(!System.getProperty("logging.config")) {
             System.setProperty("logging.config",System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)+"/log4j2.properties")
         }
+        if(!StringUtils.isEmpty(cliOptions.tag))
+            cliOptions.rollback = true
         return cliOptions
 
     }

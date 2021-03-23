@@ -12,6 +12,7 @@ buildscript {
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:7.0.0"
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
+        classpath "org.grails.plugins:database-migration:$dbMigrationPluginVersion"
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
@@ -49,7 +50,13 @@ repositories {
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     maven { url "https://jitpack.io" }
 }
-
+sourceSets {
+    main {
+        resources {
+            srcDir 'grails-app/migrations'
+        }
+    }
+}
 dependencies {
     agent "org.springframework:springloaded:1.2.8.RELEASE"
     //Rundeck plugin dependencies
@@ -141,6 +148,8 @@ dependencies {
     console ("org.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
+    compile "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
+    compile 'org.liquibase:liquibase-core:3.10.1'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
