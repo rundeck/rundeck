@@ -34,6 +34,7 @@ import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
@@ -3414,4 +3415,161 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.modelAndView.model.scheduledExecution != null
     }
 
+    def "api jobs import require 14"() {
+        given:
+            controller.apiService = Mock(ApiService)
+            request.method = 'POST'
+        when:
+            controller.apiJobsImportv14()
+        then:
+            1 * controller.apiService.requireApi(_, _, 14) >> false
+
+    }
+    def "api jobs import require project param"() {
+        given:
+            controller.apiService = Mock(ApiService)
+            request.method = 'POST'
+        when:
+            controller.apiJobsImportv14()
+        then:
+            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireParameters(_, _, ['project']) >> false
+
+    }
+
+    def "api jobs import content type #type"() {
+        given:
+            controller.apiService = Mock(ApiService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            request.method = 'POST'
+            request.contentType = type
+            params.project = 'aproj'
+            def job = new ScheduledExecution()
+            def jobset = [
+                Mock(ImportedJob) {
+                    getJob() >> job
+                }
+            ]
+            params.dupeOption = dupeoption
+            params.uuidOption = uuidoption
+            params.validateJobref = validateJobref
+        when:
+            controller.apiJobsImportv14()
+        then:
+            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireParameters(_, _, ['project']) >> true
+            1 * controller.scheduledExecutionService.parseUploadedFile(!null, format) >> [
+                jobset: jobset
+            ]
+            1 * controller.
+                scheduledExecutionService.
+                loadImportedJobs(jobset, dupeoption, uuidoption, _, _, validateJobref == 'true') >> [:]
+            1 * controller.scheduledExecutionService.issueJobChangeEvents(_)
+            1 * controller.apiService.renderSuccessXml(_, _, _)
+            job.project == 'aproj'
+        where:
+            type               | format | dupeoption | uuidoption | validateJobref
+            'application/xml'  | 'xml'  | null       | null       | null
+            'application/yaml' | 'yaml' | null       | null       | null
+            'application/yaml' | 'yaml' | null       | null       | 'true'
+            'application/yaml' | 'yaml' | null       | 'remove'   | null
+            'application/yaml' | 'yaml' | 'update'   | null       | null
+    }
+    def "api jobs import xmlBatch text format #format fileformat #fformat"() {
+        given:
+            controller.apiService = Mock(ApiService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            request.method = 'POST'
+            def job = new ScheduledExecution()
+            def jobset = [
+                Mock(ImportedJob) {
+                    getJob() >> job
+                }
+            ]
+            params.project = 'aproj'
+            params.dupeOption = dupeoption
+            params.uuidOption = uuidoption
+            params.validateJobref = validateJobref
+            params.format = format
+            params.fileformat = fformat
+            params.xmlBatch='datacontent'
+        when:
+            controller.apiJobsImportv14()
+        then:
+            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireParameters(_, _, ['project']) >> true
+            1 * controller.apiService.requireParameters(_, _, ['xmlBatch']) >> true
+            1 * controller.scheduledExecutionService.parseUploadedFile('datacontent', (format?:fformat?:'xml')) >> [
+                jobset: jobset
+            ]
+            1 * controller.
+                scheduledExecutionService.
+                loadImportedJobs(jobset, dupeoption, uuidoption, _, _, validateJobref == 'true') >> [:]
+            1 * controller.scheduledExecutionService.issueJobChangeEvents(_)
+            1 * controller.apiService.renderSuccessXml(_, _, _)
+            job.project == 'aproj'
+        where:
+            format |fformat | dupeoption | uuidoption | validateJobref
+            null |null  | null       | null       | null
+            null |'xml'  | null       | null       | null
+            null |'yaml' | null       | null       | null
+            null |'yaml' | null       | null       | 'true'
+            null |'yaml' | null       | 'remove'   | null
+            null |'yaml' | 'update'   | null       | null
+            'xml'  |null | null       | null       | null
+            'yaml' |null | null       | null       | null
+            'yaml' |null | null       | null       | 'true'
+            'yaml' |null | null       | 'remove'   | null
+            'yaml' |null | 'update'   | null       | null
+    }
+    def "api jobs import multipart file #format fileformat #fformat"() {
+        given:
+            controller.apiService = Mock(ApiService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            request.method = 'POST'
+            def job = new ScheduledExecution()
+            def jobset = [
+                Mock(ImportedJob) {
+                    getJob() >> job
+                }
+            ]
+            params.project = 'aproj'
+            params.dupeOption = dupeoption
+            params.uuidOption = uuidoption
+            params.validateJobref = validateJobref
+            params.format = format
+            params.fileformat = fformat
+            request.addFile('xmlBatch','datacontent'.bytes)
+        when:
+            controller.apiJobsImportv14()
+        then:
+            1 * controller.apiService.requireApi(_, _, 14) >> true
+            1 * controller.apiService.requireParameters(_, _, ['project']) >> true
+            1 * controller.apiService.requireParameters(_, _, ['xmlBatch']) >> true
+            1 * controller.scheduledExecutionService.parseUploadedFile(!null, (format?:fformat?:'xml')) >> [
+                jobset: jobset
+            ]
+            1 * controller.
+                scheduledExecutionService.
+                loadImportedJobs(jobset, dupeoption, uuidoption, _, _, validateJobref == 'true') >> [:]
+            1 * controller.scheduledExecutionService.issueJobChangeEvents(_)
+            1 * controller.apiService.renderSuccessXml(_, _, _)
+            job.project == 'aproj'
+        where:
+            format |fformat | dupeoption | uuidoption | validateJobref
+            null |null  | null       | null       | null
+            null |'xml'  | null       | null       | null
+            null |'yaml' | null       | null       | null
+            null |'yaml' | null       | null       | 'true'
+            null |'yaml' | null       | 'remove'   | null
+            null |'yaml' | 'update'   | null       | null
+            'xml'  |null | null       | null       | null
+            'yaml' |null | null       | null       | null
+            'yaml' |null | null       | null       | 'true'
+            'yaml' |null | null       | 'remove'   | null
+            'yaml' |null | 'update'   | null       | null
+    }
 }
