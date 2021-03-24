@@ -18,6 +18,7 @@
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.gui.SystemConfigMenuItem
 import com.dtolabs.rundeck.app.gui.SystemReportMenuItem
 import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
@@ -589,6 +590,7 @@ beans={
 
     userSummaryMenuItem(UserSummaryMenuItem)
     systemReportMenuItem(SystemReportMenuItem)
+    systemConfigMenuItem(SystemConfigMenuItem)
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
