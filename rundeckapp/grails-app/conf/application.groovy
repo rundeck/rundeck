@@ -40,7 +40,6 @@ environments {
         rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
-        rundeck.feature.notificationsEditorVue.enabled = true
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.notificationsOwnThread.enabled = false
@@ -57,7 +56,7 @@ environments {
         grails.plugin.databasemigration.updateOnStart=true
 
         spring.h2.console.enabled=true
-        
+
         //enable greenmail plugin in build.gradle, and set this value in dev mode
         //grails.mail.port = com.icegreen.greenmail.util.ServerSetupTest.SMTP.port
     }
@@ -94,7 +93,6 @@ environments {
         rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
-        rundeck.feature.notificationsEditorVue.enabled = true
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.notificationsOwnThread.enabled = false

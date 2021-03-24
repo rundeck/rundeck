@@ -30,7 +30,7 @@
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="util/tab-router.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
-    <feature:enabled name="notificationsEditorVue">
+
         <asset:javascript src="static/pages/job/editor.js" defer="defer"/>
         <asset:stylesheet src="static/css/pages/job/editor.css" />
         <g:jsMessages code="
@@ -65,15 +65,13 @@
                      data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
                                notifyAvgDurationThreshold:scheduledExecution?.notifyAvgDurationThreshold,
                      ]}"/>
-    </feature:enabled>
+
 
     <g:javascript>
+        window._rundeck = Object.assign(window._rundeck || {}, {
+            data: {notificationData: loadJsonData('jobNotificationsJSON')}
+        })
 
-        <feature:enabled name="notificationsEditorVue">
-            window._rundeck = Object.assign(window._rundeck || {}, {
-                data: {notificationData: loadJsonData('jobNotificationsJSON')}
-            })
-        </feature:enabled>
         var workflowEditor = new WorkflowEditor();
         var confirm = new PageConfirm(message('page.unsaved.changes'));
         _onJobEdit(confirm.setNeedsConfirm);
