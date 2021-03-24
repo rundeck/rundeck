@@ -681,11 +681,6 @@ class ScmService {
         }
 
         def context = scmOperationContext(auth, project)
-        def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config)
-        loaded?.provider?.totalClean()
-
-<<<<<<< HEAD
-=======
         try{
             def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config, false)
             try{
@@ -696,7 +691,6 @@ class ScmService {
         }catch (ScmPluginInvalidInput e) {
             return [valid: false, message: e.message]
         }
->>>>>>> 58ba522caf... fix when performing scm clean
     }
 
 

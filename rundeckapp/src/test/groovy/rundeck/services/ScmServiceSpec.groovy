@@ -534,11 +534,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
         1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
-<<<<<<< HEAD
-        1 * exportFactory.createPlugin(_, config) >> plugin
-=======
         1 * exportFactory.createPlugin(_, _, true) >> plugin
->>>>>>> 58ba522caf... fix when performing scm clean
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
         1 * plugin.getStatus(_)>>{
             throw new RuntimeException("get status failed")
@@ -724,8 +720,6 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         where:
             integration << ['export', 'import']
     }
-<<<<<<< HEAD
-=======
 
     def "check if job was renamed after SCM export was disabled"() {
         given:
@@ -905,6 +899,4 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             project = 'aproj'
             type = 'aplugin'
     }
-
->>>>>>> 58ba522caf... fix when performing scm clean
 }

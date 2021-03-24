@@ -1702,8 +1702,6 @@ class ScmController extends ControllerBase {
                 integration         : integration
         ]
     }
-<<<<<<< HEAD
-=======
 
     def deletePluginConfig(String project, String integration, String type){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
@@ -1749,5 +1747,4 @@ class ScmController extends ControllerBase {
         redirect(action: 'index', params: [project: project])
     }
 
->>>>>>> a6f86b7ab3... scm delete nows perfoms a clean before deleting the configuraiton
 }
