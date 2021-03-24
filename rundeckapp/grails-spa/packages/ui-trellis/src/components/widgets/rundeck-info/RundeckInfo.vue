@@ -37,8 +37,8 @@ import Vue from 'vue'
 import { Observer } from 'mobx-vue'
 import {Component, Prop} from 'vue-property-decorator'
 
-import { VersionInfo, ServerInfo } from 'src/stores/System'
-import { Release } from 'src/stores/Releases'
+import { VersionInfo, ServerInfo } from '../../../stores/System'
+import { Release } from '../../../stores/Releases'
 
 import {url} from '../../../rundeckService'
 
