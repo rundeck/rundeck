@@ -47,12 +47,11 @@ import { Observer } from 'mobx-vue'
 import {Component, Prop, Inject} from 'vue-property-decorator'
 
 import { ServerInfo, SystemStore } from '../../stores/System'
-import { getAppLinks } from '../../../lib'
-import { AppLinks } from '../../../lib/interfaces/AppLinks'
+import { getAppLinks }             from  '../../rundeckService'
+import { AppLinks }                from  '../../interfaces/AppLinks'
+import { RootStore }               from  '../../stores/RootStore'
 
-import { RootStore } from '../../stores/RootStore'
-
-import RundeckVersion from '../version/RundeckVersionDisplay.vue'
+import RundeckVersion              from  '../version/RundeckVersionDisplay.vue'
 
 
 @Observer
