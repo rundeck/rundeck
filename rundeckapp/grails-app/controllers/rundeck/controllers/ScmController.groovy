@@ -1706,7 +1706,7 @@ class ScmController extends ControllerBase {
         ]
     }
 
-    def deletePluginConfig(String project, String integration){
+    def deletePluginConfig(String project, String integration, String type){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeApplicationResourceAll(
@@ -1734,12 +1734,17 @@ class ScmController extends ControllerBase {
             return
         }
 
-        def deleted = scmService.removePluginConfiguration(integration, project, null)
-
-        if (deleted) {
-            flash.message = message(code: "scmController.action.delete.success.message", args: [integration])
+        def result = scmService.cleanPlugin(integration, project, type, authContext)
+        if(result && !result.valid){
+            flash.error = result.message
         }else{
-            flash.error = message(code: "scmController.action.delete.error.message", args: [integration])
+            def deleted = scmService.removePluginConfiguration(integration, project, type)
+
+            if (deleted) {
+                flash.message = message(code: "scmController.action.delete.success.message", args: [integration])
+            }else{
+                flash.error = message(code: "scmController.action.delete.error.message", args: [integration])
+            }
         }
 
         redirect(action: 'index', params: [project: project])

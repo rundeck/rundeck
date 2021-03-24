@@ -611,11 +611,11 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         when:
         request.method = 'POST'
         params.cancel = 'Cancel'
-        controller.deletePluginConfig(projectName, 'export')
+        controller.deletePluginConfig(projectName, 'export', 'export')
 
         then:
         0 * controller.scmService.removePluginConfiguration(*_) >> true
-
+        0 * controller.scmService.cleanPlugin(*_) >> [valid:true]
         response.status == 302
         response.redirectedUrl == '/project/test1/scm'
     }
@@ -632,10 +632,11 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         setupFormTokens(session)
         when:
         request.method = 'POST'
-        controller.deletePluginConfig(projectName, 'export')
+        controller.deletePluginConfig(projectName, 'export', 'export')
 
         then:
         1 * controller.scmService.removePluginConfiguration(*_) >> true
+        1 * controller.scmService.cleanPlugin(*_) >> [valid:true]
         response.status == 302
         response.redirectedUrl == '/project/test1/scm'
         flash.message == 'scmController.action.delete.success.message'
@@ -653,13 +654,36 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         setupFormTokens(session)
         when:
         request.method = 'POST'
-        controller.deletePluginConfig(projectName, 'export')
+        controller.deletePluginConfig(projectName, 'export', 'export')
 
         then:
         1 * controller.scmService.removePluginConfiguration(*_) >> false
+        1 * controller.scmService.cleanPlugin(*_) >> [valid:true]
         response.status == 302
         response.redirectedUrl == '/project/test1/scm'
         flash.error == 'scmController.action.delete.error.message'
+    }
+
+    void "scm action delete error clean"() {
+        given:
+        def projectName = 'test1'
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scmService = Mock(ScmService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            1 * authorizeApplicationResourceAll(*_) >> true
+        }
+        setupFormTokens(session)
+        when:
+        request.method = 'POST'
+        controller.deletePluginConfig(projectName, 'export', 'export')
+
+        then:
+        0 * controller.scmService.removePluginConfiguration(*_) >> false
+        1 * controller.scmService.cleanPlugin(*_) >> [valid:false, message: 'error from clean']
+        response.status == 302
+        response.redirectedUrl == '/project/test1/scm'
+        flash.error == 'error from clean'
     }
 
     def "perform export shouldn't call clusterFix"() {
@@ -757,4 +781,5 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         integration | _
         'export'    | _
     }
+  
 }
