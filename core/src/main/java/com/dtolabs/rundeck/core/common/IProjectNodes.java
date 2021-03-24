@@ -34,6 +34,8 @@ public interface IProjectNodes {
      */
     INodeSet getNodeSet();
 
+    INodeSet getNodeSet(boolean refreshNodeStatus);
+
     /**
      * @return all sources
      */

@@ -53,11 +53,11 @@ class ProjectNodesEnhancerSpec extends Specification {
         then:
             1 * projectnodes.getNodeSet() >> nodeSet
 
-            1 * plugin1.updateNode(null, {it.nodename=='nodeA'}) >> {
+            1 * plugin1.updateNode(null, {it.nodename=='nodeA'}, false) >> {
                 it[1].addAttribute 'attrB', 'valB2'
                 it[1].removeTag('tagA')
             }
-            1 * plugin1.updateNode(null, {it.nodename=='nodeB'})
+            1 * plugin1.updateNode(null, {it.nodename=='nodeB'}, false)
             result
             result.nodeNames.containsAll(['nodeA', 'nodeB'])
             nodeA.tags == new HashSet(['tagA', 'tagB'])
@@ -100,11 +100,11 @@ class ProjectNodesEnhancerSpec extends Specification {
         then:
         1 * projectnodes.getNodeSet() >> nodeSet
 
-        calls * plugin1.updateNode(null, {it.nodename=='nodeA'}) >> {
+        calls * plugin1.updateNode(null, {it.nodename=='nodeA'}, false) >> {
             it[1].addAttribute 'attrB', 'valB2'
             it[1].removeTag('tagA')
         }
-        calls * plugin1.updateNode(null, {it.nodename=='nodeB'})
+        calls * plugin1.updateNode(null, {it.nodename=='nodeB'}, false)
 
 
         where:

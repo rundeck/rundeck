@@ -67,6 +67,11 @@ public class RundeckProject implements IRundeckProject{
     }
 
     @Override
+    public INodeSet getNodeSet(boolean refreshNodeStatus) throws NodeFileParserException {
+        return getProjectNodes().getNodeSet(refreshNodeStatus);
+    }
+
+    @Override
     public boolean hasProperty(final String key) {
         return getProjectConfig().hasProperty(key);
     }

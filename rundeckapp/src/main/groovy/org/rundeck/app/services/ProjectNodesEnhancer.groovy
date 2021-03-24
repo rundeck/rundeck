@@ -31,6 +31,10 @@ class ProjectNodesEnhancer implements IProjectNodes {
 
     @Override
     INodeSet getNodeSet() {
+        getNodeSet(false)
+    }
+
+    INodeSet getNodeSet(boolean refreshNodeStatus) {
         def nodeset = projectNodes.getNodeSet()
         def newNodes = new NodeSetImpl()
         nodeset.nodeNames.each { String node ->
@@ -46,7 +50,7 @@ class ProjectNodesEnhancer implements IProjectNodes {
                 ModifiableNode newNode = new ModifiableNode(node)
                 newNode.attributes.putAll attrs
                 newNode.tags.addAll tags
-                plugin.updateNode(project, newNode)
+                plugin.updateNode(project, newNode, refreshNodeStatus)
                 if (newNode.attributes != attrs || newNode.tags != tags) {
                     attrs = new HashMap<>(newNode.attributes)
                     tags = new HashSet<>(newNode.tags)

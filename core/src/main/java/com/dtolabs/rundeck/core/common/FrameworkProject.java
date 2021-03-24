@@ -312,10 +312,12 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
         return getProjectNodes().getNodeSet();
     }
 
+    @Override
+    public INodeSet getNodeSet(boolean refreshNodeStatus) throws NodeFileParserException {
+        return getProjectNodes().getNodeSet(refreshNodeStatus);
+    }
 
-
-
-   /**
+    /**
      * Creates the file structure for a project
      *
      * @param projectDir     The project base directory

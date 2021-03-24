@@ -52,6 +52,8 @@ public interface IRundeckProject extends IRundeckProjectConfig {
      */
     INodeSet getNodeSet() throws NodeFileParserException;
 
+    INodeSet getNodeSet(boolean refreshNodeStatus) throws NodeFileParserException;
+
 
 
     /**

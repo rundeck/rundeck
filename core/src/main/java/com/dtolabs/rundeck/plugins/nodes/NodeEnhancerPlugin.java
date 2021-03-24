@@ -29,4 +29,6 @@ public interface NodeEnhancerPlugin {
      * @param node     node
      */
     void updateNode(String project, IModifiableNodeEntry node);
+
+    void updateNode(String project, IModifiableNodeEntry node, boolean nocache);
 }
