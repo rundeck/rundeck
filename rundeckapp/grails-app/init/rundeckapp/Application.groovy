@@ -1,6 +1,5 @@
 package rundeckapp
 
-import com.dtolabs.rundeck.core.properties.CoreConfigurationPropertiesLoader
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import org.rundeck.app.bootstrap.PreBootstrap
@@ -12,12 +11,11 @@ import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.env.PropertiesPropertySource
-import org.springframework.core.env.PropertySource
-import rundeckapp.cli.CommandLineSetup
-import rundeckapp.init.DefaultRundeckConfigPropertyLoader
 import rundeckapp.init.ReloadableRundeckPropertySource
 import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
+import rundeckapp.init.RundeckDbMigration
+import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -30,7 +28,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static String[] startArgs = []
     static void main(String[] args) {
         Application.startArgs = args
-        runPreboostrap()
+        runPrebootstrap()
         ctx = GrailsApp.run(Application, args)
     }
 
@@ -48,6 +46,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     @Override
     void setEnvironment(final Environment environment) {
         Properties hardCodedRundeckConfigs = new Properties()
+        if(rundeckConfig == null) Application.runPrebootstrap()
 
         hardCodedRundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
         hardCodedRundeckConfigs.setProperty(
@@ -65,7 +64,20 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         loadGroovyRundeckConfigIfExists(environment)
     }
 
-    static void runPreboostrap() {
+    @Override
+    void doWithApplicationContext() {
+        if(rundeckConfig.isRollback()) {
+            RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext)
+            println "Beginning db rollback to ${rundeckConfig.tagName()}"
+            rundeckDbMigration.rollback(rundeckConfig.tagName())
+            println "Rollback complete"
+            System.exit(0)
+        }
+    }
+
+    void doWithDynamicMethods() {
+    }
+    static void runPrebootstrap() {
         ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
         List<PreBootstrap> preboostraplist = []
         preBootstraps.each { pbs -> preboostraplist.add(pbs) }
