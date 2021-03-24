@@ -236,7 +236,7 @@ grails.serverURL=${RUNDECK_URL}
 dataSource.dbCreate = none
 dataSource.url = jdbc:h2:file:/home/rundeck/server/data/grailsdb;DB_CLOSE_ON_EXIT=FALSE
 dataSource.properties.removeAbandoned=true
-dataSource.properties.removeAbandonedTimeout=5
+dataSource.properties.removeAbandonedTimeout=10
 
 # Pre Auth mode settings
 rundeck.security.authorization.preauthenticated.enabled=false
