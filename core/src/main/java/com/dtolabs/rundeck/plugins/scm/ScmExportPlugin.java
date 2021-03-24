@@ -34,7 +34,6 @@ public interface ScmExportPlugin {
      */
     void cleanup();
 
-
     /**
      * perform a total clean
      */
