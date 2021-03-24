@@ -16,8 +16,11 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.internal.framework.RundeckFramework
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -25,6 +28,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
+import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
@@ -33,26 +37,24 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
+import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.Storage
 import rundeck.services.scm.ScmPluginConfigData
-import spock.lang.Specification
 
 /**
  * Created by greg on 10/15/15.
  */
 class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService> {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, User] }
+    List<Class> getDomainClasses() { [ScheduledExecution, User, Storage ] }
 
     class TestCloseable implements Closeable {
         boolean closed
@@ -448,18 +450,25 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
     def "export project status basic"() {
         given:
         def ctx = Mock(ScmOperationContext) {
-            getFrameworkProject() >> 'testProject'
+            getFrameworkProject() >> null
         }
         def config = [:]
 
         ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
-        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+        ScmExportPlugin plugin = Mock(ScmExportPlugin){
+        }
         TestCloseable exportCloser = new TestCloseable()
 
         service.pluginService = Mock(PluginService)
         service.pluginConfigService = Mock(PluginConfigService)
         service.jobEventsService = Mock(JobEventsService)
-        service.frameworkService = Mock(FrameworkService)
+        service.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(RundeckFramework){
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    listFrameworkProjectNames() >> ['testProject']
+                }
+            }
+        }
         service.storageService = Mock(StorageService)
         service.rundeckAuthContextProvider=Mock(AuthContextProvider)
 
@@ -560,6 +569,8 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
         def job = new ScheduledExecution()
         job.version = 1
+        job.jobName = "test"
+        job.groupPath = "test"
         def bobuser = new User(login: 'bob').save()
 
         //returned by export result, should be stored in job metadata
@@ -585,7 +596,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
 
         //store metadata about commit
-        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: 1, pluginMeta: commitMetadata])
+        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: 1, pluginMeta: commitMetadata, 'name': 'test', 'groupPath': 'test'])
 
         result.valid
         result.commitId == 'a-commit-id'
@@ -881,6 +892,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             }else{
                 provider=Mock(ScmImportPluginFactory){
                     1 * createPlugin(_, _, _, false)>>Mock(ScmImportPlugin){
+
                         1 * totalClean()
                     }
                 }
@@ -899,4 +911,5 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             project = 'aproj'
             type = 'aplugin'
     }
+  
 }

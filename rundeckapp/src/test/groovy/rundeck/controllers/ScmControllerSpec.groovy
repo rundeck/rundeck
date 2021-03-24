@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.CommandExec
@@ -45,6 +46,11 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec] }
 
+    protected setupFormTokens(session) {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
 
     void "scm action cancel redirects to jobs page"() {
         given:
@@ -97,7 +103,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobs(_,[]) >> [:]
+            1 * exportStatusForJobsWithoutClusterFix(_,[]) >> [:]
             1 * exportFilePathsMapForJobs([]) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
@@ -225,7 +231,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobs(_,_) >> [
+            1 * exportStatusForJobsWithoutClusterFix(_,_) >> [
                 job1: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
@@ -591,8 +597,6 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             'apiPluginInput' | 'import'
             'apiPluginInput' | 'export'
     }
-<<<<<<< HEAD
-=======
 
     void "scm action cancel delete"() {
         given:
@@ -612,7 +616,6 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         then:
         0 * controller.scmService.removePluginConfiguration(*_) >> true
         0 * controller.scmService.cleanPlugin(*_) >> [valid:true]
-
         response.status == 302
         response.redirectedUrl == '/project/test1/scm'
     }
@@ -778,5 +781,5 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         integration | _
         'export'    | _
     }
->>>>>>> a6f86b7ab3... scm delete nows perfoms a clean before deleting the configuraiton
+  
 }

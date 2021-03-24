@@ -27,6 +27,7 @@ import java.util.Map;
  * Factory for {@link ScmImportPlugin}, interface for SCMImport plugins.
  */
 public interface ScmImportPluginFactory {
+
     /**
      * Create the plugin
      *

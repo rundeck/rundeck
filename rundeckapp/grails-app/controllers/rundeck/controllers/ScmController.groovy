@@ -61,6 +61,7 @@ class ScmController extends ControllerBase {
             apiJobDiff             : ['GET'],
             apiJobActionInput      : ['GET'],
             apiJobActionPerform    : ['POST'],
+            deletePluginConfig     : ['POST'],
     ]
     /**
      * Require API v15 for all API endpoints
@@ -522,10 +523,12 @@ class ScmController extends ControllerBase {
             return
         }
 
-        //require type param
-        scmService.cleanPlugin(integration, project, type,authContext)
-
-        flash.message = message(code: "scmController.action.clean.success.message", args: [integration, type])
+        def result = scmService.cleanPlugin(integration, project, type,authContext)
+        if(result && !result.valid){
+            flash.error = result.message
+        }else{
+            flash.message = message(code: "scmController.action.clean.success.message", args: [integration, type])
+        }
         redirect(action: 'index', params: [project: project])
     }
 
@@ -977,7 +980,7 @@ class ScmController extends ControllerBase {
             List<ScheduledExecution> alljobs = ScheduledExecution.findAllByProject(project)
             Map<String, ScheduledExecution> jobMap = alljobs.collectEntries { [it.extid, it] }
 
-            Map scmJobStatus = scmService.exportStatusForJobs(authContext, alljobs).findAll {
+            Map scmJobStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, alljobs).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
 
@@ -1144,7 +1147,7 @@ class ScmController extends ControllerBase {
             jobs = jobIds.collect {
                 ScheduledExecution.getByIdOrUUID(it)
             }
-            scmStatus = scmService.exportStatusForJobs(authContext, jobs).findAll {
+            scmStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, jobs).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
             jobs = jobs.findAll {
@@ -1287,7 +1290,7 @@ class ScmController extends ControllerBase {
             renamedJobPaths.values().each {
                 deletedPaths.remove(it)
             }
-            def scmStatus = scmService.exportStatusForJobs(authContext, jobs)
+            def scmStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, jobs)
             def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
             def scmProjectStatus = scmService.getPluginStatus(authContext, integration, params.project)
