@@ -10,7 +10,7 @@ source $DIR/include.sh
 ###
 
 # job exec
-args="sleep 7"
+args="sleep 12"
 
 project=$2
 if [ "" == "$2" ] ; then
