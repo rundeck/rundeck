@@ -16,6 +16,8 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
+
 class LogFileStorageRequest {
     Execution execution
     String pluginName
