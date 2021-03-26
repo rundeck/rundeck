@@ -54,7 +54,7 @@ dependencies {
 
     compile "org.yaml:snakeyaml:${snakeyamlVersion}"
     provided "org.grails:grails-plugin-domain-class"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.0.10"
+    runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.mockito:mockito-core"
     testCompile "org.grails:grails-web-testing-support"
