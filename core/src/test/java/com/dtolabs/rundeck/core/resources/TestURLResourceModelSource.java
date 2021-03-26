@@ -31,9 +31,11 @@ import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
+import org.apache.http.Header;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.message.BasicHeader;
 
 import java.io.*;
 import java.util.HashMap;
@@ -165,21 +167,27 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
     static class test1 implements URLFileUpdater.httpClientInteraction{
         int httpResultCode=0;
         private String httpStatusText;
-        InputStream bodyStream;
-        HttpMethod method;
-        HttpClient client;
-        IOException toThrowExecute;
+        InputStream         bodyStream;
+        HttpUriRequest      request;
+        CloseableHttpClient client;
+        HttpClientContext   context;
+        IOException         toThrowExecute;
         IOException toThrowResponseBody;
         boolean releaseConnectionCalled;
         Boolean followRedirects;
-        HashMap<String, String> requestHeaders = new HashMap<String, String>();
+        HashMap<String, String> requestHeaders  = new HashMap<String, String>();
         HashMap<String, Header> responseHeaders = new HashMap<String, Header>();
 
-        public void setMethod(HttpMethod method) {
-            this.method=method;
+        @Override
+        public void setContext(final HttpClientContext context) {
+            this.context = context;
         }
 
-        public void setClient(HttpClient client) {
+        public void setRequest(HttpUriRequest request) {
+            this.request=request;
+        }
+
+        public void setClient(CloseableHttpClient client) {
             this.client=client;
         }
 
@@ -223,7 +231,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         final test1 test1 = new test1();
         test1.httpResultCode=200;
         test1.httpStatusText="OK";
-        test1.responseHeaders.put("Content-Type", new Header("Content-Type", "text/yaml"));
+        test1.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/yaml"));
         String yamlcontent = YAML_NODES_TEST;
         ByteArrayInputStream stringStream = new ByteArrayInputStream(yamlcontent.getBytes());
         test1.bodyStream=stringStream;
@@ -233,7 +241,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         assertEquals(1, nodes.getNodes().size());
         assertNotNull(nodes.getNode("testnode1"));
 
-        assertNotNull(test1.method);
+        assertNotNull(test1.request);
         assertNotNull(test1.client);
         assertNotNull(test1.followRedirects);
         assertNotNull(test1.releaseConnectionCalled);
@@ -250,7 +258,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         final test1 test1 = new test1();
         test1.httpResultCode=200;
         test1.httpStatusText="OK";
-        test1.responseHeaders.put("Content-Type", new Header("Content-Type", "text/xml"));
+        test1.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/xml"));
         ByteArrayInputStream stringStream = new ByteArrayInputStream(XML_NODES_TEXT.getBytes());
         test1.bodyStream=stringStream;
         provider.interaction= test1;
@@ -259,7 +267,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         assertEquals(1, nodes.getNodes().size());
         assertNotNull(nodes.getNode("testnode1"));
 
-        assertNotNull(test1.method);
+        assertNotNull(test1.request);
         assertNotNull(test1.client);
         assertNotNull(test1.followRedirects);
         assertNotNull(test1.releaseConnectionCalled);
@@ -276,10 +284,10 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         final test1 test1 = new test1();
         test1.httpResultCode=200;
         test1.httpStatusText="OK";
-        test1.responseHeaders.put("Content-Type", new Header("Content-Type", "text/yaml"));
+        test1.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/yaml"));
         //include etag, last-modified
-        test1.responseHeaders.put("ETag", new Header("ETag", "monkey1"));
-        test1.responseHeaders.put("Last-Modified", new Header("Last-Modified", "blahblee"));
+        test1.responseHeaders.put("ETag", new BasicHeader("ETag", "monkey1"));
+        test1.responseHeaders.put("Last-Modified", new BasicHeader("Last-Modified", "blahblee"));
 
         final ByteArrayInputStream stringStream = new ByteArrayInputStream(YAML_NODES_TEST.getBytes());
         test1.bodyStream=stringStream;
@@ -290,7 +298,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         assertEquals(1, nodes.getNodes().size());
         assertNotNull(nodes.getNode("testnode1"));
 
-        assertNotNull(test1.method);
+        assertNotNull(test1.request);
         assertNotNull(test1.client);
         assertNotNull(test1.followRedirects);
         assertNotNull(test1.releaseConnectionCalled);
@@ -302,8 +310,8 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         test2.httpResultCode = 304;
         test2.httpStatusText = "Not Modified";
         //include etag, last-modified
-        test2.responseHeaders.put("ETag", new Header("ETag", "monkey1"));
-        test2.responseHeaders.put("Last-Modified", new Header("Last-Modified", "blahblee"));
+        test2.responseHeaders.put("ETag", new BasicHeader("ETag", "monkey1"));
+        test2.responseHeaders.put("Last-Modified", new BasicHeader("Last-Modified", "blahblee"));
 
         test2.bodyStream = null;
         provider.interaction = test2;
@@ -313,7 +321,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         assertEquals(1, nodes2.getNodes().size());
         assertNotNull(nodes2.getNode("testnode1"));
 
-        assertNotNull(test2.method);
+        assertNotNull(test2.request);
         assertNotNull(test2.client);
         assertNotNull(test2.followRedirects);
         assertNotNull(test2.releaseConnectionCalled);
