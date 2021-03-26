@@ -32,4 +32,10 @@ class LogFileStorageRequest {
         pluginName maxSize: 255
         filetype nullable: true
     }
+
+    static mapping = {
+        DomainIndexHelper.generate(delegate) {
+            index 'LOGFILESTORAGE_IDX_1', ['completed']
+        }
+    }
 }
