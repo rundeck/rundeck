@@ -492,5 +492,26 @@ databaseChangeLog = {
         addForeignKeyConstraint(baseColumnNames: "workflow_id", baseTableName: "execution", constraintName: "FKs7kalwep0lr5r39cntcu0pev6", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "workflow", validate: "true")
     }
 
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-76") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                indexExists (tableName:"execution", indexName: "EXEC_IDX_7")
+            }
+        }
+        createIndex(indexName: "EXEC_IDX_7", tableName: "execution") {
+            column(name: "server_nodeuuid")
+        }
+    }
+
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-77") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                indexExists (tableName:"log_file_storage_request", indexName: "LOGFILESTORAGE_IDX_1")
+            }
+        }
+        createIndex(indexName: "LOGFILESTORAGE_IDX_1", tableName: "log_file_storage_request") {
+            column(name: "completed")
+        }
+    }
 
 }

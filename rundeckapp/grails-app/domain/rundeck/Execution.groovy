@@ -162,6 +162,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
             index 'EXEC_IDX_4', ['dateCompleted', 'scheduledExecution']
             index 'EXEC_IDX_5', ['scheduledExecution', 'status']
             index 'EXEC_IDX_6', ['user','dateStarted']
+            index 'EXEC_IDX_7', ['serverNodeUUID']
         }
     }
 
