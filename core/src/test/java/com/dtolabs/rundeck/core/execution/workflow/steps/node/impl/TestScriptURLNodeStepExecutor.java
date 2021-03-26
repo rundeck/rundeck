@@ -38,9 +38,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
+import org.apache.http.Header;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -172,21 +173,27 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
     static class test1 implements URLFileUpdater.httpClientInteraction {
         int httpResultCode = 0;
         private String httpStatusText;
-        InputStream bodyStream;
-        HttpMethod method;
-        HttpClient client;
-        IOException toThrowExecute;
+        InputStream    bodyStream;
+        HttpUriRequest      request;
+        CloseableHttpClient client;
+        HttpClientContext context;
+        IOException         toThrowExecute;
         IOException toThrowResponseBody;
         boolean releaseConnectionCalled;
         Boolean followRedirects;
-        HashMap<String, String> requestHeaders = new HashMap<String, String>();
+        HashMap<String, String> requestHeaders  = new HashMap<String, String>();
         HashMap<String, Header> responseHeaders = new HashMap<String, Header>();
 
-        public void setMethod(HttpMethod method) {
-            this.method = method;
+        @Override
+        public void setContext(final HttpClientContext context) {
+            this.context = context;
         }
 
-        public void setClient(HttpClient client) {
+        public void setRequest(HttpUriRequest request) {
+            this.request = request;
+        }
+
+        public void setClient(CloseableHttpClient client) {
             this.client = client;
         }
 

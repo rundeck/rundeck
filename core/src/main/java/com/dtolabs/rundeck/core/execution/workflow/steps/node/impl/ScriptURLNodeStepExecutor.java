@@ -45,14 +45,14 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.Converter;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.httpclient.URIException;
-import org.apache.commons.httpclient.util.URIUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -216,16 +216,16 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
 
     public static final Converter<String, String> urlPathEncoder = s -> {
         try {
-            return URIUtil.encodeWithinPath(s, UTF_8);
-        } catch (URIException e) {
+            return URLEncoder.encode(s,UTF_8).replace("+","%20");
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             return s;
         }
     };
     public static final Converter<String, String> urlQueryEncoder = s -> {
         try {
-            return URIUtil.encodeWithinQuery(s, UTF_8);
-        } catch (URIException e) {
+            return URLEncoder.encode(s,UTF_8).replace("+","%20");
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             return s;
         }

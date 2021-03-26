@@ -39,9 +39,12 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
-import org.apache.commons.httpclient.Header
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.HttpMethod
+import org.apache.http.Header
+import org.apache.http.HttpRequest
+import org.apache.http.client.methods.HttpUriRequest
+import org.apache.http.client.protocol.HttpClientContext
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.message.BasicHeader
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -137,7 +140,7 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
 
         interaction.httpResultCode = 200
         interaction.httpStatusText = "OK"
-        interaction.responseHeaders.put("Content-Type", new Header("Content-Type", "text/plain"))
+        interaction.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/plain"))
         String testcontent = "test script content @data.value@"
         ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
         interaction.bodyStream = stringStream
@@ -234,7 +237,7 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
 
         interaction.httpResultCode = 200
         interaction.httpStatusText = "OK"
-        interaction.responseHeaders.put("Content-Type", new Header("Content-Type", "text/plain"))
+        interaction.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/plain"))
         String testcontent = "test script content"
         ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
         interaction.bodyStream = stringStream
@@ -308,7 +311,7 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
 
         interaction.httpResultCode = 200
         interaction.httpStatusText = "OK"
-        interaction.responseHeaders.put("Content-Type", new Header("Content-Type", "text/plain"))
+        interaction.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/plain"))
         String testcontent = "test script content"
         ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
         interaction.bodyStream = stringStream
@@ -460,22 +463,15 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
         int httpResultCode = 0
         private String httpStatusText
         InputStream bodyStream
-        HttpMethod method
-        HttpClient client
+        HttpUriRequest request
+        CloseableHttpClient client
+        HttpClientContext context
         IOException toThrowExecute
         IOException toThrowResponseBody
         boolean releaseConnectionCalled
         Boolean followRedirects
         HashMap<String, String> requestHeaders = new HashMap<String, String>()
         HashMap<String, Header> responseHeaders = new HashMap<String, Header>()
-
-        void setMethod(HttpMethod method) {
-            this.method = method
-        }
-
-        void setClient(HttpClient client) {
-            this.client = client
-        }
 
         int executeMethod() throws IOException {
             return httpResultCode

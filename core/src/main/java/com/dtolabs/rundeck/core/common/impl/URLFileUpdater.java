@@ -27,10 +27,16 @@ import com.dtolabs.rundeck.core.common.FileUpdater;
 import com.dtolabs.rundeck.core.common.FileUpdaterException;
 import com.dtolabs.rundeck.core.common.URLFileUpdaterFactory;
 import com.dtolabs.utils.Streams;
-import org.apache.commons.httpclient.*;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpClientParams;
+import org.apache.http.*;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,9 +81,11 @@ public class URLFileUpdater implements FileUpdater {
      * Interface for interaction with HTTPClient api, or mock instance.
      */
     public static interface httpClientInteraction {
-        public void setMethod(HttpMethod method);
+        public void setContext(HttpClientContext context);
 
-        public void setClient(HttpClient client);
+        public void setRequest(HttpUriRequest request);
+
+        public void setClient(CloseableHttpClient client);
 
         public int executeMethod() throws IOException;
 
@@ -95,43 +103,53 @@ public class URLFileUpdater implements FileUpdater {
     }
 
     static final class normalInteraction implements httpClientInteraction {
-        private HttpMethod method;
-        private HttpClient client;
+        private HttpUriRequest request;
+        private CloseableHttpClient     client;
+        private HttpResponse   response;
+        private HttpClientContext context;
 
-        public void setMethod(HttpMethod method) {
-            this.method = method;
+        @Override
+        public void setContext(final HttpClientContext context) {
+            this.context = context;
         }
 
-        public void setClient(HttpClient client) {
+        public void setRequest(HttpUriRequest request) {
+            this.request = request;
+        }
+
+        public void setClient(CloseableHttpClient client) {
             this.client = client;
         }
 
         public int executeMethod() throws IOException {
-            return client.executeMethod(method);
+            response = context != null ? client.execute(request,context) : client.execute(request);
+            return response.getStatusLine().getStatusCode();
         }
 
         public String getStatusText() {
-            return method.getStatusText();
+            return response.getStatusLine().getReasonPhrase();
         }
 
         public InputStream getResponseBodyAsStream() throws IOException {
-            return method.getResponseBodyAsStream();
+            return response.getEntity().getContent();
         }
 
         public void releaseConnection() {
-            method.releaseConnection();
+            try {
+                client.close();
+            } catch (IOException ignored) {}
         }
 
         public void setRequestHeader(String name, String value) {
-            method.setRequestHeader(name, value);
+            request.addHeader(name, value);
         }
 
         public Header getResponseHeader(String name) {
-            return method.getResponseHeader(name);
+            return response.getFirstHeader(name);
         }
 
         public void setFollowRedirects(boolean follow) {
-            method.setFollowRedirects(follow);
+
         }
 
     }
@@ -222,14 +240,7 @@ public class URLFileUpdater implements FileUpdater {
         } else {
             cacheProperties = null;
         }
-
-        final HttpClientParams params = new HttpClientParams();
-        if (timeout > 0) {
-            params.setConnectionManagerTimeout(timeout * 1000);
-            params.setSoTimeout(timeout * 1000);
-        }
-
-        final HttpClient client = new HttpClient(params);
+        HttpClientBuilder clientBuilder = HttpClients.custom();
         AuthScope authscope = null;
         UsernamePasswordCredentials cred = null;
         boolean doauth = false;
@@ -240,7 +251,7 @@ public class URLFileUpdater implements FileUpdater {
                 doauth = true;
                 authscope = new AuthScope(url.getHost(),
                     url.getPort() > 0 ? url.getPort() : url.getDefaultPort(),
-                    AuthScope.ANY_REALM, "BASIC");
+                                          AuthScope.ANY_REALM, "BASIC");
                 cred = new UsernamePasswordCredentials(url.getUserInfo());
                 urlToUse = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
             } else if (null != username && null != password) {
@@ -248,7 +259,7 @@ public class URLFileUpdater implements FileUpdater {
                 authscope = new AuthScope(url.getHost(),
                     url.getPort() > 0 ? url.getPort() : url.getDefaultPort(),
                     AuthScope.ANY_REALM, "BASIC");
-                cred = new UsernamePasswordCredentials(username + ":" + password);
+                cred = new UsernamePasswordCredentials(username, password);
                 urlToUse = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
             }
         } catch (MalformedURLException e) {
@@ -256,11 +267,28 @@ public class URLFileUpdater implements FileUpdater {
                 e);
         }
         if (doauth) {
-            client.getParams().setAuthenticationPreemptive(true);
-            client.getState().setCredentials(authscope, cred);
+            BasicCredentialsProvider credProvider = new BasicCredentialsProvider();
+            credProvider.setCredentials(authscope,cred);
+            clientBuilder.setDefaultCredentialsProvider(credProvider);
+            AuthCache authCache = new BasicAuthCache();
+            BasicScheme basicAuth = new BasicScheme();
+            HttpHost target = new HttpHost(url.getHost(),url.getPort(),url.getProtocol());
+            authCache.put(target, basicAuth);
+            HttpClientContext localContext = HttpClientContext.create();
+            localContext.setAuthCache(authCache);
+            interaction.setContext(localContext);
         }
+        RequestConfig.Builder rqConfigBuilder = RequestConfig.custom();
+        rqConfigBuilder.setRedirectsEnabled(true);
+        if (timeout > 0) {
+            rqConfigBuilder.setConnectTimeout(timeout * 1000)
+                           .setSocketTimeout(timeout * 1000);
+        }
+
+        final CloseableHttpClient client = clientBuilder.setDefaultRequestConfig(rqConfigBuilder.build()).build();
         interaction.setClient(client);
-        interaction.setMethod(new GetMethod(urlToUse));
+
+        interaction.setRequest(new HttpGet(urlToUse));
         interaction.setFollowRedirects(true);
         if (null != acceptHeader) {
             interaction.setRequestHeader("Accept", acceptHeader);
@@ -301,9 +329,7 @@ public class URLFileUpdater implements FileUpdater {
                 throw new FileUpdaterException(
                     "Unable to retrieve content: result code: " + resultCode + " " + reasonCode);
             }
-        } catch (HttpException e) {
-            throw new FileUpdaterException(e);
-        } catch (IOException e) {
+        }  catch (IOException e) {
             throw new FileUpdaterException(e);
         } finally {
             interaction.releaseConnection();
