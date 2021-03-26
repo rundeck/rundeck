@@ -1,15 +1,15 @@
 databaseChangeLog = {
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-29", failOnError:"false", dbms:"mysql,mssql,postgresql") {
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-29", failOnError:"false", dbms:"mysql,mssql,postgresql,mariadb") {
         addUniqueConstraint(columnNames: "token", constraintName: "UC_AUTH_TOKENTOKEN_COL", tableName: "auth_token")
     }
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-30", failOnError:"false", dbms:"mysql,mssql,postgresql") {
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-30", failOnError:"false", dbms:"mysql,mssql,postgresql,mariadb") {
         addUniqueConstraint(columnNames: "execution_id", constraintName: "UC_LOG_FILE_STORAGE_REQUESTEXECUTION_ID_COL", tableName: "log_file_storage_request")
     }
 
 
-    changeSet(author: "rundeckuser (generated)", id: "3.4.0-31", failOnError:"false", dbms:"mysql,mssql,postgresql") {
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-31", failOnError:"false", dbms:"mysql,mssql,postgresql,mariadb") {
         addUniqueConstraint(columnNames: "name", constraintName: "UC_PROJECTNAME_COL", tableName: "project")
     }
 //////////////////////////////////////// Oracle Specific ///////////////////////////////////////////////////////////////
