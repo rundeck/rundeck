@@ -1385,7 +1385,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 authorizeProjectExecutionAny(_, exec, _) >> true
 
                 _ * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext) {
-                    getRoles() >> ['a', 'b']
+                    getRoles() >> roles
                     getUsername() >> 'bob'
                 }
             }
@@ -1393,10 +1393,19 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         def result = controller.createFromExecution()
         then:
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
-            1 * prepareCreateEditJob(params, _, _,_) >> [scheduledExecution: new ScheduledExecution()]
+            1 * prepareCreateEditJob(params, _, _,_) >> {
+                [scheduledExecution: it[1]]
+            }
         }
         response.status == 200
         model.scheduledExecution != null
+        model.scheduledExecution.userRoleList == userRoleList
+        model.scheduledExecution.userRoles == roles
+
+        where:
+        roles                   | userRoleList
+        ['a', 'b']              | "[\"a\",\"b\"]"
+        ['a, with commas', 'b'] | "[\"a, with commas\",\"b\"]"
     }
 
 

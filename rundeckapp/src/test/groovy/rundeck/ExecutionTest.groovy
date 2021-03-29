@@ -58,6 +58,36 @@ class ExecutionTest extends HibernateSpec  {
         assertFalse("Invalid: "+se.errors.allErrors*.toString().join(","), validate)
         assertTrue(se.errors.hasFieldErrors('serverNodeUUID'))
     }
+
+    void "testUserRoleListAsString"() {
+        when:
+        Execution se = createBasicExecution()
+        se.userRoleList = userRolesListAsString
+        def x = se.getUserRoles()
+        then:
+        assertEquals "incorrect number of roles found", userRoles.size(), x.size()
+        assertEquals "invalid role item", userRoles, x
+
+        where:
+        userRoles         | userRolesListAsString
+        ["a", "b", "c"]   | "a,b,c"
+        []                | null
+    }
+
+    void "testSetUserRoles"() {
+        when:
+        Execution se = createBasicExecution()
+        se.setUserRoles(userRoles)
+        then:
+        assertEquals "incorrect string value", userRolesList, se.userRoleList
+        assertEquals "incorrect user roles list", result, se.getUserRoles()
+
+        where:
+        userRoles                                | userRolesList                                    | result
+        ["a", "b", "c"]                          | "[\"a\",\"b\",\"c\"]"                            | ["a", "b", "c"]
+        ["a, with commas", "b with spaces", "c"] | "[\"a, with commas\",\"b with spaces\",\"c\"]"   | ["a, with commas", "b with spaces", "c"]
+        null                                     | null                                             | []
+    }
     void testValidRetry() {
         when:
         Execution se = createBasicExecution()

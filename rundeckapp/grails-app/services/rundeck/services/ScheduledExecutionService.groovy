@@ -3321,7 +3321,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def scheduledExecution = importedJob.job
         scheduledExecution.user = authContext.username
-        scheduledExecution.userRoleList = authContext.roles.join(',')
+        scheduledExecution.userRoles = authContext.roles as List<String>
         Map validation=[:]
         boolean failed  = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
 
@@ -3456,7 +3456,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def scheduledExecution = importedJob.job
         scheduledExecution.user = authContext.username
-        scheduledExecution.userRoleList = authContext.roles.join(',')
+        scheduledExecution.userRoles = authContext.roles as List<String>
 
         Map validation = [:]
         boolean failed = !validateJobDefinition(importedJob, authContext, params, validation, validateJobref)
