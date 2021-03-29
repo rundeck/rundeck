@@ -274,7 +274,7 @@
             </div>
           </div>
           <div class="modal-footer">
-              <g:actionSubmit action="exportInstancePrepare" class="small btn btn-primary" value="${message(code:'export.another.instance.go')}" />
+              <g:actionSubmit action="exportInstancePrepare" class="btn btn-cta" value="${message(code:'export.another.instance.go')}" />
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
