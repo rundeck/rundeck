@@ -133,7 +133,7 @@
             <g:message code="project.access.control.prompt" args="${[params.project]}"/>
             <span class="label label-default">${acllist?.size() ?: 0}</span>
             <g:if test="${hasCreateAuth}">
-              <div class="btn-group pull-right">
+              <div class="pull-right">
                 <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclUpload">
                   <g:icon name="upload"/>
                   <g:message code="button.action.Upload"/>
