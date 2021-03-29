@@ -526,12 +526,12 @@
                         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                           <g:link controller="scheduledExecution" action="create"
                                                             params="[project: params.project ?: request.project]"
-                               class="btn btn-default btn-xs">
+                               class="btn btn-cta">
                                 <g:message code="job.create.button" />
                           </g:link>
                           <g:link controller="scheduledExecution" action="upload"
                                                             params="[project: params.project ?: request.project]"
-                               class="btn btn-default btn-xs">
+                               class="btn btn-default">
                                 <g:message code="job.upload.button.title" />
                           </g:link>
                         </auth:resourceAllowed>
