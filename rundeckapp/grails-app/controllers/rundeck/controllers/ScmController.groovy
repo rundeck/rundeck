@@ -1130,8 +1130,9 @@ class ScmController extends ControllerBase {
             jobIds = ScheduledExecution.createCriteria().list{
                 eq('project', params.project)
                 cache(false)
-            }.collect {
-                it.extid
+                projections {
+                    property("uuid")
+                }
             }
             if (integration == 'export') {
                 deletedPaths = scmService.deletedExportFilesForProject(params.project)
