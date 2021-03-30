@@ -154,7 +154,7 @@ dependencies {
     runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
     runtime "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    runtime "org.apache.tomcat:tomcat-jdbc:9.0.39"
+    runtime "org.apache.tomcat:tomcat-jdbc:9.0.44"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     assets ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
