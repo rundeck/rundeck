@@ -76,6 +76,24 @@ commands:
             - ~/.gradle/caches
           key: v2-gradle-cache-{{ .Branch }}-<<pipeline.number>>
 
+  fetch-common-artifacts:
+    description: Fetch common build artifacts
+    steps:
+      - run:
+          name: Fetch Artifacts
+          command: |
+            source .circleci/travis-shim.sh
+            fetch_common_artifacts
+            pull_rdtest
+
+  fetch-ci-resources:
+    description: Fetch CI resources build artifacts
+    steps:
+      - run:
+          name: Fetch CI Resources
+          command: |
+            source .circleci/travis-shim.sh
+            fetch_common_resources
 
 jobs:
   build:
@@ -136,12 +154,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          name: Fetch Artifacts
-          command: |
-            source .circleci/travis-shim.sh
-            fetch_common_artifacts
-            pull_rdtest
+      - fetch-common-artifacts
       - run:
           name: Test
           command: |
@@ -169,12 +182,7 @@ jobs:
         type: string
     steps:
       - checkout
-      - run:
-          name: Fetch Artifacts
-          command: |
-            source .circleci/travis-shim.sh
-            fetch_common_artifacts
-            pull_rdtest
+      - fetch-common-artifacts
       - run:
           name: Test
           command: |
@@ -233,6 +241,21 @@ jobs:
           command: |
             source .circleci/travis-shim.sh
             bash scripts/travis-build.sh publish_oss
+
+  maven-publish:
+    <<: *defaults
+    executor: gradle-docker
+    steps:
+      - checkout
+      - restore-gradle-cache
+      - setup_remote_docker
+      - fetch-common-artifacts
+      - fetch-ci-resources
+      - run:
+          name: Publish
+          command: |
+            source .circleci/travis-shim.sh
+            DRY_RUN=false bash scripts/travis-build.sh publish
 
 stages:
   test: &stage-test
@@ -328,14 +351,13 @@ workflows:
       #     name: Publish Snapshots
       #     requires: *stage-test
       #     filters: {branches: {only: main}}
+      - maven-publish:
+          name: Maven Publish
+          requires: *stage-test
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
 
-      # Build enterprise for maint branches and tag releases
-      # - trigger-enterprise:
-      #     name: Enterprise Build
-      #     requires: *stage-test
-      #     filters:
-      #       branches: {only: [/maint-.*/, main, circle-ci]}
-      #       tags: {only: /^v.*$/}
   nightly:
     triggers:
       - schedule:

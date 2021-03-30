@@ -7,5 +7,3 @@ dependencies {
     compile project(':rundeck-authz:rundeck-authz-core')
     compile "org.yaml:snakeyaml:${snakeyamlVersion}"
 }
-
-apply from: '../bintray.gradle'
