@@ -13,7 +13,8 @@ stages:
   if: fork = false
 - name: test
   # Run tests on non-forked PR and main builds
-  if: fork = false AND (branch = main OR branch =~ ^release OR branch =~ ^maint-3 OR tag IS present)
+#  if: fork = false AND (branch = main OR branch =~ ^release OR branch =~ ^maint-3 OR tag IS present)
+  if: false
 - name: snapshot release
   if: fork = false AND type = push AND (branch = main OR branch =~ ^maint-3 OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
 - name: tag release
@@ -147,14 +148,6 @@ jobs:
     - script_block 'sync.ci-resources' fetch_common_resources
     - script_block 'sync.commit' sync_commit_to_s3
     - export VCS_URL=https://github.com/rundeck/rundeck.git
-    # Delete existing packages
-    # - script_block 'delete.deb' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck  dev-deb rundeck'
-    # - script_block 'delete.rpm-rundeck' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck'
-    - script_block 'delete.mavan-rpm-config' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck-config'
-    # Deploy new snapshot packages
-    # - script_block 'publish.deb' 'bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-deb'
-    # - script_block 'publish.rpm' 'bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm'
-    - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-maven "${RUNDECK_BUILD_NUMBER}"'
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
     # Upload to sonatype
