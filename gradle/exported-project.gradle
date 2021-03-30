@@ -165,8 +165,12 @@ tasks.withType(Sign) { t ->
 
 tasks.register('uploadExisting', Upload) {
     it.dependsOn tasks.named('signExisting'), configurations.existing
+
+    it.outputs.dir "${rootProject.buildDir}/deploy-serialize"
+
     it.configuration = configurations.existing.extendsFrom(configurations.signatures)
     it.repositories.mavenDeployer {
+        name = "${project.name}"
         repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
             authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
         }
