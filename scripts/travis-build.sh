@@ -66,13 +66,13 @@ publish() {
     ./gradlew \
         -Penvironment="${ENV}" \
         -PdryRun="${DRY_RUN}" \
-        -PbintrayUseExisting="true" \
-        -PbintrayUser="${BINTRAY_USER}" \
-        -PbintrayApiKey="${BINTRAY_API_KEY}" \
+        -Psigning.secretKeyRingFile="$(realpath ./ci-resources/secring.gpg)" \
+        -Psigning.password="${RUNDECK_SIGNING_PASSWORD}" \
+        -Psigning.keyId="${RUNDECK_SIGNING_KEYID}" \
         -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
-        bintrayUpload --info
+        uploadExisting --info
 }
 
 publish_oss() {
