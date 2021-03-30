@@ -14,25 +14,20 @@
  * limitations under the License.
  */
 
-buildscript {
-    dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
-    }
-}
-
 plugins {
     id "org.dvaske.gradle.git-build-info"
     id 'de.fuerstenau.buildconfig' version '1.1.8'
+    id "maven-publish"
 }
 import java.text.SimpleDateFormat
 
 /**
  * The Rundeck Core API build file
  **/
-apply plugin: 'com.jfrog.bintray'
 evaluationDependsOn(':rundeck-storage')
 apply plugin: 'idea'
 apply plugin: 'maven'
+
 description = 'The Rundeck Core API project'
 
 archivesBaseName = 'rundeck-core'
@@ -314,47 +309,4 @@ def buildpom={
 
 task('createPom').doLast {
     buildpom().writeTo("pom.xml")
-}
-
-bintray {
-    user = findProperty("bintrayUser")
-    key = findProperty("bintrayApiKey")
-    publish = true
-    dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
-    override = true
-
-    if (findProperty('bintrayUseExisting')) {
-        filesSpec {
-            from "$artifactDir/core/build/libs"
-            from "$artifactDir/core/build/poms"
-            into "${project.group}.rundeck-${project.name}".replace('.', '/') + "/$version"
-            rename { file ->
-                if (file =~ /^pom/)
-                    return "rundeck-$project.name-${version}.pom"
-                else
-                    return file
-            }
-        }
-    } else {
-        configurations =  ['archives']
-    }
-
-    pkg {
-        repo = 'maven'
-        name = archivesBaseName
-        userOrg = 'rundeck'
-
-        version {
-            mavenCentralSync {
-                sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-                user = findProperty('sonatypeUsername') //OSS user token: mandatory
-                password = findProperty('sonatypePassword') //OSS user password: mandatory
-            }
-
-            gpg {
-                sign = true //Determines whether to GPG sign the files. The default is false
-                passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
-            }
-        }
-    }
 }
