@@ -68,6 +68,50 @@ class ProjectNodesEnhancerSpec extends Specification {
 
     }
 
+    def "get project nodes and update status"() {
+        given:
+            def sut = new ProjectNodesEnhancer()
+            def projectnodes = Mock(IProjectNodes)
+            sut.projectNodes = projectnodes
+            def nodeA = new NodeEntryImpl('nodeA')
+            nodeA.attributes.put('attrA', 'valA1')
+            nodeA.attributes.put('attrB', 'valB1')
+            nodeA.getTags().add('tagA')
+            nodeA.getTags().add('tagB')
+
+            def nodeB = new NodeEntryImpl('nodeB')
+            nodeB.getTags().add('tagB')
+            def nodeSet = new NodeSetImpl()
+            nodeSet.putNodes([nodeA, nodeB])
+
+            def plugin1 = Mock(NodeEnhancerPlugin)
+            sut.plugins << new TypedNodeEnhancerPlugin(plugin1, 'testPlugin')
+
+
+            def newNodeA = new NodeEntryImpl('nodeA')
+            newNodeA.attributes.put('attrB', 'valB2')
+
+
+        when:
+            def result = sut.getNodeSet(true)
+        then:
+            1 * projectnodes.getNodeSet() >> nodeSet
+
+            1 * plugin1.updateNode(null, {it.nodename=='nodeA'}, true) >> {
+                it[1].addAttribute 'attrB', 'valB2'
+                it[1].removeTag('tagA')
+            }
+            1 * plugin1.updateNode(null, {it.nodename=='nodeB'}, true)
+            result
+            result.nodeNames.containsAll(['nodeA', 'nodeB'])
+            nodeA.tags == new HashSet(['tagA', 'tagB'])
+            result.getNode('nodeA').tags == new HashSet([ 'tagB'])
+            result.getNode('nodeA').attributes == [nodename: 'nodeA', attrA: 'valA1', attrB: 'valB2']
+
+            result.getNode('nodeB') == nodeB
+
+    }
+
 
     def "get project nodes skipping plugin"() {
         given:
