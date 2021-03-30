@@ -22,8 +22,6 @@
  * Groovy syntax highlighting for gradle build files (like this one)
  **/
 
-import org.gradle.plugins.signing.Sign
-
 buildscript {
     repositories {
         maven {
@@ -42,7 +40,6 @@ buildscript {
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath group: 'org.yaml', name: 'snakeyaml', version: '1.26'
         classpath 'org.owasp:dependency-check-gradle:5.3.2'
     }
@@ -53,6 +50,7 @@ plugins {
     id "org.dvaske.gradle.git-build-info" version "0.8"
     id "com.dorongold.task-tree" version "1.5"
     id "org.ajoberstar.grgit" version "2.2.1"
+    id "signing"
 }
 
 apply plugin: 'java'
@@ -185,180 +183,7 @@ gradle.taskGraph.whenReady { taskGraph ->
 //subproject libs that are uploaded to maven central
 exportedProjects.each {
     project(it) {
-        apply from: "${rootDir}/gradle/java.gradle"
-
-        configurations {
-            existing
-        }
-
-        def archiveName = project.name
-
-        if (! archiveName.startsWith('rundeck'))
-            archiveName = "rundeck-${project.name}"
-        else if (archiveName.startsWith('rundeckapp'))
-            archiveName = project.name.replace('rundeckapp', 'rundeck')
-
-        /* Modify auto-gen POM which gets picked up by Bintray */
-        install {
-            repositories.mavenInstaller {
-                pom.project {
-                    artifactId archiveName
-                    groupId project.group
-                    inceptionYear '2014'
-                    packaging 'jar'
-                    version version
-                    name "Rundeck library ${archiveName}"
-                    description project.description?:'Rundeck'
-                    url 'http://rundeck.org'
-                    licenses {
-                        license {
-                            name 'The Apache Software License, Version 2.0'
-                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                            distribution 'repo'
-                        }
-                    }
-                    scm {
-                        url 'https://github.com/rundeck/rundeck'
-                        connection 'scm:git:git@github.com/rundeck/rundeck.git'
-                        developerConnection 'scm:git:git@github.com:rundeck/rundeck.git'
-                    }
-                    developers {
-                        developer {
-                            id('gschueler')
-                            name('Greg Schueler')
-                            email('greg@rundeck.com')
-                        }
-                    }
-                    parent {
-                        groupId('org.sonatype.oss')
-                        artifactId('oss-parent')
-                        version('7')
-                    }
-                }
-            }
-        }
-
-        apply plugin: 'signing'
-
-        //********* artifact signing *********
-        if (isReleaseBuild && project.hasProperty("signing.keyId")) {
-            signing {
-                sign configurations.archives
-            }
-        } else {
-            task signArchives {
-                // do nothing
-            }
-        }
-
-        //build a pom we reuse for both maven builds and release to sonatype
-        ext.publishPom = pom {
-            project {
-                artifactId archiveName
-                groupId project.group
-                inceptionYear '2014'
-                packaging 'jar'
-                version version
-                name "Rundeck library ${archiveName}"
-                description project.description?:'Rundeck'
-                url 'http://rundeck.org'
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
-                    }
-                }
-                scm {
-                    url 'https://github.com/rundeck/rundeck'
-                    connection 'scm:git:git@github.com/rundeck/rundeck.git'
-                    developerConnection 'scm:git:git@github.com:rundeck/rundeck.git'
-                }
-                developers {
-                    developer {
-                        id('gschueler')
-                        name('Greg Schueler')
-                        email('greg@rundeck.com')
-                    }
-                }
-                parent {
-                    groupId('org.sonatype.oss')
-                    artifactId('oss-parent')
-                    version('7')
-                }
-            }
-        }
-
-        uploadArchives {
-            repositories.mavenDeployer {
-                configuration = configurations.archives
-                    repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
-                        authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
-                    }
-                    snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-                        authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
-                    }
-                pom = project.publishPom
-            }
-        }
-
-        task copyExisting {
-            inputs.dir 'build/libs'
-            inputs.dir 'build/poms'
-            outputs.dir 'build/existing'
-
-            doLast {
-                copy {
-                    from "build/libs"
-                    from "build/poms"
-                    into "build/existing"
-                    exclude "*.original"
-                    rename { file ->
-                        if (file =~ /^pom/)
-                            return "$project.name-${version}.pom"
-                    }
-                }
-            }
-        }
-
-        task discoverExisting {
-            dependsOn copyExisting
-
-            doLast {
-                file("build/existing").eachFile {f ->
-                    artifacts {
-                        existing file: f, name: archiveName
-                    }
-                }
-            }
-        }
-
-        task configureUploadExisting {
-            dependsOn discoverExisting
-            doLast {
-                uploadExisting {
-                    repositories.mavenDeployer {
-                        dependsOn "discoverExisting"
-                        configuration = configurations.existing
-                            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
-                                authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
-                            }
-                            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-                                authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
-                            }
-                    }
-                }
-            }
-        }
-        uploadExisting.dependsOn(configureUploadExisting)
-
-        //utility to create a pom for building
-        if(!(project.name in ['core','launcher'])){
-            //:core buildfile will generate its own pom for specialized purpose
-            task('createPom').doLast {
-                publishPom.writeTo("pom.xml")
-            }
-        }
+        apply from: "${rootDir}/gradle/exported-project.gradle"
     }
 }
 
@@ -380,16 +205,6 @@ task alljavadoc(type: Javadoc) {
 
     if (JavaVersion.current().isJava8Compatible()) {
         options.addStringOption('Xdoclint:none', '-quiet')
-    }
-}
-
-/* Workaround for Bintray plugin attaching task to subprojects */
-gradle.taskGraph.whenReady { taskGraph ->
-    def tasks = taskGraph.getAllTasks()
-    tasks.each { task ->
-        if (task.name == 'bintrayUpload' && ! exportedProjects.contains(task.project.path)) {
-            task.enabled = false
-        }
     }
 }
 
