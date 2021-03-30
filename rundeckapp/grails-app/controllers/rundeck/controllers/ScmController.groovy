@@ -1127,7 +1127,10 @@ class ScmController extends ControllerBase {
         if (params.id) {
             jobIds = [params.id].flatten()
         } else {
-            jobIds = ScheduledExecution.findAllByProject(params.project).collect {
+            jobIds = ScheduledExecution.createCriteria().list{
+                eq('project', params.project)
+                cache(false)
+            }.collect {
                 it.extid
             }
             if (integration == 'export') {
