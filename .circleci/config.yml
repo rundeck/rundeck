@@ -341,7 +341,7 @@ workflows:
       #     filters: {branches: {only: main}}
       - maven-publish:
           name: Maven Publish
-          requires: build
+          requires: [build]
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
