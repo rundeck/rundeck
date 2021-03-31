@@ -247,6 +247,7 @@ jobs:
     executor: gradle-docker
     steps:
       - checkout
+      - setup_remote_docker
       - fetch-common-artifacts
       - fetch-ci-resources
       - run:
