@@ -234,6 +234,17 @@ jobs:
             source .circleci/travis-shim.sh
             bash scripts/travis-build.sh publish_oss
 
+  maven-publish:
+    <<: *defaults
+    executor: gradle-docker
+    steps:
+      - checkout
+      - run:
+          name: Publish
+          command: |
+            source .circleci/travis-shim.sh
+            bash scripts/travis-build.sh publish
+
 stages:
   test: &stage-test
   - Gradle Test
@@ -328,14 +339,13 @@ workflows:
       #     name: Publish Snapshots
       #     requires: *stage-test
       #     filters: {branches: {only: main}}
+      - maven-publish:
+          name: Maven Publish
+          requires: build
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
 
-      # Build enterprise for maint branches and tag releases
-      # - trigger-enterprise:
-      #     name: Enterprise Build
-      #     requires: *stage-test
-      #     filters:
-      #       branches: {only: [/maint-.*/, main, circle-ci]}
-      #       tags: {only: /^v.*$/}
   nightly:
     triggers:
       - schedule:
