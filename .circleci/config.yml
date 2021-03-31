@@ -93,7 +93,7 @@ commands:
           name: Fetch CI Resources
           command: |
             source .circleci/travis-shim.sh
-            fetch_ci_resources
+            fetch_common_resources
 
 jobs:
   build:
