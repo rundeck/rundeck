@@ -1467,7 +1467,7 @@ class ProjectController extends ControllerBase{
                 || (isScheduleDisabledNow != newScheduleDisabledStatus))
         if(reschedule){
             frameworkService.handleProjectSchedulingEnabledChange(
-                    project,
+                    project?.getName(),
                     isExecutionDisabledNow,
                     isScheduleDisabledNow,
                     newExecutionDisabledStatus,
