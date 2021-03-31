@@ -34,23 +34,26 @@ buildFork() {
 buildDocker() {
     docker_login
 
-    local CLEAN_TAG=$(echo $RUNDECK_BRANCH | tr '/' '-')
+    local CLEAN_TAG=$(echo "${RUNDECK_BRANCH}" | tr '/' '-')
     local BRANCH_AS_TAG=branch${CLEAN_TAG}
 
     local ECR_BUILD_TAG=${ECR_REPO}:${ECR_IMAGE_PREFIX}-build-${RUNDECK_BUILD_NUMBER}
     local ECR_BRANCH_TAG=${ECR_REPO}:${BRANCH_AS_TAG}
 
-    local CI_BRANCH_TAG=rundeck/ci:${CLEAN_TAG}
-
     ./gradlew officialBuild -Penvironment=${ENV} -PdockerTags=latest,SNAPSHOT
 
     docker tag rundeck/rundeck:latest $ECR_BUILD_TAG
     docker tag rundeck/rundeck:latest $ECR_BRANCH_TAG
-    docker tag rundeck/rundeck:latest $CI_BRANCH_TAG
 
     docker push $ECR_BUILD_TAG
     docker push $ECR_BRANCH_TAG
-    docker push $CI_BRANCH_TAG
+
+    # CircleCI tag builds do not have a branch set
+    if [[ -z "${CLEAN_TAG}" ]] ; then
+      local CI_BRANCH_TAG=rundeck/ci:${CLEAN_TAG}
+      docker tag rundeck/rundeck:latest $CI_BRANCH_TAG
+      docker push $CI_BRANCH_TAG
+    fi
 
     if [[ "${RUNDECK_MAIN_BUILD}" = true && -z "${RUNDECK_TAG}" ]] ; then
         ./gradlew officialPush -PdockerTags=SNAPSHOT
