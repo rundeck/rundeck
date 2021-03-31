@@ -76,6 +76,24 @@ commands:
             - ~/.gradle/caches
           key: v2-gradle-cache-{{ .Branch }}-<<pipeline.number>>
 
+  fetch-common-artifacts:
+    description: Fetch common build artifacts
+    steps:
+      - run:
+          name: Fetch Artifacts
+          command: |
+            source .circleci/travis-shim.sh
+            fetch_common_artifacts
+            pull_rdtest
+
+  fetch-ci-resources:
+    description: Fetch CI resources build artifacts
+    steps:
+      - run:
+          name: Fetch CI Resources
+          command: |
+            source .circleci/travis-shim.sh
+            fetch_ci_resources
 
 jobs:
   build:
@@ -136,12 +154,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          name: Fetch Artifacts
-          command: |
-            source .circleci/travis-shim.sh
-            fetch_common_artifacts
-            pull_rdtest
+      - fetch-common-artifacts
       - run:
           name: Test
           command: |
@@ -169,12 +182,7 @@ jobs:
         type: string
     steps:
       - checkout
-      - run:
-          name: Fetch Artifacts
-          command: |
-            source .circleci/travis-shim.sh
-            fetch_common_artifacts
-            pull_rdtest
+      - fetch-common-artifacts
       - run:
           name: Test
           command: |
@@ -239,6 +247,8 @@ jobs:
     executor: gradle-docker
     steps:
       - checkout
+      - fetch-common-artifacts
+      - fetch-ci-resources
       - run:
           name: Publish
           command: |
