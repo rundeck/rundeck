@@ -49,7 +49,7 @@ buildDocker() {
     docker push $ECR_BRANCH_TAG
 
     # CircleCI tag builds do not have a branch set
-    if [[ -z "${CLEAN_TAG}" ]] ; then
+    if [[ ! -z "${CLEAN_TAG}" ]] ; then
       local CI_BRANCH_TAG=rundeck/ci:${CLEAN_TAG}
       docker tag rundeck/rundeck:latest $CI_BRANCH_TAG
       docker push $CI_BRANCH_TAG
