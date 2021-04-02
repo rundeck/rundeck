@@ -105,9 +105,9 @@
                             <div class="list-group-item">
                                 <div class="form-group">
                                     <g:each in="${jobs}" var="job">
-                                        <div class="wassa" style="display: flex;justify-content: flex-start;align-items: center; margin-bottom:10px;">
+                                        <div class="flex justify-start items-center" style="margin-bottom:10px;">
                                             <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
-                                            <div class="checkbox" style="margin-top: 0;margin-left: 20px;flex:none;">
+                                            <div class="checkbox flex-none" style="margin-top: 0;margin-left: 20px;">
                                                     <g:if test="${jobstatus?.synchState?.toString() != 'CLEAN'}">
 
                                                         <g:checkBox name="id" value="${job.extid}"
@@ -140,7 +140,7 @@
                                                     <g:message code="button.View.Diff.title"/>
                                                 </g:link>
                                             </div>
-                                            <div style="display: flex; justify-content: flex-start; align-items: center; margin-left: 20px;">
+                                            <div class="flex justify-center items-center" style="margin-left: 20px;">
                                                 <g:if test="${renamedJobPaths?.get(job.extid)}">
                                                     <div class="">
                                                         <span class="text-primary">
