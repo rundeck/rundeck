@@ -1535,11 +1535,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def project = Mock(IRundeckProject){
                 getName()>>'aProject'
                 getProjectProperties()>>projectProps
-                (count) * listDirPaths('acls/')>>['acls/test.aclpolicy']
-                (count) * loadFileResource('acls/test.aclpolicy',_)>>{
-                    it[1]<<'acl data'
-                    'acl data'.bytes.length
-                }
+                0 * listDirPaths(_)
+                0 * loadFileResource(*_)
             }
             def framework = Mock(IFramework)
             def output = new ZipOutputStream(temp.newOutputStream())
@@ -1551,6 +1548,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def listener = Mock(ProgressListener)
             service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.scmService = Mock(ScmService)
+            service.aclFileManagerService=Mock(AclFileManagerService)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1558,6 +1556,14 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             1 * listener.total('export', count)
             (count) * listener.inc('export', 1)
             1 * listener.done()
+            (count) * service.aclFileManagerService.forContext(AppACLContext.project('aProject')) >>
+            Mock(ACLFileManager) {
+                (count) * listStoredPolicyFiles() >> ['test.aclpolicy']
+                (count) * loadPolicyFileContents('test.aclpolicy', _) >> {
+                    it[1] << 'acl data'
+                    'acl data'.bytes.length
+                }
+            }
             _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
             1 * service.rundeckAuthContextEvaluator.authResourceForProjectAcl('aProject') >> [test2: 'resource']
             1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test2: 'resource'], ['read','admin'])>>aclAuth

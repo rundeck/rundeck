@@ -865,13 +865,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                             if (isExportAcls) {
                                 //acls
-                                def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
+                                def manager = aclFileManagerService.forContext(AppACLContext.project(project.name))
+                                def policies = manager.listStoredPolicyFiles()
                                 if (policies) {
                                     dir('acls/') {
-                                        policies.each { path ->
-                                            def fname = path.substring('acls/'.length())
+                                        policies.each { fname ->
                                             zip.fileStream(fname) { OutputStream stream ->
-                                                project.loadFileResource(path, stream)
+                                                manager.loadPolicyFileContents(fname,stream)
                                             }
                                         }
                                     }
