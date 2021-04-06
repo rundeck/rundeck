@@ -140,7 +140,7 @@
                                                     <g:message code="button.View.Diff.title"/>
                                                 </g:link>
                                             </div>
-                                            <div class="flex justify-center items-center" style="margin-left: 20px;">
+                                            <div class="" style="margin-left: 20px;">
                                                 <g:if test="${renamedJobPaths?.get(job.extid)}">
                                                     <div class="">
                                                         <span class="text-primary">
