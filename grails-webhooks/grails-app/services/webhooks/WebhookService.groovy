@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.webhook.WebhookEventContextImpl
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
@@ -43,6 +44,7 @@ class WebhookService {
     def apiService
     def messageSource
     def userService
+    def projectManagerService
     def rundeckAuthTokenManagerService
     def storageService
     def gormEventStoreService
@@ -70,6 +72,8 @@ class WebhookService {
                     new SimpleServiceProvider([(EventStoreService): scopedStore])
             )
         }
+        def keyStorageService = storageService.storageTreeWithContext(authContext)
+        contextServices = contextServices.combine(new SimpleServiceProvider([(KeyStorageTree): keyStorageService]))
 
         WebhookEventContext context = new WebhookEventContextImpl(contextServices)
 
