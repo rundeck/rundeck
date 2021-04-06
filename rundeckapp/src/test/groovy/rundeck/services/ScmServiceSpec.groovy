@@ -796,6 +796,71 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         "test2"  | "test"    | 1
         "test"   | "test"    | 0
     }
+    def "checkJobRenamed with new job should not"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        def project = "test"
+        def validated = new ValidatedPlugin(valid: true)
+
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_,_,_) >>
+                    Mock(UserAndRolesAuthContext) {
+                        getUsername() >> 'admin'
+                    }
+        }
+        def job = new ScheduledExecution()
+        job.version = 0
+        job.jobName = "test"
+        job.groupPath = "test"
+
+        def jobs = [job]
+        def integration = "export"
+        def originalMeta = null
+        def config = [:]
+
+        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+
+        service.jobMetadataService = Mock(JobMetadataService){
+            getJobPluginMeta(_,'scm-import')>>originalMeta
+        }
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
+        TestCloseable exportCloser = new TestCloseable()
+
+        when:
+        service.checkJobRenamed(project, jobs)
+        then:
+
+        1 * service.pluginConfigService.loadScmConfig(
+                project,
+                "etc/scm-${integration}.properties",
+                "scm.$integration"
+        ) >> Mock(ScmPluginConfigData) {
+            1 * getEnabled() >> true
+            getSetting("username")>>"admin"
+            getSettingList("roles")>>["admin"]
+            _ * getType() >> 'pluginType'
+            1 * getConfig() >> [plugin: 'config']
+        }
+        1 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
+        1 * exportFactory.createPlugin(_, _, true) >> plugin
+        1 * service.jobEventsService.addListenerForProject(_, 'test')
+
+        jobChangeCalls * plugin.jobChanged(_,_)
+        !service.renamedJobsCache['test']
+
+        where:
+        origName | origGroup | jobChangeCalls
+        "test2"  | "test"    | 0
+        "test"   | "test"    | 0
+    }
 
 
     def "update job plugin metadata"() {
