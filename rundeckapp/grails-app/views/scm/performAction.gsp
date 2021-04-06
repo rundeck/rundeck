@@ -192,32 +192,31 @@
                             <div class="list-group-item">
                                 <div class="form-group">
                                     <g:each in="${deletedPaths.keySet().sort()}" var="path" status="counter">
-
-                                        <div class="checkbox col-sm-12">
+                                        <div class="flex justify-start items-center" style="margin-bottom:10px;">
+                                            <div class="checkbox flex-none" style="margin-top: 0;margin-left: 20px;">
                                                 <g:checkBox name="deletePaths" value="${path}"
                                                             id="deletePaths${counter}"
                                                             checked="${selectedPaths?.contains(path)}"/>
-                                            <label for="deletePaths${counter}">
-                                                <g:set var="deletedJobText" value="${
-                                                    deletedPaths[path].jobNameAndGroup ?:
-                                                            message(code: "deleted.job.label")
-                                                }"/>
+                                                <label for="deletePaths${counter}">
+                                                    <g:set var="deletedJobText"
+                                                           value="${ deletedPaths[path].jobNameAndGroup ?: message(code: "deleted.job.label")}"/>
 
-                                                <g:render template="statusIcon"
-                                                          model="[iscommit: true, exportStatus: 'DELETED', notext: true,
-                                                                                                     text: '',]"/>
-                                                <g:render template="statusIcon"
-                                                          model="[iscommit: true, exportStatus: 'DELETED', noicon: true,
-                                                                                                     text: deletedJobText]"/>
+                                                    <g:render template="statusIcon"
+                                                              model="[iscommit: true, exportStatus: 'DELETED', notext: true,
+                                                                                                         text: '',]"/>
+                                                    <g:render template="statusIcon"
+                                                              model="[iscommit: true, exportStatus: 'DELETED', noicon: true,
+                                                                                                         text: deletedJobText]"/>
 
-                                            </label>
-                                        </div>
+                                                </label>
+                                            </div>
 
-                                        <div class="col-sm-11 col-sm-offset-1">
-                                            <span class="text-primary">
-                                                <span class="glyphicon glyphicon-file"></span>
-                                                ${path}
-                                            </span>
+                                            <div class="flex justify-center items-center" style="margin-left: 20px;">
+                                                <span class="text-primary">
+                                                    <span class="glyphicon glyphicon-file"></span>
+                                                    ${path}
+                                                </span>
+                                            </div>
                                         </div>
 
                                     </g:each>
