@@ -1,20 +1,19 @@
 <template>
-  <div v-if="displayCard" class="px-3">
-    <div class="card w-full p-6">
-      
+  <div v-if="displayCard">
+    <div class="card result flex-col">
       <div class="card-header">
         <div class="current-version-number">{{provider.pluginVersion}}</div>
-        <div class="text-4xl font-bold">
+        <h3 class="card-title">
           <span v-if="provider.title">{{provider.title}}</span>
           <span v-else>{{provider.name}}</span>
-        </div>
+        </h3>
       </div>
       <div class="card-content flex-grow">
         <div class="flexible">
           <button
             v-if="!provider.builtin"
             style="margin-bottom:1em;"
-            class="btn btn-sm btn-danger square-button"
+            class="btn btn-sm btn-block square-button"
             @click="handleUninstall(provider)"
           >Uninstall</button>
 
@@ -90,34 +89,72 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-.px-3{
-  padding-left: 0.75rem;
-  padding-right: 0.75rem; 
-}
-.p-6{
-  padding: 1.8rem;
-}
-.w-full{
-  width: 100%;
-}
-.thumbnail{
-  background-size: contain;
-  border: 1px solid #e2e8f0;
-  background-repeat: no-repeat;
-  background-position: center;
-  padding-bottom: 95%;
-}
-.font-bold{
-  font-weight: 600;
-}
-.links{
-  display: flex;
-  a{
-    margin-right: 10px;
+.card.result {
+  .card-header {
+    background: #20201f;
+    padding: 1em;
+    border-radius: 7px 7px 0 0;
+    .card-title {
+      margin: 0;
+      color: white;
+      font-weight: bold;
+      font-size: 1.4em;
+      line-height: 1.1em;
+    }
+    .support-type {
+      color: white;
+      // font-weight: bold;
+      margin: 0 0 0.25em;
+      // text-transform: uppercase;
+    }
+    .current-version-number {
+      font-size: 12px;
+      color: white;
+      margin-bottom: 5px;
+    }
+  }
+  .card-content {
+    padding: 1em;
+    // min-height: 250px;
+    .provides {
+      list-style: none;
+      margin: 2em 0 0;
+      padding: 0;
+      font-size: 12px;
+      li {
+        display: inline-block;
+        margin-right: 1em;
+        margin-bottom: 1em;
+        background-color: #d8d8d8;
+        padding: 6px 10px 5px;
+        border-radius: 50px;
+        color: #6e6e6e;
+      }
+    }
+  }
+  .card-footer {
+    margin-bottom: 0;
+    padding: 0 2em auto;
+    border-radius: 0 0 7px 7px;
+    .links {
+      a {
+        color: #20201f;
+        text-decoration: none;
+        margin-right: 0.6em;
+      }
+    }
+    .provider-builtin-icon,
+    .info-icon {
+      i {
+        font-size: 18px;
+      }
+    }
+    .info-icon {
+      float: right;
+    }
   }
 }
-.text-4xl{
-  font-size: 2.25rem;
-  line-height: 2.5rem;
+.btn.square-button {
+  border-radius: 5px;
 }
 </style>

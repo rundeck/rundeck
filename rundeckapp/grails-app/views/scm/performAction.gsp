@@ -42,8 +42,7 @@
 </div>
 
 <div class="row">
-    <div class="col-sm-12 ">
-    <div class="card">
+    <div class="col-sm-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
         <g:form action="performActionSubmit"
                 params="${[project: params.project, integration: integration]}"
                 useToken="true"
@@ -51,7 +50,7 @@
             <g:hiddenField name="allJobs" value="${params.allJobs}"/>
             <g:hiddenField name="actionId" value="${params.actionId}"/>
             <g:set var="serviceName" value="${integration=='export'?'ScmExport':'ScmImport'}"/>
-            <div class="panel" id="createform" style="margin-bottom: 0;">
+            <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
 
@@ -105,68 +104,67 @@
                             <div class="list-group-item">
                                 <div class="form-group">
                                     <g:each in="${jobs}" var="job">
-                                        <div class="flex justify-start items-center" style="margin-bottom:10px;">
-                                            <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
-                                            <div class="checkbox flex-none" style="margin-top: 0;margin-left: 20px;">
-                                                    <g:if test="${jobstatus?.synchState?.toString() != 'CLEAN'}">
+                                        <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
+                                        <div class="checkbox col-sm-12">
 
-                                                        <g:checkBox name="id" value="${job.extid}"
-                                                                    id="id${job.extid}"
-                                                                    checked="${selected?.contains(job.extid)}"/>
-                                                    </g:if>
-                                                <label for="id${job.extid}">
-                                                    <g:render template="statusIcon"
-                                                            model="[iscommit          : true,
-                                                                    exportStatus: jobstatus?.synchState?.toString(),
-                                                                    notext: true,
-                                                                    integration:integration,
-                                                                    text: '',
-                                                                    commit: jobstatus?.commit]"/>
-                                                    <g:render template="statusIcon"
-                                                            model="[iscommit          : true,
-                                                                    exportStatus: jobstatus?.synchState?.toString(),
-                                                                    noicon: true,
-                                                                    integration:integration,
-                                                                    text: job.jobName,
-                                                                    commit: jobstatus?.commit]"/>
 
-                                                    <span class="text-primary">
-                                                        - ${job.groupPath}
-                                                    </span>
+                                                <g:if test="${jobstatus?.synchState?.toString() != 'CLEAN'}">
 
-                                                </label>
-                                                <g:link action="diff" class="btn btn-xs btn-info"
-                                                        params="${[project: params.project, id: job.extid, integration: 'export']}">
-                                                    <g:message code="button.View.Diff.title"/>
-                                                </g:link>
-                                            </div>
-                                            <div class="flex justify-center items-center" style="margin-left: 20px;">
-                                                <g:if test="${renamedJobPaths?.get(job.extid)}">
-                                                    <div class="">
-                                                        <span class="text-primary">
-                                                            <g:icon name="file"/>
-                                                            ${renamedJobPaths[job.extid]}
-
-                                                            <g:hiddenField
-                                                                    name="renamedPaths.${job.extid}"
-                                                                    value="${renamedJobPaths[job.extid]}"/>
-                                                        </span>
-                                                    </div>
+                                                    <g:checkBox name="id" value="${job.extid}"
+                                                                id="id${job.extid}"
+                                                                checked="${selected?.contains(job.extid)}"/>
                                                 </g:if>
-                                                <g:if test="${filesMap?.get(job.extid)}">
-                                                    <div class="">
-                                                        <span class="text-primary">
-                                                            <g:if test="${renamedJobPaths?.get(job.extid)}">
-                                                                <g:icon name="arrow-right"/>
-                                                            </g:if>
-                                                            <g:icon name="file"/>
-                                                            ${filesMap[job.extid]}
+                                            <label for="id${job.extid}">
+                                                <g:render template="statusIcon"
+                                                          model="[iscommit          : true,
+                                                                  exportStatus: jobstatus?.synchState?.toString(),
+                                                                  notext: true,
+                                                                  integration:integration,
+                                                                  text: '',
+                                                                  commit: jobstatus?.commit]"/>
+                                                <g:render template="statusIcon"
+                                                          model="[iscommit          : true,
+                                                                  exportStatus: jobstatus?.synchState?.toString(),
+                                                                  noicon: true,
+                                                                  integration:integration,
+                                                                  text: job.jobName,
+                                                                  commit: jobstatus?.commit]"/>
 
-                                                        </span>
-                                                    </div>
-                                                </g:if>
-                                            </div>
+                                                <span class="text-primary">
+                                                    - ${job.groupPath}
+                                                </span>
+
+                                            </label>
+                                            <g:link action="diff" class="btn btn-xs btn-info"
+                                                    params="${[project: params.project, id: job.extid, integration: 'export']}">
+                                                <g:message code="button.View.Diff.title"/>
+                                            </g:link>
                                         </div>
+                                        <g:if test="${renamedJobPaths?.get(job.extid)}">
+                                            <div class="col-sm-11 col-sm-offset-1">
+                                                <span class="text-primary">
+                                                    <g:icon name="file"/>
+                                                    ${renamedJobPaths[job.extid]}
+
+                                                    <g:hiddenField
+                                                            name="renamedPaths.${job.extid}"
+                                                            value="${renamedJobPaths[job.extid]}"/>
+                                                </span>
+                                            </div>
+                                        </g:if>
+                                        <g:if test="${filesMap?.get(job.extid)}">
+                                            <div class="col-sm-11 col-sm-offset-1">
+                                                <span class="text-primary">
+                                                    <g:if test="${renamedJobPaths?.get(job.extid)}">
+                                                        <g:icon name="arrow-right"/>
+                                                    </g:if>
+                                                    <g:icon name="file"/>
+                                                    ${filesMap[job.extid]}
+
+                                                </span>
+                                            </div>
+                                        </g:if>
+
                                     </g:each>
                                 </div>
                                 <g:if test="${jobs.size() > 1}">
@@ -438,18 +436,17 @@
                     </div>
                 </div>
 
-                <div class="panel-heading">
+                <div class="panel-footer">
                     <button class="btn btn-default" name="cancel" value="Cancel"><g:message
                             code="button.action.Cancel"/></button>
                     <g:submitButton
                             name="submit"
                             value="${stepplugin.messageText(service:serviceName,name:pluginDescription.name,code:'action.'+actionId+'.buttonTitle',default:actionView.buttonTitle ?:
                                     g.message(code: 'button.Export.title'))}"
-                            class="btn btn-cta"/>
+                            class="btn btn-primary"/>
                 </div>
             </div>
         </g:form>
-    </div>
     </div>
 </div>
 </div>
