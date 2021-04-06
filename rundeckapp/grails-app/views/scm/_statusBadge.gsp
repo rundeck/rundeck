@@ -34,7 +34,7 @@
             )
         }%
     </g:if>
-    <span title="${tooltips.join(", ")}" class="has_tooltip">
+    <span title="${tooltips.join(", ")}" class="has_tooltip" data-viewport="#section-content">
         <g:render template="/scm/statusIcon"
                   model="[exportStatus: exportStatus,
                           importStatus: importStatus,

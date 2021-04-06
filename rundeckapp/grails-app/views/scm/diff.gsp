@@ -73,13 +73,13 @@
                     <g:if test="${scmFilePaths && scmFilePaths[job.extid]}">
                         <g:if test="${scmExportRenamedPath}">
                             <div>
-                                <span class="has_tooltip text-primary" title="Original repo path">
+                                <span class="has_tooltip text-primary" title="Original repo path" data-viewport="#section-content">
                                     <g:icon name="file"/>
                                     ${scmExportRenamedPath}
                                 </span>
                             </div>
                         </g:if>
-                        <span class="has_tooltip" title="Repo file path">
+                        <span class="has_tooltip" title="Repo file path" data-viewport="#section-content">
                             <g:if test="${scmExportRenamedPath}">
                                 <g:icon name="arrow-right"/>
                             </g:if>
