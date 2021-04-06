@@ -119,7 +119,6 @@ tasks.register('copyExisting') {
     it.outputs.dir 'build/existing'
 
     it.doLast {
-        println('FOOOOOOO!!!!!!!!!!!')
 
         copy {
             from "build/libs"
