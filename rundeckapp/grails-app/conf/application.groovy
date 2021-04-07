@@ -185,4 +185,3 @@ grails.plugin.springsecurity.logout.handlerNames = [
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']
-

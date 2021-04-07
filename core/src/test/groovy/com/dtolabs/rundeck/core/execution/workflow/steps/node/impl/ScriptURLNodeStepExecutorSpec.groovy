@@ -21,13 +21,11 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.impl.URLFileUpdater
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
-import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.FileCopierException
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
@@ -39,12 +37,9 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
-import org.apache.http.Header
-import org.apache.http.HttpRequest
-import org.apache.http.client.methods.HttpUriRequest
-import org.apache.http.client.protocol.HttpClientContext
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.message.BasicHeader
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -63,6 +58,18 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
                 new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
                 frameworkProject
         );
+    }
+
+    @Shared
+    MockWebServer server
+
+    def setupSpec() {
+        server = new MockWebServer()
+        server.start()
+    }
+
+    def cleanupSpec() {
+        server.shutdown()
     }
 
     @Unroll
@@ -102,7 +109,6 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
 
     def "interpret command script file local"() {
         given:
-
         final Framework frameworkInstance = AbstractBaseTest.createTestFramework()
         ScriptURLNodeStepExecutor interpret = new ScriptURLNodeStepExecutor(frameworkInstance)
 
@@ -126,7 +132,7 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
                 .user("blah")
                 .dataContext(new BaseDataContext("data", [value: 'a text value']))
                 .build()
-        final String urlString = "http://test.com"
+        final String urlString = server.url("/").toString()
         ScriptURLCommandBase command = createCommandBase(urlString, expandToken)
         
         when:
@@ -136,16 +142,9 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
         nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
         testexec.testResult = nodeExecutorResults
         testcopier.testResult = "/test/file/path"
-        final HttpClientInteractionTest interaction = new HttpClientInteractionTest()
 
-        interaction.httpResultCode = 200
-        interaction.httpStatusText = "OK"
-        interaction.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/plain"))
         String testcontent = "test script content @data.value@"
-        ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
-        interaction.bodyStream = stringStream
-
-        interpret.setInteraction(interaction)
+        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
 
         final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
 
@@ -222,7 +221,7 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
                 .framework(frameworkInstance)
                 .user("blah")
                 .build()
-        final String urlString = "http://test.com"
+        final String urlString = server.url("/").toString()
         String fileExtension = "myext";
         ScriptURLCommandBase command = createCommandBase(urlString, false, fileExtension)
 
@@ -233,16 +232,9 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
         nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
         testexec.testResult = nodeExecutorResults
         testcopier.testResult = "/test/file/path"
-        final HttpClientInteractionTest interaction = new HttpClientInteractionTest()
 
-        interaction.httpResultCode = 200
-        interaction.httpStatusText = "OK"
-        interaction.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/plain"))
         String testcontent = "test script content"
-        ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
-        interaction.bodyStream = stringStream
-
-        interpret.setInteraction(interaction)
+        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
 
         final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
 
@@ -296,7 +288,7 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
                 .framework(frameworkInstance)
                 .user("blah")
                 .build()
-        final String urlString = "http://test.com"
+        final String urlString = server.url("get-script").toString()
         String invocation = 'mycommand ${scriptfile}';
         ScriptURLCommandBase command = createCommandBase(urlString, false, null, invocation)
 
@@ -307,16 +299,9 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
         nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null))
         testexec.testResult = nodeExecutorResults
         testcopier.testResult = "/test/file/path"
-        final HttpClientInteractionTest interaction = new HttpClientInteractionTest()
 
-        interaction.httpResultCode = 200
-        interaction.httpStatusText = "OK"
-        interaction.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/plain"))
         String testcontent = "test script content"
-        ByteArrayInputStream stringStream = new ByteArrayInputStream(testcontent.getBytes())
-        interaction.bodyStream = stringStream
-
-        interpret.setInteraction(interaction)
+        server.enqueue(new MockResponse().setResponseCode(200).setHeader("Content-Type","text/plain").setBody(testcontent))
 
         final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1)
 
@@ -459,47 +444,4 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
 
     }
 
-    static class HttpClientInteractionTest implements URLFileUpdater.httpClientInteraction {
-        int httpResultCode = 0
-        private String httpStatusText
-        InputStream bodyStream
-        HttpUriRequest request
-        CloseableHttpClient client
-        HttpClientContext context
-        IOException toThrowExecute
-        IOException toThrowResponseBody
-        boolean releaseConnectionCalled
-        Boolean followRedirects
-        HashMap<String, String> requestHeaders = new HashMap<String, String>()
-        HashMap<String, Header> responseHeaders = new HashMap<String, Header>()
-
-        int executeMethod() throws IOException {
-            return httpResultCode
-        }
-
-        String getStatusText() {
-            return httpStatusText
-        }
-
-        InputStream getResponseBodyAsStream() throws IOException {
-            return bodyStream
-        }
-
-        void releaseConnection() {
-            releaseConnectionCalled = true
-        }
-
-        void setRequestHeader(String name, String value) {
-            requestHeaders.put(name, value)
-        }
-
-        Header getResponseHeader(String name) {
-            return responseHeaders.get(name)
-        }
-
-
-        void setFollowRedirects(boolean follow) {
-            followRedirects = follow
-        }
-    }
 }
