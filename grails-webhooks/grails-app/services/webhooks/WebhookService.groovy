@@ -44,7 +44,6 @@ class WebhookService {
     def apiService
     def messageSource
     def userService
-    def projectManagerService
     def rundeckAuthTokenManagerService
     def storageService
     def gormEventStoreService
