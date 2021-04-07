@@ -73,7 +73,6 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
     private File cacheDir;
 
     private Framework framework;
-    private URLFileUpdater.httpClientInteraction interaction;
     private ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
     public ScriptURLNodeStepExecutor(Framework framework) {
@@ -192,10 +191,6 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         }
         final URLFileUpdater updater = urlFileUpdaterBuilder.createURLFileUpdater();
         try {
-            if (null != interaction) {
-            //allow mock
-                updater.setInteraction(interaction);
-            }
             UpdateUtils.update(updater, destinationTempFile);
 
             logger.debug("Updated nodes resources file: " + destinationTempFile);
@@ -276,11 +271,4 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         return builder.toString();
     }
 
-    URLFileUpdater.httpClientInteraction getInteraction() {
-        return interaction;
-    }
-
-    void setInteraction(URLFileUpdater.httpClientInteraction interaction) {
-        this.interaction = interaction;
-    }
 }

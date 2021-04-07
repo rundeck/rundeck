@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -822,60 +824,42 @@ public class NotificationService implements ApplicationContextAware{
                 }
                 wait *= backoff
             }
-            HttpClientBuilder clientBuilder = HttpClients.custom();
-            RequestConfig.Builder rqConfigBuilder = RequestConfig.custom();
-            rqConfigBuilder.setRedirectsEnabled(true)
-            rqConfigBuilder.setConnectionRequestTimeout(timeout*1000)
-            rqConfigBuilder.setSocketTimeout(timeout*1000)
-            def URL urlo
-            def AuthScope authscope=null
-            def UsernamePasswordCredentials cred=null
-            boolean doauth=false
+            HttpClient<HttpResponse> httpClient = new ApacheHttpClient()
+            httpClient.setFollowRedirects(true)
+            httpClient.setTimeout(timeout*1000)
+
             try{
-                urlo = new URL(url)
+                URL urlo = new URL(url)
+                httpClient.setUri(urlo.toURI())
                 if(urlo.userInfo){
-                    doauth = true
-                    authscope = new AuthScope(urlo.host,urlo.port>0? urlo.port:urlo.defaultPort,AuthScope.ANY_REALM,"BASIC")
-                    cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
+                    UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    httpClient.setBasicAuthCredentials(cred.userName,cred.password)
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
             }
-            HttpClientContext localContext = null
-            if(doauth){
-                BasicCredentialsProvider credProvider = new BasicCredentialsProvider();
-                credProvider.setCredentials(authscope,cred);
-                clientBuilder.setDefaultCredentialsProvider(credProvider);
-                AuthCache authCache = new BasicAuthCache();
-                BasicScheme basicAuth = new BasicScheme();
-                HttpHost target = new HttpHost(urlo.getHost(), urlo.getPort(), urlo.getProtocol());
-                authCache.put(target, basicAuth);
-                localContext = HttpClientContext.create();
-                localContext.setAuthCache(authCache);
+
+            if(httpMethod != GET) {
+                httpClient.setMethod(HttpClient.Method.POST)
+                httpClient.addPayload(contentType,payload)
             }
 
-            def request = (httpMethod == GET) ? createGetMethod(url) : createPostMethod(url, payload, contentType)
-
-            request.addHeader(new BasicHeader("X-RunDeck-Notification-Trigger", trigger))
-            request.addHeader(new BasicHeader("X-RunDeck-Notification-Execution-ID", id))
-            request.addHeader(new BasicHeader("X-RunDeck-Notification-Execution-Status", status))
-            if(secureDigest) request.addHeader(new BasicHeader("X-RunDeck-Notification-SHA256-Digest", secureDigest))
-            final CloseableHttpClient client = clientBuilder.setDefaultRequestConfig(rqConfigBuilder.build()).build();
+            httpClient.addHeader("X-RunDeck-Notification-Trigger", trigger)
+            httpClient.addHeader("X-RunDeck-Notification-Execution-ID", id)
+            httpClient.addHeader("X-RunDeck-Notification-Execution-Status", status)
+            if(secureDigest) httpClient.addHeader("X-RunDeck-Notification-SHA256-Digest", secureDigest)
             try {
-                HttpResponse response = client.execute(request)
-                resultCode = response.statusLine.statusCode
-                resultReason = response.statusLine.reasonPhrase
-
-                if (resultCode >= 200 && resultCode <= 300) {
-                    complete=true
-                } else {
-                    error="server response: ${resultCode} ${resultReason}"
+                httpClient.execute { response ->
+                    resultCode = response.statusLine.statusCode
+                    resultReason = response.statusLine.reasonPhrase
+                    if (resultCode >= 200 && resultCode <= 300) {
+                        complete=true
+                    } else {
+                        error="server response: ${resultCode} ${resultReason}"
+                    }
                 }
             }catch (Throwable e){
                 error="Error making request: "+e.message
-            } finally {
-                client.close()
             }
             if(complete){
                 break
@@ -886,17 +870,6 @@ public class NotificationService implements ApplicationContextAware{
             return [success:complete,error:"Unable to ${httpMethod?.toUpperCase()} notification after ${count} tries: ${trigger} for execution ${id} (${status}): ${error}"]
         }
         return [success:complete]
-    }
-
-    static HttpPost createPostMethod(String url, String payload, String contentType){
-        HttpPost method = new HttpPost(url)
-        method.setEntity(new StringEntity(payload, contentType, "UTF-8"))
-        return method
-    }
-
-    static HttpGet createGetMethod(String url){
-        HttpGet method = new HttpGet(url)
-        return method
     }
 
     static String createSecureDigest(String postUrl, String trigger, id) {

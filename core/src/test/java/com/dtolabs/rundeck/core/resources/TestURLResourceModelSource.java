@@ -24,21 +24,16 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
-import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import org.apache.http.Header;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicHeader;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
 import java.io.*;
-import java.util.HashMap;
 import java.util.Properties;
 
 /**
@@ -68,6 +63,8 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
 
     IRundeckProject frameworkProject;
 
+    MockWebServer server;
+
     public void setUp() {
         super.setUp();
         final Framework frameworkInstance = getFrameworkInstance();
@@ -78,13 +75,17 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
                 new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
                 frameworkProject
         );
-
+        server = new MockWebServer();
+        try {
+            server.start();
+        } catch(Exception e) { throw new RuntimeException(e); }
     }
 
     public void tearDown() throws Exception {
         super.tearDown();
         File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
         FileUtils.deleteDir(projectdir);
+        server.shutdown();
     }
 
     public void testConfigureProperties() throws Exception {
@@ -164,170 +165,74 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         assertEquals(false, provider.configuration.useCache);
     }
 
-    static class test1 implements URLFileUpdater.httpClientInteraction{
-        int httpResultCode=0;
-        private String httpStatusText;
-        InputStream         bodyStream;
-        HttpUriRequest      request;
-        CloseableHttpClient client;
-        HttpClientContext   context;
-        IOException         toThrowExecute;
-        IOException toThrowResponseBody;
-        boolean releaseConnectionCalled;
-        Boolean followRedirects;
-        HashMap<String, String> requestHeaders  = new HashMap<String, String>();
-        HashMap<String, Header> responseHeaders = new HashMap<String, Header>();
 
-        @Override
-        public void setContext(final HttpClientContext context) {
-            this.context = context;
-        }
-
-        public void setRequest(HttpUriRequest request) {
-            this.request=request;
-        }
-
-        public void setClient(CloseableHttpClient client) {
-            this.client=client;
-        }
-
-        public int executeMethod() throws IOException {
-            return httpResultCode;
-        }
-
-        public String getStatusText() {
-            return httpStatusText;
-        }
-
-        public InputStream getResponseBodyAsStream() throws IOException {
-            return bodyStream;
-        }
-
-        public void releaseConnection() {
-            releaseConnectionCalled=true;
-        }
-
-        public void setRequestHeader(String name, String value) {
-            requestHeaders.put(name, value);
-        }
-
-        public Header getResponseHeader(String name) {
-            return responseHeaders.get(name);
-        }
-
-
-        public void setFollowRedirects(boolean follow) {
-            followRedirects=follow;
-        }
-    }
     public void testGetNodesYaml() throws Exception {
         URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
         final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
 
         build.project(PROJ_NAME);
-        build.url("http://example.com/test");
+        build.url(server.url("test").toString());
 
         provider.configure(build.getProperties());
-        final test1 test1 = new test1();
-        test1.httpResultCode=200;
-        test1.httpStatusText="OK";
-        test1.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/yaml"));
-        String yamlcontent = YAML_NODES_TEST;
-        ByteArrayInputStream stringStream = new ByteArrayInputStream(yamlcontent.getBytes());
-        test1.bodyStream=stringStream;
-        provider.interaction= test1;
+        server.enqueue(new MockResponse().setResponseCode(200).addHeader("Content-Type", "text/yaml").setBody(YAML_NODES_TEST));
         final INodeSet nodes = provider.getNodes();
         assertNotNull(nodes);
         assertEquals(1, nodes.getNodes().size());
         assertNotNull(nodes.getNode("testnode1"));
 
-        assertNotNull(test1.request);
-        assertNotNull(test1.client);
-        assertNotNull(test1.followRedirects);
-        assertNotNull(test1.releaseConnectionCalled);
-
     }
+
     public void testGetNodesXml() throws Exception {
         URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
         final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
 
         build.project(PROJ_NAME);
-        build.url("http://example.com/test");
+        build.url(server.url("test").toString());
 
         provider.configure(build.getProperties());
-        final test1 test1 = new test1();
-        test1.httpResultCode=200;
-        test1.httpStatusText="OK";
-        test1.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/xml"));
-        ByteArrayInputStream stringStream = new ByteArrayInputStream(XML_NODES_TEXT.getBytes());
-        test1.bodyStream=stringStream;
-        provider.interaction= test1;
+        server.enqueue(new MockResponse().setResponseCode(200).addHeader("Content-Type", "text/xml").setBody(XML_NODES_TEXT));
         final INodeSet nodes = provider.getNodes();
         assertNotNull(nodes);
         assertEquals(1, nodes.getNodes().size());
         assertNotNull(nodes.getNode("testnode1"));
-
-        assertNotNull(test1.request);
-        assertNotNull(test1.client);
-        assertNotNull(test1.followRedirects);
-        assertNotNull(test1.releaseConnectionCalled);
     }
     public void testGetNodesCaching() throws Exception {
         URLResourceModelSource provider = new URLResourceModelSource(getFrameworkInstance());
         final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
 
         build.project(PROJ_NAME);
-        build.url("http://example.com/test");
+        build.url(server.url("cache-test").toString());
         build.cache(true);
 
         provider.configure(build.getProperties());
-        final test1 test1 = new test1();
-        test1.httpResultCode=200;
-        test1.httpStatusText="OK";
-        test1.responseHeaders.put("Content-Type", new BasicHeader("Content-Type", "text/yaml"));
         //include etag, last-modified
-        test1.responseHeaders.put("ETag", new BasicHeader("ETag", "monkey1"));
-        test1.responseHeaders.put("Last-Modified", new BasicHeader("Last-Modified", "blahblee"));
-
-        final ByteArrayInputStream stringStream = new ByteArrayInputStream(YAML_NODES_TEST.getBytes());
-        test1.bodyStream=stringStream;
-        provider.interaction= test1;
+        server.enqueue(new MockResponse()
+                               .setResponseCode(200)
+                               .addHeader("ETag", "monkey1")
+                               .addHeader("Last-Modified", "blahblee")
+                               .addHeader("Content-Type", "text/yaml")
+                               .setBody(YAML_NODES_TEST));
 
         final INodeSet nodes = provider.getNodes();
         assertNotNull(nodes);
         assertEquals(1, nodes.getNodes().size());
         assertNotNull(nodes.getNode("testnode1"));
-
-        assertNotNull(test1.request);
-        assertNotNull(test1.client);
-        assertNotNull(test1.followRedirects);
-        assertNotNull(test1.releaseConnectionCalled);
+        server.takeRequest();
 
         //make another request. assert etag, If-modified-since are used.
-
-
-        final test1 test2 = new test1();
-        test2.httpResultCode = 304;
-        test2.httpStatusText = "Not Modified";
-        //include etag, last-modified
-        test2.responseHeaders.put("ETag", new BasicHeader("ETag", "monkey1"));
-        test2.responseHeaders.put("Last-Modified", new BasicHeader("Last-Modified", "blahblee"));
-
-        test2.bodyStream = null;
-        provider.interaction = test2;
+        server.enqueue(new MockResponse()
+                               .setResponseCode(304)
+                               .addHeader("ETag", "monkey1")
+                               .addHeader("Last-Modified", "blahblee"));
 
         final INodeSet nodes2 = provider.getNodes();
         assertNotNull(nodes2);
         assertEquals(1, nodes2.getNodes().size());
         assertNotNull(nodes2.getNode("testnode1"));
 
-        assertNotNull(test2.request);
-        assertNotNull(test2.client);
-        assertNotNull(test2.followRedirects);
-        assertNotNull(test2.releaseConnectionCalled);
-        assertEquals("monkey1", test2.requestHeaders.get("If-None-Match"));
-        assertEquals("blahblee", test2.requestHeaders.get("If-Modified-Since"));
-
+        RecordedRequest rq = server.takeRequest();
+        assertEquals("monkey1", rq.getHeader("If-None-Match"));
+        assertEquals("blahblee", rq.getHeader("If-Modified-Since"));
 
     }
     /**

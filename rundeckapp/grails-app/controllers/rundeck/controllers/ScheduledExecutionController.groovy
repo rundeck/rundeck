@@ -31,6 +31,8 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -847,70 +849,45 @@ class ScheduledExecutionController  extends ControllerBase{
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
-            HttpClientBuilder clientBuilder = HttpClients.custom();
-            RequestConfig.Builder rqConfigBuilder = RequestConfig.custom();
-            rqConfigBuilder.setRedirectsEnabled(true)
-            rqConfigBuilder.setConnectionRequestTimeout(timeout*1000)
-            rqConfigBuilder.setSocketTimeout(timeout*1000)
-            if(contimeout>0){
-                rqConfigBuilder.setConnectTimeout(contimeout*1000)
-            }
+            HttpClient<HttpResponse> client = new ApacheHttpClient()
+            client.setFollowRedirects(true)
+            client.setTimeout(timeout*1000)
+
             if(retry>0) {
-                def retryHandler = new StandardHttpRequestRetryHandler(retry,false)
-                clientBuilder.setRetryHandler(retryHandler)
+                client.setRetryCount(retry)
             }
 
-            def URL urlo
-            def AuthScope authscope=null
-            def UsernamePasswordCredentials cred=null
-            boolean doauth=false
+            URL urlo
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
                 urlo = new URL(url)
+                client.setUri(urlo.toURI())
                 if(urlo.userInfo){
-                    doauth = true
-                    authscope = new AuthScope(urlo.host, urlo.port> 0 ? urlo.port : urlo.defaultPort, AuthScope.ANY_REALM, "BASIC")
-                    cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
+                    UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    client.setBasicAuthCredentials(cred.userName,cred.password)
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
             }
-            HttpClientContext localContext = null
-            if(doauth){
-                BasicCredentialsProvider credProvider = new BasicCredentialsProvider();
-                credProvider.setCredentials(authscope,cred);
-                clientBuilder.setDefaultCredentialsProvider(credProvider);
-                AuthCache authCache = new BasicAuthCache();
-                BasicScheme basicAuth = new BasicScheme();
-                HttpHost target = new HttpHost(urlo.getHost(), urlo.getPort(), urlo.getProtocol());
-                authCache.put(target, basicAuth);
-                localContext = HttpClientContext.create();
-                localContext.setAuthCache(authCache);
-            }
-            final CloseableHttpClient client = clientBuilder.setDefaultRequestConfig(rqConfigBuilder.build()).build();
-            def request = new HttpGet(url)
-            request.addHeader("Accept","application/json")
+            client.addHeader("Accept","application/json")
             stats.url = cleanUrl;
             stats.startTime = System.currentTimeMillis();
-            HttpResponse response = localContext ? client.execute(request, localContext) : client.execute(request);
-            int resultCode = response.statusLine.statusCode
-            stats.httpStatusCode = response.statusLine.statusCode
-            stats.httpStatusText = response.statusLine.reasonPhrase
-            stats.finishTime = System.currentTimeMillis()
-            stats.durationTime=stats.finishTime-stats.startTime
-            stats.contentLength = response.getEntity().contentLength
-            final header = response.getFirstHeader("Last-Modified")
-            if(null!=header){
-                try {
+            def results = [:]
+            client.execute { response ->
+                int resultCode = response.statusLine.statusCode
+                stats.httpStatusCode = response.statusLine.statusCode
+                stats.httpStatusText = response.statusLine.reasonPhrase
+                stats.finishTime = System.currentTimeMillis()
+                stats.durationTime=stats.finishTime-stats.startTime
+                stats.contentLength = response.getEntity().contentLength
+                final header = response.getFirstHeader("Last-Modified")
+                if(null!=header){
                     stats.lastModifiedDate= DateUtils.parseDate(header.getValue())
-                } catch (DateParseException e) {
+                }else{
+                    stats.lastModifiedDate=""
+                    stats.lastModifiedDateTime=""
                 }
-            }else{
-                stats.lastModifiedDate=""
-                stats.lastModifiedDateTime=""
-            }
-            try{
+
                 def reasonCode = response.statusLine.reasonPhrase
                 if(resultCode>=200 && resultCode<=300){
                     def expectedContentType="application/json"
@@ -946,17 +923,16 @@ class ScheduledExecutionController  extends ControllerBase{
                         }else{
                             stats.contentSHA1=""
                         }
-                        return [json:json,stats:stats]
+                        results = [json:json,stats:stats]
                     }else{
-                        return [error:"Unexpected content type received: "+resultType,stats:stats]
+                        results = [error:"Unexpected content type received: "+resultType,stats:stats]
                     }
                 }else{
                     stats.contentSHA1 = ""
-                    return [error:"Server returned an error response: ${resultCode} ${reasonCode}",stats:stats]
+                    results = [error:"Server returned an error response: ${resultCode} ${reasonCode}",stats:stats]
                 }
-            } finally {
-                client.close()
             }
+            return results
         }else if (url.startsWith("file:")) {
             stats.url=url
             def File srfile = new File(new URI(url))
