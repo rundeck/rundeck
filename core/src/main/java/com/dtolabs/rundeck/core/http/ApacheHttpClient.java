@@ -82,7 +82,7 @@ public class ApacheHttpClient implements HttpClient<HttpResponse> {
         if(method == Method.GET) request = new HttpGet(uri);
         else if(method == Method.POST) request = new HttpPost(uri);
         else if(method == Method.PUT) request = new HttpPut(uri);
-        else throw new RuntimeException(String.format("Method %s not implemented",method.name()));
+        else throw new UnsupportedOperationException(String.format("Method %s not implemented",method.name()));
         return this;
     }
 
