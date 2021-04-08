@@ -505,9 +505,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
-                        pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export').enabled
+                        pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if(pluginData.scmExportEnabled){
-
                             if(!minScm){
                                 pluginData.scmStatus = scmService.exportStatusForJobs(authContext, results.nextScheduled)
                                 pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
@@ -539,9 +538,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
-                        pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import').enabled
+                        pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                         if(pluginData.scmImportEnabled){
-
                             if(!minScm){
                                 pluginData.scmImportJobStatus = scmService.importStatusForJobs(authContext, results.nextScheduled)
                                 pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
