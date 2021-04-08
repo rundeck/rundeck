@@ -79,6 +79,7 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         try {
             server.start();
         } catch(Exception e) {
+            //  deepcode ignore DontUsePrintStackTrace: Prevent deepcode from flagging this in test code.
             e.printStackTrace();
         }
     }
