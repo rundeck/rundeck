@@ -315,3 +315,42 @@
 @include pagination($success-color, 'success');
 @include pagination($warning-color, 'warning');
 @include pagination($danger-color, 'danger');
+
+.modal-pagination{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  &-item{
+    // border-top: 1px solid #cecece;
+    // border-bottom: 1px solid #cecece;
+    // border-right: 1px solid #cecece;
+    padding: 6px 7px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style-type: none;
+    margin: 0;
+    border-radius: 0;
+    cursor: pointer;
+    &:first-child{
+      // border: 1px solid #cecece;
+      // border-top-left-radius: 5px;
+      // border-bottom-left-radius: 5px;
+    }
+    &:last-child{
+      // border-left: 0 solid #cecece;
+      // border-top-right-radius: 5px;
+      // border-bottom-right-radius: 5px;
+    }
+  }
+  .currentStep{
+    width: 20px;
+    height: 20px;
+    border: 1px solid #000;
+    border-radius: 4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+}
