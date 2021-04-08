@@ -1,11 +1,6 @@
 <g:if test="${max && max < total && jobsListSize < total}">
     <div id="modal-pagination" style="display: none;">
         <div style="display:flex; justify-content: space-between; align-items: center;margin-top: 10px;">
-            <span>
-                offset ${offset}
-                total ${total}
-                max ${max}
-            </span>
             <div class="gsp-pager">
                 <div class="modal-pagination">
                     <g:set var="numPages" value="${new java.math.BigDecimal(total/max).setScale(0, java.math.RoundingMode.UP)}"/>
