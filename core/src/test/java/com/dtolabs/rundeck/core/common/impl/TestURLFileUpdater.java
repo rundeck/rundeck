@@ -104,7 +104,7 @@ public class TestURLFileUpdater extends TestCase {
         updater.updateFile(tempfile);
         assertTrue(tempfile.isFile());
         assertTrue(tempfile.length() > 0);
-        System.out.println(server.takeRequest().getPath());
+        server.takeRequest();
 
         //make another request. assert etag, If-modified-since are used.
 

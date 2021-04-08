@@ -20,7 +20,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
-import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -57,7 +56,7 @@ public class ApacheHttpClient implements HttpClient<HttpResponse> {
 
     @Override
     public HttpClient<HttpResponse> setBasicAuthCredentials(final String username, final String password) {
-        if(uri == null) throw new RuntimeException("The URI must be set first. Please call setUri(yourTargetUri)");
+        if(uri == null) throw new IllegalStateException("The URI must be set first. Please call setUri(yourTargetUri)");
         BasicCredentialsProvider credProvider = new BasicCredentialsProvider();
         credProvider.setCredentials(new AuthScope(uri.getHost(),uri.getPort(),AuthScope.ANY_REALM,"BASIC"), new UsernamePasswordCredentials(username, password));
         clientBuilder.setDefaultCredentialsProvider(credProvider);
@@ -79,7 +78,7 @@ public class ApacheHttpClient implements HttpClient<HttpResponse> {
 
     @Override
     public HttpClient<HttpResponse> setMethod(final Method method) {
-        if(uri == null) throw new RuntimeException("The URI must be set first. Please call setUri(yourTargetUri)");
+        if(uri == null) throw new IllegalStateException("The URI must be set first. Please call setUri(yourTargetUri)");
         if(method == Method.GET) request = new HttpGet(uri);
         else if(method == Method.POST) request = new HttpPost(uri);
         else if(method == Method.PUT) request = new HttpPut(uri);
@@ -101,15 +100,15 @@ public class ApacheHttpClient implements HttpClient<HttpResponse> {
 
     @Override
     public HttpClient<HttpResponse> addPayload(final String contentType, final String payload) {
-        if(request == null) throw new RuntimeException("Please set the method to a POST or PUT before calling the addPayload method");
-        if(!(request instanceof HttpEntityEnclosingRequestBase)) throw new RuntimeException("Request must be either Post or Put.");
+        if(uri == null) throw new IllegalStateException("The URI must be set first. Please call setUri(yourTargetUri)");
+        if(!(request instanceof HttpEntityEnclosingRequestBase)) throw new IllegalStateException("Request must be either Post or Put. Make sure to call setMethod(Method.POST | Method.PUT) before attempting to add a payload.");
         ((HttpEntityEnclosingRequestBase)request).setEntity(new StringEntity(payload, ContentType.create(contentType, "UTF-8")));
         return this;
     }
 
     @Override
     public void execute(RequestProcessor<HttpResponse> processor) throws Exception {
-        if(request == null) throw new RuntimeException("Please set the method before executing the http call");
+        if(uri == null) throw new IllegalStateException("The URI must be set before executing the request");
 
         try (CloseableHttpClient client = clientBuilder.setDefaultRequestConfig(rqConfigBuilder.build()).build()) {
             headers.forEach((n, v) -> request.addHeader(n, v));
