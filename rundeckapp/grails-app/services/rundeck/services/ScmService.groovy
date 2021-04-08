@@ -97,6 +97,7 @@ class ScmService {
     PluginConfigService pluginConfigService
     def StorageService storageService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
     Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
@@ -130,8 +131,15 @@ class ScmService {
     def initProject(String project, String integration){
         def pluginConfig = loadScmConfig(project, integration)
         if (!pluginConfig?.enabled) {
+            initedProjects.remove(integration + '/' + project)
             return false
         }
+        synchronized (initedProjects) {
+            if (initedProjects.contains(integration + '/' + project)) {
+                return true
+            }
+        }
+
         log.debug("Loading '${integration}' plugin ${pluginConfig.type} for ${project}...")
 
         def username = pluginConfig.getSetting("username")
@@ -152,6 +160,7 @@ class ScmService {
                 log.error("Unable to initialize SCM for project ${project} for integration ${integration}", validationException)
                 return false
             }
+            initedProjects.add(integration + '/' + project)
             return true
         } catch (Throwable e) {
             log.error(
