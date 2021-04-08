@@ -97,7 +97,6 @@ class ScmService {
     PluginConfigService pluginConfigService
     def StorageService storageService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
-    final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
     Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
@@ -129,12 +128,6 @@ class ScmService {
     }
 
     def initProject(String project, String integration){
-        synchronized (initedProjects) {
-            if (initedProjects.contains(integration + '/' + project)) {
-                return true
-            }
-            initedProjects.add(integration + '/' + project)
-        }
         def pluginConfig = loadScmConfig(project, integration)
         if (!pluginConfig?.enabled) {
             return false
@@ -167,10 +160,12 @@ class ScmService {
             )
         }
     }
+
     ScmExportPlugin getLoadedExportPluginFor(String project){
         initProject(project)
         loadedExportPlugins[project]?.provider
     }
+
     ScmImportPlugin getLoadedImportPluginFor(String project){
         initProject(project)
         loadedImportPlugins[project]?.provider
@@ -218,13 +213,19 @@ class ScmService {
     }
 
     def projectHasConfiguredExportPlugin(String project) {
-        initProject(project)
-        loadedExportPlugins.containsKey(project)
+        def loaded = initProject(project, EXPORT)
+        if(!loaded){
+            unregisterPlugin(project, EXPORT)
+        }
+        return loaded
     }
 
     def projectHasConfiguredImportPlugin(String project) {
-        initProject(project)
-        loadedImportPlugins.containsKey(project)
+        def loaded = initProject(project, IMPORT)
+        if(!loaded){
+            unregisterPlugin(project, IMPORT)
+        }
+        return loaded
     }
 
     BasicInputView getInputView(UserAndRolesAuthContext auth, String integration, String project, String actionId) {
