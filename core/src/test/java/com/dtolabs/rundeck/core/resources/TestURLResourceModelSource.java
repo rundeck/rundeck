@@ -78,7 +78,9 @@ public class TestURLResourceModelSource extends AbstractBaseTest {
         server = new MockWebServer();
         try {
             server.start();
-        } catch(Exception e) { throw new RuntimeException(e); }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void tearDown() throws Exception {
