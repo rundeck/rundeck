@@ -1,21 +1,31 @@
 <g:if test="${max && max < total && jobsListSize < total}">
-    <div id="modal-pagination" style="display: none">
-        <span>
-            offset ${offset}
-            total ${total}
-            max ${max}
-        </span>
-        <div>
-            Showing ${offset+1}-${offset+max > total ? total : offset+max} of ${total}
-        </div>
-        <div class="gsp-pager">
-            <g:set var="numPages" value="${new java.math.BigDecimal(total/max).setScale(0, java.math.RoundingMode.UP)}"/>
-            <a class="prevLink" style="display: none" onclick="handleModalPagination(this, ${offset-max}, ${max}, ${total});">Previous</a>
-            <g:each in="${1..numPages}" var="step">
-                <span style="display: ${step == 1 ? 'inline' : 'none'}" class="currentStep step-${step}">${step}</span>
-                <a style="display: ${step == 1 ? 'none' : 'inline'}" onclick="handleModalPagination(this, ${(step-1)*max}, ${max}, ${total});" class="step step-${step}">${step}</a>
-            </g:each>
-            <a class="nextLink" onclick="handleModalPagination(this, ${offset+max}, ${max}, ${total});">Next</a>
+    <div id="modal-pagination" style="display: none;">
+        <div style="display:flex; justify-content: space-between; align-items: center;margin-top: 10px;">
+            <span>
+                offset ${offset}
+                total ${total}
+                max ${max}
+            </span>
+            <div class="gsp-pager">
+                <div class="modal-pagination">
+                    <g:set var="numPages" value="${new java.math.BigDecimal(total/max).setScale(0, java.math.RoundingMode.UP)}"/>
+                    <div class="modal-pagination-item">
+                        <a class="prevLink" style="display: none" onclick="handleModalPagination(this, ${offset-max}, ${max}, ${total});">Previous</a>
+                    </div>
+                    <g:each in="${1..numPages}" var="step">
+                        <div class="modal-pagination-item">
+                            <span style="display: ${step == 1 ? 'inline' : 'none'}" class="currentStep step-${step}">${step}</span>
+                            <a style="display: ${step == 1 ? 'none' : 'inline'}" onclick="handleModalPagination(this, ${(step-1)*max}, ${max}, ${total});" class="step step-${step}">${step}</a>
+                        </div>
+                    </g:each>
+                    <div class="modal-pagination-item">
+                        <a class="nextLink" onclick="handleModalPagination(this, ${offset+max}, ${max}, ${total});">Next</a>
+                    </div>
+                </div>
+            </div>
+            <div>
+                Showing ${offset+1}-${offset+max > total ? total : offset+max} of ${total}
+            </div>
         </div>
     </div>
 </g:if>
