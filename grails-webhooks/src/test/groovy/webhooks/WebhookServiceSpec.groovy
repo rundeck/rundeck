@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidato
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
 import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
@@ -88,6 +89,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
                 webhookProviderService
             }
         }
+        service.storageService = Mock(MockStorageService){
+            storageTreeWithContext(_) >> {Mock(KeyStorageTree)}
+        }
+        
         TestWebhookEventPlugin testPlugin = new TestWebhookEventPlugin()
 
         service.pluginService = Mock(MockPluginService) {
