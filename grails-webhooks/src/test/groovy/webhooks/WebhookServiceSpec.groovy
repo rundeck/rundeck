@@ -65,6 +65,8 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         data.sender = "asender"
         data.contentType = "text/plain"
         data.data = new ByteArrayInputStream("my event data".bytes)
+        service.storageService = Mock(MockStorageService)
+
 
         when:
         def mockPropertyResolver = Mock(PropertyResolver)
@@ -89,10 +91,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
                 webhookProviderService
             }
         }
-        service.storageService = Mock(MockStorageService){
-            storageTreeWithContext(_) >> {Mock(KeyStorageTree)}
-        }
-        
+
         TestWebhookEventPlugin testPlugin = new TestWebhookEventPlugin()
 
         service.pluginService = Mock(MockPluginService) {
@@ -104,9 +103,11 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def responder = service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
 
         then:
+        1 * service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree)
         testPlugin.captured.data.text=="my event data"
         testPlugin.captured.headers["X-Rundeck-TestHdr"] == "Hdr1"
         responder instanceof DefaultWebhookResponder
+
     }
 
     class TestWebhookEventPlugin implements WebhookEventPlugin {
