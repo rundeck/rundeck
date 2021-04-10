@@ -189,7 +189,7 @@ class AuthTagLib {
             def projectNames = frameworkService.projectNames(authContext)
             projectNames.each{
                 if(it != attrs.project){
-                    def decision=  authContextEvaluatorCacheManager.evaluate(authContext, resources, tests as Set, null)
+                    def decision=  authContextEvaluatorCacheManager.evaluate(authContext, resources, tests as Set, it)
                     if(!decision.find{has^it.authorized}){
                         isAuth = true
                     }
