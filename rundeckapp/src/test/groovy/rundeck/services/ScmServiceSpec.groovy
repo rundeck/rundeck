@@ -770,7 +770,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         TestCloseable exportCloser = new TestCloseable()
 
         when:
-        service.checkJobRenamed(project, jobs)
+        service.checkExportStoredStatus(project, jobs)
         then:
 
         1 * service.pluginConfigService.loadScmConfig(
@@ -789,6 +789,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         1 * exportFactory.createPlugin(_, _, true) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'test')
 
+        1 * plugin.getJobStatus(_)>> Mock(JobState)
         jobChangeCalls * plugin.jobChanged(_,_)
 
         where:
@@ -840,7 +841,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         TestCloseable exportCloser = new TestCloseable()
 
         when:
-        service.checkStoredSCMStatus(project, jobs)
+        service.checkExportStoredStatus(project, jobs)
         then:
 
         1 * service.pluginConfigService.loadScmConfig(

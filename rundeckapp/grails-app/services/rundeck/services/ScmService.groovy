@@ -904,14 +904,20 @@ class ScmService {
         )
     }
 
-    List<JobExportReference> exportjobRefsForJobs(List<ScheduledExecution> jobs) {
+    List<JobExportReference> exportjobRefsForJobs(List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
         jobs.collect { ScheduledExecution job ->
-            exportJobRef(job)
+            if(jobsPluginMeta){
+                def jobPluginMeta = jobsPluginMeta.get(job.uuid)
+                exportJobRef(job, jobPluginMeta)
+            }else{
+                exportJobRef(job)
+            }
+
         }
     }
 
-    private JobExportReference exportJobRef(ScheduledExecution job) {
-        scmJobRef(job)
+    private JobExportReference exportJobRef(ScheduledExecution job, Map jobPluginMeta=null) {
+        scmJobRef(job, null, jobPluginMeta)
     }
 
     static class LazySerializer implements JobSerializer {
@@ -970,6 +976,10 @@ class ScmService {
      */
     JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null) {
         def metadata = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
+        scmJobRef(job, serializer, metadata)
+    }
+
+    JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null, Map metadata) {
         def impl = new JobImportReferenceImpl(
                 jobRevReference(job),
                 metadata?.version != null ? metadata.version : -1L,
@@ -1130,12 +1140,12 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobState> exportStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
+    Map<String, JobState> exportStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
             def project = jobs.get(0).project
             if(auth){
-                fixExportStatus(auth, project, jobs)
+                fixExportStatus(auth, project, jobs, jobsPluginMeta)
             }
         }
         def status = exportStatusForJobsWithoutClusterFix(auth, jobs)
@@ -1405,12 +1415,12 @@ class ScmService {
         return pluginConfig.getSettingList('trackedItems')
     }
 
-    public fixExportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
+    public fixExportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null){
         if(jobs && jobs.size()>0){
             def plugin = getLoadedExportPluginFor project
             if(plugin) {
                 def context = scmOperationContext(auth, project)
-                def joblist = exportjobRefsForJobs(jobs)
+                def joblist = exportjobRefsForJobs(jobs, jobsPluginMeta)
                 def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
                 plugin?.clusterFixJobs(context, joblist, originalPaths)
             }
@@ -1429,90 +1439,89 @@ class ScmService {
         }
     }
 
-    // check if jobs has the SCM metadata stored in the DB
-    void checkStoredSCMStatus(String project, List<ScheduledExecution> jobs) {
+    Map<String, Map> getJobsPluginMeta(String project){
+        List jobsPluginMeta = jobMetadataService.getJobsPluginMeta(project, STORAGE_NAME_IMPORT)
+        jobsPluginMeta.collectEntries{[it.key.replace("/" + STORAGE_NAME_IMPORT,""),it.pluginData]}
+    }
+
+    void checkExportStoredStatus(String project, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta, Map<String, JobState> jobsState) {
         def plugin = getLoadedExportPluginFor project
 
         if (plugin) {
-            //synch import commit info to exported commit data
             jobs.each { job ->
-                def jobReference = (JobScmReference)exportJobRef(job)
+                def jobPluginMeta = jobsPluginMeta.get(job.uuid)//jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT) ?: [:]
+                def jobReference = (JobScmReference)scmJobRef(job, null, jobPluginMeta)
+                def jobState = jobsState.get(job.id)
 
-                //need to save status in DB
-                if(jobReference.scmImportMetadata == null){
-                    def jobStatus = plugin.getJobStatus(jobReference)
-                    if(jobStatus.commit){
-                        def newmeta = [name: job.getJobName(),groupPath: job.getGroupPath(),version: job.version, pluginMeta: jobStatus.commit.asMap()]
-                        jobMetadataService.setJobPluginMeta(
-                                job,
-                                STORAGE_NAME_IMPORT,
-                                newmeta
-                        )
-                    }
-                }else{
-                    //check if the name is set
-                    def orig = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT) ?: [:]
+                // synch commit info to exported commit data
+                checkExportJobStatus(plugin, job, jobReference, jobPluginMeta, jobState)
 
-                    if(orig.name==null){
-                        def newmeta = [name: job.getJobName(), groupPath: job.getGroupPath()]
-                        jobMetadataService.setJobPluginMeta(
-                                job,
-                                STORAGE_NAME_IMPORT,
-                                orig + newmeta
-                        )
-                    }
-                }
+                //check if job was renamed
+                checkExportJobRenamed(plugin, project, job, jobReference, jobPluginMeta)
             }
-
-
         }
     }
 
-    def checkJobRenamed(String project, List<ScheduledExecution> jobs){
-        def plugin = getLoadedExportPluginFor project
+    // check if jobs has the SCM metadata stored in the DB
+    def checkExportJobStatus(ScmExportPlugin plugin,ScheduledExecution job, JobScmReference jobReference, def jobPluginMeta, JobState jobStatus){
 
-        if (plugin) {
-            //check if jobs has changed the name and are not registered
-            jobs.each { job ->
+        //need to save status in DB
+        if(jobReference.scmImportMetadata == null){
+            if(jobStatus.commit){
+                def newmeta = [name: job.getJobName(),groupPath: job.getGroupPath(),version: job.version, pluginMeta: jobStatus.commit.asMap()]
+                jobMetadataService.setJobPluginMeta(
+                        job,
+                        STORAGE_NAME_IMPORT,
+                        newmeta
+                )
+            }
+        }else{
+            //check if the name is set
+            if(jobPluginMeta.name==null){
+                def newmeta = [name: job.getJobName(), groupPath: job.getGroupPath()]
+                jobMetadataService.setJobPluginMeta(
+                        job,
+                        STORAGE_NAME_IMPORT,
+                        jobPluginMeta + newmeta
+                )
+            }
+        }
+    }
 
-                log.debug("check if job ${job.id} was renamed")
+    //check if the job was renamed
+    def checkExportJobRenamed(ScmExportPlugin plugin, String project, ScheduledExecution job, JobScmReference jobReference, def jobPluginMeta){
+        log.debug("check if job ${job.id} was renamed")
+        def jobFullName = job.generateFullName()
+        def origFullName = [jobPluginMeta.groupPath?:'',jobPluginMeta.name].join("/")
 
-                def orig = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT) ?: [:]
-                def jobReference = (JobScmReference)exportJobRef(job)
+        if( jobFullName != origFullName){
 
-                def jobFullName = job.generateFullName()
-                def origFullName = [orig.groupPath?:'',orig.name].join("/")
+            log.debug("job ${job.groupPath}/${job.jobName} was renamed, previuos name: ${jobPluginMeta.groupPath}/${jobPluginMeta.name}" )
 
-                if( jobFullName != origFullName){
+            boolean renameProcess = true
+            if (renamedJobsCache && renamedJobsCache[project] && renamedJobsCache[project][jobReference.id] ){
+                renameProcess = false
+            }
 
-                    log.debug("job ${job.groupPath}/${job.jobName} was renamed, previuos name: ${orig.groupPath}/${orig.name}" )
+            if(renameProcess){
+                def origScmRef = (JobScmReference)exportJobRef(job)
+                origScmRef.jobName = jobPluginMeta.name
+                origScmRef.groupPath = jobPluginMeta.groupPath
 
-                    boolean renameProcess = true
-                    if (renamedJobsCache && renamedJobsCache[project] && renamedJobsCache[project][jobReference.id] ){
-                        renameProcess = false
-                    }
+                log.debug("reprocessing renamed job")
 
-                    if(renameProcess){
-                        def origScmRef = (JobScmReference)exportJobRef(job)
-                        origScmRef.jobName = orig.name
-                        origScmRef.groupPath = orig.groupPath
+                //record original path for renamed job, if it is different
+                def origpath = plugin.getRelativePathForJob(origScmRef)
+                recordRenamedJob(project, origScmRef.id, origpath)
 
-                        log.debug("reprocessing renamed job")
-
-                        //record original path for renamed job, if it is different
-                        def origpath = plugin.getRelativePathForJob(origScmRef)
-                        recordRenamedJob(project, origScmRef.id, origpath)
-
-                        plugin.jobChanged(
-                                new StoredJobChangeEvent(
-                                        eventType: JobChangeEvent.JobChangeEventType.MODIFY_RENAME,
-                                        originalJobReference: origScmRef,
-                                        jobReference: jobReference
-                                ),
-                                jobReference
-                        )
-                    }
-                }
+                plugin.jobChanged(
+                        new StoredJobChangeEvent(
+                                eventType: JobChangeEvent.JobChangeEventType.MODIFY_RENAME,
+                                originalJobReference: origScmRef,
+                                jobReference: jobReference
+                        ),
+                        jobReference
+                )
             }
         }
 

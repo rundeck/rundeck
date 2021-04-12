@@ -33,6 +33,16 @@ class JobMetadataService {
     }
 
     /**
+     * Load scm metadata for the jobs
+     * @param project project
+     * @return map of metadata set by import plugin
+     */
+    List<PluginMeta> getJobsPluginMeta(final String project, final String type) {
+        def found = PluginMeta.findAllByProject(project)
+        return found
+    }
+
+    /**
      * Load scm metadata for the job
      * @param project project
      * @param id jobid

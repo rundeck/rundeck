@@ -469,6 +469,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         def status = hasJobStatusCached(job, originalPath)
 
+        /*
         //check if local commit has changed from the stored status
         if(status && status['synch'] == SynchState.CLEAN){
             def commit = lastCommitForPath(originalPath)
@@ -481,6 +482,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 status = null
             }
         }
+
+         */
 
         if (!status) {
             status = refreshJobStatus(job, originalPath)
@@ -497,6 +500,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return null
         }
         def status = hasJobStatusCached(job, originalPath)
+
+        /*
         //check if local commit has changed from the stored status
         if(status && status['synch'] == SynchState.CLEAN){
             def commit = lastCommitForPath(originalPath)
@@ -509,6 +514,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 status = null
             }
         }
+
+         */
 
         if (!status) {
             status = refreshJobStatus(job, originalPath,serialize)
@@ -570,7 +577,31 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             toPull = true
             retSt.behind = true
         }
+
+        if(toPull){
+            retSt.pull = true
+            try{
+                gitPull(context)
+            }catch (JGitInternalException e){
+                retSt.error=e
+            }catch(GitAPIException e){
+                retSt.error = e
+                log.info("Git error",e)
+            }
+
+            try{
+                jobs.each{job ->
+                    refreshJobStatus(job, originalPaths?.get(job.id))
+                }
+            }catch (ScmPluginException e){
+                retSt.error = e
+            }
+        }
+
+        //check job changes
         jobs.each { job ->
+            toPull = false
+
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
             def commitId = lastCommitForPath(getRelativePathForJob(job))
             def path = getRelativePathForJob(job)
@@ -586,26 +617,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 toPull = true
                 retSt.restored.add(job)
             }
-        }
 
-        if(toPull){
-            retSt.pull = true
-            try{
-                gitPull(context)
-            }catch (JGitInternalException e){
-                retSt.error=e
-            }catch(GitAPIException e){
-                retSt.error = e
-                log.info("Git error",e)
-            }
-        }
-
-        try{
-            jobs.each{job ->
+            if(toPull){
                 refreshJobStatus(job, originalPaths?.get(job.id))
             }
-        }catch (ScmPluginException e){
-            retSt.error = e
         }
 
         retSt

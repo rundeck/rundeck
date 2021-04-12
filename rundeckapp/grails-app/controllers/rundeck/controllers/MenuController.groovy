@@ -3387,16 +3387,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 if (frameworkService.isClusterModeEnabled()) {
                     //initialize if in another node
                     scmService.initProject(params.project, 'export')
-                    scmService.fixExportStatus(authContext, params.project, result.nextScheduled)
-                    scmService.checkStoredSCMStatus(params.project, result.nextScheduled)
                 }
                 try {
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
+                        def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
+
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
-                            scmService.checkJobRenamed(params.project, result.nextScheduled)
-
-                            pluginData.scmStatus = scmService.exportStatusForJobs(authContext, result.nextScheduled)
+                            pluginData.scmStatus = scmService.exportStatusForJobs(authContext, result.nextScheduled, jobsPluginMeta)
+                            scmService.checkExportStoredStatus(params.project, result.nextScheduled, jobsPluginMeta, pluginData.scmStatus)
                             pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                             pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                             pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
