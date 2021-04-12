@@ -747,22 +747,7 @@ class ScmService {
      * @return
      */
     def removePluginConfiguration(String integration, String project, String type) {
-        def loaded
-        if (integration == EXPORT) {
-            loaded = loadedExportPlugins.remove(project)
-            loaded?.close()
-            def changeListener = loadedExportListeners.remove(project)
-            jobEventsService.removeListener(changeListener)
-            //clear cached rename/delete info
-            renamedJobsCache.remove(project)
-            deletedJobsCache.remove(project)
-        } else {
-            loaded = loadedImportPlugins.remove(project)
-            loaded?.close()
-            def changeListener = loadedImportListeners.remove(project)
-            jobEventsService.removeListener(changeListener)
-        }
-        loaded?.provider?.cleanup()
+        unregisterPlugin(integration, project)
         pluginConfigService.removePluginConfiguration(project, pathForConfigFile(integration))
     }
     /**
