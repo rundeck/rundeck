@@ -509,7 +509,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         if(pluginData.scmExportEnabled){
 
                             if(!minScm){
-                                pluginData.scmStatus = scmService.exportStatusForJobs(authContext, results.nextScheduled)
+                                pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, results.nextScheduled)
                                 pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                                 pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
                                 pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
@@ -3394,9 +3394,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
-                            pluginData.scmStatus = scmService.exportStatusForJobs(authContext, result.nextScheduled, jobsPluginMeta)
-                            scmService.checkExportStoredStatus(params.project, result.nextScheduled, jobsPluginMeta, pluginData.scmStatus)
-                            pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                            pluginData.scmStatus = scmService.exportStatusForJobs(params.project,authContext, result.nextScheduled, jobsPluginMeta)
+                            pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params. project)
                             pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                             pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
                         }

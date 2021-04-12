@@ -1140,15 +1140,16 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobState> exportStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
+    Map<String, JobState> exportStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
         def clusterMode = frameworkService.isClusterModeEnabled()
+
         if(jobs && jobs.size()>0 && clusterMode){
-            def project = jobs.get(0).project
             if(auth){
                 fixExportStatus(auth, project, jobs, jobsPluginMeta)
             }
         }
-        def status = exportStatusForJobsWithoutClusterFix(auth, jobs)
+
+        def status = exportStatusForJobsWithoutClusterFix(project, auth, jobs, jobsPluginMeta)
 
         status
     }
@@ -1158,13 +1159,31 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobState> exportStatusForJobsWithoutClusterFix(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
+    Map<String, JobState> exportStatusForJobsWithoutClusterFix(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
         def status = [:]
-        exportjobRefsForJobs(jobs).each { jobReference ->
-            def plugin = getLoadedExportPluginFor jobReference.project
-            if (plugin) {
+        def plugin = getLoadedExportPluginFor project
+        if (plugin) {
+            jobs.each { job ->
+                def jobPluginMeta = null
+                if(!jobsPluginMeta){
+                    jobPluginMeta = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
+                }else{
+                    jobPluginMeta = jobsPluginMeta.get(job.uuid)
+                }
+
+                def jobReference = exportJobRef(job, jobPluginMeta)
+
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
-                status[jobReference.id] = plugin.getJobStatus(jobReference, originalPath)
+                JobState jobState = plugin.getJobStatus(jobReference, originalPath)
+                status[jobReference.id] = jobState
+
+
+                // synch commit info to exported commit data
+                checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
+
+                //check if job was renamed
+                checkExportJobRenamed(plugin, project, job, (JobScmReference)jobReference, jobPluginMeta)
+
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
         }
@@ -1504,7 +1523,7 @@ class ScmService {
             }
 
             if(renameProcess){
-                def origScmRef = (JobScmReference)exportJobRef(job)
+                def origScmRef = jobReference
                 origScmRef.jobName = jobPluginMeta.name
                 origScmRef.groupPath = jobPluginMeta.groupPath
 

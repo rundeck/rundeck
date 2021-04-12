@@ -619,7 +619,7 @@ class ScmController extends ControllerBase {
                 query.projFilter = params.project
                 def jobs = scheduledExecutionService.listWorkflows(query, params)
                 //relaod all jobs to get project status
-                scmService.exportStatusForJobs(authContext, jobs.schedlist)
+                scmService.exportStatusForJobs(params.project, authContext, jobs.schedlist)
             }
         }
 
@@ -820,7 +820,7 @@ class ScmController extends ControllerBase {
             jobs = ScheduledExecution.findAllByProject(project)
         }
 
-        scmJobStatus = scmService.exportStatusForJobs(null, jobs).findAll {
+        scmJobStatus = scmService.exportStatusForJobs(project, null, jobs).findAll {
             it.value.synchState != SynchState.CLEAN
         }
         jobs = jobs.findAll {
@@ -980,7 +980,9 @@ class ScmController extends ControllerBase {
             List<ScheduledExecution> alljobs = ScheduledExecution.findAllByProject(project)
             Map<String, ScheduledExecution> jobMap = alljobs.collectEntries { [it.extid, it] }
 
-            Map scmJobStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, alljobs).findAll {
+            def jobsPluginMeta = scmService.getJobsPluginMeta(project)
+
+            Map scmJobStatus = scmService.exportStatusForJobsWithoutClusterFix(project, authContext, alljobs, jobsPluginMeta).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
 
@@ -1151,7 +1153,8 @@ class ScmController extends ControllerBase {
             jobs = jobIds.collect {
                 ScheduledExecution.getByIdOrUUID(it)
             }
-            scmStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, jobs).findAll {
+            def jobsPluginMeta = scmService.getJobsPluginMeta(project)
+            scmStatus = scmService.exportStatusForJobsWithoutClusterFix(project, authContext, jobs, jobsPluginMeta).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
             jobs = jobs.findAll {
@@ -1294,7 +1297,7 @@ class ScmController extends ControllerBase {
             renamedJobPaths.values().each {
                 deletedPaths.remove(it)
             }
-            def scmStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, jobs)
+            def scmStatus = scmService.exportStatusForJobsWithoutClusterFix(project, authContext, jobs)
             def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
             def scmProjectStatus = scmService.getPluginStatus(authContext, integration, params.project)
@@ -1441,7 +1444,7 @@ class ScmController extends ControllerBase {
     {
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
         if (isExport) {
-            def scmExportStatusMap = scmService.exportStatusForJobs(authContext, [scheduledExecution])
+            def scmExportStatusMap = scmService.exportStatusForJobs(scheduledExecution.project, authContext, [scheduledExecution])
             JobState scmStatus = scmExportStatusMap[scm.id]
 
             scmJobStatus.synchState = scmStatus?.synchState?.toString()

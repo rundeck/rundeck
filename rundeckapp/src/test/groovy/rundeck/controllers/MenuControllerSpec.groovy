@@ -1787,7 +1787,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scmService.loadScmConfig(_,'export')>>Mock(ScmPluginConfig){
             getEnabled()>>true
         }
-        1 * controller.scmService.exportStatusForJobs(_,_)
+        1 * controller.scmService.exportStatusForJobs(params.project,_,_)
         1 * controller.scmService.exportPluginActions(_,_)
     }
 

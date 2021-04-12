@@ -103,7 +103,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobsWithoutClusterFix(_,[]) >> [:]
+            1 * exportStatusForJobsWithoutClusterFix(projectName,_,[]) >> [:]
             1 * exportFilePathsMapForJobs([]) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
@@ -231,7 +231,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobsWithoutClusterFix(_,_) >> [
+            1 * exportStatusForJobsWithoutClusterFix(projectName,_,_) >> [
                 job1: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
@@ -710,11 +710,11 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
-            1 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * exportStatusForJobsWithoutClusterFix(projectName,_,[])
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
             1 * exportFilePathsMapForJobs(_)
-            0 * exportStatusForJobs(_,_)
+            0 * exportStatusForJobs(_,_,_)
             0 * _(*_)
         }
 
@@ -758,12 +758,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * performExportAction(_,_,projectName,_,_,_) >> [valid: false]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
-            1 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * exportStatusForJobsWithoutClusterFix(projectName, _,[])
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
             1 * exportFilePathsMapForJobs(_)
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            0 * exportStatusForJobs(_,_)
+            0 * exportStatusForJobs(_,_,_)
             0 * _(*_)
         }
 
