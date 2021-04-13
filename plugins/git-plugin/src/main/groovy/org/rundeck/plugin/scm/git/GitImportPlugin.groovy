@@ -234,23 +234,34 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
 
         walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
+            def tracked = false
             if (expected.contains(walk.getPathString())) {
                 //saw an existing tracked item
                 expected.remove(walk.getPathString())
                 if (trackedItemNeedsImport(walk.getPathString())) {
                     importNeeded++
+                    tracked = true
                 }
             } else if (importTracker.wasRenamed(walk.getPathString())) {
                 //item is tracked to a job which was renamed
                 expected.remove(importTracker.renamedValue(walk.getPathString()))
                 renamed.add(walk.getPathString())
+                tracked = true
             } else if (importTracker.trackedItemIsUnknown(walk.getPathString())) {
                 //path is new and needs import
                 newitems.add(walk.getPathString())
                 notFound++
+                tracked = true
             }
             if(notExpected.contains(walk.getPathString())){
                 notExpected.remove(walk.getPathString())
+                tracked = true
+            }
+            if(!tracked && importTracker.getTrackedJobIds().get(walk.getPathString()) && jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))){
+                def jobState = jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))
+                if(!ImportSynchState.CLEAN.equals(jobState.get("synch"))){
+                    importNeeded++
+                }
             }
         }
 
