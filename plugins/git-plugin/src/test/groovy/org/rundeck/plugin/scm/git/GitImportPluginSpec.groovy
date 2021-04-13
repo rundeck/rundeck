@@ -251,7 +251,7 @@ class GitImportPluginSpec extends Specification {
         def origindir = new File(tempdir, 'origin')
         Import config = createTestConfig(gitdir, origindir)
         Git git = GitExportPluginSpec.createGit(origindir)
-        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-1234.xml', 'blah')
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
         git.close()
         ScmOperationContext context = Mock(ScmOperationContext) {
             getFrameworkProject() >> projectName
@@ -261,7 +261,7 @@ class GitImportPluginSpec extends Specification {
         plugin.importTracker = Mock(ImportTracker){
             trackedPaths() >> ['job1-1234.xml']
             getTrackedCommits() >> ['job1-1234.xml' : '123123']
-            getTrackedJobIds() >> ['job1-1234.xml':'1234']
+            getTrackedJobIds() >> ['job1-12345.xml':'1234']
         }
 
         when:
