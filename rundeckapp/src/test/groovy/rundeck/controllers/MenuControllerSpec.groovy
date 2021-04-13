@@ -1467,7 +1467,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
         1 * controller.scmService.initProject(project,'export')
         1 * controller.scmService.initProject(project,'import')
-        1 * controller.scmService.fixExportStatus(_, project, _)
+        1 * controller.scmService.fixExportStatus(_, project, _, _)
         1 * controller.scmService.fixImportStatus(_, project, _)
 
         response.json
@@ -1787,7 +1787,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scmService.loadScmConfig(_,'export')>>Mock(ScmPluginConfig){
             getEnabled()>>true
         }
-        1 * controller.scmService.exportStatusForJobs(params.project,_,_)
+        1 * controller.scmService.exportStatusForJobs(params.project,_,_,_)
         1 * controller.scmService.exportPluginActions(_,_)
     }
 

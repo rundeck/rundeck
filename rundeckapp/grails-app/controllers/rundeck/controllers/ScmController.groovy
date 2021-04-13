@@ -982,7 +982,7 @@ class ScmController extends ControllerBase {
 
             def jobsPluginMeta = scmService.getJobsPluginMeta(project)
 
-            Map scmJobStatus = scmService.exportStatusForJobsWithoutClusterFix(project, authContext, alljobs, jobsPluginMeta).findAll {
+            Map scmJobStatus = scmService.exportStatusForJobs(project, authContext, alljobs,false, jobsPluginMeta).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
 
@@ -1154,7 +1154,7 @@ class ScmController extends ControllerBase {
                 ScheduledExecution.getByIdOrUUID(it)
             }
             def jobsPluginMeta = scmService.getJobsPluginMeta(project)
-            scmStatus = scmService.exportStatusForJobsWithoutClusterFix(project, authContext, jobs, jobsPluginMeta).findAll {
+            scmStatus = scmService.exportStatusForJobs(project, authContext, jobs, false, jobsPluginMeta).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
             jobs = jobs.findAll {
@@ -1297,7 +1297,7 @@ class ScmController extends ControllerBase {
             renamedJobPaths.values().each {
                 deletedPaths.remove(it)
             }
-            def scmStatus = scmService.exportStatusForJobsWithoutClusterFix(project, authContext, jobs)
+            def scmStatus = scmService.exportStatusForJobs(project, authContext, jobs, false)
             def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
             def scmProjectStatus = scmService.getPluginStatus(authContext, integration, params.project)

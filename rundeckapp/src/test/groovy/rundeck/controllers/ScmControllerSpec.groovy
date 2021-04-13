@@ -17,10 +17,7 @@
 package rundeck.controllers
 
 
-import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
@@ -29,7 +26,6 @@ import com.dtolabs.rundeck.plugins.scm.SynchState
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
@@ -103,11 +99,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobsWithoutClusterFix(projectName,_,[]) >> [:]
+            1 * exportStatusForJobs(projectName,_,[],false, _) >> [:]
             1 * exportFilePathsMapForJobs([]) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
             [valid: true, nextAction: [id: 'someAction']]
+            1 * getJobsPluginMeta(projectName)
             0 * _(*_)
         }
 
@@ -231,7 +228,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobsWithoutClusterFix(projectName,_,_) >> [
+            1 * exportStatusForJobs(projectName,_,_,false, _) >> [
                 job1: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
@@ -247,6 +244,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
                 it*.uuid == selectedJobIds
             }, deleteditems
             ) >> [valid: true, nextAction: [id: 'someAction']]
+            1 * getJobsPluginMeta(projectName)
             0 * _(*_)
         }
 
@@ -710,10 +708,11 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
-            1 * exportStatusForJobsWithoutClusterFix(projectName,_,[])
+            1 * exportStatusForJobs(projectName,_,[],false,_)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
             1 * exportFilePathsMapForJobs(_)
+            1 * getJobsPluginMeta(projectName)
             0 * exportStatusForJobs(_,_,_)
             0 * _(*_)
         }
@@ -758,12 +757,11 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * performExportAction(_,_,projectName,_,_,_) >> [valid: false]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
-            1 * exportStatusForJobsWithoutClusterFix(projectName, _,[])
+            1 * exportStatusForJobs(projectName, _,[], false)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
             1 * exportFilePathsMapForJobs(_)
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            0 * exportStatusForJobs(_,_,_)
             0 * _(*_)
         }
 

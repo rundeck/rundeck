@@ -53,21 +53,16 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
-import rundeck.Storage
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
-
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 /**
  * Manages scm integration
@@ -1140,26 +1135,15 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobState> exportStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
+    Map<String, JobState> exportStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
         def clusterMode = frameworkService.isClusterModeEnabled()
 
-        if(jobs && jobs.size()>0 && clusterMode){
+        if(jobs && jobs.size()>0 && clusterMode && runClusterFix){
             if(auth){
                 fixExportStatus(auth, project, jobs, jobsPluginMeta)
             }
         }
 
-        def status = exportStatusForJobsWithoutClusterFix(project, auth, jobs, jobsPluginMeta)
-
-        status
-    }
-
-    /**
-     * Return a map of status for jobs (without cluster fix)
-     * @param jobs
-     * @return
-     */
-    Map<String, JobState> exportStatusForJobsWithoutClusterFix(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
         def status = [:]
         def plugin = getLoadedExportPluginFor project
         if (plugin) {
@@ -1461,24 +1445,6 @@ class ScmService {
     Map<String, Map> getJobsPluginMeta(String project){
         List jobsPluginMeta = jobMetadataService.getJobsPluginMeta(project, STORAGE_NAME_IMPORT)
         jobsPluginMeta.collectEntries{[it.key.replace("/" + STORAGE_NAME_IMPORT,""),it.pluginData]}
-    }
-
-    void checkExportStoredStatus(String project, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta, Map<String, JobState> jobsState) {
-        def plugin = getLoadedExportPluginFor project
-
-        if (plugin) {
-            jobs.each { job ->
-                def jobPluginMeta = jobsPluginMeta.get(job.uuid)//jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT) ?: [:]
-                def jobReference = (JobScmReference)scmJobRef(job, null, jobPluginMeta)
-                def jobState = jobsState.get(job.id)
-
-                // synch commit info to exported commit data
-                checkExportJobStatus(plugin, job, jobReference, jobPluginMeta, jobState)
-
-                //check if job was renamed
-                checkExportJobRenamed(plugin, project, job, jobReference, jobPluginMeta)
-            }
-        }
     }
 
     // check if jobs has the SCM metadata stored in the DB

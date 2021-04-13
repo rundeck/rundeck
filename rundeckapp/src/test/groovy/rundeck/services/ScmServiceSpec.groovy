@@ -769,8 +769,12 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
         TestCloseable exportCloser = new TestCloseable()
 
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'admin'
+        }
+
         when:
-        service.checkExportStoredStatus(project, jobs)
+        service.exportStatusForJobs(project, auth, jobs)
         then:
 
         1 * service.pluginConfigService.loadScmConfig(
@@ -789,7 +793,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         1 * exportFactory.createPlugin(_, _, true) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'test')
 
-        1 * plugin.getJobStatus(_)>> Mock(JobState)
+        1 * plugin.getJobStatus(_,_)>> Mock(JobState)
         jobChangeCalls * plugin.jobChanged(_,_)
 
         where:
@@ -827,7 +831,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         def integration = "export"
 
         ScmExportPlugin plugin = Mock(ScmExportPlugin){
-            getJobStatus(_)>>Mock(JobState){
+            getJobStatus(_,_)>>Mock(JobState){
                 getCommit()>>Mock(ScmCommitInfo){
                     asMap()>>[commit:"123"]
                 }
@@ -840,8 +844,12 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
         TestCloseable exportCloser = new TestCloseable()
 
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'admin'
+        }
+
         when:
-        service.checkExportStoredStatus(project, jobs)
+        service.exportStatusForJobs(project, auth, jobs)
         then:
 
         1 * service.pluginConfigService.loadScmConfig(
