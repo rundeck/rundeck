@@ -537,6 +537,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String,String> originalPaths){
         def retSt = [:]
+        List<JobExportReference> removeJobsCache = []
+
         retSt.deleted = []
         retSt.restored = []
         def toPull = false
@@ -546,6 +548,26 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (bstat && bstat.behindCount > 0) {
             toPull = true
             retSt.behind = true
+        }
+
+        jobs.each { job ->
+            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
+            def commitId = lastCommitForPath(getRelativePathForJob(job))
+            def path = getRelativePathForJob(job)
+            if(storedCommitId != null && commitId == null){
+                //file to delete-pull
+                git.rm().addFilepattern(path).call()
+                toPull = true
+                retSt.deleted.add(path)
+                removeJobsCache.add(job)
+            }else if(storedCommitId != null && commitId?.name != storedCommitId){
+                if(toPull){
+                    git.checkout().addPath(path).call()
+                }
+                toPull = true
+                retSt.restored.add(job)
+                removeJobsCache.add(job)
+            }
         }
 
         if(toPull){
@@ -558,41 +580,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 retSt.error = e
                 log.info("Git error",e)
             }
-
-            try{
-                jobs.each{job ->
-                    refreshJobStatus(job, originalPaths?.get(job.id))
-                }
-            }catch (ScmPluginException e){
-                retSt.error = e
-            }
         }
 
-        //check job changes
-        jobs.each { job ->
-            toPull = false
-
-            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
-
-            def commitId = lastCommitForPath(getRelativePathForJob(job))
-
-            def path = getRelativePathForJob(job)
-            if(storedCommitId != null && commitId == null){
-                //file to delete-pull
-                git.rm().addFilepattern(path).call()
-                toPull = true
-                retSt.deleted.add(path)
-            }else if(storedCommitId != null && commitId?.name != storedCommitId){
-                if(toPull){
-                    git.checkout().addPath(path).call()
-                }
-                toPull = true
-                retSt.restored.add(job)
-            }
-
-            if(toPull){
+        try{
+            removeJobsCache.each{job ->
                 refreshJobStatus(job, originalPaths?.get(job.id))
             }
+        }catch (ScmPluginException e){
+            retSt.error = e
         }
 
         retSt
