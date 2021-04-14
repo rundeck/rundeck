@@ -16,14 +16,19 @@
 
 package rundeck.services
 
-import grails.test.mixin.TestFor
-import spock.lang.Specification
+import grails.test.hibernate.HibernateSpec
+import grails.testing.services.ServiceUnitTest
+import rundeck.LogFileStorageRequest
+import rundeck.PluginMeta
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-@TestFor(JobMetadataService)
-class JobMetadataServiceSpec extends Specification {
+class JobMetadataServiceSpec extends HibernateSpec implements ServiceUnitTest<JobMetadataService> {
+
+    List<Class> getDomainClasses() {
+        [PluginMeta]
+    }
 
     def setup() {
     }
@@ -31,6 +36,19 @@ class JobMetadataServiceSpec extends Specification {
     def cleanup() {
     }
 
-    void "test something"() {
+    void removeAllPluginMetaForProject() {
+        given:
+            PluginMeta a = new PluginMeta(key: 'abc', project: project).save(flush: true)
+            PluginMeta a2 = new PluginMeta(key: 'bcd', project: project).save(flush: true)
+            PluginMeta b = new PluginMeta(key: 'def', project: 'otherproject').save(flush: true)
+        when:
+            def result = service.removeAllPluginMetaForProject(project)
+        then:
+            result == 2
+            PluginMeta.findAllByProject(project) == []
+            PluginMeta.list() == [b]
+
+        where:
+            project = 'aproj'
     }
 }

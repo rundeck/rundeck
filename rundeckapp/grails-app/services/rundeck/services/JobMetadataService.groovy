@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
@@ -78,6 +79,15 @@ class JobMetadataService {
         if (found) {
             found*.delete(flush: true)
         }
+    }
+
+    /**
+     * Remove all plugin metadata for the project
+     * @param project project
+     */
+    @Subscriber('projectWasDeleted')
+    def removeAllPluginMetaForProject(final String project) {
+        PluginMeta.executeUpdate('delete PluginMeta where project=:project', [project: project], [flush: true])
     }
 
     /**
