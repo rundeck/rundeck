@@ -1688,7 +1688,7 @@ class ScmController extends ControllerBase {
             return redirect(action: 'index', params: [project: project])
         }
         def job = ScheduledExecution.getByIdOrUUID(id)
-        def exportStatus = isExport ? scmService.exportStatusForJobs(authContext, [job]) : null
+        def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job]) : null
         def importStatus = isExport ? null : scmService.importStatusForJobs(authContext, [job])
         def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs([job]) : null
         def diffResult = isExport ? scmService.exportDiff(project, job) : scmService.importDiff(project, job)

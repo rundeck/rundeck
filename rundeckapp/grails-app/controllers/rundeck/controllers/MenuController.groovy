@@ -3393,7 +3393,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
 
                         if (frameworkService.isClusterModeEnabled()) {
-                            scmService.fixExportStatus(authContext, params.project, results.nextScheduled, jobsPluginMeta)
+                            scmService.fixExportStatus(authContext, params.project, result.nextScheduled, jobsPluginMeta)
                         }
 
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled

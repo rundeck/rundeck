@@ -333,18 +333,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     private hasJobStatusCached(final JobExportReference job, final String originalPath) {
-        def path = relativePath(job)
-
-        //def commit = lastCommitForPath(path)
-
-        //String ident = createStatusCacheIdent(job, commit)
-
         if (jobStateMap[job.id]){
-            // && jobStateMap[job.id].ident == ident) {
-            log.debug("hasJobStatusCached(${jobStateMap[job.id].ident}): FOUND for path $path")
+            log.debug("hasJobStatusCached(${jobStateMap[job.id].ident}): FOUND")
             return jobStateMap[job.id]
         }
-        //log.debug("hasJobStatusCached(${ident}): (no) for path $path")
 
         null
     }
@@ -356,6 +348,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 (commit ? commit.name : '') +
                 ":" +
                 (getLocalFileForJob(job)?.exists())
+
+
+
         ident
     }
 
@@ -552,19 +547,18 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         jobs.each { job ->
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
-            def commitId = lastCommitForPath(getRelativePathForJob(job))
             def path = getRelativePathForJob(job)
+            def commitId = lastCommitForPath(path)
+
             if(storedCommitId != null && commitId == null){
                 //file to delete-pull
                 git.rm().addFilepattern(path).call()
-                toPull = true
                 retSt.deleted.add(path)
                 removeJobsCache.add(job)
             }else if(storedCommitId != null && commitId?.name != storedCommitId){
                 if(toPull){
                     git.checkout().addPath(path).call()
                 }
-                toPull = true
                 retSt.restored.add(job)
                 removeJobsCache.add(job)
             }
@@ -591,6 +585,22 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         retSt
+    }
+
+    def cleanJobStatusCache(Set<JobExportReference> jobs){
+        if (!inited) {
+            return null
+        }
+
+        jobs.each {job->
+            log.debug("cleanJobStatusCache(${job.id}): ${job}")
+
+            def status = hasJobStatusCached(job, null)
+
+            if (status) {
+                refreshJobStatus(job, null,false)
+            }
+        }
     }
 
 }
