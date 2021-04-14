@@ -409,7 +409,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         jobstat['scm'] = scmState
         jobstat['path'] = path
         if (commit) {
-            jobstat['commit'] = commit
             jobstat['commitId'] = commit.name
             jobstat['commitMeta'] = GitUtil.metaForCommit(commit)
         }

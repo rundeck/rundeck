@@ -1157,6 +1157,11 @@ class ScmService {
 
                 def jobReference = exportJobRef(job, jobPluginMeta)
 
+                if(jobPluginMeta){
+                    //check if job was renamed
+                    checkExportJobRenamed(plugin, project, job, (JobScmReference)jobReference, jobPluginMeta)
+                }
+
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
                 JobState jobState = plugin.getJobStatus(jobReference, originalPath)
                 status[jobReference.id] = jobState
@@ -1164,10 +1169,6 @@ class ScmService {
                 // synch commit info to exported commit data
                 checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
 
-                if(jobPluginMeta){
-                    //check if job was renamed
-                    checkExportJobRenamed(plugin, project, job, (JobScmReference)jobReference, jobPluginMeta)
-                }
 
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
@@ -1490,7 +1491,7 @@ class ScmService {
             }
 
             if(renameProcess){
-                def origScmRef = jobReference
+                def origScmRef = (JobScmReference)exportJobRef(job)
                 origScmRef.jobName = jobPluginMeta.name
                 origScmRef.groupPath = jobPluginMeta.groupPath
 
