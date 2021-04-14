@@ -26,11 +26,11 @@ package com.dtolabs.rundeck.core.common.impl;
 import com.dtolabs.rundeck.core.common.FileUpdater;
 import com.dtolabs.rundeck.core.common.FileUpdaterException;
 import com.dtolabs.rundeck.core.common.URLFileUpdaterFactory;
+import com.dtolabs.rundeck.core.http.ApacheHttpClient;
+import com.dtolabs.rundeck.core.http.HttpClient;
 import com.dtolabs.utils.Streams;
-import org.apache.commons.httpclient.*;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpClientParams;
+import org.apache.http.*;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +38,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -65,76 +66,6 @@ public class URLFileUpdater implements FileUpdater {
     private int timeout;
     private String username;
     private String password;
-    private httpClientInteraction interaction=new normalInteraction();
-
-    public void setInteraction(final httpClientInteraction interaction) {
-        this.interaction = interaction;
-    }
-
-    /**
-     * Interface for interaction with HTTPClient api, or mock instance.
-     */
-    public static interface httpClientInteraction {
-        public void setMethod(HttpMethod method);
-
-        public void setClient(HttpClient client);
-
-        public int executeMethod() throws IOException;
-
-        public String getStatusText();
-
-        public InputStream getResponseBodyAsStream() throws IOException;
-
-        public void releaseConnection();
-
-        public void setRequestHeader(String name, String value);
-
-        public Header getResponseHeader(String name);
-
-        void setFollowRedirects(boolean follow);
-    }
-
-    static final class normalInteraction implements httpClientInteraction {
-        private HttpMethod method;
-        private HttpClient client;
-
-        public void setMethod(HttpMethod method) {
-            this.method = method;
-        }
-
-        public void setClient(HttpClient client) {
-            this.client = client;
-        }
-
-        public int executeMethod() throws IOException {
-            return client.executeMethod(method);
-        }
-
-        public String getStatusText() {
-            return method.getStatusText();
-        }
-
-        public InputStream getResponseBodyAsStream() throws IOException {
-            return method.getResponseBodyAsStream();
-        }
-
-        public void releaseConnection() {
-            method.releaseConnection();
-        }
-
-        public void setRequestHeader(String name, String value) {
-            method.setRequestHeader(name, value);
-        }
-
-        public Header getResponseHeader(String name) {
-            return method.getResponseHeader(name);
-        }
-
-        public void setFollowRedirects(boolean follow) {
-            method.setFollowRedirects(follow);
-        }
-
-    }
 
     /**
      * Create a URLUpdater
@@ -212,9 +143,7 @@ public class URLFileUpdater implements FileUpdater {
     }
 
     private void updateHTTPUrl(final File destinationFile) throws FileUpdaterException {
-        if (null == interaction) {
-            interaction = new normalInteraction();
-        }
+        HttpClient<HttpResponse> httpClient = new ApacheHttpClient();
         final Properties cacheProperties;
         if (useCaching) {
             cacheProperties = loadCacheData(cacheMetadata);
@@ -223,90 +152,64 @@ public class URLFileUpdater implements FileUpdater {
             cacheProperties = null;
         }
 
-        final HttpClientParams params = new HttpClientParams();
-        if (timeout > 0) {
-            params.setConnectionManagerTimeout(timeout * 1000);
-            params.setSoTimeout(timeout * 1000);
-        }
-
-        final HttpClient client = new HttpClient(params);
-        AuthScope authscope = null;
-        UsernamePasswordCredentials cred = null;
-        boolean doauth = false;
         String cleanUrl = url.toExternalForm().replaceAll("^(https?://)([^:@/]+):[^@/]*@", "$1$2:****@");
         String urlToUse = url.toExternalForm();
         try {
+            urlToUse = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
+            httpClient.setUri(url.toURI());
             if (null != url.getUserInfo()) {
-                doauth = true;
-                authscope = new AuthScope(url.getHost(),
-                    url.getPort() > 0 ? url.getPort() : url.getDefaultPort(),
-                    AuthScope.ANY_REALM, "BASIC");
-                cred = new UsernamePasswordCredentials(url.getUserInfo());
-                urlToUse = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
+                UsernamePasswordCredentials cred = new UsernamePasswordCredentials(url.getUserInfo());
+                httpClient.setBasicAuthCredentials(cred.getUserName(),cred.getPassword());
             } else if (null != username && null != password) {
-                doauth = true;
-                authscope = new AuthScope(url.getHost(),
-                    url.getPort() > 0 ? url.getPort() : url.getDefaultPort(),
-                    AuthScope.ANY_REALM, "BASIC");
-                cred = new UsernamePasswordCredentials(username + ":" + password);
-                urlToUse = new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile()).toExternalForm();
+                httpClient.setBasicAuthCredentials(username,password);
             }
-        } catch (MalformedURLException e) {
+
+        } catch (MalformedURLException | URISyntaxException e) {
             throw new FileUpdaterException("Failed to configure base URL for authentication: " + e.getMessage(),
                 e);
         }
-        if (doauth) {
-            client.getParams().setAuthenticationPreemptive(true);
-            client.getState().setCredentials(authscope, cred);
-        }
-        interaction.setClient(client);
-        interaction.setMethod(new GetMethod(urlToUse));
-        interaction.setFollowRedirects(true);
-        if (null != acceptHeader) {
-            interaction.setRequestHeader("Accept", acceptHeader);
-        } else {
-            interaction.setRequestHeader("Accept", "*/*");
-        }
+        httpClient.setTimeout(timeout * 1000);
+        httpClient.setFollowRedirects(true);
+        httpClient.setMethod(HttpClient.Method.GET);
+        httpClient.addHeader("Accept",Optional.ofNullable(acceptHeader).orElse("*/*"));
 
         if (useCaching) {
-            applyCacheHeaders(cacheProperties, interaction);
+            applyCacheHeaders(cacheProperties, httpClient);
         }
 
         logger.debug("Making remote request: " + cleanUrl);
         try {
-            resultCode = interaction.executeMethod();
-            reasonCode = interaction.getStatusText();
-            if (useCaching && HttpStatus.SC_NOT_MODIFIED == resultCode) {
-                logger.debug("Content NOT MODIFIED: file up to date");
-            } else if (HttpStatus.SC_OK == resultCode) {
-                determineContentType(interaction);
+            httpClient.execute((HttpResponse rsp) -> {
+                resultCode = rsp.getStatusLine().getStatusCode();
+                reasonCode = rsp.getStatusLine().getReasonPhrase();
 
-                //write to file
-                FileOutputStream output=new FileOutputStream(destinationFile);
-                try{
-                    Streams.copyStream(interaction.getResponseBodyAsStream(), output);
-                }finally{
-                    output.close();
-                }
-                if (destinationFile.length() < 1) {
-                    //file was empty!
-                    if(!destinationFile.delete()) {
-                        logger.warn("Failed to remove empty file: " + destinationFile.getAbsolutePath());
+                if (useCaching && HttpStatus.SC_NOT_MODIFIED == resultCode) {
+                    logger.debug("Content NOT MODIFIED: file up to date");
+                } else if (HttpStatus.SC_OK == resultCode) {
+                    determineContentType(rsp);
+
+                    try (FileOutputStream output = new FileOutputStream(destinationFile)) {
+                        //write to file
+                        Streams.copyStream(rsp.getEntity().getContent(), output);
                     }
+                    if (destinationFile.length() < 1) {
+                        //file was empty!
+                        if(!destinationFile.delete()) {
+                            logger.warn("Failed to remove empty file: " + destinationFile.getAbsolutePath());
+                        }
+                    }
+                    if (useCaching) {
+                        cacheResponseInfo(rsp, cacheMetadata);
+                    }
+                } else {
+                    throw new FileUpdaterException(
+                            "Unable to retrieve content: result code: " + resultCode + " " + reasonCode);
                 }
-                if (useCaching) {
-                    cacheResponseInfo(interaction, cacheMetadata);
-                }
-            } else {
-                throw new FileUpdaterException(
-                    "Unable to retrieve content: result code: " + resultCode + " " + reasonCode);
-            }
-        } catch (HttpException e) {
+
+
+            });
+        }  catch (Exception e) {
             throw new FileUpdaterException(e);
-        } catch (IOException e) {
-            throw new FileUpdaterException(e);
-        } finally {
-            interaction.releaseConnection();
         }
     }
 
@@ -314,13 +217,13 @@ public class URLFileUpdater implements FileUpdater {
      * Add appropriate cache headers to the request method, but only if there is valid data in the cache (content type
      * as well as file content)
      */
-    private void applyCacheHeaders(final Properties cacheProperties, final httpClientInteraction method) {
+    private void applyCacheHeaders(final Properties cacheProperties, final HttpClient<HttpResponse> client) {
         if (isCachedContentPresent() && null != contentType) {
             if (cacheProperties.containsKey(E_TAG)) {
-                method.setRequestHeader(IF_NONE_MATCH, cacheProperties.getProperty(E_TAG));
+                client.addHeader(IF_NONE_MATCH,cacheProperties.getProperty(E_TAG));
             }
             if (cacheProperties.containsKey(LAST_MODIFIED)) {
-                method.setRequestHeader(IF_MODIFIED_SINCE, cacheProperties.getProperty(LAST_MODIFIED));
+                client.addHeader(IF_MODIFIED_SINCE, cacheProperties.getProperty(LAST_MODIFIED));
             }
         }
     }
@@ -336,9 +239,9 @@ public class URLFileUpdater implements FileUpdater {
         }
     }
 
-    private void determineContentType(final httpClientInteraction method) {
-        if (null != method.getResponseHeader(CONTENT_TYPE)) {
-            contentType = method.getResponseHeader(CONTENT_TYPE).getValue();
+    private void determineContentType(final HttpResponse response) {
+        if (null != response.getEntity().getContentType().getValue()) {
+            contentType = response.getEntity().getContentType().getValue();
             cleanContentType();
         }
     }
@@ -359,11 +262,8 @@ public class URLFileUpdater implements FileUpdater {
         if (cacheFile.isFile()) {
             //try to load cache data if present
             try {
-                final FileInputStream fileInputStream = new FileInputStream(cacheFile);
-                try {
+                try (FileInputStream fileInputStream = new FileInputStream(cacheFile)) {
                     cacheProperties.load(fileInputStream);
-                } finally {
-                    fileInputStream.close();
                 }
             } catch (IOException e) {
                 logger.debug("failed to load cache data from file: " + cacheFile);
@@ -375,18 +275,18 @@ public class URLFileUpdater implements FileUpdater {
     /**
      * Cache etag and last-modified header info for a response
      */
-    private void cacheResponseInfo(final httpClientInteraction method, final File cacheFile) {
+    private void cacheResponseInfo(final HttpResponse httpResponse, final File cacheFile) {
         //write cache data to file if present
         Properties newprops = new Properties();
 
-        if (null != method.getResponseHeader(LAST_MODIFIED)) {
-            newprops.setProperty(LAST_MODIFIED, method.getResponseHeader(LAST_MODIFIED).getValue());
+        if (null != httpResponse.getFirstHeader(LAST_MODIFIED)) {
+            newprops.setProperty(LAST_MODIFIED, httpResponse.getFirstHeader(LAST_MODIFIED).getValue());
         }
-        if (null != method.getResponseHeader(E_TAG)) {
-            newprops.setProperty(E_TAG, method.getResponseHeader(E_TAG).getValue());
+        if (null != httpResponse.getFirstHeader(E_TAG)) {
+            newprops.setProperty(E_TAG, httpResponse.getFirstHeader(E_TAG).getValue());
         }
-        if (null != method.getResponseHeader(CONTENT_TYPE)) {
-            newprops.setProperty(CONTENT_TYPE, method.getResponseHeader(CONTENT_TYPE).getValue());
+        if (null != httpResponse.getFirstHeader(CONTENT_TYPE)) {
+            newprops.setProperty(CONTENT_TYPE, httpResponse.getFirstHeader(CONTENT_TYPE).getValue());
         }
         if (newprops.size() > 0) {
             try {

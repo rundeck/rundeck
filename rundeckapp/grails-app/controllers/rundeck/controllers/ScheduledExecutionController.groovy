@@ -31,22 +31,31 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.converters.JSON
 import org.apache.commons.collections.list.TreeList
-import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.HttpMethod
-import org.apache.commons.httpclient.UsernamePasswordCredentials
-import org.apache.commons.httpclient.auth.AuthScope
-import org.apache.commons.httpclient.methods.GetMethod
-import org.apache.commons.httpclient.params.HttpClientParams
-import org.apache.commons.httpclient.params.HttpMethodParams
-import org.apache.commons.httpclient.util.DateParseException
-import org.apache.commons.httpclient.util.DateUtil
+import org.apache.http.HttpHost
+import org.apache.http.HttpResponse
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.AuthCache
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.protocol.HttpClientContext
+import org.apache.http.client.utils.DateUtils
+import org.apache.http.impl.auth.BasicScheme
+import org.apache.http.impl.client.BasicAuthCache
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.impl.client.StandardHttpRequestRetryHandler
+import org.apache.http.impl.cookie.DateParseException
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -840,65 +849,51 @@ class ScheduledExecutionController  extends ControllerBase{
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
-            final HttpClientParams params = new HttpClientParams()
-            params.setConnectionManagerTimeout(timeout*1000L)
-            params.setSoTimeout(timeout*1000)
-            if(contimeout>0){
-                params.setIntParameter('http.connection.timeout',contimeout*1000)
-            }
+            HttpClient<HttpResponse> client = new ApacheHttpClient()
+            client.setFollowRedirects(true)
+            client.setTimeout(timeout*1000)
+
             if(retry>0) {
-                def myretryhandler = new DefaultHttpMethodRetryHandler(retry, false)
-                params.setParameter(HttpMethodParams.RETRY_HANDLER, myretryhandler);
+                client.setRetryCount(retry)
             }
-            def HttpClient client= new HttpClient(params)
-            def URL urlo
-            def AuthScope authscope=null
-            def UsernamePasswordCredentials cred=null
-            boolean doauth=false
+
+            URL urlo
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
                 urlo = new URL(url)
+                client.setUri(urlo.toURI())
                 if(urlo.userInfo){
-                    doauth = true
-                    authscope = new AuthScope(urlo.host,urlo.port>0? urlo.port:urlo.defaultPort,AuthScope.ANY_REALM,"BASIC")
-                    cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
+                    UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    client.setBasicAuthCredentials(cred.userName,cred.password)
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
             }
-            if(doauth){
-                client.getParams().setAuthenticationPreemptive(true);
-                client.getState().setCredentials(authscope,cred)
-            }
-            def HttpMethod method = new GetMethod(url)
-            method.setFollowRedirects(true)
-            method.setRequestHeader("Accept","application/json")
+            client.addHeader("Accept","application/json")
             stats.url = cleanUrl;
             stats.startTime = System.currentTimeMillis();
-            def resultCode = client.executeMethod(method);
-            stats.httpStatusCode = resultCode
-            stats.httpStatusText = method.getStatusText()
-            stats.finishTime = System.currentTimeMillis()
-            stats.durationTime=stats.finishTime-stats.startTime
-            stats.contentLength = method.getResponseContentLength()
-            final header = method.getResponseHeader("Last-Modified")
-            if(null!=header){
-                try {
-                    stats.lastModifiedDate= DateUtil.parseDate(header.getValue())
-                } catch (DateParseException e) {
+            def results = [:]
+            client.execute { response ->
+                int resultCode = response.statusLine.statusCode
+                stats.httpStatusCode = response.statusLine.statusCode
+                stats.httpStatusText = response.statusLine.reasonPhrase
+                stats.finishTime = System.currentTimeMillis()
+                stats.durationTime=stats.finishTime-stats.startTime
+                stats.contentLength = response.getEntity().contentLength
+                final header = response.getFirstHeader("Last-Modified")
+                if(null!=header){
+                    stats.lastModifiedDate= DateUtils.parseDate(header.getValue())
+                }else{
+                    stats.lastModifiedDate=""
+                    stats.lastModifiedDateTime=""
                 }
-            }else{
-                stats.lastModifiedDate=""
-                stats.lastModifiedDateTime=""
-            }
-            try{
-                def reasonCode = method.getStatusText();
+
+                def reasonCode = response.statusLine.reasonPhrase
                 if(resultCode>=200 && resultCode<=300){
                     def expectedContentType="application/json"
                     def resultType=''
-                    if (null != method.getResponseHeader("Content-Type")) {
-                        resultType = method.getResponseHeader("Content-Type").getValue();
+                    if (null != response.getFirstHeader("Content-Type")) {
+                        resultType = response.getFirstHeader("Content-Type").getValue();
                     }
                     String type = resultType;
                     if (type.indexOf(";") > 0) {
@@ -913,9 +908,9 @@ class ScheduledExecutionController  extends ControllerBase{
                     }
 
                     if (continueRendering) {
-                        final stream = method.getResponseBodyAsStream()
+                        final stream = response.getEntity().content
                         final writer = new StringWriter()
-                        int len=copyToWriter(new BufferedReader(new InputStreamReader(stream, method.getResponseCharSet())),writer)
+                        int len=copyToWriter(new BufferedReader(new InputStreamReader(stream)),writer)
                         stream.close()
                         writer.flush()
                         final string = writer.toString()
@@ -928,17 +923,16 @@ class ScheduledExecutionController  extends ControllerBase{
                         }else{
                             stats.contentSHA1=""
                         }
-                        return [json:json,stats:stats]
+                        results = [json:json,stats:stats]
                     }else{
-                        return [error:"Unexpected content type received: "+resultType,stats:stats]
+                        results = [error:"Unexpected content type received: "+resultType,stats:stats]
                     }
                 }else{
                     stats.contentSHA1 = ""
-                    return [error:"Server returned an error response: ${resultCode} ${reasonCode}",stats:stats]
+                    results = [error:"Server returned an error response: ${resultCode} ${reasonCode}",stats:stats]
                 }
-            } finally {
-                method.releaseConnection();
             }
+            return results
         }else if (url.startsWith("file:")) {
             stats.url=url
             def File srfile = new File(new URI(url))

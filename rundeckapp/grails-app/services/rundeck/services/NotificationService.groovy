@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -41,16 +43,23 @@ import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
-import org.apache.commons.httpclient.Header
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.HttpMethod
-import org.apache.commons.httpclient.HttpMethodBase
-import org.apache.commons.httpclient.UsernamePasswordCredentials
-import org.apache.commons.httpclient.auth.AuthScope
-import org.apache.commons.httpclient.methods.GetMethod
-import org.apache.commons.httpclient.methods.PostMethod
-import org.apache.commons.httpclient.methods.StringRequestEntity
-import org.apache.commons.httpclient.params.HttpClientParams
+import org.apache.http.HttpHost
+import org.apache.http.HttpResponse
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.AuthCache
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.protocol.HttpClientContext
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.auth.BasicScheme
+import org.apache.http.impl.client.BasicAuthCache
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.message.BasicHeader
 import org.rundeck.app.AppConstants
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
@@ -815,49 +824,42 @@ public class NotificationService implements ApplicationContextAware{
                 }
                 wait *= backoff
             }
-            final HttpClientParams params = new HttpClientParams()
-            params.setConnectionManagerTimeout(timeout * 1000)
-            params.setSoTimeout(timeout * 1000)
-            def HttpClient client = new HttpClient(params)
-            def URL urlo
-            def AuthScope authscope=null
-            def UsernamePasswordCredentials cred=null
-            boolean doauth=false
+            HttpClient<HttpResponse> httpClient = new ApacheHttpClient()
+            httpClient.setFollowRedirects(true)
+            httpClient.setTimeout(timeout*1000)
+
             try{
-                urlo = new URL(url)
+                URL urlo = new URL(url)
+                httpClient.setUri(urlo.toURI())
                 if(urlo.userInfo){
-                    doauth = true
-                    authscope = new AuthScope(urlo.host,urlo.port>0? urlo.port:urlo.defaultPort,AuthScope.ANY_REALM,"BASIC")
-                    cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    url = new URL(urlo.protocol, urlo.host, urlo.port, urlo.file).toExternalForm()
+                    UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    httpClient.setBasicAuthCredentials(cred.userName,cred.password)
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
             }
-            if(doauth){
-                client.getParams().setAuthenticationPreemptive(true);
-                client.getState().setCredentials(authscope,cred)
+
+            if(httpMethod != GET) {
+                httpClient.setMethod(HttpClient.Method.POST)
+                httpClient.addPayload(contentType,payload)
             }
 
-            def method = (httpMethod == GET) ? createGetMethod(url) : createPostMethod(url, payload, contentType)
-
-            method.setRequestHeader(new Header("X-RunDeck-Notification-Trigger", trigger))
-            method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-ID", id))
-            method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-Status", status))
-            if(secureDigest) method.setRequestHeader(new Header("X-RunDeck-Notification-SHA256-Digest", secureDigest))
+            httpClient.addHeader("X-RunDeck-Notification-Trigger", trigger)
+            httpClient.addHeader("X-RunDeck-Notification-Execution-ID", id)
+            httpClient.addHeader("X-RunDeck-Notification-Execution-Status", status)
+            if(secureDigest) httpClient.addHeader("X-RunDeck-Notification-SHA256-Digest", secureDigest)
             try {
-                resultCode = client.executeMethod(method);
-                resultReason = method.getStatusText();
-
-                if (resultCode >= 200 && resultCode <= 300) {
-                    complete=true
-                } else {
-                    error="server response: ${resultCode} ${resultReason}"
+                httpClient.execute { response ->
+                    resultCode = response.statusLine.statusCode
+                    resultReason = response.statusLine.reasonPhrase
+                    if (resultCode >= 200 && resultCode <= 300) {
+                        complete=true
+                    } else {
+                        error="server response: ${resultCode} ${resultReason}"
+                    }
                 }
             }catch (Throwable e){
                 error="Error making request: "+e.message
-            } finally {
-                method.releaseConnection();
             }
             if(complete){
                 break
@@ -868,17 +870,6 @@ public class NotificationService implements ApplicationContextAware{
             return [success:complete,error:"Unable to ${httpMethod?.toUpperCase()} notification after ${count} tries: ${trigger} for execution ${id} (${status}): ${error}"]
         }
         return [success:complete]
-    }
-
-    static PostMethod createPostMethod(String url, String payload, String contentType){
-        PostMethod method = new PostMethod(url)
-        method.setRequestEntity(new StringRequestEntity(payload, contentType, "UTF-8"))
-        return method
-    }
-
-    static GetMethod createGetMethod(String url){
-        GetMethod method = new GetMethod(url)
-        return method
     }
 
     static String createSecureDigest(String postUrl, String trigger, id) {
