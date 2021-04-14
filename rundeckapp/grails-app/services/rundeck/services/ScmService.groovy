@@ -1161,12 +1161,13 @@ class ScmService {
                 JobState jobState = plugin.getJobStatus(jobReference, originalPath)
                 status[jobReference.id] = jobState
 
-
                 // synch commit info to exported commit data
                 checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
 
-                //check if job was renamed
-                checkExportJobRenamed(plugin, project, job, (JobScmReference)jobReference, jobPluginMeta)
+                if(jobPluginMeta){
+                    //check if job was renamed
+                    checkExportJobRenamed(plugin, project, job, (JobScmReference)jobReference, jobPluginMeta)
+                }
 
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
