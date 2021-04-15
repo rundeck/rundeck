@@ -104,5 +104,6 @@ databaseChangeLog = {
         include file: 'core/Webhook.groovy'
         include file: 'core/ConstraintsIndexesKeys.groovy'
         include file: 'core/Tag-3.4.0.groovy'
+        include file: 'core/WorkflowStep.groovy'
 
 }
