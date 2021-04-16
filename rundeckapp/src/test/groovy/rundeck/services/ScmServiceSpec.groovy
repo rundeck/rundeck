@@ -802,6 +802,73 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         "test"   | "test"    | 0
     }
 
+    def "exportStatusForJobs calls plugin cluster fix in cluster mode"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        def project = "test"
+
+        service.rundeckAuthContextProvider = Mock(AuthContextProvider) {
+            getAuthContextForUserAndRolesAndProject(_,_,_) >>
+                    Mock(UserAndRolesAuthContext) {
+                        getUsername() >> 'admin'
+                    }
+        }
+        def job = new ScheduledExecution()
+        job.version = 1
+        job.jobName = "test"
+        job.groupPath = "test"
+
+        def jobs = [job]
+        def integration = "export"
+        def originalMeta = [name: origName, groupPath: origGroup]
+        def config = [:]
+
+        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+
+        service.jobMetadataService = Mock(JobMetadataService){
+            getJobPluginMeta(_,'scm-import')>>originalMeta
+        }
+
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'admin'
+        }
+        service.initedProjects<<"import/$project"
+        service.initedProjects<<"export/$project"
+        service.loadedExportPlugins[project]=Closeables.closeableProvider(plugin)
+
+        when:
+        service.exportStatusForJobs(project, auth, jobs,true)
+        then:
+
+        1 * service.pluginConfigService.loadScmConfig(
+                project,
+                "etc/scm-${integration}.properties",
+                "scm.$integration"
+        ) >> Mock(ScmPluginConfigData) {
+            1 * getEnabled() >> true
+            getSetting("username")>>"admin"
+            getSettingList("roles")>>["admin"]
+            _ * getType() >> 'pluginType'
+            1 * getConfig() >> [plugin: 'config']
+        }
+
+        1 * plugin.clusterFixJobs(_,_,_)>> [:]
+        1 * plugin.getJobStatus(_,_)>> Mock(JobState)
+        jobChangeCalls * plugin.jobChanged(_,_)
+
+        where:
+        origName | origGroup | jobChangeCalls
+        "test2"  | "test"    | 1
+        "test"   | "test"    | 0
+    }
+
     def "get job plugin meta"(){
         given:
             def job = new ScheduledExecution()
