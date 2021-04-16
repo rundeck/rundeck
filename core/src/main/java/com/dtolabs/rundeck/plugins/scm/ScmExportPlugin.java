@@ -107,14 +107,12 @@ public interface ScmExportPlugin {
     }
 
     /**
-     * Refresh the job cache and returns the new state
+     * Set default job status
      *
-     * @param job          job
-     *
-     * @return state
+     * @param jobs
      */
-    default JobState getJobStatusRefresh(JobExportReference job){
-        return getJobStatus(job, null);
+    default void initJobsStatus(List<JobExportReference> jobs) {
+
     }
 
     /**

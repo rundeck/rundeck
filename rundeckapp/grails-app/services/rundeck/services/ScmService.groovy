@@ -16,7 +16,6 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobReference
@@ -54,15 +53,12 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
-import grails.events.annotation.Subscriber
-import grails.gorm.transactions.Transactional
-import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import rundeck.ScheduledExecution
+import rundeck.Storage
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
@@ -70,10 +66,8 @@ import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
 
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * Manages scm integration
@@ -88,8 +82,7 @@ class ScmService {
     public static final Map<String, String> PREFIXES = [export: EXPORT_PREF, import: IMPORT_PREF]
     public static final Map<String, String> STORAGE_NAMES = [export: STORAGE_NAME_EXPORT, import: STORAGE_NAME_IMPORT]
     public static final ArrayList<String> INTEGRATIONS = [EXPORT, IMPORT]
-    public static final long DEFAULT_LOADER_DELAY = 10
-    public static final long DEFAULT_LOADER_INTERVAL_SEC = 30
+
 
     def JobEventsService jobEventsService
     def ContextJobImporter scmJobImporter
@@ -104,162 +97,11 @@ class ScmService {
     PluginConfigService pluginConfigService
     def StorageService storageService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
-    def configurationService
-
     final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
     Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedImportListeners = Collections.synchronizedMap([:])
-
-    /**
-     * scheduledExecutor to load job SCM cache
-     */
-    ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2)
-    final Map<String, ScheduledFuture> scmProjectLoaderProcess = Collections.synchronizedMap([:])
-
-    @Subscriber("rundeck.bootstrap")
-    void beginScmLoader(){
-        if(frameworkService) {
-
-            //check if each project has set the SCM Loader process (if needed)
-            scheduledExecutor.scheduleAtFixedRate(
-                    {
-                        for (String project : frameworkService.projectNames()) {
-                            for (String integration : INTEGRATIONS) {
-                                String projectIntegration = project + "-" + integration
-                                ScmPluginConfigData pluginConfigData = loadScmConfig(project, integration)
-                                if(!scmProjectLoaderProcess.get(projectIntegration)){
-                                    if(pluginConfigData && pluginConfigData.enabled) {
-                                        scmProjectLoaderProcess.put(projectIntegration, startScmLoader(project, integration))
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    scmLoaderInitialDelaySeconds,
-                    scmLoaderIntervalSeconds,
-                    TimeUnit.SECONDS
-            )
-        }
-    }
-
-    def startScmLoader(String project, String integration){
-
-        //enable project integration cache loader
-        def scheduler = scheduledExecutor.scheduleAtFixedRate(
-                {
-                    String projectIntegration = project + "-" + integration
-                    def scheduler =scmProjectLoaderProcess.get(projectIntegration)
-                    ScmPluginConfigData pluginConfigData = loadScmConfig(project, integration)
-                    if(pluginConfigData && pluginConfigData.enabled){
-                        try {
-                            if (integration == EXPORT) {
-                                processScmExportLoader(project, pluginConfigData)
-                            }else{
-                                processScmImportLoader(project, pluginConfigData)
-                            }
-
-                        } catch (Throwable t) {
-                            log.error("processMessages error: $project/$integration: ${t.message}")
-                        }
-                    }else{
-                        //removing task
-                        log.debug("removing thread ${projectIntegration}")
-                        scmProjectLoaderProcess.remove(projectIntegration)
-                        throw new RuntimeException("SCM disabled or project removed");
-                    }
-                },
-                scmLoaderInitialDelaySeconds,
-                scmLoaderIntervalSeconds,
-                TimeUnit.SECONDS
-        )
-        scheduler
-    }
-
-    long getScmLoaderInitialDelaySeconds() {
-        configurationService?.getLong('scm.loader.delay', DEFAULT_LOADER_DELAY) ?: DEFAULT_LOADER_DELAY
-    }
-
-    long getScmLoaderIntervalSeconds() {
-        configurationService?.getLong(
-                'scm.loader.delay',
-                DEFAULT_LOADER_INTERVAL_SEC
-        ) ?:
-                DEFAULT_LOADER_INTERVAL_SEC
-    }
-
-
-    @Transactional
-    void processScmExportLoader(String project, ScmPluginConfigData pluginConfig){
-        log.debug("processing SCM export Loader ${project} / ${pluginConfig.type}")
-        def plugin = getLoadedExportPluginFor project
-
-        if(plugin ){
-            log.debug("export plugin found")
-
-            def query=new ScheduledExecutionQuery()
-            query.projFilter = project
-            def listWorkflows = scheduledExecutionService.listWorkflows(query)
-            def jobs = listWorkflows.schedlist
-
-            log.debug("processing ${jobs.size()} jobs")
-
-            def joblist = exportjobRefsForJobs(jobs)
-
-            if(frameworkService.isClusterModeEnabled()){
-                def username = pluginConfig.getSetting("username")
-                def roles = pluginConfig.getSettingList("roles")
-                def context = scmOperationContext(username, roles, project)
-                def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
-
-                log.debug("processing cluster fix")
-                plugin?.clusterFixJobs(context, joblist, originalPaths)
-            }
-
-            joblist.each {jobReference->
-                plugin.getJobStatusRefresh(jobReference)
-            }
-        }
-
-    }
-
-    @Transactional
-    void processScmImportLoader(String project, ScmPluginConfigData pluginConfig){
-        log.debug("processing SCM import Loader ${project} / ${pluginConfig.type}")
-
-        def plugin = getLoadedImportPluginFor project
-
-        if(plugin){
-            log.debug("import plugin found")
-
-            def query=new ScheduledExecutionQuery()
-            query.projFilter = project
-            def listWorkflows = scheduledExecutionService.listWorkflows(query)
-            def jobs = listWorkflows.schedlist
-
-            log.debug("processing ${jobs.size()} jobs")
-            def joblist = scmJobRefsForJobs(jobs)
-
-            if(frameworkService.isClusterModeEnabled()) {
-                def username = pluginConfig.getSetting("username")
-                def roles = pluginConfig.getSettingList("roles")
-
-                def context = scmOperationContext(username, roles, project)
-                def originalPaths = joblist.collectEntries { [it.id, getRenamedPathForJobId(it.project, it.id)] }
-
-                plugin?.clusterFixJobs(context, joblist, originalPaths)
-                plugin?.getStatus(context)
-
-            }
-
-            joblist.each {job->
-                plugin.getJobStatusRefresh(job)
-            }
-        }
-
-
-    }
 
     def initialize() {
         if(!isScmInitDeferred()) {
@@ -325,7 +167,6 @@ class ScmService {
             )
         }
     }
-
     ScmExportPlugin getLoadedExportPluginFor(String project){
         initProject(project)
         loadedExportPlugins[project]?.provider
@@ -724,9 +565,6 @@ class ScmService {
                     return [valid: true, plugin: plugin, nextAction: nextAction]
                 }
             }
-            //register loader
-            startScmLoader(project, integration, scmPluginConfig)
-
             return [valid: true, plugin: plugin]
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
@@ -833,13 +671,6 @@ class ScmService {
             def changeListener = loadedImportListeners.remove(project)
             jobEventsService.removeListener(changeListener)
         }
-
-        String projectIntegration = project + "-" + integration
-        ScheduledFuture scheduledFuture = scmProjectLoaderProcess.get(projectIntegration)
-        if(scheduledFuture){
-            scheduledFuture.cancel(true)
-        }
-
         loaded?.provider?.cleanup()
     }
 
@@ -1694,6 +1525,7 @@ class ScmService {
     }
 
 }
+
 
 
 

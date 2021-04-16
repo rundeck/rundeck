@@ -92,14 +92,12 @@ public interface ScmImportPlugin {
     JobImportState getJobStatus(JobScmReference job, String originalPath);
 
     /**
-     * Refresh the job cache and returns the new state
+     * Set default job status
      *
-     * @param job          job
-     *
-     * @return state
+     * @param jobs
      */
-    default JobImportState getJobStatusRefresh(JobScmReference job){
-        return getJobStatus(job, null);
+    default void initJobsStatus(List<JobScmReference> jobs) {
+
     }
 
     /**

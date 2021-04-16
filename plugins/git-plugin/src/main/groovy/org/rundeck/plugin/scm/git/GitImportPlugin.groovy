@@ -673,8 +673,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     @Override
-    JobImportState getJobStatusRefresh(JobScmReference job) {
-        refreshJobStatus(job, null)
-        return getJobStatus(job)
+    void initJobsStatus(List<JobScmReference> jobs) {
+        jobs.each {job->
+            initJobStatus(job)
+        }
+    }
+
+    private Map initJobStatus(final JobScmReference job) {
+        def jobstat = Collections.synchronizedMap([:])
+        jobstat['synch'] = SynchState.LOADING
+        jobstat['id'] = job.id
+        jobstat['version'] = job.version
+        return jobstat
+
     }
 }

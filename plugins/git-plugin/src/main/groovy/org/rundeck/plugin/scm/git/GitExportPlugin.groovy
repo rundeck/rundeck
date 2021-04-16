@@ -594,9 +594,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     @Override
-    JobState getJobStatusRefresh(JobExportReference job) {
-        refreshJobStatus(job, null)
-        return getJobStatus(job)
+    void initJobsStatus(List<JobExportReference> jobs) {
+        jobs.each {job->
+            if(!jobStateMap[job.id]){
+                def jobstat = initJobStatus(job)
+                jobStateMap[job.id] = jobstat
+            }
+
+        }
     }
 
     private Map initJobStatus(final JobRevReference job) {
