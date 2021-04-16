@@ -335,8 +335,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     private hasJobStatusCached(final JobExportReference job, final String originalPath) {
         def path = relativePath(job)
 
-        if (jobStateMap[job.id]) {
-            log.debug("hasJobStatusCached(${jobStateMap[job.id].ident}): FOUND for path $path")
+        def commit = lastCommitForPath(path)
+
+        String ident = createStatusCacheIdent(job, commit)
+
+        if (jobStateMap[job.id] && jobStateMap[job.id].ident == ident) {
+            log.debug("hasJobStatusCached(): FOUND for path $path")
             return jobStateMap[job.id]
         }
         log.debug("hasJobStatusCached(): (no) for path $path")
@@ -465,9 +469,24 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         def status = hasJobStatusCached(job, originalPath)
 
-         if (!status) {
-            status = initJobStatus(job)
+
+        //check if local commit has changed from the stored status
+        if(status && status['synch'] == SynchState.CLEAN){
+            def commit = lastCommitForPath(originalPath)
+            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
+            if(storedCommitId != null && commit == null){
+                //force refresh cache
+                status = null
+            }else if(storedCommitId != null && commit?.name != storedCommitId){
+                //force refresh cache
+                status = null
+            }
         }
+
+        if (!status) {
+            status = refreshJobStatus(job, originalPath)
+        }
+
 
         return createJobStatus(status, jobActionsForStatus(status))
     }
@@ -610,6 +629,5 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         jobstat['id'] = job.id
         jobstat['version'] = job.version
         return jobstat
-
     }
 }

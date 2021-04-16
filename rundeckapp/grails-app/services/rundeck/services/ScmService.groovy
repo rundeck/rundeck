@@ -1131,7 +1131,7 @@ class ScmService {
      * @return
      */
     Map<String, JobState> exportStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
-        /*
+
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
             def project = jobs.get(0).project
@@ -1140,7 +1140,7 @@ class ScmService {
             }
         }
 
-         */
+
         def status = exportStatusForJobsWithoutClusterFix(auth, jobs)
 
         status
@@ -1188,14 +1188,11 @@ class ScmService {
      */
     Map<String, JobImportState> importStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
         def status = [:]
-        /*
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
             def project = jobs.get(0).project
             fixImportStatus(auth,project,jobs)
         }
-
-         */
         scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->
             def plugin = getLoadedImportPluginFor jobReference.project
             if (plugin) {
