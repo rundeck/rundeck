@@ -340,10 +340,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         String ident = createStatusCacheIdent(job, commit)
 
         if (jobStateMap[job.id] && jobStateMap[job.id].ident == ident) {
-            log.debug("hasJobStatusCached(): FOUND for path $path")
+            log.debug("hasJobStatusCached(${ident}): FOUND for path $path")
             return jobStateMap[job.id]
         }
-        log.debug("hasJobStatusCached(): (no) for path $path")
+        log.debug("hasJobStatusCached(${ident}): (no) for path $path")
 
         null
     }
@@ -468,7 +468,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return null
         }
         def status = hasJobStatusCached(job, originalPath)
-
 
         //check if local commit has changed from the stored status
         if(status && status['synch'] == SynchState.CLEAN){

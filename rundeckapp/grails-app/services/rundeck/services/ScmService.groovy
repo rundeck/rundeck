@@ -1131,7 +1131,6 @@ class ScmService {
      * @return
      */
     Map<String, JobState> exportStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
-
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
             def project = jobs.get(0).project
@@ -1139,8 +1138,6 @@ class ScmService {
                 fixExportStatus(auth, project, jobs)
             }
         }
-
-
         def status = exportStatusForJobsWithoutClusterFix(auth, jobs)
 
         status
