@@ -107,6 +107,17 @@ public interface ScmExportPlugin {
     }
 
     /**
+     * Refresh the job cache and returns the new state
+     *
+     * @param job          job
+     *
+     * @return state
+     */
+    default JobState getJobStatusRefresh(JobExportReference job){
+        return getJobStatus(job, null);
+    }
+
+    /**
      * Return a list of tracked files that have been deleted.
      */
     List<String> getDeletedFiles();

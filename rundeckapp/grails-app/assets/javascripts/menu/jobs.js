@@ -221,6 +221,9 @@ function BulkEditor(data){
                 case "CLEAN":
                     text = self.messages['scm.export.status.CLEAN.description'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.export.status.LOADING.description'];
+                    break;
                 default:
                     text = exportStatus;
             }
@@ -247,6 +250,9 @@ function BulkEditor(data){
                     break;
                 case "UNKNOWN":
                     text += self.messages['scm.import.status.UNKNOWN.description'];
+                    break;
+                case "LOADING":
+                    text = self.messages['scm.import.status.LOADING.description'];
                     break;
                 default:
                     text += importStatus;
@@ -279,6 +285,10 @@ function BulkEditor(data){
             case "CLEAN":
                 return "text-primary";
                 break;
+            case "LOADING":
+                return "text-danger";
+                break;
+
         }
         return 'text-primary';
     };
@@ -306,6 +316,10 @@ function BulkEditor(data){
             case "CLEAN":
                 return "glyphicon-ok";
                 break;
+            case "LOADING":
+                return "glyphicon-refresh";
+                break;
+
         }
         return 'glyphicon-plus';
     };
@@ -359,6 +373,9 @@ function BulkEditor(data){
                 case "CLEAN":
                     text = self.messages['scm.export.status.CLEAN.display.text'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.export.status.LOADING.display.text'];
+                    break;
             }
             if(!text){
                 text = self.exportState();
@@ -383,6 +400,9 @@ function BulkEditor(data){
                     break;
                 case "CLEAN":
                     text = self.messages['scm.import.status.CLEAN.display.text'];
+                    break;
+                case "LOADING":
+                    text = self.messages['scm.import.status.LOADING.display.text'];
                     break;
             }
             if(!text){

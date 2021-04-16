@@ -611,4 +611,18 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         retSt
     }
 
+    @Override
+    JobState getJobStatusRefresh(JobExportReference job) {
+        refreshJobStatus(job, null)
+        return getJobStatus(job)
+    }
+
+    private Map initJobStatus(final JobRevReference job) {
+        def jobstat = Collections.synchronizedMap([:])
+        jobstat['synch'] = SynchState.LOADING
+        jobstat['id'] = job.id
+        jobstat['version'] = job.version
+        return jobstat
+
+    }
 }

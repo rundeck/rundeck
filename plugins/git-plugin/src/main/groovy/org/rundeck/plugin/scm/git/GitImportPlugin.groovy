@@ -671,4 +671,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
         [:]
     }
+
+    @Override
+    JobImportState getJobStatusRefresh(JobScmReference job) {
+        refreshJobStatus(job, null)
+        return getJobStatus(job)
+    }
 }
