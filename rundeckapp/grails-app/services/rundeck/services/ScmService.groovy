@@ -837,15 +837,16 @@ class ScmService {
     }
 
     /**
+     * @param project project name
      * @param jobs list of {@link ScheduledExecution} objects
      * @return map of job ID to file path
      */
-    Map<String, String> exportFilePathsMapForJobs(List<ScheduledExecution> jobs) {
+    Map<String, String> exportFilePathsMapForJobs(String project, List<ScheduledExecution> jobs) {
         def files = [:]
-        jobs.each { ScheduledExecution job ->
-            def plugin = getLoadedExportPluginFor job.project
-            if (plugin) {
-                files[job.extid] = plugin.getRelativePathForJob(scmJobRef(job))
+        def plugin = getLoadedExportPluginFor project
+        if (plugin) {
+            jobs.each { ScheduledExecution job ->
+                files[job.extid] = plugin.getRelativePathForJob(jobRevReference(job))
             }
         }
         files

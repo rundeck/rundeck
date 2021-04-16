@@ -932,4 +932,26 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             type = 'aplugin'
     }
 
+    def "export file path maps for jobs"(){
+        given:
+            String project='aproj'
+            def job1 = new ScheduledExecution(jobName: 'job1', uuid: 'job1id', project: project)
+            def job2 = new ScheduledExecution(jobName: 'job2', uuid: 'job2id', project: project)
+            def jobs = [job1, job2]
+            service.jobMetadataService=Mock(JobMetadataService)
+            service.initedProjects << "export/$project".toString()
+            service.initedProjects << "import/$project".toString()
+            def plugin = Mock(ScmExportPlugin)
+            service.loadedExportPlugins[project] = Closeables.closeableProvider(plugin)
+        when:
+            def result = service.exportFilePathsMapForJobs(project, jobs)
+        then:
+            0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_IMPORT)
+            1 * plugin.getRelativePathForJob({it.id== 'job1id' })>> '/a/path/job1'
+            1 * plugin.getRelativePathForJob({it.id=='job2id' })>>'/a/path/job2'
+            result == [
+                job1id:'/a/path/job1',
+                job2id:'/a/path/job2'
+            ]
+    }
 }

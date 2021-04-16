@@ -100,7 +100,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * exportStatusForJobs(projectName,_,[],false, _) >> [:]
-            1 * exportFilePathsMapForJobs([]) >> [:]
+            1 * exportFilePathsMapForJobs(projectName, []) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
             [valid: true, nextAction: [id: 'someAction']]
@@ -233,7 +233,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
             ]
-            1 * exportFilePathsMapForJobs(_) >> [
+            1 * exportFilePathsMapForJobs(projectName, _) >> [
                 job1: 'item1',
                 job2: 'item2',
                 job3: 'item3',
@@ -711,7 +711,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * exportStatusForJobs(projectName,_,[],false,_)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(_)
+            1 * exportFilePathsMapForJobs(projectName, _)
             1 * getJobsPluginMeta(projectName)
             0 * exportStatusForJobs(_,_,_)
             0 * _(*_)
@@ -760,8 +760,9 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * exportStatusForJobs(projectName, _,[], false, _)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(_)
+            1 * exportFilePathsMapForJobs(projectName, _)
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            1 * getJobsPluginMeta(projectName)
             0 * _(*_)
         }
 
