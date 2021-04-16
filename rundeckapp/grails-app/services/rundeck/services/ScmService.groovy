@@ -850,20 +850,6 @@ class ScmService {
         }
         files
     }
-    /**
-     * @param refs list of {@link JobRevReference} objects
-     * @return map of job ID to file path
-     */
-    Map<String, String> exportFilePathsMapForJobRefs(List<JobRevReference> refs) {
-        def files = [:]
-        refs.each { JobRevReference jobReference ->
-            def plugin = getLoadedExportPluginFor jobReference.project
-            if (plugin) {
-                files[jobReference.id] = plugin.getRelativePathForJob(jobReference)
-            }
-        }
-        files
-    }
 
     List<JobRevReference> jobRefsForIds(List<String> ids) {
         jobRefsForJobs(
