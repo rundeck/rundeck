@@ -310,7 +310,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                                   AuthConstants.ACTION_SCM_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                     model.scmImportEnabled = true
-                    model.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
+                    model.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
                 }
             }
             render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
@@ -537,7 +537,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                               AuthConstants.ACTION_SCM_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true
-                dataMap.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
+                dataMap.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
             }
         }
 

@@ -1194,11 +1194,10 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobImportState> importStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
+    Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
         def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
-            def project = jobs.get(0).project
             fixImportStatus(auth,project,jobs)
         }
         scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->

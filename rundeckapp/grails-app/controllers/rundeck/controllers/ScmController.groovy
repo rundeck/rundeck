@@ -1168,7 +1168,7 @@ class ScmController extends ControllerBase {
                 jobMap[it] = ScheduledExecution.getByIdOrUUID(it)
             }
             jobs = (jobMap.values() as List).findAll { it != null }
-            scmStatus = scmService.importStatusForJobs(authContext, jobs)
+            scmStatus = scmService.importStatusForJobs(project, authContext, jobs)
         }
 
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)
@@ -1464,7 +1464,7 @@ class ScmController extends ControllerBase {
 
         } else {
 
-            def scmImportStatusMap = scmService.importStatusForJobs(authContext, [scheduledExecution])
+            def scmImportStatusMap = scmService.importStatusForJobs(scheduledExecution.project, authContext, [scheduledExecution])
             JobImportState scmStatus = scmImportStatusMap[scm.id]
 
             scmJobStatus.synchState = scmStatus?.synchState?.toString()
@@ -1692,9 +1692,9 @@ class ScmController extends ControllerBase {
             return redirect(action: 'index', params: [project: project])
         }
         def job = ScheduledExecution.getByIdOrUUID(id)
-        def jobmeta = scmService.getJobPluginMeta(job)
-        def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job], [(id):jobmeta]) : null
-        def importStatus = isExport ? null : scmService.importStatusForJobs(authContext, [job])
+        def jobMetaMap = [(id):scmService.getJobPluginMeta(job)]
+        def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job], jobMetaMap) : null
+        def importStatus = isExport ? null : scmService.importStatusForJobs(project, authContext, [job])
         def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs(project, [job]) : null
         def diffResult = isExport ? scmService.exportDiff(project, job) : scmService.importDiff(project, job)
         def scmExportRenamedPath = isExport ? scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid) :
