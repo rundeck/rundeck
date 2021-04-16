@@ -812,15 +812,17 @@ class ScmController extends ControllerBase {
             deletedPaths.remove(it)
         }
         List<ScheduledExecution> jobs = []
+        Map<String, Map> jobPluginMeta = [:]
         if (jobids) {
             jobs = jobids.collect {
                 ScheduledExecution.getByIdOrUUID(it)
             }.findAll { it }
         } else {
             jobs = ScheduledExecution.findAllByProject(project)
+            jobPluginMeta = scmService.getJobsPluginMeta()
         }
 
-        scmJobStatus = scmService.exportStatusForJobs(project, null, jobs).findAll {
+        scmJobStatus = scmService.exportStatusForJobs(project, null, jobs, jobPluginMeta).findAll {
             it.value.synchState != SynchState.CLEAN
         }
         jobs = jobs.findAll {
@@ -1297,7 +1299,8 @@ class ScmController extends ControllerBase {
             renamedJobPaths.values().each {
                 deletedPaths.remove(it)
             }
-            def scmStatus = scmService.exportStatusForJobs(project, authContext, jobs, false)
+            def jobsPluginMeta = scmService.getJobsPluginMeta(project)
+            def scmStatus = integration == 'export' ? scmService.exportStatusForJobs(project, authContext, jobs, false, jobsPluginMeta) : null
             def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
             def scmProjectStatus = scmService.getPluginStatus(authContext, integration, params.project)
@@ -1688,7 +1691,8 @@ class ScmController extends ControllerBase {
             return redirect(action: 'index', params: [project: project])
         }
         def job = ScheduledExecution.getByIdOrUUID(id)
-        def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job]) : null
+        def jobmeta = scmService.getJobPluginMeta(job)
+        def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job], [(id):jobmeta]) : null
         def importStatus = isExport ? null : scmService.importStatusForJobs(authContext, [job])
         def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs([job]) : null
         def diffResult = isExport ? scmService.exportDiff(project, job) : scmService.importDiff(project, job)
