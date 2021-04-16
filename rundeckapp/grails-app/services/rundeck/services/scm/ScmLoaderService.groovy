@@ -45,6 +45,7 @@ class ScmLoaderService {
                                         ScheduledFuture scheduler = scmProjectLoaderProcess.get(projectIntegration)
                                         scheduler.cancel(true)
                                         scmProjectLoaderProcess.remove(projectIntegration)
+                                        cleanUpScmPlugin(project, integration)
                                     }
                                 }
                             }
@@ -79,6 +80,7 @@ class ScmLoaderService {
                         //removing task
                         log.debug("removing thread ${projectIntegration}")
                         scmProjectLoaderProcess.remove(projectIntegration)
+                        cleanUpScmPlugin(project, integration)
                         throw new RuntimeException("SCM disabled or project removed");
                     }
                 },
@@ -102,10 +104,16 @@ class ScmLoaderService {
     }
 
     @Transactional
-    void processScmExportLoader(String project, ScmPluginConfigData pluginConfig){
+    def processScmExportLoader(String project, ScmPluginConfigData pluginConfig){
+
+        if (!scmService.projectHasConfiguredExportPlugin(project)) {
+            return
+        }
+
         log.debug("processing SCM export Loader ${project} / ${pluginConfig.type}")
 
-        def plugin = scmService.loadedExportPlugins[project]?.provider
+        //def plugin = scmService.loadedExportPlugins[project]?.provider
+        def plugin = scmService.getLoadedExportPluginFor(project)
 
         if(plugin ){
             log.debug("export plugin found")
@@ -133,10 +141,14 @@ class ScmLoaderService {
     }
 
     @Transactional
-    void processScmImportLoader(String project, ScmPluginConfigData pluginConfig){
+    def processScmImportLoader(String project, ScmPluginConfigData pluginConfig){
         log.debug("processing SCM import Loader ${project} / ${pluginConfig.type}")
 
-        def plugin = scmService.loadedImportPlugins[project]?.provider
+        if (!scmService.projectHasConfiguredImportPlugin(project)) {
+            return
+        }
+
+        def plugin = scmService.getLoadedImportPluginFor(project)
 
         if(plugin){
             log.debug("import plugin found")
@@ -163,8 +175,20 @@ class ScmLoaderService {
             plugin?.getStatus(context)
 
         }
+    }
 
 
+    def cleanUpScmPlugin(String project, String integration){
+
+        if (integration == scmService.EXPORT) {
+            if (scmService.projectHasConfiguredExportPlugin(project)) {
+                scmService.unregisterPlugin(integration, project)
+            }
+        }else{
+            if (scmService.projectHasConfiguredImportPlugin(project)) {
+                scmService.unregisterPlugin(integration, project)
+            }
+        }
     }
 
 }
