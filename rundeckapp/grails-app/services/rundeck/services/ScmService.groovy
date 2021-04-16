@@ -954,7 +954,7 @@ class ScmService {
      * @return
      */
     private JobImportReference importJobRef(ScheduledExecution job) {
-        def metadata = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
+        def metadata = getJobPluginMeta(job)
         new JobImportReferenceImpl(
                 jobRevReference(job),
                 metadata?.version != null ? metadata.version : -1L,
@@ -970,8 +970,17 @@ class ScmService {
      * @return JobScmReference
      */
     JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null) {
-        def metadata = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
+        def metadata = getJobPluginMeta(job)
         scmJobRef(job, serializer, metadata)
+    }
+
+    /**
+     * Get metadata for a single job
+     * @param job
+     * @return metadata map
+     */
+    public Map getJobPluginMeta(ScheduledExecution job) {
+        jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
     }
 
     JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null, Map metadata) {
@@ -1150,7 +1159,7 @@ class ScmService {
             jobs.each { job ->
                 def jobPluginMeta = null
                 if(!jobsPluginMeta){
-                    jobPluginMeta = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
+                    jobPluginMeta = getJobPluginMeta(job)
                 }else{
                     jobPluginMeta = jobsPluginMeta.get(job.uuid)
                 }
@@ -1276,7 +1285,7 @@ class ScmService {
             if (result && result.success && result.commit) {
                 //synch import commit info to exported commit data
                 jobs.each { job ->
-                    def orig = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT) ?: [:]
+                    def orig = getJobPluginMeta(job) ?: [:]
 
                     def newmeta = [version: job.version, pluginMeta: result.commit.asMap(), name: job.jobName, groupPath: job.groupPath]
 

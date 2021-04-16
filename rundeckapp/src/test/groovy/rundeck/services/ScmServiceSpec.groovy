@@ -802,6 +802,18 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         "test"   | "test"    | 0
     }
 
+    def "get job plugin meta"(){
+        given:
+            def job = new ScheduledExecution()
+            service.jobMetadataService=Mock(JobMetadataService)
+        when:
+            def result = service.getJobPluginMeta(job)
+        then:
+            1 * service.jobMetadataService.getJobPluginMeta(job, ScmService.STORAGE_NAME_IMPORT)>>expect
+            result == expect
+        where:
+            expect = [a:'map']
+    }
 
     def "update job plugin metadata"() {
         given:
