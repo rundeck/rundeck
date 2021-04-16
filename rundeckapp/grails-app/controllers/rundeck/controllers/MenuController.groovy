@@ -3314,22 +3314,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,  AuthConstants.ACTION_SCM_EXPORT]
             )) {
                 def pluginData = [:]
-                if (frameworkService.isClusterModeEnabled()) {
-                    //initialize if in another node
-                    scmService.initProject(params.project, 'export')
-                }
                 try {
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
-                        def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
-
-                        if (frameworkService.isClusterModeEnabled()) {
-                            scmService.fixExportStatus(authContext, params.project, result.nextScheduled, jobsPluginMeta)
-                        }
-
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
-                            pluginData.scmStatus = scmService.exportStatusForJobs(params.project,authContext, result.nextScheduled, false, jobsPluginMeta)
-                            pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params. project)
+                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
+                            pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, true, jobsPluginMeta)
+                            pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                             pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                             pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
                         }
@@ -3346,14 +3337,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT]
             )) {
 
-                def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
-
-                if (frameworkService.isClusterModeEnabled()) {
-                    //initialize if in another node
-                    scmService.initProject(params.project, 'import')
-                    scmService.fixImportStatus(authContext, params.project, result.nextScheduled)
-                    scmService.importPluginStatus(authContext, params.project)
-                }
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {

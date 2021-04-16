@@ -1384,19 +1384,18 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         !response.json.scmImportEnabled
     }
 
-    def "initialize scm on ajax call if its cluster"() {
+    @Unroll
+    def "list export calls exportStatusForJobs when export is enabled"() {
         given:
         controller.frameworkService = Mock(FrameworkService){
             isClusterModeEnabled() >> true
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
-        def scmConfig = Mock(ScmPluginConfigData){
-            getEnabled() >> true
-        }
+        def scmConfig = Mock(ScmPluginConfigData)
 
         when:
         request.method = 'POST'
@@ -1418,30 +1417,37 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                                AuthConstants.ACTION_IMPORT,
                                                                                 AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
-        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
-        1 * controller.scmService.initProject(project,'export')
-        1 * controller.scmService.initProject(project,'import')
+        1 * scmConfig.getEnabled() >> enabled
+        (count) * controller.scmService.getJobsPluginMeta(project)
+        (count) * controller.scmService.exportStatusForJobs(project,_, _, true, _)
+        (count) * controller.scmService.exportPluginStatus(_,project)
+        (count) * controller.scmService.exportPluginActions(_,project)
+        (count) * controller.scmService.getRenamedJobPathsForProject(project)
+
+        0 * controller.scmService.initProject(project,'export')
+        0 * controller.scmService.initProject(project,'import')
 
         response.json
-        response.json.scmExportEnabled
+        response.json.scmExportEnabled==enabled
         !response.json.scmImportEnabled
+        where:
+            enabled | count
+            true    | 1
+            false   | 0
     }
-
-
-    def "fixExport/ImportStatus on ajax call if its cluster"() {
+    @Unroll
+    def "list export calls importStatusForJobs when import is enabled"() {
         given:
         controller.frameworkService = Mock(FrameworkService){
             isClusterModeEnabled() >> true
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
-        def scmConfig = Mock(ScmPluginConfigData){
-            getEnabled() >> true
-        }
+        def scmConfig = Mock(ScmPluginConfigData)
 
         when:
         request.method = 'POST'
@@ -1461,19 +1467,29 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                                AuthConstants.ACTION_SCM_EXPORT]) >> true
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
-                                                                               AuthConstants.ACTION_SCM_IMPORT]) >> true
-        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
-        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
-        1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
-        1 * controller.scmService.initProject(project,'export')
-        1 * controller.scmService.initProject(project,'import')
-        1 * controller.scmService.fixExportStatus(_, project, _, _)
-        1 * controller.scmService.fixImportStatus(_, project, _)
+                                                                                AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
+        1 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
+        1 * scmConfig.getEnabled() >> enabled
+        0 * controller.scmService.getJobsPluginMeta(project)
+        (count) * controller.scmService.importStatusForJobs(project,_, _)
+        (count) * controller.scmService.importPluginStatus(_,project)
+        (count) * controller.scmService.importPluginActions(_,project)
+        0 * controller.scmService.getRenamedJobPathsForProject(project)
+
+        0 * controller.scmService.initProject(project,'export')
+        0 * controller.scmService.initProject(project,'import')
 
         response.json
-        response.json.scmExportEnabled
-        !response.json.scmImportEnabled
+        !response.json.scmExportEnabled
+        response.json.scmImportEnabled==enabled
+        where:
+            enabled | count
+            true    | 1
+            false   | 0
     }
+
 
     def "project Toggle SCM off"(){
         given:
