@@ -1748,7 +1748,8 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     }
 
 
-    def "job list with scm active"() {
+    @Unroll
+    def "jobs Fragment with scm active"() {
         given:
         def testUUID = UUID.randomUUID().toString()
         ScmPluginConfig data = Mock(ScmPluginConfig)
@@ -1757,10 +1758,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 getProjectManager() >> Mock(ProjectManager)
             }
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_,_,_)>>true
-            }
-                    controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            authorizeApplicationResourceAny(_,_,_)>>true
+        }
+        controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         controller.userService = Mock(UserService)
@@ -1770,7 +1771,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
 
         when:
-        def model = controller.jobsFragment(query)
+        def model = controller.jobsFragment(query, option)
         then:
         1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
                 [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
@@ -1783,12 +1784,21 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                           offset        : 0,
                                                                           paginateParams: [:],
                                                                           displayParams : [:]]
-        1 * controller.scmService.projectHasConfiguredExportPlugin(_)>>true
-        controller.scmService.loadScmConfig(_,'export')>>Mock(ScmPluginConfig){
+        (expected) * controller.scmService.loadScmConfig(_,'export')>>Mock(ScmPluginConfig){
             getEnabled()>>true
+            getType()>>'atype'
         }
-        1 * controller.scmService.exportStatusForJobs(params.project,_,_,_)
-        1 * controller.scmService.exportPluginActions(_,_)
+        (expected) * controller.scmService.loadScmConfig(_,'import')>>Mock(ScmPluginConfig){
+            getEnabled()>>true
+            getType()>>'btype'
+        }
+        (expected) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null)
+        (expected) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null)
+        model.hasConfiguredPlugins==hasConfigured
+        where:
+            option | hasConfigured | expected
+            MenuController.JobsScmInfo.MINIMAL | true |1
+            MenuController.JobsScmInfo.NONE | null| 0
     }
 
     def "user summary"() {
