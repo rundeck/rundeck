@@ -1475,7 +1475,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         (count) * controller.scmService.getJobsPluginMeta(project)
         (count) * controller.scmService.importStatusForJobs(project,_, _, _, _)
         (count) * controller.scmService.importPluginStatus(_,project)
-        (count) * controller.scmService.importPluginActions(_,project)
+        (count) * controller.scmService.importPluginActions(_,project,_)
         0 * controller.scmService.getRenamedJobPathsForProject(project)
 
         0 * controller.scmService.initProject(project,'export')

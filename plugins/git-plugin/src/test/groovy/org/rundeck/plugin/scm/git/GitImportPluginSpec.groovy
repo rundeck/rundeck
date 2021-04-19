@@ -287,6 +287,10 @@ class GitImportPluginSpec extends Specification {
             trackedPaths() >> ['job1-123.xml']
             getTrackedCommits() >> ['job1-123.xml' : '123123']
         }
+        plugin.jobStateMap["123"] = [
+                "synch": ImportSynchState.IMPORT_NEEDED,
+                "path": "job1-123.xml"
+        ]
 
         when:
         def result = plugin.getStatusInternal(context, false)
