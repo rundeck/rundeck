@@ -140,6 +140,14 @@ public interface ScmImportPlugin {
      */
     List<Action> actionsAvailableForContext(ScmOperationContext context);
 
+    /**
+     * @param context context map
+     *
+     * @return list of actions available for the context
+     */
+    default List<Action> actionsAvailableForContext(ScmOperationContext context, ScmImportSynchState status){
+        return actionsAvailableForContext(context);
+    }
 
     /**
      * list any known items that can be tracked, such as: all files found in the

@@ -3319,7 +3319,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
                             def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
-                            pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, true, jobsPluginMeta)
+                            pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
                             pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                             pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                             pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
@@ -3342,9 +3342,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
                         pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                         if (pluginData.scmImportEnabled) {
-                            pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled)
+                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
+                            pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
                             pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
-                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
+                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
                         }
                         results.putAll(pluginData)
                     }

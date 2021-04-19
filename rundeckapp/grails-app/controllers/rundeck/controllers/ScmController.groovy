@@ -647,7 +647,7 @@ class ScmController extends ControllerBase {
             } else {
 
                 ScmImportSynchState status = scmService.importPluginStatus(authContext, apiProjStatusIntRequest.project)
-                List<Action> actions = scmService.importPluginActions(authContext, apiProjStatusIntRequest.project)
+                List<Action> actions = scmService.importPluginActions(authContext, apiProjStatusIntRequest.project, status)
 
                 scmProjectStatus.synchState = status?.state?.toString()
                 scmProjectStatus.message = status?.message
@@ -1161,11 +1161,11 @@ class ScmController extends ControllerBase {
         def toDeleteItems = []
         def jobMap = [:]
         def scmStatus = []
+        def jobsPluginMeta = scmService.getJobsPluginMeta(project)
         if (integration == 'export') {
             jobs = jobIds.collect {
                 ScheduledExecution.getByIdOrUUID(it)
             }
-            def jobsPluginMeta = scmService.getJobsPluginMeta(project)
             scmStatus = scmService.exportStatusForJobs(project, authContext, jobs, false, jobsPluginMeta).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
@@ -1177,7 +1177,7 @@ class ScmController extends ControllerBase {
                 jobMap[it] = ScheduledExecution.getByIdOrUUID(it)
             }
             jobs = (jobMap.values() as List).findAll { it != null }
-            scmStatus = scmService.importStatusForJobs(project, authContext, jobs)
+            scmStatus = scmService.importStatusForJobs(project, authContext, jobs, false, jobsPluginMeta)
         }
 
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)

@@ -531,7 +531,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String,String> originalPaths){
         def retSt = [:]
-        List<JobExportReference> removeJobsCache = []
+        List<JobExportReference> refreshJobCache = []
 
         retSt.deleted = []
         retSt.restored = []
@@ -553,13 +553,17 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 //file to delete-pull
                 git.rm().addFilepattern(path).call()
                 retSt.deleted.add(path)
-                removeJobsCache.add(job)
+                refreshJobCache.add(job)
             }else if(storedCommitId != null && commitId?.name != storedCommitId){
                 if(toPull){
                     git.checkout().addPath(path).call()
                 }
                 retSt.restored.add(job)
-                removeJobsCache.add(job)
+                refreshJobCache.add(job)
+            }
+            
+            if(!hasJobStatusCached(job, null)){
+                refreshJobCache.add(job)
             }
         }
 
@@ -576,7 +580,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         try{
-            removeJobsCache.each{job ->
+            refreshJobCache.each{job ->
                 refreshJobStatus(job, originalPaths?.get(job.id))
             }
         }catch (ScmPluginException e){

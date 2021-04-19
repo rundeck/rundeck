@@ -233,11 +233,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             }
         }
 
+        Map jobsCache = jobStateMap.collectEntries {key, value -> [value.path, value]}
+
         walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             if (expected.contains(walk.getPathString())) {
                 //saw an existing tracked item
                 expected.remove(walk.getPathString())
-                if (trackedItemNeedsImport(walk.getPathString())) {
+                def jobSatus = jobsCache[walk.getPathString()]
+                if(jobSatus  && jobSatus["synch"] == ImportSynchState.IMPORT_NEEDED ){
                     importNeeded++
                 }
             } else if (importTracker.wasRenamed(walk.getPathString())) {
@@ -299,6 +302,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     private hasJobStatusCached(final JobScmReference job, final String originalPath) {
+        if (jobStateMap[job.id]){
+            log.debug("hasJobStatusCached(${jobStateMap[job.id].ident}): FOUND")
+            return jobStateMap[job.id]
+        }
+
         null
     }
 
@@ -435,7 +443,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             originalPath = importTracker.originalValue(path)
         }
         def status = hasJobStatusCached(job, originalPath)
-        if (!status) {
+        if (!status || status && status["synch"] == ImportSynchState.UNKNOWN) {
             status = refreshJobStatus(job, originalPath)
         }
         return createJobImportStatus(status,jobActionsForStatus(status))
@@ -497,6 +505,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
+        actionsAvailableForContext(context,null)
+    }
+
+    @Override
+    List<Action> actionsAvailableForContext(ScmOperationContext context, ScmImportSynchState status) {
         if (context.frameworkProject) {
             //project-level actions
             if (!config.shouldUseFilePattern() && !trackedItems) {
@@ -504,7 +517,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             } else {
 
                 def avail = []
-                def status = getStatusInternal(context, false)
+                if(!status){
+                    status = getStatusInternal(context, false)
+                }
+
                 if (status.state == ImportSynchState.REFRESH_NEEDED) {
                     avail << actions[ACTION_PULL]
                 }
@@ -670,5 +686,22 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return [updated:true]
         }
         [:]
+    }
+
+    def cleanJobStatusCache(List<String> selectedPaths){
+        if (!inited) {
+            return null
+        }
+
+        def jobsToClean = []
+        jobStateMap?.each { key, metadata ->
+            if(selectedPaths.contains(metadata.path) ){
+                jobsToClean << metadata
+            }
+        }
+        jobsToClean.each {job->
+            log.debug("cleanJobStatusCache(${job.id}): ${job}")
+            jobStateMap.remove(job.id)
+        }
     }
 }

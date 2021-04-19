@@ -163,11 +163,11 @@ class ScmService {
         }
     }
     ScmExportPlugin getLoadedExportPluginFor(String project){
-        initProject(project)
+        initProject(project, EXPORT)
         loadedExportPlugins[project]?.provider
     }
     ScmImportPlugin getLoadedImportPluginFor(String project){
-        initProject(project)
+        initProject(project, IMPORT)
         loadedImportPlugins[project]?.provider
     }
 
@@ -929,9 +929,15 @@ class ScmService {
         }
     }
 
-    List<JobScmReference> scmJobRefsForJobs(List<ScheduledExecution> jobs) {
+    List<JobScmReference> scmJobRefsForJobs(List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
         jobs.collect { ScheduledExecution job ->
-            scmJobRef(job)
+            if(jobsPluginMeta){
+                def jobPluginMeta = jobsPluginMeta.get(job.uuid)
+                scmJobRef(job, null, jobPluginMeta)
+            }else{
+                scmJobRef(job)
+            }
+
         }
     }
 
@@ -1117,11 +1123,11 @@ class ScmService {
      * @param project
      * @return
      */
-    List<Action> importPluginActions(UserAndRolesAuthContext auth, String project) {
+    List<Action> importPluginActions(UserAndRolesAuthContext auth, String project, ScmImportSynchState status = null) {
         def plugin = getLoadedImportPluginFor project
         if (plugin) {
             def context = scmOperationContext(auth, project)
-            return plugin.actionsAvailableForContext(context)
+            return plugin.actionsAvailableForContext(context, status)
         }
         null
     }
@@ -1165,7 +1171,6 @@ class ScmService {
                 // synch commit info to exported commit data
                 checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
 
-
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
         }
@@ -1194,15 +1199,23 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
+    Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs,  boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
         def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
-        if(jobs && jobs.size()>0 && clusterMode){
+        if(jobs && jobs.size()>0 && clusterMode && runClusterFix ){
             fixImportStatus(auth,project,jobs)
         }
-        scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->
-            def plugin = getLoadedImportPluginFor jobReference.project
-            if (plugin) {
+        def plugin = getLoadedImportPluginFor project
+        if (plugin) {
+            jobs.collect { ScheduledExecution job ->
+                def jobReference
+                if(jobsPluginMeta){
+                    def jobPluginMeta = jobsPluginMeta.get(job.uuid)
+                    jobReference = scmJobRef(job, null, jobPluginMeta)
+                }else{
+                    jobReference = scmJobRef(job)
+                }
+
                 //TODO: deleted job paths?
 //                def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
                 status[jobReference.id] = plugin.getJobStatus(jobReference)
