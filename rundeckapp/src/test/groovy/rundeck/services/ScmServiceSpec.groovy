@@ -911,4 +911,67 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             type = 'aplugin'
     }
 
+    def "getExportPushActionId"(){
+        given:
+            def projectName = 'testProject'
+            ScmExportPlugin plugin = Mock(ScmExportPlugin){
+                getJobStatus(_)>>Mock(JobState){
+                    getCommit()>>Mock(ScmCommitInfo){
+                        asMap()>>[commit:"123"]
+                    }
+                }
+            }
+            service.frameworkService = Mock(FrameworkService) {
+                isClusterModeEnabled() >> true
+            }
+            service.pluginConfigService = Mock(PluginConfigService)
+            def ctx = Mock(ScmOperationContext)
+            ScmPluginConfigData config = Mock(ScmPluginConfigData){
+                1 * getEnabled()>>true
+                1 * getSetting('username') >> 'testuser'
+                1 * getSettingList('roles') >> ['arole']
+            }
+                service.pluginConfigService.loadScmConfig(
+                    projectName,
+                    "etc/scm-${integration}.properties",
+                    'scm.' + integration,
+            ) >> config
+            service.rundeckAuthContextProvider=Mock(AuthContextProvider)
+            service.storageService = Mock(StorageService)
+            service.rundeckAuthContextProvider.getAuthContextForUserAndRolesAndProject(_, _, 'testProject') >> Mock(
+                    UserAndRolesAuthContext
+            ) {
+                getUsername()>>'testuser'
+                getRoles()>>new HashSet<String>(['arole'])
+            }
+            def validated = new ValidatedPlugin(valid: true)
+            service.pluginService = Mock(PluginService)
+            1 * service.pluginService.validatePlugin(*_) >> validated
+            def provider
+            if(integration=='export'){
+                provider=Mock(ScmExportPluginFactory){
+                    1 * createPlugin(_,_, true)>>Mock(ScmExportPlugin){
+                        1 * getExportPushActionId() >> 'project-push'
+                    }
+                }
+            }else{
+                provider=Mock(ScmImportPluginFactory){
+                    1 * createPlugin(_, _, _, true)>>Mock(ScmImportPlugin){
+                    }
+                }
+            }
+            1 * service.pluginService.retainPlugin(_,_)>>Mock(CloseableProvider){
+                1 * getProvider()>>provider
+            }
+            service.jobEventsService = Mock(JobEventsService)
+        when:
+            def result = service.getExportPushActionId(projectName)
+        then:
+            result == (integration == ScmService.EXPORT? 'project-push':null)
+        where:
+        integration         | _
+        ScmService.EXPORT   | _
+        ScmService.IMPORT   | _
+    }
+
 }
