@@ -1275,6 +1275,75 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         description == response.json.projects[0].description
     }
 
+    def "homeAjax evaluate project auth"() {
+        given:
+        def description = 'desc'
+        controller.frameworkService = Mock(FrameworkService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+                    new Project(name: 'proj').save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+        request.addHeader('x-rundeck-ajax', 'true')
+        def systemAuth=Mock(UserAndRolesAuthContext)
+        def projectAuth=Mock(UserAndRolesAuthContext)
+
+        when:
+        controller.homeAjax()
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)>>systemAuth
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'proj') >> projectAuth
+            1 * controller.
+                rundeckAuthContextProcessor.
+                authorizeProjectResourceAll(projectAuth, AuthorizationUtil.resourceType('event'), ['read'], 'proj')>>authEventRead
+            1 * controller.
+                rundeckAuthContextProcessor.authorizeProjectResource(
+                projectAuth,
+                AuthConstants.RESOURCE_TYPE_JOB,
+                AuthConstants.ACTION_CREATE,
+                'proj'
+            )>>authJobCreate
+            1 * controller.
+                rundeckAuthContextProcessor.authResourceForProject('proj')
+            1 * controller.
+                rundeckAuthContextProcessor.
+                authorizeApplicationResourceAny(
+                    projectAuth,
+                    _,
+                    [
+                        AuthConstants.ACTION_CONFIGURE,
+                        AuthConstants.ACTION_ADMIN,
+                        AuthConstants.ACTION_IMPORT,
+                        AuthConstants.ACTION_EXPORT,
+                        AuthConstants.ACTION_DELETE
+                    ]
+                )>> authAdmin
+        0 * controller.rundeckAuthContextProcessor._(*_)
+        1 * controller.frameworkService.projectNames(_) >> ['proj']
+        1 * controller.frameworkService.projects(_) >> projects
+        def json=response.json
+        json.projects[0].auth.jobCreate==authJobCreate
+        json.projects[0].auth.admin==authAdmin
+        if(!authEventRead){
+            json.projects[0].execCount== 0
+            json.projects[0].failedCount== 0
+            json.projects[0].userSummary== []
+            json.projects[0].userCount==0
+        }
+        where:
+            authAdmin | authJobCreate | authEventRead
+            true      | true          | true
+            false     | true          | true
+            true      | false         | true
+            true      | true          | false
+    }
+
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
