@@ -253,10 +253,10 @@
                       <g:message code="job.bulk.activate.menu.label" />
                     </a>
                   </li>
-                  <g:if test="${(scmExportEnabled) || (scmImportEnabled)}">
                   <li data-bind="visible: isLoadingSCMActions()" id="scm_export_actions_loading" role="presentation" class="dropdown-header">
-                      <g:message code="loading" /></li>
-                    <g:if test="${scmExportEnabled}">
+                      <g:message code="loading" />
+                  </li>
+                    <!-- ko if: scmExportEnabled() -->
                       <li data-bind="visible: scmExportActions()" class="divider"></li>
                       <li data-bind="visible: scmExportActions()" role="presentation" class="dropdown-header">
                         <g:icon name="circle-arrow-right"/>
@@ -268,8 +268,9 @@
                             data-bind="urlPathParam: $data.id, text: $data.title, attr: { title: $data.description}"></a>
                           </li>
                         <!-- /ko -->
-                    </g:if>
-                    <g:if test="${scmImportEnabled}">
+                    <!-- /ko -->
+
+                    <!-- ko if: scmImportEnabled() -->
                       <li data-bind="visible: scmImportActions()" class="divider"></li>
                       <li data-bind="visible: scmImportActions()" role="presentation" class="dropdown-header">
                         <g:icon name="circle-arrow-left"/>
@@ -281,8 +282,7 @@
                             data-bind="urlPathParam: $data.id, text: $data.title, attr: { title: $data.description}"></a>
                           </li>
                         <!-- /ko -->
-                    </g:if>
-                  </g:if>
+                    <!-- /ko -->
                   <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
                 <li class="divider"></li>
                 <li>
