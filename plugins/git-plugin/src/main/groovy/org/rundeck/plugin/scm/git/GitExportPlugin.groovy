@@ -194,6 +194,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         actions.subMap(Arrays.asList(ids)).values().collect { ActionBuilder.from(it) }
     }
 
+    protected List<Action> actionRefs(List ids) {
+        actions.subMap(ids).values().collect { ActionBuilder.from(it) }
+    }
+
     @Override
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.jobId) {
@@ -203,19 +207,31 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         } else if (context.frameworkProject) {
             //actions in project view
             def status = getStatusInternal(context, false)
+            def actions = []
             if (!status.gitStatus.clean) {
-                actionRefs PROJECT_COMMIT_ACTION_ID
-            } else if (status.state == SynchState.EXPORT_NEEDED) {
+                actions << PROJECT_COMMIT_ACTION_ID
+            }else if (status.state == SynchState.EXPORT_NEEDED) {
                 //need a push
-                actionRefs PROJECT_PUSH_ACTION_ID
+                actions << PROJECT_PUSH_ACTION_ID
             } else if (status.state == SynchState.REFRESH_NEEDED) {
                 //need to fast forward
-                actionRefs PROJECT_SYNCH_ACTION_ID
+                actions << PROJECT_SYNCH_ACTION_ID
             } else if(!config.shouldFetchAutomatically()){
-                actionRefs PROJECT_FETCH_ACTION_ID
+                actions << PROJECT_FETCH_ACTION_ID
             }else{
                 null
             }
+            //It only checks for push action if no push or refresh is yet added to actions
+            if((!actions || !actions.contains(PROJECT_PUSH_ACTION_ID)) && !actions.contains(PROJECT_SYNCH_ACTION_ID)){
+                status = git.status().call()
+                def synchState = new GitExportSynchState()
+                synchState.gitStatus = status
+                def bstat = BranchTrackingStatus.of(repo, branch)
+                if (bstat && bstat.aheadCount > 0) {
+                    actions << PROJECT_PUSH_ACTION_ID
+                }
+            }
+            return actionRefs(actions)
         } else {
             null
         }
@@ -609,6 +625,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         retSt
+    }
+
+    @Override
+    String getExportPushActionId(){
+        return PROJECT_PUSH_ACTION_ID
     }
 
 }

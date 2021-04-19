@@ -1148,14 +1148,16 @@ class ScmController extends ControllerBase {
         def jobMap = [:]
         def scmStatus = []
         if (integration == 'export') {
-            jobs = jobIds.collect {
-                ScheduledExecution.getByIdOrUUID(it)
-            }
-            scmStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, jobs).findAll {
-                it.value.synchState != SynchState.CLEAN
-            }
-            jobs = jobs.findAll {
-                it.extid in scmStatus.keySet()
+            if(actionId && !actionId.equals(scmService.getExportPushActionId(project))){
+                jobs = jobIds.collect {
+                    ScheduledExecution.getByIdOrUUID(it)
+                }
+                scmStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, jobs).findAll {
+                    it.value.synchState != SynchState.CLEAN
+                }
+                jobs = jobs.findAll {
+                    it.extid in scmStatus.keySet()
+                }
             }
         } else {
             (trackingItems*.jobId).each {

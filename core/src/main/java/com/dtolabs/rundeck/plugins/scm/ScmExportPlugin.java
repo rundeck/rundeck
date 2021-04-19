@@ -169,4 +169,13 @@ public interface ScmExportPlugin {
     default Map clusterFixJobs(ScmOperationContext context, List<JobExportReference> jobs, Map<String,String> originalPaths){
         return null;
     }
+
+    /**
+     * It gets the action id for push action
+     *
+     * @return action name id for push
+     */
+    default String getExportPushActionId(){
+        return null;
+    }
 }
