@@ -20,7 +20,9 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
+import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
+import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import grails.test.hibernate.HibernateSpec
@@ -174,7 +176,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         ] + overrides
     }
 
-    private Map defineJobs(String... ids) {
+    private Map<String,ScheduledExecution> defineJobs(String... ids) {
 
         def jobs = [:]
         ids.collectEntries { id ->
@@ -780,5 +782,111 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         where:
         integration | _
         'export'    | _
+    }
+
+    @Unroll
+    def "getViewExportActionItems state #state"(){
+        given:
+            def project='testproj'
+            def meta=[:]
+            def definedJobs = defineJobs('job1', 'job2')
+            def jobs=definedJobs.values().toList()
+            controller.scmService=Mock(ScmService)
+        when:
+            def result=controller.getViewExportActionItems(project,jobs)
+        then:
+            result
+            1 * controller.scmService.deletedExportFilesForProject(project)
+            1 * controller.scmService.getRenamedJobPathsForProject(project) >> [:]
+            1 * controller.scmService.getJobsPluginMeta(project) >> meta
+            1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
+                job1: new JobStateImpl(synchState: SynchState.CLEAN),
+                job2: new JobStateImpl(synchState: state)
+            ]
+            1 * controller.scmService.exportFilePathsMapForJobs(project, {
+                it.size()==1
+                it[0].extid=='job2'
+            }) >> [
+                job2: '/path/to/job2'
+            ]
+            result.size() == 1
+            result[0].itemId == '/path/to/job2'
+            result[0].originalId == null
+            result[0].renamed == false
+            result[0].status == state.toString()
+        where:
+            state << [
+                SynchState.EXPORT_NEEDED,
+                SynchState.REFRESH_NEEDED,
+                SynchState.CREATE_NEEDED,
+                SynchState.DELETE_NEEDED,
+            ]
+    }
+    def "getViewExportActionItems deleted items"(){
+        given:
+            def project='testproj'
+            def meta=[:]
+            def definedJobs = defineJobs('job1', 'job2')
+            def jobs=definedJobs.values().toList()
+            controller.scmService=Mock(ScmService)
+        when:
+            def result=controller.getViewExportActionItems(project,jobs)
+        then:
+            result
+            1 * controller.scmService.deletedExportFilesForProject(project)>>[
+                'scm/path/to/job3': [id: 'job3', jobName: 'job', groupPath: 'a', jobNameAndGroup: 'a/job']
+            ]
+            1 * controller.scmService.getRenamedJobPathsForProject(project) >> [:]
+            1 * controller.scmService.getJobsPluginMeta(project) >> meta
+            1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
+                job1: new JobStateImpl(synchState: SynchState.CLEAN),
+                job2: new JobStateImpl(synchState: SynchState.CLEAN)
+            ]
+            1 * controller.scmService.exportFilePathsMapForJobs(project, []) >> [:]
+            result.size() == 1
+            result[0].itemId == 'scm/path/to/job3'
+            result[0].originalId == null
+            result[0].renamed == false
+            result[0].status == null
+            result[0].deleted
+            result[0].job.jobId=='job3'
+            result[0].job.groupPath=='a'
+            result[0].job.jobName=='job'
+    }
+    def "getViewExportActionItems renamed items"(){
+        given:
+            def project='testproj'
+            def meta=[:]
+            def definedJobs = defineJobs('job1', 'job2')
+            def jobs=definedJobs.values().toList()
+            controller.scmService=Mock(ScmService)
+        when:
+            def result=controller.getViewExportActionItems(project,jobs)
+        then:
+            result
+            1 * controller.scmService.deletedExportFilesForProject(project)>>[
+                '/oldscm/path/to/job2': [id: 'job2', jobName: 'blah', groupPath: 'bloo', jobNameAndGroup: 'bloo/blah']
+            ]
+            1 * controller.scmService.getRenamedJobPathsForProject(project) >> [job2:'/oldscm/path/to/job2']
+            1 * controller.scmService.getJobsPluginMeta(project) >> meta
+            1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
+                job1: new JobStateImpl(synchState: SynchState.CLEAN),
+                job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED)
+            ]
+            1 * controller.scmService.exportFilePathsMapForJobs(project, {
+                it.size()==1
+                it[0].extid=='job2'
+            }) >> [
+                job2: '/path/to/job2'
+            ]
+            result.size() == 1
+            result[0].itemId == '/path/to/job2'
+            result[0].originalId == '/oldscm/path/to/job2'
+            result[0].renamed == true
+            result[0].status == 'EXPORT_NEEDED'
+            !result[0].deleted
+            result[0].job.jobId=='job2'
+            result[0].job.groupPath=='some/where'
+            result[0].job.jobName=='job job2'
     }
 }

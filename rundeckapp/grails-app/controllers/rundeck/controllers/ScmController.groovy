@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
+import groovy.transform.PackageScope
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.ScheduledExecution
@@ -802,7 +803,14 @@ class ScmController extends ControllerBase {
         )
     }
 
-    private ArrayList<ScmExportActionItem> getViewExportActionItems(String project, List<String> jobids = null) {
+    /**
+     * Get export action items for project and optional jobs list
+     * @param project
+     * @param jobids
+     * @return
+     */
+    @PackageScope
+    ArrayList<ScmExportActionItem> getViewExportActionItems(String project, List<String> jobids = null) {
         Map<String, JobState> scmJobStatus
         List<ScmExportActionItem> exportActionItems = []
         Map deletedPaths = scmService.deletedExportFilesForProject(project)
@@ -819,11 +827,11 @@ class ScmController extends ControllerBase {
             }.findAll { it }
         } else {
             jobs = ScheduledExecution.findAllByProject(project)
-            jobPluginMeta = scmService.getJobsPluginMeta()
+            jobPluginMeta = scmService.getJobsPluginMeta(project)
         }
 
-        scmJobStatus = scmService.exportStatusForJobs(project, null, jobs, jobPluginMeta).findAll {
-            it.value.synchState != SynchState.CLEAN
+        scmJobStatus = scmService.exportStatusForJobs(project, null, jobs, true, jobPluginMeta).findAll {k,v->
+            v.synchState != SynchState.CLEAN
         }
         jobs = jobs.findAll {
             it.extid in scmJobStatus.keySet()
