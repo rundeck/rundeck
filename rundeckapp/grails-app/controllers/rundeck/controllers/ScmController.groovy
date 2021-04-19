@@ -619,8 +619,9 @@ class ScmController extends ControllerBase {
                 def query=new ScheduledExecutionQuery()
                 query.projFilter = params.project
                 def jobs = scheduledExecutionService.listWorkflows(query, params)
+                def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
                 //relaod all jobs to get project status
-                scmService.exportStatusForJobs(params.project, authContext, jobs.schedlist)
+                scmService.exportStatusForJobs(params.project, authContext, jobs.schedlist, true, jobsPluginMeta)
             }
         }
 
