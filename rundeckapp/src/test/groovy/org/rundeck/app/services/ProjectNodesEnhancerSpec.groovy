@@ -68,6 +68,7 @@ class ProjectNodesEnhancerSpec extends Specification {
 
     }
 
+
     def "get project nodes skipping plugin"() {
         given:
         def sut = new ProjectNodesEnhancer()

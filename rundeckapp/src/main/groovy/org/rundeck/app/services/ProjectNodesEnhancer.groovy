@@ -29,6 +29,7 @@ class ProjectNodesEnhancer implements IProjectNodes {
 
     long loadedTime
 
+   @Override
    INodeSet getNodeSet() {
         def nodeset = projectNodes.getNodeSet()
         def newNodes = new NodeSetImpl()

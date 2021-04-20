@@ -143,10 +143,7 @@ public class TestDefaultFileCopierUtil extends TestCase {
             return null;
         }
 
-        @Override
-        public INodeSet getNodeSet(boolean refreshNodeStatus) throws NodeFileParserException {
-            return null;
-        }
+
 
         @Override
         public String getProperty(final String name) {

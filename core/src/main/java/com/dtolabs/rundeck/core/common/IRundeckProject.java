@@ -53,6 +53,7 @@ public interface IRundeckProject extends IRundeckProjectConfig {
     INodeSet getNodeSet() throws NodeFileParserException;
 
 
+
     /**
      * @param name property name
      *

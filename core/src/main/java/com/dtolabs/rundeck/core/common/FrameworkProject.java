@@ -312,7 +312,10 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
         return getProjectNodes().getNodeSet();
     }
 
-    /**
+
+
+
+   /**
      * Creates the file structure for a project
      *
      * @param projectDir     The project base directory
