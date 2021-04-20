@@ -576,9 +576,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
      * @param selector
      * @param project
      */
-    def INodeSet filterNodeSet( NodesSelector selector, String project, boolean refreshNodeStatus = false) {
+    def INodeSet filterNodeSet( NodesSelector selector, String project) {
         return metricService.timer(this.class.name,'filterNodeSet').time((Callable<INodeSet>) {
-            def unfiltered = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getNodeSet(refreshNodeStatus);
+            def unfiltered = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getNodeSet();
             if(0==unfiltered.getNodeNames().size()) {
                 log.warn("Empty node list");
             }

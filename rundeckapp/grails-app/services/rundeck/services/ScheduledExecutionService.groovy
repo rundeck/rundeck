@@ -4226,10 +4226,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return rundeckAuthContextProcessor.filterAuthorizedNodes(
                     scheduledExecution.project,
                     actions,
-                    frameworkService.filterNodeSet(nodeselector, scheduledExecution.project, nodeselector != null),
+                    frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
                     authContext)
         }else{
-            return frameworkService.filterNodeSet(nodeselector, scheduledExecution.project, nodeselector != null)
+            return frameworkService.filterNodeSet(nodeselector, scheduledExecution.project)
         }
     }
 

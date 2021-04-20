@@ -186,10 +186,5 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             node.attributes.putAll(attributes)
             node
         }
-
-        @Override
-        void updateNode(String project, IModifiableNodeEntry node, boolean nocache) {
-            updateNode(project, node)
-        }
     }
 }

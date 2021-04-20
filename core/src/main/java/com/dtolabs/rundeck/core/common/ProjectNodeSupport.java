@@ -127,7 +127,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return an instance of {@link INodeSet}
      */
     @Override
-    public INodeSet getNodeSet(boolean refreshNodeStatus) {
+    public INodeSet getNodeSet() {
         //iterate through sources, and add nodes
         final NodeSetMerge list = getNodeSetMerge();
         Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
@@ -188,10 +188,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         }
         return list;
 
-    }
-
-    public INodeSet getNodeSet() {
-        return getNodeSet(false);
     }
 
     /**

@@ -34,7 +34,11 @@ public interface IProjectNodes {
      */
     INodeSet getNodeSet();
 
-    INodeSet getNodeSet(boolean refreshNodeStatus);
+    /**
+     * Refresh status of nodes for the project
+     * @param project
+     */
+    default void refreshNodeStatus(String project){}
 
     /**
      * @return all sources

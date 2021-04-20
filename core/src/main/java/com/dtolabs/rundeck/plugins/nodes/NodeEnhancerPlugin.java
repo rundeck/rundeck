@@ -30,5 +30,9 @@ public interface NodeEnhancerPlugin {
      */
     void updateNode(String project, IModifiableNodeEntry node);
 
-    void updateNode(String project, IModifiableNodeEntry node, boolean nocache);
+    /**
+     * Refresh status of nodes for a project
+     * @param project
+     */
+    default void refreshNodeStatus(String project){}
 }

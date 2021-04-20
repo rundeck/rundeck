@@ -36,13 +36,8 @@ class CachedProjectNodes implements IProjectNodes {
         nodeSupport.resourceModelSources
     }
     @Override
-    INodeSet getNodeSet(boolean refreshNodeStatus) {
-        return doCache?nodes:reloadNodeSet()
-    }
-
-    @Override
     INodeSet getNodeSet() {
-        return getNodeSet(false)
+        return doCache?nodes:reloadNodeSet()
     }
 
     INodeSet reloadNodeSet() {
