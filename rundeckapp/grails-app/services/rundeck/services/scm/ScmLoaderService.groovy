@@ -1,20 +1,28 @@
 package rundeck.services.scm
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.plugins.scm.JobExportReference
+import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileStatic
+import rundeck.services.ConfigurationService
+import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
+import rundeck.services.ScmService
 
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
+@CompileStatic
 class ScmLoaderService {
 
-    def frameworkService
-    def scmService
-    def scheduledExecutionService
-    def configurationService
+    FrameworkService frameworkService
+    ScmService scmService
+    ScheduledExecutionService scheduledExecutionService
+    ConfigurationService configurationService
     public static final long DEFAULT_LOADER_DELAY = 0
     public static final long DEFAULT_LOADER_INTERVAL_SEC = 30
 
@@ -140,8 +148,8 @@ class ScmLoaderService {
             if(frameworkService.isClusterModeEnabled()){
                 def username = pluginConfig.getSetting("username")
                 def roles = pluginConfig.getSettingList("roles")
-                def context = scmService.scmOperationContext(username, roles, project)
-                def originalPaths = joblist.collectEntries{[it.id,scmService.getRenamedPathForJobId(it.project, it.id)]}
+                ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
+                Map<String,String> originalPaths = joblist.collectEntries{[it.id,scmService.getRenamedPathForJobId(it.project, it.id)]}
 
                 //run cluster fix
                 plugin.clusterFixJobs(context, joblist, originalPaths)
@@ -187,7 +195,7 @@ class ScmLoaderService {
                 def roles = pluginConfig.getSettingList("roles")
 
                 def context = scmService.scmOperationContext(username, roles, project)
-                def originalPaths = joblist.collectEntries { [it.id, scmService.getRenamedPathForJobId(it.project, it.id)] }
+                Map<String,String> originalPaths = joblist.collectEntries { [it.id, scmService.getRenamedPathForJobId(it.project, it.id)] }
 
                 //run cluster fix
                 plugin.clusterFixJobs(context, joblist, originalPaths)

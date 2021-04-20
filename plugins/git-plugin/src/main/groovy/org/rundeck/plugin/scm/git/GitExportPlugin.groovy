@@ -647,7 +647,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     @Override
-    void refreshJobsStatus(List<JobScmReference> jobs){
+    void refreshJobsStatus(List<JobExportReference> jobs){
         jobs.each{job ->
             refreshJobStatus(job,null)
         }

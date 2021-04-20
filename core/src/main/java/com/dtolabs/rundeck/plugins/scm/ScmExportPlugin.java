@@ -186,6 +186,6 @@ public interface ScmExportPlugin {
      * @param jobs rundeck jobs
      * @return map with information on the process
      */
-    default void refreshJobsStatus(List<JobScmReference> jobs){
+    default void refreshJobsStatus(List<JobExportReference> jobs){
     }
 }
