@@ -1702,7 +1702,7 @@ class ScmController extends ControllerBase {
         }
         def job = ScheduledExecution.getByIdOrUUID(id)
         def jobMetaMap = [(id):scmService.getJobPluginMeta(job)]
-        def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job], jobMetaMap) : null
+        def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job], true, jobMetaMap) : null
         def importStatus = isExport ? null : scmService.importStatusForJobs(project, authContext, [job])
         def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs(project, [job]) : null
         def diffResult = isExport ? scmService.exportDiff(project, job) : scmService.importDiff(project, job)
