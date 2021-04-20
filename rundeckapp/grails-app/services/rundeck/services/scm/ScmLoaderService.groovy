@@ -2,10 +2,13 @@ package rundeck.services.scm
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
+import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import rundeck.ScheduledExecution
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
@@ -34,6 +37,7 @@ class ScmLoaderService {
     final Map<String, Boolean> scmProjectInitLoaded = Collections.synchronizedMap([:])
 
     @Subscriber("rundeck.bootstrap")
+    @CompileDynamic
     void beginScmLoader(){
         if(frameworkService) {
 
@@ -112,6 +116,15 @@ class ScmLoaderService {
                 DEFAULT_LOADER_INTERVAL_SEC
     }
 
+    @CompileDynamic
+    List<ScheduledExecution> getJobs(String project){
+        def query=new ScheduledExecutionQuery()
+        query.projFilter = project
+        def listWorkflows = scheduledExecutionService.listWorkflows(query)["schedlist"]
+        List<ScheduledExecution> jobs = listWorkflows["schedlist"]
+        return jobs
+    }
+
     @Transactional
     def processScmExportLoader(String project, ScmPluginConfigData pluginConfig){
 
@@ -126,14 +139,10 @@ class ScmLoaderService {
         if(plugin){
             log.debug("export plugin found")
 
-            def query=new ScheduledExecutionQuery()
-            query.projFilter = project
-            def listWorkflows = scheduledExecutionService.listWorkflows(query)
-            def jobs = listWorkflows.schedlist
-
+            List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
 
-            def joblist = scmService.exportjobRefsForJobs(jobs)
+            List<JobExportReference> joblist = scmService.exportjobRefsForJobs(jobs)
 
             def key = project+"-export"
             if(!scmProjectInitLoaded.containsKey(key)){
@@ -171,13 +180,10 @@ class ScmLoaderService {
         if(plugin){
             log.debug("import plugin found")
 
-            def query=new ScheduledExecutionQuery()
-            query.projFilter = project
-            def listWorkflows = scheduledExecutionService.listWorkflows(query)
-            def jobs = listWorkflows.schedlist
-
+            List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
-            def joblist = scmService.scmJobRefsForJobs(jobs)
+
+            List<JobScmReference> joblist = scmService.scmJobRefsForJobs(jobs)
 
             def key = project+"-import"
             if(!scmProjectInitLoaded.containsKey(key)){

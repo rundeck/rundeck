@@ -324,6 +324,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         def path = relativePath(job)
         def state = jobStateMap[job.id]
 
+        if (state && state.synch == SynchState.LOADING) {
+            return state
+        }
+
         def commit = lastCommitForPath(path)
         String ident = createStatusCacheIdent(job, commit)
 
@@ -332,12 +336,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return state
         }
         log.debug("hasJobStatusCached(${ident}): (no) for path $path")
-
-        def state = jobStateMap[job.id]
-
-        if (state && state.synch == SynchState.LOADING) {
-            return state
-        }
 
         null
     }
@@ -553,8 +551,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     status = getStatusInternal(context, false)
                 }
 
-                def status = getStatusInternal(context, false)
-
                 if (status.state == SynchState.LOADING) {
                     return null
                 }
@@ -750,6 +746,23 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     void refreshJobsStatus(List<JobScmReference> jobs){
         jobs.each{job ->
             refreshJobStatus(job,null)
+        }
+    }
+
+    def cleanJobStatusCache(List<String> selectedPaths){
+        if (!inited) {
+            return null
+        }
+
+        def jobsToClean = []
+        jobStateMap?.each { key, metadata ->
+            if(selectedPaths.contains(metadata.path) ){
+                jobsToClean << metadata
+            }
+        }
+        jobsToClean.each {job->
+            log.debug("cleanJobStatusCache(${job.id}): ${job}")
+            jobStateMap.remove(job.id)
         }
     }
 }
