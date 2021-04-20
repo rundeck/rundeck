@@ -213,12 +213,12 @@ class ScmService {
     }
 
     def projectHasConfiguredExportPlugin(String project) {
-        initProject(project)
+        initProject(project, EXPORT)
         loadedExportPlugins.containsKey(project)
     }
 
     def projectHasConfiguredImportPlugin(String project) {
-        initProject(project)
+        initProject(project, IMPORT)
         loadedImportPlugins.containsKey(project)
     }
 
@@ -616,6 +616,9 @@ class ScmService {
             scmPluginConfig.enabled = false
             storeConfig(scmPluginConfig, project, integration)
         }
+        if (initedProjects.contains(integration + '/' + project)) {
+            initedProjects.remove(integration + '/' + project)
+        }
 
         unregisterPlugin(integration, project)
     }
@@ -696,6 +699,7 @@ class ScmService {
         try{
             def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config, false)
             try{
+                jobMetadataService.removeProjectPluginMeta(project)
                 loaded?.provider?.totalClean()
             }finally{
                 loaded?.close()
@@ -892,7 +896,7 @@ class ScmService {
                 def jobPluginMeta = jobsPluginMeta.get(job.uuid)
                 exportJobRef(job, jobPluginMeta)
             }else{
-                exportJobRef(job)
+                scmJobRef(job)
             }
 
         }

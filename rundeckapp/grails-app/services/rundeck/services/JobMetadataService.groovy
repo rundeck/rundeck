@@ -78,6 +78,20 @@ class JobMetadataService {
             found.delete(flush: true)
         }
     }
+
+    /**
+     * Remove scm metadata for the project
+     * @param project project
+     */
+    def removeProjectPluginMeta(final String project) {
+        def pluginMeta = PluginMeta.findAllByProject(project)
+        if (pluginMeta) {
+            pluginMeta.each {meta->
+                meta.delete(flush: true)
+            }
+        }
+    }
+
     /**
      * Remove all scm metadata for the job
      * @param project project

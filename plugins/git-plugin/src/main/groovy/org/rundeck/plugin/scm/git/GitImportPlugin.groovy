@@ -17,6 +17,7 @@
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
@@ -301,11 +302,28 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         return state
     }
 
+    private String createStatusCacheIdent(JobRevReference job, RevCommit commit) {
+        def ident = job.id + ':' +
+                String.valueOf(job.version) +
+                ':' +
+                (commit ? commit.name : '') +
+                ":" +
+                (getLocalFileForJob(job)?.exists())
+        ident
+    }
+
     private hasJobStatusCached(final JobScmReference job, final String originalPath) {
-        if (jobStateMap[job.id]){
-            log.debug("hasJobStatusCached(${jobStateMap[job.id].ident}): FOUND")
-            return jobStateMap[job.id]
+        def path = relativePath(job)
+        def state = jobStateMap[job.id]
+
+        def commit = lastCommitForPath(path)
+        String ident = createStatusCacheIdent(job, commit)
+
+        if (state && state.ident == ident) {
+            log.debug("hasJobStatusCached(${ident}): FOUND for path $path")
+            return state
         }
+        log.debug("hasJobStatusCached(${ident}): (no) for path $path")
 
         null
     }

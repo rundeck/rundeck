@@ -333,10 +333,18 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
     private hasJobStatusCached(final JobExportReference job, final String originalPath) {
-        if (jobStateMap[job.id]){
-            log.debug("hasJobStatusCached(${jobStateMap[job.id].ident}): FOUND")
-            return jobStateMap[job.id]
+
+        def path = relativePath(job)
+        def state = jobStateMap[job.id]
+
+        def commit = lastCommitForPath(path)
+        String ident = createStatusCacheIdent(job, commit)
+
+        if (state && state.ident == ident) {
+            log.debug("hasJobStatusCached(${ident}): FOUND for path $path")
+            return state
         }
+        log.debug("hasJobStatusCached(${ident}): (no) for path $path")
 
         null
     }
@@ -348,9 +356,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 (commit ? commit.name : '') +
                 ":" +
                 (getLocalFileForJob(job)?.exists())
-
-
-
         ident
     }
 
@@ -559,10 +564,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     git.checkout().addPath(path).call()
                 }
                 retSt.restored.add(job)
-                refreshJobCache.add(job)
-            }
-            
-            if(!hasJobStatusCached(job, null)){
                 refreshJobCache.add(job)
             }
         }

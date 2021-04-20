@@ -984,6 +984,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
                     }
                 }
             }
+            service.jobMetadataService = Mock(JobMetadataService)
         when:
             service.cleanPlugin(integration,project,type,auth)
         then:
@@ -993,6 +994,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
                  1 * getProvider()>>provider
                  1 * close()
             }
+            1 * service.jobMetadataService.removeProjectPluginMeta(project)
         where:
             integration << ['export','import']
             project = 'aproj'

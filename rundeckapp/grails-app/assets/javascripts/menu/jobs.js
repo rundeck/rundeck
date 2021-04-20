@@ -394,7 +394,7 @@ function BulkEditor(data){
     };
 
     self.defaultDisplayText = function(){
-        if(self.exportState() != 'CLEAN'){
+        if(self.exportState()!=null && self.exportState() != 'CLEAN'){
             return self.defaultExportText();
         }else{
             return self.defaultImportText();
