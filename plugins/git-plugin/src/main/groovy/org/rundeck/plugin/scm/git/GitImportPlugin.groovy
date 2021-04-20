@@ -202,6 +202,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return null
         }
 
+        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+
+        if(loadingStatus){
+            def synchState = new GitExportSynchState()
+            synchState.state = SynchState.LOADING
+            return synchState
+        }
+
         def msgs = []
         if (performFetch) {
             try {
@@ -324,6 +332,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return state
         }
         log.debug("hasJobStatusCached(${ident}): (no) for path $path")
+
+        def state = jobStateMap[job.id]
+
+        if (state && state.synch == SynchState.LOADING) {
+            return state
+        }
 
         null
     }
@@ -461,7 +475,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             originalPath = importTracker.originalValue(path)
         }
         def status = hasJobStatusCached(job, originalPath)
-        if (!status || status && status["synch"] == ImportSynchState.UNKNOWN) {
+        if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
         return createJobImportStatus(status,jobActionsForStatus(status))
@@ -537,6 +551,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 def avail = []
                 if(!status){
                     status = getStatusInternal(context, false)
+                }
+
+                def status = getStatusInternal(context, false)
+
+                if (status.state == SynchState.LOADING) {
+                    return null
                 }
 
                 if (status.state == ImportSynchState.REFRESH_NEEDED) {
@@ -706,20 +726,30 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         [:]
     }
 
-    def cleanJobStatusCache(List<String> selectedPaths){
-        if (!inited) {
-            return null
-        }
-
-        def jobsToClean = []
-        jobStateMap?.each { key, metadata ->
-            if(selectedPaths.contains(metadata.path) ){
-                jobsToClean << metadata
+    @Override
+    void initJobsStatus(List<JobScmReference> jobs) {
+        jobs.each {job->
+            if(!jobStateMap[job.id]){
+                def jobstat = initJobStatus(job)
+                jobStateMap[job.id] = jobstat
             }
+
         }
-        jobsToClean.each {job->
-            log.debug("cleanJobStatusCache(${job.id}): ${job}")
-            jobStateMap.remove(job.id)
+    }
+
+    private Map initJobStatus(final JobScmReference job) {
+        def jobstat = Collections.synchronizedMap([:])
+        jobstat['synch'] = SynchState.LOADING
+        jobstat['id'] = job.id
+        jobstat['version'] = job.version
+        return jobstat
+
+    }
+
+    @Override
+    void refreshJobsStatus(List<JobScmReference> jobs){
+        jobs.each{job ->
+            refreshJobStatus(job,null)
         }
     }
 }
