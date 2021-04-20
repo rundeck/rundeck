@@ -201,6 +201,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             return null
         }
 
+        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+
+        if(loadingStatus){
+            def synchState = new GitExportSynchState()
+            synchState.state = SynchState.LOADING
+            return synchState
+        }
+
         def msgs = []
         if (performFetch) {
             try {
@@ -299,6 +307,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     private hasJobStatusCached(final JobScmReference job, final String originalPath) {
+        def state = jobStateMap[job.id]
+
+        if (state && state.synch == SynchState.LOADING) {
+            return state
+        }
+
         null
     }
 
@@ -505,6 +519,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
                 def avail = []
                 def status = getStatusInternal(context, false)
+
+                if (status.state == SynchState.LOADING) {
+                    return null
+                }
+
                 if (status.state == ImportSynchState.REFRESH_NEEDED) {
                     avail << actions[ACTION_PULL]
                 }
@@ -675,7 +694,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     void initJobsStatus(List<JobScmReference> jobs) {
         jobs.each {job->
-            initJobStatus(job)
+            if(!jobStateMap[job.id]){
+                def jobstat = initJobStatus(job)
+                jobStateMap[job.id] = jobstat
+            }
+
         }
     }
 
@@ -686,5 +709,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         jobstat['version'] = job.version
         return jobstat
 
+    }
+
+    @Override
+    void refreshJobsStatus(List<JobScmReference> jobs){
+        jobs.each{job ->
+            refreshJobStatus(job,null)
+        }
     }
 }

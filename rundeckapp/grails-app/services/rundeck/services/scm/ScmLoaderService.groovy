@@ -15,7 +15,7 @@ class ScmLoaderService {
     def scmService
     def scheduledExecutionService
     def configurationService
-    public static final long DEFAULT_LOADER_DELAY = 10
+    public static final long DEFAULT_LOADER_DELAY = 0
     public static final long DEFAULT_LOADER_INTERVAL_SEC = 30
 
     /**
@@ -23,6 +23,7 @@ class ScmLoaderService {
      */
     ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2)
     final Map<String, ScheduledFuture> scmProjectLoaderProcess = Collections.synchronizedMap([:])
+    final Map<String, Boolean> scmProjectInitLoaded = Collections.synchronizedMap([:])
 
     @Subscriber("rundeck.bootstrap")
     void beginScmLoader(){
@@ -112,10 +113,9 @@ class ScmLoaderService {
 
         log.debug("processing SCM export Loader ${project} / ${pluginConfig.type}")
 
-        //def plugin = scmService.loadedExportPlugins[project]?.provider
         def plugin = scmService.getLoadedExportPluginFor(project)
 
-        if(plugin ){
+        if(plugin){
             log.debug("export plugin found")
 
             def query=new ScheduledExecutionQuery()
@@ -127,15 +127,25 @@ class ScmLoaderService {
 
             def joblist = scmService.exportjobRefsForJobs(jobs)
 
-            plugin.initJobsStatus(joblist)
-
-            def username = pluginConfig.getSetting("username")
-            def roles = pluginConfig.getSettingList("roles")
-            def context = scmService.scmOperationContext(username, roles, project)
-            def originalPaths = joblist.collectEntries{[it.id,scmService.getRenamedPathForJobId(it.project, it.id)]}
+            def key = project+"-export"
+            if(!scmProjectInitLoaded.containsKey(key)){
+                plugin.initJobsStatus(joblist)
+                //loading first time job status
+                log.debug("refresh jobs status")
+                plugin.refreshJobsStatus(joblist)
+                scmProjectInitLoaded.put(key, true)
+            }
 
             log.debug("processing cluster fix")
-            plugin?.clusterFixJobs(context, joblist, originalPaths)
+            if(frameworkService.isClusterModeEnabled()){
+                def username = pluginConfig.getSetting("username")
+                def roles = pluginConfig.getSettingList("roles")
+                def context = scmService.scmOperationContext(username, roles, project)
+                def originalPaths = joblist.collectEntries{[it.id,scmService.getRenamedPathForJobId(it.project, it.id)]}
+
+                //run cluster fix
+                plugin.clusterFixJobs(context, joblist, originalPaths)
+            }
         }
 
     }
@@ -161,34 +171,40 @@ class ScmLoaderService {
             log.debug("processing ${jobs.size()} jobs")
             def joblist = scmService.scmJobRefsForJobs(jobs)
 
-            //load init status
-            plugin.initJobsStatus(joblist)
+            def key = project+"-import"
+            if(!scmProjectInitLoaded.containsKey(key)){
+                plugin.initJobsStatus(joblist)
+                //loading first time job status
+                log.debug("refresh jobs status")
+                //loading first time job status
+                plugin.refreshJobsStatus(joblist)
 
-            //refresh jobs
-            def username = pluginConfig.getSetting("username")
-            def roles = pluginConfig.getSettingList("roles")
+                scmProjectInitLoaded.put(key, true)
+            }
 
-            def context = scmService.scmOperationContext(username, roles, project)
-            def originalPaths = joblist.collectEntries { [it.id, scmService.getRenamedPathForJobId(it.project, it.id)] }
+            if(frameworkService.isClusterModeEnabled()){
+                def username = pluginConfig.getSetting("username")
+                def roles = pluginConfig.getSettingList("roles")
 
-            plugin?.clusterFixJobs(context, joblist, originalPaths)
-            plugin?.getStatus(context)
+                def context = scmService.scmOperationContext(username, roles, project)
+                def originalPaths = joblist.collectEntries { [it.id, scmService.getRenamedPathForJobId(it.project, it.id)] }
+
+                //run cluster fix
+                plugin.clusterFixJobs(context, joblist, originalPaths)
+            }
+
 
         }
     }
 
 
     def cleanUpScmPlugin(String project, String integration){
-
-        if (integration == scmService.EXPORT) {
-            if (scmService.projectHasConfiguredExportPlugin(project)) {
-                scmService.unregisterPlugin(integration, project)
-            }
-        }else{
-            if (scmService.projectHasConfiguredImportPlugin(project)) {
-                scmService.unregisterPlugin(integration, project)
-            }
+        def key = project + "-" + integration
+        if(scmProjectInitLoaded.containsKey(key)){
+            scmProjectInitLoaded.remove(key)
         }
+
+        scmService.unregisterPlugin(integration, project)
     }
 
 }

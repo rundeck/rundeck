@@ -205,4 +205,14 @@ public interface ScmImportPlugin {
     default Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
         return null;
     }
+
+    /**
+     * Function to refresh all job status .
+     * will upgrade the jobs cache status .
+     *
+     * @param jobs rundeck jobs
+     * @return map with information on the process
+     */
+    default void refreshJobsStatus(List<JobScmReference> jobs){
+    }
 }
