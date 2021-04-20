@@ -231,7 +231,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     actions << PROJECT_PUSH_ACTION_ID
                 }
             }
-            return actionRefs(actions)
+            if(actions && !actions.isEmpty()){
+                return actionRefs(actions)
+            }else{
+                return null
+            }
         } else {
             null
         }
