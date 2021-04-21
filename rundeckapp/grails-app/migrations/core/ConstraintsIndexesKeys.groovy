@@ -514,4 +514,27 @@ databaseChangeLog = {
         }
     }
 
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-scm-fixes") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(tableName: "plugin_meta", indexName: "PLUGIN_META_INDX1")
+            }
+        }
+        createIndex(indexName: "PLUGIN_META_INDX1", tableName: "plugin_meta") {
+            column(name: "project")
+        }
+    }
+
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-scm-fixes2") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(tableName: "plugin_meta", indexName: "PLUGIN_META_INDX2")
+            }
+        }
+        createIndex(indexName: "PLUGIN_META_INDX2", tableName: "plugin_meta") {
+            column(name: "project")
+            column(name: "data_key")
+        }
+    }
+
 }
