@@ -31,18 +31,7 @@ class ScriptPluginResourceModelSourceFactorySpec  extends Specification{
         given:
 
         def storageTree = Mock(KeyStorageTree)
-        storageTree.getResource(_) >> Mock(Resource) {
-            getContents() >> Mock(ResourceMeta) {
-                writeContent(_) >> { args ->
-                    args[0].write('password'.bytes)
-                    return 6L
-                }
-            }
-        }
-
-        Services services = Mock(Services){
-            getService(KeyStorageTree.class) >> storageTree
-        }
+        Services services = Mock(Services)
 
         Properties configuration = new Properties()
         configuration.put("project",PROJECT_NAME)
@@ -93,8 +82,19 @@ class ScriptPluginResourceModelSourceFactorySpec  extends Specification{
         def resource = pluginFactory.createResourceModelSource(services, configuration)
 
         then:
-        resource !=null
+        1 * services.getService(KeyStorageTree.class) >> storageTree
+        storageTree.getResource(_) >> Mock(Resource) {
+            1* getContents() >> Mock(ResourceMeta) {
+                writeContent(_) >> { args ->
+                    args[0].write('password'.bytes)
+                    return 6L
+                }
+            }
+        }
 
+        resource !=null
+        resource.configuration.getProperty("token") != null
+        resource.configuration.getProperty("token") == "password"
     }
 
 
