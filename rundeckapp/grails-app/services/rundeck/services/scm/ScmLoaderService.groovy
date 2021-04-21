@@ -120,7 +120,7 @@ class ScmLoaderService {
     List<ScheduledExecution> getJobs(String project){
         def query=new ScheduledExecutionQuery()
         query.projFilter = project
-        def listWorkflows = scheduledExecutionService.listWorkflows(query)["schedlist"]
+        def listWorkflows = scheduledExecutionService.listWorkflows(query)
         List<ScheduledExecution> jobs = listWorkflows["schedlist"]
         return jobs
     }
@@ -222,4 +222,3 @@ class ScmLoaderService {
     }
 
 }
-
