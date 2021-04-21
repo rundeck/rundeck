@@ -213,19 +213,7 @@
                   </dl>
                   <!-- /ko -->
                 </div>
-                <g:if test="${scmExportEnabled && scmExportStatus || scmImportEnabled  && scmImportStatus}">
-                %{--SCM synch status--}%
-                <g:set var="projectExportStatus" value="${scmExportEnabled ?scmExportStatus :null}"/>
-                <g:set var="projectImportStatus" value="${scmImportEnabled ?scmImportStatus :null}"/>
-                <g:render template="/scm/scmExportStatus" model="[
-                        exportStatus:projectExportStatus?.state,
-                        importStatus:projectImportStatus?.state,
-                        text:'',
-                        exportMessage:projectExportStatus?.message?:'',
-                        importMessage:projectImportStatus?.message?:'',
-                        meta:[:]
-                ]"/>
-                </g:if>
+
                 <div class="btn-group">
                   <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                     <g:message code="job.actions" />
