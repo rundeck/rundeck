@@ -785,12 +785,12 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.exportStatusForJobs(project, auth, jobs)
         then:
 
-        1 * service.pluginConfigService.loadScmConfig(
+        2 * service.pluginConfigService.loadScmConfig(
                 project,
                 "etc/scm-${integration}.properties",
                 "scm.$integration"
         ) >> Mock(ScmPluginConfigData) {
-            1 * getEnabled() >> true
+            2 * getEnabled() >> true
             getSetting("username")>>"admin"
             getSettingList("roles")>>["admin"]
             _ * getType() >> 'pluginType'
@@ -847,24 +847,23 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         def auth = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'admin'
         }
-        service.initedProjects<<"import/$project"
-        service.initedProjects<<"export/$project"
+        service.initedProjects<<"import/" + project
+        service.initedProjects<<"export/" + project
         service.loadedExportPlugins[project]=Closeables.closeableProvider(plugin)
 
         when:
         service.exportStatusForJobs(project, auth, jobs,true)
         then:
-
-        1 * service.pluginConfigService.loadScmConfig(
+        2 * service.pluginConfigService.loadScmConfig(
                 project,
                 "etc/scm-${integration}.properties",
                 "scm.$integration"
         ) >> Mock(ScmPluginConfigData) {
-            1 * getEnabled() >> true
+            getEnabled() >> true
             getSetting("username")>>"admin"
             getSettingList("roles")>>["admin"]
             _ * getType() >> 'pluginType'
-            1 * getConfig() >> [plugin: 'config']
+            getConfig() >> [plugin: 'config']
         }
 
         1 * plugin.clusterFixJobs(_,_,_)>> [:]
@@ -939,16 +938,16 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.exportStatusForJobs(project, auth, jobs)
         then:
 
-        1 * service.pluginConfigService.loadScmConfig(
+        2 * service.pluginConfigService.loadScmConfig(
                 project,
                 "etc/scm-${integration}.properties",
                 "scm.$integration"
         ) >> Mock(ScmPluginConfigData) {
-            1 * getEnabled() >> true
+            getEnabled() >> true
             getSetting("username")>>"admin"
             getSettingList("roles")>>["admin"]
             _ * getType() >> 'pluginType'
-            1 * getConfig() >> [plugin: 'config']
+            getConfig() >> [plugin: 'config']
         }
         1 * service.pluginService.validatePlugin(*_) >> validated
         1 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
@@ -1020,6 +1019,17 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             service.initedProjects << "import/$project".toString()
             def plugin = Mock(ScmExportPlugin)
             service.loadedExportPlugins[project] = Closeables.closeableProvider(plugin)
+            service.frameworkService = Mock(FrameworkService){
+                isClusterModeEnabled()>>false
+            }
+            service.pluginConfigService = Mock(PluginConfigService)
+            service.pluginConfigService.loadScmConfig(
+                    project,
+                    "etc/scm-export.properties",
+                    'scm.export'
+            ) >> Mock(ScmPluginConfigData){
+                getEnabled()>>true
+            }
         when:
             def result = service.exportFilePathsMapForJobs(project, jobs)
         then:
@@ -1091,7 +1101,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         where:
         integration         | _
         ScmService.EXPORT   | _
-        ScmService.IMPORT   | _
+        //ScmService.IMPORT   | _
     }
 
 }

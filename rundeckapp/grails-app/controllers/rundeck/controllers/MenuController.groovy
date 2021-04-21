@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
+import groovy.transform.PackageScope
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager

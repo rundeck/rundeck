@@ -719,9 +719,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * deletedExportFilesForProject(projectName)
             1 * exportFilePathsMapForJobs(projectName, _)
             1 * getJobsPluginMeta(projectName)
-            0 * exportStatusForJobs(_,_,_)
-            1 * exportFilePathsMapForJobs(_)
-            0 * exportStatusForJobs(_,_)
+            0 * exportStatusForJobs(_,_,_,_,_)
             1 * getExportPushActionId('testproj') >> null
             0 * _(*_)
         }
@@ -985,10 +983,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
-            0 * exportStatusForJobsWithoutClusterFix(_,[])
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(_)
+            1 * exportFilePathsMapForJobs(projectName,_)
+            1 * getJobsPluginMeta('testproj')
             0 * exportStatusForJobs(_,_)
             1 * getExportPushActionId('testproj') >> actionName
             0 * _(*_)

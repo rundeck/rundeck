@@ -1169,7 +1169,7 @@ class ScmController extends ControllerBase {
                 jobs = jobIds.collect {
                     ScheduledExecution.getByIdOrUUID(it)
                 }
-                scmStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, jobs).findAll {
+                scmStatus = scmService.exportStatusForJobs(project, authContext, jobs, false, jobsPluginMeta).findAll {
                     it.value.synchState != SynchState.CLEAN
                 }
                 jobs = jobs.findAll {
