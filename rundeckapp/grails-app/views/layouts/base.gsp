@@ -60,18 +60,11 @@
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
-    <!-- 
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="jquery-ui.js"/>
     <asset:javascript src="jquery-ui-timepicker-addon.js"/>
     <asset:javascript src="perfect-scrollbar.js"/>
     <asset:javascript src="bootstrap-all.js"/>  
-    -->
-    <asset:javascript src="vendor-jquery.js"/>
-    <asset:javascript src="jquery-ui.js"/>
-    <asset:javascript src="vendor-jquery-ui-timepicker-addon.js"/>
-    <asset:javascript src="vendor-perfect-scrollbar.js"/>
-    <asset:javascript src="vendor-bootstrap-all.js"/>  
     <g:set var="includePrototypeJs" value="${true}" scope="page"/>
 
     <g:ifPageProperty name="meta.skipPrototypeJs">
