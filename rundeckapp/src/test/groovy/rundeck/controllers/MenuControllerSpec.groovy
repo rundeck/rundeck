@@ -1801,20 +1801,30 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                           paginateParams: [:],
                                                                           displayParams : [:]]
         (expected) * controller.scmService.loadScmConfig(_,'export')>>Mock(ScmPluginConfig){
-            getEnabled()>>true
-            getType()>>'atype'
+            getEnabled()>>eenabled
+            getType()>>(econfiged?'atype':null)
         }
         (expected) * controller.scmService.loadScmConfig(_,'import')>>Mock(ScmPluginConfig){
-            getEnabled()>>true
-            getType()>>'btype'
+            getEnabled()>>ienabled
+            getType()>>(iconfiged?'btype':null)
         }
-        (expected) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null)
-        (expected) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null)
-        model.hasConfiguredPlugins==hasConfigured
+        (ienabled?expected:0) * controller.scmService.projectHasConfiguredPlugin('import','test')>>iconfiged
+        (eenabled?expected:0) * controller.scmService.projectHasConfiguredPlugin('export','test')>>econfiged
+        (econfiged?expected:0) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null)
+        (iconfiged?expected:0) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null)
+        model.hasConfiguredScmPlugins==hasConfigured
+        model.hasConfiguredScmPluginsEnabled==hasEnabled
         where:
-            option | hasConfigured | expected
-            MenuController.JobsScmInfo.MINIMAL | true |1
-            MenuController.JobsScmInfo.NONE | null| 0
+            option                             | hasConfigured | hasEnabled  | ienabled | iconfiged | eenabled | econfiged | expected
+            MenuController.JobsScmInfo.MINIMAL | true          | true        | true     | true      | true     | true      | 1
+            MenuController.JobsScmInfo.MINIMAL | true          | true        | false    | false     | true     | true      | 1
+            MenuController.JobsScmInfo.MINIMAL | true          | true        | true     | true      | false    | false     | 1
+            MenuController.JobsScmInfo.MINIMAL | false         | false       | true     | false     | true     | false     | 1
+            MenuController.JobsScmInfo.MINIMAL | false         | false       | false    | false     | false    | false     | 1
+            MenuController.JobsScmInfo.MINIMAL | true          | false       | false    | true      | false    | true      | 1
+            MenuController.JobsScmInfo.MINIMAL | true          | true        | false    | true      | true     | true      | 1
+            MenuController.JobsScmInfo.MINIMAL | true          | true        | true     | true      | false    | true      | 1
+            MenuController.JobsScmInfo.NONE    | null          | null        | false    | false     | false    | false     | 0
     }
 
     def "user summary"() {
