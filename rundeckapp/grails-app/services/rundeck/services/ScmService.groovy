@@ -1527,6 +1527,11 @@ class ScmService {
 
     }
 
+    def getExportPushActionId(project){
+        def plugin = getLoadedExportPluginFor project
+        return plugin?.getExportPushActionId()
+    }
+
 }
 
 

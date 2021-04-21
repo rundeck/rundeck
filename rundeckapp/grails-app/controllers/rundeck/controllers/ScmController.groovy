@@ -1165,14 +1165,16 @@ class ScmController extends ControllerBase {
         def scmStatus = []
         def jobsPluginMeta = scmService.getJobsPluginMeta(project)
         if (integration == 'export') {
-            jobs = jobIds.collect {
-                ScheduledExecution.getByIdOrUUID(it)
-            }
-            scmStatus = scmService.exportStatusForJobs(project, authContext, jobs, false, jobsPluginMeta).findAll {
-                it.value.synchState != SynchState.CLEAN
-            }
-            jobs = jobs.findAll {
-                it.extid in scmStatus.keySet()
+            if(actionId && !actionId.equals(scmService.getExportPushActionId(project))){
+                jobs = jobIds.collect {
+                    ScheduledExecution.getByIdOrUUID(it)
+                }
+                scmStatus = scmService.exportStatusForJobsWithoutClusterFix(authContext, jobs).findAll {
+                    it.value.synchState != SynchState.CLEAN
+                }
+                jobs = jobs.findAll {
+                    it.extid in scmStatus.keySet()
+                }
             }
         } else {
             (trackingItems*.jobId).each {

@@ -720,6 +720,9 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * exportFilePathsMapForJobs(projectName, _)
             1 * getJobsPluginMeta(projectName)
             0 * exportStatusForJobs(_,_,_)
+            1 * exportFilePathsMapForJobs(_)
+            0 * exportStatusForJobs(_,_)
+            1 * getExportPushActionId('testproj') >> null
             0 * _(*_)
         }
 
@@ -958,4 +961,53 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         integration | _
         'import'    | _
     }
+
+    def "perform export shouldn't call clusterFix with push action match"() {
+        given:
+        def projectName = 'testproj'
+        def actionName = 'testAction'
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
+
+        controller.frameworkService = Mock(FrameworkService) {
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)>>true
+
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scmService = Mock(ScmService) {
+            1 * projectHasConfiguredPlugin(integration, projectName) >> true
+            1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            1 * getRenamedJobPathsForProject(projectName) >> [:]
+            1 * loadProjectPluginDescriptor(projectName, integration)
+            0 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * getPluginStatus(_,integration, projectName)
+            1 * deletedExportFilesForProject(projectName)
+            1 * exportFilePathsMapForJobs(_)
+            0 * exportStatusForJobs(_,_)
+            1 * getExportPushActionId('testproj') >> actionName
+            0 * _(*_)
+        }
+
+        response.format = 'json'
+        request.method = 'POST'
+        request.contentType = 'application/json'
+        request.content = '{"input":null}'.bytes
+
+        when:
+        controller.performAction(integration, projectName, actionName)
+
+        then:
+        response.status == 200
+
+        where:
+        integration | _
+        'export'    | _
+    }
+
 }

@@ -188,4 +188,13 @@ public interface ScmExportPlugin {
      */
     default void refreshJobsStatus(List<JobExportReference> jobs){
     }
+
+    /**
+     * It gets the action id for push action
+     *
+     * @return action name id for push
+     */
+    default String getExportPushActionId(){
+        return null;
+    }
 }
