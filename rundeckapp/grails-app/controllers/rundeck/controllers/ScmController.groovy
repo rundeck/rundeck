@@ -1159,6 +1159,8 @@ class ScmController extends ControllerBase {
         def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
         List<ScheduledExecution> jobs = []
         def toDeleteItems = []
+        def skipCleanItems = []
+
         def jobMap = [:]
         def scmStatus = []
         def jobsPluginMeta = scmService.getJobsPluginMeta(project)
@@ -1188,12 +1190,22 @@ class ScmController extends ControllerBase {
             trackingItems.each { item ->
                 if(item.jobId){
                     def tmpJob = jobMap[item.jobId]
-                    if(tmpJob && scmStatus.get(tmpJob.extid) && scmStatus.get(tmpJob.extid).synchState?.toString() == 'DELETE_NEEDED'){
+                    if(tmpJob && scmStatus.get(tmpJob.extid) &&
+                       scmStatus.get(tmpJob.extid).synchState?.toString() == 'DELETE_NEEDED'
+                    ){
                         toDeleteItems.add(item)
+                    }
+                    if(tmpJob && scmStatus.get(tmpJob.extid) &&
+                            scmStatus.get(tmpJob.extid).synchState?.toString() == 'CLEAN'
+                    ){
+                        skipCleanItems.add(item)
                     }
                 }
             }
             trackingItems?.removeAll(toDeleteItems)
+            if(skipCleanItems){
+                trackingItems?.removeAll(skipCleanItems)
+            }
         }
 
         [

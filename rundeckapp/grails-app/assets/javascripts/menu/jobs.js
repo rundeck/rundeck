@@ -266,28 +266,20 @@ function BulkEditor(data){
         switch(self.jobSynchState(jobid)) {
             case "EXPORT_NEEDED":
                 return "text-info";
-                break;
             case "CREATE_NEEDED":
                 return "text-success";
-                break;
             case "UNKNOWN":
                 return "text-primary";
-                break;
             case "IMPORT_NEEDED":
                 return "text-warning";
-                break;
             case "REFRESH_NEEDED":
                 return "text-warning";
-                break;
             case "DELETED":
                 return "text-danger";
-                break;
             case "CLEAN":
                 return "text-primary";
-                break;
             case "LOADING":
                 return "text-danger";
-                break;
 
         }
         return 'text-primary';
@@ -297,28 +289,20 @@ function BulkEditor(data){
         switch(self.jobSynchState(jobid)) {
             case "EXPORT_NEEDED":
                 return "glyphicon-exclamation-sign";
-                break;
             case "CREATE_NEEDED":
                 return "glyphicon-exclamation-sign";
-                break;
             case "UNKNOWN":
                 return "glyphicon-question-sign";
-                break;
             case "IMPORT_NEEDED":
                 return "glyphicon-exclamation-sign";
-                break;
             case "REFRESH_NEEDED":
                 return "glyphicon-exclamation-sign";
-                break;
             case "DELETED":
                 return "glyphicon-minus-sign";
-                break;
             case "CLEAN":
                 return "glyphicon-ok";
-                break;
             case "LOADING":
                 return "glyphicon-refresh";
-                break;
 
         }
         return 'glyphicon-plus';
