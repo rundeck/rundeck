@@ -666,4 +666,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             refreshJobStatus(job,null)
         }
     }
+
+    @Override
+    String getExportPushActionId(){
+        return PROJECT_PUSH_ACTION_ID
+    }
+
 }
