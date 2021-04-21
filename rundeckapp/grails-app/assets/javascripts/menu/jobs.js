@@ -271,15 +271,13 @@ function BulkEditor(data){
             case "UNKNOWN":
                 return "text-primary";
             case "IMPORT_NEEDED":
-                return "text-warning";
             case "REFRESH_NEEDED":
+            case "LOADING":
                 return "text-warning";
             case "DELETED":
                 return "text-danger";
             case "CLEAN":
                 return "text-primary";
-            case "LOADING":
-                return "text-danger";
 
         }
         return 'text-primary';
@@ -288,13 +286,11 @@ function BulkEditor(data){
     self.jobIcon = function(jobid){
         switch(self.jobSynchState(jobid)) {
             case "EXPORT_NEEDED":
-                return "glyphicon-exclamation-sign";
             case "CREATE_NEEDED":
                 return "glyphicon-exclamation-sign";
             case "UNKNOWN":
                 return "glyphicon-question-sign";
             case "IMPORT_NEEDED":
-                return "glyphicon-exclamation-sign";
             case "REFRESH_NEEDED":
                 return "glyphicon-exclamation-sign";
             case "DELETED":
