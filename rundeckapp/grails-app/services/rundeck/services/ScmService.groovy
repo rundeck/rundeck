@@ -53,16 +53,21 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
+import rundeck.Storage
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import rundeck.services.scm.ScmUser
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * Manages scm integration
@@ -124,16 +129,17 @@ class ScmService {
     }
 
     def initProject(String project, String integration){
+        def pluginConfig = loadScmConfig(project, integration)
+        if (!pluginConfig?.enabled) {
+            initedProjects.remove(integration + '/' + project)
+            return false
+        }
         synchronized (initedProjects) {
             if (initedProjects.contains(integration + '/' + project)) {
                 return true
             }
-            initedProjects.add(integration + '/' + project)
         }
-        def pluginConfig = loadScmConfig(project, integration)
-        if (!pluginConfig?.enabled) {
-            return false
-        }
+
         log.debug("Loading '${integration}' plugin ${pluginConfig.type} for ${project}...")
 
         def username = pluginConfig.getSetting("username")
@@ -154,6 +160,7 @@ class ScmService {
                 log.error("Unable to initialize SCM for project ${project} for integration ${integration}", validationException)
                 return false
             }
+            initedProjects.add(integration + '/' + project)
             return true
         } catch (Throwable e) {
             log.error(
@@ -215,11 +222,21 @@ class ScmService {
     def projectHasConfiguredExportPlugin(String project) {
         initProject(project, EXPORT)
         loadedExportPlugins.containsKey(project)
+        def loaded = initProject(project, EXPORT)
+        if(!loaded){
+            unregisterPlugin(project, EXPORT)
+        }
+        return loaded
     }
 
     def projectHasConfiguredImportPlugin(String project) {
         initProject(project, IMPORT)
         loadedImportPlugins.containsKey(project)
+        def loaded = initProject(project, IMPORT)
+        if(!loaded){
+            unregisterPlugin(project, IMPORT)
+        }
+        return loaded
     }
 
     BasicInputView getInputView(UserAndRolesAuthContext auth, String integration, String project, String actionId) {
@@ -736,22 +753,7 @@ class ScmService {
      * @return
      */
     def removePluginConfiguration(String integration, String project, String type) {
-        def loaded
-        if (integration == EXPORT) {
-            loaded = loadedExportPlugins.remove(project)
-            loaded?.close()
-            def changeListener = loadedExportListeners.remove(project)
-            jobEventsService.removeListener(changeListener)
-            //clear cached rename/delete info
-            renamedJobsCache.remove(project)
-            deletedJobsCache.remove(project)
-        } else {
-            loaded = loadedImportPlugins.remove(project)
-            loaded?.close()
-            def changeListener = loadedImportListeners.remove(project)
-            jobEventsService.removeListener(changeListener)
-        }
-        loaded?.provider?.cleanup()
+        unregisterPlugin(integration, project)
         pluginConfigService.removePluginConfiguration(project, pathForConfigFile(integration))
     }
     /**
@@ -841,7 +843,6 @@ class ScmService {
     }
 
     /**
-     * @param project project name
      * @param jobs list of {@link ScheduledExecution} objects
      * @return map of job ID to file path
      */

@@ -556,12 +556,20 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.jobMetadataService = Mock(JobMetadataService)
         service.storageService = Mock(StorageService)
         service.frameworkService = Mock(FrameworkService)
-
+        def config1 = Mock(ScmPluginConfigData) {
+            getEnabled() >> true
+            getSetting("username") >> 'bob'
+            getSettingList("roles") >> ['arole']
+            getType() >> 'pluginType'
+            getConfig() >> [plugin: 'config']
+            getSettingList('trackedItems') >> ['a', 'b']
+        }
+        service.pluginConfigService = Mock(PluginConfigService){
+            loadScmConfig('test1', _, _) >> config1
+        }
         ScmExportPlugin plugin = Mock(ScmExportPlugin)
         TestCloseable exportCloser = new TestCloseable()
         service.loadedExportPlugins['test1'] = Closeables.closeableProvider(plugin, exportCloser)
-            service.initedProjects.add('export/test1')
-            service.initedProjects.add('import/test1')
 
         def input = [:]
         def auth = Mock(UserAndRolesAuthContext) {
@@ -720,12 +728,12 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             service.initProject('testproj1', integration)
             service.initProject('testproj1', integration)
         then:
-            1 * service.pluginConfigService.loadScmConfig(
+            2 * service.pluginConfigService.loadScmConfig(
                     'testproj1',
                     "etc/scm-${integration}.properties",
                     "scm.$integration"
             ) >> Mock(ScmPluginConfigData) {
-                1 * getEnabled() >> false
+                2 * getEnabled() >> false
             }
 
         where:
