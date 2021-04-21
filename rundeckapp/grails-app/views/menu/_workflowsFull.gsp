@@ -48,11 +48,11 @@
 <g:set var="authProjectSCMAdmin" value="${auth.resourceAllowedTest(
         context: 'application',
         type: 'project',
-        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT],
+        action: [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN],
         any: true,
         name: params.project
 )}"/>
-<g:set var="status" value="${(scmImportEnabled || scmExportEnabled)?'off':'on'}"/>
+<g:set var="status" value="${(hasConfiguredScmPluginsEnabled)?'off':'on'}"/>
 
 
 <div id="wffilterform">
@@ -283,7 +283,7 @@
                           </li>
                         <!-- /ko -->
                     <!-- /ko -->
-                  <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
+                  <g:if test="${authProjectSCMAdmin && hasConfiguredScmPlugins}">
                 <li class="divider"></li>
                 <li>
                     <a id="toggle_btn"
@@ -323,7 +323,7 @@
 
                 <span id="busy" style="display:none"></span>
 <g:timerEnd key="head"/>
-        <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
+        <g:if test="${authProjectSCMAdmin && hasConfiguredScmPlugins}">
             <g:form controller="menu" params="[project: params.project ?: request.project]">
                 <div class="modal fade" id="toggle_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog">
@@ -340,21 +340,15 @@
 
                             <div class="modal-footer">
                                 <button type="button"
-           class="btn btn-default"
+                                        class="btn btn-default"
                                         data-bind="click: cancel"
                                         data-dismiss="modal" ><g:message code="no"/></button>
 
-                <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }"
-                                      project="${params.project ?: request.project}">
-
-                                <span>
-                                    <g:actionSubmit controller="menu" action="projectToggleSCM"
-                                                    value="${message(code:'job.toggle.scm.button.label.'+status)}"
-           class="btn btn-danger"
-                                    />
-                                </span>
-                </auth:resourceAllowed>
-
+                                <g:actionSubmit controller="menu"
+                                                action="projectToggleSCM"
+                                                value="${message(code:'job.toggle.scm.button.label.'+status)}"
+                                                class="btn btn-danger"
+                                />
                             </div>
                         </div><!-- /.modal-content -->
                     </div><!-- /.modal-dialog -->
