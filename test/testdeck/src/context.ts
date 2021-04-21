@@ -30,7 +30,7 @@ export class Context {
     }
 
     urlFor(path: string) {
-        return Url.resolve(this.baseUrl, path)
+        return `${this.baseUrl.endsWith('/') ? this.baseUrl.substring(0, this.baseUrl.length - 1) : this.baseUrl}/${path.startsWith('/') ? path.substring(1) : path}`
     }
 
     friendlyTestName() {
