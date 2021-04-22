@@ -194,6 +194,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         actions.subMap(Arrays.asList(ids)).values().collect { ActionBuilder.from(it) }
     }
 
+    protected List<Action> actionRefs(List ids) {
+        actions.subMap(ids).values().collect { ActionBuilder.from(it) }
+    }
+
     @Override
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.jobId) {
@@ -203,18 +207,36 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         } else if (context.frameworkProject) {
             //actions in project view
             def status = getStatusInternal(context, false)
-            if (!status.gitStatus.clean) {
-                actionRefs PROJECT_COMMIT_ACTION_ID
-            } else if (status.state == SynchState.EXPORT_NEEDED) {
+            def actions = []
+            if (status.state == SynchState.LOADING) {
+                return []
+            } else if (!status.gitStatus.clean) {
+                actions << PROJECT_COMMIT_ACTION_ID
+            }else if (status.state == SynchState.EXPORT_NEEDED) {
                 //need a push
-                actionRefs PROJECT_PUSH_ACTION_ID
+                actions << PROJECT_PUSH_ACTION_ID
             } else if (status.state == SynchState.REFRESH_NEEDED) {
                 //need to fast forward
-                actionRefs PROJECT_SYNCH_ACTION_ID
+                actions << PROJECT_SYNCH_ACTION_ID
             } else if(!config.shouldFetchAutomatically()){
-                actionRefs PROJECT_FETCH_ACTION_ID
+                actions << PROJECT_FETCH_ACTION_ID
             }else{
                 null
+            }
+            //It only checks for push action if no push or refresh is yet added to actions
+            if((!actions || !actions.contains(PROJECT_PUSH_ACTION_ID)) && !actions.contains(PROJECT_SYNCH_ACTION_ID)){
+                status = git.status().call()
+                def synchState = new GitExportSynchState()
+                synchState.gitStatus = status
+                def bstat = BranchTrackingStatus.of(repo, branch)
+                if (bstat && bstat.aheadCount > 0) {
+                    actions << PROJECT_PUSH_ACTION_ID
+                }
+            }
+            if(actions && !actions.isEmpty()){
+                return actionRefs(actions)
+            }else{
+                return null
             }
         } else {
             null
@@ -231,6 +253,15 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     GitExportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //perform fetch
         def msgs=[]
+
+        def loadingStatus = jobStateMap.find {key, meta -> meta["synch"] == SynchState.LOADING }
+
+        if(loadingStatus){
+            def synchState = new GitExportSynchState()
+            synchState.state = SynchState.LOADING
+            return synchState
+        }
+
         boolean fetchError=false
         if (performFetch) {
             try {
@@ -334,14 +365,18 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     private hasJobStatusCached(final JobExportReference job, final String originalPath) {
         def path = relativePath(job)
+        def state = jobStateMap[job.id]
+
+        if (state && state.synch == SynchState.LOADING) {
+            return state
+        }
 
         def commit = lastCommitForPath(path)
-
         String ident = createStatusCacheIdent(job, commit)
 
-        if (jobStateMap[job.id] && jobStateMap[job.id].ident == ident) {
+        if (state && state.ident == ident) {
             log.debug("hasJobStatusCached(${ident}): FOUND for path $path")
-            return jobStateMap[job.id]
+            return state
         }
         log.debug("hasJobStatusCached(${ident}): (no) for path $path")
 
@@ -469,19 +504,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
         def status = hasJobStatusCached(job, originalPath)
 
-        //check if local commit has changed from the stored status
-        if(status && status['synch'] == SynchState.CLEAN){
-            def commit = lastCommitForPath(originalPath)
-            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
-            if(storedCommitId != null && commit == null){
-                //force refresh cache
-                status = null
-            }else if(storedCommitId != null && commit?.name != storedCommitId){
-                //force refresh cache
-                status = null
-            }
-        }
-
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
@@ -497,18 +519,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return null
         }
         def status = hasJobStatusCached(job, originalPath)
-        //check if local commit has changed from the stored status
-        if(status && status['synch'] == SynchState.CLEAN){
-            def commit = lastCommitForPath(originalPath)
-            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
-            if(storedCommitId != null && commit == null){
-                //force refresh cache
-                status = null
-            }else if(storedCommitId != null && commit?.name != storedCommitId){
-                //force refresh cache
-                status = null
-            }
-        }
 
         if (!status) {
             status = refreshJobStatus(job, originalPath,serialize)
@@ -560,6 +570,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String,String> originalPaths){
         def retSt = [:]
+        List<JobExportReference> refreshJobCache = []
+
         retSt.deleted = []
         retSt.restored = []
         def toPull = false
@@ -570,21 +582,23 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             toPull = true
             retSt.behind = true
         }
+
         jobs.each { job ->
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
-            def commitId = lastCommitForPath(getRelativePathForJob(job))
             def path = getRelativePathForJob(job)
+            def commitId = lastCommitForPath(path)
+
             if(storedCommitId != null && commitId == null){
                 //file to delete-pull
                 git.rm().addFilepattern(path).call()
-                toPull = true
                 retSt.deleted.add(path)
+                refreshJobCache.add(job)
             }else if(storedCommitId != null && commitId?.name != storedCommitId){
                 if(toPull){
                     git.checkout().addPath(path).call()
                 }
-                toPull = true
                 retSt.restored.add(job)
+                refreshJobCache.add(job)
             }
         }
 
@@ -601,7 +615,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         try{
-            jobs.each{job ->
+            refreshJobCache.each{job ->
                 refreshJobStatus(job, originalPaths?.get(job.id))
             }
         }catch (ScmPluginException e){
@@ -609,6 +623,53 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
 
         retSt
+    }
+
+    def cleanJobStatusCache(Set<JobExportReference> jobs){
+        if (!inited) {
+            return null
+        }
+
+        jobs.each {job->
+            log.debug("cleanJobStatusCache(${job.id}): ${job}")
+
+            def status = hasJobStatusCached(job, null)
+
+            if (status) {
+                refreshJobStatus(job, null,false)
+            }
+        }
+    }
+
+    @Override
+    void initJobsStatus(List<JobExportReference> jobs) {
+        jobs.each {job->
+            if(!jobStateMap[job.id]){
+                def jobstat = initJobStatus(job)
+                jobStateMap[job.id] = jobstat
+            }
+
+        }
+    }
+
+    private Map initJobStatus(final JobRevReference job) {
+        def jobstat = Collections.synchronizedMap([:])
+        jobstat['synch'] = SynchState.LOADING
+        jobstat['id'] = job.id
+        jobstat['version'] = job.version
+        return jobstat
+    }
+
+    @Override
+    void refreshJobsStatus(List<JobExportReference> jobs){
+        jobs.each{job ->
+            refreshJobStatus(job,null)
+        }
+    }
+
+    @Override
+    String getExportPushActionId(){
+        return PROJECT_PUSH_ACTION_ID
     }
 
 }

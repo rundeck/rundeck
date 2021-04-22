@@ -48,11 +48,11 @@
 <g:set var="authProjectSCMAdmin" value="${auth.resourceAllowedTest(
         context: 'application',
         type: 'project',
-        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT],
+        action: [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN],
         any: true,
         name: params.project
 )}"/>
-<g:set var="status" value="${(scmImportEnabled || scmExportEnabled)?'off':'on'}"/>
+<g:set var="status" value="${(hasConfiguredScmPluginsEnabled)?'off':'on'}"/>
 
 
 <div id="wffilterform">
@@ -213,19 +213,7 @@
                   </dl>
                   <!-- /ko -->
                 </div>
-                <g:if test="${scmExportEnabled && scmExportStatus || scmImportEnabled  && scmImportStatus}">
-                %{--SCM synch status--}%
-                <g:set var="projectExportStatus" value="${scmExportEnabled ?scmExportStatus :null}"/>
-                <g:set var="projectImportStatus" value="${scmImportEnabled ?scmImportStatus :null}"/>
-                <g:render template="/scm/scmExportStatus" model="[
-                        exportStatus:projectExportStatus?.state,
-                        importStatus:projectImportStatus?.state,
-                        text:'',
-                        exportMessage:projectExportStatus?.message?:'',
-                        importMessage:projectImportStatus?.message?:'',
-                        meta:[:]
-                ]"/>
-                </g:if>
+
                 <div class="btn-group">
                   <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                     <g:message code="job.actions" />
@@ -253,10 +241,10 @@
                       <g:message code="job.bulk.activate.menu.label" />
                     </a>
                   </li>
-                  <g:if test="${(scmExportEnabled) || (scmImportEnabled)}">
                   <li data-bind="visible: isLoadingSCMActions()" id="scm_export_actions_loading" role="presentation" class="dropdown-header">
-                      <g:message code="loading" /></li>
-                    <g:if test="${scmExportEnabled}">
+                      <g:message code="loading" />
+                  </li>
+                    <!-- ko if: scmExportEnabled() -->
                       <li data-bind="visible: scmExportActions()" class="divider"></li>
                       <li data-bind="visible: scmExportActions()" role="presentation" class="dropdown-header">
                         <g:icon name="circle-arrow-right"/>
@@ -268,8 +256,9 @@
                             data-bind="urlPathParam: $data.id, text: $data.title, attr: { title: $data.description}"></a>
                           </li>
                         <!-- /ko -->
-                    </g:if>
-                    <g:if test="${scmImportEnabled}">
+                    <!-- /ko -->
+
+                    <!-- ko if: scmImportEnabled() -->
                       <li data-bind="visible: scmImportActions()" class="divider"></li>
                       <li data-bind="visible: scmImportActions()" role="presentation" class="dropdown-header">
                         <g:icon name="circle-arrow-left"/>
@@ -281,9 +270,8 @@
                             data-bind="urlPathParam: $data.id, text: $data.title, attr: { title: $data.description}"></a>
                           </li>
                         <!-- /ko -->
-                    </g:if>
-                  </g:if>
-                  <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
+                    <!-- /ko -->
+                  <g:if test="${authProjectSCMAdmin && hasConfiguredScmPlugins}">
                 <li class="divider"></li>
                 <li>
                     <a id="toggle_btn"
@@ -323,7 +311,7 @@
 
                 <span id="busy" style="display:none"></span>
 <g:timerEnd key="head"/>
-        <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
+        <g:if test="${authProjectSCMAdmin && hasConfiguredScmPlugins}">
             <g:form controller="menu" params="[project: params.project ?: request.project]">
                 <div class="modal fade" id="toggle_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog">
@@ -340,21 +328,15 @@
 
                             <div class="modal-footer">
                                 <button type="button"
-           class="btn btn-default"
+                                        class="btn btn-default"
                                         data-bind="click: cancel"
                                         data-dismiss="modal" ><g:message code="no"/></button>
 
-                <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }"
-                                      project="${params.project ?: request.project}">
-
-                                <span>
-                                    <g:actionSubmit controller="menu" action="projectToggleSCM"
-                                                    value="${message(code:'job.toggle.scm.button.label.'+status)}"
-           class="btn btn-danger"
-                                    />
-                                </span>
-                </auth:resourceAllowed>
-
+                                <g:actionSubmit controller="menu"
+                                                action="projectToggleSCM"
+                                                value="${message(code:'job.toggle.scm.button.label.'+status)}"
+                                                class="btn btn-danger"
+                                />
                             </div>
                         </div><!-- /.modal-content -->
                     </div><!-- /.modal-dialog -->
