@@ -38,11 +38,11 @@ public interface ScmImportPlugin {
      * @param input         result of GUI input
      */
     ScmExportResult scmImport(
-        ScmOperationContext context,
-        String actionId,
-        JobImporter importer,
-        List<String> selectedPaths,
-        Map<String, String> input
+            ScmOperationContext context,
+            String actionId,
+            JobImporter importer,
+            List<String> selectedPaths,
+            Map<String, String> input
     ) throws ScmPluginException;
 
     /**
@@ -56,12 +56,12 @@ public interface ScmImportPlugin {
      * @param input         result of GUI input
      */
     default ScmExportResult scmImport(
-        ScmOperationContext context,
-        String actionId,
-        JobImporter importer,
-        List<String> selectedPaths,
-        List<String> deletedJobs,
-        Map<String, String> input
+            ScmOperationContext context,
+            String actionId,
+            JobImporter importer,
+            List<String> selectedPaths,
+            List<String> deletedJobs,
+            Map<String, String> input
     ) throws ScmPluginException {
         return scmImport(context, actionId, importer, selectedPaths, input);
     }
@@ -90,6 +90,15 @@ public interface ScmImportPlugin {
      * @return state
      */
     JobImportState getJobStatus(JobScmReference job, String originalPath);
+
+    /**
+     * Set default job status
+     *
+     * @param jobs
+     */
+    default void initJobsStatus(List<JobScmReference> jobs) {
+
+    }
 
     /**
      * Return the state of the given job
@@ -140,6 +149,14 @@ public interface ScmImportPlugin {
      */
     List<Action> actionsAvailableForContext(ScmOperationContext context);
 
+    /**
+     * @param context context map
+     *
+     * @return list of actions available for the context
+     */
+    default List<Action> actionsAvailableForContext(ScmOperationContext context, ScmImportSynchState status){
+        return actionsAvailableForContext(context);
+    }
 
     /**
      * list any known items that can be tracked, such as: all files found in the
@@ -195,5 +212,15 @@ public interface ScmImportPlugin {
      */
     default Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
         return null;
+    }
+
+    /**
+     * Function to refresh all job status .
+     * will upgrade the jobs cache status .
+     *
+     * @param jobs rundeck jobs
+     * @return map with information on the process
+     */
+    default void refreshJobsStatus(List<JobScmReference> jobs){
     }
 }

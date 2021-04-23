@@ -231,9 +231,9 @@ class GitImportPluginSpec extends Specification {
 
         when:
         def ret = plugin.scmImport(context, actionId,
-         importer,
-        selectedPaths,
-        input)
+                importer,
+                selectedPaths,
+                input)
 
         then:
         ret != null
@@ -261,6 +261,7 @@ class GitImportPluginSpec extends Specification {
         plugin.importTracker = Mock(ImportTracker){
             trackedPaths() >> ['job1-1234.xml']
             getTrackedCommits() >> ['job1-1234.xml' : '123123']
+            getTrackedJobIds() >> ['job1-12345.xml':'1234']
         }
 
         when:
@@ -287,6 +288,10 @@ class GitImportPluginSpec extends Specification {
             trackedPaths() >> ['job1-123.xml']
             getTrackedCommits() >> ['job1-123.xml' : '123123']
         }
+        plugin.jobStateMap["123"] = [
+                "synch": ImportSynchState.IMPORT_NEEDED,
+                "path": "job1-123.xml"
+        ]
 
         when:
         def result = plugin.getStatusInternal(context, false)
@@ -311,12 +316,44 @@ class GitImportPluginSpec extends Specification {
         plugin.importTracker = Mock(ImportTracker){
             trackedPaths() >> ['job1-1231.xml']
             getTrackedCommits() >> ['job1-123.xml' : '123123']
+            getTrackedJobIds() >> ['123123':'123123.xml']
         }
-
         when:
         def result = plugin.getStatusInternal(context, false)
         then:
         result.state == ImportSynchState.DELETE_NEEDED
+    }
+
+    def "getStatusInternal import needed for job mod"(){
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-1234.xml', 'blah')
+        git.close()
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+        plugin.jobStateMap['1234'] = ['synch':'MODIFIED','path':'job1-1234.xml']
+        plugin.importTracker = Mock(ImportTracker){
+            trackedPaths() >> ['job1-1234.xml']
+            getTrackedCommits() >> ['job1-1234.xml' : '123123']
+            getTrackedJobIds() >> ['job1-1234.xml':'1234']
+        }
+        plugin.jobStateMap["123123"] = [
+                "synch": ImportSynchState.IMPORT_NEEDED,
+                "path": "job1-1234.xml"
+        ]
+        when:
+        def result = plugin.getStatusInternal(context, false)
+        then:
+        result.message == '1 file(s) need to be imported'
+        result.importNeeded == 1
+        result.state == ImportSynchState.IMPORT_NEEDED
     }
 
 }

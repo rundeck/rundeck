@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
+import groovy.transform.PackageScope
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
@@ -310,8 +311,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
-        params['_gui_min_scm'] = true
-        def results = jobsFragment(query)
+        def results = jobsFragment(query, JobsScmInfo.MINIMAL)
         results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
         if(results.warning){
@@ -379,9 +379,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                 ])
         }
         //don't load scm status for api response
-        params['_no_scm']=true
-
-        def results = jobsFragment(query)
+        def results = jobsFragment(query,JobsScmInfo.NONE)
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
         def serverNodeUUID = frameworkService.serverUUID
 
@@ -451,8 +449,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 [formats: [ 'json']]
         )
     }
-
-    def jobsFragment(ScheduledExecutionQuery query) {
+    static enum JobsScmInfo{
+        NONE,
+        MINIMAL
+    }
+    @PackageScope
+    def jobsFragment(ScheduledExecutionQuery query, JobsScmInfo scmFlags) {
         long start=System.currentTimeMillis()
         UserAndRolesAuthContext authContext
         def usedFilter=null
@@ -485,97 +487,28 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
-        //fill scm status
-        if(params['_no_scm']!=true) {
-            def minScm = params['_gui_min_scm']
-            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                authContext,
-                rundeckAuthContextProcessor.authResourceForProject(
-                    params.project
-                ),
-                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_SCM_EXPORT]
-            )) {
-                if((!minScm) && frameworkService.isClusterModeEnabled()){
-                    if (!scmService.projectHasConfiguredExportPlugin(params.project)) {
-                        //initialize if in another node
-                        scmService.initProject(params.project, 'export')
-                    }
-                    scmService.fixExportStatus(authContext, params.project, results.nextScheduled)
-                }
-                def pluginData = [:]
-                try {
-                    if (scmService.projectHasConfiguredExportPlugin(params.project)) {
-                        pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export').enabled
-                        if(pluginData.scmExportEnabled){
-
-                            if(!minScm){
-                                pluginData.scmStatus = scmService.exportStatusForJobs(authContext, results.nextScheduled)
-                                pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
-                                pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
-                                pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
-                            }
-                        }
-                        results.putAll(pluginData)
-                    }
-                } catch (ScmPluginException e) {
-                    results.warning = "Failed to update SCM Export status: ${e.message}"
-                }
-            }
-            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                authContext,
-                rundeckAuthContextProcessor.authResourceForProject(
-                    params.project
-                ),
-                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT]
-            )) {
-                if((!minScm) && frameworkService.isClusterModeEnabled()){
-                    if (!scmService.projectHasConfiguredImportPlugin(params.project)) {
-                        //initialize if in another node
-                        scmService.initProject(params.project, 'import')
-                    }
-                    scmService.fixImportStatus(authContext, params.project, results.nextScheduled)
-                    scmService.importPluginStatus(authContext, params.project)
-                }
-                def pluginData = [:]
-                try {
-                    if (scmService.projectHasConfiguredImportPlugin(params.project)) {
-                        pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import').enabled
-                        if(pluginData.scmImportEnabled){
-
-                            if(!minScm){
-                                pluginData.scmImportJobStatus = scmService.importStatusForJobs(authContext, results.nextScheduled)
-                                pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
-                                pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
-                            }
-                        }
-                        results.putAll(pluginData)
-                    }
-
-                } catch (ScmPluginException e) {
-                    results.warning = "Failed to update SCM Import status: ${e.message}"
-                }
-            }
+        if (scmFlags == JobsScmInfo.MINIMAL) {
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 rundeckAuthContextProcessor.authResourceForProject(params.project),
                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT,
                  AuthConstants.ACTION_SCM_IMPORT, AuthConstants.ACTION_SCM_EXPORT]
             )) {
-                if (minScm) {
-                    def pluginData = [:]
-                    def ePluginConfig = scmService.loadScmConfig(params.project, 'export')
-                    def iPluginConfig = scmService.loadScmConfig(params.project, 'import')
-                    def eConfiguredPlugin = null
-                    def iConfiguredPlugin = null
-                    if (ePluginConfig?.type) {
-                        eConfiguredPlugin = scmService.getPluginDescriptor('export', ePluginConfig.type)
-                    }
-                    if (iPluginConfig?.type) {
-                        iConfiguredPlugin = scmService.getPluginDescriptor('import', iPluginConfig.type)
-                    }
-                    pluginData.hasConfiguredPlugins = (eConfiguredPlugin || iConfiguredPlugin)
-                    results.putAll(pluginData)
+                def ePluginConfig = scmService.loadScmConfig(params.project, 'export')
+                def iPluginConfig = scmService.loadScmConfig(params.project, 'import')
+                def eEnabled = ePluginConfig?.enabled && scmService.projectHasConfiguredPlugin('export', params.project)
+                def iEnabled = iPluginConfig?.enabled && scmService.projectHasConfiguredPlugin('import', params.project)
+
+                def eConfiguredPlugin = null
+                def iConfiguredPlugin = null
+                if (ePluginConfig?.type) {
+                    eConfiguredPlugin = scmService.getPluginDescriptor('export', ePluginConfig.type)
                 }
+                if (iPluginConfig?.type) {
+                    iConfiguredPlugin = scmService.getPluginDescriptor('import', iPluginConfig.type)
+                }
+                results.hasConfiguredScmPlugins = (eConfiguredPlugin || iConfiguredPlugin)
+                results.hasConfiguredScmPluginsEnabled = (eEnabled || iEnabled)
             }
         }
 
@@ -2866,7 +2799,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                         args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
                                                 ])
         }
-        def results = jobsFragment(query)
+        def results = jobsFragment(query, JobsScmInfo.NONE)
 
         respondApiJobsList(results.nextScheduled)
     }
@@ -3242,8 +3175,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         //don't load scm status for api response
-        params['_no_scm']=true
-        def results = jobsFragment(query)
+        def results = jobsFragment(query,JobsScmInfo.NONE)
 
         withFormat{
             xml{
@@ -3386,19 +3318,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,  AuthConstants.ACTION_SCM_EXPORT]
             )) {
                 def pluginData = [:]
-                if (frameworkService.isClusterModeEnabled()) {
-                    //initialize if in another node
-                    scmService.initProject(params.project, 'export')
-                    scmService.fixExportStatus(authContext, params.project, result.nextScheduled)
-                    scmService.checkStoredSCMStatus(params.project, result.nextScheduled)
-                }
                 try {
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
-                            scmService.checkJobRenamed(params.project, result.nextScheduled)
-
-                            pluginData.scmStatus = scmService.exportStatusForJobs(authContext, result.nextScheduled)
+                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
+                            pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
                             pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                             pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                             pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
@@ -3415,20 +3340,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     ),
                     [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT]
             )) {
-                if (frameworkService.isClusterModeEnabled()) {
-                    //initialize if in another node
-                    scmService.initProject(params.project, 'import')
-                    scmService.fixImportStatus(authContext, params.project, result.nextScheduled)
-                    scmService.importPluginStatus(authContext, params.project)
-                }
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
                         pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                         if (pluginData.scmImportEnabled) {
-                            pluginData.scmImportJobStatus = scmService.importStatusForJobs(authContext, result.nextScheduled)
+                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
+                            pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
                             pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
-                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
+                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
                         }
                         results.putAll(pluginData)
                     }

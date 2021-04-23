@@ -107,6 +107,7 @@ Pulling from remote branch: `${plugin.branch}`"""
             gitPull(context, plugin)
         } else {
             //no action
+            notActionNeeded(status)
         }
 
     }
@@ -117,6 +118,14 @@ Pulling from remote branch: `${plugin.branch}`"""
         result.success = pullResult.successful
         result.message = "Git Pull "+(result.success?'succeeded':'failed')
         result.extendedMessage = pullResult.mergeResult?.toString()?:null
+        result
+    }
+
+    ScmExportResult notActionNeeded(ScmExportSynchState status){
+        def result = new ScmExportResultImpl()
+        result.success = true
+        result.message = ""
+        result.extendedMessage = status.message
         result
     }
 }

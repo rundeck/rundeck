@@ -1830,6 +1830,7 @@ class GitExportPluginSpec extends Specification {
 
         plugin.jobStateMap[jobId]= [id:jobId, ident: "${jobId}:1:${commit.name}:true", "synch": SynchState.CLEAN]
 
+        def context = Mock(ScmOperationContext)
         def serializer = Mock(JobSerializer)
         def jobref = Stub(JobScmReference) {
             getJobName() >> 'testjob'
@@ -1841,11 +1842,12 @@ class GitExportPluginSpec extends Specification {
             getJobSerializer() >> serializer
         }
         when:
-        def status = plugin.getJobStatus(jobref)
+        def status = plugin.clusterFixJobs(context, [jobref])
 
         then:
         status != null
-        status.synchState == SynchState.EXPORT_NEEDED
+        status.restored != null
+        status.restored.size() == 1
         1 * serializer.serialize('xml', !null, _, null) >> { args ->
             args[1].write('data'.bytes)
         }
