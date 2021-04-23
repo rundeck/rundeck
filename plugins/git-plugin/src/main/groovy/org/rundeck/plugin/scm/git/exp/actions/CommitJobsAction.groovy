@@ -156,6 +156,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         commit = commit1.call()
         result.success = true
         result.commit=new GitScmCommit(GitUtil.metaForCommit(commit))
+        plugin.cleanJobStatusCache(jobs)
 
         if (result.success && input[TagAction.P_TAG_NAME]) {
             def tagResult = plugin.export(context, GitExportPlugin.PROJECT_TAG_ACTION_ID, jobs, pathsToDelete, input)

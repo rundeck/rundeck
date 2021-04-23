@@ -17,19 +17,20 @@
 package rundeck.controllers
 
 
-import com.dtolabs.rundeck.app.api.scm.ScmActionRequest
 import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
+import com.dtolabs.rundeck.plugins.scm.ImportSynchState
+import com.dtolabs.rundeck.plugins.scm.JobImportState
+import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
+import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
+import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
@@ -83,12 +84,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * existsFrameworkProject(projectName) >> true
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authResourceForProject(projectName)
-                1 * authorizeApplicationResourceAny(_, _, _)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)
 
-                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            }
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -103,11 +104,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobsWithoutClusterFix(_,[]) >> [:]
-            1 * exportFilePathsMapForJobs([]) >> [:]
+            1 * exportStatusForJobs(projectName,_,[],false, _) >> [:]
+            1 * exportFilePathsMapForJobs(projectName, []) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
-            [valid: true, nextAction: [id: 'someAction']]
+                    [valid: true, nextAction: [id: 'someAction']]
+            1 * getJobsPluginMeta(projectName)
             0 * _(*_)
         }
 
@@ -121,10 +123,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         then:
         response.json == [
-            success         : true,
-            validationErrors: null,
-            nextAction      : 'someAction',
-            message         : 'api.scm.action.integration.success.message'
+                success         : true,
+                validationErrors: null,
+                nextAction      : 'someAction',
+                message         : 'api.scm.action.integration.success.message'
         ]
         response.status == 200
 
@@ -163,24 +165,24 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
     private Map createJobParams(Map overrides = [:]) {
         [
-            jobName       : 'blue',
-            project       : 'testproj',
-            groupPath     : 'some/where',
-            description   : 'a job',
-            argString     : '-a b -c d',
-            workflow      : new Workflow(
-                keepgoing: true,
-                commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
-            ),
-            serverNodeUUID: null,
-            scheduled     : true
+                jobName       : 'blue',
+                project       : 'testproj',
+                groupPath     : 'some/where',
+                description   : 'a job',
+                argString     : '-a b -c d',
+                workflow      : new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ),
+                serverNodeUUID: null,
+                scheduled     : true
         ] + overrides
     }
 
-    private Map defineJobs(String... ids) {
+    private Map<String,ScheduledExecution> defineJobs(String... ids) {
 
         def jobs = [:]
-        ids.collectEntries { id ->
+        jobs = ids.collectEntries { id ->
             ScheduledExecution job = new ScheduledExecution(createJobParams(uuid: id, jobName: "job " + id)).save()
             [id, job]
         }
@@ -207,12 +209,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * existsFrameworkProject(projectName) >> true
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authResourceForProject(projectName)
-                1 * authorizeApplicationResourceAny(_, _, _)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)
 
-                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            }
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -231,22 +233,23 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobsWithoutClusterFix(_,_) >> [
-                job1: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
-                job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
-                job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
+            1 * exportStatusForJobs(projectName,_,_,false, _) >> [
+                    job1: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
+                    job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
+                    job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
             ]
-            1 * exportFilePathsMapForJobs(_) >> [
-                job1: 'item1',
-                job2: 'item2',
-                job3: 'item3',
+            1 * exportFilePathsMapForJobs(projectName, _) >> [
+                    job1: 'item1',
+                    job2: 'item2',
+                    job3: 'item3',
             ]
             1 * getRenamedJobPathsForProject(projectName) >> renamed
             1 * performExportAction(
-                actionName, _, projectName, config, {
+                    actionName, _, projectName, config, {
                 it*.uuid == selectedJobIds
             }, deleteditems
             ) >> [valid: true, nextAction: [id: 'someAction']]
+            1 * getJobsPluginMeta(projectName)
             0 * _(*_)
         }
 
@@ -260,10 +263,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         then:
         response.json == [
-            success         : true,
-            validationErrors: null,
-            nextAction      : 'someAction',
-            message         : 'api.scm.action.integration.success.message'
+                success         : true,
+                validationErrors: null,
+                nextAction      : 'someAction',
+                message         : 'api.scm.action.integration.success.message'
         ]
         response.status == 200
 
@@ -290,12 +293,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * existsFrameworkProject(projectName) >> true
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authResourceForProject(projectName)
-                1 * authorizeApplicationResourceAny(_, _, _)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)
 
-                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            }
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -311,7 +314,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * performImportAction(actionName, _, projectName, _, _, _) >>
-            [valid: true, nextAction: [id: 'someAction']]
+                    [valid: true, nextAction: [id: 'someAction']]
             0 * _(*_)
         }
 
@@ -325,10 +328,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         then:
         response.json == [
-            success         : true,
-            validationErrors: null,
-            nextAction      : 'someAction',
-            message         : 'api.scm.action.integration.success.message'
+                success         : true,
+                validationErrors: null,
+                nextAction      : 'someAction',
+                message         : 'api.scm.action.integration.success.message'
         ]
         response.status == 200
 
@@ -382,12 +385,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * existsFrameworkProject(projectName) >> true
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authResourceForProject(projectName)
-                1 * authorizeApplicationResourceAny(_, _, _)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)
 
-                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            }
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -408,7 +411,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * getTrackingItemsForAction(projectName, actionName) >> []
             1 * performImportAction(actionName, _, projectName, config, tracked, deletejobs) >>
-            [valid: true, nextAction: [id: 'someAction']]
+                    [valid: true, nextAction: [id: 'someAction']]
             0 * _(*_)
         }
 
@@ -422,10 +425,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         then:
         response.json == [
-            success         : true,
-            validationErrors: null,
-            nextAction      : 'someAction',
-            message         : 'api.scm.action.integration.success.message'
+                success         : true,
+                validationErrors: null,
+                nextAction      : 'someAction',
+                message         : 'api.scm.action.integration.success.message'
         ]
         response.status == 200
 
@@ -465,12 +468,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * existsFrameworkProject(projectName) >> true
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authResourceForProject(projectName)
-                1 * authorizeApplicationResourceAny(_, _, _)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)
 
-                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            }
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
         controller.apiService = Mock(ApiService) {
             1 * requireAuthorized(_, _, _) >> true
             1 * parseJsonXmlWith(_, _, _) >> { args ->
@@ -490,12 +493,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * getTrackingItemsForAction(projectName, actionName) >> [
-                ScmImportTrackedItemBuilder.builder().id("/a/path").jobId("job1").deleted(true).build(),
-                ScmImportTrackedItemBuilder.builder().id("/a/path2").jobId("job2").deleted(false).build(),
-                ScmImportTrackedItemBuilder.builder().id("/a/path3").jobId("job3").deleted(false).build(),
+                    ScmImportTrackedItemBuilder.builder().id("/a/path").jobId("job1").deleted(true).build(),
+                    ScmImportTrackedItemBuilder.builder().id("/a/path2").jobId("job2").deleted(false).build(),
+                    ScmImportTrackedItemBuilder.builder().id("/a/path3").jobId("job3").deleted(false).build(),
             ]
             1 * performImportAction(actionName, _, projectName, config, tracked, deletejobs) >>
-            [valid: true, nextAction: [id: 'someAction']]
+                    [valid: true, nextAction: [id: 'someAction']]
             0 * _(*_)
         }
 
@@ -509,10 +512,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
 
         then:
         response.json == [
-            success         : true,
-            validationErrors: null,
-            nextAction      : 'someAction',
-            message         : 'api.scm.action.integration.success.message'
+                success         : true,
+                validationErrors: null,
+                nextAction      : 'someAction',
+                message         : 'api.scm.action.integration.success.message'
         ]
         response.status == 200
 
@@ -535,12 +538,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         controller.frameworkService = Mock(FrameworkService) {
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authResourceForProject(projectName)
-                1 * authorizeApplicationResourceAny(_, _, _)>>true
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)>>true
 
-                getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            }
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
 
         controller.scmService = Mock(ScmService) {
 
@@ -549,7 +552,8 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
             1 * getTrackingItemsForAction(projectName, actionName) >> null
-            1 * importStatusForJobs(_,[])
+            1 * importStatusForJobs(projectName,_,[],_,_)
+            1 * getJobsPluginMeta(projectName)
             1 * getPluginStatus(_,integration, projectName)
             0 * _(*_)
         }
@@ -573,29 +577,29 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
     @Unroll
     def "authz required for endpoint #endpoint #integration"() {
         given:
-            ScmPluginTypeRequest req = new ScmPluginTypeRequest()
-            req.project = 'aProject'
-            req.integration = integration
-            req.type = 'xyz'
-            controller.apiService = Mock(ApiService)
-            controller.frameworkService = Mock(FrameworkService){
-                1 * existsFrameworkProject('aProject')>>true
-            }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        ScmPluginTypeRequest req = new ScmPluginTypeRequest()
+        req.project = 'aProject'
+        req.integration = integration
+        req.type = 'xyz'
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService){
+            1 * existsFrameworkProject('aProject')>>true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         when:
-            controller."$endpoint"(req)
+        controller."$endpoint"(req)
         then:
-            response.status == 403
-            1 * controller.apiService.requireAuthorized(false, _, _) >> {
-                it[1].status = 403
-                false
-            }
-            1 * controller.rundeckAuthContextProcessor.
+        response.status == 403
+        1 * controller.apiService.requireAuthorized(false, _, _) >> {
+            it[1].status = 403
+            false
+        }
+        1 * controller.rundeckAuthContextProcessor.
                 authorizeApplicationResourceAny(_, _, [integration, 'scm_' + integration, 'admin'])
         where:
-            endpoint         | integration
-            'apiPluginInput' | 'import'
-            'apiPluginInput' | 'export'
+        endpoint         | integration
+        'apiPluginInput' | 'import'
+        'apiPluginInput' | 'export'
     }
 
     void "scm action cancel delete"() {
@@ -616,6 +620,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         then:
         0 * controller.scmService.removePluginConfiguration(*_) >> true
         0 * controller.scmService.cleanPlugin(*_) >> [valid:true]
+
         response.status == 302
         response.redirectedUrl == '/project/test1/scm'
     }
@@ -709,11 +714,13 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
-            1 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * exportStatusForJobs(projectName,_,[],false,_)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(_)
-            0 * exportStatusForJobs(_,_)
+            1 * exportFilePathsMapForJobs(projectName, _)
+            1 * getJobsPluginMeta(projectName)
+            0 * exportStatusForJobs(_,_,_,_,_)
+            1 * getExportPushActionId('testproj') >> null
             0 * _(*_)
         }
 
@@ -757,12 +764,12 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * performExportAction(_,_,projectName,_,_,_) >> [valid: false]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
-            1 * exportStatusForJobsWithoutClusterFix(_,[])
+            1 * exportStatusForJobs(projectName, _,[], false, _)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(_)
+            1 * exportFilePathsMapForJobs(projectName, _)
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            0 * exportStatusForJobs(_,_)
+            1 * getJobsPluginMeta(projectName)
             0 * _(*_)
         }
 
@@ -781,5 +788,224 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         integration | _
         'export'    | _
     }
-  
+
+    @Unroll
+    def "getViewExportActionItems state #state"(){
+        given:
+        def project='testproj'
+        def meta=[:]
+        def definedJobs = defineJobs('job1', 'job2')
+        def jobs=[]
+        controller.scmService=Mock(ScmService)
+        when:
+        def result=controller.getViewExportActionItems(project,jobs)
+        then:
+        result
+        1 * controller.scmService.deletedExportFilesForProject(project)
+        1 * controller.scmService.getRenamedJobPathsForProject(project) >> [:]
+        1 * controller.scmService.getJobsPluginMeta(project) >> meta
+        1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
+                job1: new JobStateImpl(synchState: SynchState.CLEAN),
+                job2: new JobStateImpl(synchState: state)
+        ]
+        1 * controller.scmService.exportFilePathsMapForJobs(project, {
+            it.size()==1
+            it[0].extid=='job2'
+        }) >> [
+                job2: '/path/to/job2'
+        ]
+        result.size() == 1
+        result[0].itemId == '/path/to/job2'
+        result[0].originalId == null
+        result[0].renamed == false
+        result[0].status == state.toString()
+        where:
+        state << [
+                SynchState.EXPORT_NEEDED,
+                SynchState.REFRESH_NEEDED,
+                SynchState.CREATE_NEEDED,
+                SynchState.DELETE_NEEDED,
+        ]
+    }
+    def "getViewExportActionItems deleted items"(){
+        given:
+        def project='testproj'
+        def meta=[:]
+        def definedJobs = defineJobs('job1', 'job2')
+        def jobs=[]
+        controller.scmService=Mock(ScmService)
+        when:
+        def result=controller.getViewExportActionItems(project,jobs)
+        then:
+        result
+        1 * controller.scmService.deletedExportFilesForProject(project)>>[
+                'scm/path/to/job3': [id: 'job3', jobName: 'job', groupPath: 'a', jobNameAndGroup: 'a/job']
+        ]
+        1 * controller.scmService.getRenamedJobPathsForProject(project) >> [:]
+        1 * controller.scmService.getJobsPluginMeta(project) >> meta
+        1 * controller.scmService.exportStatusForJobs(project, _, _, true, meta) >> [
+                job1: new JobStateImpl(synchState: SynchState.CLEAN),
+                job2: new JobStateImpl(synchState: SynchState.CLEAN)
+        ]
+        1 * controller.scmService.exportFilePathsMapForJobs(project, []) >> [:]
+        result.size() == 1
+        result[0].itemId == 'scm/path/to/job3'
+        result[0].originalId == null
+        result[0].renamed == false
+        result[0].status == null
+        result[0].deleted
+        result[0].job.jobId=='job3'
+        result[0].job.groupPath=='a'
+        result[0].job.jobName=='job'
+    }
+    def "getViewExportActionItems renamed items"(){
+        given:
+        def project='testproj'
+        def meta=[:]
+        def definedJobs = defineJobs('job1', 'job2')
+        def jobs=[]
+        controller.scmService=Mock(ScmService)
+        when:
+        def result=controller.getViewExportActionItems(project,jobs)
+        then:
+        result
+        1 * controller.scmService.deletedExportFilesForProject(project)>>[
+                '/oldscm/path/to/job2': [id: 'job2', jobName: 'blah', groupPath: 'bloo', jobNameAndGroup: 'bloo/blah']
+        ]
+        1 * controller.scmService.getRenamedJobPathsForProject(project) >> [job2:'/oldscm/path/to/job2']
+        1 * controller.scmService.getJobsPluginMeta(project) >> meta
+        1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
+                job1: new JobStateImpl(synchState: SynchState.CLEAN),
+                job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED)
+        ]
+        1 * controller.scmService.exportFilePathsMapForJobs(project, {
+            it.size()==1
+            it[0].extid=='job2'
+        }) >> [
+                job2: '/path/to/job2'
+        ]
+        result.size() == 1
+        result[0].itemId == '/path/to/job2'
+        result[0].originalId == '/oldscm/path/to/job2'
+        result[0].renamed == true
+        result[0].status == 'EXPORT_NEEDED'
+        !result[0].deleted
+        result[0].job.jobId=='job2'
+        result[0].job.groupPath=='some/where'
+        result[0].job.jobName=='job job2'
+    }
+
+    def 'perform import fetch items with status <> CLEAN'() {
+        given:
+        def projectName = 'testproj'
+        def actionName = 'testAction'
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
+        def meta=[:]
+        def definedJobs = defineJobs('job1', 'job2', 'job3')
+        def job1 = definedJobs.job1
+        def job2 = definedJobs.job2
+
+        controller.frameworkService = Mock(FrameworkService) {
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)>>true
+
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scmService = Mock(ScmService) {
+
+            1 * projectHasConfiguredPlugin(integration, projectName) >> true
+            1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            1 * getRenamedJobPathsForProject(projectName) >> [:]
+            1 * loadProjectPluginDescriptor(projectName, integration)
+            1 * getTrackingItemsForAction(projectName, actionName) >> [
+                    Mock(ScmImportTrackedItem){
+                        getId()>> job1.id
+                        getJobId()>>job1.id
+                    },
+                    Mock(ScmImportTrackedItem){
+                        getId()>>job2.id
+                        getJobId()>>job2.id
+
+                    }
+            ]
+            1 * getJobsPluginMeta(projectName)>>meta
+            1 * getPluginStatus(_,integration, projectName)
+            1 * importStatusForJobs(projectName, _, {it.size()==2}, false, meta) >> [
+                    job1: Mock(JobImportState){getSynchState()>> ImportSynchState.CLEAN},
+                    job2: Mock(JobImportState){getSynchState()>> ImportSynchState.IMPORT_NEEDED}
+            ]
+            0 * _(*_)
+        }
+
+        response.format = 'json'
+        request.method = 'POST'
+        request.contentType = 'application/json'
+        request.content = '{"input":null}'.bytes
+
+        when:
+        def result = controller.performAction(integration, projectName, actionName)
+
+        then:
+        response.status == 200
+        result.trackingItems.size() == 1
+
+        where:
+        integration | _
+        'import'    | _
+    }
+
+    def "perform export shouldn't call clusterFix with push action match"() {
+        given:
+        def projectName = 'testproj'
+        def actionName = 'testAction'
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
+
+        controller.frameworkService = Mock(FrameworkService) {
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _)>>true
+
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+        }
+
+        controller.scmService = Mock(ScmService) {
+            1 * projectHasConfiguredPlugin(integration, projectName) >> true
+            1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            1 * getRenamedJobPathsForProject(projectName) >> [:]
+            1 * loadProjectPluginDescriptor(projectName, integration)
+            1 * getPluginStatus(_,integration, projectName)
+            1 * deletedExportFilesForProject(projectName)
+            1 * exportFilePathsMapForJobs(projectName,_)
+            1 * getJobsPluginMeta('testproj')
+            0 * exportStatusForJobs(_,_)
+            1 * getExportPushActionId('testproj') >> actionName
+            0 * _(*_)
+        }
+
+        response.format = 'json'
+        request.method = 'POST'
+        request.contentType = 'application/json'
+        request.content = '{"input":null}'.bytes
+
+        when:
+        controller.performAction(integration, projectName, actionName)
+
+        then:
+        response.status == 200
+
+        where:
+        integration | _
+        'export'    | _
+    }
+
 }

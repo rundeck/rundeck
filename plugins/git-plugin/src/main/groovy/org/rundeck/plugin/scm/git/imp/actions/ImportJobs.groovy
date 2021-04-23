@@ -117,6 +117,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
             }
 
         }
+        plugin.cleanJobStatusCache(selectedPaths)
         def result = new ScmExportResultImpl()
         result.success = success
         result.message = "Git Import " + (success ? "successful" : "failed")

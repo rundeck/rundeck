@@ -46,6 +46,7 @@ environments {
         rundeck.feature.userSessionProjectsCache.enabled=true
         rundeck.feature.uiNext.enabled = false
         rundeck.feature.workflowDesigner.enabled = false
+        rundeck.scm.startup.initDeferred=false
 
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
