@@ -220,8 +220,6 @@ class ScmService {
     }
 
     def projectHasConfiguredExportPlugin(String project) {
-        initProject(project, EXPORT)
-        loadedExportPlugins.containsKey(project)
         def loaded = initProject(project, EXPORT)
         if(!loaded){
             unregisterPlugin(project, EXPORT)
@@ -230,8 +228,6 @@ class ScmService {
     }
 
     def projectHasConfiguredImportPlugin(String project) {
-        initProject(project, IMPORT)
-        loadedImportPlugins.containsKey(project)
         def loaded = initProject(project, IMPORT)
         if(!loaded){
             unregisterPlugin(project, IMPORT)
