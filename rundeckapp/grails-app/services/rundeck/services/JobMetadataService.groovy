@@ -33,6 +33,16 @@ class JobMetadataService {
     }
 
     /**
+     * Load scm metadata for the jobs
+     * @param project project
+     * @return map of metadata set by import plugin
+     */
+    List<PluginMeta> getJobsPluginMeta(final String project, final String type) {
+        def found = PluginMeta.findAllByProject(project)
+        return found
+    }
+
+    /**
      * Load scm metadata for the job
      * @param project project
      * @param id jobid
@@ -68,6 +78,20 @@ class JobMetadataService {
             found.delete(flush: true)
         }
     }
+
+    /**
+     * Remove scm metadata for the project
+     * @param project project
+     */
+    def removeProjectPluginMeta(final String project) {
+        def pluginMeta = PluginMeta.findAllByProject(project)
+        if (pluginMeta) {
+            pluginMeta.each {meta->
+                meta.delete(flush: true)
+            }
+        }
+    }
+
     /**
      * Remove all scm metadata for the job
      * @param project project
