@@ -29,7 +29,6 @@ class PatternJobFileMapper implements JobFileMapper{
     File fileForJob(final JobReference jobReference) {
         return new File(substitute(mappingPath,jobReference))
     }
-
     @Override
     String pathForJob(final JobReference jobReference) {
         return substitute(mappingPath,jobReference)

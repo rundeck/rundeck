@@ -1879,4 +1879,35 @@ class GitExportPluginSpec extends Specification {
         0 * serializer.serialize(*_)
 
     }
+
+    def "init job status sets loading status"(){
+        given:
+            def gitdir = new File(tempdir, 'scm')
+            def origindir = new File(tempdir, 'origin')
+            Export config = createTestConfig(gitdir, origindir)
+            //create a git dir
+            def git = createGit(origindir)
+            addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+
+            git.close()
+
+            def plugin = new GitExportPlugin(config)
+            plugin.initialize(Mock(ScmOperationContext))
+            def jobrefs = [
+                 Stub(JobExportReference) {
+                    getJobName() >> 'name'
+                    getGroupPath() >> 'a/b'
+                    getId() >> 'xyz'
+                    getVersion() >> 1
+                }
+            ]
+        when:
+            plugin.initJobsStatus(jobrefs)
+        then: "job synch state is loading"
+            plugin.jobStateMap['xyz'].synch==SynchState.LOADING
+            plugin.jobStateMap['xyz'].id=='xyz'
+            plugin.jobStateMap['xyz'].version==1
+
+
+    }
 }
