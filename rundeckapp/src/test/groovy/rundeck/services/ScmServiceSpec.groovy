@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -28,6 +30,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
+import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
@@ -48,6 +52,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
 import rundeck.services.scm.ScmPluginConfigData
+import spock.lang.Unroll
 
 /**
  * Created by greg on 10/15/15.
@@ -1051,4 +1056,121 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         //ScmService.IMPORT   | _
     }
 
+<<<<<<< HEAD
 }
+=======
+    def "export change listener event Delete"() {
+        given:
+            def project='aproj'
+            def context = Mock(ScmOperationContext){
+                getFrameworkProject()>>project
+            }
+            def plugin = Mock(ScmExportPlugin)
+            def sut = new ScmService.ExportChangeListener(service: service, context: context, plugin: plugin)
+            def jobref = Mock(JobRevReference){
+                getProject()>>project
+                getId()>>'123'
+            }
+            def event = new StoredJobChangeEvent(eventType: evtType,jobReference: jobref)
+            def serializer = null
+            service.jobMetadataService=Mock(JobMetadataService)
+        when:
+            sut.jobChangeEvent(event, serializer)
+        then:
+
+            1 * plugin.getRelativePathForJob({
+                it.id=='123'
+            })>>'/a/path'
+            1 * service.jobMetadataService.getJobPluginMeta(project,'123','scm-import')
+            1 * plugin.jobChanged({ it.eventType==evtType },_)
+            service.deletedJobsCache[project]['/a/path']!=null
+        where:
+            evtType                                  | _
+            JobChangeEvent.JobChangeEventType.DELETE | _
+
+    }
+
+    def "export change listener event MODIFY_RENAME"() {
+        given:
+            def project='aproj'
+            def context = Mock(ScmOperationContext){
+                getFrameworkProject()>>project
+            }
+            def plugin = Mock(ScmExportPlugin)
+            def sut = new ScmService.ExportChangeListener(service: service, context: context, plugin: plugin)
+            def jobref = Mock(JobRevReference){
+                getProject()>>project
+                getId()>>'123'
+                getJobName()>>'aname'
+            }
+            def origref=Mock(JobReference){
+                getProject()>>project
+                getId()>>'123'
+                getJobName()>>'bname'
+            }
+            def event = new StoredJobChangeEvent(
+                eventType: evtType,
+                jobReference: jobref,
+                originalJobReference: origref
+            )
+            def serializer = null
+            service.jobMetadataService = Mock(JobMetadataService)
+        when:
+            sut.jobChangeEvent(event, serializer)
+        then:
+
+
+            1 * plugin.getRelativePathForJob({
+                it.id=='123'
+                it.jobName=='aname'
+            })>> '/a/path'
+            1 * plugin.getRelativePathForJob({
+                it.id=='123'
+                it.jobName=='bname'
+            })>> '/b/path'
+            1 * plugin.jobChanged({ it.eventType==evtType },_)
+            0 * plugin._(*_)
+            service.renamedJobsCache[project]['123'] == '/b/path'
+        where:
+            evtType                                  | _
+            JobChangeEvent.JobChangeEventType.MODIFY_RENAME | _
+    }
+    @Unroll
+    def "export change listener event #evtType default behavior"() {
+        given:
+            def project='aproj'
+            def context = Mock(ScmOperationContext){
+                getFrameworkProject()>>project
+            }
+            def plugin = Mock(ScmExportPlugin)
+            def sut = new ScmService.ExportChangeListener(service: service, context: context, plugin: plugin)
+            def jobref = Mock(JobRevReference){
+                getProject()>>project
+                getId()>>'123'
+                getJobName()>>'aname'
+            }
+            def origref=Mock(JobReference){
+                getProject()>>project
+                getId()>>'123'
+                getJobName()>>'bname'
+            }
+            def event = new StoredJobChangeEvent(
+                eventType: evtType,
+                jobReference: jobref,
+                originalJobReference: origref
+            )
+            def serializer = null
+            service.jobMetadataService = Mock(JobMetadataService)
+        when:
+            sut.jobChangeEvent(event, serializer)
+        then:
+            1 * plugin.jobChanged({ it.eventType==evtType },_)
+            0 * plugin._(*_)
+        where:
+            evtType                                  | _
+            JobChangeEvent.JobChangeEventType.CREATE | _
+            JobChangeEvent.JobChangeEventType.MODIFY | _
+    }
+
+}
+>>>>>>> 2bb14811a8... fix: import when import/export are enabled can show incorrect status
