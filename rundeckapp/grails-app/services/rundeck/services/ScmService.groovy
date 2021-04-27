@@ -56,6 +56,7 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
+import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
 import rundeck.Storage
@@ -419,7 +420,6 @@ class ScmService {
      * @return repo path for original job name
      */
     public String getRenamedPathForJobId(String project, String jobid) {
-        log.debug "Get renamed path for project ${project}, job: ${jobid}: " + renamedJobsCache[project]?.get(jobid)
         return renamedJobsCache[project]?.get(jobid)
     }
     /**
@@ -495,52 +495,54 @@ class ScmService {
 
     }
 
-    private JobChangeListener listenerForExportPlugin(
-            ScmExportPlugin plugin,
-            ScmOperationContext context
-    )
-    {
-        { JobChangeEvent event, JobSerializer serializer ->
+    @CompileStatic
+    static class ExportChangeListener implements JobChangeListener{
+        ScmService service
+        ScmExportPlugin plugin
+        ScmOperationContext context
+        @Override
+        void jobChangeEvent(final JobChangeEvent event, final JobSerializer serializer) {
             log.debug("job change event: " + event)
-            if(event.eventType == JobChangeEvent.JobChangeEventType.CREATE){
-                def metadata = jobMetadataService.getJobPluginMeta(event.jobReference.project, event.jobReference.id, STORAGE_NAME_IMPORT)
-                //generate "source" UUID in case the local UUID will not be exported
-                jobMetadataService.setJobPluginMeta(event.jobReference.project, event.jobReference.id, STORAGE_NAME_IMPORT,[
-                        srcId:(metadata?.srcId)?:UUID.randomUUID().toString()
-                ])
-            }
-            JobScmReference scmRef = scmJobRef(event.jobReference, serializer)
-            JobScmReference origScmRef = event.originalJobReference?scmOrigJobRef(event.originalJobReference, null):null
+            JobScmReference scmRef = service.scmJobRef(event.jobReference, serializer)
+            JobScmReference origScmRef = event.originalJobReference?service.scmOrigJobRef(event.originalJobReference, null):null
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
                 //record deleted path
-                recordDeletedJob(
-                        context.frameworkProject,
-                        plugin.getRelativePathForJob(scmRef),
-                        [
-                                id             : event.jobReference.id,
-                                jobName        : event.jobReference.getJobName(),
-                                groupPath      : event.jobReference.getGroupPath(),
-                                jobNameAndGroup: event.jobReference.getJobAndGroup(),
-                        ]
+                service.recordDeletedJob(
+                    context.frameworkProject,
+                    plugin.getRelativePathForJob(scmRef),
+                    [
+                        id             : event.jobReference.id,
+                        jobName        : event.jobReference.getJobName(),
+                        groupPath      : event.jobReference.getGroupPath(),
+                        jobNameAndGroup: event.jobReference.getJobAndGroup(),
+                    ]
                 )
             } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
                 //record original path for renamed job, if it is different
                 def origpath = plugin.getRelativePathForJob(origScmRef)
                 def newpath = plugin.getRelativePathForJob(scmRef)
                 if (origpath != newpath) {
-                    recordRenamedJob(context.frameworkProject, event.jobReference.id, origpath)
+                    service.recordRenamedJob(context.frameworkProject, event.jobReference.id, origpath)
                 }
             }
 
             plugin.jobChanged(
-                    new StoredJobChangeEvent(
-                            eventType: event.eventType,
-                            originalJobReference: origScmRef,
-                            jobReference: scmRef
-                    ),
-                    scmRef
+                new StoredJobChangeEvent(
+                    eventType: event.eventType,
+                    originalJobReference: origScmRef,
+                    jobReference: scmRef
+                ),
+                scmRef
             )
-        } as JobChangeListener
+        }
+    }
+
+    private JobChangeListener listenerForExportPlugin(
+            ScmExportPlugin plugin,
+            ScmOperationContext context
+    )
+    {
+        new ExportChangeListener(service: this, plugin: plugin, context: context)
     }
 
     /**
