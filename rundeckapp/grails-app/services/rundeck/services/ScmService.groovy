@@ -1481,7 +1481,11 @@ class ScmService {
         def jobFullName = job.generateFullName()
         def origFullName = [jobPluginMeta.groupPath?:'',jobPluginMeta.name].join("/")
 
-        if( jobFullName != origFullName){
+        log.info("original name")
+        log.info(origFullName)
+        log.info(jobPluginMeta)
+
+        if(jobPluginMeta && jobPluginMeta.name && jobFullName != origFullName){
 
             log.debug("job ${job.groupPath}/${job.jobName} was renamed, previuos name: ${jobPluginMeta.groupPath}/${jobPluginMeta.name}" )
 
