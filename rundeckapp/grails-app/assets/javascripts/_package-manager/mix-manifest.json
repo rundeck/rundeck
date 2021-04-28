@@ -1,8 +1,9 @@
 {
     "/jquery.js": "/jquery.js",
-    "/bootstrap/bootstrap.js": "/bootstrap/bootstrap.js",
+    "/bootstrap/bootstrap-341.js": "/bootstrap/bootstrap-341.js",
     "/knockout.min.js": "/knockout.min.js",
     "/knockout-mapping.js": "/knockout-mapping.js",
     "/perfect-scrollbar.js": "/perfect-scrollbar.js",
-    "/jquery-ui-timepicker-addon.js": "/jquery-ui-timepicker-addon.js"
+    "/jquery-ui-timepicker-addon.js": "/jquery-ui-timepicker-addon.js",
+    "/bootstrap/bootstrap.js": "/bootstrap/bootstrap.js"
 }
