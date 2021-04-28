@@ -583,26 +583,26 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             retSt.behind = true
         }
 
-        jobs.each { job ->
-            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
-            def path = getRelativePathForJob(job)
-            def commitId = lastCommitForPath(path)
-
-            if(storedCommitId != null && commitId == null){
-                //file to delete-pull
-                git.rm().addFilepattern(path).call()
-                retSt.deleted.add(path)
-                refreshJobCache.add(job)
-            }else if(storedCommitId != null && commitId?.name != storedCommitId){
-                if(toPull){
-                    git.checkout().addPath(path).call()
-                }
-                retSt.restored.add(job)
-                refreshJobCache.add(job)
-            }
-        }
-
         if(toPull){
+            jobs.each { job ->
+                def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
+                def path = getRelativePathForJob(job)
+                def commitId = lastCommitForPath(path)
+
+                if(storedCommitId != null && commitId == null){
+                    //file to delete-pull
+                    git.rm().addFilepattern(path).call()
+                    retSt.deleted.add(path)
+                    refreshJobCache.add(job)
+                }else if(storedCommitId != null && commitId?.name != storedCommitId){
+                    if(toPull){
+                        git.checkout().addPath(path).call()
+                    }
+                    retSt.restored.add(job)
+                    refreshJobCache.add(job)
+                }
+            }
+
             retSt.pull = true
             try{
                 gitPull(context)

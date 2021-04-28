@@ -54,6 +54,7 @@ public class RundeckConfigBase {
     UserSessionProjectsCache userSessionProjectsCache;
     RundeckNotificationConfig notification;
     RundeckApiConfig api;
+    ScmLoader scmLoader;
 
     @Data
     public static class UserSessionProjectsCache {
@@ -536,6 +537,12 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckNotificationConfig {
         Long threadTimeOut;
+    }
+
+    @Data
+    public static class ScmLoader {
+        Long delay;
+        Long interval;
     }
 
     public static final Map<String,String> DEPRECATED_PROPS = ImmutableMap.of(

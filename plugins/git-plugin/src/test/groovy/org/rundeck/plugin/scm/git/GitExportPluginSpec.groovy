@@ -1439,10 +1439,19 @@ class GitExportPluginSpec extends Specification {
         ScmOperationContext context = Mock(ScmOperationContext)
         //create a git dir
         def git = createGit(origindir)
-
+        addCommitFile(origindir, git, 'blah-abc.xml', 'blah')
         git.close()
         def plugin = new GitExportPlugin(config)
         plugin.initialize(Mock(ScmOperationContext))
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'blah-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def gitScm = openGit(gitdir)
+        plugin.fetchFromRemote(context, gitScm)
+
 
         def serializer = Mock(JobSerializer)
         def jobref = Stub(JobScmReference) {
@@ -1510,6 +1519,14 @@ class GitExportPluginSpec extends Specification {
         git.close()
         def plugin = new GitExportPlugin(config)
         plugin.initialize(Mock(ScmOperationContext))
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def gitScm = openGit(gitdir)
+        plugin.fetchFromRemote(context, gitScm)
 
         def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
@@ -1818,8 +1835,17 @@ class GitExportPluginSpec extends Specification {
 
         git.close()
 
+        def context = Mock(ScmOperationContext)
         def plugin = new GitExportPlugin(config)
-        plugin.initialize(Mock(ScmOperationContext))
+        plugin.initialize(context)
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def gitScm = openGit(gitdir)
+        plugin.fetchFromRemote(context, gitScm)
 
         def outfile = new File(origindir, 'a/b/testjob-xyz.xml')
         AtomicLong latch = new AtomicLong(-1)
@@ -1830,7 +1856,6 @@ class GitExportPluginSpec extends Specification {
 
         plugin.jobStateMap[jobId]= [id:jobId, ident: "${jobId}:1:${commit.name}:true", "synch": SynchState.CLEAN]
 
-        def context = Mock(ScmOperationContext)
         def serializer = Mock(JobSerializer)
         def jobref = Stub(JobScmReference) {
             getJobName() >> 'testjob'
