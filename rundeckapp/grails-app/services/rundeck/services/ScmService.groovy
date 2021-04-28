@@ -53,12 +53,10 @@ import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfoMissing
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.ScheduledExecution
-import rundeck.Storage
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
@@ -682,6 +680,7 @@ class ScmService {
             def changeListener = loadedImportListeners.remove(project)
             jobEventsService.removeListener(changeListener)
         }
+        initedProjects.remove(integration + '/' + project)
         loaded?.provider?.cleanup()
     }
 
@@ -1160,17 +1159,9 @@ class ScmService {
 
                 def jobReference = exportJobRef(job, jobPluginMeta)
 
-                if(jobPluginMeta){
-                    //check if job was renamed
-                    checkExportJobRenamed(plugin, project, job, (JobScmReference)jobReference, jobPluginMeta)
-                }
-
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
                 JobState jobState = plugin.getJobStatus(jobReference, originalPath)
                 status[jobReference.id] = jobState
-
-                // synch commit info to exported commit data
-                checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
 
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
@@ -1490,7 +1481,7 @@ class ScmService {
         def jobFullName = job.generateFullName()
         def origFullName = [jobPluginMeta.groupPath?:'',jobPluginMeta.name].join("/")
 
-        if( jobFullName != origFullName){
+        if(jobPluginMeta && jobPluginMeta.name && jobFullName != origFullName){
 
             log.debug("job ${job.groupPath}/${job.jobName} was renamed, previuos name: ${jobPluginMeta.groupPath}/${jobPluginMeta.name}" )
 
@@ -1526,6 +1517,24 @@ class ScmService {
     def getExportPushActionId(project){
         def plugin = getLoadedExportPluginFor project
         return plugin?.getExportPushActionId()
+    }
+
+    def refreshExportPluginMetadata(String project, ScmExportPlugin plugin, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta ){
+        jobs.each { job ->
+            Map jobPluginMeta =  jobsPluginMeta.get(job.uuid)
+            JobExportReference jobReference = exportJobRef(job, jobPluginMeta)
+
+            if(jobPluginMeta){
+                //check if job was renamed
+                checkExportJobRenamed(plugin, project, job, (JobScmReference)jobReference, jobPluginMeta)
+            }
+
+            String originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
+            JobState jobState = plugin.getJobStatus(jobReference, originalPath)
+
+            // synch commit info to exported commit data
+            checkExportJobStatus(plugin, job, (JobScmReference)jobReference, jobPluginMeta, jobState)
+        }
     }
 
 }

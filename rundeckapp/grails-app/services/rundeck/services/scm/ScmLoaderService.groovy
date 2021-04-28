@@ -3,6 +3,8 @@ package rundeck.services.scm
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
+import com.dtolabs.rundeck.plugins.scm.JobState
+import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
@@ -27,7 +29,7 @@ class ScmLoaderService {
     ScheduledExecutionService scheduledExecutionService
     ConfigurationService configurationService
     public static final long DEFAULT_LOADER_DELAY = 0
-    public static final long DEFAULT_LOADER_INTERVAL_SEC = 30
+    public static final long DEFAULT_LOADER_INTERVAL_SEC = 20
 
     /**
      * scheduledExecutor to load job SCM cache
@@ -35,6 +37,7 @@ class ScmLoaderService {
     ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2)
     final Map<String, ScheduledFuture> scmProjectLoaderProcess = Collections.synchronizedMap([:])
     final Map<String, Boolean> scmProjectInitLoaded = Collections.synchronizedMap([:])
+    final Map<String, ScmPluginConfigData> scmPluginMeta = Collections.synchronizedMap([:])
 
     @Subscriber("rundeck.bootstrap")
     @CompileDynamic
@@ -78,6 +81,9 @@ class ScmLoaderService {
                 {
                     String projectIntegration = project + "-" + integration
                     ScmPluginConfigData pluginConfigData = scmService.loadScmConfig(project, integration)
+                    if(!scmPluginMeta.get(projectIntegration)){
+                        scmPluginMeta.put(projectIntegration, pluginConfigData)
+                    }
                     if(pluginConfigData && pluginConfigData.enabled){
                         try {
                             if (integration == scmService.EXPORT) {
@@ -105,12 +111,12 @@ class ScmLoaderService {
     }
 
     long getScmLoaderInitialDelaySeconds() {
-        configurationService?.getLong('scm.loader.delay', DEFAULT_LOADER_DELAY) ?: DEFAULT_LOADER_DELAY
+        configurationService?.getLong('scmLoader.delay', DEFAULT_LOADER_DELAY) ?: DEFAULT_LOADER_DELAY
     }
 
     long getScmLoaderIntervalSeconds() {
         configurationService?.getLong(
-                'scm.loader.delay',
+                'scmLoader.interval',
                 DEFAULT_LOADER_INTERVAL_SEC
         ) ?:
                 DEFAULT_LOADER_INTERVAL_SEC
@@ -132,6 +138,11 @@ class ScmLoaderService {
             return
         }
 
+        //if plugin property changed, the plugin must be re-enabled
+        if(reloadPlugin(project, ScmService.EXPORT, pluginConfig)){
+            log.info("SCM Export has change for project ${project}")
+        }
+
         log.debug("processing SCM export Loader ${project} / ${pluginConfig.type}")
 
         def plugin = scmService.getLoadedExportPluginFor(project)
@@ -139,10 +150,18 @@ class ScmLoaderService {
         if(plugin){
             log.debug("export plugin found")
 
+            def username = pluginConfig.getSetting("username")
+            def roles = pluginConfig.getSettingList("roles")
+            ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
+            //check global status
+            //needed to perform fetch
+            plugin.getStatus(context)
+
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
 
-            List<JobExportReference> joblist = scmService.exportjobRefsForJobs(jobs)
+            Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project)
+            List<JobExportReference> joblist = scmService.exportjobRefsForJobs(jobs, jobPluginMeta)
 
             def key = project+"-export"
             if(!scmProjectInitLoaded.containsKey(key)){
@@ -153,11 +172,12 @@ class ScmLoaderService {
                 scmProjectInitLoaded.put(key, true)
             }
 
+            //refresh job plugin meta
+            scmService.refreshExportPluginMetadata(project, plugin,jobs,jobPluginMeta)
+
             log.debug("processing cluster fix")
             if(frameworkService.isClusterModeEnabled()){
-                def username = pluginConfig.getSetting("username")
-                def roles = pluginConfig.getSettingList("roles")
-                ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
+
                 Map<String,String> originalPaths = joblist.collectEntries{[it.id,scmService.getRenamedPathForJobId(it.project, it.id)]}
 
                 //run cluster fix
@@ -175,15 +195,27 @@ class ScmLoaderService {
             return
         }
 
+        if(reloadPlugin(project, ScmService.IMPORT, pluginConfig)){
+            log.info("SCM Import has change for project ${project}")
+        }
+
         def plugin = scmService.getLoadedImportPluginFor(project)
 
         if(plugin){
             log.debug("import plugin found")
 
+            def username = pluginConfig.getSetting("username")
+            def roles = pluginConfig.getSettingList("roles")
+            ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
+            //check global status
+            //needed to perform fetch
+            plugin.getStatus(context)
+
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
 
-            List<JobScmReference> joblist = scmService.scmJobRefsForJobs(jobs)
+            Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project)
+            List<JobScmReference> joblist = scmService.scmJobRefsForJobs(jobs, jobPluginMeta)
 
             def key = project+"-import"
             if(!scmProjectInitLoaded.containsKey(key)){
@@ -197,10 +229,6 @@ class ScmLoaderService {
             }
 
             if(frameworkService.isClusterModeEnabled()){
-                def username = pluginConfig.getSetting("username")
-                def roles = pluginConfig.getSettingList("roles")
-
-                def context = scmService.scmOperationContext(username, roles, project)
                 Map<String,String> originalPaths = joblist.collectEntries { [it.id, scmService.getRenamedPathForJobId(it.project, it.id)] }
 
                 //run cluster fix
@@ -209,6 +237,19 @@ class ScmLoaderService {
 
 
         }
+    }
+
+    boolean reloadPlugin(String project, String integration, ScmPluginConfigData pluginConfig){
+        String key = project + "-" + integration
+        def pluginConfigCache = scmPluginMeta.get(key)
+        if(pluginConfigCache && pluginConfig.getProperties() != pluginConfigCache.getProperties()){
+            scmService.unregisterPlugin(integration, project)
+            scmService.initProject(project, integration)
+            scmPluginMeta.remove(key)
+            return true
+        }
+
+        return false
     }
 
 
