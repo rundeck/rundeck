@@ -57,12 +57,12 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v2-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            - v3-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - restore_cache:
           keys:
-            - v2-gradle-cache-{{ .Branch }}-<<pipeline.number>>
-            - v2-gradle-cache-{{ .Branch }}-
-            - v2-gradle-cache-
+            - v3-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+            - v3-gradle-cache-{{ .Branch }}-
+            - v3-gradle-cache-
 
   save-gradle-cache:
     description: Save Gradle cache
@@ -70,11 +70,11 @@ commands:
       - save_cache:
           paths:
             - ~/.gradle/wrapper
-          key: v2-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+          key: v3-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - save_cache:
           paths:
             - ~/.gradle/caches
-          key: v2-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+          key: v3-gradle-cache-{{ .Branch }}-<<pipeline.number>>
 
   fetch-common-artifacts:
     description: Fetch common build artifacts
@@ -431,4 +431,3 @@ workflows:
             name: OWASP Dependency Checks
             requires: [build]
             continue: 'false'
-      
