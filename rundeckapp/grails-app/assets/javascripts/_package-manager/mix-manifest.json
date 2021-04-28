@@ -1,6 +1,6 @@
 {
     "/jquery.js": "/jquery.js",
-    "/bootstrap-all.js": "/bootstrap-all.js",
+    "/bootstrap/bootstrap.js": "/bootstrap/bootstrap.js",
     "/knockout.min.js": "/knockout.min.js",
     "/knockout-mapping.js": "/knockout-mapping.js",
     "/perfect-scrollbar.js": "/perfect-scrollbar.js",
