@@ -569,6 +569,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
     Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs, final Map<String,String> originalPaths){
+        //force fetch
+        fetchFromRemote(context)
+
         def retSt = [:]
         List<JobExportReference> refreshJobCache = []
 

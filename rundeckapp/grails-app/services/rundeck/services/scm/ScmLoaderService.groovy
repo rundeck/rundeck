@@ -205,9 +205,6 @@ class ScmLoaderService implements EventBusAware {
             def username = pluginConfig.getSetting("username")
             def roles = pluginConfig.getSettingList("roles")
             ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
-            //check global status
-            //needed to perform fetch
-            plugin.getStatus(context)
 
             List<ScheduledExecution> jobs = getJobs(project)
             List<String> deleted = []
@@ -291,9 +288,6 @@ class ScmLoaderService implements EventBusAware {
             def username = pluginConfig.getSetting("username")
             def roles = pluginConfig.getSettingList("roles")
             ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
-            //check global status
-            //needed to perform fetch
-            plugin.getStatus(context)
 
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
