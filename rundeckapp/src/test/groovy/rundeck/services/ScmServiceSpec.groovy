@@ -1056,9 +1056,6 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         //ScmService.IMPORT   | _
     }
 
-<<<<<<< HEAD
-}
-=======
     def "export change listener event Delete"() {
         given:
             def project='aproj'
@@ -1173,4 +1170,3 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
     }
 
 }
->>>>>>> 2bb14811a8... fix: import when import/export are enabled can show incorrect status
