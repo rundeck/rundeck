@@ -1,13 +1,17 @@
 package rundeck.services.scm
 
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
+import grails.events.bus.EventBus
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
+import rundeck.services.JobReferenceImpl
+import rundeck.services.JobRevReferenceImpl
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 
@@ -25,7 +29,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         def scmPluginConfigData = Mock(ScmPluginConfigData)
         when:
 
-        service.processScmExportLoader(project, scmPluginConfigData)
+        service.processScmExportLoader(project, scmPluginConfigData, new ScmLoaderService.ScmExportLoaderStateImpl())
 
         then:
         0 * service.scmService.getLoadedExportPluginFor(project)
@@ -77,7 +81,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
 
         when:
 
-        service.processScmExportLoader(project, scmPluginConfigData)
+        service.processScmExportLoader(project, scmPluginConfigData, new ScmLoaderService.ScmExportLoaderStateImpl())
 
         then:
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
@@ -167,7 +171,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         def jobList = [jobExportReference]
         when:
 
-        service.processScmExportLoader(project, scmPluginConfigData)
+        service.processScmExportLoader(project, scmPluginConfigData, new ScmLoaderService.ScmExportLoaderStateImpl())
 
         then:
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
@@ -178,6 +182,80 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         jobs.size()*service.scmService.getRenamedPathForJobId(_,_)
         1 * plugin.clusterFixJobs(_,_,_)
         service.scmProjectInitLoaded.containsKey(project+"-export")
+
+    }
+
+    def "loaded export plugin load externally deleted jobs"(){
+
+        given:
+        def project = "test"
+
+        service.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled()>>true
+        }
+
+        def job = new ScheduledExecution()
+        job.id = 123
+        job.uuid = "123-123"
+        job.jobName = "test"
+        job.groupPath = "demo"
+        job.project = project
+
+        def jobs = [job]
+
+        def listWorkflow = [
+                "schedlist": jobs
+        ]
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            listWorkflows(_)>>listWorkflow
+        }
+        def username = "admin"
+        def roles = ["admin"]
+
+        def plugin  = Mock(ScmExportPlugin)
+        def scmPluginConfigData = Mock(ScmPluginConfigData){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+        }
+        service.scmService = Mock(ScmService){
+            projectHasConfiguredExportPlugin(project)>>true
+        }
+        def jobExportReference = Mock(JobScmReference){
+            getId()>>job.uuid
+            getProject()>>job.project
+        }
+        def jobList = [jobExportReference]
+        def oldReference = new JobRevReferenceImpl(
+            jobName: 'ajob',
+            id: 'asdf'
+        )
+        def oldstate = new ScmLoaderService.ScmExportLoaderStateImpl(
+            inited: true,
+            scannedJobs: ['asdf': oldReference]
+        )
+        service.targetEventBus=Mock(EventBus)
+        when:
+
+        service.processScmExportLoader(project, scmPluginConfigData, oldstate)
+
+        then:
+        1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
+        1 * service.scmService.exportjobRefsForJobs(jobs,_)>>jobList
+        1 * service.scmService.deletedExportFilesForProject(project)>>[:]
+        1 * plugin.initJobsStatus(_)
+        1 * plugin.refreshJobsStatus(_)
+        1 * service.scmService.scmOperationContext(username,roles,project)>>Mock(ScmOperationContext)
+        jobs.size()*service.scmService.getRenamedPathForJobId(_,_)
+        0 * service.scmService.recordDeletedJob(project,'/old/job/path',_)
+        1 * plugin.clusterFixJobs(_,_,_)
+        service.scmProjectInitLoaded.containsKey(project+"-export")
+        1 * service.eventBus.notify('multiJobChanged',{
+            it[0].size()==1
+            it[0][0].eventType == JobChangeEvent.JobChangeEventType.DELETE
+            it[0][0].jobReference == oldReference
+            it[0][0].originalJobReference == oldReference
+        })
+        oldstate.scannedJobs.keySet().contains '123-123'
 
     }
 
@@ -278,7 +356,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         service.scmPluginMeta.put(project + "-export", scmPluginConfigDataCached)
         when:
 
-        service.processScmExportLoader(project, (ScmPluginConfigData)scmPluginConfigData)
+        service.processScmExportLoader(project, (ScmPluginConfigData)scmPluginConfigData, new ScmLoaderService.ScmExportLoaderStateImpl())
 
         then:
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin

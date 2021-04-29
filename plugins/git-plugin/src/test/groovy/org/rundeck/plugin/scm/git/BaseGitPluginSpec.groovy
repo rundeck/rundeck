@@ -46,6 +46,7 @@ import org.eclipse.jgit.util.SystemReader
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Export
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicLong
@@ -86,6 +87,7 @@ class BaseGitPluginSpec extends Specification {
         [:]                            | [strictHostKeyChecking: 'other']
     }
 
+    @Unroll
     def "serialize job to valid file path"() {
         given:
         Common config = new Common()
