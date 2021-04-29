@@ -236,9 +236,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         service.scmProjectInitLoaded.containsKey(project+"-import")
 
     }
-<<<<<<< HEAD
 }
-=======
 
     def "SCM export project config changed" (){
         given:
@@ -343,4 +341,3 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
 
     }
 }
->>>>>>> 4064788115... - check if config was changed
