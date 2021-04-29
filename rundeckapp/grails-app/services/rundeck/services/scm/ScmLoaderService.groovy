@@ -233,7 +233,8 @@ class ScmLoaderService implements EventBusAware {
                                 def cacheItem = state.scannedJobs.remove(jobid)
                                 new StoredJobChangeEvent(
                                     eventType: JobChangeEvent.JobChangeEventType.DELETE,
-                                    jobReference: cacheItem
+                                    jobReference: cacheItem,
+                                    originalJobReference: cacheItem
                                 )
                             }
                         )

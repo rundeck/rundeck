@@ -253,6 +253,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
             it[0].size()==1
             it[0][0].eventType == JobChangeEvent.JobChangeEventType.DELETE
             it[0][0].jobReference == oldReference
+            it[0][0].originalJobReference == oldReference
         })
         oldstate.scannedJobs.keySet().contains '123-123'
 
