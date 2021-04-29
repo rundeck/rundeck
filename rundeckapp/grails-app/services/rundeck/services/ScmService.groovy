@@ -1519,7 +1519,6 @@ class ScmService {
         return plugin?.getExportPushActionId()
     }
 
-}
     def refreshExportPluginMetadata(String project, ScmExportPlugin plugin, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta ){
         jobs.each { job ->
             Map jobPluginMeta =  jobsPluginMeta.get(job.uuid)
@@ -1539,6 +1538,5 @@ class ScmService {
     }
 
 }
-
 
 

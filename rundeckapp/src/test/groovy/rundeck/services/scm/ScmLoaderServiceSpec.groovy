@@ -236,7 +236,6 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         service.scmProjectInitLoaded.containsKey(project+"-import")
 
     }
-}
 
     def "SCM export project config changed" (){
         given:
