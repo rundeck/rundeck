@@ -151,7 +151,9 @@ dependencies {
     compile "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
     compile 'org.liquibase:liquibase-core:3.10.1'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
-    profile "org.grails.profiles:web"
+    profile ("org.grails.profiles:web"){
+        exclude(group:"org.grails.profiles",module:"web")
+    }
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "com.h2database:h2:1.4.199"
     runtime 'org.apache.logging.log4j:log4j-web:2.13.3'
