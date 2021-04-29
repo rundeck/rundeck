@@ -1,20 +1,25 @@
 package rundeck.services.scm
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import rundeck.ScheduledExecution
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
+import rundeck.services.JobRevReferenceImpl
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
+import rundeck.services.StoredJobChangeEvent
 
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -22,7 +27,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
-class ScmLoaderService {
+class ScmLoaderService implements EventBusAware {
 
     FrameworkService frameworkService
     ScmService scmService
@@ -76,6 +81,7 @@ class ScmLoaderService {
 
     def startScmLoader(String project, String integration){
 
+        def state = new ScmExportLoaderStateImpl()
         //enable project integration cache loader
         def scheduler = scheduledExecutor.scheduleAtFixedRate(
                 {
@@ -87,7 +93,7 @@ class ScmLoaderService {
                     if(pluginConfigData && pluginConfigData.enabled){
                         try {
                             if (integration == scmService.EXPORT) {
-                                processScmExportLoader(project, pluginConfigData)
+                                processScmExportLoader(project, pluginConfigData, state)
                             }else{
                                 processScmImportLoader(project, pluginConfigData)
                             }
@@ -131,8 +137,54 @@ class ScmLoaderService {
         return jobs
     }
 
+    /**
+     * state container interface for export loader
+     */
+    @CompileStatic
+    static interface ScmExportLoaderState {
+        boolean getInited()
+
+        void setInited(boolean val)
+
+        void addJobs(List<ScheduledExecution> jobs)
+
+        Map<String, JobRevReference> getScannedJobs()
+    }
+
+    /**
+     * state implementation for export loader
+     */
+    @CompileStatic
+    static class ScmExportLoaderStateImpl implements ScmExportLoaderState {
+        boolean inited
+        Map<String, JobRevReference> scannedJobs = new HashMap<>()
+
+        void addJobs(List<ScheduledExecution> jobs) {
+            jobs.each {
+                scannedJobs.
+                    put(
+                        it.extid,
+                        new JobRevReferenceImpl(
+                            project: it.project,
+                            id: it.extid,
+                            jobName: it.jobName,
+                            groupPath: it.groupPath,
+                            version: it.version
+                        )
+                    )
+            }
+        }
+    }
+
+    /**
+     *
+     * @param project project
+     * @param pluginConfig plugin config
+     * @param state state holder object
+     * @return
+     */
     @Transactional
-    def processScmExportLoader(String project, ScmPluginConfigData pluginConfig){
+    def processScmExportLoader(String project, ScmPluginConfigData pluginConfig, ScmExportLoaderState state) {
 
         if (!scmService.projectHasConfiguredExportPlugin(project)) {
             return
@@ -147,7 +199,7 @@ class ScmLoaderService {
 
         def plugin = scmService.getLoadedExportPluginFor(project)
 
-        if(plugin){
+        if (plugin) {
             log.debug("export plugin found")
 
             def username = pluginConfig.getSetting("username")
@@ -158,7 +210,39 @@ class ScmLoaderService {
             plugin.getStatus(context)
 
             List<ScheduledExecution> jobs = getJobs(project)
+            List<String> deleted = []
             log.debug("processing ${jobs.size()} jobs")
+            if (!state.inited) {
+                state.inited = true
+                state.addJobs(jobs)
+            } else {
+                //detect deleted jobs
+                List<String> jobids = jobs*.extid
+                if (!jobids.containsAll(state.scannedJobs.keySet())) {
+                    deleted.addAll((Collection<String>) state.scannedJobs.keySet())
+                    deleted.removeAll(jobids)
+                    //remove known deleted jobs
+                    def deletedfiles = scmService.deletedExportFilesForProject(project)
+                    deleted.removeAll(deletedfiles.values()*.id)
+                    if (deleted) {
+                        log.debug("detected deleted jobs: ${deleted}...")
+                        //emit fake job change event
+                        eventBus.notify(
+                            'multiJobChanged',
+                            deleted.collect { jobid ->
+                                def cacheItem = state.scannedJobs.remove(jobid)
+                                new StoredJobChangeEvent(
+                                    eventType: JobChangeEvent.JobChangeEventType.DELETE,
+                                    jobReference: cacheItem,
+                                    originalJobReference: cacheItem
+                                )
+                            }
+                        )
+                    }
+                }
+                state.scannedJobs.clear()
+                state.addJobs(jobids.collect { id -> jobs.find { it.extid == id } })
+            }
 
             Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project)
             List<JobExportReference> joblist = scmService.exportjobRefsForJobs(jobs, jobPluginMeta)
