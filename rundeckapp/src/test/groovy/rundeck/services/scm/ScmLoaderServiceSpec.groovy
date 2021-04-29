@@ -221,7 +221,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
             projectHasConfiguredExportPlugin(project)>>true
         }
         def jobExportReference = Mock(JobScmReference){
-            getId()>>job.id
+            getId()>>job.uuid
             getProject()>>job.project
         }
         def jobList = [jobExportReference]
@@ -240,7 +240,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
 
         then:
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
-        1 * service.scmService.exportjobRefsForJobs(jobs)>>jobList
+        1 * service.scmService.exportjobRefsForJobs(jobs,_)>>jobList
         1 * service.scmService.deletedExportFilesForProject(project)>>[:]
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
@@ -356,7 +356,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         service.scmPluginMeta.put(project + "-export", scmPluginConfigDataCached)
         when:
 
-        service.processScmExportLoader(project, (ScmPluginConfigData)scmPluginConfigData)
+        service.processScmExportLoader(project, (ScmPluginConfigData)scmPluginConfigData, new ScmLoaderService.ScmExportLoaderStateImpl())
 
         then:
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
