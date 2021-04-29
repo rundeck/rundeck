@@ -1542,5 +1542,3 @@ class ScmService {
 
 
 
-
->>>>>>> 4064788115... - check if config was changed
