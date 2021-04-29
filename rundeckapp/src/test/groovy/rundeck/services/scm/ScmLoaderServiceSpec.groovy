@@ -81,7 +81,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
 
         then:
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
-        1 * service.scmService.exportjobRefsForJobs(jobs)
+        1 * service.scmService.exportjobRefsForJobs(jobs,_)
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
         service.scmProjectInitLoaded.containsKey(project+"-export")
@@ -117,7 +117,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
 
         then:
         1 * service.scmService.getLoadedImportPluginFor(project)  >> plugin
-        1 * service.scmService.scmJobRefsForJobs(jobs)
+        1 * service.scmService.scmJobRefsForJobs(jobs,_)
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
         service.scmProjectInitLoaded.containsKey(project+"-import")
@@ -171,7 +171,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
 
         then:
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
-        1 * service.scmService.exportjobRefsForJobs(jobs)>>jobList
+        1 * service.scmService.exportjobRefsForJobs(jobs,_)>>jobList
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
         1 * service.scmService.scmOperationContext(username,roles,project)>>Mock(ScmOperationContext)
@@ -227,12 +227,115 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
 
         then:
         1 * service.scmService.getLoadedImportPluginFor(project)  >> plugin
-        1 * service.scmService.scmJobRefsForJobs(jobs) >> jobList
+        1 * service.scmService.scmJobRefsForJobs(jobs,_) >> jobList
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
         1 * service.scmService.scmOperationContext(username,roles,project)>>Mock(ScmOperationContext)
         jobs.size()*service.scmService.getRenamedPathForJobId(project,_)
         1 * plugin.clusterFixJobs(_,_,_)
+        service.scmProjectInitLoaded.containsKey(project+"-import")
+
+    }
+
+    def "SCM export project config changed" (){
+        given:
+        def project = "test"
+
+        service.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled()>>true
+        }
+        def jobs = []
+
+        def listWorkflow = [
+                "schedlist": jobs
+        ]
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            listWorkflows(_)>>listWorkflow
+        }
+        def username = "admin"
+        def roles = ["admin"]
+        def config = ["url":"http://localhost","branch": "dev"]
+        def configCached = ["url":"http://localhost","branch": "main"]
+
+        def plugin  = Mock(ScmExportPlugin)
+        def scmPluginConfigData = Mock(ScmPluginConfig){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+            getProperties() >> config
+        }
+
+        def scmPluginConfigDataCached = Mock(ScmPluginConfig){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+            getProperties() >> configCached
+        }
+
+        service.scmService = Mock(ScmService){
+            projectHasConfiguredExportPlugin(project)>>true
+        }
+        def jobList = []
+
+        service.scmPluginMeta.put(project + "-export", scmPluginConfigDataCached)
+        when:
+
+        service.processScmExportLoader(project, (ScmPluginConfigData)scmPluginConfigData)
+
+        then:
+        1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
+        1 * service.scmService.exportjobRefsForJobs(_,_)>>jobList
+        1 * service.scmService.unregisterPlugin("export", project)
+        1 * service.scmService.initProject(project, "export")
+        service.scmProjectInitLoaded.containsKey(project+"-export")
+    }
+
+    def "SCM import plugin config changed"(){
+        given:
+        def project = "test"
+
+        service.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled()>>true
+        }
+
+        def jobs = []
+
+        def listWorkflow = [
+                "schedlist": jobs
+        ]
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            listWorkflows(_)>>listWorkflow
+        }
+        def username = "admin"
+        def roles = ["admin"]
+        def config = ["url":"http://localhost","branch": "dev"]
+        def configCached = ["url":"http://localhost","branch": "main"]
+
+        def plugin  = Mock(ScmImportPlugin)
+        def scmPluginConfigData = Mock(ScmPluginConfig){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+            getProperties() >> config
+        }
+
+        def scmPluginConfigDataCached = Mock(ScmPluginConfig){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+            getProperties() >> configCached
+        }
+        service.scmService = Mock(ScmService){
+            projectHasConfiguredImportPlugin(project)>>true
+        }
+        def jobList = []
+        service.scmPluginMeta.put(project + "-import", scmPluginConfigDataCached)
+
+        when:
+
+        service.processScmImportLoader(project, (ScmPluginConfigData)scmPluginConfigData)
+
+        then:
+        1 * service.scmService.getLoadedImportPluginFor(project)  >> plugin
+        1 * service.scmService.scmJobRefsForJobs(jobs,_) >> jobList
+        1 * service.scmService.unregisterPlugin("import", project)
+        1 * service.scmService.initProject(project, "import")
         service.scmProjectInitLoaded.containsKey(project+"-import")
 
     }
