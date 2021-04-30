@@ -357,9 +357,6 @@ class GitImportPluginSpec extends Specification {
         result.state == ImportSynchState.IMPORT_NEEDED
     }
 
-<<<<<<< HEAD
-}
-=======
     def "perform import renamed job"() {
         given:
         def projectName = 'GitImportPluginSpec'
@@ -427,4 +424,3 @@ class GitImportPluginSpec extends Specification {
     }
 
 }
->>>>>>> 32e8f960ea... - fix import process when a job was renamed

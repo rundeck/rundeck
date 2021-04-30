@@ -760,7 +760,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
     }
 
-<<<<<<< HEAD
     def cleanJobStatusCache(List<String> selectedPaths){
         if (!inited) {
             return null
@@ -778,6 +777,3 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         }
     }
 }
-=======
-}
->>>>>>> 32e8f960ea... - fix import process when a job was renamed
