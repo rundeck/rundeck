@@ -1156,7 +1156,6 @@ class ScmController extends ControllerBase {
         renamedJobPaths.values().each {
             deletedPaths.remove(it)
         }
-        def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
         List<ScheduledExecution> jobs = []
         def toDeleteItems = []
         def skipCleanItems = []
@@ -1176,12 +1175,14 @@ class ScmController extends ControllerBase {
                 }
             }
         } else {
-            (trackingItems*.jobId).each {
+            jobIds.each {
                 jobMap[it] = ScheduledExecution.getByIdOrUUID(it)
             }
             jobs = (jobMap.values() as List).findAll { it != null }
             scmStatus = scmService.importStatusForJobs(project, authContext, jobs, false, jobsPluginMeta)
         }
+
+        def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
 
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)
         def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(project, jobs) : null

@@ -325,9 +325,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         def ident = job.id + ':' +
                 String.valueOf(job.version) +
                 ':' +
-                (commit ? commit.name : '') +
-                ":" +
-                (getLocalFileForJob(job)?.exists())
+                (commit ? commit.name : '')
         ident
     }
 
@@ -717,9 +715,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
 
     Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs, Map<String,String> originalPaths){
-        Status st = git.status().call()
+        //force fetch
+        fetchFromRemote(context)
+
         def bstat = BranchTrackingStatus.of(repo, branch)
-        if(st.clean && bstat && bstat.behindCount>0){
+        if (bstat && bstat.behindCount > 0) {
             try {
                 PullResult result = gitPull(context)
                 jobs.each{job ->
