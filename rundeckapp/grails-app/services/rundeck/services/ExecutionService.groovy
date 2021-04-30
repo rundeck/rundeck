@@ -2963,13 +2963,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "finish", execution.user)
 
             def context = execmap?.thread?.context
+            def export = execmap?.thread?.resultObject?.getSharedContext()?.consolidate()?.getData(ContextView.global())
             notificationService.asyncTriggerJobNotification(
                 execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
                 schedId,
                 [
                     execution: execution,
                     nodestatus: [succeeded: sucCount,failed:failedCount,total:totalCount],
-                    context: context
+                    context: context,
+                    export:  export
                 ]
             )
             notify('executionComplete',
@@ -3787,12 +3789,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             if(!jitem.ignoreNotifications) {
                 // Get a new object attached to the new session
+                Map<String, String> data = ((WorkflowExecutionResult) wresult.result)?.getSharedContext()?.consolidate()
+                                                                                     ?.getData(ContextView.global())
+                if (data) {
+                    executionContext.getOutputContext().addOutput(ContextView.global(), "export", data.get("export"))
+                }
 
                 if (averageDuration > 0 && duration > averageDuration) {
                     avgDurationExceeded(id, [
                             execution: execution,
                             context  : newContext,
-                            jobref   : jitem.jobIdentifier
+                            jobref   : jitem.jobIdentifier,
+                            export    : data
                     ])
                 }
 
@@ -3804,17 +3812,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 execution : execution,
                                 nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
                                 context   : newContext,
-                                jobref    : jitem.jobIdentifier
+                                jobref    : jitem.jobIdentifier,
+                                export    : data
                         ]
                 )
             }
 
             result.sourceResult = wresult.result
 
-            Map<String, String> data = ((WorkflowExecutionResult) wresult.result)?.getSharedContext()?.getData(ContextView.global())?.get("export")
-            if (data) {
-                executionContext.getOutputContext().addOutput(ContextView.global(), "export", data)
-            }
         }
 
         return result
