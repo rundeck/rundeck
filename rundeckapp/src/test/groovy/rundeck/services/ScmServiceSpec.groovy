@@ -985,10 +985,19 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         when:
         def result = service.exportFilePathsMapForJobs(project, jobs)
         then:
+<<<<<<< HEAD
         0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_IMPORT)
         1 * plugin.getRelativePathForJob({it.id== 'job1id' })>> '/a/path/job1'
         1 * plugin.getRelativePathForJob({it.id=='job2id' })>>'/a/path/job2'
         result == [
+=======
+            0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_IMPORT)
+            1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_IMPORT)
+            1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_IMPORT)
+            1 * plugin.getRelativePathForJob({it.id== 'job1id' })>> '/a/path/job1'
+            1 * plugin.getRelativePathForJob({it.id=='job2id' })>>'/a/path/job2'
+            result == [
+>>>>>>> 2585048584... restore metadata loading for exportFilePathsMapForJobs, enable preloaded metadata to be used
                 job1id:'/a/path/job1',
                 job2id:'/a/path/job2'
         ]
