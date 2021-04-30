@@ -387,6 +387,7 @@ if (signArchives) {
 
 clean {
     delete "$projectDir/grails-app/assets/provided"
+    delete "${rootProject.buildDir}/gitbuildinfo/rundeck"
 }
 
 bintray {
