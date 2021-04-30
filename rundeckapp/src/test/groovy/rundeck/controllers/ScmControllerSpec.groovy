@@ -926,17 +926,17 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * getTrackingItemsForAction(projectName, actionName) >> [
                     Mock(ScmImportTrackedItem){
                         getId()>> job1.id
-                        getJobId()>>job1.id
+                        getJobId()>>job1.uuid
                     },
                     Mock(ScmImportTrackedItem){
                         getId()>>job2.id
-                        getJobId()>>job2.id
+                        getJobId()>>job2.uuid
 
                     }
             ]
             1 * getJobsPluginMeta(projectName)>>meta
             1 * getPluginStatus(_,integration, projectName)
-            1 * importStatusForJobs(projectName, _, {it.size()==2}, false, meta) >> [
+            1 * importStatusForJobs(projectName, _, _, false, meta) >> [
                     job1: Mock(JobImportState){getSynchState()>> ImportSynchState.CLEAN},
                     job2: Mock(JobImportState){getSynchState()>> ImportSynchState.IMPORT_NEEDED}
             ]
