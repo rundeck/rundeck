@@ -843,12 +843,13 @@ class ScmService {
      * @param jobs list of {@link ScheduledExecution} objects
      * @return map of job ID to file path
      */
-    Map<String, String> exportFilePathsMapForJobs(String project, List<ScheduledExecution> jobs) {
+    Map<String, String> exportFilePathsMapForJobs(String project, List<ScheduledExecution> jobs, Map<String,Map> jobMetadata=[:]) {
         def files = [:]
         def plugin = getLoadedExportPluginFor project
         if (plugin) {
             jobs.each { ScheduledExecution job ->
-                files[job.extid] = plugin.getRelativePathForJob(jobRevReference(job))
+                Map metadata = jobMetadata[job.extid] ?: getJobPluginMeta(job)
+                files[job.extid] = plugin.getRelativePathForJob(scmJobRef(job, null, metadata))
             }
         }
         files
@@ -1009,14 +1010,7 @@ class ScmService {
      */
     JobScmReference scmJobRef(JobRevReference reference, JobSerializer serializer) {
         def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, STORAGE_NAME_IMPORT)
-        def impl = new JobImportReferenceImpl(
-                reference,
-                metadata?.version != null ? metadata.version : -1L,
-                metadata?.pluginMeta,
-                metadata?.srcId
-        )
-        impl.jobSerializer = serializer
-        impl
+        scmJobRef(reference, metadata, serializer)
     }
     /**
      * Create reference for job with scm import metadata and serializer
@@ -1028,7 +1022,6 @@ class ScmService {
             JobRevReference reference, Map metadata, JobSerializer serializer = null
     )
     {
-//        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, 'scm-import')
         def impl = new JobImportReferenceImpl(
                 reference,
                 metadata?.version != null ? metadata.version : -1L,
@@ -1178,7 +1171,8 @@ class ScmService {
      */
     Map<String, JobState> exportStatusForJob(ScheduledExecution job) {
         def status = [:]
-        def jobReference = exportJobRef(job)
+        def metadata = getJobPluginMeta(job)
+        def jobReference = exportJobRef(job, metadata)
         def plugin = getLoadedExportPluginFor jobReference.project
         if (plugin) {
             def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
@@ -1327,7 +1321,8 @@ class ScmService {
     }
 
     ScmDiffResult exportDiff(String project, ScheduledExecution job) {
-        def jobref = exportJobRef(job)
+        def metadata = getJobPluginMeta(job)
+        def jobref = exportJobRef(job, metadata)
         def plugin = getLoadedExportPluginFor project
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
@@ -1493,7 +1488,7 @@ class ScmService {
             }
 
             if(renameProcess){
-                def origScmRef = (JobScmReference)exportJobRef(job)
+                def origScmRef = (JobScmReference)exportJobRef(job,jobPluginMeta)
                 origScmRef.jobName = jobPluginMeta.name
                 origScmRef.groupPath = jobPluginMeta.groupPath
 

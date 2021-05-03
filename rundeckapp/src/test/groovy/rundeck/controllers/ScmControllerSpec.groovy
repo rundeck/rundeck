@@ -105,7 +105,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * exportStatusForJobs(projectName,_,[],false, _) >> [:]
-            1 * exportFilePathsMapForJobs(projectName, []) >> [:]
+            1 * exportFilePathsMapForJobs(projectName, [], _) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
                     [valid: true, nextAction: [id: 'someAction']]
@@ -238,10 +238,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
                     job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                     job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
             ]
-            1 * exportFilePathsMapForJobs(projectName, _) >> [
-                    job1: 'item1',
-                    job2: 'item2',
-                    job3: 'item3',
+            1 * exportFilePathsMapForJobs(projectName, _, _) >> [
+                job1: 'item1',
+                job2: 'item2',
+                job3: 'item3',
             ]
             1 * getRenamedJobPathsForProject(projectName) >> renamed
             1 * performExportAction(
@@ -717,7 +717,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * exportStatusForJobs(projectName,_,[],false,_)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(projectName, _)
+            1 * exportFilePathsMapForJobs(projectName, _, _)
             1 * getJobsPluginMeta(projectName)
             0 * exportStatusForJobs(_,_,_,_,_)
             1 * getExportPushActionId('testproj') >> null
@@ -767,7 +767,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * exportStatusForJobs(projectName, _,[], false, _)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(projectName, _)
+            1 * exportFilePathsMapForJobs(projectName, _, _)
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * getJobsPluginMeta(projectName)
             0 * _(*_)
@@ -807,12 +807,16 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: state)
-        ]
-        1 * controller.scmService.exportFilePathsMapForJobs(project, {
-            it.size()==1
-            it[0].extid=='job2'
-        }) >> [
-                job2: '/path/to/job2'
+            ]
+        1 * controller.scmService.exportFilePathsMapForJobs(
+            project,
+            {
+                it.size()==1
+                it[0].extid=='job2'
+            },
+            _
+        ) >> [
+            job2: '/path/to/job2'
         ]
         result.size() == 1
         result[0].itemId == '/path/to/job2'
@@ -847,7 +851,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: SynchState.CLEAN)
         ]
-        1 * controller.scmService.exportFilePathsMapForJobs(project, []) >> [:]
+        1 * controller.scmService.exportFilePathsMapForJobs(project, [], _) >> [:]
         result.size() == 1
         result[0].itemId == 'scm/path/to/job3'
         result[0].originalId == null
@@ -877,12 +881,16 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED)
-        ]
-        1 * controller.scmService.exportFilePathsMapForJobs(project, {
-            it.size()==1
-            it[0].extid=='job2'
-        }) >> [
-                job2: '/path/to/job2'
+            ]
+        1 * controller.scmService.exportFilePathsMapForJobs(
+            project,
+            {
+                it.size()==1
+                it[0].extid=='job2'
+            },
+            _
+        ) >> [
+            job2: '/path/to/job2'
         ]
         result.size() == 1
         result[0].itemId == '/path/to/job2'
@@ -985,7 +993,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * loadProjectPluginDescriptor(projectName, integration)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(projectName,_)
+            1 * exportFilePathsMapForJobs(projectName,_, _)
             1 * getJobsPluginMeta('testproj')
             0 * exportStatusForJobs(_,_)
             1 * getExportPushActionId('testproj') >> actionName
