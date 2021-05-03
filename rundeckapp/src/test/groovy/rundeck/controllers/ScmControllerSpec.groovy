@@ -238,17 +238,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
                     job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                     job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
             ]
-<<<<<<< HEAD
-            1 * exportFilePathsMapForJobs(projectName, _) >> [
-                    job1: 'item1',
-                    job2: 'item2',
-                    job3: 'item3',
-=======
             1 * exportFilePathsMapForJobs(projectName, _, _) >> [
                 job1: 'item1',
                 job2: 'item2',
                 job3: 'item3',
->>>>>>> 2585048584... restore metadata loading for exportFilePathsMapForJobs, enable preloaded metadata to be used
             ]
             1 * getRenamedJobPathsForProject(projectName) >> renamed
             1 * performExportAction(
@@ -814,20 +807,16 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: state)
-<<<<<<< HEAD
-        ]
-        1 * controller.scmService.exportFilePathsMapForJobs(project, {
-            it.size()==1
-            it[0].extid=='job2'
-        }) >> [
-=======
             ]
-            1 * controller.scmService.exportFilePathsMapForJobs(project, {
+        1 * controller.scmService.exportFilePathsMapForJobs(
+            project,
+            {
                 it.size()==1
                 it[0].extid=='job2'
-            }, _) >> [
->>>>>>> 2585048584... restore metadata loading for exportFilePathsMapForJobs, enable preloaded metadata to be used
-                job2: '/path/to/job2'
+            },
+            _
+        ) >> [
+            job2: '/path/to/job2'
         ]
         result.size() == 1
         result[0].itemId == '/path/to/job2'
@@ -861,9 +850,8 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         1 * controller.scmService.exportStatusForJobs(project, _, _, true, meta) >> [
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: SynchState.CLEAN)
-<<<<<<< HEAD
         ]
-        1 * controller.scmService.exportFilePathsMapForJobs(project, []) >> [:]
+        1 * controller.scmService.exportFilePathsMapForJobs(project, [], _) >> [:]
         result.size() == 1
         result[0].itemId == 'scm/path/to/job3'
         result[0].originalId == null
@@ -873,19 +861,6 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         result[0].job.jobId=='job3'
         result[0].job.groupPath=='a'
         result[0].job.jobName=='job'
-=======
-            ]
-            1 * controller.scmService.exportFilePathsMapForJobs(project, [], _) >> [:]
-            result.size() == 1
-            result[0].itemId == 'scm/path/to/job3'
-            result[0].originalId == null
-            result[0].renamed == false
-            result[0].status == null
-            result[0].deleted
-            result[0].job.jobId=='job3'
-            result[0].job.groupPath=='a'
-            result[0].job.jobName=='job'
->>>>>>> 2585048584... restore metadata loading for exportFilePathsMapForJobs, enable preloaded metadata to be used
     }
     def "getViewExportActionItems renamed items"(){
         given:
@@ -906,20 +881,16 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED)
-<<<<<<< HEAD
-        ]
-        1 * controller.scmService.exportFilePathsMapForJobs(project, {
-            it.size()==1
-            it[0].extid=='job2'
-        }) >> [
-=======
             ]
-            1 * controller.scmService.exportFilePathsMapForJobs(project, {
+        1 * controller.scmService.exportFilePathsMapForJobs(
+            project,
+            {
                 it.size()==1
                 it[0].extid=='job2'
-            }, _) >> [
->>>>>>> 2585048584... restore metadata loading for exportFilePathsMapForJobs, enable preloaded metadata to be used
-                job2: '/path/to/job2'
+            },
+            _
+        ) >> [
+            job2: '/path/to/job2'
         ]
         result.size() == 1
         result[0].itemId == '/path/to/job2'

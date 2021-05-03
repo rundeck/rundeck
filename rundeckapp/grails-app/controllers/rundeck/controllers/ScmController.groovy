@@ -1000,14 +1000,9 @@ class ScmController extends ControllerBase {
             List<ScheduledExecution> uncleanJobs = jobMap.subMap(scmJobStatus.keySet()).values() as List
 
             Map<String, String> scmFiles = scmService.exportFilePathsMapForJobs(
-<<<<<<< HEAD
-                    project,
-                    uncleanJobs
-=======
                 project,
                 uncleanJobs,
                 jobsPluginMeta
->>>>>>> 2585048584... restore metadata loading for exportFilePathsMapForJobs, enable preloaded metadata to be used
             )
             Map reversed = [:]
             scmFiles.each { k, v ->
