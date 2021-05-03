@@ -86,7 +86,6 @@ class ScmJobImporter implements ContextJobImporter {
                 [user: context.userInfo.userName, method: 'scm-import'],
                 context.authContext
         )
-        scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         if (loadresults.errjobs) {
             return ImporterResult.fail(loadresults.errjobs.collect { it.errmsg }.join(", "))
@@ -106,6 +105,7 @@ class ScmJobImporter implements ContextJobImporter {
         result.modified = result.job.version > 0
         result.successful = true
 
+        scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
         result
     }
 
