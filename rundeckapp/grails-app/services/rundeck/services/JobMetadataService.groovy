@@ -138,7 +138,6 @@ class JobMetadataService {
             found.project = project
             found.key = key
         }
-        log.debug("setJobPluginMeta(${project},${id},${type}) to ${metadata}")
         found.setPluginData(metadata)
         found.save(flush: true)
     }

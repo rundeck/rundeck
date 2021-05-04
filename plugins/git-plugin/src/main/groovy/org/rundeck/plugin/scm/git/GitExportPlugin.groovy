@@ -335,7 +335,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         File origfile = mapper.fileForJob(event.originalJobReference)
         File outfile = mapper.fileForJob(exportReference)
         String origPath = null
-        log.debug("Job event (${event}), writing to path: ${outfile}")
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
@@ -375,10 +374,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         String ident = createStatusCacheIdent(job, commit)
 
         if (state && state.ident == ident) {
-            log.debug("hasJobStatusCached(${ident}): FOUND for path $path")
             return state
         }
-        log.debug("hasJobStatusCached(${ident}): (no) for path $path")
 
         null
     }
@@ -420,16 +417,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             statusb.addPath(originalPath)
         }
         Status status = statusb.call()
-//        log.debug(debugStatus(status))
         SynchState synchState = synchStateForStatus(status, commit, path)
         def scmState = scmStateForStatus(status, commit, path)
-        log.debug("for new path: commit ${commit}, synch: ${synchState}, scm: ${scmState}")
 
         if (originalPath) {
             def origCommit = lastCommitForPath(originalPath)
             SynchState osynchState = synchStateForStatus(status, origCommit, originalPath)
             def oscmState = scmStateForStatus(status, origCommit, originalPath)
-            log.debug("for original path: commit ${origCommit}, synch: ${osynchState}, scm: ${oscmState}")
             if (origCommit && !commit) {
                 commit = origCommit
             }
@@ -451,7 +445,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             jobstat['commitId'] = commit.name
             jobstat['commitMeta'] = GitUtil.metaForCommit(commit)
         }
-        log.debug("refreshJobStatus(${job.id}): ${jobstat}")
 
         jobStateMap[job.id] = jobstat
 
@@ -498,23 +491,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     JobState getJobStatus(final JobExportReference job, final String originalPath) {
-        log.debug("getJobStatus(${job.id},${originalPath}): ${job}")
-        if (!inited) {
-            return null
-        }
-        def status = hasJobStatusCached(job, originalPath)
-
-        if (!status) {
-            status = refreshJobStatus(job, originalPath)
-        }
-
-
-        return createJobStatus(status, jobActionsForStatus(status))
+        getJobStatus(job, originalPath, true)
     }
 
     @Override
     JobState getJobStatus(final JobExportReference job, final String originalPath, final boolean serialize) {
-        log.debug("getJobStatus(${job.id},${originalPath}): ${job}, serialize ${serialize}")
         if (!inited) {
             return null
         }
