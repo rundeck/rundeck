@@ -51,10 +51,13 @@ class JobMetadataService {
      */
     Map getJobPluginMeta(final String project, final String id, final String type) {
         def key = id + '/' + type
-        def found = PluginMeta.findByProjectAndKey(project, key)
-        if (found) {
-            log.debug("found job metadata for ${id}: ${found.pluginData}")
-            return found.pluginData
+        try {
+            def found = PluginMeta.findByProjectAndKey(project, key)
+            if (found) {
+                return found.pluginData
+            }
+        } catch (Throwable e) {
+            log.trace("Exception getting plugin meta for job", e)
         }
         return null
     }
