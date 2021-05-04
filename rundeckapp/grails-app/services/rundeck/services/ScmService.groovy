@@ -1474,7 +1474,6 @@ class ScmService {
 
     //check if the job was renamed
     def checkExportJobRenamed(ScmExportPlugin plugin, String project, ScheduledExecution job, JobScmReference jobReference, def jobPluginMeta){
-        log.debug("check if job ${job.id} was renamed")
         def jobFullName = job.generateFullName()
         def origFullName = [jobPluginMeta.groupPath?:'',jobPluginMeta.name].join("/")
 
@@ -1492,7 +1491,6 @@ class ScmService {
                 origScmRef.jobName = jobPluginMeta.name
                 origScmRef.groupPath = jobPluginMeta.groupPath
 
-                log.debug("reprocessing renamed job")
 
                 //record original path for renamed job, if it is different
                 def origpath = plugin.getRelativePathForJob(origScmRef)
