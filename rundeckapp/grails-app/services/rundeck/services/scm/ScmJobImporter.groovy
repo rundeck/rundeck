@@ -41,7 +41,8 @@ class ScmJobImporter implements ContextJobImporter {
             final String format,
             final InputStream input,
             final Map importMetadata,
-            final boolean preserveUuid
+            final boolean preserveUuid,
+            final Map renamedJob
     )
     {
 
@@ -67,16 +68,21 @@ class ScmJobImporter implements ContextJobImporter {
             )
         }
 
-        importJob(context, parseresult.jobset[0], importMetadata, preserveUuid)
+        return importJob(context, parseresult.jobset[0], importMetadata, preserveUuid, renamedJob)
     }
 
     private ImportResult importJob(
             final ScmOperationContext context,
             ImportedJob<ScheduledExecution> jobData,
             final Map importMetadata,
-            final boolean preserveUuid
+            boolean preserveUuid,
+            final Map renamedJob
     )
     {
+        if(renamedJob){
+            jobData.job.uuid = renamedJob.uuid
+            preserveUuid = true
+        }
 
         jobData.job.project = context.frameworkProject
         def loadresults = scheduledExecutionService.loadImportedJobs(
@@ -97,6 +103,10 @@ class ScmJobImporter implements ContextJobImporter {
         if (loadresults.idMap?.get(job.extid)) {
             data.srcId = loadresults.idMap[job.extid]
         }
+        if(renamedJob){
+            data.srcId = renamedJob.sourceId
+        }
+
         jobMetadataService.setJobPluginMeta(job, 'scm-import', data)
 
         def result = new ImporterResult()

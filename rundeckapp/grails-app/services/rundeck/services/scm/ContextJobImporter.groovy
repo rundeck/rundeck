@@ -30,7 +30,8 @@ interface ContextJobImporter {
             final String format,
             final InputStream input,
             final Map importMetadata,
-            final boolean preserveUuid
+            final boolean preserveUuid,
+            final Map renamedJob
     )
 
     ImportResult importFromMap(

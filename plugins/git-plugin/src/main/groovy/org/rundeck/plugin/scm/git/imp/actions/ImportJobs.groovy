@@ -105,11 +105,20 @@ class ImportJobs extends BaseAction implements GitImportAction {
             def meta = GitUtil.metaForCommit(commit)
             meta.url = plugin.config.url
 
+            def renamedJob = null
+            if(plugin.importTracker.originalValue(path)){
+                def originalPath = plugin.importTracker.originalValue(path)
+                def jobUUID = plugin.importTracker.trackedJob(originalPath)
+                def jobCache = plugin.jobStateMap[jobUUID]
+                renamedJob = [uuid: jobUUID, sourceId: jobCache?.sourceId]
+            }
+
             def importResult = importer.importFromStream(
                     plugin.config.format,
                     new ByteArrayInputStream(bytes),
                     meta,
-                    plugin.config.importPreserve
+                    plugin.config.importPreserve,
+                    renamedJob
             )
 
             if (!importResult.successful) {

@@ -62,10 +62,11 @@ public interface JobImporter {
      * @param input          input stream
      * @param importMetadata metadata to attach to the job
      * @param preserveUuid   if true, preserve any UUID on import, otherwise remove it
+     * @param renamedJob     pass original ID/UUID if the job is renamed
      *
      * @return result
      */
-    ImportResult importFromStream(String format, InputStream input, Map importMetadata, boolean preserveUuid);
+    ImportResult importFromStream(String format, InputStream input, Map importMetadata, boolean preserveUuid, Map renamedJob);
 
     /**
      * Deleted a job deleted remotely
