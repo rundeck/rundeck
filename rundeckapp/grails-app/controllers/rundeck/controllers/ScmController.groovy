@@ -837,7 +837,7 @@ class ScmController extends ControllerBase {
         jobs = jobs.findAll {
             it.extid in scmJobStatus.keySet()
         }
-        Map<String, String> scmFiles = scmService.exportFilePathsMapForJobs(project, jobs)
+        Map<String, String> scmFiles = scmService.exportFilePathsMapForJobs(project, jobs, jobPluginMeta)
 
         jobs.each { ScheduledExecution job ->
             ScmExportActionItem item = new ScmExportActionItem()
@@ -1000,8 +1000,9 @@ class ScmController extends ControllerBase {
             List<ScheduledExecution> uncleanJobs = jobMap.subMap(scmJobStatus.keySet()).values() as List
 
             Map<String, String> scmFiles = scmService.exportFilePathsMapForJobs(
-                    project,
-                    uncleanJobs
+                project,
+                uncleanJobs,
+                jobsPluginMeta
             )
             Map reversed = [:]
             scmFiles.each { k, v ->
@@ -1156,7 +1157,6 @@ class ScmController extends ControllerBase {
         renamedJobPaths.values().each {
             deletedPaths.remove(it)
         }
-        def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
         List<ScheduledExecution> jobs = []
         def toDeleteItems = []
         def skipCleanItems = []
@@ -1176,15 +1176,17 @@ class ScmController extends ControllerBase {
                 }
             }
         } else {
-            (trackingItems*.jobId).each {
+            jobIds.each {
                 jobMap[it] = ScheduledExecution.getByIdOrUUID(it)
             }
             jobs = (jobMap.values() as List).findAll { it != null }
             scmStatus = scmService.importStatusForJobs(project, authContext, jobs, false, jobsPluginMeta)
         }
 
+        def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
+
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)
-        def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(project, jobs) : null
+        def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(project, jobs, jobsPluginMeta) : null
 
         if(integration == 'import'){
             //separate files to import and to delete
@@ -1324,7 +1326,7 @@ class ScmController extends ControllerBase {
             }
             def jobsPluginMeta = scmService.getJobsPluginMeta(project)
             def scmStatus = integration == 'export' ? scmService.exportStatusForJobs(project, authContext, jobs, false, jobsPluginMeta) : null
-            def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(project, jobs) : null
+            def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(project, jobs, jobsPluginMeta) : null
 
             def scmProjectStatus = scmService.getPluginStatus(authContext, integration, params.project)
             def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null

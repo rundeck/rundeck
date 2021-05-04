@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -28,6 +30,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
+import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
@@ -48,6 +52,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
 import rundeck.services.scm.ScmPluginConfigData
+import spock.lang.Unroll
 
 /**
  * Created by greg on 10/15/15.
@@ -751,8 +756,6 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.jobEventsService = Mock(JobEventsService)
 
         def project = "test"
-        def validated = new ValidatedPlugin(valid: true)
-
         service.rundeckAuthContextProvider = Mock(AuthContextProvider) {
             getAuthContextForUserAndRolesAndProject(_,_,_) >>
                     Mock(UserAndRolesAuthContext) {
@@ -760,46 +763,25 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
                     }
         }
         def job = new ScheduledExecution()
+        job.uuid = "1234"
         job.version = 1
         job.jobName = "test"
         job.groupPath = "test"
 
         def jobs = [job]
-        def integration = "export"
         def originalMeta = [name: origName, groupPath: origGroup]
-        def config = [:]
+        def jobsPluginMeta = ["1234":originalMeta]
 
         ScmExportPlugin plugin = Mock(ScmExportPlugin)
 
         service.jobMetadataService = Mock(JobMetadataService){
             getJobPluginMeta(_,'scm-import')>>originalMeta
-        }
-        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
-        TestCloseable exportCloser = new TestCloseable()
-
-        def auth = Mock(UserAndRolesAuthContext) {
-            getUsername() >> 'admin'
+            getJobsPluginMeta(project, _)>> jobsPluginMeta
         }
 
         when:
-        service.exportStatusForJobs(project, auth, jobs)
+        service.refreshExportPluginMetadata(project,plugin, jobs, jobsPluginMeta)
         then:
-
-        2 * service.pluginConfigService.loadScmConfig(
-                project,
-                "etc/scm-${integration}.properties",
-                "scm.$integration"
-        ) >> Mock(ScmPluginConfigData) {
-            2 * getEnabled() >> true
-            getSetting("username")>>"admin"
-            getSettingList("roles")>>["admin"]
-            _ * getType() >> 'pluginType'
-            1 * getConfig() >> [plugin: 'config']
-        }
-        1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
-        1 * exportFactory.createPlugin(_, _, true) >> plugin
-        1 * service.jobEventsService.addListenerForProject(_, 'test')
 
         1 * plugin.getJobStatus(_,_)>> Mock(JobState)
         jobChangeCalls * plugin.jobChanged(_,_)
@@ -835,8 +817,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
 
         def jobs = [job]
         def integration = "export"
-        def originalMeta = [name: origName, groupPath: origGroup]
-        def config = [:]
+        def originalMeta = [name: "test", groupPath: "tes"]
 
         ScmExportPlugin plugin = Mock(ScmExportPlugin)
 
@@ -868,12 +849,6 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
 
         1 * plugin.clusterFixJobs(_,_,_)>> [:]
         1 * plugin.getJobStatus(_,_)>> Mock(JobState)
-        jobChangeCalls * plugin.jobChanged(_,_)
-
-        where:
-        origName | origGroup | jobChangeCalls
-        "test2"  | "test"    | 1
-        "test"   | "test"    | 0
     }
 
     def "get job plugin meta"(){
@@ -900,7 +875,6 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.jobEventsService = Mock(JobEventsService)
 
         def project = "test"
-        def validated = new ValidatedPlugin(valid: true)
 
         service.rundeckAuthContextProvider = Mock(AuthContextProvider) {
             getAuthContextForUserAndRolesAndProject(_,_,_) >>
@@ -910,11 +884,12 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
         def job = new ScheduledExecution()
         job.version = 1
+        job.uuid = "1234"
         job.jobName = "test"
         job.groupPath = "test"
 
         def jobs = [job]
-        def integration = "export"
+        def jobsPluginMeta = ["1234":originalMeta]
 
         ScmExportPlugin plugin = Mock(ScmExportPlugin){
             getJobStatus(_,_)>>Mock(JobState){
@@ -928,34 +903,11 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             getJobPluginMeta(_,'scm-import')>>originalMeta
         }
         ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
-        TestCloseable exportCloser = new TestCloseable()
-
-        def auth = Mock(UserAndRolesAuthContext) {
-            getUsername() >> 'admin'
-        }
 
         when:
-        service.exportStatusForJobs(project, auth, jobs)
+        service.refreshExportPluginMetadata(project,plugin, jobs, jobsPluginMeta)
         then:
-
-        2 * service.pluginConfigService.loadScmConfig(
-                project,
-                "etc/scm-${integration}.properties",
-                "scm.$integration"
-        ) >> Mock(ScmPluginConfigData) {
-            getEnabled() >> true
-            getSetting("username")>>"admin"
-            getSettingList("roles")>>["admin"]
-            _ * getType() >> 'pluginType'
-            getConfig() >> [plugin: 'config']
-        }
-        1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
-        1 * exportFactory.createPlugin(_, _, true) >> plugin
-        1 * service.jobEventsService.addListenerForProject(_, 'test')
-
         jobMetadataCalls * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', _)
-
 
         where:
         originalMeta                                                    | jobMetadataCalls
@@ -1034,11 +986,13 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         def result = service.exportFilePathsMapForJobs(project, jobs)
         then:
         0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_IMPORT)
+        1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_IMPORT)
+        1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_IMPORT)
         1 * plugin.getRelativePathForJob({it.id== 'job1id' })>> '/a/path/job1'
         1 * plugin.getRelativePathForJob({it.id=='job2id' })>>'/a/path/job2'
         result == [
-                job1id:'/a/path/job1',
-                job2id:'/a/path/job2'
+            job1id:'/a/path/job1',
+            job2id:'/a/path/job2'
         ]
     }
     def "getExportPushActionId"(){
@@ -1102,6 +1056,119 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         integration         | _
         ScmService.EXPORT   | _
         //ScmService.IMPORT   | _
+    }
+
+    def "export change listener event Delete"() {
+        given:
+            def project='aproj'
+            def context = Mock(ScmOperationContext){
+                getFrameworkProject()>>project
+            }
+            def plugin = Mock(ScmExportPlugin)
+            def sut = new ScmService.ExportChangeListener(service: service, context: context, plugin: plugin)
+            def jobref = Mock(JobRevReference){
+                getProject()>>project
+                getId()>>'123'
+            }
+            def event = new StoredJobChangeEvent(eventType: evtType,jobReference: jobref)
+            def serializer = null
+            service.jobMetadataService=Mock(JobMetadataService)
+        when:
+            sut.jobChangeEvent(event, serializer)
+        then:
+
+            1 * plugin.getRelativePathForJob({
+                it.id=='123'
+            })>>'/a/path'
+            1 * service.jobMetadataService.getJobPluginMeta(project,'123','scm-import')
+            1 * plugin.jobChanged({ it.eventType==evtType },_)
+            service.deletedJobsCache[project]['/a/path']!=null
+        where:
+            evtType                                  | _
+            JobChangeEvent.JobChangeEventType.DELETE | _
+
+    }
+
+    def "export change listener event MODIFY_RENAME"() {
+        given:
+            def project='aproj'
+            def context = Mock(ScmOperationContext){
+                getFrameworkProject()>>project
+            }
+            def plugin = Mock(ScmExportPlugin)
+            def sut = new ScmService.ExportChangeListener(service: service, context: context, plugin: plugin)
+            def jobref = Mock(JobRevReference){
+                getProject()>>project
+                getId()>>'123'
+                getJobName()>>'aname'
+            }
+            def origref=Mock(JobReference){
+                getProject()>>project
+                getId()>>'123'
+                getJobName()>>'bname'
+            }
+            def event = new StoredJobChangeEvent(
+                eventType: evtType,
+                jobReference: jobref,
+                originalJobReference: origref
+            )
+            def serializer = null
+            service.jobMetadataService = Mock(JobMetadataService)
+        when:
+            sut.jobChangeEvent(event, serializer)
+        then:
+
+
+            1 * plugin.getRelativePathForJob({
+                it.id=='123'
+                it.jobName=='aname'
+            })>> '/a/path'
+            1 * plugin.getRelativePathForJob({
+                it.id=='123'
+                it.jobName=='bname'
+            })>> '/b/path'
+            1 * plugin.jobChanged({ it.eventType==evtType },_)
+            0 * plugin._(*_)
+            service.renamedJobsCache[project]['123'] == '/b/path'
+        where:
+            evtType                                  | _
+            JobChangeEvent.JobChangeEventType.MODIFY_RENAME | _
+    }
+    @Unroll
+    def "export change listener event #evtType default behavior"() {
+        given:
+            def project='aproj'
+            def context = Mock(ScmOperationContext){
+                getFrameworkProject()>>project
+            }
+            def plugin = Mock(ScmExportPlugin)
+            def sut = new ScmService.ExportChangeListener(service: service, context: context, plugin: plugin)
+            def jobref = Mock(JobRevReference){
+                getProject()>>project
+                getId()>>'123'
+                getJobName()>>'aname'
+            }
+            def origref=Mock(JobReference){
+                getProject()>>project
+                getId()>>'123'
+                getJobName()>>'bname'
+            }
+            def event = new StoredJobChangeEvent(
+                eventType: evtType,
+                jobReference: jobref,
+                originalJobReference: origref
+            )
+            def serializer = null
+            service.jobMetadataService = Mock(JobMetadataService)
+        when:
+            sut.jobChangeEvent(event, serializer)
+        then:
+            1 * plugin.jobChanged({ it.eventType==evtType },_)
+            0 * plugin._(*_)
+        where:
+            evtType                                  | _
+            JobChangeEvent.JobChangeEventType.CREATE | _
+            JobChangeEvent.JobChangeEventType.MODIFY | _
     }
 
 }
