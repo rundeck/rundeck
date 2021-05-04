@@ -106,4 +106,56 @@ class ScmJobImporterSpec extends Specification {
             }
             job.project == 'aProject'
     }
+
+    def "import from stream job rename"() {
+
+        given:
+        def sut = new ScmJobImporter()
+        def ctx = Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'aProject'
+            getUserInfo() >> Mock(ScmUserInfo) {
+                getUserName() >> 'bob'
+            }
+        }
+        def format = 'xml'
+        def input = new ByteArrayInputStream('test'.bytes)
+        def meta = [:]
+        def preserve = false
+        def job = new ScheduledExecution()
+        job.jobName= "Test"
+        job.groupPath = "Demo"
+
+        def imported = Mock(ImportedJob) {
+            getJob() >> job
+        }
+
+        sut.scheduledExecutionService = Mock(ScheduledExecutionService)
+        sut.jobMetadataService = Mock(JobMetadataService)
+        AtomicInteger counter=new AtomicInteger(0)
+        def renamedJob = [uuid: "123", sourceId: "456"]
+
+        when:
+        def result = sut.importFromStream(ctx, format, input, meta, preserve,renamedJob)
+        then:
+        result
+        result.successful
+
+        1 * sut.scheduledExecutionService.parseUploadedFile(input, format) >> [jobset: [imported]]
+        1 * sut.scheduledExecutionService.loadImportedJobs(
+                _,
+                'update',
+                'preserve',
+                [user: 'bob', method: 'scm-import'],
+                _
+        ) >> [jobs: [job], jobChangeEvents: []]
+        1 * sut.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: null, pluginMeta: meta, srcId: "456" ])>>{
+            assert counter.getAndIncrement()==0
+        }
+        1 * sut.scheduledExecutionService.issueJobChangeEvents([])>>{
+            assert counter.getAndIncrement()==1
+        }
+        job.project == 'aProject'
+        job.uuid == "123"
+    }
+
 }
