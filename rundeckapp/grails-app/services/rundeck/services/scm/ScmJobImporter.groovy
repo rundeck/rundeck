@@ -103,7 +103,7 @@ class ScmJobImporter implements ContextJobImporter {
         if (loadresults.idMap?.get(job.extid)) {
             data.srcId = loadresults.idMap[job.extid]
         }
-        if(renamedJob){
+        if(renamedJob && renamedJob.sourceId){
             data.srcId = renamedJob.sourceId
         }
 
@@ -133,7 +133,7 @@ class ScmJobImporter implements ContextJobImporter {
         } catch (Throwable e) {
             return ImporterResult.fail("Failed to construct job definition map: " + e.message)
         }
-        importJob(context, jobset[0], importMetadata, preserveUuid)
+        importJob(context, jobset[0], importMetadata, preserveUuid, [:])
     }
 
     @Override
