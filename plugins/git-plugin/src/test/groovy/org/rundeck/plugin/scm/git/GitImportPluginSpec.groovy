@@ -375,7 +375,7 @@ class GitImportPluginSpec extends Specification {
 
         JobImporter importer = Mock(JobImporter)
         List<String> selectedPaths = ["test/job-123.xml"]
-        List<String> deletePaths = ["123"]
+        List<String> deletePaths = []
 
         def job = Mock(JobScmReference) {
             getScmImportMetadata() >> ["commitId":commit.name]
@@ -386,12 +386,16 @@ class GitImportPluginSpec extends Specification {
             getJobAndGroup() >> 'job1'
         }
 
+        def renamedTracker = new RenameTracker<>()
+        renamedTracker.trackItem('job-123.xml','test/job-123.xml')
+
         def plugin = new GitImportPlugin(config, [])
         plugin.initialize(context)
         plugin.importTracker = Mock(ImportTracker){
             trackedPaths() >> ['test/job-123.xml']
             getTrackedCommits() >> ['test/job-123.xml' : '123']
             getTrackedJobIds() >> ['test/job-123.xml':'123']
+            getRenamedTrackedItems() >>renamedTracker
         }
 
         when:
@@ -402,16 +406,14 @@ class GitImportPluginSpec extends Specification {
                 [:]
         )
 
-
-
         then:
 
-        1*importer.deleteJob(projectName, "123")>>Mock(ImportResult){
+        0*importer.deleteJob(projectName, "123")>>Mock(ImportResult){
             isSuccessful()>>true
         }
 
         then:
-        1*importer.importFromStream(_,_,_,_)>>Mock(ImportResult){
+        1*importer.importFromStream(_,_,_,_,_)>>Mock(ImportResult){
             isSuccessful()>>true
             getJob()>>job
         }

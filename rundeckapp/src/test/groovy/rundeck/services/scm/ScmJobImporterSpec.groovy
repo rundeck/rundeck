@@ -37,7 +37,7 @@ class ScmJobImporterSpec extends Specification {
             AtomicInteger counter=new AtomicInteger(0)
 
         when:
-            def result = sut.importFromStream(ctx, format, input, meta, preserve)
+            def result = sut.importFromStream(ctx, format, input, meta, preserve,[:])
         then:
             result
             result.successful

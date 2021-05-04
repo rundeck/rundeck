@@ -110,7 +110,10 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 def originalPath = plugin.importTracker.originalValue(path)
                 def jobUUID = plugin.importTracker.trackedJob(originalPath)
                 def jobCache = plugin.jobStateMap[jobUUID]
-                renamedJob = [uuid: jobUUID, sourceId: jobCache?.sourceId]
+                renamedJob = [uuid: jobUUID]
+                if(jobCache?.sourceId){
+                    renamedJob.sourceId = jobCache.sourceId
+                }
             }
 
             def importResult = importer.importFromStream(
