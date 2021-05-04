@@ -52,10 +52,11 @@ class ResolvedJobImporter implements JobImporter {
             final String format,
             final InputStream input,
             final Map importMetadata,
-            boolean preserveUuid
+            boolean preserveUuid,
+            Map renamedJob
     )
     {
-        return jobImporter.importFromStream(context, format, input, importMetadata, preserveUuid)
+        return jobImporter.importFromStream(context, format, input, importMetadata, preserveUuid, renamedJob)
     }
 
     @Override

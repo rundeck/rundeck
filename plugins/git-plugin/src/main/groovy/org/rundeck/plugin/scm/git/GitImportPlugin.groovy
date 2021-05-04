@@ -436,6 +436,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         "${entry.changeType} ${entry.oldPath}->${entry.newPath}"
                     }.join("\n")
                     )
+
+                    def findNewPath = changes.find { it.changeType == DiffEntry.ChangeType.ADD && it.newPath != null }
+                    def findOldPath = changes.find { it.changeType == DiffEntry.ChangeType.DELETE && it.oldPath != null }
+
+                    if(findNewPath && findOldPath){
+                        def oldPath = findOldPath.oldPath
+                        def newPath = findNewPath.newPath
+                        log.error("Rename detected from ${oldPath} to ${newPath}")
+                        this.importTracker.jobRenamed(job, oldPath, newPath)
+                        return ImportSynchState.IMPORT_NEEDED
+                    }
+
                     def found = pathChanges.find { it.oldPath == path }
                     if (found && found.changeType == DiffEntry.ChangeType.DELETE) {
                         return ImportSynchState.DELETE_NEEDED
@@ -514,7 +526,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
-                importTracker.jobRenamed(reference, path, newpath)
+                if(importTracker.originalValue(newpath)){
+                    //if a job was imported with a new name traker needs to be cleaned
+                    def oldPath=importTracker.originalValue(newpath)
+                    importTracker.renamedTrackedItems.trackItem(oldPath, oldPath)
+                    importTracker.untrackPath(oldPath)
+                }else{
+                    importTracker.jobRenamed(reference, path, newpath)
+                }
         //TODO
 //            case JobChangeEvent.JobChangeEventType.CREATE:
 //            case JobChangeEvent.JobChangeEventType.MODIFY:
