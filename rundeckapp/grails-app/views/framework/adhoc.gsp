@@ -335,7 +335,7 @@ search
                                             checked="true"
                                             id="preserveQuotesCheck"
                                 />
-                                <label class="has_tooltip" title="${message(code: "Workflow.Step.adhocRemoteString.preserve.quotes.tooltip")}"
+                                <label class="has_tooltip" title="${message(code: "Workflow.Step.adhocRemoteString.preserve.quotes.tooltip", encodeAs: 'htmlAttribute')}"
                                        data-placement="bottom" for="preserveQuotesCheck">
                                   <g:message code="Workflow.Step.adhocRemoteString.preserve.quotes.label" />
                                 </label>
