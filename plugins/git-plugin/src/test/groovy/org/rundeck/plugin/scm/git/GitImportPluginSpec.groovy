@@ -425,4 +425,48 @@ class GitImportPluginSpec extends Specification {
         ret.success
     }
 
+    def "get job status IMPORT_NEEDED when job is renamed"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        def commit2 = GitExportPluginSpec.addCommitFile(origindir, git, 'job2-234.xml', 'blah 222')
+        def commit3 = GitExportPluginSpec.addCommitFile(origindir, git, 'job2-234.xml', 'blah 333')
+        def commit4 = GitExportPluginSpec.renameCommitFile(origindir, git, 'job1-123.xml', 'job1-rename-123.xml', 'blah 333')
+        def commit5 = GitExportPluginSpec.addCommitFile(origindir, git, 'job2-234.xml', 'blah 4444')
+
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        )
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [commitId: commit.name, url: origindir.absolutePath]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getImportVersion() >> 12L
+            getVersion() >> 12L
+        }
+
+        when:
+        def status = plugin.getJobStatus(job, null)
+
+
+        then:
+        status.synchState == ImportSynchState.IMPORT_NEEDED
+        plugin.importTracker.renamedTrackedItems !=null
+        plugin.importTracker.renamedTrackedItems.wasRenamed('job1-123.xml')
+        plugin.importTracker.renamedTrackedItems.originalValue('job1-rename-123.xml') == 'job1-123.xml'
+    }
+
 }

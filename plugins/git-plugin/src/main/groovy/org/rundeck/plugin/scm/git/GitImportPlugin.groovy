@@ -437,8 +437,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     }.join("\n")
                     )
 
-                    def findNewPath = changes.find { it.changeType == DiffEntry.ChangeType.ADD && it.newPath != null }
-                    def findOldPath = changes.find { it.changeType == DiffEntry.ChangeType.DELETE && it.oldPath != null }
+                    String jobSerializerId = job?.sourceId !=null ? job.sourceId: job.id
+
+                    def findNewPath = changes.find { it.changeType == DiffEntry.ChangeType.ADD && it.newPath && it.newPath.contains(jobSerializerId) }
+                    def findOldPath = changes.find { it.changeType == DiffEntry.ChangeType.DELETE && it.oldPath && it.oldPath.contains(jobSerializerId) }
 
                     if(findNewPath && findOldPath){
                         def oldPath = findOldPath.oldPath
