@@ -3476,6 +3476,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             'application/yaml' | 'yaml' | null       | 'remove'   | null
             'application/yaml' | 'yaml' | 'update'   | null       | null
     }
+    @Unroll
     def "api jobs import xmlBatch text format #format fileformat #fformat"() {
         given:
             controller.apiService = Mock(ApiService)

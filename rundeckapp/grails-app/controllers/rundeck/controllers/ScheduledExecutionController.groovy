@@ -2991,12 +2991,12 @@ class ScheduledExecutionController  extends ControllerBase{
             parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), 'yaml')
         }else if (!apiService.requireParameters(params,response,['xmlBatch'])) {
             return
-        }else if (request instanceof MultipartHttpServletRequest && request.fileNames.toList().contains('xmlBatch')) {
-            def file = request.getFile("xmlBatch")
-            if (!file) {
+        }else if (request.format=='multipartForm' && request instanceof MultipartHttpServletRequest) {
+            if (!request.fileNames.toList().contains('xmlBatch')) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.jobs.import.missing-file', args: null])
             }
+            def file = request.getFile("xmlBatch")
             parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
         }else if (params.xmlBatch) {
             String fileContent = params.xmlBatch
