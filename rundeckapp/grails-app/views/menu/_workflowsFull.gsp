@@ -67,7 +67,7 @@
 <div class="modal" id="jobs_filters" tabindex="-1" role="dialog"
      aria-labelledby="jobs_filters_title" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-    <g:form action="jobs" params="[project:params.project]" method="POST" class="form form-horizontal" useToken="true">
+    <g:form action="jobs" params="[project:params.project, jobListType:params.jobListType]" method="POST" class="form form-horizontal" useToken="true">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
