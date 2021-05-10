@@ -24,27 +24,17 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.*;
-import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.data.BaseDataContext;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.*;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -167,57 +157,6 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
             return testResult.get(index++);
         }
 
-    }
-
-    static class test1 implements URLFileUpdater.httpClientInteraction {
-        int httpResultCode = 0;
-        private String httpStatusText;
-        InputStream bodyStream;
-        HttpMethod method;
-        HttpClient client;
-        IOException toThrowExecute;
-        IOException toThrowResponseBody;
-        boolean releaseConnectionCalled;
-        Boolean followRedirects;
-        HashMap<String, String> requestHeaders = new HashMap<String, String>();
-        HashMap<String, Header> responseHeaders = new HashMap<String, Header>();
-
-        public void setMethod(HttpMethod method) {
-            this.method = method;
-        }
-
-        public void setClient(HttpClient client) {
-            this.client = client;
-        }
-
-        public int executeMethod() throws IOException {
-            return httpResultCode;
-        }
-
-        public String getStatusText() {
-            return httpStatusText;
-        }
-
-        public InputStream getResponseBodyAsStream() throws IOException {
-            return bodyStream;
-        }
-
-        public void releaseConnection() {
-            releaseConnectionCalled = true;
-        }
-
-        public void setRequestHeader(String name, String value) {
-            requestHeaders.put(name, value);
-        }
-
-        public Header getResponseHeader(String name) {
-            return responseHeaders.get(name);
-        }
-
-
-        public void setFollowRedirects(boolean follow) {
-            followRedirects = follow;
-        }
     }
 
     public void testExpandUrlString() throws Exception {

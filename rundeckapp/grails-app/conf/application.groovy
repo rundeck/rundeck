@@ -175,7 +175,7 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
-
+grails.plugin.springsecurity.ajaxHeader = 'AJAX AUTH DISABLED\u0000'
 grails.plugin.springsecurity.logout.handlerNames = [
         'rememberMeServices',
         'securityContextLogoutHandler',
@@ -186,4 +186,3 @@ grails.plugin.springsecurity.logout.handlerNames = [
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']
-

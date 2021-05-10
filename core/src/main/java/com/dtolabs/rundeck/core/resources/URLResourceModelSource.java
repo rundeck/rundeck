@@ -58,7 +58,6 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
     private File destinationTempFile;
     private File destinationCacheData;
     private String tempFileName;
-    URLFileUpdater.httpClientInteraction interaction;
 
     public URLResourceModelSource(final Framework framework) {
         this.framework = framework;
@@ -275,10 +274,6 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
         }
         final URLFileUpdater updater = urlFileUpdaterBuilder.createURLFileUpdater();
         try {
-            if (null != interaction) {
-                //allow mock
-                updater.setInteraction(interaction);
-            }
             UpdateUtils.update(updater, destinationTempFile);
 
             logger.debug("Updated nodes resources file: " + destinationTempFile);
