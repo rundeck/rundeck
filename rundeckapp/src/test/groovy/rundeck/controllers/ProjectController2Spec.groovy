@@ -1183,9 +1183,10 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         }
     }
     private def mockFrameworkServiceForProjectConfigPut(boolean exists, boolean authorized, String action,
-                                                        LinkedHashMap props, boolean success, String errorMessage,
-                                                        String propFileText){
+                                                        LinkedHashMap currentProps, boolean success, String errorMessage,
+                                                        String propFileText, boolean handleScheduling = false){
         mockWith(FrameworkService){
+            Map newConfigProps = [:]
             existsFrameworkProject{String name->
                 exists
             }
@@ -1200,18 +1201,24 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
                 assertEquals('test1',name)
                 Mock(IRundeckProject){
                     getName()>>'test1'
-                    getProjectProperties()>>props
+                    getProjectProperties()>>currentProps
                 }
             }
             setFrameworkProjectConfig{proj,configProps->
-                assertEquals props,configProps
+//                assertEquals props,configProps
+                newConfigProps = configProps
                 [success: success,error: errorMessage]
+            }
+            if(handleScheduling) {
+                handleProjectSchedulingEnabledChange { String proj, isExecutionDisabledNow, isScheduleDisabledNow, newExecutionDisabledStatus, newScheduleDisabledStatus ->
+
+                }
             }
             if(!success){
                 return
             }
             loadProjectProperties { proj ->
-                props
+                newConfigProps
             }
         }
     }
@@ -1538,10 +1545,54 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "config", response.xml.name()
         assertEquals 2, response.xml.property.size()
-        assertEquals 'prop1', response.xml.property[0].'@key'.text()
-        assertEquals 'value1', response.xml.property[0].'@value'.text()
-        assertEquals 'prop2', response.xml.property[1].'@key'.text()
-        assertEquals 'value2', response.xml.property[1].'@value'.text()
+        assertEquals 'prop2', response.xml.property[0].'@key'.text()
+        assertEquals 'value2', response.xml.property[0].'@value'.text()
+        assertEquals 'prop1', response.xml.property[1].'@key'.text()
+        assertEquals 'value1', response.xml.property[1].'@value'.text()
+    }
+
+    void apiProjectConfigPut_xml_disabling_execution_success(){
+        when:
+        //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        controller.apiService = new ApiService()
+        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure',
+                ['project.disable.executions': 'false'], true, null, 'text', true)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
+        request.api_version = 11
+        params.project = 'test1'
+        request.method='PUT'
+        request.xml='<config><property key="project.disable.executions" value="true"/></config>'
+        controller.apiProjectConfigPut()
+        then:
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals "config", response.xml.name()
+        assertEquals 1, response.xml.property.size()
+        assertEquals 'project.disable.executions', response.xml.property[0].'@key'.text()
+        assertEquals 'true', response.xml.property[0].'@value'.text()
+    }
+
+    void apiProjectConfigPut_xml_disabling_schedule_success(){
+        when:
+        //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        controller.apiService = new ApiService()
+        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure',
+                ['project.disable.schedule': 'false'], true, null, 'text', true)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
+        request.api_version = 11
+        params.project = 'test1'
+        request.method='PUT'
+        request.xml='<config><property key="project.disable.schedule" value="true"/></config>'
+        controller.apiProjectConfigPut()
+        then:
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals "config", response.xml.name()
+        assertEquals 1, response.xml.property.size()
+        assertEquals 'project.disable.schedule', response.xml.property[0].'@key'.text()
+        assertEquals 'true', response.xml.property[0].'@value'.text()
     }
 
     void apiProjectConfigPut_json_success(){
@@ -1563,6 +1614,46 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'value1', response.json.prop1
         assertEquals 'value2', response.json.prop2
+    }
+
+    void apiProjectConfigPut_json_disabling_executions_success(){
+        when:
+        controller.apiService = new ApiService()
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure',
+                ['project.disable.executions': 'true'], true, null, 'text', true)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
+        request.api_version = 11
+        params.project = 'test1'
+        request.json='{"project.disable.executions":"false"}'
+        request.method='PUT'
+        controller.apiProjectConfigPut()
+        then:
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'false', response.json.getAt('project.disable.executions')
+    }
+
+    void apiProjectConfigPut_json_disabling_schedule_success(){
+        when:
+        controller.apiService = new ApiService()
+        mockCodec(JSONCodec)
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure',
+                ['project.disable.schedule': 'true'], true, null, 'text', true)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN]) >> true
+            }
+        request.api_version = 11
+        params.project = 'test1'
+        request.json='{"project.disable.schedule":"false"}'
+        request.method='PUT'
+        controller.apiProjectConfigPut()
+        then:
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'false', response.json.getAt('project.disable.schedule')
     }
 
 
