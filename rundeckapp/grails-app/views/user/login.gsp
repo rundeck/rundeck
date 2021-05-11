@@ -72,12 +72,18 @@
         .sso-login-link {
             flex: auto;
             padding: 4px 10px;
-            border-radius: 0 2px 2px 0;
+            border-radius: 4px;
             border: 1px solid #167df0;
             background-color: #167df0;
             color: #fff;
             vertical-align: middle;
             font-size: 1.2em;
+        }
+        .sso-login-link:hover {
+            border: 1px solid #0e53a0;
+            background-color: #0e53a0;
+            color: #fff;
+            text-decoration: none;
         }
     </style>
 </head>
