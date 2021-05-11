@@ -303,7 +303,7 @@ class ScmLoaderService implements EventBusAware {
                 }
             }
 
-            Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project)
+            Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project, true)
             List<JobExportReference> joblist = scmService.exportjobRefsForJobs(jobs, jobPluginMeta)
 
             def key = project+"-export"
@@ -359,8 +359,8 @@ class ScmLoaderService implements EventBusAware {
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
 
-            Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project)
-            List<JobScmReference> joblist = scmService.scmJobRefsForJobs(jobs, jobPluginMeta)
+            Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project, false)
+            List<JobScmReference> joblist = scmService.scmImportJobRefsForJobs(jobs, jobPluginMeta)
 
             def key = project+"-import"
             if(!scmProjectInitLoaded.containsKey(key)){
