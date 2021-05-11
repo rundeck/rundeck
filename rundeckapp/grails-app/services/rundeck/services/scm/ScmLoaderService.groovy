@@ -7,7 +7,6 @@ import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.annotation.Subscriber
-import grails.events.bus.EventBus
 import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileDynamic
