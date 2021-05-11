@@ -92,7 +92,7 @@ Template".
 
     @PluginProperty(
             title = "Base branch on",
-            description = "Create the new branch based on the existen branch",
+            description = "Create the new branch based on the existent branch",
             defaultValue = 'master',
             required = false
 

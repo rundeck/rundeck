@@ -61,6 +61,7 @@ import javax.validation.constraints.NotNull
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.*
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 /**
@@ -288,98 +289,100 @@ class LogFileStorageService
         failedRequests.remove(requestId)
         failures.remove(requestId)
         long retryMax = 30000;
+        LogFileStorageRequest.withNewSession {
 
-        Execution execution = Execution.get(execId)
+            Execution execution = Execution.get(execId)
+            def files = getExecutionFiles(execution, typelist, false)
 
-        def files = getExecutionFiles(execution, typelist, false)
-        try {
-            def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files)
-            success = didsucceed
-            if (!success) {
-                failures.put(requestId, new ArrayList<String>(failuremap.values()))
-            }
-            if (!success && failuremap && failuremap.size() > 1 || !failuremap[filetype]) {
-                def ftype = failuremap.keySet().findAll { it != null && it != 'null' }.join(',')
-
-                LogFileStorageRequest request = retryLoad(requestId, retryMax)
-                if (!request) {
-                    log.error("Storage request [ID#${task.id}]: Error updating: not found for id $requestId")
-                    success = false
-                } else if (request.filetype != ftype || request.completed != success) {
-                    int retryC = 5
-                    boolean saveDone = false
-                    Exception saveError
-                    while (retryC > 0) {
-                        request = LogFileStorageRequest.get(requestId)
-                        request.refresh()
-                        request.filetype = ftype
-                        request.completed = success
-                        try {
-                            request.save(flush: true)
-                            saveDone = true
-                            break
-                        } catch (Exception e) {
-                            saveError = e
-                            log.debug("Error: ${e}", e)
-                        }
-                        retryC--
-                    }
-                    if (!saveDone) {
-                        log.error("Storage request [ID#${task.id}]: Error updating: $saveError", saveError)
-                    }
+            try {
+                def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files)
+                success = didsucceed
+                if (!success) {
+                    failures.put(requestId, new ArrayList<String>(failuremap.values()))
                 }
+                if (!success && failuremap && failuremap.size() > 1 || !failuremap[filetype]) {
+                    def ftype = failuremap.keySet().findAll { it != null && it != 'null' }.join(',')
 
-            }
-        } catch (IOException | ExecutionFileStorageException e) {
-            success = false
-            log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
-        }
-
-        if (!success && count < retry) {
-            log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
-
-            queueLogStorageRequest(task, delay)
-        } else if (!success) {
-            getStorageFailedCounter()?.inc()
-            if(getConfiguredStorageFailureCancel()){
-                log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
-                //if policy, remove the request from db
-                executorService.execute {
-                    //use executorService to run within hibernate session
                     LogFileStorageRequest request = retryLoad(requestId, retryMax)
                     if (!request) {
-                        log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
-                    } else {
-                        request.delete(flush: true)
-                        log.debug("Storage request [ID#${task.id}] cancelled.")
+                        log.error("Storage request [ID#${task.id}]: Error updating: not found for id $requestId")
+                        success = false
+                    } else if (request.filetype != ftype || request.completed != success) {
+                        int retryC = 5
+                        boolean saveDone = false
+                        Exception saveError
+                        while (retryC > 0) {
+                            request = LogFileStorageRequest.get(requestId)
+                            request.refresh()
+                            request.filetype = ftype
+                            request.completed = success
+                            try {
+                                request.save(flush: true)
+                                saveDone = true
+                                break
+                            } catch (Exception e) {
+                                saveError = e
+                                log.debug("Error: ${e}", e)
+                            }
+                            retryC--
+                        }
+                        if (!saveDone) {
+                            log.error("Storage request [ID#${task.id}]: Error updating: $saveError", saveError)
+                        }
                     }
-                }
-                failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling"])
-                failedRequests.add(requestId)
-            }else{
-                log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
 
-                failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up"])
-                failedRequests.add(requestId)
+                }
+            } catch (IOException | ExecutionFileStorageException e) {
+                success = false
+                log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
             }
-        } else {
-            failedRequests.remove(requestId)
-            failures.remove(requestId)
-            //use executorService to run within hibernate session
-            executorService.execute {
-                log.debug("executorService saving storage request status...")
-                LogFileStorageRequest request = retryLoad(requestId, retryMax)
-                if (!request) {
-                    log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
-                } else if (request) {
-                    log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
-                    request.refresh()
-                    request.completed = success
-                    request.save(flush: true)
 
-                    log.debug("Storage request [ID#${task.id}] complete.")
+            if (!success && count < retry) {
+                log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
+
+                queueLogStorageRequest(task, delay)
+            } else if (!success) {
+                getStorageFailedCounter()?.inc()
+                if (getConfiguredStorageFailureCancel()) {
+                    log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
+                    //if policy, remove the request from db
+                    executorService.execute {
+                        //use executorService to run within hibernate session
+                        LogFileStorageRequest request = retryLoad(requestId, retryMax)
+                        if (!request) {
+                            log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
+                        } else {
+                            request.delete(flush: true)
+                            log.debug("Storage request [ID#${task.id}] cancelled.")
+                        }
+                    }
+                    failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling"])
+                    failedRequests.add(requestId)
+                } else {
+                    log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
+
+                    failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up"])
+                    failedRequests.add(requestId)
                 }
-                getStorageSuccessCounter()?.inc()
+            } else {
+                failedRequests.remove(requestId)
+                failures.remove(requestId)
+                //use executorService to run within hibernate session
+                executorService.execute {
+                    log.debug("executorService saving storage request status...")
+                    LogFileStorageRequest request = retryLoad(requestId, retryMax)
+                    if (!request) {
+                        log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
+                    } else if (request) {
+                        log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
+                        request.refresh()
+                        request.completed = success
+                        request.save(flush: true)
+
+                        log.debug("Storage request [ID#${task.id}] complete.")
+                    }
+                    getStorageSuccessCounter()?.inc()
+                }
             }
         }
     }
@@ -545,41 +548,42 @@ class LogFileStorageService
      * @param execution
      * @return
      */
-    def createPeriodicCheckpoint(Execution execution) {
+    Consumer<Long> createPeriodicCheckpoint(Execution execution) {
         def File logfile = getFileForExecutionFiletype(
                 execution,
                 LoggingService.LOG_FILE_FILETYPE,
                 false,
                 false
         )
-        if (pluginEnabledForPartialStorage(execution)) {
-            def execid = execution.id
-            def checker = new PeriodicFileChecker(
-                    periodUnit: TimeUnit.SECONDS,
-                    period: logstoreCheckpointTimeSecondsPeriod,
-                    periodThreshold: logstoreCheckpointTimeSecondsMinimum,
-                    sizeThreshold: logstoreCheckpointFilesizeMinimum,
-                    sizeIncrement: logstoreCheckpointFilesizeIncrement,
-                    logfile: logfile,
-                    //OR means: trigger action if initial size OR time threshold met
-                    thresholdBehavior: PeriodicFileChecker.Behavior.OR,
-                    action: { long fileSizeChange, long timediff ->
-                        log.debug("Partial log file storage trigger for ${execid}")
-                        notify('executionCheckpoint',
-                                new ExecutionCompleteEvent(
-                                        state: 'partial',
-                                        execution: execution,
-                                        context: [fileSizeChange: fileSizeChange, timediff: timediff]
+        if (!pluginEnabledForPartialStorage(execution)) {
+            return null
+        }
+        def execid = execution.id
+        def checker = new PeriodicFileChecker(
+                periodUnit: TimeUnit.SECONDS,
+                period: logstoreCheckpointTimeSecondsPeriod,
+                periodThreshold: logstoreCheckpointTimeSecondsMinimum,
+                sizeThreshold: logstoreCheckpointFilesizeMinimum,
+                sizeIncrement: logstoreCheckpointFilesizeIncrement,
+                logfile: logfile,
+                //OR means: trigger action if initial size OR time threshold met
+                thresholdBehavior: PeriodicFileChecker.Behavior.OR,
+                action: { long fileSizeChange, long timediff ->
+                    log.debug("Partial log file storage trigger for ${execid}")
+                    notify('executionCheckpoint',
+                            new ExecutionCompleteEvent(
+                                    state: 'partial',
+                                    execution: execution,
+                                    context: [fileSizeChange: fileSizeChange, timediff: timediff]
 
-                                )
-                        )
-                    }
-            )
-            log.debug("Partial log file storage enabled for execution ${execid} with checker ${checker}")
-            return { long duration ->
-                if (checker.triggerCheck()) {
-                    log.debug("periodic check succeeded after ${duration}")
+                            )
+                    )
                 }
+        )
+        log.debug("Partial log file storage enabled for execution ${execid} with checker ${checker}")
+        return { long duration ->
+            if (checker.triggerCheck()) {
+                log.debug("periodic check succeeded after ${duration}")
             }
         }
     }

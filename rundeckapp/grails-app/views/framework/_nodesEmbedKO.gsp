@@ -24,7 +24,7 @@
            class=" col-xs-6 node_ident embedded_node tight"
            tabindex="0"
            role="button"
-           data-viewport="#main-panel"
+           data-viewport="#section-content"
            data-placement="auto"
            data-container="body"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
@@ -69,10 +69,9 @@
 
 
         <div data-bind="attr: { 'id': 'node_pop_${xkey}_'+$index() }, css: {server: islocal }"
-             style="display:none;"
-             class="detailpopup node_entry tooltipcontent node_filter_link_holder"
-             data-node-filter-link-id="${enc(attr: nodefilterLinkId ?: '')}">
-            <div class="_mousedown_popup_allowed">
+             style="display:none;">
+            <div class="_mousedown_popup_allowed detailpopup node_entry tooltipcontent node_filter_link_holder"
+                 data-node-filter-link-id="${enc(attr: nodefilterLinkId ?: '')}">
                 <span>
                     <i class="fas fa-hdd"></i>
                     <span data-bind="text: nodename"></span>

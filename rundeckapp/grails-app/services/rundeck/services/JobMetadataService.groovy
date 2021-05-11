@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
@@ -33,6 +34,16 @@ class JobMetadataService {
     }
 
     /**
+     * Load scm metadata for the jobs
+     * @param project project
+     * @return map of metadata set by import plugin
+     */
+    List<PluginMeta> getJobsPluginMeta(final String project, final String type) {
+        def found = PluginMeta.findAllByProject(project)
+        return found
+    }
+
+    /**
      * Load scm metadata for the job
      * @param project project
      * @param id jobid
@@ -40,10 +51,13 @@ class JobMetadataService {
      */
     Map getJobPluginMeta(final String project, final String id, final String type) {
         def key = id + '/' + type
-        def found = PluginMeta.findByProjectAndKey(project, key)
-        if (found) {
-            log.debug("found job metadata for ${id}: ${found.pluginData}")
-            return found.pluginData
+        try {
+            def found = PluginMeta.findByProjectAndKey(project, key)
+            if (found) {
+                return found.pluginData
+            }
+        } catch (Throwable e) {
+            log.trace("Exception getting plugin meta for job", e)
         }
         return null
     }
@@ -68,6 +82,20 @@ class JobMetadataService {
             found.delete(flush: true)
         }
     }
+
+    /**
+     * Remove scm metadata for the project
+     * @param project project
+     */
+    def removeProjectPluginMeta(final String project) {
+        def pluginMeta = PluginMeta.findAllByProject(project)
+        if (pluginMeta) {
+            pluginMeta.each {meta->
+                meta.delete(flush: true)
+            }
+        }
+    }
+
     /**
      * Remove all scm metadata for the job
      * @param project project
@@ -78,6 +106,15 @@ class JobMetadataService {
         if (found) {
             found*.delete(flush: true)
         }
+    }
+
+    /**
+     * Remove all plugin metadata for the project
+     * @param project project
+     */
+    @Subscriber('projectWasDeleted')
+    def removeAllPluginMetaForProject(final String project) {
+        PluginMeta.executeUpdate('delete PluginMeta where project=:project', [project: project], [flush: true])
     }
 
     /**
@@ -101,7 +138,6 @@ class JobMetadataService {
             found.project = project
             found.key = key
         }
-        log.debug("setJobPluginMeta(${project},${id},${type}) to ${metadata}")
         found.setPluginData(metadata)
         found.save(flush: true)
     }

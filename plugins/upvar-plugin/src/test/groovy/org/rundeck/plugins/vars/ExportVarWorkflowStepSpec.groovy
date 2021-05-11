@@ -53,4 +53,29 @@ class ExportVarWorkflowStepSpec extends Specification {
 
     }
 
+    def "null/blank value checks"() {
+        given:
+            def plugin = new ExportVarWorkflowStep()
+            def context = Mock(PluginStepContext)
+            def config = [:]
+            plugin.setProperties(value, group, name)
+
+        when:
+            plugin.executeStep(context, config)
+
+        then:
+            StepException e = thrown()
+            e.message.contains(msg)
+
+        where:
+            group | name   | value   | msg
+            null  | 'name' | 'value' | 'Required Group'
+            ''    | 'name' | 'value' | 'Required Group'
+            'asdf'| null   | 'value' | 'Required Name'
+            'asdf'| ''     | 'value' | 'Required Name'
+            'asdf'| 'as'   | ''      | 'Empty value'
+            'asdf'| 'as'   | null    | 'Empty value'
+
+    }
+
 }

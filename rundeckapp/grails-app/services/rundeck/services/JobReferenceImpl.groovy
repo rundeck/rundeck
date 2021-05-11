@@ -26,6 +26,7 @@ class JobReferenceImpl implements JobReference {
     String project
     String jobName
     String groupPath
+    String serverUUID
 
     @Override
     String getJobAndGroup() {

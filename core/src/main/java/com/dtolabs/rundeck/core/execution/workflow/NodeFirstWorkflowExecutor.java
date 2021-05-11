@@ -366,12 +366,6 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
         }
     }
 
-    private void validateNodeSet(ExecutionContext executionContext, NodesSelector nodeSelector) {
-        if (0 == executionContext.getNodes().getNodes().size()) {
-            throw new NodesetEmptyException(nodeSelector);
-        }
-    }
-
     static enum Reason implements FailureReason {
         WorkflowSequenceFailures,
         ExecutionServiceError

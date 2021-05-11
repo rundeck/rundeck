@@ -17,9 +17,12 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.*
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
@@ -54,10 +57,12 @@ class ReportsControllerSpec extends HibernateSpec implements ControllerUnitTest<
     def "events query date binding format #dateFilter"() {
         given:
 
-        controller.frameworkService = Mock(FrameworkService) {
-            _ * getAuthContextForSubjectAndProject(*_) >> null
-            _ * authorizeProjectResourceAll(*_) >> true
-        }
+        controller.frameworkService = Mock(FrameworkService)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                _ * getAuthContextForSubjectAndProject(*_) >> null
+                _ * authorizeProjectResourceAll(*_) >> true
+            }
         controller.userService = Mock(UserService) {
             findOrCreateUser(*_) >> new User()
         }
@@ -102,7 +107,9 @@ class ReportsControllerSpec extends HibernateSpec implements ControllerUnitTest<
     def "add job ref on index"() {
         given:
 
-        controller.frameworkService = Mock(FrameworkService) {
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            1 * getAuthContextForSubjectAndProject(_, _)
             _ * authorizeProjectResourceAll(*_) >> true
         }
         controller.userService = Mock(UserService) {

@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
@@ -19,7 +20,7 @@ import java.util.concurrent.CompletableFuture
 @CompileStatic
 class AuthedLogFileLoaderService implements AuthorizingExecutionFileLoaderService {
     LogFileStorageService logFileStorageService
-    FrameworkService frameworkService
+    AppAuthContextEvaluator rundeckAuthContextEvaluator
 
     @Override
     ExecutionFileLoader requestFileLoad(
@@ -48,7 +49,7 @@ class AuthedLogFileLoaderService implements AuthorizingExecutionFileLoaderServic
         if (!exec) {
             throw new ExecutionNotFound("Execution not found", e.id, e.project)
         }
-        def isAuth = frameworkService.authorizeProjectExecutionAny(
+        def isAuth = rundeckAuthContextEvaluator.authorizeProjectExecutionAny(
                 auth,
                 exec,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]

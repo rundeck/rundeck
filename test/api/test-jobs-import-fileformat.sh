@@ -12,7 +12,7 @@ fi
 
 #produce job.xml content corresponding to the dispatch request
 cat > $DIR/temp.out <<END
-- 
+-
   project: test
   loglevel: INFO
   sequence:

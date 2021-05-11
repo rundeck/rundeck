@@ -1,10 +1,14 @@
 rundeck:
-  projectsStorageType: file
+  projectsStorageType: db
   grails:
     upload:
       maxsize: '50000000'
   server:
     name: superserver
+  database:
+    create: update
+    migrate:
+      onstart: 'true'
   config:
     storage:
       converter:

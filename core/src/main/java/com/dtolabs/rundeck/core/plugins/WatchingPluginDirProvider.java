@@ -33,7 +33,7 @@ public class WatchingPluginDirProvider implements PluginDirProvider {
     private final ScheduledExecutorService           executor             = Executors.newScheduledThreadPool(2);
     private final List<PluginDirChangeEventListener> changeEventListeners = new ArrayList<>();
 
-    WatchingPluginDirProvider(final File pluginDir) {
+    public WatchingPluginDirProvider(final File pluginDir) {
         this.pluginDir = pluginDir;
         if(!this.pluginDir.exists()) this.pluginDir.mkdirs();
         startFolderWatch();

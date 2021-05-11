@@ -29,9 +29,14 @@
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-%{--    <asset:stylesheet href="bootstrap.min.css"/>--}%
-%{--    <asset:stylesheet href="app.css"/>--}%
-    <asset:stylesheet href="static/css/components/central.css"/>
+    %{-- Core theme styles from ui-trellis --}%
+    <feature:disabled name="uiNext">
+        <asset:stylesheet href="static/css/components/theme.css"/>
+    </feature:disabled>
+    <feature:enabled name="uiNext">
+        <asset:stylesheet href="static/css/components/theme-next.css"/>
+    </feature:enabled>
+
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -40,7 +45,6 @@
     <g:render template="/common/css"/>
 </head>
 <body id="loginpage">
-  <div class="wrapper wrapper-full-page">
     <div class="full-page login-page">
     <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
       <div class="content">
@@ -59,8 +63,9 @@
                 <div class="card-header">
                   <h4 class="card-title">
                     <div class="logo">
+                        <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'logos/rundeck-logo-black.png'}"/>
                         <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
-                          <img src="${resource(dir: 'images', file: 'rundeck-full-logo-black.png')}" alt="Rundeck" style="height: 20px; width: auto;"/>
+                            <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;"/>
                         </a>
 
                         <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
@@ -79,7 +84,7 @@
                 </div>
                 <div class="card-content">
                   <p class="text-center">
-                    <g:link controller="menu" action="home" class="btn btn-default btn-large">
+                    <g:link controller="menu" action="home" class="btn btn-cta btn-large">
                       <g:message code="login.again" />
                     </g:link>
                   </p>
@@ -91,6 +96,5 @@
     </div>
     <g:render template="/common/footer"/>
   </div>
-</div>
 </body>
 </html>

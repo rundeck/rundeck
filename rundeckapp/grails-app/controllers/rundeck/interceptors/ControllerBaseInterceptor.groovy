@@ -1,5 +1,6 @@
 package rundeck.interceptors
 
+import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.util.Toposort
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.ConfigurationService
@@ -9,6 +10,7 @@ import rundeck.services.UiPluginService
 class ControllerBaseInterceptor {
     @Autowired
     ConfigurationService configurationService
+    InterceptorHelper interceptorHelper
 
     public static final ArrayList<String> UIPLUGIN_PAGES = [
             'menu/jobs',
@@ -113,7 +115,7 @@ class ControllerBaseInterceptor {
 
     boolean after() {
         if(!currentRequestAttributes().isRequestActive()) return true
-        if(InterceptorHelper.matchesStaticAssets(controllerName, request) || !view) return true
+        if(interceptorHelper.matchesAllowedAsset(controllerName, request) || !view) return true
         model.uiplugins = loadUiPlugins(controllerName + "/" + actionName)
         model.uipluginsorder = sortUiPlugins(model.uiplugins)
         model.uipluginsPath = controllerName + "/" + actionName

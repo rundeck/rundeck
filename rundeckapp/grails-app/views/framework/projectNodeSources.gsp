@@ -42,6 +42,13 @@
     jQuery(function () {
       setupTabRouter('#node_config_tabs', 'node_');
     })
+    window._rundeck = Object.assign(window._rundeck || {}, {
+            data: {
+                projectAclConfigPageUrl:"${enc(js:createLink(controller:'menu',action:'createProjectAclFile',params:[project:params.project?:project]))}",
+                systemAclConfigPageUrl:"${enc(js:createLink(controller:'menu',action:'createSystemAclFile'))}",
+
+            }
+        });
   </g:javascript>
   <!-- VUE JS MODULES -->
   <asset:javascript src="static/pages/project-nodes-config.js" defer="defer" />
@@ -50,6 +57,8 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
       <div class="col-xs-12">
@@ -151,7 +160,7 @@
 
                               <div class="card-footer">
 
-                                <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-primary reset_page_confirm"/>
+                                <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-cta reset_page_confirm"/>
                               </div>
                           </g:form>
 
@@ -196,6 +205,10 @@
                                                           @reset="EventBus.$emit('page-reset','Node Sources')"
                                                           :event-bus="EventBus">
                               </project-node-sources-config>
+
+                              <project-node-sources-help class="project-plugin-config-vue" :event-bus="EventBus">
+
+                              </project-node-sources-help>
                         </div>
 
 
@@ -224,7 +237,8 @@
       </div>
     </div>
   </div>
-
+</div>
+</div>
 </body>
 
 </html>

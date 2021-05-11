@@ -1,6 +1,6 @@
 <template>
   <div class=" activity-list">
-    
+
           <section class="section-space-bottom">
 
             <span>
@@ -30,7 +30,7 @@
 
 
           <activity-filter v-model="query" :event-bus="eventBus" :opts="filterOpts" v-if="showFilters"></activity-filter>
-          
+
           <div class="pull-right">
             <span v-if="runningOpts.allowAutoRefresh">
               <input type=checkbox id=auto-refresh v-model=autorefresh />
@@ -171,6 +171,7 @@
             class="execution link activity_row autoclickable"
             :class="{nowrunning:!exec.dateCompleted,[exec.status]:true}"
             @click="autoBulkEdit(exec)"
+            @click.middle="middleClickRow(exec)"
             >
           <!-- #{{exec.id}} -->
 
@@ -180,12 +181,13 @@
                 name="bulk_edit"
                 :value="exec.id"
                 v-model="bulkSelectedIds"
-                :disabled="exec.status==='running' || exec.status==='scheduled'"
+                :disabled="exec.status==='running' || exec.status==='scheduled' || exec.status==='queued'"
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
                     <b class="fas fa-circle-notch fa-spin text-info" v-if="exec.status==='running'"></b>
                     <b class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></b>
+                    <b class="fas fa-layer-group text-muted " v-else-if="exec.status==='queued'"></b>
                     <b class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></b>
                 </td>
                 <td class="right date " v-tooltip.bottom="runningStatusTooltip(exec)">
@@ -203,6 +205,7 @@
                 </td>
                 <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)" colspan="2">
                       <progress-bar v-if="exec.status === 'scheduled'" :value="100" striped  type="default" label :label-text="$t('job.execution.starting.0',[runningStartedDisplay(exec.dateStarted.date)])" ></progress-bar>
+                      <progress-bar v-else-if="exec.status === 'queued'" :value="100" striped  type="default" label :label-text="$t('job.execution.queued')" ></progress-bar>
                       <progress-bar v-else-if="exec.job && exec.job.averageDuration" :value="jobDurationPercentage(exec)" striped active type="info" label min-width></progress-bar>
                       <progress-bar v-else-if="exec.dateStarted.date" :value="100" striped active type="info" label :label-text="$t('running')" ></progress-bar>
                 </td>
@@ -245,7 +248,8 @@
         <tbody class="history-executions" v-if="reports.length > 0">
         <tr class="link activity_row autoclickable"
             @click="autoBulkEdit(rpt)"
-            :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}"
+            @click.middle="middleClickRow(rpt)"
+            :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',missed:rpt.status==='missed',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}"
             v-for="rpt in reports"
             :key="rpt.execution.id"
           >
@@ -260,7 +264,8 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date " v-tooltip.bottom="$t('info.completed.0.1',[jobLocalCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
+            
+            <td class="right date " v-tooltip.bottom="$t(rpt.status==='missed'?'info.missed.0.1':'info.completed.0.1',[jobLocalCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
                     <span class="timeabs ">
                         {{rpt.dateCompleted | moment(momentJobFormat)}}
@@ -279,7 +284,8 @@
                 <span v-else-if="rpt.node.succeeded>0">{{rpt.node.succeeded}} {{$t('ok')}}</span>
             </td>
             <td class="duration text-secondary">
-                <span class="duration">{{formatDurationMomentHumanize(rpt.duration)}}</span>
+                <span class="duration" v-if="rpt.status==='missed'">missed</span>
+                <span class="duration" v-else>{{formatDurationMomentHumanize(rpt.duration)}}</span>
             </td>
             <td class="  user text-right " style="white-space: nowrap;">
                 <em><i18n path="by" default="by"/></em>
@@ -321,7 +327,7 @@
             </td>
 
             <td class="text-right">
-                <a  :href="rpt.executionHref">
+                <a  :href="rpt.executionHref" @click.middle.stop>
                 #{{rpt.executionId}}
                 </a>
             </td>
@@ -363,12 +369,9 @@ import moment from 'moment'
 import OffsetPagination from '@rundeck/ui-trellis/lib/components/utils/OffsetPagination.vue'
 import ActivityFilter from './activityFilter.vue'
 
-import {
-  getRundeckContext,
-  RundeckContext
-} from "@rundeck/ui-trellis"
-import { ExecutionBulkDeleteResponse, ExecutionListRunningResponse, Execution } from '@rundeck/client/dist/lib/models';
-import { setTimeout, clearTimeout } from 'timers';
+import {getRundeckContext} from "@rundeck/ui-trellis"
+import {Execution, ExecutionBulkDeleteResponse} from '@rundeck/client/dist/lib/models';
+import {clearTimeout, setTimeout} from 'timers';
 
 /**
  * Generate a URL
@@ -390,7 +393,7 @@ function _genUrl(url:string, params:any) {
 }
 
 
-const knownStatusList = ['scheduled','running','succeed','succeeded','failed',
+const knownStatusList = ['scheduled','running','queued','succeed','succeeded','failed','missed',
     'cancel','aborted','retry','timedout','timeout','fail'];
 
 function nodeStats(node: string) {
@@ -528,14 +531,17 @@ export default Vue.extend({
       return moment().diff(moment(date),'days') <= 7
     },
     runningStatusTooltip(exec:Execution){
-      if(exec.status == 'scheduled' && exec.dateStarted && exec.dateStarted.date){
+      if(exec.status?.toString() === 'queued') {
+        return (this as any).$t('job.execution.queued')
+      }else
+        if(exec.status == 'scheduled' && exec.dateStarted && exec.dateStarted.date){
         return (this as any).$t('job.execution.starting.0',[this.runningStartedDisplay(exec.dateStarted.date)])
       }else if(exec.dateStarted && exec.dateStarted.date){
         const startmo=moment(exec.dateStarted.date)
         if(exec.job && exec.job.averageDuration){
           const expected = startmo.clone()
           expected.add(exec.job.averageDuration,'ms')
-          return (this as any).$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])    
+          return (this as any).$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])
         }
         return (this as any).$t('info.started.0',[startmo.fromNow()])
       }
@@ -563,6 +569,13 @@ export default Vue.extend({
         this.bulkSelectedIds.splice(ndx,1)
       }
     },
+    middleClickRow(rpt:any) {
+      if(rpt.executionHref){
+        window.open(rpt.executionHref, '_blank')
+      }else if(rpt.permalink){
+        window.open(rpt.permalink, '_blank')
+      }
+    },
     autoBulkEdit(rpt:any){
       if(!this.bulkEditMode){
         if(rpt.executionHref){
@@ -572,7 +585,7 @@ export default Vue.extend({
         }
       }else if(rpt.executionId){
         this.toggleSelectId(rpt.executionId)
-      }else if(rpt.id && rpt.status!=='running' && rpt.status!=='scheduled'){
+      }else if(rpt.id && rpt.status!=='running' && rpt.status!=='scheduled' && rpt.status!=='queued'){
         this.toggleSelectId(rpt.id)
       }
     },
@@ -621,6 +634,12 @@ export default Vue.extend({
         if (status == 'running') {
             return 'running';
         }
+        if (status == 'queued') {
+            return 'queued';
+        }
+        if (status == 'missed') {
+          return 'missed';
+        }
         if (status == 'timedout') {
             return 'timedout';
         }
@@ -651,7 +670,7 @@ export default Vue.extend({
           this.bulkEditMode = false
         }
         this.loadActivity(this.pagination.offset)
-        
+
       }catch(error){
         this.bulkEditProgress=false
         this.bulkEditError=error
@@ -672,7 +691,7 @@ export default Vue.extend({
           params: Object.assign({offset: this.pagination.offset, max: this.pagination.max},this.query,{since:this.lastDate}),
           withCredentials: true
         })
-        
+
         if(this.lastDate>0  && response.data.since && response.data.since.count ){
             this.sincecount=response.data.since.count
         }
@@ -684,6 +703,10 @@ export default Vue.extend({
       // const rundeckContext = getRundeckContext()
       this.loadingRunning = true
       let qparams: { [key: string]: string } = {}
+
+      // include scheduled and queued on running list.
+      qparams.includePostponed = "true"
+
       if (this.query.jobIdFilter) {
         qparams.jobIdFilter = this.query.jobIdFilter
       }
@@ -822,7 +845,7 @@ export default Vue.extend({
       this.activityPageHref = window._rundeck.data['activityPageHref']
       this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
         this.autorefreshms = window._rundeck.data['autorefreshms'] || 5000
-      
+
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
       }
@@ -904,5 +927,9 @@ $since-bg: #ccf;
 .progress{
   height: 20px;
   margin:0;
+}
+.missed {
+  background-color: #dddddd;
+  color: #999;
 }
 </style>

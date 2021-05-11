@@ -136,7 +136,7 @@ the container.
 
 ### `RUNDECK_DATABASE_URL`
 
-Defaults to `jdbc:h2:file:/home/rundeck/server/data/grailsdb;MVCC=true`. The default configuration utilizes an h2 file for data storage.
+Defaults to `jdbc:h2:file:/home/rundeck/server/data/grailsdb;DB_CLOSE_ON_EXIT=FALSE`. The default configuration utilizes an h2 file for data storage.
 
 ### `RUNDECK_DATABASE_DRIVER`
 
@@ -149,6 +149,11 @@ Set this if using an alternative backend from h2.
 ### `RUNDECK_DATABASE_USERNAME`
 
 ### `RUNDECK_DATABASE_PASSWORD`
+
+### `RUNDECK_DATABASE_MIGRATE_ONSTART`
+
+Toggles database migrations on startup. Defaults to the Rundeck
+default. Can be `true` or `false`.
 
 ### `RUNDECK_LOGGING_STRATEGY=CONSOLE`
 

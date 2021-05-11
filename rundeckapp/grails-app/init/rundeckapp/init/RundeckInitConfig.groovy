@@ -89,4 +89,12 @@ class RundeckInitConfig {
     boolean isTestAuth() {
         cliOptions.testAuth
     }
+
+    boolean isRollback() {
+        cliOptions.rollback
+    }
+
+    String tagName(){
+        cliOptions.tag
+    }
 }

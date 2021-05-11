@@ -16,9 +16,12 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.http.ApacheHttpClient
+import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -36,16 +39,27 @@ import grails.gorm.transactions.Transactional
 import grails.util.Holders
 import grails.web.JSONBuilder
 import grails.web.mapping.LinkGenerator
-import groovy.json.StreamingJsonBuilder
 import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
-import org.apache.commons.httpclient.Header
-import org.apache.commons.httpclient.HttpClient
-import org.apache.commons.httpclient.methods.PostMethod
-import org.apache.commons.httpclient.methods.StringRequestEntity
-import org.apache.commons.httpclient.params.HttpClientParams
+import org.apache.http.HttpHost
+import org.apache.http.HttpResponse
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.AuthCache
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.protocol.HttpClientContext
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.auth.BasicScheme
+import org.apache.http.impl.client.BasicAuthCache
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.message.BasicHeader
 import org.rundeck.app.AppConstants
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
@@ -59,6 +73,7 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeoutException
 
 /*
  * NotificationService.java
@@ -70,6 +85,11 @@ import java.text.SimpleDateFormat
 
 public class NotificationService implements ApplicationContextAware{
     boolean transactional = false
+
+    static final String POST = "post"
+    static final String GET = "get"
+
+    def defaultThreadTO = 120000
     def grailsLinkGenerator
 
     ApplicationContext applicationContext
@@ -83,6 +103,8 @@ public class NotificationService implements ApplicationContextAware{
     def executionService
     def workflowService
     OrchestratorPluginService orchestratorPluginService
+    def featureService
+    def configurationService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService,
@@ -129,36 +151,52 @@ public class NotificationService implements ApplicationContextAware{
         return pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
     }
     def Map listNotificationPluginsDynamicProperties(String project, Services services){
-        def plugins = pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
-        def result = [:]
-        plugins.forEach{name, plugin->
-            def dynamicProperties = pluginService.getDynamicProperties(
-                    frameworkService.getRundeckFramework(),
-                    ServiceNameConstants.Notification,
-                    plugin.name,
-                    project,
-                    services
-            )
-            if(dynamicProperties){
-                result.put(name, dynamicProperties)
-            }else{
-                result.put(name, [:])
-            }
-        }
-        return result
-    }
-    @Transactional
-    boolean triggerJobNotification(String trigger, schedId, Map content){
-        if(trigger && schedId){
-            ScheduledExecution.withNewTransaction {
-                def ScheduledExecution sched = ScheduledExecution.get(schedId)
-                if(null!=sched){
-                    return triggerJobNotification(trigger,sched,content)
+        ScheduledExecution.withNewSession {
+            def plugins = pluginService.listPlugins(NotificationPlugin, notificationPluginProviderService)
+            def result = [:]
+            plugins.forEach { name, plugin ->
+                def dynamicProperties = pluginService.getDynamicProperties(
+                        frameworkService.getRundeckFramework(),
+                        ServiceNameConstants.Notification,
+                        plugin.name,
+                        project,
+                        services
+                )
+                if (dynamicProperties) {
+                    result.put(name, dynamicProperties)
+                } else {
+                    result.put(name, [:])
                 }
             }
+            result
         }
-        return false
     }
+
+    @Transactional
+    void asyncTriggerJobNotification(String trigger, schedId, Map content){
+        if(trigger && schedId){
+            if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){
+                Thread.start {
+                    Thread notificationThread = new NotificationThread(this, trigger, schedId, content)
+                    notificationThread.start()
+                    notificationThread.join(configurationService.getLong("notification.threadTimeOut", defaultThreadTO))
+                    if (notificationThread.isAlive()) {
+                        notificationThread.interrupt()
+                        throw new TimeoutException()
+                    }
+                }
+            }else{
+                ScheduledExecution.withNewTransaction {
+                    ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+                    if(null != scheduledExecution){
+                        triggerJobNotification(trigger, scheduledExecution, content)
+                    }
+                }
+            }
+
+        }
+    }
+
     /**
      * Replace template variables in the text.
      * @param templateText
@@ -238,7 +276,8 @@ public class NotificationService implements ApplicationContextAware{
         }
         return map;
     }
-    def boolean triggerJobNotification(String trigger,ScheduledExecution source, Map content){
+
+    boolean triggerJobNotification(String trigger, ScheduledExecution source, Map content){
         def didsend = false
         if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
             def notes = source.notifications.findAll{it.eventTrigger=='on'+trigger}
@@ -264,6 +303,7 @@ public class NotificationService implements ApplicationContextAware{
                             (ExecutionService.EXECUTION_RUNNING):'STARTING',
                             (ExecutionService.EXECUTION_SUCCEEDED):'SUCCESS',
                             (ExecutionService.EXECUTION_TIMEDOUT):'TIMEDOUT',
+                            (ExecutionService.EXECUTION_MISSED):'MISSED',
                     ]
 
                     def execMap = null
@@ -473,13 +513,16 @@ public class NotificationService implements ApplicationContextAware{
                     if (log.traceEnabled){
                         log.trace("Posting webhook notification[${n.eventTrigger},${state},${exec.id}]; to URLs: ${n.content}")
                     }
-                    def urlarr = n.content.split(",") as List
+                    Map urlsConfiguration = n.urlConfiguration()
+                    String urls = urlsConfiguration.urls
+                    String method = urlsConfiguration.httpMethod
+                    def urlarr = urls.split(",") as List
                     def webhookfailure=false
                     urlarr.each{String urlstr->
                         //perform token expansion within URL.
                         String newurlstr=expandWebhookNotificationUrl(urlstr,exec,source,trigger)
                         try{
-                            def result= postDataUrl(newurlstr, n.format,payloadStr, trigger, state, exec.id.toString())
+                            def result= postDataUrl(newurlstr, n.format,payloadStr, trigger, state, exec.id.toString(), method)
                             if(!result.success){
                                 webhookfailure=true
                                 log.error("Notification failed [${n.eventTrigger},${state},${exec.id}]; URL ${newurlstr}: ${result.error}")
@@ -762,7 +805,7 @@ public class NotificationService implements ApplicationContextAware{
         return srcUrl
     }
 
-    static Map postDataUrl(String url, String format, String payload, String trigger, String status, String id, rptCount=1, backoff=2){
+    static Map postDataUrl(String url, String format, String payload, String trigger, String status, String id, String httpMethod = POST, rptCount=1, backoff=2){
         int count=0;
         int wait=1000;
         int timeout=15
@@ -781,29 +824,42 @@ public class NotificationService implements ApplicationContextAware{
                 }
                 wait *= backoff
             }
-            final HttpClientParams params = new HttpClientParams()
-            params.setConnectionManagerTimeout(timeout * 1000)
-            params.setSoTimeout(timeout * 1000)
-            def HttpClient client = new HttpClient(params)
-            def PostMethod method = new PostMethod(url)
-            method.setRequestHeader(new Header("X-RunDeck-Notification-Trigger", trigger))
-            method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-ID", id))
-            method.setRequestHeader(new Header("X-RunDeck-Notification-Execution-Status", status))
-            if(secureDigest) method.setRequestHeader(new Header("X-RunDeck-Notification-SHA256-Digest", secureDigest))
-            method.setRequestEntity(new StringRequestEntity(payload, contentType, "UTF-8"))
-            try {
-                resultCode = client.executeMethod(method);
-                resultReason = method.getStatusText();
+            HttpClient<HttpResponse> httpClient = new ApacheHttpClient()
+            httpClient.setFollowRedirects(true)
+            httpClient.setTimeout(timeout*1000)
 
-                if (resultCode >= 200 && resultCode <= 300) {
-                    complete=true
-                } else {
-                    error="server response: ${resultCode} ${resultReason}"
+            try{
+                URL urlo = new URL(url)
+                httpClient.setUri(urlo.toURI())
+                if(urlo.userInfo){
+                    UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
+                    httpClient.setBasicAuthCredentials(cred.userName,cred.password)
+                }
+            }catch(MalformedURLException e){
+                throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
+            }
+
+            if(httpMethod != GET) {
+                httpClient.setMethod(HttpClient.Method.POST)
+                httpClient.addPayload(contentType,payload)
+            }
+
+            httpClient.addHeader("X-RunDeck-Notification-Trigger", trigger)
+            httpClient.addHeader("X-RunDeck-Notification-Execution-ID", id)
+            httpClient.addHeader("X-RunDeck-Notification-Execution-Status", status)
+            if(secureDigest) httpClient.addHeader("X-RunDeck-Notification-SHA256-Digest", secureDigest)
+            try {
+                httpClient.execute { response ->
+                    resultCode = response.statusLine.statusCode
+                    resultReason = response.statusLine.reasonPhrase
+                    if (resultCode >= 200 && resultCode <= 300) {
+                        complete=true
+                    } else {
+                        error="server response: ${resultCode} ${resultReason}"
+                    }
                 }
             }catch (Throwable e){
                 error="Error making request: "+e.message
-            } finally {
-                method.releaseConnection();
             }
             if(complete){
                 break
@@ -811,7 +867,7 @@ public class NotificationService implements ApplicationContextAware{
 
         }
         if(!complete){
-            return [success:complete,error:"Unable to POST notification after ${count} tries: ${trigger} for execution ${id} (${status}): ${error}"]
+            return [success:complete,error:"Unable to ${httpMethod?.toUpperCase()} notification after ${count} tries: ${trigger} for execution ${id} (${status}): ${error}"]
         }
         return [success:complete]
     }
@@ -868,5 +924,28 @@ public class NotificationService implements ApplicationContextAware{
         context = DataContextUtils.merge(context, contextMap)
 
         [context, execMap]
+    }
+}
+
+class NotificationThread extends Thread {
+    def notificationService
+    def trigger
+    def schedId
+    def content
+
+    NotificationThread(NotificationService notificationService, trigger, schedId, content){
+        this.notificationService = notificationService
+        this.trigger = trigger
+        this.schedId = schedId
+        this.content = content
+    }
+
+    void run() {
+        ScheduledExecution.withNewTransaction {
+            ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+            if(null != scheduledExecution){
+                notificationService.triggerJobNotification(trigger, scheduledExecution, content)
+            }
+        }
     }
 }

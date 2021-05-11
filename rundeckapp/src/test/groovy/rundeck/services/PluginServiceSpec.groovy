@@ -305,6 +305,50 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
 
     }
 
+    @Unroll
+    def "getDynamicProperties exception"() {
+        given:
+        String project = 'aproject'
+        String svcName = 'WorkflowStep'
+        String type = 'AProvider'
+
+        def services = Mock(Services)
+
+        def manager = Mock(ProjectManager) {
+            getFrameworkProject(project) >> Mock(FrameworkProject) {
+                getProperties() >> [:]
+            }
+        }
+
+        Properties properties = new Properties()
+
+        def mockSvc = Mock(StepExecutionService)
+        def fwk=Mock(IFramework) {
+            getFrameworkProjectMgr() >> manager
+            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever([:])
+
+            getStepExecutionService()>> mockSvc
+            getPropertyLookup() >> PropertyLookup.create(properties)
+        }
+        Description desc = DescriptionBuilder.builder()
+                .name(type)
+                .property(PropertyBuilder.builder().string('aprop').build())
+                .property(PropertyBuilder.builder().string('xprop').build())
+                .build()
+        def pluginInstance = Mock(DynamicProperties)
+
+        service.rundeckPluginRegistry=Mock(PluginRegistry){
+            1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+        }
+
+        when:
+        def result = service.getDynamicProperties(fwk,svcName, type, project, services)
+
+        then:
+        1 * pluginInstance.dynamicProperties(_, services) >> { throw new Exception() }
+        result == null
+    }
+
     def "test shared service api plugin"() {
         given:
         service.rundeckPluginRegistry = Mock(PluginRegistry)

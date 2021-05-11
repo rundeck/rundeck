@@ -46,6 +46,8 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
@@ -61,7 +63,7 @@
               <g:message code="project.config.edit.message" default="Edit Project Configuration File"/>: <g:enc>${params.project ?: request.project}</g:enc>
               <g:link controller="framework" action="editProject"
                       params="[project: params.project ?: request.project]"
-                      class="pull-right btn btn-default btn-sm"
+                      class="pull-right btn btn-success btn-sm"
                       >
                   <!-- <g:icon name="edit"/> -->
                   <g:message code="page.admin.EditProjectSimple.button" default="Simple Configuration"/>
@@ -76,13 +78,16 @@
           </div>
           <div class="card-footer">
               <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
-              <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary reset_page_confirm"/>
+              <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
           </div>
         </div>
       </div>
       </g:form>
     </div>
-
+  </div>
+</div>
+</div>
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
+
 </body>
 </html>

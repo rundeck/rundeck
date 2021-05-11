@@ -20,7 +20,9 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -31,7 +33,9 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
-import org.rundeck.app.authorization.RundeckAuthContextEvaluator
+import org.rundeck.app.acl.ACLFileManager
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
@@ -45,7 +49,6 @@ import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.codecs.JobsXMLCodec
-import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
@@ -197,14 +200,19 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 'test2.aclpolicy':tempfile2
         ]
         def project = Mock(IRundeckProject){
-            getName()>>'myproject'
+            getName()>>'myProject'
         }
-        service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
-            }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
+        service.aclFileManagerService=Mock(AclFileManagerService){
+            forContext(AppACLContext.project('myProject'))>>Mock(ACLFileManager){
+                _ * getValidator()>>Mock(Validator) {
+                    1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    1 * validateYamlPolicy( 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    0 * _(*_)
+                }
             }
             0 * _(*_)
         }
@@ -214,8 +222,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
         then:
         result==[]
-        1 * project.storeFileResource('acls/test.aclpolicy',{it.text=='file1'})
-        1 * project.storeFileResource('acls/test2.aclpolicy',{it.text=='file2'})
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myProject')).storePolicyFile('test.aclpolicy', _)
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myProject')).storePolicyFile('test2.aclpolicy', _)
     }
     def "importProjectACLPolicies invalid"(){
         given:
@@ -232,14 +240,19 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def project = Mock(IRundeckProject){
             getName()>>'myproject'
         }
-        service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>false
-                getErrors()>>['blah':['blah']]
-                toString()>>'test validation failure'
-            }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
-                isValid()>>true
+        service.aclFileManagerService=Mock(AclFileManagerService){
+            forContext(AppACLContext.project('myproject'))>>Mock(ACLFileManager){
+                _ * getValidator()>>Mock(Validator) {
+                    1 * validateYamlPolicy( 'files/acls/test.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid()>>false
+                        getErrors()>>['blah':['blah']]
+                        toString()>>'test validation failure'
+                    }
+                    1 * validateYamlPolicy( 'files/acls/test2.aclpolicy', _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                    0 * _(*_)
+                }
             }
             0 * _(*_)
         }
@@ -248,8 +261,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def result=service.importProjectACLPolicies(policyfiles,project)
 
         then:
-        0 * project.storeFileResource('acls/test.aclpolicy',{it.text=='file1'})
-        1 * project.storeFileResource('acls/test2.aclpolicy',{it.text=='file2'})
+        0 * service.aclFileManagerService.forContext(AppACLContext.project('myproject')).storePolicyFile('test.aclpolicy', _)
+        1 * service.aclFileManagerService.forContext(AppACLContext.project('myproject')).storePolicyFile('test2.aclpolicy', _)
         result==['files/acls/test.aclpolicy: test validation failure']
     }
 
@@ -428,6 +441,225 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         1 * component2.projectDeleted('myproject')
     }
 
+    def "import project archive only nodes without config"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> false
+            getImportNodesSources() >> true
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.put("resources.source.1.type", "local")
+        LinkedHashSet expectedPropertiesToMerge = ["resources.source."]
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        1 * project.mergeProjectProperties(expectedProperties, expectedPropertiesToMerge)
+    }
+
+    def "import project archive only config without nodes"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> true
+            getImportNodesSources() >> false
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.putAll([
+                "project.disable.schedule"             : "false",
+                "project.name"                         : "test",
+                "project.jobs.gui.groupExpandLevel"    : "1",
+                "project.ssh-authentication"           : "privateKey",
+                "service.NodeExecutor.default.provider": "jsch-ssh",
+                "project.ssh-command-timeout"          : "0",
+                "project.label"                        : "Import Source",
+                "project.disable.executions"           : "false",
+                "project.ssh-keypath"                  : "/Users/stephen/.ssh/id_rsa",
+                "project.description"                  : "Import Source",
+                "service.FileCopier.default.provider"  : "jsch-scp",
+                "project.ssh-connect-timeout"          : "0"
+        ])
+
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        0 * project.mergeProjectProperties(_, _)
+        1 * project.setProjectProperties(expectedProperties)
+    }
+
+    def "import project archive with config and nodes"() {
+        setup:
+
+        def project = Mock(IRundeckProject) {
+            getName() >> 'importtest'
+        }
+        def framework = Mock(Framework) {
+            getFrameworkProjectsBaseDir() >> { File.createTempDir() }
+        }
+        def authCtx = Mock(UserAndRolesAuthContext) {
+            getUsername() >> { "user" }
+            getRoles() >> { ["admin"] as Set }
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * loadImportedJobs(_,_,_,_,_,_) >> { [] }
+            1 * issueJobChangeEvents([]) >> {}
+        }
+        service.logFileStorageService = Mock(LogFileStorageService) {
+            getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
+        }
+        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+
+        }
+        ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
+            getProject() >> 'importtest'
+            getImportConfig() >> true
+            getImportNodesSources() >> true
+            getImportACL() >> true
+            getImportScm() >> true
+        }
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                uuid: UUID.randomUUID().toString(),
+                adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                description: 'a job', argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString:
+                                        '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:se,associations: [:])
+        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            decodeFormat('xml',_)>>[importedJob]
+        }
+
+        Properties expectedProperties = new Properties()
+        expectedProperties.putAll([
+                "project.disable.schedule"             : "false",
+                "project.name"                         : "test",
+                "project.jobs.gui.groupExpandLevel"    : "1",
+                "project.ssh-authentication"           : "privateKey",
+                "service.NodeExecutor.default.provider": "jsch-ssh",
+                "project.ssh-command-timeout"          : "0",
+                "project.label"                        : "Import Source",
+                "project.disable.executions"           : "false",
+                "project.ssh-keypath"                  : "/Users/stephen/.ssh/id_rsa",
+                "project.description"                  : "Import Source",
+                "service.FileCopier.default.provider"  : "jsch-scp",
+                "project.ssh-connect-timeout"          : "0",
+                "resources.source.1.type"              : "local"
+        ])
+        LinkedHashSet expectedPropertiesToMerge = ["resources.source"]
+
+        when:
+        def result = service.
+                importToProject(
+                        project, framework, authCtx, getClass().getClassLoader().getResourceAsStream(
+                        "test-rdproject.jar"
+                ), rq
+                )
+
+        then:
+        result
+        0 * project.mergeProjectProperties(_, _)
+        1 * project.setProjectProperties(expectedProperties)
+    }
+
     def "import project archive does not fail when webhooks are enabled but project archive has no webhook defs"() {
         setup:
 
@@ -463,6 +695,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest){
             getProject()>>'importtest'
             getImportConfig()>>true
+            getImportNodesSources()>>true
             getImportACL()>>true
             getImportScm()>>true
             getImportComponents()>>[webhooks:true]
@@ -527,6 +760,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
                 getProject() >> 'importtest'
                 getImportConfig() >> true
+                getImportNodesSources() >> true
                 getImportACL() >> true
                 getImportScm() >> true
             }
@@ -910,7 +1144,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def listener = Mock(ProgressListener){
 
             }
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -943,7 +1177,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -978,7 +1212,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
 
             component.getName() >> name1
             component2.getName() >> name2
@@ -1039,7 +1273,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
 
             component.getName() >> name1
             component2.getName() >> name2
@@ -1097,7 +1331,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1131,7 +1365,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1174,7 +1408,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1216,7 +1450,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1262,7 +1496,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.scmService = Mock(ScmService)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
@@ -1301,11 +1535,8 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             def project = Mock(IRundeckProject){
                 getName()>>'aProject'
                 getProjectProperties()>>projectProps
-                (count) * listDirPaths('acls/')>>['acls/test.aclpolicy']
-                (count) * loadFileResource('acls/test.aclpolicy',_)>>{
-                    it[1]<<'acl data'
-                    'acl data'.bytes.length
-                }
+                0 * listDirPaths(_)
+                0 * loadFileResource(*_)
             }
             def framework = Mock(IFramework)
             def output = new ZipOutputStream(temp.newOutputStream())
@@ -1315,8 +1546,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             def auth = Mock(AuthContext)
             def listener = Mock(ProgressListener)
-            service.rundeckAuthContextEvaluator = Mock(RundeckAuthContextEvaluator)
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.scmService = Mock(ScmService)
+            service.aclFileManagerService=Mock(AclFileManagerService)
         when:
             service.exportProjectToStream(project, framework, output, listener, options, auth)
         then:
@@ -1324,6 +1556,14 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             1 * listener.total('export', count)
             (count) * listener.inc('export', 1)
             1 * listener.done()
+            (count) * service.aclFileManagerService.forContext(AppACLContext.project('aProject')) >>
+            Mock(ACLFileManager) {
+                (count) * listStoredPolicyFiles() >> ['test.aclpolicy']
+                (count) * loadPolicyFileContents('test.aclpolicy', _) >> {
+                    it[1] << 'acl data'
+                    'acl data'.bytes.length
+                }
+            }
             _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
             1 * service.rundeckAuthContextEvaluator.authResourceForProjectAcl('aProject') >> [test2: 'resource']
             1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test2: 'resource'], ['read','admin'])>>aclAuth
@@ -1582,7 +1822,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.workflowService= workflowmock.proxyInstance()
 
         service.executionUtilService = new ExecutionUtilService()
-        service.executionUtilService.grailsApplication = [:]
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
         when:
         service.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -1634,7 +1876,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         service.loggingService = logmock.proxyInstance()
         service.executionUtilService = new ExecutionUtilService()
-        service.executionUtilService.grailsApplication = [:]
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
         def workflowmock = new MockFor(WorkflowService)
         workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
             assert exec == e
@@ -1708,7 +1952,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         service.workflowService = workflowmock.proxyInstance()
         service.executionUtilService = new ExecutionUtilService()
-        service.executionUtilService.grailsApplication = [:]
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
+
         when:
         service.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -2304,7 +2551,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.workflowService= workflowmock.proxyInstance()
 
         service.executionUtilService = new ExecutionUtilService()
-        service.executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:false]]]]]]
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>false
+        }
         when:
         service.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -2369,10 +2618,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.workflowService= workflowmock.proxyInstance()
 
         service.executionUtilService = new ExecutionUtilService()
+        service.executionUtilService.configurationService=Mock(ConfigurationService){
+            getBoolean('execution.logs.fileStorage.generateExecutionXml',_)>>true
+        }
         service.executionUtilService.rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
 
-
-        service.executionUtilService.grailsApplication = [:]
         when:
         service.exportExecution(zip,exec,outfilename)
         then:

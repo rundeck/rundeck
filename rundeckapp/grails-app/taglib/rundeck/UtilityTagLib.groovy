@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import grails.util.Holders
 import org.rundeck.app.components.RundeckJobDefinitionManager
@@ -74,6 +75,7 @@ class UtilityTagLib{
     def configurationService
     def scheduledExecutionService
     FrameworkService frameworkService
+    AuthContextProvider rundeckAuthContextProvider
     GrailsConventionGroovyPageLocator groovyPageLocator
     /**
      * Return a new random string every time it is called.  Attrs are:
@@ -859,12 +861,20 @@ class UtilityTagLib{
         }
         def rdversion = grailsApplication.metadata.getProperty('info.app.version', String)
         def rdversionShort = rdversion.split('-')[0]
-        def helpBase='https://docs.rundeck.com/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversionShort )
+
+        def helpBase
         def helpUrl
         if(grailsApplication.config.rundeck?.gui?.helpLink){
             helpBase= grailsApplication.config.rundeck?.gui?.helpLink
             helpUrl=helpBase + path + fragment
         }else{
+            def docVersion = rdversion?.contains('SNAPSHOT')?'docs':rdversionShort
+
+            if (path)
+                helpBase="https://docs.rundeck.com/${docVersion}"
+            else
+                helpBase="https://docs.rundeck.com/${docVersion}/manual/02-getting-help.html"
+
             def helpParams = helpLinkParams(attrs,body)
             helpUrl= helpBase + path + '?' + helpParams + fragment
         }
@@ -1920,14 +1930,17 @@ ansi-bg-default'''))
             throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
         }
         def auth = session.subject ? (
-                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
-                frameworkService.getAuthContextForSubject(session.subject)
+                project ? rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project) :
+                rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         ) : null
 
         def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
         applicationContext.getBeansOfType(MenuItem).
                 findAll { it.value.type == menuType }.
                 findAll { checkEnabled.apply(it.value) }.
+                sort {a, b->
+                    a.value.priority <=> b.value.priority
+                }.
                 each { name, MenuItem item ->
                     out << body((var): item)
                 }
@@ -1949,8 +1962,8 @@ ansi-bg-default'''))
             throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
         }
         def auth = session.subject ? (
-                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
-                frameworkService.getAuthContextForSubject(session.subject)
+                project ? rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project) :
+                rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         ) : null
 
         def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)

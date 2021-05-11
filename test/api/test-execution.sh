@@ -9,9 +9,10 @@ source $DIR/include.sh
 # Setup: create simple adhoc command execution to provide execution ID.
 ####
 
-runurl="${APIURL}/run/command"
+
 proj="test"
-params="project=${proj}&exec=echo+testing+execution+api"
+runurl="${APIURL}/project/${proj}/run/command"
+params="exec=echo+testing+execution+api"
 
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out
@@ -24,7 +25,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #select id
 
-execid=$($XMLSTARLET sel -T -t -v "/result/execution/@id" $DIR/curl.out)
+execid=$(xmlsel "//execution/@id" $DIR/curl.out)
 
 if [ -z "$execid" ] ; then
     errorMsg "FAIL: expected execution id"
@@ -53,14 +54,14 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+itemcount=$(xmlsel "//executions/@count" $DIR/curl.out)
 assert "1" "$itemcount" "execution count should be 1"
-assert_xml_value "$execid" "/result/executions/execution/@id" $DIR/curl.out
-assert_xml_notblank "/result/executions/execution/@href" $DIR/curl.out
-assert_xml_notblank "/result/executions/execution/@permalink" $DIR/curl.out
-assert_xml_notblank "/result/executions/execution/@status" $DIR/curl.out
-assert_xml_notblank "/result/executions/execution/@project" $DIR/curl.out
-assert_xml_notblank "/result/executions/execution/user" $DIR/curl.out
+assert_xml_value "$execid" "//executions/execution/@id" $DIR/curl.out
+assert_xml_notblank "//executions/execution/@href" $DIR/curl.out
+assert_xml_notblank "//executions/execution/@permalink" $DIR/curl.out
+assert_xml_notblank "//executions/execution/@status" $DIR/curl.out
+assert_xml_notblank "//executions/execution/@project" $DIR/curl.out
+assert_xml_notblank "//executions/execution/user" $DIR/curl.out
 
 echo "OK"
 

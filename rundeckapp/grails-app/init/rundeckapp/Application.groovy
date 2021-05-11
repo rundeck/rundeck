@@ -1,6 +1,5 @@
 package rundeckapp
 
-import com.dtolabs.rundeck.core.properties.CoreConfigurationPropertiesLoader
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import org.rundeck.app.bootstrap.PreBootstrap
@@ -12,10 +11,11 @@ import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.env.PropertiesPropertySource
-import rundeckapp.cli.CommandLineSetup
-import rundeckapp.init.DefaultRundeckConfigPropertyLoader
+import rundeckapp.init.ReloadableRundeckPropertySource
 import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
+import rundeckapp.init.RundeckDbMigration
+import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -28,7 +28,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static String[] startArgs = []
     static void main(String[] args) {
         Application.startArgs = args
-        runPreboostrap()
+        runPrebootstrap()
         ctx = GrailsApp.run(Application, args)
     }
 
@@ -45,24 +45,39 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     @Override
     void setEnvironment(final Environment environment) {
-        Properties rundeckConfigs = loadRundeckPropertyFile()
+        Properties hardCodedRundeckConfigs = new Properties()
+        if(rundeckConfig == null) Application.runPrebootstrap()
 
-        rundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
-        rundeckConfigs.setProperty(
+        hardCodedRundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
+        hardCodedRundeckConfigs.setProperty(
                 "rundeck.security.fileUserDataSource",
                 rundeckConfig.runtimeConfiguration.getProperty(RundeckInitializer.PROP_REALM_LOCATION)
         )
-        rundeckConfigs.setProperty(
+        hardCodedRundeckConfigs.setProperty(
                 "rundeck.security.jaasLoginModuleName",
                 rundeckConfig.runtimeConfiguration.getProperty(RundeckInitializer.PROP_LOGINMODULE_NAME)
         )
         environment.propertySources.addFirst(
-                new PropertiesPropertySource(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, rundeckConfigs)
+                new PropertiesPropertySource("hardcoded-rundeck-props", hardCodedRundeckConfigs)
         )
+        environment.propertySources.addFirst(ReloadableRundeckPropertySource.getRundeckPropertySourceInstance())
         loadGroovyRundeckConfigIfExists(environment)
     }
 
-    static void runPreboostrap() {
+    @Override
+    void doWithApplicationContext() {
+        if(rundeckConfig.isRollback()) {
+            RundeckDbMigration rundeckDbMigration = new RundeckDbMigration(applicationContext)
+            println "Beginning db rollback to ${rundeckConfig.tagName()}"
+            rundeckDbMigration.rollback(rundeckConfig.tagName())
+            println "Rollback complete"
+            System.exit(0)
+        }
+    }
+
+    void doWithDynamicMethods() {
+    }
+    static void runPrebootstrap() {
         ServiceLoader<PreBootstrap> preBootstraps = ServiceLoader.load(PreBootstrap)
         List<PreBootstrap> preboostraplist = []
         preBootstraps.each { pbs -> preboostraplist.add(pbs) }
@@ -77,25 +92,8 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         }
     }
 
-    def loadRundeckPropertyFile() {
-        if (!System.getProperty(SYS_PROP_RUNDECK_CONFIG_INITTED) && !System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION).endsWith(".groovy")) {
-            CoreConfigurationPropertiesLoader rundeckConfigPropertyFileLoader = new DefaultRundeckConfigPropertyLoader()
-            ServiceLoader<CoreConfigurationPropertiesLoader> rundeckPropertyLoaders = ServiceLoader.load(
-                    CoreConfigurationPropertiesLoader
-            )
-            rundeckPropertyLoaders.each { loader ->
-                rundeckConfigPropertyFileLoader = loader
-            }
-            return rundeckConfigPropertyFileLoader.loadProperties()
-        }
-        return new Properties()
-    }
 
     void loadGroovyRundeckConfigIfExists(final Environment environment) {
-        if(System.getProperty(SYS_PROP_RUNDECK_CONFIG_INITTED)) {
-            println "Not loading rundeck-config.properties or rundeck-config.groovy because Rundeck config initialization has already taken place"
-            return
-        }
         String rundeckGroovyConfigFile = System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR) +
                 "/rundeck-config.groovy"
 

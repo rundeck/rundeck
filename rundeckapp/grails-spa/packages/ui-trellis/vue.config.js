@@ -1,5 +1,6 @@
 const Glob = require('glob')
 
+const fse = require('fs-extra')
 const Path = require('path')
 const walk = require('walk')
 
@@ -41,6 +42,7 @@ module.exports = {
       config.plugins.delete('copy')
     })
 
+    /** Remove cache loaders so .d.ts files are emitted */
     config.module.rule('ts').uses.delete('cache-loader')
     config.module.rule('tsx').uses.delete('cache-loader')
   },
@@ -87,6 +89,7 @@ module.exports = {
     /** Don't minimize or split chunks */
     config.optimization.minimize = false
     config.optimization.splitChunks = false
+    config.optimization.minimizer.shift()
 
     /**
      * Disable transpile only so types are emitted
@@ -97,10 +100,37 @@ module.exports = {
         r.use.forEach( u => {
           if (u.loader.match(/ts-loader/)) {
             u.options.transpileOnly = false
+            u.options.onlyCompileBundledFiles = false
             u.options.configFile = 'tsconfig.webpack.json'
-            u.options.logLevel = 'info'
+            u.options.compilerOptions = {
+              declarationDir: './lib',
+            }
           }
         })
+    })
+
+    /** 
+     * Add plugin to fixup .d.ts locations after webpack emit 
+     * Randomly the webpack build will spit the TypeScript .d.ts
+     * files out into the wrong directory structure. This appears to be an interplay
+     * between ts-loader and how it utilizes the TypeScript compiler in multi-entry(page)
+     * builds. Or an error in either.
+     * */
+    config.plugins.push({
+      apply: (compiler) => {
+        const logger = compiler.getInfrastructureLogger('RundeckTsFixup')
+        compiler.hooks.afterEmit.tap('RundeckTsFixup', (compilation) => {
+          if (fse.existsSync('./lib/src')) {
+            logger.error('Fixing up .d.ts location')
+            fse.copySync('./lib/src', './lib')
+            fse.removeSync('./lib/src')
+          }
+          if (fse.existsSync('./lib/node_modules')) {
+            logger.error('Removing extraneous lib/node_modules')
+            fse.removeSync('./lib/node_modules')
+          }
+        })
+      }
     })
   }
 };

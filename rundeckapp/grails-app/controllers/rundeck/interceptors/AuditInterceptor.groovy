@@ -19,6 +19,7 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.common.FrameworkResource
+import org.rundeck.app.access.InterceptorHelper
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.ConfigurationService
 
@@ -35,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap
 class AuditInterceptor {
 
     int order = HIGHEST_PRECEDENCE + 101
+    InterceptorHelper interceptorHelper
 
     /** Default minimum period to wait between project access notifications, in seconds */
     private static final int DEFAULT_PROJECT_MIN_NOTIFICATION_PERIOD = 60 * 30 // default 30 min.
@@ -70,7 +72,7 @@ class AuditInterceptor {
 
     boolean before() {
 
-        if (InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
+        if (interceptorHelper.matchesAllowedAsset(controllerName, request)) return true
 
         if (request.is_allowed_api_request || request.api_version || request.is_api_req) {
             //skip api calls

@@ -20,6 +20,7 @@
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
     var appLinks = {
         api_version: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
+        communityNews: '${createLink(controller: 'communityNews', action: 'index')}',
         project_name: '${params.project ?: request.project}',
         disclosureIcon: '${resource(dir:"images",file:"icon-tiny-disclosure.png")}',
         disclosureIconOpen: '${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}',
@@ -46,6 +47,7 @@
         frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:projParams)}",
         frameworkNodeSummaryAjax: "${createLink(controller:"framework",action:"nodeSummaryAjax",params:projParams)}",
         frameworkDeleteNodeFilterAjax: "${createLink(controller:"framework",action:"deleteNodeFilterAjax",params:projParams)}",
+        authProjectsToCreateAjax: "${g.createLink(controller: 'menu', action: 'authProjectsToCreateAjax',params:projParams)}",
         menuDeleteJobFilterAjax: "${createLink(controller:"menu",action:"deleteJobFilterAjax",params:projParams)}",
         menuSaveJobFilterAjax: "${createLink(controller:"menu",action:"saveJobFilterAjax",params:projParams)}",
         reportsEventsAjax: "${g.createLink(controller: 'reports', action: 'eventsAjax',params:projParams)}",
@@ -101,6 +103,7 @@
         editOptsRenderAll: '${createLink(controller:"editOpts",action:"renderAll",params:projParams)}',
         editOptsRenderSummary: '${createLink(controller:"editOpts",action:"renderSummary",params:projParams)}',
         editOptsRemove: '${createLink(controller:"editOpts",action:"remove",params:projParams)}',
+        editOptsDuplicate: '${createLink(controller:"editOpts",action:"duplicate",params:projParams)}',
         editOptsReorder: '${createLink(controller:"editOpts",action:"reorder",params:projParams)}',
         editOptsUndo: '${createLink(controller:"editOpts",action:"undo",params:projParams)}',
         editOptsRedo: '${createLink(controller:"editOpts",action:"redo",params:projParams)}',
@@ -114,7 +117,9 @@
         apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}',
 
         scmjobs: '${createLink(controller:'menu',action:'listExport',params: projParams)}',
-        togglescm: '${createLink(controller:'menu',action:'projectToggleSCM',params: projParams)}'
+        togglescm: '${createLink(controller:'menu',action:'projectToggleSCM',params: projParams)}',
+
+        help: '${raw(g.helpLinkUrl())}'
     } ;
     <g:if test="${Environment.current==Environment.DEVELOPMENT}" >
     function _messageMissingError(code){

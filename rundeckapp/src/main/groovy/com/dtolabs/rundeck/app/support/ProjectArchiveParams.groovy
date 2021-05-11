@@ -32,6 +32,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     String jobUuidOption='preserve'
     Boolean importExecutions=true
     Boolean importConfig=false
+    Boolean importNodesSources=false
     Boolean importACL=false
     Boolean importScm=false
     Boolean validateJobref=false
@@ -53,6 +54,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         jobUuidOption(nullable: true,inList: ['preserve','remove'])
         importExecutions(nullable: true)
         importConfig(nullable: true)
+        importNodesSources(nullable: true)
         importACL(nullable: true)
         importScm(nullable: true)
         exportAll(nullable: true)

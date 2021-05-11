@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.config;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -39,6 +40,7 @@ public class RundeckConfigBase {
     RundeckProjectServiceConfig projectService;
     RundeckProjectManagerServiceConfig projectManagerService;
     RundeckLogFileStorageServiceConfig logFileStorageService;
+    RundeckAuthorizationServiceConfig authorizationService;
     RundeckReportServiceConfig reportService;
     RepositoryConfig repository;
     RundeckLog4jConfig log4j;
@@ -51,10 +53,28 @@ public class RundeckConfigBase {
     RundeckMetricsConfig metrics;
     RundeckExecutionConfig execution;
     UserSessionProjectsCache userSessionProjectsCache;
+    RundeckNotificationConfig notification;
+    RundeckApiConfig api;
+    ScmLoader scmLoader;
 
     @Data
     public static class UserSessionProjectsCache {
         Long refreshDelay;
+    }
+
+    @Data
+    public static class RundeckApiConfig {
+        ApiTokensConfig tokens;
+
+        @Data
+        public static class ApiTokensConfig {
+            ApiTokensDuration duration;
+        }
+
+        @Data
+        public static class ApiTokensDuration {
+            String max;
+        }
     }
 
     @Data
@@ -89,6 +109,7 @@ public class RundeckConfigBase {
             ConcurrencyLimit retrievalTasks;
 
             Checkpoint checkpoint;
+            boolean generateExecutionXml;
         }
 
         @Data
@@ -161,13 +182,27 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckProjectManagerServiceConfig {
         ProjectCache projectCache;
+        FileCache fileCache;
 
+        @Data
+        public static class FileCache {
+            String spec;
+        }
         @Data
         public static class ProjectCache {
             String spec;
         }
     }
 
+    @Data
+    public static class RundeckAuthorizationServiceConfig {
+        SourceCache sourceCache;
+
+        @Data
+        public static class SourceCache {
+            String spec;
+        }
+    }
     @Data
     public static class RundeckLogFileStorageServiceConfig {
         Startup startup;
@@ -293,11 +328,15 @@ public class RundeckConfigBase {
         Enabled jobLifecyclePlugin = new Enabled();
         Enabled executionLifecyclePlugin = new Enabled();
         Enabled legacyExecOutputViewer = new Enabled();
-        Enabled notificationsEditorVue = new Enabled();
         Enabled sidebarProjectListing = new Enabled(true);
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
+        Enabled notificationsOwnThread = new Enabled();
+        Enabled uiNext = new Enabled(false);
+        Enabled workflowDesigner = new Enabled(true);
+        Enabled eventStore = new Enabled(true);
+        Enabled projectKeyStorage = new Enabled(true);
 
         @Data
         public static class Enabled {
@@ -337,6 +376,18 @@ public class RundeckConfigBase {
         Csrf csrf;
         Ldap ldap;
         HttpHeaders headers;
+        InterceptorHelperConfig interceptor;
+
+        @Data
+        public static class InterceptorHelperConfig {
+            AllowedAssets allowed;
+        }
+
+        @Data
+        public static class AllowedAssets {
+            List<String> controllers;
+            List<String> paths;
+        }
 
         @Data
         public static class Ldap {
@@ -370,6 +421,10 @@ public class RundeckConfigBase {
             private String delimiter;
             private String redirectUrl;
             private Boolean redirectLogout;
+            private Boolean userSyncEnabled;
+            private String userFirstNameHeader;
+            private String userLastNameHeader;
+            private String userEmailHeader;
         }
         @Data
         public static class Csrf {
@@ -391,6 +446,7 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckLoginConfig {
         LocalLogin localLogin;
+        String redirectUri;
     }
 
     @Data
@@ -414,7 +470,17 @@ public class RundeckConfigBase {
         Login login;
         Job job;
         Home home;
+        GuiSystemConfig system;
 
+        @Data
+        public static class GuiSystemConfig{
+            AclList aclList;
+        }
+        @Data
+        public static class AclList{
+            Boolean pagingEnabled;
+            int pagingMax;
+        }
         @Data
         public static class Home {
             ProjectList projectList;
@@ -484,6 +550,17 @@ public class RundeckConfigBase {
         public static class Compression {
             Integer nodeThreshold;
         }
+    }
+
+    @Data
+    public static class RundeckNotificationConfig {
+        Long threadTimeOut;
+    }
+
+    @Data
+    public static class ScmLoader {
+        Long delay;
+        Long interval;
     }
 
     public static final Map<String,String> DEPRECATED_PROPS = ImmutableMap.of(

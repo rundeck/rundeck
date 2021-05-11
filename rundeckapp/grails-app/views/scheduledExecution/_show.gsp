@@ -52,12 +52,12 @@
                           model="[scheduledExecution: scheduledExecution,
                                   hideTitle         : false,
                                   dropdownClass     : 'dropdown-menu-right',
-                                  btnClass          : 'btn btn-secondary btn-sm']"/>
+                                  btnClass          : 'btn btn-sm']"/>
             </div>
 
             <g:if test="${readAccess}">
                 <section class="section-space">
-                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-secondary btn-sm ">
+                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-sm ">
 
                         <g:if test="${rundoctext}">
                             <i class="glyphicon glyphicon-book"></i>

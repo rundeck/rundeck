@@ -16,20 +16,16 @@
 
 /*
 * ExecutionContext.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/21/11 4:32 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.NodesSelector;
-import com.dtolabs.rundeck.core.common.OrchestratorConfig;
-import com.dtolabs.rundeck.core.common.PluginControlService;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.data.MultiDataContext;
@@ -63,8 +59,15 @@ public interface ExecutionContext {
 
     /**
      * @return the framework
+     * @deprecated use {@link #getIFramework()}
      */
     public Framework getFramework();
+
+    /**
+     *
+     * @return the framework
+     */
+    public IFramework getIFramework();
 
     /**
      * @return the authorization context

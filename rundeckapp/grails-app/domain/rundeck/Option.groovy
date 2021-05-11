@@ -429,6 +429,13 @@ public class Option implements Comparable{
         optionValues
     }
 
+    List parseOptionValueList(){
+        if(valuesFromPlugin){
+            return valuesFromPlugin.collect{[name:it.name,value:it.value]}
+        }
+        return null
+    }
+
     public String toString ( ) {
         return "Option{" +
         "name='" + name + '\'' +

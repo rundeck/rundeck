@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
 import com.fasterxml.jackson.databind.ObjectMapper
+import grails.converters.JSON
 import grails.events.bus.EventBus
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -52,8 +53,7 @@ class BootStrap {
     def frameworkService
     def workflowService
     def logFileStorageService
-    def projectManagerService
-    def filesystemProjectManager
+    def rundeckFilesystemProjectImporter
     def reportService
     def configurationService
     def fileUploadService
@@ -79,6 +79,8 @@ class BootStrap {
     }
 
     def init = { ServletContext servletContext ->
+        // Marshal enums to "STRING" instead of {"enumType":"com.package.MyEnum", "name":"OBJECT"}
+        JSON.registerObjectMarshaller(Enum, { Enum e -> e.toString() })
         //setup profiler logging
         if(!(grailsApplication.config?.grails?.profiler?.disable) && grailsApplication.mainContext.profilerLog) {
             //re-enable log output for profiler info, which is disabled by miniprofiler
@@ -248,14 +250,8 @@ class BootStrap {
                     log.debug("Loaded ${tokens.size()} tokens from tokens file: ${tokensfile}...")
                 }
             }
-
-            //import filesystem projects if using DB storage
-            if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
-                log.debug("importing existing filesystem projects")
-                timer("ProjectManagerService importProjectsFromProjectManager"){
-                    projectManagerService.importProjectsFromProjectManager(filesystemProjectManager)
-                }
-            }
+            //begin import at bootstrap time
+            rundeckFilesystemProjectImporter.bootstrap()
         }
         executionService.initialize()
 

@@ -55,7 +55,7 @@
         </div>
         <div slot="footer">
           <btn @click="openModal=false">Cancel</btn>
-          <btn type="primary" @click="loadUsersList(0)">{{ $t("message.pageFilterBtnSearch")}}</btn>
+          <btn type="cta" @click="loadUsersList(0)">{{ $t("message.pageFilterBtnSearch")}}</btn>
         </div>
     </modal>
 

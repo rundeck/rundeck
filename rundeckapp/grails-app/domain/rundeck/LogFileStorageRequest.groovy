@@ -16,6 +16,8 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
+
 class LogFileStorageRequest {
     Execution execution
     String pluginName
@@ -31,5 +33,12 @@ class LogFileStorageRequest {
         execution nullable: false, unique: true
         pluginName maxSize: 255
         filetype nullable: true
+    }
+
+
+    static mapping = {
+        DomainIndexHelper.generate(delegate) {
+            index 'LOGFILESTORAGE_IDX_1', ['completed']
+        }
     }
 }

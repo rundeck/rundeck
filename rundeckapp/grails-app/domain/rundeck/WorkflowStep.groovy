@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.dirty.checking.DirtyCheck
 
@@ -37,6 +38,10 @@ abstract class WorkflowStep {
     static mapping = {
         pluginConfigData(type: 'text')
         errorHandler lazy: false
+
+        DomainIndexHelper.generate(delegate) {
+            index 'IDX_ERROR_HANDLER', ['errorHandler']
+        }
     }
 
     public String summarize() {

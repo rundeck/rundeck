@@ -119,6 +119,11 @@ public class AclRuleBuilder {
         return this;
     }
 
+    public AclRuleBuilder urn(final String urn) {
+        aclRuleImpl.urn = urn;
+        return this;
+    }
+
     public AclRuleBuilder allowActions(final Set<String> allowActions) {
         aclRuleImpl.allowActions = allowActions;
         return this;

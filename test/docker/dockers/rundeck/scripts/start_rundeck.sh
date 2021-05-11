@@ -93,16 +93,6 @@ export JAVA_HOME
 PATH=\$JAVA_HOME/bin:\$RDECK_BASE/tools/bin:\$PATH
 export PATH
 
-
-export LIBDIR=\$RDECK_BASE/tools/lib
-
-CLI_CP=
-for i in \`ls \$LIBDIR/*.jar\`
-do
- CLI_CP=\${CLI_CP}:\${i}
-done
-export CLI_CP
-
 # force UTF-8 default encoding
 export RDECK_JVM="-Dfile.encoding=UTF-8 -Drundeck.bootstrap.build.info=true $RDECK_JVM_OPTS"
 END
@@ -243,10 +233,10 @@ rdeck.base=/home/rundeck
 rss.enabled=false
 server.address=0.0.0.0
 grails.serverURL=${RUNDECK_URL}
-dataSource.dbCreate = update
-dataSource.url = jdbc:h2:file:/home/rundeck/server/data/grailsdb;MVCC=true
+dataSource.dbCreate = none
+dataSource.url = jdbc:h2:file:/home/rundeck/server/data/grailsdb;DB_CLOSE_ON_EXIT=FALSE
 dataSource.properties.removeAbandoned=true
-dataSource.properties.removeAbandonedTimeout=5
+dataSource.properties.removeAbandonedTimeout=10
 
 # Pre Auth mode settings
 rundeck.security.authorization.preauthenticated.enabled=false

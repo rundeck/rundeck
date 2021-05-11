@@ -115,7 +115,7 @@ var NodeFiltersTest = function () {
     };
 
     self.testAll = function () {
-        jQuery(document.body).append(jQuery('<div id="node-filters-tests" class="test-elem"></div>'))
+        jQuery('.content').append(jQuery('<div id="node-filters-tests" class="test-elem"></div>'))
         assert("Start: nodeFiltersKOTest.js", 1, 1);
         for (var i in self) {
             if (i.endsWith('Test')) {

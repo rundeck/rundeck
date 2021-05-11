@@ -1,0 +1,87 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:${assetPluginVersion}"
+    }
+}
+
+group "webhooks"
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"org.grails.grails-plugin"
+apply plugin:"org.grails.grails-plugin-publish"
+apply plugin:"asset-pipeline"
+apply plugin:"org.grails.grails-gsp"
+
+repositories {
+    mavenLocal()
+    maven { url "https://repo.grails.org/grails/core" }
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+dependencies {
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    compile "org.springframework.boot:spring-boot-starter-log4j2"
+    compile "org.springframework.boot:spring-boot-autoconfigure"
+    compile("org.grails:grails-core") {
+        exclude(group:"org.yaml",module:"snakeyaml")
+    }
+    compile "org.grails:grails-web-boot"
+    compile "org.grails:grails-logging"
+    compile "org.grails:grails-plugin-rest"
+    compile "org.grails:grails-plugin-databinding"
+    compile "org.grails:grails-plugin-i18n"
+    compile "org.grails:grails-plugin-services"
+    compile "org.grails:grails-plugin-url-mappings"
+    compile "org.grails:grails-plugin-interceptors"
+    compile "org.grails.plugins:async"
+    compile "org.grails.plugins:scaffolding"
+    compile "org.grails.plugins:gsp"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    console "org.grails:grails-console"
+    compile project(":core")
+
+    compile "org.yaml:snakeyaml:${snakeyamlVersion}"
+    provided "org.grails:grails-plugin-domain-class"
+    runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.mockito:mockito-core"
+    testCompile "org.grails:grails-web-testing-support"
+}
+
+bootRun {
+    ignoreExitValue true
+    jvmArgs(
+            '-Dspring.output.ansi.enabled=always',
+            '-noverify',
+            '-XX:TieredStopAtLevel=1',
+            '-Xmx1024m')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
+}
+
+tasks.withType(GroovyCompile) {
+    configure(groovyOptions) {
+        forkOptions.jvmArgs = ['-Xmx1024m']
+    }
+}
+
+// enable if you wish to package this plugin as a standalone application
+bootJar.enabled = false
+bootRun.enabled = false
+
+assets {
+    packagePlugin = true
+}

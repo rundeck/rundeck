@@ -22,15 +22,10 @@ import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.jobs.JobOption
-import com.dtolabs.rundeck.core.plugins.PluginConfigSet
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
-import com.google.gson.Gson
-import groovy.json.JsonOutput
-import org.quartz.Calendar
-import org.quartz.TriggerUtils
-import org.quartz.impl.calendar.BaseCalendar
+import com.dtolabs.rundeck.core.jobs.JobReference
+import com.fasterxml.jackson.core.JsonParseException
 import org.rundeck.util.Sizes
+import rundeck.services.JobReferenceImpl
 
 class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
@@ -417,12 +412,12 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(data.orchestrator){
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
-        
+
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
         se.excludeFilterUncheck = data.excludeFilterUncheck?data.excludeFilterUncheck:false
-        
+
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
         if(data.loglimit){
@@ -660,7 +655,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     }
 
     public setUserRoles(List l){
-        def json = JsonOutput.toJson(l)
+        def json = serializeJsonList(l)
         setUserRoleList(json)
     }
 
@@ -668,9 +663,8 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(userRoleList){
             //check if the string is a valid JSON
             try {
-                Gson gson = new Gson()
-                return gson.fromJson(userRoleList, List.class)
-            } catch(com.google.gson.JsonSyntaxException ex) {
+                return asJsonList(userRoleList)
+            } catch(JsonParseException ex) {
                 return Arrays.asList(userRoleList.split(/,/))
             }
 
@@ -989,7 +983,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
     }
 
-    def getExtid(){
+    String getExtid(){
         return this.uuid?:this.id.toString()
     }
 
@@ -1099,6 +1093,16 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         options.findAll { it.typeFile } as List
     }
 
+    /**
+     * Indicates if this job has secure options in its configuration.
+     * @return true if the job has any secure option.
+     */
+    boolean hasSecureOptions() {
+        return !options ? false : options?.any {
+            it.secureInput || it.secureExposed
+        }
+    }
+
     long getAverageDuration() {
         def stats = getStats()
         def statsContent= stats?.getContentMap()
@@ -1205,6 +1209,20 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      */
     SortedSet<JobOption> jobOptionsSet() {
         new TreeSet<>(options.collect{it.toJobOption()})
+    }
+
+    /**
+     *
+     * @return reference interface for this job
+     */
+    JobReference asReference() {
+        new JobReferenceImpl(
+            id: extid,
+            jobName: jobName,
+            groupPath: groupPath,
+            project: project,
+            serverUUID: serverNodeUUID
+        )
     }
 }
 

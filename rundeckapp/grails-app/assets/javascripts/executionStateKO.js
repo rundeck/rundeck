@@ -942,6 +942,9 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.scheduled = ko.pureComputed(function () {
         return self.executionState() === 'SCHEDULED';
     });
+    self.queued = ko.pureComputed(function () {
+        return self.executionState() === 'QUEUED';
+    });
     self.failed = ko.pureComputed(function () {
         return self.executionState() === 'FAILED';
     });

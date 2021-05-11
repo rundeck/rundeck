@@ -45,6 +45,8 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
         <div class="col-xs-12">
@@ -97,7 +99,7 @@
               </div>
             </div>
             <div class="card-footer">
-              <g:submitButton name="create" value="${g.message(code: 'button.Setup.title', default: 'Setup')}" class="btn btn-default"/>
+              <g:submitButton name="create" value="${g.message(code: 'button.Setup.title', default: 'Setup')}" class="btn btn-cta"/>
             </div>
           </div>
         </g:form>
@@ -105,5 +107,7 @@
     </div>
   </div>
   <g:render template="/framework/storageBrowseModalKO"/>
+</div>
+</div>
 </body>
 </html>

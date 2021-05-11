@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#test /api/jobs/import
+
 set -e
 
 DIR=$(cd `dirname $0` && pwd)
@@ -49,7 +49,7 @@ END
     NDATES=$(( $NDATES + 10 ))
     osname=$(uname)
     if [ "Darwin" = "$osname" ] ; then
-        NDATE=$(date -u -r "$NDATES" '+%Y %m %d %H %M %S')
+        NDATE=$(date -r "$NDATES" '+%Y %m %d %H %M %S')
     else
         NDATE=$(date -u --date="@$NDATES" '+%Y %m %d %H %M %S')
     fi
@@ -89,24 +89,11 @@ END
 END
 
     # now submit req
-    runurl="${APIURL}/project/$projname/jobs/import"
-    params=""
-    ulopts="-F xmlBatch=@$DIR/job_create.post"
 
-    # get listing
-    docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+    jobId=$(uploadJob "$DIR/job_create.post" "$projname"  1 "")
     if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed query request"
-        exit 2
-    fi
-
-    jobId=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-    succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-
-    if [ "1" != "$succount" -o "" == "$jobId" ] ; then
-        errorMsg  "Upload was not successful."
-        $XMLSTARLET sel -T -t -v "/result/failed" $DIR/curl.out
-        exit 2
+      errorMsg "failed job upload"
+      exit 2
     fi
 }
 
@@ -176,7 +163,7 @@ assert_job_execution_count(){
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-    assert $expectedcount $(xmlsel "/result/executions/@count" $DIR/curl.out) "Wrong number of executions"
+    assert $expectedcount $(xmlsel "//executions/@count" $DIR/curl.out) "Wrong number of executions"
 }
 
 ####
@@ -185,6 +172,7 @@ assert_job_execution_count(){
 echo "TEST: when schedule is on, job does execute"
 generate_projectName_and_jobName
 create_proj_and_job $projectName $jobName
+echo "jobName $jobName projectName $projectName"
 assert_job_execution_count $jobId "0"
 sleep 12
 assert_job_execution_count $jobId "1"

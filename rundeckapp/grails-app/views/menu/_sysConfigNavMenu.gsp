@@ -53,7 +53,7 @@
 }
 </style>
 
-<ul class="dropdown-menu">
+<ul class="dropdown-menu dropdown-menu-right">
   <li class="dropdown-header">System</li>
   <li>
     <g:link controller="menu" action="storage">
@@ -62,18 +62,8 @@
   </li>
   <g:if test="${authRead}">
     <li>
-      <g:link controller="menu" action="systemConfig">
-        <g:message code="gui.menu.SystemConfig"/>
-      </g:link>
-    </li>
-    <li>
       <g:link controller="menu" action="acls">
         <g:message code="gui.menu.AccessControl"/>
-      </g:link>
-    </li>
-    <li>
-      <g:link controller="menu" action="systemInfo">
-        <g:message code="gui.menu.SystemInfo"/>
       </g:link>
     </li>
     <li>
@@ -85,7 +75,7 @@
 <g:if test="${pluginRead && repoEnabled}">
   <li class="dropdown-submenu">
     <a href="#">Plugins <span class="caret"></span></a>
-    <ul class="dropdown-menu">
+    <ul class="dropdown-menu dropdown-menu-right">
       <li>
         <a href="${g.createLink(uri:'/artifact/index/repositories')}">
             <g:message code="gui.menu.FindPlugins"/>

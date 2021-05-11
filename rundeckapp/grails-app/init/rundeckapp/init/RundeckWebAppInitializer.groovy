@@ -31,6 +31,6 @@ import javax.servlet.ServletException
 class RundeckWebAppInitializer implements WebApplicationInitializer {
     @Override
     void onStartup(final ServletContext servletContext) throws ServletException {
-        Application.runPreboostrap()
+        Application.runPrebootstrap()
     }
 }

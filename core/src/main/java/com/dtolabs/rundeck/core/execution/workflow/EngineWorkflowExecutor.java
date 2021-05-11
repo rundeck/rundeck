@@ -17,7 +17,9 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.NodesetEmptyException;
 import com.dtolabs.rundeck.core.common.IFramework;
+import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
@@ -203,8 +205,100 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
 
         WorkflowStrategy strategyForWorkflow;
+        WorkflowStatusResult workflowResult = null;
+        Exception exception = null;
         try {
             strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, getFramework());
+
+            final NodesSelector nodeSelector = executionContext.getNodeSelector();
+            validateNodeSet(executionContext, nodeSelector);
+            RuleEngine ruleEngine = setupRulesEngine(executionContext, workflow, strategyForWorkflow);
+
+            WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
+            if (profile == null) {
+                profile = new SequentialStrategyProfile();
+            }
+
+            final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
+            Set<StepOperation> operations = buildOperations(
+                    this,
+                    executionContext,
+                    item,
+                    workflow,
+                    wlistener,
+                    ruleEngine,
+                    state,
+                    profile,
+                    logDebug
+            );
+
+            logDebug.log("Create rule engine with rules: " + ruleEngine);
+            logDebug.log("Create workflow engine with state: " + state);
+
+            List<WorkflowSystemEventListener> list = new ArrayList<>();
+
+            list.add(event -> {
+                logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
+            });
+
+            executionContext.useAllComponentsOfType(WorkflowSystemEventListener.class, list::add);
+
+            WorkflowSystem<Map<String, String>> workflowEngine = buildWorkflowSystem(
+                    state,
+                    ruleEngine,
+                    strategyForWorkflow.getThreadCount(),
+                    getWorkflowSystemBuilderSupplier(),
+                    list
+            );
+
+            WorkflowSystem.SharedData<WFSharedContext, Map<String, String>>
+                    dataContextSharedData =
+                    WorkflowSystem.SharedData.with(
+                            sharedContext::merge,
+                            () -> sharedContext,
+                            () -> DataContextUtils.flattenDataContext(sharedContext.getData(ContextView.global()))
+                    );
+
+            Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>
+                    operationResults =
+                    workflowEngine.processOperations(operations, dataContextSharedData);
+
+
+            String statusString = null;
+            ControlBehavior controlBehavior = null;
+
+
+            boolean workflowSuccess = !workflowEngine.isInterrupted();
+            for (WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation> operationResult :
+                    operationResults) {
+                OperationCompleted completed = operationResult.getSuccess();
+                StepOperation operation = operationResult.getOperation();
+                Throwable failure = operationResult.getFailure();
+
+                if (completed != null) {
+                    StepResultCapture result = completed.getStepResultCapture();
+                    if (!result.getStepResult().isSuccess()) {
+                        stepFailures.put(completed.getStepNum(), result.getStepResult());
+                        workflowSuccess = false;
+                    }
+                    stepResults.add(result.getStepResult());
+                    if (result.getControlBehavior() != null && result.getControlBehavior() != ControlBehavior.Continue) {
+                        controlBehavior = result.getControlBehavior();
+                        statusString = result.getStatusString();
+                    }
+                } else {
+                    workflowSuccess = false;
+                    addUnknownStepFailure(executionContext, stepFailures, operation, failure, logDebug, logErr);
+                }
+            }
+            logSkippedOperations(executionContext, operations, logWarn);
+
+            workflowResult = workflowResult(
+                    workflowSuccess,
+                    statusString,
+                    null != controlBehavior ? controlBehavior : ControlBehavior.Continue,
+                    sharedContext
+            );
         } catch (ExecutionServiceException e) {
             logErr.log("Exception: " + e.getClass() + ": " + e.getMessage());
             return new BaseWorkflowExecutionResult(
@@ -215,103 +309,29 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     WorkflowResultFailed,
                     sharedContext
             );
-        }
-
-
-        RuleEngine ruleEngine = setupRulesEngine(executionContext, workflow, strategyForWorkflow);
-
-        WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
-        if (profile == null) {
-            profile = new SequentialStrategyProfile();
-        }
-
-        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        Set<StepOperation> operations = buildOperations(
-                this,
-                executionContext,
-                item,
-                workflow,
-                wlistener,
-                ruleEngine,
-                state,
-                profile,
-                logDebug
-        );
-
-        logDebug.log("Create rule engine with rules: " + ruleEngine);
-        logDebug.log("Create workflow engine with state: " + state);
-
-        List<WorkflowSystemEventListener> list = new ArrayList<>();
-
-        list.add(event -> {
-            logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
-        });
-
-        executionContext.useAllComponentsOfType(WorkflowSystemEventListener.class, list::add);
-
-        WorkflowSystem<Map<String, String>> workflowEngine = buildWorkflowSystem(
-                state,
-                ruleEngine,
-                strategyForWorkflow.getThreadCount(),
-                getWorkflowSystemBuilderSupplier(),
-                list
-        );
-
-        WorkflowSystem.SharedData<WFSharedContext, Map<String, String>>
-                dataContextSharedData =
-                WorkflowSystem.SharedData.with(
-                        sharedContext::merge,
-                        () -> sharedContext,
-                        () -> DataContextUtils.flattenDataContext(sharedContext.getData(ContextView.global()))
-                );
-
-        Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>
-                operationResults =
-                workflowEngine.processOperations(operations, dataContextSharedData);
-
-
-        String statusString = null;
-        ControlBehavior controlBehavior = null;
-
-
-        boolean workflowSuccess = !workflowEngine.isInterrupted();
-        for (WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation> operationResult :
-                operationResults) {
-            OperationCompleted completed = operationResult.getSuccess();
-            StepOperation operation = operationResult.getOperation();
-            Throwable failure = operationResult.getFailure();
-
-            if (completed != null) {
-                StepResultCapture result = completed.getStepResultCapture();
-                if (!result.getStepResult().isSuccess()) {
-                    stepFailures.put(completed.getStepNum(), result.getStepResult());
-                    workflowSuccess = false;
-                }
-                stepResults.add(result.getStepResult());
-                if (result.getControlBehavior() != null && result.getControlBehavior() != ControlBehavior.Continue) {
-                    controlBehavior = result.getControlBehavior();
-                    statusString = result.getStatusString();
-                }
+        } catch (NodesetEmptyException e) {
+            Boolean successOnEmptyNodeFilter = Boolean.valueOf(executionContext.getDataContext()
+                    .get("job")
+                    .get("successOnEmptyNodeFilter"));
+            if (!successOnEmptyNodeFilter) {
+                exception = e;
+                e.printStackTrace();
+                executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
+                        .getMessage());
+                workflowResult = WorkflowResultFailed;
             } else {
-                workflowSuccess = false;
-                addUnknownStepFailure(executionContext, stepFailures, operation, failure, logDebug, logErr);
+                logDebug.log("No matched nodes");
+                workflowResult = workflowResult(true, null, ControlBehavior.Continue, sharedContext);
             }
         }
-        logSkippedOperations(executionContext, operations, logWarn);
-
-        WorkflowStatusResult workflowResult = workflowResult(
-                workflowSuccess,
-                statusString,
-                null != controlBehavior ? controlBehavior : ControlBehavior.Continue,
-                sharedContext
-        );
+        final Exception fexception = exception;
 
         final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
         return new BaseWorkflowExecutionResult(
                 stepResults,
                 nodeFailures,
                 stepFailures,
-                null,
+                fexception,
                 workflowResult,
                 sharedContext
         );

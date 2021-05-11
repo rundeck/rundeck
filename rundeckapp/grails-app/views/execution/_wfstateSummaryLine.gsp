@@ -45,7 +45,7 @@
                     (<span data-bind="text: startTimeAgo()"></span>)
                 </span>
                 <span data-bind="
-                if: execDurationSimple() != '',
+                if: !queued() && execDurationSimple() != '',
                  attr: {title: execDurationHumanized() },
                  css: {'text-info':!completed(), 'text-secondary': completed()},
                  click: toggleHumanizedDisplay"
@@ -81,7 +81,7 @@
 
             <dl  class="execution-full-dates">
                 <dt>
-                    <!-- ko if: !scheduled() -->
+                    <!-- ko if: !scheduled() && !queued() -->
                     <g:message code="start" />
                     (<span data-bind="text: startTimeAgo()"></span>)
                     <!-- /ko -->

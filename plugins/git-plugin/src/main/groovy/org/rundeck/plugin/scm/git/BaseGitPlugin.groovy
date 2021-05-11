@@ -157,7 +157,6 @@ class BaseGitPlugin {
             outfile = mapper.fileForJob(job)
         }
         AtomicLong counter = fileCounterFor(outfile)
-        logger.debug("Start serialize[${Thread.currentThread().name}]...")
 
         synchronized (counter) {
             //other threads serializing the same job must wait until we complete
@@ -207,7 +206,6 @@ class BaseGitPlugin {
                                 "Failed to serialize job, no content was written for job ${job}"
                         )
                     }
-                    logger.debug("Serialized[${Thread.currentThread().name}] ${job} ${format} to ${outfile}")
 
                     Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
                 }finally{
@@ -217,10 +215,9 @@ class BaseGitPlugin {
                 }
             } else {
                 //another thread already serialized this or earlier revision of the job, should not
-                logger.debug("SKIP serialize[${Thread.currentThread().name}] for ${job} to ${outfile}")
+                logger.trace("SKIP serialize[${Thread.currentThread().name}] for ${job} to ${outfile}")
             }
         }
-        logger.debug("Done serialize[${Thread.currentThread().name}]...")
     }
 
     def serializeTemp(final JobExportReference job, String format, boolean preserveId, boolean useSourceId) {
@@ -534,7 +531,7 @@ class BaseGitPlugin {
         }
     }
 
-    protected void cloneOrCreate(final ScmOperationContext context, File base, String url) throws ScmPluginException {
+    protected void cloneOrCreate(final ScmOperationContext context, File base, String url, String integration) throws ScmPluginException {
         if (base.isDirectory() && new File(base, ".git").isDirectory()) {
             def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
             def agit = new Git(arepo)
@@ -543,16 +540,18 @@ class BaseGitPlugin {
             def config = agit.getRepository().getConfig()
             def found = config.getString("remote", REMOTE_NAME, "url")
             def projectName = config.getString("rundeck", "scm-plugin", "project-name")
-            if (projectName && !projectName.equals(context.frameworkProject)) {
+            def gitIntegration = config.getString("rundeck", "scm-plugin", "integration")
+            if (projectName && !projectName.equals(context.frameworkProject) || gitIntegration && !gitIntegration.equals(integration)) {
                 throw new ScmPluginInvalidInput(
-                        "The base directory is already in use by another project: ${projectName}",
+                        "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}",
                         Validator.errorReport(
                                 'dir',
-                                "The base directory is already in use by another project: ${projectName}"
+                                "The base directory is already in use by another project: ${projectName} with integration : ${gitIntegration}"
                         )
                 )
             } else if (!projectName) {
                 config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
+                config.setString("rundeck", "scm-plugin", "integration", integration)
                 config.save()
             }
             def needsClone=false;
@@ -569,7 +568,7 @@ class BaseGitPlugin {
             if(needsClone){
                 //need to reconfigured
                 removeWorkdir(base)
-                performClone(base, url, context)
+                performClone(base, url, context, integration)
                 return
             }
 
@@ -583,7 +582,7 @@ class BaseGitPlugin {
             git = agit
             repo = arepo
         } else {
-            performClone(base, url, context)
+            performClone(base, url, context, integration)
         }
     }
 
@@ -599,8 +598,8 @@ class BaseGitPlugin {
         return msgs.join("; ")
     }
 
-    private void performClone(File base, String url, ScmOperationContext context, String branch=this.branch) {
-        logger.debug("cloning...");
+    private void performClone(File base, String url, ScmOperationContext context, String branch=this.branch, String integration) {
+        logger.debug("cloning...")
         def cloneCommand = Git.cloneRepository().
                 setBranch(branch).
                 setRemote(REMOTE_NAME).
@@ -613,6 +612,9 @@ class BaseGitPlugin {
             logger.debug("Failed cloning the repository from ${url}: ${e.message}", e)
             throw new ScmPluginException("Failed cloning the repository from ${url}: ${e.message}", e)
         }
+        git.getRepository().config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
+        git.getRepository().config.setString("rundeck", "scm-plugin", "integration", integration)
+        git.getRepository().config.save()
         repo = git.getRepository()
     }
 

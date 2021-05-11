@@ -58,11 +58,12 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
             endDate
         }
         Date execDate = new Date(2015 - 1900, 02, 03)
+        FrameworkService frameworkService = initNonClusterFrameworkService()
+
         ScheduledExecution se = setupJob(projName)
-        Execution execution = setupExecution(se, projName, execDate, execDate)
+        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         ExecutionsCleanUp job = new ExecutionsCleanUp()
 
-        FrameworkService frameworkService = initNonClusterFrameworkService()
         List execIdsToExclude = job.searchExecutions(
                 frameworkService,
                 new ExecutionService(),
@@ -97,8 +98,6 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
 
 
         logFileStorageService.demand.getExecutionFiles(1..999) { e , filters, endpoint ->  [:] }
-
-        Execution execution = setupExecution(se, projName, execDate, execDate)
 
         Assert.assertEquals(true, execIdsToExclude.size() > 0)
 
@@ -164,7 +163,7 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
 
     }
 
-    Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate) {
+    Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
         Execution e
         Execution.withNewTransaction {
             e = new Execution(
@@ -179,8 +178,11 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
                             commands: [new CommandExec(
                                     [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                             )]
-                    )
+                    ),
             )
+            if(serverUUID){
+                e.serverNodeUUID = serverUUID
+            }
             e.save()
         }
         return e

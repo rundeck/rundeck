@@ -49,23 +49,10 @@ class ApplicationTest extends Specification {
         List<String> propertiesLoaded = env.propertySources.iterator().collect { it.name }
 
         then:
-        propertiesLoaded.size() == 2
+        propertiesLoaded.size() == 3
+        propertiesLoaded.contains("hardcoded-rundeck-props")
         propertiesLoaded.contains("rundeck.config.location")
         propertiesLoaded.contains("rundeck-config-groovy")
-
-    }
-
-    def "load rundeck-config.properties if set in system property RDECK_CONFIG_LOCATION"() {
-
-        when:
-        File tmpProp = File.createTempFile("app-test",".properties")
-        tmpProp << "myprop=avalue"
-        Application app = new Application()
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,tmpProp.absolutePath)
-        Properties props = app.loadRundeckPropertyFile()
-
-        then:
-        props.get("myprop") == "avalue"
 
     }
 
@@ -127,78 +114,11 @@ class ApplicationTest extends Specification {
 
     }
 
-    def "do not try to load rundeck-config.groovy if set in system property RDECK_CONFIG_LOCATION"() {
-
-        when:
-        File tmpGroovy = File.createTempFile("app-test",".groovy")
-        tmpGroovy << "grails { mail {} } "
-        Application app = new Application()
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,tmpGroovy.absolutePath)
-        Properties props = app.loadRundeckPropertyFile()
-
-        then:
-        props.isEmpty()
-
-        cleanup:
-        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
-    }
-
     def "RunPreboostrap"() {
         when:
-        Application.runPreboostrap()
+        Application.runPrebootstrap()
         then:
         System.getProperty("TestPreboostrap") == "ran successfully"
-    }
-
-    def "LoadRundeckPropertyFile - check config initted"() {
-        setup:
-        Properties p1 = new Properties()
-        p1.setProperty("prop1","val1")
-        File tmpFile = File.createTempFile("tmp","properties")
-        tmpFile.deleteOnExit()
-        tmpFile.withPrintWriter { w -> p1.store(w,"") }
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,tmpFile.absolutePath)
-        if(configInitted) System.setProperty("rundeck.config.initted", "true")
-
-        when:
-        Application app = new Application()
-        Properties rdkProps = app.loadRundeckPropertyFile()
-
-        then:
-        rdkProps.getProperty("prop1") == expectedProp1Val
-
-        where:
-        configInitted   | expectedProp1Val
-        false           | "val1"
-        true            | null
-
-    }
-
-    @Unroll
-    def "LoadGroovyRundeckConfigIfExists - check config initted: #configInitted"() {
-        setup:
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,"")
-        File tdir = File.createTempDir()
-        File tmpFile = new File(tdir,"rundeck-config.groovy")
-        tmpFile.deleteOnExit()
-        tmpFile << "prop1 = val1"
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR,tdir.absolutePath)
-        if(configInitted) System.setProperty("rundeck.config.initted", "true")
-        else System.clearProperty("rundeck.config.initted")
-
-        when:
-        Application app = new Application()
-        TestEnvironment tenv = new TestEnvironment()
-        app.loadGroovyRundeckConfigIfExists(tenv)
-        boolean propSourceExists = tenv.propertySources.find { it.name == "rundeck-config-groovy"} != null
-
-        then:
-        propSourceExists == shouldHavePropSource
-
-        where:
-        configInitted   | shouldHavePropSource
-        false           | true
-        true            | false
     }
 
     class TestEnvironment extends StandardEnvironment {

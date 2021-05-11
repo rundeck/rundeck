@@ -8,6 +8,7 @@ export const Elems= {
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
     saveButton  : By.css('#Create'),
+    cancelButton  : By.css('#createFormCancelButton'),
     editSaveButton: By.css('#editForm div.card-footer input.btn.btn-primary[type=submit][value=Save]'),
     errorAlert  : By.css('#error'),
     formValidationAlert: By.css('#page_job_edit > div.list-group-item > div.alert.alert-danger'),
@@ -99,6 +100,9 @@ export class JobCreatePage extends Page {
     }
     saveButton():WebElementPromise{
         return this.ctx.driver.findElement(Elems.saveButton)
+    }
+    cancelButton():WebElementPromise{
+        return this.ctx.driver.findElement(Elems.cancelButton)
     }
     async editSaveButton(){
         return this.ctx.driver.findElement(Elems.editSaveButton)
@@ -314,9 +318,19 @@ export class JobCreatePage extends Page {
     }
 
     async waitOptionli(position: string){
-        let  optionEditForm = By.css('#optli_'+position)
+        let  optionEditForm = By.css('#optli_' + position)
 
         return this.ctx.driver.wait(until.elementLocated(optionEditForm),15000)
+    }
+
+    async optionDuplicateButton(name: string) {
+        const optionDuplicateButton = By.xpath('//*[@id="optctrls_' + name + '"]/span[2]')
+        return await this.ctx.driver.findElement(optionDuplicateButton)
+    }
+
+    async optionNameText(position: string) {
+        const optionDuplicateButton = By.xpath('//*[@id="optli_' + position + '"]/div/div/span[2]/span/span[1]/span[1]')
+        return await (await this.ctx.driver.findElement(optionDuplicateButton)).getText()
     }
 
     async optionUndoButton(){

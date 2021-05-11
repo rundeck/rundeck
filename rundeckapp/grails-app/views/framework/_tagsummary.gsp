@@ -25,7 +25,7 @@
         <g:set var="hidetop" value="${hidetop?:tagsummary.findAll {it.value>1}.size()>30}"/>
         <g:if test="${hidetop}">
             <span class="textbtn textbtn-secondary tag"
-                  title="Show tag demographics" onclick="Element.toggle('nodes_tags'); Element.toggleClassName(this,'active');">
+                  title="Show tag demographics" onclick="jQuery(this).next().toggle(); jQuery(this).toggleClass('active');">
                 <i class="glyphicon glyphicon-tags text-primary "></i>
                 <g:enc>${tagsummary.size()}</g:enc> tags
                 <i class="glyphicon glyphicon-chevron-right"></i></span>
@@ -60,8 +60,8 @@
             </g:each>
             <g:if test="${singletag}">
                 <span class="btn btn-sm btn-default receiver" title="See all tags"
-                      onclick="Element.show('${enc(attr:urkey)}singletags');
-                Element.hide(this);">Show All&hellip;</span>
+                      onclick="jQuery('#${enc(attr:urkey)}singletags').show();
+                      jQuery(this).hide();">Show All&hellip;</span>
                 <span style="display:none" id="${enc(attr:urkey)}singletags">
                     <g:each var="tag" in="${singletag}">
                         <span class="summary">

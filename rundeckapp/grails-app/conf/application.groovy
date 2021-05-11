@@ -13,6 +13,7 @@ hibernate {
         }
     }
 }
+
 dataSource {
     pooled = true
     jmxExport = true
@@ -24,11 +25,14 @@ dataSource {
 grails.controllers.upload.maxFileSize=26214400
 grails.controllers.upload.maxRequestSize=26214400
 
+grails.plugin.databasemigration.changelog = "changelog.groovy"
+
 environments {
     development{
         grails.serverURL="http://localhost:9090/rundeck"
         application.refreshDelay=5000
         grails.profiler.disable=false
+        rundeck.execution.logs.fileStorage.generateExecutionXml=true
         feature.incubator.'*'=true
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
@@ -36,17 +40,26 @@ environments {
         rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
-        rundeck.feature.notificationsEditorVue.enabled = true
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = false
+        rundeck.feature.workflowDesigner.enabled = true
+        rundeck.feature.projectKeyStorage.enabled = true
+        rundeck.scm.startup.initDeferred=false
+
         dataSource {
-            dbCreate = "create-drop" // one of 'create', 'create-drop','update'
+            dbCreate = "none" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
         }
+        grails.plugin.databasemigration.updateOnStart=true
+
         spring.h2.console.enabled=true
 
+        //enable greenmail plugin in build.gradle, and set this value in dev mode
+        //grails.mail.port = com.icegreen.greenmail.util.ServerSetupTest.SMTP.port
     }
     test {
         def rdeckbasedir = File.createTempDir()
@@ -55,9 +68,11 @@ environments {
         grails.profiler.disable=true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
-            dbCreate = "create-drop"
+            dbCreate = "none"
             url = "jdbc:h2:file:./db/testDb"
         }
+        grails.plugin.databasemigration.updateOnStart=true
+
     }
     production {
 //        grails.serverURL = "http://www.changeme.com"
@@ -68,6 +83,8 @@ environments {
         //enable takeover schedule feature
         feature.incubator.jobs = true
 
+        rundeck.execution.logs.fileStorage.generateExecutionXml=true
+
         rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.optionValuesPlugin.enabled = true
 
@@ -77,13 +94,17 @@ environments {
         rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
         rundeck.feature.legacyExecOutputViewer.enabled = false
-        rundeck.feature.notificationsEditorVue.enabled = true
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
+        rundeck.feature.notificationsOwnThread.enabled = false
         rundeck.feature.sidebarProjectListing.enabled=true
         rundeck.feature.userSessionProjectsCache.enabled=true
+        rundeck.feature.uiNext.enabled = false
+        rundeck.feature.workflowDesigner.enabled = true
+        grails.plugin.databasemigration.updateOnStart=true
+
         dataSource {
-            dbCreate = "update"
+            dbCreate = "none"
             url = "jdbc:h2:file:/rundeck/grailsh2"
             properties {
                 jmxEnabled= true
@@ -161,7 +182,7 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
-
+grails.plugin.springsecurity.ajaxHeader = 'AJAX AUTH DISABLED\u0000'
 grails.plugin.springsecurity.logout.handlerNames = [
         'rememberMeServices',
         'securityContextLogoutHandler',
@@ -172,4 +193,3 @@ grails.plugin.springsecurity.logout.handlerNames = [
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']
-

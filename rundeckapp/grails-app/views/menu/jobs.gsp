@@ -42,7 +42,7 @@
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <g:jsMessages
         id="bulkEditMessages"
-        code="scm.export.status.EXPORT_NEEDED.description,scm.export.status.CREATE_NEEDED.description,scm.export.status.CLEAN.description,scm.import.status.IMPORT_NEEDED.description,scm.import.status.DELETE_NEEDED.description,scm.import.status.CLEAN.description,scm.import.status.REFRESH_NEEDED.description,scm.import.status.UNKNOWN.description,scm.export.status.EXPORT_NEEDED.display.text,scm.export.status.CREATE_NEEDED.display.text,scm.export.status.REFRESH_NEEDED.display.text,scm.export.status.DELETED.display.text,scm.export.status.CLEAN.display.text,scm.import.status.IMPORT_NEEDED.display.text,scm.import.status.REFRESH_NEEDED.display.text,scm.import.status.UNKNOWN.display.text,scm.import.status.CLEAN.display.text"/>
+        code="scm.export.status.EXPORT_NEEDED.description,scm.export.status.CREATE_NEEDED.description,scm.export.status.CLEAN.description,scm.import.status.IMPORT_NEEDED.description,scm.import.status.DELETE_NEEDED.description,scm.import.status.CLEAN.description,scm.import.status.REFRESH_NEEDED.description,scm.import.status.UNKNOWN.description,scm.export.status.EXPORT_NEEDED.display.text,scm.export.status.CREATE_NEEDED.display.text,scm.export.status.REFRESH_NEEDED.display.text,scm.export.status.DELETED.display.text,scm.export.status.CLEAN.display.text,scm.import.status.IMPORT_NEEDED.display.text,scm.import.status.REFRESH_NEEDED.display.text,scm.import.status.UNKNOWN.display.text,scm.import.status.CLEAN.display.text,scm.export.status.LOADING.display.text,scm.import.status.LOADING.display.text,scm.export.status.LOADING.description,scm.import.status.LOADING.description"/>
     <g:jsMessages id="queryformmessages"
     code="jobquery.title.name,jobquery.title.jobFilter,jobquery.title.projFilter,jobquery.title.groupPath,jobquery.title.descFilter,jobquery.title.loglevelFilter,jobquery.title.idlist,jobquery.title.scheduledFilter,jobquery.title.serverNodeUUIDFilter"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
@@ -69,6 +69,10 @@ search
         function showError(message){
              appendText('#error',message);
              jQuery("#error").show();
+        }
+        function showErrorModal(message){
+             setText('#modalErrorContent',message);
+             jQuery("#errorModal").modal('show');
         }
         var _jobExecUnloadHandlers=new Array();
         function _registerJobExecUnloadHandler(handler){
@@ -128,7 +132,7 @@ search
                         loadExec(null, jQuery('#' + elem + ' form').serialize() + "&dovalidate=true");
                     } else {
                         unloadExec();
-                        showError(result.message ? result.message : result.error ? result.error : "Failed request");
+                        showErrorModal("Failed to run job: "+(result.message ? result.message : result.error ? result.error : "Failed request"));
                     }
                 },
                 error: function (data, jqxhr, err) {
@@ -269,6 +273,19 @@ search
             PageActionHandlers.registerHandler('copy_other_project',function(el){
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
+                jQuery.ajax({
+                    dataType:'json',
+                    method: 'GET',
+                    url:_genUrl(appLinks.authProjectsToCreateAjax),
+                    success:function(data){
+                        jQuery('#jobProject').empty();
+                        for (let i in data.projectNames ) {
+                            jQuery('#jobProject').append(
+                                '<option value="' + data.projectNames[i] + '">' + data.projectNames[i] + '</option>'
+                            );
+                        }
+                    }
+                });
             });
 
 
@@ -397,121 +414,118 @@ search
 </head>
 <body>
 
+<div class="content">
+<div id="layoutBody">
+<div style="margin-bottom: 20px;">
+        <div class="subtitle-head-item flex-container flex-align-items-baseline">
+            <div class="flex-item-auto text-h3">
 
-<content tag="subtitlecss">plain</content>
-<content tag="subtitlesection">
-
-  <div class="subtitle-head">
-    <div class="subtitle-head-item flex-container flex-align-items-baseline">
-    <div class="flex-item-auto text-h3">
-
-     <span class="label label-secondary has_tooltip" title="${totalauthorized} Jobs Found"><g:enc>${totalauthorized}</g:enc></span>
+                <span class="label label-secondary has_tooltip" title="${totalauthorized} Jobs Found"><g:enc>${totalauthorized}</g:enc></span>
 
 
-      <g:if test="${wasfiltered && wasfiltered.contains('groupPath') && !filterName}">
-        <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:paginateParams.groupPath,project:params.project]"/>
-
-      </g:if>
-     <a href="#">
-
-        <g:if test="${wasfiltered}">
-            <g:if test="${filterName}">
-                <i class="glyphicon glyphicon-filter"></i>
-                <g:enc>${filterName}</g:enc>
-            </g:if>
-            <g:else>
-
-              <g:if test="${wasfiltered.contains('groupPath') && wasfiltered.size()>1 || wasfiltered.size()>0 }">
-
-                                    <span class="query-section">
-                <g:each in="${wasfiltered.sort()}" var="qparam">
-                      <g:if test="${qparam!='groupPath'}">
-                        <g:if test="${paginateParams[qparam] instanceof Map}">
-                            <g:each in="${paginateParams[qparam]}" var="customParam">
-                                <span class="text-secondary">${customParam.key}:</span>
-                                <span class="text-info">${customParam.value}</span>
-                            </g:each>
-                        </g:if>
-                        <g:else>
-                          <span class="text-secondary"><g:message code="jobquery.title.${qparam}"/>:</span>
-
-                          <span class="text-info">
-                              ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
-                          </span>
-                        </g:else>
-
-                      </g:if>
-                  </g:each>
-                  </span>
+                <g:if test="${wasfiltered && wasfiltered.contains('groupPath') && !filterName}">
+                    <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:paginateParams.groupPath,project:params.project]"/>
 
                 </g:if>
-              </g:else>
-        </g:if>
-        <g:else>
-            All Jobs
-        </g:else>
+                <a href="#">
 
-     </a>
+                    <g:if test="${wasfiltered}">
+                        <g:if test="${filterName}">
+                            <i class="glyphicon glyphicon-filter"></i>
+                            <g:enc>${filterName}</g:enc>
+                        </g:if>
+                        <g:else>
 
-<g:if test="${wasfiltered || filterName || filterset}">
-                    <div class="btn-group " data-ko-bind="jobFilters">
-                                    <button type="button"
-                                            class="btn btn-secondary btn-sm dropdown-toggle "
-                                            title="Saved Filters"
-                                            data-toggle="dropdown"
-                                            aria-expanded="false">
-                                            Filters
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu " role="menu">
-                                        <g:if test="${wasfiltered && !filterName}">
-                                        <li >
-                                          <a data-toggle="modal" href="#saveJobFilterKOModal" title="${message(code:"job.filter.save.button.title")}" >
-                                          <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
-                                        </a>
-                                        </li>
-                                        <li role="separator" class="divider"></li>
-                                        </g:if>
-                                        <g:elseif test="${filterName}">
-                                          <li >
-                                              <a data-bind="click: deleteCurrentFilterConfirm" title="${message(code:"job.filter.delete.button.title")}">
-                                                <b class="glyphicon glyphicon-trash"></b>
-                                                <g:message code="job.filter.delete.named.button" args="[filterName]"/>
+                            <g:if test="${wasfiltered.contains('groupPath') && wasfiltered.size()>1 || wasfiltered.size()>0 }">
 
-                                              </a>
-                                            </li>
-                                        <li role="separator" class="divider"></li>
-                                        </g:elseif>
-                                        <!-- ko if: filters().length > 0 -->
-                                        <li class="dropdown-header">
-                                        <i class="glyphicon glyphicon-filter"></i>
-                                        Saved Filters
-                                        </li>
-                                        <li data-bind="foreach: { data: filters, as: 'filter' } ">
-                                          <a href="#" data-bind="click: $root.redirectFilter, attr: {href: filter.url }" title="Select Filter">
-                                                <span data-bind="if: filter.name()==$root.currentFilter()">
-                                                    <i class="glyphicon glyphicon-check"></i>
+                                <span class="query-section">
+                                    <g:each in="${wasfiltered.sort()}" var="qparam">
+                                        <g:if test="${qparam!='groupPath'}">
+                                            <g:if test="${paginateParams[qparam] instanceof Map}">
+                                                <g:each in="${paginateParams[qparam]}" var="customParam">
+                                                    <span class="text-secondary">${customParam.key}:</span>
+                                                    <span class="text-info">${customParam.value}</span>
+                                                </g:each>
+                                            </g:if>
+                                            <g:else>
+                                                <span class="text-secondary"><g:message code="jobquery.title.${qparam}"/>:</span>
+
+                                                <span class="text-info">
+                                                    ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
                                                 </span>
-                                                <span data-bind="text: filter.name()"></span>
-                                          </a>
-                                        </li>
-                                        <!-- /ko -->
-                                    </ul>
-                                </div>
+                                            </g:else>
 
-</g:if>
+                                        </g:if>
+                                    </g:each>
+                                </span>
+
+                            </g:if>
+                        </g:else>
+                    </g:if>
+                    <g:else>
+                        All Jobs
+                    </g:else>
+
+                </a>
+
+                <g:if test="${wasfiltered || filterName || filterset}">
+                    <div class="btn-group " data-ko-bind="jobFilters">
+                        <button type="button"
+                                class="btn btn-secondary btn-sm dropdown-toggle "
+                                title="Saved Filters"
+                                data-toggle="dropdown"
+                                aria-expanded="false">
+                            Filters
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu " role="menu">
+                            <g:if test="${wasfiltered && !filterName}">
+                                <li >
+                                    <a data-toggle="modal" href="#saveJobFilterKOModal" title="${message(code:"job.filter.save.button.title")}" >
+                                        <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
+                                    </a>
+                                </li>
+                                <li role="separator" class="divider"></li>
+                            </g:if>
+                            <g:elseif test="${filterName}">
+                                <li >
+                                    <a data-bind="click: deleteCurrentFilterConfirm" title="${message(code:"job.filter.delete.button.title")}">
+                                        <b class="glyphicon glyphicon-trash"></b>
+                                        <g:message code="job.filter.delete.named.button" args="[filterName]"/>
+
+                                    </a>
+                                </li>
+                                <li role="separator" class="divider"></li>
+                            </g:elseif>
+                        <!-- ko if: filters().length > 0 -->
+                            <li class="dropdown-header">
+                                <i class="glyphicon glyphicon-filter"></i>
+                                Saved Filters
+                            </li>
+                            <li data-bind="foreach: { data: filters, as: 'filter' } ">
+                                <a href="#" data-bind="click: $root.redirectFilter, attr: {href: filter.url }" title="Select Filter">
+                                    <span data-bind="if: filter.name()==$root.currentFilter()">
+                                        <i class="glyphicon glyphicon-check"></i>
+                                    </span>
+                                    <span data-bind="text: filter.name()"></span>
+                                </a>
+                            </li>
+                            <!-- /ko -->
+                        </ul>
+                    </div>
+
+                </g:if>
 
 
 
-      </div>
+            </div>
 
-          <span title="Click to modify filter" class="btn btn-secondary btn-sm query " data-toggle="modal" data-target="#jobs_filters">
-               <g:message code="search.ellipsis" />
-          </span>
+            <span title="Click to modify filter" class="btn btn-secondary btn-sm query " data-toggle="modal" data-target="#jobs_filters">
+                <g:message code="search.ellipsis" />
+            </span>
 
         </div>
-        </div>
-</content>
+    </div>
 <g:jsonToken id="ajaxFilterTokens" />
 <div class="modal fade" id="deleteJobFilterKOModal" role="dialog" aria-labelledby="deleteJobFilterKOModalLabel" aria-hidden="true" data-ko-bind="jobFilters">
     <div class="modal-dialog ">
@@ -622,6 +636,7 @@ search
       <div class="card">
         <div class="card-content">
           <div class="runbox primary jobs" id="indexMain">
+            <div id="error" class="alert alert-danger" style="display:none;"></div>
             <g:render template="workflowsFull"
                       model="${[
                           jobExpandLevel    : jobExpandLevel,
@@ -639,7 +654,6 @@ search
                           rkey              : rkey,
                           clusterModeEnabled: clusterModeEnabled
                       ]}"/>
-              <div id="error" class="alert alert-danger" style="display:none;"></div>
           </div>
           <g:if test="${paginateJobs && !wasfiltered}">
           <div>
@@ -693,7 +707,25 @@ search
     </div>
   </div>
 </div>
-
+<div class="modal fade" id="errorModal" role="dialog" aria-labelledby="execErrModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="execErrModalLabel"><g:message code="request.error.title" /></h4>
+      </div>
+        <div class="modal-body">
+            <div class="alert alert-danger" id="modalErrorContent"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal"><g:message code="ok" default="OK"/></button>
+        </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
 <g:render template="/menu/copyModal" model="[projectNames: projectNames]"/>
+
 </body>
 </html>

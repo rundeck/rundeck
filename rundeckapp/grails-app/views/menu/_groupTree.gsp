@@ -1,3 +1,4 @@
+<%@ page import="java.math.RoundingMode" %>
 %{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
@@ -90,7 +91,7 @@
                 <g:if test="${!jobsjscallback}">
                     <a class="groupname text-primary visibility-hidden "
                     title="Browse job group: ${enc(attr:prefix ? prefix + '/' + group.key : group.key)}"
-                        href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><i class="glyphicon glyphicon-folder-open"></i></a>
+                        href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key,jobListType:params.jobListType])}"><i class="glyphicon glyphicon-folder-open"></i></a>
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">
@@ -129,7 +130,8 @@
     <g:if test="${currentJobs}">
         <g:timerStart key="_groupTree2.gsp-jobslist"/>
         <div>
-        <g:render template="jobslist" model="[projectScheduleModeActive:projectScheduleModeActive,projectExecutionModeActive:projectExecutionModeActive,jobslist:currentJobs,total:currentJobs?.size(),nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
+            <g:render template="jobslist" model="[projectScheduleModeActive:projectScheduleModeActive,projectExecutionModeActive:projectExecutionModeActive,jobslist:currentJobs,total:currentJobs?.size(),nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
+            <g:render template="jobPickerModalPagination" model="[max:max, total: total, offset: offset, jobsListSize: currentJobs?.size()]"/>
         </div>
         <g:timerEnd key="_groupTree2.gsp-jobslist"/>
     </g:if>

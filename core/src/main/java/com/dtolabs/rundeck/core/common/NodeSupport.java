@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.Decision;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
@@ -106,27 +107,19 @@ public class NodeSupport implements IFrameworkNodes{
         }
         final HashSet<Map<String, String>> resources = new HashSet<Map<String, String>>();
         for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
-            HashMap<String, String> resdef = new HashMap<String, String>(iNodeEntry.getAttributes());
-            resdef.put("type", "node");
-            resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
+            HashMap<String, String> resdef = getNodeAuthResource(iNodeEntry);
             resources.add(resdef);
         }
         final Set<Decision> decisions = authContext.evaluate(resources,
                                                              actions,
-                                                             Collections.singleton(
-                                                                     new Attribute(
-                                                                             URI.create(EnvironmentalContext.URI_BASE + "project"),
-                                                                             project
-                                                                     )
-                                                             ));
+                                                             AuthorizationUtil.projectContext(project)
+                                                             );
         final NodeSetImpl authorized = new NodeSetImpl();
         HashMap<String, Set<String>> authorizations = new HashMap<String, Set<String>>();
         for (final Decision decision : decisions) {
             if (decision.isAuthorized() && actions.contains(decision.getAction())) {
                 final String nodename = decision.getResource().get("nodename");
-                if(null==authorizations.get(nodename)) {
-                    authorizations.put(nodename, new HashSet<String>());
-                }
+                authorizations.computeIfAbsent(nodename, k -> new HashSet<>());
                 authorizations.get(nodename).add(decision.getAction());
             }
         }
@@ -138,7 +131,12 @@ public class NodeSupport implements IFrameworkNodes{
         return authorized;
     }
 
-
+    public HashMap<String, String> getNodeAuthResource(final INodeEntry iNodeEntry) {
+        HashMap<String, String> resdef = new HashMap<>(iNodeEntry.getAttributes());
+        resdef.put("type", "node");
+        resdef.put("rundeck_server", Boolean.toString(isLocalNode(iNodeEntry)));
+        return resdef;
+    }
 
 
     /**

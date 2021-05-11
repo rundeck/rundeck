@@ -29,6 +29,13 @@ public interface MenuItem {
      */
     public MenuType getType();
 
+    /**
+     * Sort key
+     */
+    default Integer getPriority() {
+        return 0;
+    }
+
     enum MenuDomain {
         SYSTEM,
         PROJECT,

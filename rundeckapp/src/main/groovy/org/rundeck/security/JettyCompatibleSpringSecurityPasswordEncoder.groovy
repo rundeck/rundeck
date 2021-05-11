@@ -18,6 +18,8 @@ package org.rundeck.security
 import org.eclipse.jetty.util.security.Credential
 import org.eclipse.jetty.util.security.Password
 import org.grails.web.util.WebUtils
+import org.rundeck.jaas.jetty.BcryptCredentialProvider
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 class JettyCompatibleSpringSecurityPasswordEncoder implements PasswordEncoder {
     String getUsername() {
@@ -34,6 +36,7 @@ class JettyCompatibleSpringSecurityPasswordEncoder implements PasswordEncoder {
         if(encPass.startsWith("MD5:")) return Credential.MD5.digest(rawPass.toString()) == encPass
         if(encPass.startsWith("OBF:")) return Password.obfuscate(rawPass.toString()) == encPass
         if(encPass.startsWith("CRYPT:")) return Credential.Crypt.crypt(username, rawPass.toString()) == encPass
+        if(encPass.startsWith("BCRYPT:")) return new BcryptCredentialProvider().getCredential(encPass).check(rawPass)
         return encPass == rawPass
     }
 }

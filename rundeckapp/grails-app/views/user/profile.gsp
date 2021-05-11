@@ -62,6 +62,8 @@
             id="genPageData"/>
 </head>
 <body>
+<div class="content">
+<div id="layoutBody">
 <div class="container-fluid">
   <div class="row">
       <div class="col-xs-12">
@@ -77,7 +79,7 @@
                     <div class="pull-left">
                       <g:link action="edit"
                               params="[login: user.login]"
-                              class="btn btn-sm"
+                              class="btn btn-cta btn-sm"
                               title="${message(code: 'userController.action.edit.description', args: [user.login])}">
                           <g:icon name="edit"/>
                           <g:message code="button.Edit.label"/>
@@ -121,6 +123,8 @@
           </div>
       </div>
   </div>
+</div>
+</div>
 </div>
 </body>
 </html>

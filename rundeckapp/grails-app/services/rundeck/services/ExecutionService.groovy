@@ -23,7 +23,6 @@ import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
-import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
@@ -32,6 +31,8 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionValidator
+import com.dtolabs.rundeck.core.execution.JobValidationReference
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
@@ -53,20 +54,19 @@ import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.EventPublisher
 import grails.events.annotation.Publisher
-import grails.events.annotation.Subscriber
 import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
+import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
-import org.grails.web.json.JSONObject
 import org.hibernate.JDBCException
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
@@ -85,11 +85,11 @@ import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
+import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
 import javax.annotation.PreDestroy
-import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
@@ -100,9 +100,8 @@ import java.text.MessageFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 import java.util.regex.Pattern
 
 /**
@@ -113,6 +112,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     static Logger executionStatusLogger = LoggerFactory.getLogger("org.rundeck.execution.status")
 
     def FrameworkService frameworkService
+    AppAuthContextProcessor rundeckAuthContextProcessor
     def notificationService
     def ScheduledExecutionService scheduledExecutionService
     def ReportService reportService
@@ -135,6 +135,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def grailsApplication
     def configurationService
     def executionUtilService
+    ExecutionValidator executionValidatorService
     def fileUploadService
     def pluginService
     def executorService
@@ -426,11 +427,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     Date now = new Date()
                     if (EXECUTION_SCHEDULED == query.runningFilter ) {
                         eq('status', EXECUTION_SCHEDULED)
-                    } else if ('running' == query.runningFilter) {
+                    }
+                    else if (EXECUTION_QUEUED == query.runningFilter ){
+                        eq('status', EXECUTION_QUEUED)
+                    }
+                    else if ('running' == query.runningFilter) {
                         and{
+                            isNotNull('dateStarted')
                             isNull('dateCompleted')
                             if(!query.considerPostponedRunsAsRunningFilter){
-                                le('dateStarted', now)
+                                or {
+                                    isNull('status')
+                                        and{
+                                            ne('status', ExecutionService.EXECUTION_SCHEDULED)
+                                            ne('status', ExecutionService.EXECUTION_QUEUED)
+                                        }
+                                }
                             }
                         }
                     } else {
@@ -478,35 +490,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      }
                  }
 
-//                if(query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter){
-//                    between('dateStarted',query.startafterFilter,query.startbeforeFilter)
-//                }
-//                else if(query.dostartbeforeFilter && query.startbeforeFilter ){
-//                    le('dateStarted',query.startbeforeFilter)
-//                }else if (query.dostartafterFilter && query.startafterFilter ){
-//                    ge('dateStarted',query.startafterFilter)
-//                }
-
-//                if(query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter){
-//                    between('dateCompleted',query.endafterFilter,query.endbeforeFilter)
-//                }
-//                else if(query.doendbeforeFilter && query.endbeforeFilter ){
-//                    le('dateCompleted',query.endbeforeFilter)
-//                }
-//                if(query.doendafterFilter && query.endafterFilter ){
-
-//                or{
-//                    between("dateCompleted", endAfterDate,nowDate)
                     isNull("dateCompleted")
-//                }
-//                }
-            }else{
-//                and {
-//                    or{
-//                        between("dateCompleted", endAfterDate,nowDate)
+            } else{
                         isNull("dateCompleted")
-//                    }
-//                }
             }
 
             if(query && query.sortBy && filters[query.sortBy]){
@@ -555,14 +541,33 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                  }
 
                  //running status filter.
-                 if(query.runningFilter){
-                     if('running'==query.runningFilter){
-                        isNull("dateCompleted")
-                     }else {
+                 if (query.runningFilter) {
+                     Date now = new Date()
+                     if (EXECUTION_SCHEDULED == query.runningFilter ) {
+                         eq('status', EXECUTION_SCHEDULED)
+                     }
+                     else if (EXECUTION_QUEUED == query.runningFilter ){
+                         eq('status', EXECUTION_QUEUED)
+                     }
+                     else if ('running' == query.runningFilter) {
                          and{
-                            eq('status',"completed"==query.runningFilter?'true':'false')
-                            eq('cancelled',"killed"==query.runningFilter?'true':'false')
-                            isNotNull('dateCompleted')
+                             isNotNull('dateStarted')
+                             isNull('dateCompleted')
+                             if(!query.considerPostponedRunsAsRunningFilter){
+                                 or {
+                                     isNull('status')
+                                     and{
+                                         ne('status', ExecutionService.EXECUTION_SCHEDULED)
+                                         ne('status', ExecutionService.EXECUTION_QUEUED)
+                                     }
+                                 }
+                             }
+                         }
+                     } else {
+                         and {
+                             eq('status', 'completed' == query.runningFilter ? 'true' : 'false')
+                             eq('cancelled', 'killed' == query.runningFilter ? 'true' : 'false')
+                             isNotNull('dateCompleted')
                          }
                      }
                  }
@@ -711,66 +716,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
     /**
-    * Return a dataset: [nowrunning: (list of Execution), jobs: [map of id->ScheduledExecution for scheduled jobs],
-     *  total: total number of running executions, max: input max]
-     */
-    def listNowRunning(Framework framework, int max=10){
-        //find currently running executions
-
-        def Date lastHour = new Date(System.currentTimeMillis()-1000*60*60)
-        def Date nowDate = new Date()
-
-        def crit = Execution.createCriteria()
-        def runlist = crit.list{
-            maxResults(max)
-            isNull("dateCompleted")
-            order("dateStarted","desc")
-        };
-        def currunning=[]
-        runlist.each{
-            currunning<<it
-        }
-
-        def jobs =[:]
-        currunning.each{
-            if(it.scheduledExecution && !jobs[it.scheduledExecution.id.toString()]){
-                jobs[it.scheduledExecution.id.toString()] = ScheduledExecution.get(it.scheduledExecution.id)
-            }
-        }
-
-
-        def total = Execution.createCriteria().count{
-            isNull("dateCompleted")
-        };
-
-        return [jobs: jobs, nowrunning:currunning, total: total, max: max]
-    }
-
-    /**
      * Set the result status to FAIL for any Executions that are not complete,
      * excludes executions which are still scheduled and haven't started.
      *
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
     def cleanupRunningJobsAsync(String serverUUID = null, String status = null, Date before = new Date()) {
-        def executionIds = Execution.withCriteria {
-            isNotNull('dateStarted')
-            isNull('dateCompleted')
+
+        def executionIds = Execution.runningExecutionsCriteria.list {
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
             } else {
                 eq('serverNodeUUID', serverUUID)
             }
             lt('dateStarted', before)
-            or{
-                isNull('status')
-                ne('status', EXECUTION_SCHEDULED)
-            }
 
             projections {
                 property('id')
             }
         }
+
         executorService.submit {
             def found = executionIds.collect { Execution.get(it) }
             cleanupRunningJobs(found, status)
@@ -783,22 +748,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      *
      * @param   serverUUID  if not null, only match executions assigned to the given server UUID
      */
-    private List<Execution> findRunningExecutions(String serverUUID = null, Date before=new Date()) {
-        return Execution.withCriteria{
-            isNotNull('dateStarted')
-            isNull('dateCompleted')
-            if (serverUUID == null) {
-                isNull('serverNodeUUID')
-            } else {
-                eq('serverNodeUUID', serverUUID)
-            }
+    private static def List<Execution> findRunningExecutions(String serverUUID = null, Date before=new Date()) {
+        List result = Execution.runningExecutionsCriteria.list {
             lt('dateStarted', before)
-            or{
-                isNull('status')
-                ne('status', EXECUTION_SCHEDULED)
+            if (serverUUID != null) {
+                eq('serverNodeUUID', serverUUID)
+            } else {
+                isNull('serverNodeUUID')
             }
         }
+        return result
     }
+
     /**
      * Set the result status to FAIL for any Executions that are not complete (Creates a new transaction)
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
@@ -853,7 +814,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * calls {@link #saveExecutionState_currentTransaction(java.lang.Object, java.lang.Object, java.util.Map, java.util.Map, java.util.Map)}
+     * calls {@link #saveExecutionState_currentTransaction(java.lang.Object, java.lang.Object, java.util.Map, rundeck.services.ExecutionService.AsyncStarted, java.util.Map)}
      * @param e execution
      * @param status
      */
@@ -1042,21 +1003,44 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         grailsLinkGenerator.link(controller: 'menu', action: 'index', absolute: true)
     }
 
+    @CompileStatic
+    static class AsyncStarted{
+        WorkflowExecutionServiceThread thread
+        ExecutionLogWriter loghandler
+        NodeRecorder noderecorder
+        Execution execution
+        ScheduledExecution scheduledExecution
+        ThresholdValue threshold
+        Consumer<Long> periodicCheck
+    }
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler, threshold:Threshold]
      */
-    def Map executeAsyncBegin(
-            Framework framework,
+    AsyncStarted executeAsyncBegin(
+            IFramework framework,
             UserAndRolesAuthContext authContext,
             Execution execution,
             ScheduledExecution scheduledExecution = null,
             Map extraParams = null,
-            Map extraParamsExposed = null,
-            int retryAttempt = 0
+            Map extraParamsExposed = null
     ) {
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
+
+        // update start date
+//        if(!execution.dateStarted) {
+//            execution.dateStarted = new Date()
+//            def newstr = expandDateStrings(execution.argString, execution.dateStarted)
+//            if(newstr!=execution.argString){
+//                execution.argString=newstr
+//            }
+//        }
+//        else {
+//            println "already have dateStarted"
+//        }
+//
+
         //set up log output threshold
         def thresholdMap = ScheduledExecution.parseLogOutputThreshold(scheduledExecution?.logOutputThreshold)
         def threshold = LoggingThreshold.fromMap(thresholdMap,scheduledExecution?.logOutputThresholdAction)
@@ -1140,7 +1124,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     jobcontext,
                     extraParamsExposed
             )
-            def checkpoint = logFileStorageService.createPeriodicCheckpoint(execution)
+            Consumer<Long> checkpoint = logFileStorageService.createPeriodicCheckpoint(execution)
 
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
@@ -1201,7 +1185,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "start", execution.user)
             if (scheduledExecution) {
                 //send onstart notification
-                def result = notificationService.triggerJobNotification('start', scheduledExecution.id,
+                notificationService.asyncTriggerJobNotification('start', scheduledExecution.id,
                         [execution: execution, context:executioncontext])
 
             }
@@ -1243,7 +1227,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             thread.start()
             log.debug("started thread")
-            return [
+            return new AsyncStarted(
                     thread            : thread,
                     loghandler        : loghandler,
                     noderecorder      : recorder,
@@ -1251,7 +1235,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     scheduledExecution: scheduledExecution,
                     threshold         : threshold,
                     periodicCheck     : checkpoint
-            ]
+            )
         }catch(Exception e) {
             log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
@@ -1406,6 +1390,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_FAILED_WITH_RETRY = "failed-with-retry"
     public static String EXECUTION_STATE_OTHER = "other"
     public static String EXECUTION_SCHEDULED = "scheduled"
+    public static String EXECUTION_MISSED = "missed"
+    public static String EXECUTION_QUEUED = "queued"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
@@ -1423,7 +1409,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                               Map extraParams = null, Map extraParamsExposed = null,
                                               String charsetEncoding = null,
                                               LoggingManager manager = null,
-                                              Map secureOptionNodeDeferred = null
+                                              Map secureOptionNodeDeferred = null,
+            Boolean childNodes = null
     )
     {
         createContext(execMap,
@@ -1439,7 +1426,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                       extraParamsExposed,
                       charsetEncoding,
                       manager,
-                      secureOptionNodeDeferred
+                      secureOptionNodeDeferred,
+                      childNodes
         )
     }
     /**
@@ -1448,7 +1436,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public StepExecutionContext createContext(
             ExecutionContext execMap,
             StepExecutionContext origContext,
-            Framework framework,
+            IFramework framework,
             UserAndRolesAuthContext authContext,
             String userName = null,
             Map<String, String> jobcontext,
@@ -1459,7 +1447,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map extraParamsExposed = null,
             String charsetEncoding = null,
             LoggingManager manager = null,
-            Map secureOptionNodeDeferred = null
+            Map secureOptionNodeDeferred = null,
+            Boolean useChildNodes = null
     )
     {
         if (!userName) {
@@ -1543,10 +1532,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeselector = null
         }
 
-        def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
-                origContext?.frameworkProject?:execMap.project,
+        def projNodeSet = origContext?.frameworkProject?:execMap.project
+        if(useChildNodes){
+            projNodeSet = execMap.project
+        }
+        def INodeSet nodeSet = rundeckAuthContextProcessor.filterAuthorizedNodes(
+                projNodeSet,
                 new HashSet<String>(Arrays.asList("read", "run")),
-                frameworkService.filterNodeSet(nodeselector, origContext?.frameworkProject?:execMap.project),
+                frameworkService.filterNodeSet(nodeselector, projNodeSet),
                 authContext)
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
@@ -1614,6 +1607,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param killAsUser as username
      * @return AbortResult
      */
+    @CompileStatic
     def abortExecution(
             ScheduledExecution se,
             Execution e,
@@ -1623,14 +1617,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             boolean forceIncomplete = false
     )
     {
-        if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
+        if (!rundeckAuthContextProcessor.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
             return new AbortResult(
                     abortstate: ABORT_FAILED,
                     jobstate: getExecutionState(e),
                     status: getExecutionState(e),
                     reason: "unauthorized"
             )
-        } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(
+        } else if (killAsUser && !rundeckAuthContextProcessor.authorizeProjectExecutionAll(
                 authContext,
                 e,
                 [AuthConstants.ACTION_KILLAS]
@@ -1732,7 +1726,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             }
             result.abortstate = success ? ABORT_PENDING : ABORT_FAILED
-            result.reason = success ? '' : 'Unable to modify the execution'
+            result.reason = success ? null : 'Unable to modify the execution'
             if (success) {
                 def didCancel = scheduledExecutionService.interruptJob(
                         quartzJobInstanceId,
@@ -1741,7 +1735,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         isadhocschedule
                 )
                 result.abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
-                result.reason = didCancel ? '' : 'Unable to interrupt the running job'
+                result.reason = didCancel ? null : 'Unable to interrupt the running job'
             }
             result.jobstate = EXECUTION_RUNNING
         } else if (null == dateCompleted) {
@@ -1760,6 +1754,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 )
             result.abortstate = ABORT_ABORTED
             result.jobstate = EXECUTION_ABORTED
+            if(forceIncomplete){
+                result.reason = 'Marked as ' + cleanupStatus
+            }
         } else {
             result.jobstate = getExecutionState(e)
             result.status = 'previously ' + result.jobstate
@@ -1812,8 +1809,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     Map deleteExecution(Execution e, AuthContext authContext, String username){
-        if (!frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(e.project),
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
+                 rundeckAuthContextProcessor.authResourceForProject(e.project),
                 [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
@@ -2090,7 +2087,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public Map retryExecuteJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext,
                                String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt,
                                long prevId, long originalId) {
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
@@ -2167,7 +2164,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
 
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+        if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
@@ -2434,29 +2431,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return execution
     }
-    /**
-     * sync objects for preventing multiple executions of a job within this server
-     */
-    ConcurrentMap<String, Object> multijobflag = new ConcurrentHashMap<String, Object>()
 
-    /**
-     * Return an object for synchronization of the job id
-     * @param id
-     * @return object
-     */
-    private Object syncForJob(String id){
-        def object = new Object()
-        //return existing object if present, or the new object
-        multijobflag.putIfAbsent(id, object) ?: object
-    }
 
-    @Subscriber
-    def jobChanged(StoredJobChangeEvent e) {
-        if (e.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
-            //clear multijob sync object
-            multijobflag?.remove(e.originalJobReference.id)
-        }
-    }
+
     /**
      * Create an execution
      * @param se
@@ -2481,34 +2458,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     )
             throws ExecutionServiceException
     {
-        def maxExecutions = 1
-        if(se.multipleExecutions){
-            maxExecutions = 0
-            if(se.maxMultipleExecutions){
-                maxExecutions = se.maxMultipleExecutions?.toInteger()
-            }
-        }
-        if (maxExecutions > 0 ) {
-            synchronized (syncForJob(se.extid)) {
-                //find any currently running executions for this job, and if so, throw exception
-                def found = Execution.withCriteria {
-                    isNull('dateCompleted')
-                    eq('scheduledExecution', se)
-                    isNotNull('dateStarted')
-                    if (retry) {
-                        ne('id', prevId)
-                    }
-                }
 
-                if (found && found.size() >= maxExecutions) {
-                    throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}} is currently being executed {{Execution ' + found[0].id + '}}', 'conflict')
-                }
+        JobValidationReference jobReference = ExecutionValidatorService.buildJobReference(se)
 
-                return int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
-            }
-        }else{
-            return int_createExecution(se,authContext,runAsUser,input, securedOpts, secureExposedOpts)
+        // Validate max executions.
+        if(!executionValidatorService.canRunMoreExecutions(jobReference, retry, prevId)) {
+            throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}}: Limit of running executions has been reached.', 'conflict')
         }
+
+        return int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
+
     }
 
     /**
@@ -2780,6 +2739,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
                 if (opt.multivalued) {
+                    boolean multivaluedOptionEvalFailed = false
                     if (opt.regex && !opt.enforced && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
@@ -2787,13 +2747,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         } else {
                             val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
                         }
+                        List failedValues = []
                         val.grep { it }.each { value ->
                             if (!(value ==~ opt.regex)) {
-                                fail = true
+                                failedValues += value
+                                multivaluedOptionEvalFailed = true
                             }
                         }
-                        if (fail) {
-                            invalidOpt opt,lookupMessage("domain.Option.validation.regex.values",[opt.name,optparams[opt.name],opt.regex])
+                        if (multivaluedOptionEvalFailed) {
+                            invalidOpt opt,lookupMessage("domain.Option.validation.regex.values",[opt.name, failedValues,opt.regex])
                             return
                         }
                     }
@@ -2868,9 +2830,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    def saveExecutionState( schedId, exId, Map props, Map execmap, Map retryContext){
+    @CompileStatic
+    def saveExecutionState( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
         Execution.withNewTransaction {
-            saveExecutionState_currentTransaction(schedId,exId,props,execmap,retryContext)
+            saveExecutionState_currentTransaction(schedId, exId, props, execmap, retryContext)
         }
     }
 
@@ -2883,7 +2846,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param retryContext
      * @return
      */
-    def saveExecutionState_currentTransaction( schedId, exId, Map props, Map execmap, Map retryContext){
+    def saveExecutionState_currentTransaction( schedId, exId, Map props, AsyncStarted execmap, Map retryContext){
         def ScheduledExecution scheduledExecution
         def boolean execSaved = false
         def Execution execution = Execution.get(exId)
@@ -2966,8 +2929,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             int sucCount=-1;
             int failedCount=-1;
             int totalCount=0;
-            if (execmap && execmap.noderecorder && execmap.noderecorder instanceof NodeRecorder) {
-                NodeRecorder rec = (NodeRecorder) execmap.noderecorder
+            if (execmap?.noderecorder) {
+                NodeRecorder rec =  execmap.noderecorder
                 final HashSet<String> success = rec.getSuccessfulNodes()
                 final Map<String,Object> failedMap = rec.getFailedNodes()
                 final HashSet<String> failed = new HashSet<String>(failedMap.keySet())
@@ -3000,7 +2963,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             logExecutionLog4j(execution, "finish", execution.user)
 
             def context = execmap?.thread?.context
-            notificationService.triggerJobNotification(
+            notificationService.asyncTriggerJobNotification(
                 execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
                 schedId,
                 [
@@ -3028,7 +2991,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //        }else{
             //summarize execution
             StringBuffer sb = new StringBuffer()
-            final def wfsize = exec.workflow.commands.size()
+            final def wfsize = exec?.workflow?.commands?.size() ?: 0
 
             if(wfsize>0){
                 sb<<exec.workflow.commands[0].summarize()
@@ -3213,15 +3176,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return result
     }
 
-    def int countNowRunning() {
 
-        def total = Execution.createCriteria().count{
-            and {
-                isNull("dateCompleted")
-            }
-        };
-        return total
-    }
     def public static EXEC_FORMAT_SEQUENCE=['time','level','user','module','command','node','context']
 
     @Override
@@ -3376,11 +3331,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 trialNodes = frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject)
             }
 
-            INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
+            INodeSet nodeSet = rundeckAuthContextProcessor.filterAuthorizedNodes(
                     newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
                     trialNodes,
-                    newContext.authContext);
+                    newContext.userAndRolesAuthContext);
 
             builder.nodeSelector(nodeselector).nodes(nodeSet)
 
@@ -3403,11 +3358,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     origContext.nodes
             )
             def nodeselector = SelectorUtils.nodeList(nodeSet.nodeNames)
-            nodeSet = frameworkService.filterAuthorizedNodes(
+            nodeSet = rundeckAuthContextProcessor.filterAuthorizedNodes(
                     newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
                     nodeSet,
-                    newContext.authContext);
+                    newContext.userAndRolesAuthContext);
 
             builder.nodeSelector(nodeselector).nodes(nodeSet)
         }
@@ -3441,7 +3396,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             INodeEntry node,
             Boolean nodeIntersect,
             Boolean importOptions,
-            dovalidate
+            dovalidate,
+            Boolean useChildNodes
     )
     throws ExecutionServiceValidationException
     {
@@ -3557,7 +3513,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 evalSecOpts,
                 null,
                 workflowLogManager,
-                secureOptionNodeDeferred
+                secureOptionNodeDeferred,
+                useChildNodes
         )
 
         if (nodeFilter || nodeIntersect) {
@@ -3613,6 +3570,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def project = null
         def failOnDisable = false
         def uuid
+        def childNodes = false
 
         def schedlist
 
@@ -3630,6 +3588,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             failOnDisable = jitem.failOnDisable
             uuid = jitem.uuid
             useName = jitem.useName
+            childNodes = jitem.childNodes
         }
 
         ScheduledExecution.withTransaction {
@@ -3692,10 +3651,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     return
                 }
 
-                def targetJobContext = frameworkService.getAuthContextForUserAndRolesAndProject(executionContext.getUserAndRolesAuthContext()?.getUsername(),
+                def targetJobContext = rundeckAuthContextProcessor.getAuthContextForUserAndRolesAndProject(executionContext.getUserAndRolesAuthContext()?.getUsername(),
                         executionContext.getUserAndRolesAuthContext()?.getRoles()?.toList(),
                         se.project)
-                if (!frameworkService.authorizeProjectJobAll(targetJobContext, se, [AuthConstants.ACTION_RUN], se.project)) {
+                if (!rundeckAuthContextProcessor.authorizeProjectJobAll(targetJobContext, se, [AuthConstants.ACTION_RUN], se.project)) {
                     def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
                     executionContext.getExecutionListener().log(0, msg);
                     result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
@@ -3717,7 +3676,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             node,
                             jitem.nodeIntersect,
                             jitem.importOptions,
-                            true
+                            true,
+                            jitem.childNodes
                     )
                 } catch (ExecutionServiceValidationException e) {
                     executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
@@ -3781,7 +3741,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ScheduledExecution.withTransaction {
                         // Get a new object attached to the new session
                         def scheduledExecution = ScheduledExecution.get(id)
-                        notificationService.triggerJobNotification('start', scheduledExecution,
+                        notificationService.asyncTriggerJobNotification('start', scheduledExecution.id,
                                 [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
                     }
 
@@ -3837,9 +3797,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
                 def scheduledExecution = ScheduledExecution.get(id)
-                notificationService.triggerJobNotification(
+                notificationService.asyncTriggerJobNotification(
                         wresult?.result.success ? 'success' : 'failure',
-                        scheduledExecution,
+                        scheduledExecution.id,
                         [
                                 execution : execution,
                                 nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
@@ -4117,8 +4077,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
 
-    boolean avgDurationExceeded(schedId, Map content){
-        notificationService.triggerJobNotification('avgduration',schedId, content)
+    void avgDurationExceeded(schedId, Map content){
+        notificationService.asyncTriggerJobNotification('avgduration', schedId, content)
     }
 
     List<PluginConfiguration> getGlobalPluginConfigurations(String project){
@@ -4145,7 +4105,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
 
-        INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext)
+        INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext, new HashSet<String>([AuthConstants.ACTION_READ, AuthConstants.ACTION_RUN]))
         def nodeFilter = props.filter? props.filter : scheduledExecution.asFilter()
         JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(
                 scheduledExecution.jobName,
@@ -4176,5 +4136,43 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         modifiedSuccessNodeList
+    }
+
+    def createMissedExecution(ScheduledExecution scheduledExecution, String scheduledServer, Date misfireTime) {
+        Execution missed = new Execution()
+        missed.scheduledExecution = scheduledExecution
+        missed.dateStarted = misfireTime
+        missed.dateCompleted = new Date()
+        missed.project = scheduledExecution.project
+        missed.user = scheduledExecution.user
+        missed.userRoleList = scheduledExecution.userRoleList
+        missed.serverNodeUUID = scheduledServer
+        missed.workflow = new Workflow()
+        missed.workflow.save()
+        missed.status = 'missed'
+        missed.save()
+        ExecReport execReport = ExecReport.fromExec(missed)
+        execReport.save()
+
+        if(scheduledExecution.notifications) {
+            AuthContext authContext = rundeckAuthContextProcessor.
+                    getAuthContextForUserAndRolesAndProject(
+                            scheduledExecution.user,
+                            scheduledExecution.userRoles,
+                            scheduledExecution.project
+                    )
+            def contextBuilder = ExecutionContextImpl.builder()
+            contextBuilder.with {
+                storageTree(storageService.storageTreeWithContext(authContext))
+                framework(frameworkService.rundeckFramework)
+                frameworkProject(scheduledExecution.project)
+            }
+            contextBuilder.authContext(authContext)
+            notificationService.triggerJobNotification(
+                    "failure", scheduledExecution,
+                    [execution: missed,
+                     context  : contextBuilder.build()]
+            )
+        }
     }
 }

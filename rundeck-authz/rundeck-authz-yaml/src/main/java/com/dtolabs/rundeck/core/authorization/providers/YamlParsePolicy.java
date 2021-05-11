@@ -43,6 +43,8 @@ public class YamlParsePolicy implements Policy {
     public static final String NOT_BY_SECTION = "notBy";
     public static final String USERNAME_KEY = "username";
     public static final String GROUP_KEY = "group";
+    public static final String URN_KEY = "urn";
+
     ACLPolicyDoc policyDoc;
     String sourceIdent;
     int sourceIndex;
@@ -51,6 +53,7 @@ public class YamlParsePolicy implements Policy {
 
     private Set<String> usernames = new HashSet<String>();
     private Set<String> groups = new HashSet<String>();
+    private Set<String> urns = new HashSet<String>();
     private Set<AclRule> rules = new HashSet<>();
     private boolean isBy;
 
@@ -147,20 +150,27 @@ public class YamlParsePolicy implements Policy {
             AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).group(group);
             rules.addAll(createRules(ruleBuilder));
         }
+        for (String urn : urns) {
+            AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).urn(urn);
+            rules.addAll(createRules(ruleBuilder));
+        }
     }
 
     private void parseByClause() {
 
         Object u = null;
         Object g = null;
+        Object urn = null;
         if(null != policyDoc.getBy()) {
             this.isBy = true;
             u = policyDoc.getBy().getUsername();
             g = policyDoc.getBy().getGroup();
+            urn = policyDoc.getBy().getUrn();
         }else if(null != policyDoc.getNotBy()){
             this.isBy=false;
             u = policyDoc.getNotBy().getUsername();
             g = policyDoc.getNotBy().getGroup();
+            urn = policyDoc.getNotBy().getUrn();
         }
 
         if (null != u) {
@@ -214,7 +224,33 @@ public class YamlParsePolicy implements Policy {
                 );
             }
         }
-        if (groups.size() < 1 && usernames.size() < 1) {
+
+        if (null != urn) {
+            if (urn instanceof String) {
+                addUrn((String) urn);
+            } else if (g instanceof Collection) {
+                for (final Object o : (Collection) urn) {
+                    if (o instanceof String) {
+                        addUrn((String) o);
+                    } else {
+                        throw new AclPolicySyntaxException(
+                                "Section '" +
+                                        URN_KEY +
+                                        ":' should contain only Strings, but saw a: " +
+                                        o.getClass().getName()
+                        );
+                    }
+                }
+            } else {
+                throw new AclPolicySyntaxException(
+                        "Section '" +
+                                URN_KEY +
+                                ":' should be a list or a String, but it was: " +
+                                urn.getClass().getName()
+                );
+            }
+        }
+        if (groups.size() < 1 && usernames.size() < 1 && urns.size() < 1) {
             if (null != validation) {
                 validation.addError(
                         sourceIdent,
@@ -224,6 +260,8 @@ public class YamlParsePolicy implements Policy {
                         GROUP_KEY +
                         ":' and/or '" +
                         USERNAME_KEY +
+                        ":' and/or '" +
+                        URN_KEY +
                         ":'"
                 );
             }
@@ -232,6 +270,10 @@ public class YamlParsePolicy implements Policy {
 
     private void addGroup(String g) {
         groups.add(g);
+    }
+
+    private void addUrn(String urn) {
+        urns.add(urn);
     }
 
     private void addUsername(String u) {
@@ -246,7 +288,7 @@ public class YamlParsePolicy implements Policy {
         }
 
         if (null != policyDoc.getBy() &&
-                (null == policyDoc.getBy().getGroup() && null == policyDoc.getBy().getUsername())) {
+                (null == policyDoc.getBy().getGroup() && null == policyDoc.getBy().getUsername() && null == policyDoc.getBy().getUrn())) {
 
             throw new AclPolicySyntaxException(
                     "Section '" + BY_SECTION +
@@ -255,11 +297,14 @@ public class YamlParsePolicy implements Policy {
                     GROUP_KEY +
                     ":' and/or '" +
                     USERNAME_KEY +
+                    ":' and/or '" +
+                    URN_KEY +
                     ":'"
+
             );
         }
         if (null != policyDoc.getNotBy() &&
-                (null == policyDoc.getNotBy().getGroup() && null == policyDoc.getNotBy().getUsername())) {
+                (null == policyDoc.getNotBy().getGroup() && null == policyDoc.getNotBy().getUsername() && null == policyDoc.getNotBy().getUrn())) {
 
             throw new AclPolicySyntaxException(
                     "Section '" + NOT_BY_SECTION +
@@ -268,6 +313,8 @@ public class YamlParsePolicy implements Policy {
                             GROUP_KEY +
                             ":' and/or '" +
                             USERNAME_KEY +
+                            ":' and/or '" +
+                            URN_KEY +
                             ":'"
             );
         }
@@ -450,7 +497,7 @@ public class YamlParsePolicy implements Policy {
                         AuthorizationUtil.contextAsString(forcedContext)
                 );
             }
-            environment = new YamlParsePolicy.YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, forcedContext);
+            environment = new YamlParsePolicy.YamlEnvironmentalContext(AuthorizationUtil.URI_BASE, forcedContext);
         } else if (null == context) {
             throw new AclPolicySyntaxException("Required 'context:' section was not present");
         } else {
@@ -462,7 +509,7 @@ public class YamlParsePolicy implements Policy {
                         ", it should have only one entry: 'application:' or 'project:'"
                 );
             }
-            environment = new YamlParsePolicy.YamlEnvironmentalContext(EnvironmentalContext.URI_BASE, context);
+            environment = new YamlParsePolicy.YamlEnvironmentalContext(AuthorizationUtil.URI_BASE, context);
         }
         if (!environment.isValid()) {
             throw new AclPolicySyntaxException(
@@ -500,6 +547,11 @@ public class YamlParsePolicy implements Policy {
     @Override
     public Set<String> getGroups() {
         return groups;
+    }
+
+    @Override
+    public Set<String> getUrns() {
+        return urns;
     }
 
     @Override
@@ -545,7 +597,7 @@ public class YamlParsePolicy implements Policy {
                 key = next.getKey();
                 value = next.getValue();
                 return BasicEnvironmentalContext.patternContextFor(
-                        key.toString().substring(EnvironmentalContext.URI_BASE.length()),
+                        key.toString().substring(AuthorizationUtil.URI_BASE.length()),
                         value.toString()
                 );
             } else {
@@ -554,7 +606,7 @@ public class YamlParsePolicy implements Policy {
                 String value = next.getValue();
                 return BasicEnvironmentalContext.staticContextFor(
                         key.toString().substring(
-                                EnvironmentalContext.URI_BASE.length()
+                                AuthorizationUtil.URI_BASE.length()
                         ),
                         value
                 );

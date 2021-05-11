@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # common header for test scripts
-API_CURRENT_VERSION=36
+API_CURRENT_VERSION=39
 
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
@@ -45,17 +45,13 @@ xmlsel(){
 API_VERSION=${API_VERSION:-$API_CURRENT_VERSION}
 
 # curl opts to use a cookie jar, and follow redirects, showing only errors
-if [ -n "$RDAUTH" ] ; then 
+if [ -n "$RDAUTH" ] ; then
     AUTHHEADER="X-RunDeck-Auth-Token: $RDAUTH"
     CURLOPTS="-s -S -L"
 else
     CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"
 fi
-
-if [ -z "$API_XML_NO_WRAPPER" ] ; then
-    CURLOPTS="$CURLOPTS -H X-Rundeck-API-XML-Response-Wrapper:true"
-fi
-
+export API_XML_NO_WRAPPER=true
 if [ -n "$DEBUG" ] ; then
     CURLOPTS="$CURLOPTS -v"
 fi
@@ -66,7 +62,7 @@ docurl(){
             echo $CURL -H "${AUTHHEADER:-}" "$@" 1>&2
         fi
         $CURL -H "${AUTHHEADER:-}" "$@"
-    else    
+    else
         if [ "true" == "${RDDEBUG:-}" ] ; then
             echo $CURL "$@" 1>&2
         fi
@@ -111,7 +107,7 @@ api_request(){
     if [ -n "${POSTFILE:-}" ] ; then
         H_UPLOAD="--data-binary @$POSTFILE"
         if [ -n "$DEBUG" ] ; then
-            1>&2 echo "POSTFILE=$POSTFILE" 
+            1>&2 echo "POSTFILE=$POSTFILE"
             1>&2 echo ">>>>"
             1>&2 cat $POSTFILE
             1>&2 echo ">>>>"
@@ -123,19 +119,19 @@ api_request(){
         fail "ERROR: failed query request"
     fi
     if [ -n "${DEBUG:-}" ] ; then
-            1>&2 echo "FILE=$FILE" 
+            1>&2 echo "FILE=$FILE"
             1>&2 echo "<<<<"
             1>&2 cat $FILE
             1>&2 echo "<<<<"
         fi
-    
+
     assert_http_status ${EXPECT_STATUS:-200} $DIR/headers.out
     METHOD=
     ACCEPT=
     TYPE=
     POSTFILE=
     EXPECT_STATUS=
-    
+
 }
 api_waitfor_execution(){
     local execid=$1
@@ -148,13 +144,13 @@ api_waitfor_execution(){
     local rsleep=3
     local rmax=${3:-10}
     local rc=0
-    
+
     while [[ ( $status == "running" || $status == "scheduled" ) && $rc -lt $rmax ]]; do
 
         # get listing
         docurl ${runurl} > $DIR/curl.out || fail "failed request: ${runurl}"
 
-        
+
         #Check projects list
         assert_xml_valid $DIR/curl.out
         assert_xml_value "1" "//executions/@count" $DIR/curl.out
@@ -166,9 +162,9 @@ api_waitfor_execution(){
             sleep $rsleep
         fi
     done
-    
-    # only return 1 if failed or aborted, 
-    # this is how rd-queue used to work, 
+
+    # only return 1 if failed or aborted,
+    # this is how rd-queue used to work,
     if [[ $status == 'failed' || $status == 'aborted' ]] ; then
         if [[ $shouldfail == "true" ]] ; then
             echo "Status is $status shouldfail $shouldfail"
@@ -206,7 +202,7 @@ assert_xml_valid(){
 # assert_xml_value 'value' 'xpath' $file
 ##
 assert_xml_value(){
-    local value=$($XMLSTARLET sel -T -t -v "$2" $3)
+    local value=$(xmlsel "$2" $3)
     if [ $? != 0 -a -n "$1" ] ; then
         errorMsg "xmlstarlet failed: $!: $value, for $1 $2 $3"
         cat $3
@@ -219,7 +215,7 @@ assert_xml_value(){
     fi
 }
 assert_xml_notblank(){
-    local value=$($XMLSTARLET sel -T -t -v "$1" $2)
+    local value=$(xmlsel "$1" $2)
     if [ $? != 0 ] ; then
         errorMsg "Expected value for XPath $1, but select failed: $! (in file $2)"
         cat $2
@@ -234,7 +230,7 @@ assert_xml_notblank(){
 
 ##
 # assert_json_value 'value' 'jsonquery' $file
-## 
+##
 assert_json_value(){
     local JQ=`which jq`
 
@@ -297,4 +293,54 @@ assert_json_not_null(){
         cat $2
         exit 2
     fi
+}
+
+##
+# val=$(json_val  'jsonquery' $file)
+##
+json_val(){
+    local JQ=`which jq`
+
+    if [ -z "$JQ" ] ; then
+        errorMsg "FAIL: Can't test JSON format, install jq"
+        exit 2
+    fi
+    local propval=$($JQ -r "$1" < $2 )
+    if [ $? != 0 ] ; then
+        errorMsg "Json query invalid: $1: $!"
+        exit 2
+    fi
+    echo $propval
+}
+
+uploadJob(){
+    local file=$1;shift
+    local proj=$1;shift
+    local count=${1:-1};shift
+    local params=${1:-dupeOption=update};shift
+    local select=${1:-//succeeded/job/id};shift
+
+    # now submit req
+    runurl="${APIURL}/project/$proj/jobs/import"
+
+    # specify the file for upload with curl, named "xmlBatch"
+    local ulopts="-F xmlBatch=@$file -H Accept:application/xml"
+
+    # get listing
+    docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+    if [ 0 != $? ] ; then
+        errorMsg "ERROR: failed query request"
+        exit 2
+    fi
+
+    assert_xml_value "$count" '/result/succeeded/@count' $DIR/curl.out
+    local jobid
+    jobid=$(xmlsel "$select" $DIR/curl.out)
+
+    if [ "" == "$jobid" ] ; then
+        errorMsg  "Upload was not successful."
+        exit
+    fi
+
+    echo $jobid
 }

@@ -33,6 +33,8 @@
 </head>
 
 <body>
+<div class="content">
+<div id="layoutBody">
   <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">
@@ -119,5 +121,7 @@
       </div>
     </div>
   </div>
+</div>
+</div>
 </body>
 </html>

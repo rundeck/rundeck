@@ -416,6 +416,39 @@ class ScheduledExecutionTest  {
         assertEquals "incorrect number of roles found", 0, x.size()
     }
 
+    @Test void testUserRolesWithCommas() {
+        def ScheduledExecution se = new ScheduledExecution()
+        assertNull "should be null", se.userRoleList
+        se.setUserRoles(["a,with,commas", "b, with commas", "c without commas"])
+        assertEquals "User roles not set correctly", "[\"a,with,commas\",\"b, with commas\",\"c without commas\"]", se.userRoleList
+        def x = se.getUserRoles()
+        assertEquals "incorrect number of roles found", 3, x.size()
+        assertEquals "invalid role item", "a,with,commas", x[0]
+        assertEquals "invalid role item", "b, with commas", x[1]
+        assertEquals "invalid role item", "c without commas", x[2]
+
+        se.userRoleList = null
+        x = se.getUserRoles()
+        assertEquals "incorrect number of roles found", 0, x.size()
+    }
+
+    @Test void testUserRolesAsString() {
+        def ScheduledExecution se = new ScheduledExecution()
+        assertNull "should be null", se.userRoleList
+//        se.setUserRoles(["a,with,commas", "b, with commas", "c without commas"])
+        se.userRoleList = "a,b,c"
+        assertEquals "User roles not set correctly", "a,b,c", se.userRoleList
+        def x = se.getUserRoles()
+        assertEquals "incorrect number of roles found", 3, x.size()
+        assertEquals "invalid role item", "a", x[0]
+        assertEquals "invalid role item", "b", x[1]
+        assertEquals "invalid role item", "c", x[2]
+
+        se.userRoleList = null
+        x = se.getUserRoles()
+        assertEquals "incorrect number of roles found", 0, x.size()
+    }
+
     @Test void testUserRolesADWithDN() {
         def ScheduledExecution se = new ScheduledExecution()
         assertNull "should be null", se.userRoleList

@@ -16,10 +16,10 @@
 
 /*
 * TestYamlPolicyCollection.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 8/25/11 10:18 AM
-* 
+*
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
@@ -51,7 +51,7 @@ public class TestYamlPolicyCollection extends TestCase {
         testdir = new File("src/test/resources/com/dtolabs/rundeck/core/authorization/providers");
         test1 = new File(testdir, "test1.yaml");
         test2 = new File(testdir, "test2.yaml");
-//        environment.add(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), "aproject"));
+//        environment.add(new Attribute(URI.create(AuthorizationUtil.URI_BASE + "project"), "aproject"));
 
     }
 

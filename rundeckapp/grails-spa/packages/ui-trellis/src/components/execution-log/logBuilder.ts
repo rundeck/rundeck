@@ -106,6 +106,10 @@ export class LogBuilder {
     }
   }
 
+  updateProp(opts: IBuilderOpts) {
+    this.opts = Object.assign(LogBuilder.DefaultOpts(), opts)
+  }
+
   addLines(entries: Array<ExecutionOutputEntry>) {
     const items = entries.map( e => {
       return this.addLine(e, false)

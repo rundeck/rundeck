@@ -30,7 +30,6 @@
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="util/tab-router.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
-<feature:enabled name="notificationsEditorVue">
     <asset:javascript src="static/pages/job/editor.js" defer="defer"/>
     <asset:stylesheet src="static/css/pages/job/editor.css" />
     <g:jsMessages code="
@@ -65,14 +64,11 @@
                  data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
                            notifyAvgDurationThreshold:scheduledExecution?.notifyAvgDurationThreshold,
                  ]}"/>
-</feature:enabled>
-    <g:javascript>
 
-        <feature:enabled name="notificationsEditorVue">
+    <g:javascript>
         window._rundeck = Object.assign(window._rundeck || {}, {
             data: {notificationData: loadJsonData('jobNotificationsJSON')}
         })
-        </feature:enabled>
         console.log("loaded data",window._rundeck)
         var workflowEditor = new WorkflowEditor();
         var confirm = new PageConfirm(message('page.unsaved.changes'));
@@ -86,8 +82,10 @@
     <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
 </head>
 <body>
-
-
+<div class="content">
+<div id="layoutBody">
     <g:render template="/scheduledExecution/createForm" model="[scheduledExecution:scheduledExecution,crontab:crontab,iscopy:iscopy,authorized:authorized]"/>
+</div>
+</div>
 </body>
 </html>

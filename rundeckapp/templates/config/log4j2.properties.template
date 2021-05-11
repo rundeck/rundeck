@@ -261,3 +261,13 @@ logger.springBeanPropertyDescriptor.name = org.springframework.beans.GenericType
 logger.springBeanPropertyDescriptor.level = error
 logger.springBeanPropertyDescriptor.additivity = false
 logger.springBeanPropertyDescriptor.appenderRef.stdout.ref = STDOUT
+
+logger.migration.name = org.grails.plugins.databasemigration
+logger.migration.level = info
+logger.migration.additivity = false
+logger.migration.appenderRef.stdout.ref = STDOUT
+
+logger.liquibase.name = liquibase
+logger.liquibase.level = info
+logger.liquibase.additivity = false
+logger.liquibase.appenderRef.stdout.ref = STDOUT

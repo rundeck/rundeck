@@ -147,14 +147,6 @@ jobs:
     - script_block 'sync.ci-resources' fetch_common_resources
     - script_block 'sync.commit' sync_commit_to_s3
     - export VCS_URL=https://github.com/rundeck/rundeck.git
-    # Delete existing packages
-    # - script_block 'delete.deb' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck  dev-deb rundeck'
-    # - script_block 'delete.rpm-rundeck' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck'
-    - script_block 'delete.mavan-rpm-config' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck-config'
-    # Deploy new snapshot packages
-    # - script_block 'publish.deb' 'bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-deb'
-    # - script_block 'publish.rpm' 'bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm'
-    - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-maven "${RUNDECK_BUILD_NUMBER}"'
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
     # Upload to sonatype
@@ -162,22 +154,7 @@ jobs:
 
   # Stage: tag release publishes artifacts to the appropriate external repsositories
   - stage: tag release
-    env: JOB='Publish Maven'
-    script:
-    - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'sync.ci-resources' fetch_common_resources
-    - export VCS_URL=https://github.com/rundeck/rundeck.git
-
-    # Deploy new snapshot packages
-    # - bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_DEB_REPO}"
-    # - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_RPM_REPO}"
-    # - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_MAVEN_REPO}" "${RUNDECK_BUILD_NUMBER}"
-    # Upload to sonatype
-    - script_block 'publish.maven' 'DRY_RUN=false bash scripts/travis-build.sh publish'
-    # Trigger downstream release builds(packaging-core)
-    - script_block 'trigger.downstream' trigger_downstream_releases
-
-  - env: JOB='Publish Docker'
+    env: JOB='Publish Docker'
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'sync.ci-resources' fetch_common_resources
@@ -223,4 +200,4 @@ notifications:
   irc:
   - irc.freenode.org#rundeck
   slack:
-    secure: ep3APeVD6QwEkTJ8YR0f1eDzcFJ2uLUIci4Aob/5ILm+v8h0hOTAe1yFoKv+iR/4PCeZ+5PvVezOMHSkFNX7rCj06Mj/ivlnng569JLjOQAR0q25aeIH+wy4oDE33HaNbNOYLMe7bXDP4SelRi9SbRRe84j6OjDgZzyDC36cyAk=
+    secure: n02+acmU1U7J+k6cQuB+nMMcZl8aRpCYgieOPHEjRM+eY1gg2MOsD1DePWu+02GiLb53HKGQETEbAhkEv7NpxAyL5kudmM6lRJTIYu/xsBMUXnRVvwbUmJq08m2mSXZJ88Hejx2m5U4uVBKBdPaC9pzgYxx9+bttPtcsLBW99Qw=

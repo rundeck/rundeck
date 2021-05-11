@@ -1,9 +1,9 @@
 Rundeck
 ========
 
-| Travis | Deb | RPM | War | Jar |
-|--------|-----|-----|-----|-----|
-|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-deb/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-deb/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-rpm/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-rpm/rundeck/_latestVersion)| [![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck-launcher/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck-launcher/_latestVersion)
+| Travis | Deb | RPM | War |
+|--------|-----|-----|-----|
+|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-deb/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-deb/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-rpm/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-rpm/rundeck/_latestVersion)| [![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck/_latestVersion)
 
 Rundeck is an open source automation service with a web console, 
 command line tools and a WebAPI.
@@ -18,9 +18,6 @@ It lets you easily run automation tasks across a set of nodes.
 
 See the [Release Notes](https://docs.rundeck.com/docs/history/) for the latest version information.
 
-![Rundeck_survey](https://www.rundeck.com/hubfs/github-2.png)
-
-[Help us Help you!  Click here to answer the Community Survey and a chance to win prizes](https://www.rundeck.com/oss-survey)
 
 To Build:
 =====
@@ -37,15 +34,6 @@ Artifacts:
 * `rundeckapp/build/libs/rundeck-X.Y.war`
 
 
-Other builds
-======
-
-The documentation can be built with [pandoc](http://johnmacfarlane.net/pandoc/).
-    
-Build the documentation. Artifacts in `docs/en/dist`:
-
-    cd docs
-    make
 
 RPM and DEB package builds
 =======
@@ -107,7 +95,7 @@ Requirements
 
 Java 8 (openjdk, oracle)
 
-[Pandoc](http://johnmacfarlane.net/pandoc/) (documentation build only)
+Node JS 12
 
 Documentation
 ======
@@ -122,7 +110,6 @@ Development
 Refer to the [IDE Development Environment](https://github.com/rundeck/rundeck/wiki/IDE-Development-Environment) to get set up using IntelliJ IDEA or Eclipse/STS.
 
 * [Issue tracker](https://github.com/rundeck/rundeck/issues) at github.com
-* [Fresh builds](http://build.rundeck.org) served by Jenkins
 
 Do you have changes to contribute? Please see the [Development](https://github.com/rundeck/rundeck/wiki/Development) wiki page.
 

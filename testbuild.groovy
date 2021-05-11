@@ -45,7 +45,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
 //versions of dependency we want to verify
 def versions=[
-        jetty:'9.4.26.v20200117',
+        jetty:'9.4.39.v20210325',
         servlet:'api-3.1.0',
         log4j:'2.13.2'
 ]
@@ -56,7 +56,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
 def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','orchestrator', 'source-refresh','upvar']
-def externalPlugins=['rundeck-ansible-plugin','aws-s3-model-source','py-winrm-plugin','openssh-node-execution','multiline-regex-datacapture-filter', 'attribute-match-node-enhancer']
+def externalPlugins=['rundeck-ansible-plugin','aws-s3-model-source','py-winrm-plugin','openssh-node-execution','multiline-regex-datacapture-filter', 'attribute-match-node-enhancer','sshj-plugin']
 
 //manifest describing expected build results
 def manifest=[

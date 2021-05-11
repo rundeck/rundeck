@@ -179,10 +179,10 @@ function BulkEditor(data){
         var exportStatus = null;
         var importStatus = null;
         if(self.scmStatus() && self.scmStatus()[jobid]){
-            exportStatus = self.scmStatus()[jobid].synchState.name;
+            exportStatus = self.scmStatus()[jobid].synchState;
         }
         if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
-            importStatus = self.scmImportJobStatus()[jobid].synchState.name;
+            importStatus = self.scmImportJobStatus()[jobid].synchState;
         }
         if(!exportStatus || exportStatus == "CLEAN"){
             return importStatus;
@@ -196,10 +196,10 @@ function BulkEditor(data){
         var displayImport = false;
         if(self.scmExportEnabled() || self.scmImportEnabled()){
             if(self.scmStatus() && self.scmStatus()[jobid]){
-                displayExport = self.scmStatus()[jobid].synchState.name != "CLEAN";
+                displayExport = self.scmStatus()[jobid].synchState != "CLEAN";
             }
             if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
-                displayImport = self.scmImportJobStatus()[jobid].synchState.name != "CLEAN";
+                displayImport = self.scmImportJobStatus()[jobid].synchState != "CLEAN";
             }
         }
         return (displayExport || displayImport);
@@ -210,7 +210,7 @@ function BulkEditor(data){
         var importStatus = null;
         var text = null;
         if(self.scmStatus() && self.scmStatus()[jobid]){
-            exportStatus = self.scmStatus()[jobid].synchState.name;
+            exportStatus = self.scmStatus()[jobid].synchState;
             switch(exportStatus) {
                 case "EXPORT_NEEDED":
                     text = self.messages['scm.export.status.EXPORT_NEEDED.description'];
@@ -220,6 +220,9 @@ function BulkEditor(data){
                     break;
                 case "CLEAN":
                     text = self.messages['scm.export.status.CLEAN.description'];
+                    break;
+                case "LOADING":
+                    text = self.messages['scm.export.status.LOADING.description'];
                     break;
                 default:
                     text = exportStatus;
@@ -231,7 +234,7 @@ function BulkEditor(data){
             }else{
                 text = '';
             }
-            importStatus = self.scmImportJobStatus()[jobid].synchState.name;
+            importStatus = self.scmImportJobStatus()[jobid].synchState;
             switch(importStatus) {
                 case "IMPORT_NEEDED":
                     text += self.messages['scm.import.status.IMPORT_NEEDED.description'];
@@ -248,6 +251,9 @@ function BulkEditor(data){
                 case "UNKNOWN":
                     text += self.messages['scm.import.status.UNKNOWN.description'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.import.status.LOADING.description'];
+                    break;
                 default:
                     text += importStatus;
             }
@@ -260,25 +266,19 @@ function BulkEditor(data){
         switch(self.jobSynchState(jobid)) {
             case "EXPORT_NEEDED":
                 return "text-info";
-                break;
             case "CREATE_NEEDED":
                 return "text-success";
-                break;
             case "UNKNOWN":
                 return "text-primary";
-                break;
             case "IMPORT_NEEDED":
-                return "text-warning";
-                break;
             case "REFRESH_NEEDED":
+            case "LOADING":
                 return "text-warning";
-                break;
             case "DELETED":
                 return "text-danger";
-                break;
             case "CLEAN":
                 return "text-primary";
-                break;
+
         }
         return 'text-primary';
     };
@@ -286,26 +286,20 @@ function BulkEditor(data){
     self.jobIcon = function(jobid){
         switch(self.jobSynchState(jobid)) {
             case "EXPORT_NEEDED":
-                return "glyphicon-exclamation-sign";
-                break;
             case "CREATE_NEEDED":
                 return "glyphicon-exclamation-sign";
-                break;
             case "UNKNOWN":
                 return "glyphicon-question-sign";
-                break;
             case "IMPORT_NEEDED":
-                return "glyphicon-exclamation-sign";
-                break;
             case "REFRESH_NEEDED":
                 return "glyphicon-exclamation-sign";
-                break;
             case "DELETED":
                 return "glyphicon-minus-sign";
-                break;
             case "CLEAN":
                 return "glyphicon-ok";
-                break;
+            case "LOADING":
+                return "glyphicon-refresh";
+
         }
         return 'glyphicon-plus';
     };
@@ -325,13 +319,13 @@ function BulkEditor(data){
 
     self.exportState = function(){
         if(self.scmExportStatus()){
-            return self.scmExportStatus().state.name;
+            return self.scmExportStatus().state;
         }
         return null;
     };
     self.importState = function(){
         if(self.scmImportStatus()){
-            return self.scmImportStatus().state.name;
+            return self.scmImportStatus().state;
         }
         return null;
     };
@@ -359,6 +353,9 @@ function BulkEditor(data){
                 case "CLEAN":
                     text = self.messages['scm.export.status.CLEAN.display.text'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.export.status.LOADING.display.text'];
+                    break;
             }
             if(!text){
                 text = self.exportState();
@@ -384,6 +381,9 @@ function BulkEditor(data){
                 case "CLEAN":
                     text = self.messages['scm.import.status.CLEAN.display.text'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.import.status.LOADING.display.text'];
+                    break;
             }
             if(!text){
                 text = self.importState();
@@ -394,7 +394,7 @@ function BulkEditor(data){
     };
 
     self.defaultDisplayText = function(){
-        if(self.exportState() != 'CLEAN'){
+        if(self.exportState()!=null && self.exportState() != 'CLEAN'){
             return self.defaultExportText();
         }else{
             return self.defaultImportText();

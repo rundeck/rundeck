@@ -66,9 +66,14 @@
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[params.project]:params.project}"/>
     <title><g:message code="page.title.project.access.control.0" args="${[projectLabel]}"/></title>
 
+    <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/components/ko-paginator.js"/>
+    <!-- /VUE JS REQUIREMENTS -->
+
     <asset:javascript src="menu/aclListing.js"/>
     <script type="application/javascript">
         var checkUploadForm;
+        let project="${enc(js:params.project)}"
         jQuery(function () {
             var data = loadJsonData('aclPolicyList');
             jQuery.extend(data,{
@@ -77,7 +82,8 @@
                     max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
                 }
             })
-            window.policies = new PolicyFiles(data);
+            window.policies = new PolicyFiles(data,_genUrl(_rundeck.rdBase+'/menu/ajaxProjectAclMeta',{project:project}));
+            new PagerVueAdapter(window.policies.paging, 'acl-stored')
             ko.applyBindings(policies, jQuery('#policyList')[0]);
             ko.applyBindings(policies, jQuery('#deleteAclPolicy')[0]);
             <g:if test="${hasCreateAuth}" >
@@ -101,6 +107,8 @@
                          [:]}"/>
 </head>
 <body>
+<div class="content">
+<div id="layoutBody">
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-12">
@@ -125,7 +133,7 @@
             <g:message code="project.access.control.prompt" args="${[params.project]}"/>
             <span class="label label-default">${acllist?.size() ?: 0}</span>
             <g:if test="${hasCreateAuth}">
-              <div class="btn-group pull-right">
+              <div class="pull-right">
                 <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclUpload">
                   <g:icon name="upload"/>
                   <g:message code="button.action.Upload"/>
@@ -133,7 +141,7 @@
                 <g:link controller="menu"
                         action="createProjectAclFile"
                         params="${[project: params.project]}"
-                        class="btn btn-sm btn-success">
+                        class="btn btn-sm btn-cta">
                   <g:icon name="plus"/>
                   <g:message code="access.control.action.create.acl.policy.button.title"/>
                 </g:link>
@@ -143,7 +151,7 @@
         </div>
 
         <div class="card-content" id="policyList">
-            <g:render template="aclsPagingKO"/>
+            <g:render template="aclsPagingKO" model="[name: 'acl-stored']"/>
             <g:render template="aclKOTemplates"/>
             <div data-bind="foreach: policiesView">
               <g:render template="/menu/aclValidationRowKO"
@@ -169,6 +177,8 @@
                                                 uploadModalId: 'aclUpload',
                                                 uploadAction : hasCreateAuth || hasEditAuth ? [controller: 'menu', action: 'saveProjectAclFile', params: [project: params.project, upload: true]] : null
   ]"/>
+</div>
+</div>
 </div>
 </body>
 </html>
