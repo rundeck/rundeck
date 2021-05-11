@@ -1419,7 +1419,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
         1 * scmConfig.getEnabled() >> enabled
-        (count) * controller.scmService.getJobsPluginMeta(project)
+        (count) * controller.scmService.getJobsPluginMeta(project, true)
         (count) * controller.scmService.exportStatusForJobs(project,_, _, _, _)
         (count) * controller.scmService.exportPluginStatus(_,project)
         (count) * controller.scmService.exportPluginActions(_,project)
@@ -1472,7 +1472,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
         1 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
         1 * scmConfig.getEnabled() >> enabled
-        (count) * controller.scmService.getJobsPluginMeta(project)
+        (count) * controller.scmService.getJobsPluginMeta(project, false)
         (count) * controller.scmService.importStatusForJobs(project,_, _, _, _)
         (count) * controller.scmService.importPluginStatus(_,project)
         (count) * controller.scmService.importPluginActions(_,project,_)

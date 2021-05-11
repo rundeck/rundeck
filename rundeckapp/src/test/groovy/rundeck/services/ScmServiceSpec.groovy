@@ -609,7 +609,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
 
         //store metadata about commit
-        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: 1, pluginMeta: commitMetadata, 'name': 'test', 'groupPath': 'test'])
+        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-export', [version: 1, pluginMeta: commitMetadata, 'name': 'test', 'groupPath': 'test'])
 
         result.valid
         result.commitId == 'a-commit-id'
@@ -856,7 +856,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             def job = new ScheduledExecution()
             service.jobMetadataService=Mock(JobMetadataService)
         when:
-            def result = service.getJobPluginMeta(job)
+            def result = service.getJobPluginMeta(job, "scm-import")
         then:
             1 * service.jobMetadataService.getJobPluginMeta(job, ScmService.STORAGE_NAME_IMPORT)>>expect
             result == expect
@@ -900,14 +900,14 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
 
         service.jobMetadataService = Mock(JobMetadataService){
-            getJobPluginMeta(_,'scm-import')>>originalMeta
+            getJobPluginMeta(_,'scm-export')>>originalMeta
         }
         ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
 
         when:
         service.refreshExportPluginMetadata(project,plugin, jobs, jobsPluginMeta)
         then:
-        jobMetadataCalls * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', _)
+        jobMetadataCalls * service.jobMetadataService.setJobPluginMeta(job, 'scm-export', _)
 
         where:
         originalMeta                                                    | jobMetadataCalls
@@ -985,9 +985,9 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         when:
             def result = service.exportFilePathsMapForJobs(project, jobs)
         then:
-            0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_IMPORT)
-            1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_IMPORT)
-            1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_IMPORT)
+            0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_EXPORT)
+            1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_EXPORT)
+            1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_EXPORT)
             1 * plugin.getRelativePathForJob({it.id== 'job1id' })>> '/a/path/job1'
             1 * plugin.getRelativePathForJob({it.id=='job2id' })>>'/a/path/job2'
             result == [
@@ -1080,7 +1080,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             1 * plugin.getRelativePathForJob({
                 it.id=='123'
             })>>'/a/path'
-            1 * service.jobMetadataService.getJobPluginMeta(project,'123','scm-import')
+            1 * service.jobMetadataService.getJobPluginMeta(project,'123','scm-export')
             1 * plugin.jobChanged({ it.eventType==evtType },_)
             service.deletedJobsCache[project]['/a/path']!=null
         where:

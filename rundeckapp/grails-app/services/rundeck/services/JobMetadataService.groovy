@@ -39,7 +39,7 @@ class JobMetadataService {
      * @return map of metadata set by import plugin
      */
     List<PluginMeta> getJobsPluginMeta(final String project, final String type) {
-        def found = PluginMeta.findAllByProject(project)
+        def found = PluginMeta.findAllByProjectAndKeyLike(project, "%/${type}")
         return found
     }
 

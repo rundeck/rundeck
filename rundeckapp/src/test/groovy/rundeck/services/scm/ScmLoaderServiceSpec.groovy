@@ -1,6 +1,8 @@
 package rundeck.services.scm
 
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
@@ -9,6 +11,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.bus.EventBus
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.storage.api.StorageException
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
 import rundeck.services.JobRevReferenceImpl
@@ -16,7 +19,7 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import spock.lang.Unroll
 
-class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmLoaderService> {
+class  ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmLoaderService> {
 
     def "loaded export plugin not configured"(){
 
@@ -71,6 +74,8 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         def listWorkflow = [
                 "schedlist": jobs
         ]
+        def username = "admin"
+        def roles = ["admin"]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             listWorkflows(_)>>listWorkflow
         }
@@ -78,13 +83,17 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
             projectHasConfiguredExportPlugin(project)>>true
         }
         def plugin  = Mock(ScmExportPlugin)
-        def scmPluginConfigData = Mock(ScmPluginConfigData)
+        def scmPluginConfigData = Mock(ScmPluginConfigData){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+        }
 
         when:
 
         service.processScmExportLoader(project, scmPluginConfigData, new ScmLoaderService.ScmLoaderStateImpl())
-
         then:
+        1 * service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
         1 * service.scmService.exportjobRefsForJobs(jobs,_)
         1 * plugin.initJobsStatus(_)
@@ -93,7 +102,7 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
 
     }
 
-    def "loaded import plugin load without"(){
+    def "loaded import plugin load without cluster fix"(){
 
         given:
         def project = "test"
@@ -107,6 +116,8 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         def listWorkflow = [
                 "schedlist": jobs
         ]
+        def username = "admin"
+        def roles = ["admin"]
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             listWorkflows(_)>>listWorkflow
         }
@@ -114,15 +125,20 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
             projectHasConfiguredImportPlugin(project)>>true
         }
         def plugin  = Mock(ScmImportPlugin)
-        def scmPluginConfigData = Mock(ScmPluginConfigData)
+        def scmPluginConfigData = Mock(ScmPluginConfigData){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+        }
 
         when:
 
         service.processScmImportLoader(project, scmPluginConfigData, new ScmLoaderService.ScmLoaderStateImpl())
 
         then:
+        1 * service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
         1 * service.scmService.getLoadedImportPluginFor(project)  >> plugin
-        1 * service.scmService.scmJobRefsForJobs(jobs,_)
+        1 * service.scmService.scmImportJobRefsForJobs(jobs,_)
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
         service.scmProjectInitLoaded.containsKey(project+"-import")
@@ -175,11 +191,12 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         service.processScmExportLoader(project, scmPluginConfigData, new ScmLoaderService.ScmLoaderStateImpl())
 
         then:
+        1 * service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
         1 * service.scmService.exportjobRefsForJobs(jobs,_)>>jobList
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
-        1 * service.scmService.scmOperationContext(username,roles,project)>>Mock(ScmOperationContext)
         jobs.size()*service.scmService.getRenamedPathForJobId(_,_)
         1 * plugin.clusterFixJobs(_,_,_)
         service.scmProjectInitLoaded.containsKey(project+"-export")
@@ -240,12 +257,13 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         service.processScmExportLoader(project, scmPluginConfigData, oldstate)
 
         then:
+        1 * service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
         1 * service.scmService.exportjobRefsForJobs(jobs,_)>>jobList
         1 * service.scmService.deletedExportFilesForProject(project)>>[:]
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
-        1 * service.scmService.scmOperationContext(username,roles,project)>>Mock(ScmOperationContext)
         jobs.size()*service.scmService.getRenamedPathForJobId(_,_)
         0 * service.scmService.recordDeletedJob(project,'/old/job/path',_)
         1 * plugin.clusterFixJobs(_,_,_)
@@ -305,11 +323,12 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         service.processScmImportLoader(project, scmPluginConfigData, new ScmLoaderService.ScmLoaderStateImpl())
 
         then:
+        1 * service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
         1 * service.scmService.getLoadedImportPluginFor(project)  >> plugin
-        1 * service.scmService.scmJobRefsForJobs(jobs,_) >> jobList
+        1 * service.scmService.scmImportJobRefsForJobs(jobs,_) >> jobList
         1 * plugin.initJobsStatus(_)
         1 * plugin.refreshJobsStatus(_)
-        1 * service.scmService.scmOperationContext(username,roles,project)>>Mock(ScmOperationContext)
         jobs.size()*service.scmService.getRenamedPathForJobId(project,_)
         1 * plugin.clusterFixJobs(_,_,_)
         service.scmProjectInitLoaded.containsKey(project+"-import")
@@ -370,11 +389,12 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
             service.processScmImportLoader(project, scmPluginConfigData, oldstate)
 
         then:
+            1 * service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+            1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
             1 * service.scmService.getLoadedImportPluginFor(project) >> plugin
-            1 * service.scmService.scmJobRefsForJobs(jobs, _) >> jobList
+            1 * service.scmService.scmImportJobRefsForJobs(jobs, _) >> jobList
             1 * plugin.initJobsStatus(_)
             1 * plugin.refreshJobsStatus(_)
-            1 * service.scmService.scmOperationContext(username, roles, project) >> Mock(ScmOperationContext)
             jobs.size() * service.scmService.getRenamedPathForJobId(project, _)
             1 * plugin.clusterFixJobs(_, _, _)
             service.scmProjectInitLoaded.containsKey(project + "-import")
@@ -459,6 +479,8 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
             .ScmLoaderStateImpl())
 
         then:
+        1 * service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
         1 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
         1 * service.scmService.exportjobRefsForJobs(_,_)>>jobList
         1 * service.scmService.unregisterPlugin("export", project)
@@ -510,11 +532,82 @@ class ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmL
         service.processScmImportLoader(project, (ScmPluginConfigData)scmPluginConfigData, new ScmLoaderService.ScmLoaderStateImpl())
 
         then:
+        1 * service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        1 * service.scmService.loadPluginWithConfig(_, _, _, _) >> Mock(CloseableProvider)
         1 * service.scmService.getLoadedImportPluginFor(project)  >> plugin
-        1 * service.scmService.scmJobRefsForJobs(jobs,_) >> jobList
+        1 * service.scmService.scmImportJobRefsForJobs(jobs,_) >> jobList
         1 * service.scmService.unregisterPlugin("import", project)
         1 * service.scmService.initProject(project, "import")
         service.scmProjectInitLoaded.containsKey(project+"-import")
+
+    }
+
+    def "SCM export project bad plugin config" (){
+        given:
+        def project = "test"
+        def username = "admin"
+        def roles = ["admin"]
+        def config = ["url":"http://localhost","branch": "dev"]
+        def configCached = ["url":"http://localhost","branch": "main"]
+
+        def plugin  = Mock(ScmExportPlugin)
+        def scmPluginConfigData = Mock(ScmPluginConfig){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+            getProperties() >> config
+        }
+
+        service.scmService = Mock(ScmService){
+            projectHasConfiguredExportPlugin(project)>>true
+        }
+
+        service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        service.scmService.loadPluginWithConfig(_, _, _, _) >> { throw new Exception("fail plugin config")  }
+
+        when:
+
+        service.processScmExportLoader(project, (ScmPluginConfigData)scmPluginConfigData, new ScmLoaderService
+                .ScmLoaderStateImpl())
+
+        then:
+        Exception e = thrown()
+        0 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
+        0 * service.scmService.exportjobRefsForJobs(_,_)
+        0 * service.scmService.unregisterPlugin("export", project)
+        0 * service.scmService.initProject(project, "export")
+    }
+
+    def "SCM import bad plugin config"(){
+        given:
+        def project = "test"
+        def username = "admin"
+        def roles = ["admin"]
+        def config = ["url":"http://localhost","branch": "dev"]
+        def configCached = ["url":"http://localhost","branch": "main"]
+
+        def plugin  = Mock(ScmImportPlugin)
+        def scmPluginConfigData = Mock(ScmPluginConfig){
+            getSetting("username")>>username
+            getSettingList("roles")>>roles
+            getProperties() >> config
+        }
+
+        service.scmService = Mock(ScmService){
+            projectHasConfiguredImportPlugin(project)>>true
+        }
+        service.scmService.scmOperationContext(username,roles,project) >> Mock(ScmOperationContext)
+        service.scmService.loadPluginWithConfig(_, _, _, _) >> { throw new Exception("fail plugin config")  }
+
+        when:
+
+        service.processScmImportLoader(project, (ScmPluginConfigData)scmPluginConfigData, new ScmLoaderService.ScmLoaderStateImpl())
+
+        then:
+        Exception e = thrown()
+        0 * service.scmService.getLoadedExportPluginFor(project)  >> plugin
+        0 * service.scmService.exportjobRefsForJobs(_,_)
+        0 * service.scmService.unregisterPlugin("import", project)
+        0 * service.scmService.initProject(project, "import")
 
     }
 }
