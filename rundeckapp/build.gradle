@@ -413,6 +413,7 @@ if (signArchives) {
 
 clean {
     delete "$projectDir/grails-app/assets/provided"
+    delete "$projectDir/grails-app/assets/javascripts/vendor"
 }
 
 bintray {
