@@ -24,16 +24,12 @@
 package com.dtolabs.rundeck.core.common.impl;
 
 import junit.framework.TestCase;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.HashMap;
+import java.io.*;
+import java.nio.file.Files;
 
 /**
  * TestURLFileUpdater is ...
@@ -60,78 +56,31 @@ public class TestURLFileUpdater extends TestCase {
         super(name);
     }
 
+    MockWebServer server;
 
-    static class test1 implements URLFileUpdater.httpClientInteraction {
-        int httpResultCode = 0;
-        private String httpStatusText;
-        InputStream bodyStream;
-        HttpMethod method;
-        HttpClient client;
-        IOException toThrowExecute;
-        IOException toThrowResponseBody;
-        boolean releaseConnectionCalled;
-        Boolean followRedirects;
-        HashMap<String, String> requestHeaders = new HashMap<String, String>();
-        HashMap<String, Header> responseHeaders = new HashMap<String, Header>();
+    @Override
+    protected void setUp() throws Exception {
+        server = new MockWebServer();
+        server.start();
+    }
 
-        public void setMethod(HttpMethod method) {
-            this.method = method;
-        }
-
-        public void setClient(HttpClient client) {
-            this.client = client;
-        }
-
-        public int executeMethod() throws IOException {
-            return httpResultCode;
-        }
-
-        public String getStatusText() {
-            return httpStatusText;
-        }
-
-        public InputStream getResponseBodyAsStream() throws IOException {
-            return bodyStream;
-        }
-
-        public void releaseConnection() {
-            releaseConnectionCalled = true;
-        }
-
-        public void setRequestHeader(String name, String value) {
-            requestHeaders.put(name, value);
-        }
-
-        public Header getResponseHeader(String name) {
-            return responseHeaders.get(name);
-        }
-
-
-        public void setFollowRedirects(boolean follow) {
-            followRedirects = follow;
-        }
+    @Override
+    protected void tearDown() throws Exception {
+        server.shutdown();
     }
 
     public void testUpdateBasic() throws Exception {
-        URLFileUpdater updater = new URLFileUpdater(new URL("http://example.com/test"), null, -1, null, null, false,
+        URLFileUpdater updater = new URLFileUpdater(server.url("test").url(), null, -1, null, null, false,
             null, null);
 
-        final test1 test1 = new test1();
-        test1.httpResultCode = 200;
-        test1.httpStatusText = "OK";
-        test1.responseHeaders.put("Content-Type", new Header("Content-Type", "text/yaml"));
-        String yamlcontent = YAML_NODES_TEST;
-        ByteArrayInputStream stringStream = new ByteArrayInputStream(yamlcontent.getBytes());
-        test1.bodyStream = stringStream;
-        updater.setInteraction(test1);
+        server.enqueue(new MockResponse().setResponseCode(200).addHeader("Content-Type", "text/yaml").setBody(YAML_NODES_TEST));
         File tempfile = File.createTempFile("test", ".yaml");
         tempfile.deleteOnExit();
         updater.updateFile(tempfile);
 
-        assertNotNull(test1.method);
-        assertNotNull(test1.client);
-        assertNotNull(test1.followRedirects);
-        assertNotNull(test1.releaseConnectionCalled);
+        ByteArrayOutputStream tempFileContent = new ByteArrayOutputStream();
+        Files.copy(tempfile.toPath(),tempFileContent);
+        assertEquals(YAML_NODES_TEST,new String(tempFileContent.toByteArray()));
 
     }
 
@@ -142,56 +91,38 @@ public class TestURLFileUpdater extends TestCase {
         tempfile.deleteOnExit();
         File cachemeta = File.createTempFile("test", ".properties");
         cachemeta.deleteOnExit();
-        URLFileUpdater updater = new URLFileUpdater(new URL("http://example.com/test"), null, -1, cachemeta, tempfile,
+        URLFileUpdater updater = new URLFileUpdater(server.url("cache-test").url(), null, -1, cachemeta, tempfile,
             true, null, null);
 
-
-        final test1 test1 = new test1();
-        test1.httpResultCode = 200;
-        test1.httpStatusText = "OK";
-        test1.responseHeaders.put("Content-Type", new Header("Content-Type", "text/yaml"));
-        //include etag, last-modified
-        test1.responseHeaders.put("ETag", new Header("ETag", "monkey1"));
-        test1.responseHeaders.put("Last-Modified", new Header("Last-Modified", "blahblee"));
-
-        final ByteArrayInputStream stringStream = new ByteArrayInputStream(YAML_NODES_TEST.getBytes());
-        test1.bodyStream = stringStream;
-        updater.setInteraction(test1);
+        server.enqueue(new MockResponse()
+                               .setResponseCode(200)
+                               .addHeader("ETag", "monkey1")
+                               .addHeader("Last-Modified", "blahblee")
+                               .addHeader("Content-Type", "text/yaml")
+                               .setBody(YAML_NODES_TEST));
 
         updater.updateFile(tempfile);
         assertTrue(tempfile.isFile());
         assertTrue(tempfile.length() > 0);
-
-        assertNotNull(test1.method);
-        assertNotNull(test1.client);
-        assertNotNull(test1.followRedirects);
-        assertNotNull(test1.releaseConnectionCalled);
+        server.takeRequest();
 
         //make another request. assert etag, If-modified-since are used.
 
-
-        final test1 test2 = new test1();
-        test2.httpResultCode = 304;
-        test2.httpStatusText = "Not Modified";
-        //include etag, last-modified
-        test2.responseHeaders.put("ETag", new Header("ETag", "monkey1"));
-        test2.responseHeaders.put("Last-Modified", new Header("Last-Modified", "blahblee"));
-
-        test2.bodyStream = null;
-        updater.setInteraction(test2);
-
+        server.enqueue(new MockResponse()
+                               .setResponseCode(304)
+                               .addHeader("ETag", "monkey1")
+                               .addHeader("Last-Modified", "blahblee"));
         updater.updateFile(tempfile);
         assertTrue(tempfile.isFile());
         assertTrue(tempfile.length()>0);
 
+        ByteArrayOutputStream tempFileContent = new ByteArrayOutputStream();
+        Files.copy(tempfile.toPath(),tempFileContent);
+        assertEquals(YAML_NODES_TEST,new String(tempFileContent.toByteArray()));
 
-        assertNotNull(test2.method);
-        assertNotNull(test2.client);
-        assertNotNull(test2.followRedirects);
-        assertNotNull(test2.releaseConnectionCalled);
-        assertEquals("monkey1", test2.requestHeaders.get("If-None-Match"));
-        assertEquals("blahblee", test2.requestHeaders.get("If-Modified-Since"));
-
+        RecordedRequest rq = server.takeRequest();
+        assertEquals("monkey1", rq.getHeader("If-None-Match"));
+        assertEquals("blahblee", rq.getHeader("If-Modified-Since"));
 
     }
 

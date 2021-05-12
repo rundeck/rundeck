@@ -20,6 +20,7 @@
 //= require knockout-onenter
 
 
+
 function StorageResource() {
     var self = this;
     self.meta = ko.observable({});
@@ -411,7 +412,7 @@ function StorageBrowser(baseUrl, rootPath) {
             self.resources([]);
             var reload=false;
             self.selectedPath(null);
-            self.inputPath(self.relativePath(path));
+            self.inputPath(self.relativePathRoot(self.rootBasePath(), path))
             if(reload){
                 self.browseToInputPath();
             }

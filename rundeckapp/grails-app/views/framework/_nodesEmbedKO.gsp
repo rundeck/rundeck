@@ -24,7 +24,7 @@
            class=" col-xs-6 node_ident embedded_node tight"
            tabindex="0"
            role="button"
-           data-viewport="#main-panel"
+           data-viewport="#section-content"
            data-placement="auto"
            data-container="body"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"

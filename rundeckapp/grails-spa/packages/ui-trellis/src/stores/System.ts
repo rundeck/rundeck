@@ -35,7 +35,6 @@ export class SystemStore {
         this.loaded = true
     }
 }
-
 export class VersionInfo {
     @observable full!: string
     @observable number!: string
@@ -66,7 +65,7 @@ export class VersionInfo {
 
 export class ServerInfo {
     name!: string
-    color!: number
+    color!: string
     uuid!: string
     icon!: string
 
@@ -74,7 +73,7 @@ export class ServerInfo {
         const ver = new RundeckVersion({})
         this.name = name
         this.uuid = uuid
-        this.icon = ver.iconForVersion2(ver.splitUUID('f1dbb7ed-c575-4154-8d01-216a59d7cb5e')['uuid4'])
-        this.color = ver.splitUUID('f1dbb7ed-c575-4154-8d01-216a59d7cb5e')['uuid0']
+        this.icon = ver.iconForVersion2(ver.splitUUID(uuid)['uuid0'])
+        this.color = ver.splitUUID(uuid)['sixes'][0]
     }
 }

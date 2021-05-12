@@ -18,6 +18,7 @@
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.gui.SystemConfigMenuItem
 import com.dtolabs.rundeck.app.gui.SystemReportMenuItem
 import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
@@ -104,6 +105,7 @@ import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.ExecutionValidatorService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
@@ -292,6 +294,7 @@ beans={
         quartzScheduler = ref('quartzScheduler')
     }
 
+    executionValidatorService(ExecutionValidatorService)
 
     localJobQueryService(LocalJobQueryService)
 
@@ -537,13 +540,12 @@ beans={
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
-    if(!(application.config.rundeck?.feature?.notificationsEditorVue?.enabled in [false,'false'])) {
-        //enable dummy notification plugins for new Notifications UI
-        [
-            DummyEmailNotificationPlugin,
-            DummyWebhookNotificationPlugin,].each {
-            "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
-        }
+
+    //enable dummy notification plugins for new Notifications UI
+    [
+        DummyEmailNotificationPlugin,
+        DummyWebhookNotificationPlugin,].each {
+        "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
 
     //TODO: scan defined plugins:
@@ -587,6 +589,7 @@ beans={
 
     userSummaryMenuItem(UserSummaryMenuItem)
     systemReportMenuItem(SystemReportMenuItem)
+    systemConfigMenuItem(SystemConfigMenuItem)
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){

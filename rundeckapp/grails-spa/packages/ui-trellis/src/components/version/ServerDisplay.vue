@@ -1,6 +1,6 @@
 <template>
     <span :title="title">
-        <span :style="{color: `rgba(${color}, 219, 183)`}">
+        <span :style="{color}">
             <i class="glyphicon" :class="[`glyphicon-${glyphicon}`]" />
             {{uuidShort}}
         </span>
@@ -21,9 +21,9 @@ export default Vue.extend({
         name: String
     },
     computed: {
-        color(): number {
+        color(): string {
             const ver = new RundeckVersion({})
-            return ver.splitUUID(this.uuid)['uuid0']
+            return `#${ver.splitUUID(this.uuid)['sixes'][0]}`
         },
         uuidShort(): string {
             return this.uuid.substr(0, 2)

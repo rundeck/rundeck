@@ -42,6 +42,8 @@ import org.rundeck.plugin.scm.git.exp.actions.TagAction
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.concurrent.atomic.AtomicLong
+
 /**
  * Created by greg on 8/31/15.
  */
@@ -385,7 +387,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
             getId() >> 'xyz'
@@ -426,7 +428,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
             getId() >> 'xyz'
@@ -1061,7 +1063,7 @@ class GitExportPluginSpec extends Specification {
         def localfile = new File(gitdir, 'blah-xyz.xml')
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1109,7 +1111,7 @@ class GitExportPluginSpec extends Specification {
                 return 10
             }
         }
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1161,7 +1163,7 @@ class GitExportPluginSpec extends Specification {
                 throw new IllegalArgumentException('failure')
             }
         }
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1216,7 +1218,7 @@ class GitExportPluginSpec extends Specification {
             0 * serialize(*_)
 
         }
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1335,7 +1337,7 @@ class GitExportPluginSpec extends Specification {
             getVersion() >> 1
             getJobSerializer() >> serializer
         }
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'blah2'
             getGroupPath() >> ''
             getId() >> 'xyz'
@@ -1437,10 +1439,19 @@ class GitExportPluginSpec extends Specification {
         ScmOperationContext context = Mock(ScmOperationContext)
         //create a git dir
         def git = createGit(origindir)
-
+        addCommitFile(origindir, git, 'blah-abc.xml', 'blah')
         git.close()
         def plugin = new GitExportPlugin(config)
         plugin.initialize(Mock(ScmOperationContext))
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'blah-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def gitScm = openGit(gitdir)
+        plugin.fetchFromRemote(context, gitScm)
+
 
         def serializer = Mock(JobSerializer)
         def jobref = Stub(JobScmReference) {
@@ -1509,6 +1520,14 @@ class GitExportPluginSpec extends Specification {
         def plugin = new GitExportPlugin(config)
         plugin.initialize(Mock(ScmOperationContext))
 
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def gitScm = openGit(gitdir)
+        plugin.fetchFromRemote(context, gitScm)
+
         def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
@@ -1543,7 +1562,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
             getId() >> 'xyz'
@@ -1579,7 +1598,7 @@ class GitExportPluginSpec extends Specification {
         plugin.initialize(Mock(ScmOperationContext))
 
         def serializer = Mock(JobSerializer)
-        def jobref = Stub(JobExportReference) {
+        def jobref = Stub(JobScmReference) {
             getJobName() >> 'name'
             getGroupPath() >> 'a/b'
             getId() >> 'xyz'
@@ -1752,5 +1771,143 @@ class GitExportPluginSpec extends Specification {
         then:
         ScmPluginException e = thrown()
         e.message=="Non existent remote branch: wrong"
+    }
+
+    def "refresh status should re-serialize job if stored commit is different than local commit"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+
+        //first init with origin1
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(context)
+
+        def outfile = new File(origindir, 'a/b/testjob-xyz.xml')
+        AtomicLong latch = new AtomicLong(-1)
+        plugin.fileSerializeRevisionCounter.putIfAbsent(outfile, latch)
+
+        def sourceId = "123"
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'testjob'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getSourceId() >> sourceId
+            getVersion()>>1L
+            getScmImportMetadata()>>["commitId":"123"]
+            getJobSerializer() >> serializer
+
+        }
+        def originalPath = 'a/b/testjob-xyz.xml'
+
+        when:
+        def result = plugin.refreshJobStatus(jobref,originalPath )
+
+        then:
+        1 * serializer.serialize('xml', !null, true, null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+
+        result !=null
+        result.synch ==SynchState.EXPORT_NEEDED
+
+    }
+
+    def "get job status, force  re-serialize if stored commit is different than local commit "() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(context)
+
+        git = createGit(origindir)
+        addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah2')
+        git.push()
+        git.close()
+
+        def gitScm = openGit(gitdir)
+        plugin.fetchFromRemote(context, gitScm)
+
+        def outfile = new File(origindir, 'a/b/testjob-xyz.xml')
+        AtomicLong latch = new AtomicLong(-1)
+        plugin.fileSerializeRevisionCounter.putIfAbsent(outfile, latch)
+
+        def jobId = "xyz"
+        def commit = plugin.lastCommitForPath('a/b/testjob-xyz.xml')
+
+        plugin.jobStateMap[jobId]= [id:jobId, ident: "${jobId}:1:${commit.name}:true", "synch": SynchState.CLEAN]
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'testjob'
+            getGroupPath() >> 'a/b'
+            getId() >> jobId
+            getSourceId() >> "123"
+            getVersion()>>1L
+            getScmImportMetadata()>>["commitId":"123"]
+            getJobSerializer() >> serializer
+        }
+        when:
+        def status = plugin.clusterFixJobs(context, [jobref])
+
+        then:
+        status != null
+        status.restored != null
+        status.restored.size() == 1
+        1 * serializer.serialize('xml', !null, _, null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+        0 * serializer.serialize(*_)
+
+    }
+
+    def "init job status sets loading status"(){
+        given:
+            def gitdir = new File(tempdir, 'scm')
+            def origindir = new File(tempdir, 'origin')
+            Export config = createTestConfig(gitdir, origindir)
+            //create a git dir
+            def git = createGit(origindir)
+            addCommitFile(origindir, git, 'a/b/testjob-xyz.xml', 'blah')
+
+            git.close()
+
+            def plugin = new GitExportPlugin(config)
+            plugin.initialize(Mock(ScmOperationContext))
+            def jobrefs = [
+                 Stub(JobExportReference) {
+                    getJobName() >> 'name'
+                    getGroupPath() >> 'a/b'
+                    getId() >> 'xyz'
+                    getVersion() >> 1
+                }
+            ]
+        when:
+            plugin.initJobsStatus(jobrefs)
+        then: "job synch state is loading"
+            plugin.jobStateMap['xyz'].synch==SynchState.LOADING
+            plugin.jobStateMap['xyz'].id=='xyz'
+            plugin.jobStateMap['xyz'].version==1
+
+
     }
 }

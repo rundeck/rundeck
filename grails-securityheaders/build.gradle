@@ -52,7 +52,7 @@ dependencies {
     compileOnly "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     profile "org.grails.profiles:web-plugin"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:3.0.10"
+    runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.mockito:mockito-core"
     testCompile "org.grails:grails-web-testing-support"

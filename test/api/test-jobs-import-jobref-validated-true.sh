@@ -48,29 +48,11 @@ cat > $DIR/temp.out <<END
 
 END
 
-# now submit req
-runurl="${APIURL}/project/$project/jobs/import"
 
-params="validateJobref=true"
+uploadJob "$DIR/temp.out" "$project" 0 "validateJobref=true" "//failed/job/id"
 
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-
-# get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
-if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#result will contain list of failed and succeeded jobs, in this
-#case there should only be 1 failed or 1 succeeded since we submit only 1
-
-succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-failedcount=$($XMLSTARLET sel -T -t -v "/result/failed/@count" $DIR/curl.out)
-#$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
+failedcount=$(xmlsel "//failed/@count" $DIR/curl.out)
+#$(xmlsel "//succeeded/job/id" $DIR/curl.out)
 
 if [ "1" != "$failedcount" ] ; then
     errorMsg  "Upload was not successful."

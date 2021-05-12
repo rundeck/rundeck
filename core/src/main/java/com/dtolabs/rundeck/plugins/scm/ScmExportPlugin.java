@@ -34,7 +34,6 @@ public interface ScmExportPlugin {
      */
     void cleanup();
 
-
     /**
      * perform a total clean
      */
@@ -108,6 +107,15 @@ public interface ScmExportPlugin {
     }
 
     /**
+     * Set default job status
+     *
+     * @param jobs
+     */
+    default void initJobsStatus(List<JobExportReference> jobs) {
+
+    }
+
+    /**
      * Return a list of tracked files that have been deleted.
      */
     List<String> getDeletedFiles();
@@ -168,6 +176,25 @@ public interface ScmExportPlugin {
      * @return map with information on the process
      */
     default Map clusterFixJobs(ScmOperationContext context, List<JobExportReference> jobs, Map<String,String> originalPaths){
+        return null;
+    }
+
+    /**
+     * Function to refresh all job status .
+     * will upgrade the jobs cache status .
+     *
+     * @param jobs rundeck jobs
+     * @return map with information on the process
+     */
+    default void refreshJobsStatus(List<JobExportReference> jobs){
+    }
+
+    /**
+     * It gets the action id for push action
+     *
+     * @return action name id for push
+     */
+    default String getExportPushActionId(){
         return null;
     }
 }

@@ -45,32 +45,32 @@ if [ -n "$API_XML_NO_WRAPPER" ] ; then
         errorMsg "FAIL: Response was not expected to contain 'result' element"
         exit 2
     fi
-    exit 0
-fi
+else
 
-##
-# result wrapper is expected
-##
+  ##
+  # result wrapper is expected
+  ##
 
-#test for expected /joblist element
-$XMLSTARLET el ${file} | grep -e '^result' -q
-if [ 0 != $? ] ; then
-    errorMsg "FAIL: Response did not contain expected result"
-    exit 2
-fi
+  #test for expected /joblist element
+  $XMLSTARLET el ${file} | grep -e '^result' -q
+  if [ 0 != $? ] ; then
+      errorMsg "FAIL: Response did not contain expected result: $API_XML_NO_WRAPPER"
+      exit 2
+  fi
 
-wassucc=$($XMLSTARLET sel -T -t -v "/result/@success" ${file})
-if [ "true" != "$wassucc" ] ; then
-    errorMsg "FAIL: Server did not report success: "
-    $XMLSTARLET sel -T -t -m "/result/error/message" -v "." -n  ${file}
-    exit 2
-fi
-if [ "" != "${message}" ] ; then 
-    sucmsg=$($XMLSTARLET sel -T -t -v "/result/success/message" ${file})
-    if [ "${sucmsg}" != "${message}" ] ; then
-        errorMsg "FAIL: wrong success message: \"${sucmsg}\", expected \"${message}\""
-        exit 2
-    fi
+  wassucc=$($XMLSTARLET sel -T -t -v "/result/@success" ${file})
+  if [ "true" != "$wassucc" ] ; then
+      errorMsg "FAIL: Server did not report success: "
+      $XMLSTARLET sel -T -t -m "/result/error/message" -v "." -n  ${file}
+      exit 2
+  fi
+  if [ "" != "${message}" ] ; then
+      sucmsg=$($XMLSTARLET sel -T -t -v "/result/success/message" ${file})
+      if [ "${sucmsg}" != "${message}" ] ; then
+          errorMsg "FAIL: wrong success message: \"${sucmsg}\", expected \"${message}\""
+          exit 2
+      fi
+  fi
 fi
 
 exit 0

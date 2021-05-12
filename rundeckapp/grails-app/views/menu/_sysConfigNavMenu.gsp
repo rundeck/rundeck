@@ -62,11 +62,6 @@
   </li>
   <g:if test="${authRead}">
     <li>
-      <g:link controller="menu" action="systemConfig">
-        <g:message code="gui.menu.SystemConfig"/>
-      </g:link>
-    </li>
-    <li>
       <g:link controller="menu" action="acls">
         <g:message code="gui.menu.AccessControl"/>
       </g:link>

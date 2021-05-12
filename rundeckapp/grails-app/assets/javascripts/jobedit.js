@@ -1558,6 +1558,7 @@ function _doRevertOptsAction() {
 var uuidField;
 var jobNameFieldId;
 var jobGroupFieldId;
+var jobChooseModalId;
 
 function jobChosen(uuid, name, group, elem) {
   jobWasEdited();
@@ -1578,12 +1579,15 @@ function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, mo
     jQuery('#' + modalid).modal('hide');
     return;
   }
+
+  jobChooseModalId = modalid;
   uuidField = uuid;
   jobNameFieldId = nameid;
   jobGroupFieldId = groupid;
   var project = selFrameworkProject;
 
   if (projectid) {
+    projectFieldId = projectid
     project = jQuery('#' + projectid).val();
   }
   jQuery(elem).button('loading').addClass('active');
@@ -1597,6 +1601,7 @@ function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, mo
       jQuery(elem).button('reset').removeClass('active');
       jQuery('#' + modalcontentid).html(resp);
       jQuery('#' + modalid).modal('show');
+      jQuery('#' + modalid + " #modal-pagination").show();
     },
     error: function (jqxhr, status, resp) {
       showError("Error performing request: menuJobsPicker: " + resp);

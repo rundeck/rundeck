@@ -9,6 +9,8 @@ import rundeck.services.JobMetadataService
 import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
 
+import java.util.concurrent.atomic.AtomicInteger
+
 class ScmJobImporterSpec extends Specification {
     def "import from stream"() {
 
@@ -32,6 +34,7 @@ class ScmJobImporterSpec extends Specification {
 
             sut.scheduledExecutionService = Mock(ScheduledExecutionService)
             sut.jobMetadataService = Mock(JobMetadataService)
+            AtomicInteger counter=new AtomicInteger(0)
 
         when:
             def result = sut.importFromStream(ctx, format, input, meta, preserve)
@@ -47,7 +50,12 @@ class ScmJobImporterSpec extends Specification {
                 [user: 'bob', method: 'scm-import'],
                 _
             ) >> [jobs: [job], jobChangeEvents: []]
-            1 * sut.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: null, pluginMeta: meta])
+            1 * sut.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: null, pluginMeta: meta])>>{
+                assert counter.getAndIncrement()==0
+            }
+            1 * sut.scheduledExecutionService.issueJobChangeEvents([])>>{
+                assert counter.getAndIncrement()==1
+            }
             job.project == 'aProject'
     }
 
@@ -74,6 +82,7 @@ class ScmJobImporterSpec extends Specification {
             sut.scheduledExecutionService = Mock(ScheduledExecutionService)
             sut.jobMetadataService = Mock(JobMetadataService)
             sut.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager)
+            AtomicInteger counter=new AtomicInteger(0)
 
         when:
             def result = sut.importFromMap(ctx, input, meta, preserve)
@@ -89,7 +98,12 @@ class ScmJobImporterSpec extends Specification {
                 [user: 'bob', method: 'scm-import'],
                 _
             ) >> [jobs: [job], jobChangeEvents: []]
-            1 * sut.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: null, pluginMeta: meta])
+            1 * sut.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: null, pluginMeta: meta])>>{
+                assert counter.getAndIncrement()==0
+            }
+            1 * sut.scheduledExecutionService.issueJobChangeEvents([])>>{
+                assert counter.getAndIncrement()==1
+            }
             job.project == 'aProject'
     }
 }

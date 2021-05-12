@@ -116,7 +116,7 @@ class ApplicationTest extends Specification {
 
     def "RunPreboostrap"() {
         when:
-        Application.runPreboostrap()
+        Application.runPrebootstrap()
         then:
         System.getProperty("TestPreboostrap") == "ran successfully"
     }

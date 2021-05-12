@@ -386,8 +386,8 @@
                 <g:radio name="excludeFilterUncheck" value="true"
                          checked="${scheduledExecution.excludeFilterUncheck}"
                          data-bind="checked: excludeFilterUncheck"
-                         id="editableTrue"/>
-                <label for="editableTrue">
+                         id="excludeFilterTrue"/>
+                <label for="excludeFilterTrue">
                     <g:message code="yes"/>
                 </label>
             </div>
@@ -396,8 +396,8 @@
                 <g:radio value="false" name="excludeFilterUncheck"
                          checked="${!scheduledExecution.excludeFilterUncheck}"
                          data-bind="checked: excludeFilterUncheck"
-                         id="editableFalse"/>
-                <label for="editableFalse">
+                         id="excludeFilterFalse"/>
+                <label for="excludeFilterFalse">
                     <g:message code="no"/>
                 </label>
             </div>
@@ -678,10 +678,7 @@
       %{--Notifications--}%
       <div class="tab-pane" id="tab_notifications"  >
       <section class="section-space-lg"  >
-              <g:set var="adminauth"
-                  value="${auth.resourceAllowedTest(type: 'project', name: scheduledExecution.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
-
-          <g:render template="editNotificationsForm" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
+          <g:render template="editNotificationsForm" />
 
 
               <g:render template="jobComponentProperties"

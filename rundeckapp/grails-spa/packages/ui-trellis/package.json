@@ -10,7 +10,7 @@
     "dev": "concurrently -n vue,tsc \"vue-cli-service build --mode development --watch\" \"tsc -W -p ./tsconfig.build.json\"",
     "build": "run-script-os",
     "build:darwin:linux": "./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.build.json",
-    "build:win32": "vue-cli-service.js build --mode production && tsc -p ./tsconfig.build.json",
+    "build:win32": "vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.build.json",
     "storybook": "start-storybook -s public,theme,tests/data",
     "storybook:next": "STORYBOOK_THEME=theme-next start-storybook -s public,theme-next,tests/data"
   },

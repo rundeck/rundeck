@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#test  scheduled job 
+#test  scheduled job
 
 DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
@@ -27,7 +27,7 @@ NDATES=$(date '+%s')
 NDATES=$(( $NDATES + 10 ))
 osname=$(uname)
 if [ "Darwin" = "$osname" ] ; then
-  NDATE=$(date -u -r "$NDATES" '+%Y %m %d %H %M %S')
+  NDATE=$(date -r "$NDATES" '+%Y %m %d %H %M %S')
 else
   NDATE=$(date -u --date="@$NDATES" '+%Y %m %d %H %M %S')
 fi
@@ -59,7 +59,7 @@ cat > $DIR/temp.out <<END
         <month month='$NMO'  day='$ND' />
         <year year='$NY' />
       </schedule>
-      
+
       <sequence>
         <command>
         <exec>$xmlargs</exec>
@@ -70,40 +70,17 @@ cat > $DIR/temp.out <<END
 
 END
 
-# now submit req
-runurl="${APIURL}/project/$project/jobs/import"
-
-params="dupeOption=update"
-
-# specify the file for upload with curl, named "xmlBatch"
-ulopts="-F xmlBatch=@$DIR/temp.out"
-
-# get listing
-docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
+jobid=$(uploadJob "$DIR/temp.out" "$project"  1 )
 if [ 0 != $? ] ; then
-    errorMsg "ERROR: failed query request"
-    exit 2
-fi
-
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#result will contain list of failed and succeeded jobs, in this
-#case there should only be 1 failed or 1 succeeded since we submit only 1
-
-succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-
-if [ "1" != "$succount" -o "" == "$jobid" ] ; then
-    errorMsg  "Upload job, success count expected 1, saw $succount."
-    cat $DIR/curl.out
-    exit 2
+  errorMsg "failed job upload"
+  exit 2
 fi
 
 ###
 # Get list of successful execs for this job before the job succeeds
 ###
 
-runurl="${APIURL}/job/api-test-job-run-scheduled/executions"
+runurl="${APIURL}/job/$jobid/executions"
 
 params="status=succeeded"
 
@@ -119,7 +96,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-succount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+succount=$(xmlsel "//executions/@count" $DIR/curl.out)
 
 ###
 # Wait for schedule to pass and test success
@@ -130,7 +107,7 @@ echo "TEST: scheduled job run should succeed (sleep 20 sec)"
 #check if job has another success after 20 secs
 sleep 20
 
-runurl="${APIURL}/job/api-test-job-run-scheduled/executions"
+runurl="${APIURL}/job/$jobid/executions"
 
 params="status=succeeded"
 
@@ -146,7 +123,7 @@ $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 #result will contain list of failed and succeeded jobs, in this
 #case there should only be 1 failed or 1 succeeded since we submit only 1
 
-succount2=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+succount2=$(xmlsel "//executions/@count" $DIR/curl.out)
 
 ####
 # Verify the Count of executions

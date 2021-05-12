@@ -55,6 +55,7 @@ public class RundeckConfigBase {
     UserSessionProjectsCache userSessionProjectsCache;
     RundeckNotificationConfig notification;
     RundeckApiConfig api;
+    ScmLoader scmLoader;
 
     @Data
     public static class UserSessionProjectsCache {
@@ -327,7 +328,6 @@ public class RundeckConfigBase {
         Enabled jobLifecyclePlugin = new Enabled();
         Enabled executionLifecyclePlugin = new Enabled();
         Enabled legacyExecOutputViewer = new Enabled();
-        Enabled notificationsEditorVue = new Enabled();
         Enabled sidebarProjectListing = new Enabled(true);
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
@@ -336,7 +336,7 @@ public class RundeckConfigBase {
         Enabled uiNext = new Enabled(false);
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
-        Enabled projectKeyStorage = new Enabled();
+        Enabled projectKeyStorage = new Enabled(true);
 
         @Data
         public static class Enabled {
@@ -555,6 +555,12 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckNotificationConfig {
         Long threadTimeOut;
+    }
+
+    @Data
+    public static class ScmLoader {
+        Long delay;
+        Long interval;
     }
 
     public static final Map<String,String> DEPRECATED_PROPS = ImmutableMap.of(

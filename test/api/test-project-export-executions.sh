@@ -16,13 +16,13 @@ create_project(){
   local runurl="${APIURL}/projects"
   local params=""
 
-  
-  
+
+
   cat > $DIR/proj_create.post <<END
   <project>
       <name>$test_proj</name>
       <description>test1</description>
-      
+
   </project>
 END
 
@@ -50,40 +50,7 @@ delete_project(){
 }
 
 
-uploadJob(){
-    local test_proj=$1;shift
-    local file=$1;shift
 
-    # now submit req
-    runurl="${APIURL}/project/$test_proj/jobs/import"
-
-    params="dupeOption=update"
-
-    # specify the file for upload with curl, named "xmlBatch"
-    ulopts="-F xmlBatch=@$file"
-
-    # get listing
-    docurl $ulopts  ${runurl}?${params} > $DIR/curl.out
-    if [ 0 != $? ] ; then
-        errorMsg "ERROR: failed query request"
-        exit 2
-    fi
-
-    $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-    #result will contain list of failed and succeeded jobs, in this
-    #case there should only be 1 failed or 1 succeeded since we submit only 1
-
-    succount=$($XMLSTARLET sel -T -t -v "/result/succeeded/@count" $DIR/curl.out)
-    jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" $DIR/curl.out)
-
-    if [ "1" != "$succount" -o "" == "$jobid" ] ; then
-        $XMLSTARLET sel -T -t -v "//failed" $DIR/curl.out 1>&2
-        fail  "Expected 1 successful job upload, but it was not successful." 
-    fi
-
-    echo $jobid
-}
 
 
 runJob(){
@@ -100,8 +67,8 @@ runJob(){
 
     #get execid
 
-    execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
-    execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
+    execcount=$(xmlsel "//executions/@count" $DIR/curl.out)
+    execid=$(xmlsel "//executions/execution/@id" $DIR/curl.out)
 
     if [ "1" != "${execcount}" -o "" == "${execid}" ] ; then
         errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
@@ -116,9 +83,9 @@ get_archive(){
   local PARAMS=$1;shift
   runurl="${APIURL}/project/$test_proj/export"
 
-  
+
   ENDPOINT="${APIURL}/project/$test_proj/export"
-  
+
 
   docurl -D $DIR/headers.out -o $archive_file  ${ENDPOINT}?${PARAMS:-} > $DIR/curl.out
   if [ 0 != $? ] ; then
@@ -150,7 +117,7 @@ assert_archive_contents(){
     cat $DIR/archive_list.output | grep -q "executions/output-$EID.rdlog" || fail "Archive missing expected file: output-$EID.rdlog"
     cat $DIR/archive_list.output | grep -q "executions/state-$EID.state.json" || fail "Archive missing expected file: state-$EID.state.json"
   done
-  
+
   local repcount=$(cat $DIR/archive_list.output | grep -e 'reports/report-.*.xml' | wc -l | cut -d' ' -f8)
   if [ "$repcount" != "$count" ] ; then
     fail "report xml expected $count files"
@@ -192,8 +159,8 @@ test_archive_executions(){
   </joblist>
 
 END
-  
-  JOBID=$(uploadJob "$test_proj" "$DIR/temp.out")
+
+  JOBID=$(uploadJob  "$DIR/temp.out" "$test_proj")
 
   #run job to completion twice
   EXECID=$(runJob $JOBID)
@@ -203,32 +170,32 @@ END
   #run job to completion twice
   EXECID2=$(runJob $JOBID)
   api_waitfor_execution $EXECID2 || fail "failed to wait for job completion $EXECID2"
-  
+
   echo "TEST: Export specifying executions, 2"
-  
+
   get_archive $test_proj $DIR/test_archive.zip "executionIds=$EXECID,$EXECID2"
 
   #Archive contents
   assert_archive_contents "$DIR/test_archive.zip" "2" "$EXECID $EXECID2"
-  
+
   echo "OK"
-  
+
   echo "TEST: Export specifying executions, 1"
-  
+
   get_archive $test_proj $DIR/test_archive.zip "executionIds=$EXECID"
 
   #Archive contents
   assert_archive_contents "$DIR/test_archive.zip" "1" "$EXECID"
-  
+
   echo "OK"
 
   echo "TEST: Export specifying executions, 1"
-  
+
   get_archive $test_proj $DIR/test_archive.zip "executionIds=$EXECID2"
 
   #Archive contents
   assert_archive_contents "$DIR/test_archive.zip" "1" "$EXECID2"
-  
+
   echo "OK"
 }
 

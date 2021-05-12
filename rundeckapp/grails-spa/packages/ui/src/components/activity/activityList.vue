@@ -181,12 +181,13 @@
                 name="bulk_edit"
                 :value="exec.id"
                 v-model="bulkSelectedIds"
-                :disabled="exec.status==='running' || exec.status==='scheduled'"
+                :disabled="exec.status==='running' || exec.status==='scheduled' || exec.status==='queued'"
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
                     <b class="fas fa-circle-notch fa-spin text-info" v-if="exec.status==='running'"></b>
                     <b class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></b>
+                    <b class="fas fa-layer-group text-muted " v-else-if="exec.status==='queued'"></b>
                     <b class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></b>
                 </td>
                 <td class="right date " v-tooltip.bottom="runningStatusTooltip(exec)">
@@ -204,6 +205,7 @@
                 </td>
                 <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)" colspan="2">
                       <progress-bar v-if="exec.status === 'scheduled'" :value="100" striped  type="default" label :label-text="$t('job.execution.starting.0',[runningStartedDisplay(exec.dateStarted.date)])" ></progress-bar>
+                      <progress-bar v-else-if="exec.status === 'queued'" :value="100" striped  type="default" label :label-text="$t('job.execution.queued')" ></progress-bar>
                       <progress-bar v-else-if="exec.job && exec.job.averageDuration" :value="jobDurationPercentage(exec)" striped active type="info" label min-width></progress-bar>
                       <progress-bar v-else-if="exec.dateStarted.date" :value="100" striped active type="info" label :label-text="$t('running')" ></progress-bar>
                 </td>
@@ -366,12 +368,9 @@ import moment from 'moment'
 import OffsetPagination from '@rundeck/ui-trellis/lib/components/utils/OffsetPagination.vue'
 import ActivityFilter from './activityFilter.vue'
 
-import {
-  getRundeckContext,
-  RundeckContext
-} from "@rundeck/ui-trellis"
-import { ExecutionBulkDeleteResponse, ExecutionListRunningResponse, Execution } from '@rundeck/client/dist/lib/models';
-import { setTimeout, clearTimeout } from 'timers';
+import {getRundeckContext} from "@rundeck/ui-trellis"
+import {Execution, ExecutionBulkDeleteResponse} from '@rundeck/client/dist/lib/models';
+import {clearTimeout, setTimeout} from 'timers';
 
 /**
  * Generate a URL
@@ -393,7 +392,7 @@ function _genUrl(url:string, params:any) {
 }
 
 
-const knownStatusList = ['scheduled','running','succeed','succeeded','failed','missed',
+const knownStatusList = ['scheduled','running','queued','succeed','succeeded','failed','missed',
     'cancel','aborted','retry','timedout','timeout','fail'];
 
 function nodeStats(node: string) {
@@ -524,7 +523,10 @@ export default Vue.extend({
       return moment().diff(moment(date),'days') <= 7
     },
     runningStatusTooltip(exec:Execution){
-      if(exec.status == 'scheduled' && exec.dateStarted && exec.dateStarted.date){
+      if(exec.status?.toString() === 'queued') {
+        return (this as any).$t('job.execution.queued')
+      }else
+        if(exec.status == 'scheduled' && exec.dateStarted && exec.dateStarted.date){
         return (this as any).$t('job.execution.starting.0',[this.runningStartedDisplay(exec.dateStarted.date)])
       }else if(exec.dateStarted && exec.dateStarted.date){
         const startmo=moment(exec.dateStarted.date)
@@ -575,7 +577,7 @@ export default Vue.extend({
         }
       }else if(rpt.executionId){
         this.toggleSelectId(rpt.executionId)
-      }else if(rpt.id && rpt.status!=='running' && rpt.status!=='scheduled'){
+      }else if(rpt.id && rpt.status!=='running' && rpt.status!=='scheduled' && rpt.status!=='queued'){
         this.toggleSelectId(rpt.id)
       }
     },
@@ -623,6 +625,9 @@ export default Vue.extend({
         }
         if (status == 'running') {
             return 'running';
+        }
+        if (status == 'queued') {
+            return 'queued';
         }
         if (status == 'missed') {
           return 'missed';
@@ -690,6 +695,10 @@ export default Vue.extend({
       // const rundeckContext = getRundeckContext()
       this.loadingRunning = true
       let qparams: { [key: string]: string } = {}
+
+      // include scheduled and queued on running list.
+      qparams.includePostponed = "true"
+
       if (this.query.jobIdFilter) {
         qparams.jobIdFilter = this.query.jobIdFilter
       }

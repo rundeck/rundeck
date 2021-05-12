@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="container">
     <Overlay/>
     <router-view></router-view>
   </div>

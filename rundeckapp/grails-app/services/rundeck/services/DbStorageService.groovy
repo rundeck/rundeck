@@ -173,7 +173,23 @@ class DbStorageService implements NamespacedStorage{
     protected Storage findResource(String ns, Path path) {
         def dir, name
         (dir, name) = splitPath(path)
-        def found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
+        def found = Storage.createCriteria().get(){
+            if(ns){
+                eq('namespace', ns)
+            }else{
+                isNull('namespace')
+            }
+            if(dir){
+                eq('dir', dir)
+            }else{
+                or{
+                    eq('dir', '')
+                    isNull('dir')
+                }
+            }
+            eq('name', name)
+            cache(false)
+        }
         found?.refresh()
         found
     }

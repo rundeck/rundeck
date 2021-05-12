@@ -18,14 +18,15 @@
 .subtitlebar {
   &.execution-page {
     background-color: $bg-default-inverse;
-    border-bottom: 1px solid darken($bg-subheader, 10%);
-
+    // border-bottom: 1px solid darken($bg-subheader, 10%);
+    margin-bottom: 20px;
+    border-radius: 6px;
     .execution-head-info {
       background: #ffffff;
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
     }
-
     .execution-aux-info {
-
     }
   }
 }

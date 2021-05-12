@@ -1,8 +1,14 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
+title: ''
+labels: ''
+assignees: ''
 
 ---
+
+**Getting Help**
+Please use this template for **feature requests** *only*. For support on configuration or troubleshooting please see [Getting Help](https://docs.rundeck.com/docs/manual/02-getting-help.html#enterprise-support) for the appropriate channels.
 
 IMPORTANT: Please search the existing Issues and look at the [Trello board](https://trello.com/b/sn3g9nOr/rundeck-development) for your idea before posting.
 

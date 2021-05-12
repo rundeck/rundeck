@@ -16,7 +16,7 @@
         >{{repo.results.length}} {{ repo.results.length | pluralize('plugin')}} found in this repo that match the search term</span>
         <span v-else>{{repo.results.length}} {{ repo.results.length | pluralize('plugin')}} in repo</span>
       </div>
-      <div class="artifact-grid row row-flex row-flex-wrap" :class="repo.repositoryName">
+      <div class="artifact-grid row row-flex row-flex-wrap " :class="repo.repositoryName">
         <PluginCard
           :result="result"
           :repo="repo"

@@ -37,7 +37,11 @@
                 </td>
                 <td style="width:12px;" class="eventicon">
                 <g:set var="gicon"
-                       value="${execution.dateStarted != null && timeNow < execution.dateStarted.getTime() && execution.status == 'scheduled' ? 'time' : execution.status == 'true' ? 'ok-circle' : null == execution.dateCompleted ? 'play-circle' : execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
+                       value="${execution.dateStarted != null && timeNow < execution.dateStarted.getTime() && execution.status == 'scheduled' ? 'time' :
+                               execution.status == 'queued' ? 'align-justify' :
+                                       execution.status == 'true' ? 'ok-circle' :
+                                               null == execution.dateCompleted ? 'play-circle' :
+                                                       execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
 
                 <i class="glyphicon glyphicon-${gicon} exec-status ${!execution.dateCompleted?'running':execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}">
                 </i>
