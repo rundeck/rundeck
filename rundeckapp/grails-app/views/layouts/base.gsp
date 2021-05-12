@@ -52,19 +52,19 @@
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="ansi24.css"/>
     %{-- Vendor CSS styles--}%
-    <asset:stylesheet href="perfect-scrollbar.css"/>
+    <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
     <asset:stylesheet href="github-markdown.css"/>
-    <asset:stylesheet href="jquery-ui.css"/>
+    <asset:stylesheet href="vendor/jquery-ui.css"/>
 
     <asset:javascript src="umd-vue-component-loader.js" />
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
-    <asset:javascript src="jquery.js"/>
-    <asset:javascript src="jquery-ui.js"/>
-    <asset:javascript src="jquery-ui-timepicker-addon.js"/>
-    <asset:javascript src="perfect-scrollbar.js"/>
-    <asset:javascript src="bootstrap-all.js"/>  
+    <asset:javascript src="vendor/jquery.js"/>
+    <asset:javascript src="vendor/jquery-ui.js"/>
+    <asset:javascript src="vendor/jquery-ui-timepicker-addon.js"/>
+    <asset:javascript src="vendor/perfect-scrollbar.js"/>
+    <asset:javascript src="bootstrap-all.js"/>
     <g:set var="includePrototypeJs" value="${true}" scope="page"/>
 
     <g:ifPageProperty name="meta.skipPrototypeJs">
