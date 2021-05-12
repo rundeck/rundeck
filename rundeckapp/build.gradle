@@ -18,6 +18,7 @@ buildscript {
 }
 plugins {
     id "org.dvaske.gradle.git-build-info"
+    id "com.moowork.node" version "1.2.0"
 }
 
 apply plugin:"com.jfrog.bintray"
@@ -151,7 +152,9 @@ dependencies {
     compile "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
     compile 'org.liquibase:liquibase-core:3.10.1'
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
-    profile "org.grails.profiles:web"
+    profile ("org.grails.profiles:web"){
+        exclude(group:"org.grails.profiles",module:"web")
+    }
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "com.h2database:h2:1.4.199"
     runtime 'org.apache.logging.log4j:log4j-web:2.13.3'
@@ -230,7 +233,7 @@ task copyRuntimeLibs(type: Copy) {
 }
 
 bootRun {
-    dependsOn 'copySpa', copyRuntimeLibs
+    dependsOn 'copySpa', copyRuntimeLibs, 'vendorAssetDeps'
     main 'rundeckapp.Application'
     ignoreExitValue true
     jvmArgs(
@@ -268,7 +271,7 @@ tasks.withType(Test) {
 assets {
     minifyJs = false
     minifyCss = false
-    excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less']
+    excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less', '_package-manager/**/*']
 }
 
 buildProperties.doLast {
@@ -356,6 +359,29 @@ task copySpa(type: Copy) {
 }
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
+
+task vendorAssetDeps(type: NpmTask) { it ->
+    def baseDir = "${projectDir}/grails-app/assets/javascripts"
+
+    it.inputs.file "${baseDir}/_package-manager/package.json"
+    it.inputs.file "${baseDir}/_package-manager/package-lock.json"
+    it.inputs.file "${baseDir}/_package-manager/webpack.mix.js"
+
+    it.outputs.dir "${baseDir}/vendor"
+
+    def npmCommand = System.env.CI ?
+            'ci:build' :
+            'dev:build'
+
+    it.args = ['run', npmCommand]
+
+    execOverrides {
+        it.workingDir = "${baseDir}/_package-manager"
+    }
+}
+assetPluginPackage.dependsOn vendorAssetDeps
+assetCompile.dependsOn vendorAssetDeps
+
 archivesBaseName = 'rundeck'
 bootWar {
     enabled=true
@@ -387,6 +413,7 @@ if (signArchives) {
 
 clean {
     delete "$projectDir/grails-app/assets/provided"
+    delete "$projectDir/grails-app/assets/javascripts/vendor"
 }
 
 bintray {

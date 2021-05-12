@@ -1,4 +1,4 @@
-//= require knockout.min
+//= require vendor/knockout.min
 
 function Loadable (dataLoader,loaded) {
     let self = this
