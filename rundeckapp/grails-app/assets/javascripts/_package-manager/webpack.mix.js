@@ -11,4 +11,4 @@ mix
     .copy('node_modules/knockout-mapping/dist/knockout.mapping.min.js', '../vendor/knockout-mapping.js')
     .copy('node_modules/perfect-scrollbar/dist/perfect-scrollbar.min.js', '../vendor/perfect-scrollbar.js')
     .copy('node_modules/perfect-scrollbar/css/perfect-scrollbar.css', '../vendor/perfect-scrollbar.css')
-    .combine(['node_modules/bootstrap/dist/js/bootstrap.js', '../bootstrap/popover-default.js'], '../vendor/bootstrap/bootstrap.js');
+    .combine(['node_modules/bootstrap/dist/js/bootstrap.js', './popover-default.js'], '../vendor/bootstrap/bootstrap.js');
