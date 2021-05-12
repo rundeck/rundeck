@@ -15,8 +15,8 @@
  */
 
 //= require momentutil
-//= require knockout.min
-//= require knockout-mapping
+//= require vendor/knockout.min
+//= require vendor/knockout-mapping
 //= require knockout-foreachprop
 //= require nodeFiltersKO
 //= require executionOptions

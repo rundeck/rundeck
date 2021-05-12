@@ -16,9 +16,9 @@
 
 
 //= require momentutil
-//= require knockout.min
+//= require vendor/knockout.min
 //= require knockout-foreachprop
-//= require knockout-mapping
+//= require vendor/knockout-mapping
 
 function LogViewOptions (data) {
     const self = this

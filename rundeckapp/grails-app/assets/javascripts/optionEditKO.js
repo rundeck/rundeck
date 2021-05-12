@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-//= require knockout.min
-//= require knockout-mapping
+//= require vendor/knockout.min
+//= require vendor/knockout-mapping
 
 
 function OptionEditor(data) {
