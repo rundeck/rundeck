@@ -1,9 +1,8 @@
 {
     "/jquery.js": "/jquery.js",
-    "/bootstrap/bootstrap-341.js": "/bootstrap/bootstrap-341.js",
-    "/knockout.min.js": "/knockout.min.js",
-    "/knockout-mapping.js": "/knockout-mapping.js",
-    "/perfect-scrollbar.js": "/perfect-scrollbar.js",
-    "/jquery-ui-timepicker-addon.js": "/jquery-ui-timepicker-addon.js",
-    "/bootstrap/bootstrap.js": "/bootstrap/bootstrap.js"
+    "/vendor/knockout.min.js": "/vendor/knockout.min.js",
+    "/vendor/knockout-mapping.js": "/vendor/knockout-mapping.js",
+    "/vendor/perfect-scrollbar.js": "/vendor/perfect-scrollbar.js",
+    "/vendor/jquery-ui-timepicker-addon.js": "/vendor/jquery-ui-timepicker-addon.js",
+    "/vendor/bootstrap/bootstrap.js": "/vendor/bootstrap/bootstrap.js"
 }
