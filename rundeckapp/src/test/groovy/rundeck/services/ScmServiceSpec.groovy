@@ -951,6 +951,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         when:
         service.cleanPlugin(integration,project,type,auth)
         then:
+<<<<<<< HEAD
         (integration == 'import' ? 2 : 1) * service.pluginConfigService.loadScmConfig(project, _, _) >> config
         1 * service.pluginConfigService.storeConfig(config,project,_)
         1 * service.pluginService.retainPlugin(type,_)>>Mock(CloseableProvider){
@@ -958,6 +959,15 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             1 * close()
         }
         1 * service.jobMetadataService.removeProjectPluginMeta(project)
+=======
+            (integration == 'import' ? 2 : 1) * service.pluginConfigService.loadScmConfig(project, _, _) >> config
+            1 * service.pluginConfigService.storeConfig(config,project,_)
+            1 * service.pluginService.retainPlugin(type,_)>>Mock(CloseableProvider){
+                 1 * getProvider()>>provider
+                 1 * close()
+            }
+            1 * service.jobMetadataService.removeProjectPluginMeta(project, _)
+>>>>>>> b8947515a7 (clean project job metadata per integration)
         where:
         integration << ['export','import']
         project = 'aproj'

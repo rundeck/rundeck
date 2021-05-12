@@ -710,7 +710,8 @@ class ScmService {
         try{
             def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config, false)
             try{
-                jobMetadataService.removeProjectPluginMeta(project)
+
+                jobMetadataService.removeProjectPluginMeta(project, integration == EXPORT ? STORAGE_NAME_EXPORT:STORAGE_NAME_IMPORT)
                 loaded?.provider?.totalClean()
             }finally{
                 loaded?.close()
