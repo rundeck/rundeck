@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
@@ -14,6 +14,7 @@ RUN set -euxo pipefail \
     && apt-get -y --no-install-recommends install \
         ca-certificates \
         git \
+        gnupg \
         wget \
         zip \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
