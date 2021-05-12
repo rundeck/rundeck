@@ -36,6 +36,7 @@ before_install:
 - pip install awscli --upgrade --user
 install: true
 before_script:
+- nvm use
 - source scripts/travis-helpers.sh
 - export -f travis_nanoseconds
 - export -f travis_fold
