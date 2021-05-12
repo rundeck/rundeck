@@ -18,6 +18,7 @@ buildscript {
 }
 plugins {
     id "org.dvaske.gradle.git-build-info"
+    id "com.moowork.node" version "1.2.0"
 }
 
 apply plugin:"com.jfrog.bintray"
@@ -270,7 +271,7 @@ tasks.withType(Test) {
 assets {
     minifyJs = false
     minifyCss = false
-    excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less']
+    excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less', '_package-manager/**/*']
 }
 
 buildProperties.doLast {
@@ -358,6 +359,28 @@ task copySpa(type: Copy) {
 }
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
+
+def bundleAssetDeps = tasks.register("bundleAssetDeps", NpmTask) { it ->
+    def baseDir = "${projectDir}/grails-app/assets/javascripts"
+
+    it.inputs.file "${baseDir}/_package-manager/package.json"
+    it.inputs.file "${baseDir}/_package-manager/package-lock.json"
+
+    it.outputs.dir "${baseDir}/vendor"
+
+    def npmCommand = System.env.CI ?
+            'ci:build' :
+            'dev:build'
+
+    it.args = ['run', npmCommand]
+
+    execOverrides {
+        it.workingDir = "${baseDir}/_package-manager"
+    }
+}
+assetPluginPackage.dependsOn bundleAssetDeps
+assetCompile.dependsOn bundleAssetDeps
+
 archivesBaseName = 'rundeck'
 bootWar {
     enabled=true
