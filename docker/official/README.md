@@ -219,3 +219,6 @@ Set to a space-separated list of environment variables to unset before starting 
 
 ### `RUNDECK_QUARTZ_THREADPOOL_THREADCOUNT`
 Set the threadCount value to the max number of threads you want to run concurrently. If not set, default to 10.
+
+### `RDECK_JVM_SETTINGS`
+Set extra java command line arguments.

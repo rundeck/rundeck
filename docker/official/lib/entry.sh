@@ -71,6 +71,7 @@ if [[ -n "${EXEC_CMD}" ]] ; then
 fi
 
 exec java \
+    "${RDECK_JVM_SETTINGS}" \
     -XX:+UnlockExperimentalVMOptions \
     -XX:MaxRAMPercentage="${JVM_MAX_RAM_PERCENTAGE}" \
     -Dlog4j.configurationFile="${HOME}/server/config/log4j2.properties" \
