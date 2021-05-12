@@ -233,7 +233,7 @@ task copyRuntimeLibs(type: Copy) {
 }
 
 bootRun {
-    dependsOn 'copySpa', copyRuntimeLibs
+    dependsOn 'copySpa', copyRuntimeLibs, 'vendorAssetDeps'
     main 'rundeckapp.Application'
     ignoreExitValue true
     jvmArgs(
@@ -360,7 +360,7 @@ task copySpa(type: Copy) {
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
 
-def bundleAssetDeps = tasks.register("bundleAssetDeps", NpmTask) { it ->
+task vendorAssetDeps(type: NpmTask) { it ->
     def baseDir = "${projectDir}/grails-app/assets/javascripts"
 
     it.inputs.file "${baseDir}/_package-manager/package.json"
@@ -379,8 +379,8 @@ def bundleAssetDeps = tasks.register("bundleAssetDeps", NpmTask) { it ->
         it.workingDir = "${baseDir}/_package-manager"
     }
 }
-assetPluginPackage.dependsOn bundleAssetDeps
-assetCompile.dependsOn bundleAssetDeps
+assetPluginPackage.dependsOn vendorAssetDeps
+assetCompile.dependsOn vendorAssetDeps
 
 archivesBaseName = 'rundeck'
 bootWar {
