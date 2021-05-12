@@ -5115,6 +5115,53 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}' | '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
         '{}'                                                | '{}'
     }
+
+    def "getWorkflowDescriptionTree"() {
+        setup:
+        println "get workflow description tree"
+        String project = "AProject"
+        def job1 = new ScheduledExecution(
+                jobName: 'test',
+                groupPath: "group",
+                project: project,
+                description: 'test job',
+                workflow: new Workflow(commands: [
+                        new CommandExec(argString: "blah blah", adhocLocalString: "test2")
+                ])
+        )
+        job1.save()
+        def schedEx = new ScheduledExecution(
+                jobName: 'testUploadErrorHandlers',
+                groupPath: "testgroup",
+                project: project,
+                description: 'desc',
+                workflow: new Workflow(commands: [
+                        new CommandExec(adhocExecution: true, adhocRemoteString: "echo test",
+                                        errorHandler: new CommandExec(adhocExecution: true,
+                                                                      adhocRemoteString: "echo this is an errorhandler")),
+                        new CommandExec(argString: "blah blah", adhocLocalString: "test2"),
+                        new CommandExec(argString: "blah3 blah3", adhocFilepath: "test3"),
+                        new JobExec(jobGroup: "group", jobName: "test"),
+
+                ])
+        )
+        schedEx.save()
+
+        when:
+        def output = service.getWorkflowDescriptionTree(project,schedEx.workflow,false)
+
+        then:
+        output[0].exec == "exec"
+        output[0].errorhandler.exec == "exec"
+        output[1].script == "script"
+        output[2].scriptfile == "scriptfile"
+        output[2].expandTokenInScriptFile == false
+        output[3].jobref.group == "group"
+        output[3].jobref.name == "test"
+        output[3].jobId
+        output[3].workflow == [[script:"script"]]
+
+    }
 }
 
 class TriggersExtenderImpl implements TriggersExtender {
