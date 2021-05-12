@@ -12,13 +12,8 @@ ARG CLI_VERS
 #Add PAM test user
 RUN useradd -p $(echo "pampwd123" | openssl passwd -1 -stdin) -m --shell /bin/bash pamlogintest
 
-    # Add gpg key
-RUN curl "https://bintray.com/user/downloadSubjectPublicKey?username=bintray" > /tmp/bintray.gpg.key \
-    && apt-key add - < /tmp/bintray.gpg.key \
-    # Add cli tool debian repo
-    && echo "deb $CLI_DEB_URL /" | sudo tee -a /etc/apt/sources.list \
     # RUNDECK - create user
-    && adduser --shell /bin/bash --home $HOME --gecos "" --disabled-password $USERNAME && \
+RUN adduser --shell /bin/bash --home $HOME --gecos "" --disabled-password $USERNAME && \
         passwd -d $USERNAME && \
         addgroup $USERNAME sudo && \
         addgroup $USERNAME shadow
@@ -30,11 +25,8 @@ COPY --chown=rundeck:rundeck api_test $HOME/api_test
 
 ARG LAUNCHER_URL
 ARG RUNDECK_NODE=rundeck1
-RUN echo "download rundeck launcher: ${LAUNCHER_URL}" \
-    && { test -f $HOME/rundeck-launcher.war || curl -sS -f -L ${LAUNCHER_URL} > $HOME/rundeck-launcher.war; } \
-    && { test -f $HOME/data/rd.deb && dpkg -i $HOME/data/rd.deb || true; } \
-    && { test -f $HOME/data/rd.deb || apt-get -y update && apt-get -y install rundeck-cli=$CLI_VERS; } \
-    && java \
+RUN \
+    java \
         -Dserver.http.port=4440 \
         -Dserver.hostname=$RUNDECK_NODE \
         -jar $HOME/rundeck-launcher.war --installonly \
