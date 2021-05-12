@@ -365,6 +365,7 @@ def bundleAssetDeps = tasks.register("bundleAssetDeps", NpmTask) { it ->
 
     it.inputs.file "${baseDir}/_package-manager/package.json"
     it.inputs.file "${baseDir}/_package-manager/package-lock.json"
+    it.inputs.file "${baseDir}/_package-manager/webpack.mix.js"
 
     it.outputs.dir "${baseDir}/vendor"
 
