@@ -921,19 +921,30 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.endTime=ko.observable();
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
-    self.activeTab = ko.observable("nodes");
+    self.activeView = ko.observable("nodes");
+    /**
+     * synonym with activeView, to maintain compatibility
+     */
+    self.activeTab = self.activeView;
 
-    let tabs = [
-        {id: 'nodes', title: 'Nodes'},
-        {id: 'output', title: 'Log Output'},
-    ];
-
-    self.tabs = ko.observableArray(data.tabs || tabs)
+    self.views = ko.observableArray(data.views)
+    /**
+     * returns the tabs that have showButton flag enabled
+     */
+    self.viewButtons = ko.pureComputed(function () {
+        return ko.utils.arrayFilter(self.views(), (e) => e.showButton)
+    })
+    /**
+     * Returns the tabs that have hasContent flag enabled
+     */
+    self.contentViews = ko.pureComputed(function () {
+        return ko.utils.arrayFilter(self.views(), (e) => e.hasContent)
+    })
     self.humanizedDisplay=ko.observable(false);
     self.logoutput = ko.observable(data.logoutput);
     self.activeTabData = ko.pureComputed(function () {
         const theTab = self.activeTab()
-        return self.tabs().find((e) => e.id === theTab)
+        return self.views().find((e) => e.id === theTab)
     })
     self.scheduled = ko.pureComputed(function () {
         return self.executionState() === 'SCHEDULED';
