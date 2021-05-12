@@ -37,7 +37,7 @@
   <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
-  <asset:javascript src="jquery.js" />
+  <asset:javascript src="vendor/jquery.js" />
   <asset:javascript src="bootstrap.js" />
 </head>
 
