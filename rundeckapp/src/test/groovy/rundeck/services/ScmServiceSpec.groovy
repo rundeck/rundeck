@@ -953,7 +953,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
                  1 * getProvider()>>provider
                  1 * close()
             }
-            1 * service.jobMetadataService.removeProjectPluginMeta(project)
+            1 * service.jobMetadataService.removeProjectPluginMeta(project, _)
         where:
             integration << ['export','import']
             project = 'aproj'
