@@ -26,6 +26,7 @@ import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.acl.AclPolicyFile
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.cluster.ClusterInfo
 import spock.lang.Specification
 
 class AuthorizationServiceSpec extends Specification implements ServiceUnitTest<AuthorizationService>{
@@ -197,5 +198,28 @@ context:
             context                        | path
             AppACLContext.system()         | "a/path"
             AppACLContext.project('aproj') | "another/path"
+    }
+    def "path was modified sends cluster.clearAclCache event"() {
+        given:
+            service.targetEventBus = Mock(EventBus)
+            service.clusterInfoService=Mock(ClusterInfo)
+        when:
+            service.pathWasModified(context, path)
+        then:
+            1 * service.clusterInfoService.isClusterModeEnabled()>>true
+            1 * service.eventBus.sendAndReceive(
+                'cluster.clearAclCache',
+                {
+                    it.project == projName
+                    it.system == isSystem
+                    it.path == path
+                },
+                _
+            )
+
+        where:
+            context                        | projName | isSystem | path
+            AppACLContext.system()         | null     | true     | "a/path"
+            AppACLContext.project('aproj') | 'aproj'  | false    | "another/path"
     }
 }
