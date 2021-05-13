@@ -753,13 +753,13 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         given:
         service.configStorageService=Stub(ConfigStorageService){
             existsDirResource("projects/test1/my-dir") >> true
-            listDirPaths("projects/test1/my-dir", pat) >> result
+            listDirPaths("projects/test1/my-dir", pat) >> resultDirPaths
             existsDirResource("projects/test1/not-my-resource") >> false
         }
         expect:
         service.listProjectDirPaths("test1", 'my-dir', pat)==expect
         where:
-            pat        | result                                                          | expect
+            pat        | resultDirPaths                                                  | expect
             'file[12]' | ["projects/test1/my-dir/file1", "projects/test1/my-dir/file2",] | ['my-dir/file1', 'my-dir/file2']
             '.*/'      | ["projects/test1/my-dir/etc/"]                                  | ['my-dir/etc/']
     }
