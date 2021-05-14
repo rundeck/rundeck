@@ -891,7 +891,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def getWorkflowDescriptionTree(String project,Workflow workflow,readAuth,maxDepth=3){
         def jobids=[:]
-        def cmdData={x,WorkflowStep step->
+        def cmdData={}
+        cmdData={x,WorkflowStep step->
             def map=readAuth?step.toMap():step.toDescriptionMap()
             map.remove('plugins')
             if(map.type){
