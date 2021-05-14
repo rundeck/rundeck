@@ -165,7 +165,7 @@ export default class ProjectSelect extends Vue {
 }
 
 .skeleton {
-    --skel-color: red !important;
+    --skel-color: #eeeeee !important;
     margin: 0 10px 0 10px;
 }
 

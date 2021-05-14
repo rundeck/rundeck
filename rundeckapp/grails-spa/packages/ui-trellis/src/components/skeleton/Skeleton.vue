@@ -62,7 +62,7 @@ export default Vue.extend({
 <style scoped lang="scss">
 
 :root {
-    --skel-color: lightgray;
+    --skel-color: #dedede;
 }
 
 .skeleton--list {
@@ -70,11 +70,11 @@ export default Vue.extend({
     background-repeat: repeat-y;
     background-image:
         linear-gradient( 100deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0) 80% ),
-        linear-gradient(var(--skel-color) 1em, transparent 0 );
+        linear-gradient(var(--skel-color) 20px, transparent 0 );
 
     background-size:
         50px 1.5em, /* highlight */
-        100% 1.5em;
+        100% 30px;
 
     background-position:
         -50px 0, /* highlight */
