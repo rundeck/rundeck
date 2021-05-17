@@ -42,12 +42,7 @@
     <g:render template="/common/navData"/>
 
     %{-- Core theme styles from ui-trellis --}%
-    <feature:disabled name="uiNext">
-        <asset:stylesheet href="static/css/components/theme.css"/>
-    </feature:disabled>
-    <feature:enabled name="uiNext">
-        <asset:stylesheet href="static/css/components/theme-next.css"/>
-    </feature:enabled>
+    <asset:stylesheet href="static/css/components/theme.css"/>
 
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="ansi24.css"/>
