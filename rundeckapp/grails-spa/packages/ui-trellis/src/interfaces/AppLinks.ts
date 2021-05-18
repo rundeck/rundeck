@@ -21,6 +21,7 @@ export interface AppLinks {
     frameworkCheckResourceModelConfig: string
     frameworkEditResourceModelConfig: string
     frameworkCreateResourceModelConfig: string
+    frameworkCreateProject: string
     frameworkNodes: string
     frameworkNodesFragment: string
     frameworkNodesQueryAjax: string
