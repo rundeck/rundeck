@@ -47,6 +47,7 @@
         frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:projParams)}",
         frameworkNodeSummaryAjax: "${createLink(controller:"framework",action:"nodeSummaryAjax",params:projParams)}",
         frameworkDeleteNodeFilterAjax: "${createLink(controller:"framework",action:"deleteNodeFilterAjax",params:projParams)}",
+        frameworkCreateProject: "${createLink(controller:"framework",action:"createProject")}",
         authProjectsToCreateAjax: "${g.createLink(controller: 'menu', action: 'authProjectsToCreateAjax',params:projParams)}",
         menuDeleteJobFilterAjax: "${createLink(controller:"menu",action:"deleteJobFilterAjax",params:projParams)}",
         menuSaveJobFilterAjax: "${createLink(controller:"menu",action:"saveJobFilterAjax",params:projParams)}",
