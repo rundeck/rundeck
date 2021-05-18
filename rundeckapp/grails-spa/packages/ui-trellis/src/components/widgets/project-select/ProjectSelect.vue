@@ -29,7 +29,7 @@
             </RecycleScroller>
         </div>
         <div class="widget-section" style="height: 40px; flex-grow: 0; flex-shrink: 0;border-top: solid 1px grey; padding-left: 10px">
-            <a class="text-info" href="/" @click@keypress.enter="handleSelect">View All Projects</a>
+            <a class="text-info" :href="allProjectsLink" @click@keypress.enter="handleSelect">View All Projects</a>
         </div>
     </div>
 </template>
@@ -37,18 +37,17 @@
 <script lang="ts">
 import Vue from 'vue'
 import {Component, Inject} from 'vue-property-decorator'
+import { autorun } from 'mobx'
 import {Observer} from 'mobx-vue'
-
+import PerfectScrollbar from 'perfect-scrollbar'
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
-import {RootStore} from '../../../stores/RootStore'
+import { getAppLinks } from '../../../rundeckService'
 
+import {RootStore} from '../../../stores/RootStore'
 import { ProjectStore, Project } from '../../../stores/Projects'
 
-import PerfectScrollbar from 'perfect-scrollbar'
-
-import { autorun } from 'mobx'
 
 
 RecycleScroller.updated = function() {
@@ -78,6 +77,10 @@ export default class ProjectSelect extends Vue {
     ps!: PerfectScrollbar
 
     searchTerm: string = ''
+
+    get allProjectsLink(): string {
+        return getAppLinks().menuHome
+    }
 
     created() {
         this.projects = this.rootStore.projects

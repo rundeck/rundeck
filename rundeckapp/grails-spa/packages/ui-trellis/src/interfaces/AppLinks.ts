@@ -36,6 +36,7 @@ export interface AppLinks {
     reportsSaveFilterAjax: string
     reportsDeleteFilterAjax: string
     menuNowrunningAjax: string
+    menuHome: string
     menuHomeAjax: string
     menuHomeSummaryAjax: string
     menuProjectNamesAjax: string
