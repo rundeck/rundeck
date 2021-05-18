@@ -1,4 +1,4 @@
-//= require knockout.min
+//= require vendor/knockout.min
 
 /**
  *

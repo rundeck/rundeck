@@ -179,7 +179,14 @@ class DbStorageService implements NamespacedStorage{
             }else{
                 isNull('namespace')
             }
-            eq('dir', dir)
+            if(dir){
+                eq('dir', dir)
+            }else{
+                or{
+                    eq('dir', '')
+                    isNull('dir')
+                }
+            }
             eq('name', name)
             cache(false)
         }

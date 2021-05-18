@@ -15,8 +15,8 @@
  */
 
 //= require jobedit
-//= require knockout.min
-//= require knockout-mapping
+//= require vendor/knockout.min
+//= require vendor/knockout-mapping
 //= require knockout-foreachprop
 //= require knockout-onenter
 //= require ko/handler-bootstrapTooltip

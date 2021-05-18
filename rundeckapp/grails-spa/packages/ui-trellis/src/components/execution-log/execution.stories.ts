@@ -322,3 +322,20 @@ export const missingOutput = () => (Vue.extend({
         }
     })
 }))
+
+export const oversizeOutput = () => (Vue.extend({
+    components: { 
+        LogViewer: playback(LogViewer, '/fixtures/ExecOverSize.json')
+    },
+    template: '<LogViewer executionId="900" style="height: 100%;" />',
+    mounted: async function() {
+        const el = this.$el as any
+        el.parentNode.style.height = '100%'
+    },
+    provide: () => ({
+        rootStore: new RootStore(window._rundeck.rundeckClient),
+        executionLogViewerFactory: function(){
+            return Promise.resolve(new ExecutionLog('900'))
+        }
+    })
+}))

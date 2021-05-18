@@ -15,8 +15,8 @@
  */
 
 //= require momentutil
-//= require knockout.min
-//= require knockout-mapping
+//= require vendor/knockout.min
+//= require vendor/knockout-mapping
 //= require ko/binding-popover
 //= require ko/binding-url-path-param
 
@@ -928,10 +928,6 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         {id: 'output', title: 'Log Output'},
     ];
 
-    if (window._rundeck.feature.legacyExecOutputViewer.enabled === true) {
-        tabs.push({id: 'output-legacy', title: 'Log Output Legacy'});
-    }
-
     self.tabs = ko.observableArray(data.tabs || tabs)
     self.humanizedDisplay=ko.observable(false);
     self.logoutput = ko.observable(data.logoutput);
@@ -1130,50 +1126,12 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         }
     };
     self.showOutput= function (nodestep) {
-        if (!window._rundeck.feature.legacyExecOutputViewer.enabled) {
-            /** Kick the event out to Vue Land and let the new viewer handle display */
-            if (nodestep.executionState() != 'NOT_STARTED')
-                window._rundeck.eventBus.$emit('ko-exec-show-output', nodestep)
-            else
-                nodestep.outputLineCount(0)
-
-            return
-        }
-
-        var node=nodestep.node.name;
-        var stepctx=nodestep.stepctx;
-        var sel = '.wfnodeoutput[data-node="' + node + '"]';
-        if (stepctx) {
-            sel += '[data-stepctx=\'' + stepctx + '\']';
-        } else {
-            sel += '[data-stepctx=]';
-        }
-        var targetElement = jQuery.find(sel);
-        if (!targetElement || targetElement.length!=1) {
-            throw "could not find output area";
-        }
-        targetElement=targetElement[0];
-        var params = {nodename: node};
-        if (stepctx) {
-            jQuery.extend(params, {stepctx: stepctx});
-        }
-        var ctrl = new FollowControl(null, null, {
-            parentElement: targetElement,
-            showClusterExecWarning: false,
-            extraParams: '&' + _genUrlQuery(params),
-            appLinks: {tailExecutionOutput: self.followOutputUrl},
-            finishedExecutionAction: false,
-            autoscroll:false,
-            onAppend:function(){
-                nodestep.outputLineCount(ctrl.getLineCount());
-            }
-        });
-        ctrl.workflow = self.workflow;
-        ctrl.setColNode(false);
-        ctrl.setColStep(null == stepctx);
-        ctrl.beginFollowingOutput();
-        return ctrl;
-    };
+        /** Kick the event out to Vue Land and let the new viewer handle display */
+        if (nodestep.executionState() !== 'NOT_STARTED')
+            window._rundeck.eventBus.$emit('ko-exec-show-output', nodestep)
+        else
+            nodestep.outputLineCount(0)
+    }
 
     self.toggleOutputForNodeStep = function (nodestep,callback) {
         self.stopShowingOutput();

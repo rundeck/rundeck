@@ -250,8 +250,9 @@
                             <div class="list-group-item overflowy">
                                 <div class="form-group">
                                     <g:each in="${trackingItems}" var="trackedItem">
+                                        <div class="flex justify-start items-center" style="margin-bottom:10px;">
                                         <g:set var="job" value="${trackedItem.jobId?jobMap[trackedItem.jobId]:null}"/>
-                                        <div class="checkbox col-sm-12">
+                                        <div class="checkbox flex-none"  style="margin-top: 0;margin-left: 20px;">
                                                 <g:checkBox name="chosenTrackedItem"
                                                             id="chosenTrackedItem${trackedItem.id}"
                                                             value="${trackedItem.id}"
@@ -312,6 +313,7 @@
                                             </div>
                                         </g:if>
 
+                                        </div>
                                     </g:each>
                                 </div>
                                 <g:if test="${trackingItems.size() > 1}">
@@ -335,10 +337,11 @@
                             <div class="list-group-item overflowy">
                                 <div class="form-group">
                                     <g:each in="${toDeleteItems}" var="toDeleteItem">
+                                        <div class="flex justify-start items-center" style="margin-bottom:10px;">
                                         <g:set var="job" value="${toDeleteItem.jobId?jobMap[toDeleteItem.jobId]:null}"/>
                                         <g:set var="jobst" value="${job?scmStatus?.get(job.extid)?.synchState?.toString():null}"/>
 
-                                        <div class="checkbox col-sm-12">
+                                        <div class="checkbox flex-none" style="margin-top: 0;margin-left: 20px;">
 
                                                 <g:checkBox name="chosenDeleteItem"
                                                     id="chosenDeleteItem${toDeleteItem.id}"
@@ -399,7 +402,7 @@
                                                 </span>
                                             </div>
                                         </g:if>
-
+                                        </div>
                                     </g:each>
                                 </div>
                                 <g:if test="${toDeleteItems.size() > 1}">

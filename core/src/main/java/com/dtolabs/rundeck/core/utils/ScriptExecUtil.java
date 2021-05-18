@@ -232,21 +232,28 @@ public class ScriptExecUtil {
         final Streams.StreamCopyThread outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
         errthread.start();
         outthread.start();
-        final int result = exec.waitFor();
-
-        outputStream.flush();
-        errorStream.flush();
-        errthread.join();
-        outthread.join();
-        exec.getInputStream().close();
-        exec.getErrorStream().close();
-        if (null != outthread.getException()) {
-            throw outthread.getException();
+        try {
+            final int result = exec.waitFor();
+            outputStream.flush();
+            errorStream.flush();
+            errthread.join();
+            outthread.join();
+            exec.getInputStream().close();
+            exec.getErrorStream().close();
+            if (null != outthread.getException()) {
+                throw outthread.getException();
+            }
+            if (null != errthread.getException()) {
+                throw errthread.getException();
+            }
+            return result;
+        } catch (InterruptedException e) {
+            exec.destroy();
+            if(exec.isAlive()){
+                exec.waitFor();
+            }
+            throw new InterruptedException("Execution interrupted with code: " + exec.exitValue());
         }
-        if (null != errthread.getException()) {
-            throw errthread.getException();
-        }
-        return result;
     }
 
     /**

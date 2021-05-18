@@ -10,7 +10,6 @@ module.exports = {
     'components/project-picker': { entry: './src/components/project-picker/main.ts'},
     'components/first-run': { entry: './src/components/first-run/main.ts' },
     'components/theme': { entry: './src/components/theme/main.ts'},
-    'components/theme-next': { entry: './src/components/theme/next.ts'},
     'components/tour': { entry: './src/components/tour/main.js'},
     'components/version-notification': { entry: './src/components/version-notification/main.js'},
     'components/version': { entry: './src/components/version/main.js'},
