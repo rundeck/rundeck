@@ -55,6 +55,7 @@
         reportsSaveFilterAjax: "${g.createLink(controller: 'reports', action: 'saveFilterAjax',params:projParams)}",
         reportsDeleteFilterAjax: "${g.createLink(controller: 'reports', action: 'deleteFilterAjax',params:projParams)}",
         menuNowrunningAjax: "${g.createLink(controller: 'menu', action: 'nowrunningAjax',params:projParams)}",
+        menuHome: "${g.createLink(controller: 'menu', action: 'home',params:projParams)}",
         menuHomeAjax: "${g.createLink(controller: 'menu', action: 'homeAjax',params:projParams)}",
         menuHomeSummaryAjax: "${g.createLink(controller: 'menu', action: 'homeSummaryAjax',params:projParams)}",
         menuProjectNamesAjax: "${g.createLink(controller: 'menu', action: 'projectNamesAjax',params:projParams)}",
