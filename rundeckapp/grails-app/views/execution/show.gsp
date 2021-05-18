@@ -65,7 +65,7 @@
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
-      <g:jsMessages codes="['execution.show.mode.Log.title','execution.show.mode.LogLegacy.title','execution.page.show.tab.Nodes.title']"/>
+      <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
 
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
@@ -186,7 +186,7 @@ search
     <div class="content">
     <div id="layoutBody">
         <div class="container-fluid">
-          
+
               <nav id="subtitlebar" class=" subtitlebar has-content execution-page">
                 <div class="subtitle-head flex-container reverse flex-align-items-stretch" data-ko-bind="nodeflow">
                     <div class="subtitle-head-item execution-head-info flex-item-1">
@@ -569,8 +569,8 @@ search
                     </g:if>
                 </div>
               </nav>
-      
-   
+
+
               <div class="row">
                   <div class="col-sm-12">
                       <div class="card card-plain " data-ko-bind="nodeflow">
@@ -616,11 +616,6 @@ search
 
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
-
-                                  <a data-bind="visible: activeTab() == 'output-legacy'" href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
-                                      <g:message code="execution.page.view.options.title"/>
-                                      <i class="glyphicon glyphicon-cog"></i>
-                                  </a>
 
                                   <span class="btn-group">
                                       <button type="button" class="btn btn-xs dropdown-toggle"
@@ -857,11 +852,6 @@ search
                                       <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true"></div>
                                   </div>
 
-                                  <div class="tab-pane " id="output-legacy" data-bind="css: {active: activeTab()==='output-legacy'}">
-                                      <g:render template="/execution/showFragment"
-                                                model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
-                                  </div>
-
                               </div>
                           </div>
 
@@ -895,13 +885,6 @@ search
 
                           </g:if>
                     </div>
-
-                      <div data-ko-bind="nodeflow"
-                           data-bind="visible: logoutput().fileLoadError() && activeTab()==='output-legacy'"
-                           class="alert alert-warning"
-                           style="display:none">
-                          <span data-bind="text: logoutput().fileLoadError" ></span>
-                      </div>
                   </div>
           <g:if test="${scheduledExecution}">
 
@@ -1177,8 +1160,7 @@ search
         reloadInterval:1500,
             tabs:[
                 {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
-                {id: 'output', title: message('execution.show.mode.Log.title')},
-                {id: 'output-legacy', title: message('execution.show.mode.LogLegacy.title')}
+                {id: 'output', title: message('execution.show.mode.Log.title')}
             ]
      });
 
@@ -1205,8 +1187,6 @@ search
             window.location.hash = "#" + val
             if (val === 'nodes') {
                 followState();
-           }else if(val==='output-legacy'){
-                followOutput();
            }
         });
 
@@ -1271,14 +1251,12 @@ search
         });
         followState();
         var outDetails = window.location.hash;
-        if(outDetails.startsWith('#output') && !outDetails.includes('legacy')) {
+        if(outDetails.startsWith('#output')) {
             nodeflowvm.activeTab(outDetails.slice(1))
-        } else if (outDetails === '#output-legacy') {
-            nodeflowvm.activeTab("output-legacy")
         } else if (outDetails === '#nodes') {
             nodeflowvm.activeTab("nodes");
         }else{
-            //default to nodes tab, original options of 'summary' and 'monitor' will go here
+            //default to nodes tab
             nodeflowvm.activeTab("nodes");
         }
         initKoBind(null, {nodeflow: nodeflowvm})

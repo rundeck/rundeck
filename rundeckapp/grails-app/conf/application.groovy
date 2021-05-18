@@ -39,7 +39,6 @@ environments {
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
-        rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.notificationsOwnThread.enabled = false
@@ -93,7 +92,6 @@ environments {
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
-        rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.notificationsOwnThread.enabled = false

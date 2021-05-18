@@ -327,7 +327,6 @@ public class RundeckConfigBase {
         Enabled legacyProjectNodesUi = new Enabled();
         Enabled jobLifecyclePlugin = new Enabled();
         Enabled executionLifecyclePlugin = new Enabled();
-        Enabled legacyExecOutputViewer = new Enabled();
         Enabled sidebarProjectListing = new Enabled(true);
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
