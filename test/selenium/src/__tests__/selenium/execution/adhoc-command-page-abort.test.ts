@@ -23,7 +23,7 @@ beforeAll(async () => {
 })
 
 describe('execution', () => {
-  it('abort button in show page', async () => {
+  it('abort button in commands page', async () => {
 
     await adhocPage.get()
     await ctx.driver.wait(until.urlContains('/command/run'), 25000)
