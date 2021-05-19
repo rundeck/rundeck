@@ -4,7 +4,7 @@ rdeck.base=${rdeck.base}
 
 #rss.enabled if set to true enables RSS feeds that are public (non-authenticated)
 rss.enabled=false
-server.address=127.0.0.1
+server.address=localhost
 server.port=${server.http.port}
 grails.serverURL=http://localhost:${server.http.port}${server.web.context}
 dataSource.dbCreate = none
