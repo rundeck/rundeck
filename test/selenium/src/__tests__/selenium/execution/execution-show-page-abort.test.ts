@@ -52,7 +52,7 @@ describe('execution', () => {
     // view execution as running
     const display = await execShowPage.executionStateDisplay()
     const val = await display.getAttribute('data-execstate')
-    expect(val).toEqual('RUNNING')
+    expect(val.toUpperCase()).toEqual('RUNNING')
 
     // invoke abort button
     const abortButton = await execShowPage.abortButton()
@@ -63,7 +63,7 @@ describe('execution', () => {
 
     // expect state to change to Aborted
     const val2 = await display.getAttribute('data-execstate')
-    expect(val2).toEqual('ABORTED')
+    expect(val2.toUpperCase()).toEqual('ABORTED')
 
   })
 
