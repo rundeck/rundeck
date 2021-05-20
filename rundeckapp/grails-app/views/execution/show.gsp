@@ -574,8 +574,9 @@ search
               <div class="row">
                   <div class="col-sm-12">
                       <div class="card card-plain " data-ko-bind="nodeflow">
-                          <div class="btn-group " data-bind="if: tabs().length>2">
+                          <div class="btn-group " data-bind="if: views().length>2">
                               <button class="btn btn-default btn-sm dropdown-toggle "
+                                      id="views_dropdown_button"
                                       data-target="#"
                                       data-toggle="dropdown">
                                   <span class="colon-after"><g:message code="view"/></span>
@@ -584,33 +585,29 @@ search
                                   </span>
                                   <i class="caret"></i>
                               </button>
-                              <ul class="dropdown-menu pull-left" role="menu" data-bind="foreach: tabs">
+                              <ul class="dropdown-menu pull-left" role="menu" data-bind="foreach: views">
 
                                   <li data-bind="attr: {id: 'tab_link_'+id }">
                                       <a href="#"
-                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }, text: title">
+                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }">
+                                          <span data-bind="text: title"></span>
+                                          <!-- ko if: $root.activeTab()===id -->
+                                          <i class="fas fa-check" style="margin-left:1em"></i>
+                                          <!-- /ko -->
                                       </a>
                                   </li>
 
                               </ul>
 
                           </div>
-                          <a href="#state"
-                             data-bind="click: function(){activeTab('nodes')}, visible: activeTab()!=='nodes'"
+                          <!-- ko foreach: viewButtons -->
+                          <a href="#"
+                             data-bind="click:function(){$root.activeTab(id)}, attr: {href: '#'+id, id: 'btn_view_'+id }, visible: $root.activeTab()!==id"
                              class="btn btn-sm">
-                              <g:message code="execution.page.show.tab.Nodes.title"/>  &raquo;
+                              <span data-bind="text: title"></span> &raquo;
                           </a>
-                          <a href="#output"
-                             data-bind="click: function(){activeTab('output')}, visible: activeTab()!=='output'"
-                             class="btn btn-sm">
-                              <g:message code="execution.show.mode.Log.title"/> &raquo;
-                          </a>
+                          <!-- /ko -->
 
-%{--                          <a href="#output-plus"--}%
-%{--                             data-bind="click: function(){activeTab('output-plus')}, visible: activeTab()!=='output-plus'"--}%
-%{--                             class="btn btn-sm">--}%
-%{--                              <g:message code="execution.show.mode.LogPlus.title"/> &raquo;--}%
-%{--                          </a>--}%
 
                           <span data-bind="visible: activeTab().startsWith('output')">
 
@@ -837,6 +834,11 @@ search
 
                               <div class="tab-content" id="exec-main-view">
 
+                                  <!-- ko foreach: contentViews -->
+                                  <div class="tab-pane" data-bind="css: {active: $root.activeTab()===id}, attr: {id:id}">
+                                      <span data-bind="attr: {id:id+'_content'}, html:content"></span>
+                                  </div>
+                                  <!-- /ko -->
                                   <div class="tab-pane " id="nodes" data-bind="css: {active: activeTab()==='nodes'}">
                                       <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
                                           <g:render template="wfstateNodeModelDisplay" bean="${workflowState}"
@@ -1149,7 +1151,11 @@ search
                     showStep:${enc(js: !isAdhoc)},
                     showNodeCol:false,
                 }
-            } )
+            } ),
+            views: [
+                {id: 'nodes', title: message('execution.page.show.tab.Nodes.title'), showButton: true},
+                {id: 'output', title: message('execution.show.mode.Log.title'), showButton: true}
+            ]
         }
         );
         flowState = new FlowState('${enc(js: execution?.id)}','flowstate',{
@@ -1158,10 +1164,6 @@ search
         outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
         selectedOutputStatusId:'selectedoutputview',
         reloadInterval:1500,
-            tabs:[
-                {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
-                {id: 'output', title: message('execution.show.mode.Log.title')}
-            ]
      });
 
       nodeflowvm.followFlowState(flowState,true);
