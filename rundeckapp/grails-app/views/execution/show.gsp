@@ -1065,7 +1065,7 @@ search
     <span data-bind="text: stepinfo.stepdesc"></span>
     </span>
   </script>
-
+  <g:jsonToken id="exec_cancel_token" url="${request.forwardURI}"/>
   <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
         <script type="application/javascript">
     var workflow=null;
