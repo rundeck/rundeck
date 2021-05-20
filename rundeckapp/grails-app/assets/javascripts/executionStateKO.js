@@ -928,6 +928,8 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.activeTab = self.activeView;
 
     self.views = ko.observableArray(data.views)
+    /** synonym for compatibility */
+    self.tabs = self.views
     /**
      * returns the tabs that have showButton flag enabled
      */
