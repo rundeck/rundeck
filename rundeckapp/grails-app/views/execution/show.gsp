@@ -576,6 +576,7 @@ search
                       <div class="card card-plain " data-ko-bind="nodeflow">
                           <div class="btn-group " data-bind="if: views().length>2">
                               <button class="btn btn-default btn-sm dropdown-toggle "
+                                      id="views_dropdown_button"
                                       data-target="#"
                                       data-toggle="dropdown">
                                   <span class="colon-after"><g:message code="view"/></span>
@@ -601,7 +602,7 @@ search
                           </div>
                           <!-- ko foreach: viewButtons -->
                           <a href="#"
-                             data-bind="click:function(){$root.activeTab(id)}, attr: {href: '#'+id }, visible: $root.activeTab()!==id"
+                             data-bind="click:function(){$root.activeTab(id)}, attr: {href: '#'+id, id: 'btn_view_'+id }, visible: $root.activeTab()!==id"
                              class="btn btn-sm">
                               <span data-bind="text: title"></span> &raquo;
                           </a>
