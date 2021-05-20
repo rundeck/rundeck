@@ -52,11 +52,6 @@ describe('execution', () => {
     const displayed = await viewContent.isDisplayed()
     expect(displayed).toBeTruthy()
 
-    // expect view dropdown to show nodes
-    const viewDropdown = await execShowPage.viewDropdown()
-    const viewDropdownText = await viewDropdown.getText()
-    expect(viewDropdownText).toBe('View Nodes')
-
     // expect nodes button to be hidden
     const nodesButton = await execShowPage.viewButton('nodes')
     const btnDisplayed = await nodesButton.isDisplayed()
@@ -88,11 +83,6 @@ describe('execution', () => {
 
     const displayed = await viewContent.isDisplayed()
     expect(displayed).toBeTruthy()
-
-    // expect view dropdown to show correct text
-    const viewDropdown = await execShowPage.viewDropdown()
-    const viewDropdownText = await viewDropdown.getText()
-    expect(viewDropdownText).toBe('View Log Output')
 
     // expect output button to be hidden
     const viewButton = await execShowPage.viewButton('output')
@@ -126,11 +116,6 @@ describe('execution', () => {
     const displayed = await viewContent.isDisplayed()
     expect(displayed).toBeTruthy()
 
-    // expect view dropdown to show nodes
-    const viewDropdown = await execShowPage.viewDropdown()
-    const viewDropdownText = await viewDropdown.getText()
-    expect(viewDropdownText).toBe('View Nodes')
-
     // expect nodes button to be hidden
     const nodesButton = await execShowPage.viewButton('nodes')
     const btnDisplayed = await nodesButton.isDisplayed()
@@ -163,11 +148,6 @@ describe('execution', () => {
 
     const displayed = await viewContent.isDisplayed()
     expect(displayed).toBeTruthy()
-
-    // expect view dropdown to show correct text
-    const viewDropdown = await execShowPage.viewDropdown()
-    const viewDropdownText = await viewDropdown.getText()
-    expect(viewDropdownText).toBe('View Log Output')
 
     // expect output button to be hidden
     const viewButton = await execShowPage.viewButton('output')
