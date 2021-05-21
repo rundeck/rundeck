@@ -72,6 +72,17 @@ module.exports = {
       filename: '[name].js',
       library: 'rundeckCore',
     },
+    devServer: {
+      hot: true,
+      watchOptions: {
+        followSymlinks: true,
+      },
+      proxy: {
+        ".": {
+          target: "http://xubuntu:4440"
+        }
+      }
+    },
     externals: {'vue': 'Vue'},
     plugins: [
       new webpack.NormalModuleReplacementPlugin( /node_modules\/ant-design-vue\/es\/style\/index\.less/, function(resource) {
