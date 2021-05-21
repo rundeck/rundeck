@@ -18,7 +18,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <div class="row">
 <div class="col-sm-12 table-responsive">
-<table class="table item_details">
+<table class="table item_details table-fixed">
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && !execdata.hasExecutionEnabled()}">
         <tr>
             <td></td>
