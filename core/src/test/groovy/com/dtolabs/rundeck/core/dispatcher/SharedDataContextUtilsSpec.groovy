@@ -328,13 +328,15 @@ class SharedDataContextUtilsSpec extends Specification {
 
         where:
 
-        script                             | context                       | nodedata                    | expect
-        'echo \'@option.domain@\''         | [:]                           | [:]                         | 'echo \'\'\n'
-        'echo \'@option.domain@\''         | [option: [domain: 'peabody']] | [:]                         | 'echo \'peabody\'\n'
-        'echo \'@option.domain@\''         | [option: [domain: 'peabody']] | [option: [domain: 'olive']] | 'echo \'olive\'\n'
-        'echo \'@option.domain@\''         | [:]                           | [option: [domain: 'olive']] | 'echo \'olive\'\n'
-        'echo \'@unquotedoption.domain@\'' | [option: [domain: 'peabody']] | [:]                         | 'echo \'\'\n'
-        'echo \'@unquotedoption.domain@\'' | [:]                           | [option: [domain: 'olive']] | 'echo \'\'\n'
+        script                         | context                       | nodedata                    | expect
+        'echo \'@option.domain@\''     | [:]                           | [:]                         | 'echo \'\'\n'
+        'echo \'@option.domain@\''     | [option: [domain: 'peabody']] | [:]                         | 'echo \'peabody\'\n'
+        'echo \'@option.domain@\''     | [option: [domain: 'peabody']] | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+        'echo \'@option.domain@\''     | [:]                           | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+        'echo @unquotedoption.domain@' | [option: [domain: 'peabody']] | [:]                         | 'echo peabody\n'
+        'echo @unquotedoption.domain@' | [:]                           | [option: [domain: 'olive']] | 'echo olive\n'
+        'echo @unquotedoption.domain@' | [option: [domain: 'one peabody']] | [:]                         | 'echo one peabody\n'
+        'echo @unquotedoption.domain@' | [:]                               | [option: [domain: 'one olive']] | 'echo one olive\n'
     }
 
     @Unroll
