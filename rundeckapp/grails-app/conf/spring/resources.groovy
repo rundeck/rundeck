@@ -688,8 +688,7 @@ beans={
 
     if(grailsApplication.config.rundeck.security.syncLdapUser in [true,'true']) {
         rundeckJaasAuthenticationSuccessEventListener(RundeckJaasAuthenticationSuccessEventListener) {
-            userService = ref("userService")
-            grailsApplication = grailsApplication
+            configurationService = ref('configurationService')
         }
     }
     rundeckConfig(RundeckConfig)
