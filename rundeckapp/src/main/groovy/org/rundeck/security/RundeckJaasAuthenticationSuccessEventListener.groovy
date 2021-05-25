@@ -18,25 +18,27 @@ package org.rundeck.security
 import com.dtolabs.rundeck.jetty.jaas.LdapEmailPrincipal
 import com.dtolabs.rundeck.jetty.jaas.LdapFirstNamePrincipal
 import com.dtolabs.rundeck.jetty.jaas.LdapLastNamePrincipal
+import grails.events.bus.EventBusAware
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken
 import org.springframework.security.authentication.jaas.event.JaasAuthenticationSuccessEvent
+import rundeck.services.ConfigurationService
 import rundeck.services.UserService
 
 import javax.security.auth.Subject
 
 
-class RundeckJaasAuthenticationSuccessEventListener implements ApplicationListener<JaasAuthenticationSuccessEvent> {
+class RundeckJaasAuthenticationSuccessEventListener implements ApplicationListener<JaasAuthenticationSuccessEvent>,
+    EventBusAware {
     private static final Logger LOG = LoggerFactory.getLogger(RundeckJaasAuthenticationSuccessEventListener)
-    UserService userService
-    def grailsApplication
+    ConfigurationService configurationService
 
     @Override
     void onApplicationEvent(final JaasAuthenticationSuccessEvent event) {
         try {
-            if (grailsApplication.config.rundeck.security.syncLdapUser?.toBoolean() == true) {
+            if (configurationService.getBoolean('rundeck.security.syncLdapUser', false)) {
                 Subject subject = ((JaasAuthenticationToken) event.authentication).loginContext.subject
 
                 String username = event.authentication.principal.toString()
@@ -53,12 +55,17 @@ class RundeckJaasAuthenticationSuccessEventListener implements ApplicationListen
                 LOG.debug("First Name: " + firstNamePrincipal?.name)
                 LOG.debug("Last Name: " + lastNamePrincipal?.name)
                 LOG.debug("Email: " + emailPrincipal?.name)
-                userService.updateUserProfile(
-                        username,
-                        lastNamePrincipal?.name,
-                        firstNamePrincipal?.name,
-                        emailPrincipal?.name
-                )
+
+                eventBus.
+                    notify(
+                        UserService.G_EVENT_LOGIN_PROFILE_CHANGE,
+                        new UserService.UserProfileData(
+                            username: username,
+                            lastName: lastNamePrincipal?.name,
+                            firstName: firstNamePrincipal?.name,
+                            email: emailPrincipal?.name
+                        )
+                    )
             }
         } catch(Exception ex) {
             LOG.error("Unable to update user profile from LDAP.",ex)

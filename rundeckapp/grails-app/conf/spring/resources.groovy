@@ -629,7 +629,6 @@ beans={
     if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']) {
         rundeckPreauthSuccessEventHandler(RundeckPreauthSuccessEventHandler) {
             configurationService = ref('configurationService')
-            userService = ref("userService")
         }
         rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
             enabled = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true, 'true']
