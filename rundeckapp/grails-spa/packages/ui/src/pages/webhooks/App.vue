@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="webhooks-app" style="height: 100%">
     <webhooks-view />
   </div>
 </template>
