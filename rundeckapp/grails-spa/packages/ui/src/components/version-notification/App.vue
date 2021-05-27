@@ -31,7 +31,7 @@
           target="_blank"
           style="margin-bottom:1em;"
           class="btn btn-default btn-block btn-success btn-fill"
-        >{{$t("message.getUpdate")}}</a>,
+        >{{$t("message.getUpdate")}}</a>
         <a
           v-else
           href="https://download.rundeck.com"
