@@ -921,23 +921,32 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.endTime=ko.observable();
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
-    self.activeTab = ko.observable("nodes");
+    self.activeView = ko.observable("nodes");
+    /**
+     * synonym with activeView, to maintain compatibility
+     */
+    self.activeTab = self.activeView;
 
-    let tabs = [
-        {id: 'nodes', title: 'Nodes'},
-        {id: 'output', title: 'Log Output'},
-    ];
-
-    if (window._rundeck.feature.legacyExecOutputViewer.enabled === true) {
-        tabs.push({id: 'output-legacy', title: 'Log Output Legacy'});
-    }
-
-    self.tabs = ko.observableArray(data.tabs || tabs)
+    self.views = ko.observableArray(data.views)
+    /** synonym for compatibility */
+    self.tabs = self.views
+    /**
+     * returns the tabs that have showButton flag enabled
+     */
+    self.viewButtons = ko.pureComputed(function () {
+        return ko.utils.arrayFilter(self.views(), (e) => e.showButton)
+    })
+    /**
+     * Returns the tabs that have hasContent flag enabled
+     */
+    self.contentViews = ko.pureComputed(function () {
+        return ko.utils.arrayFilter(self.views(), (e) => e.hasContent)
+    })
     self.humanizedDisplay=ko.observable(false);
     self.logoutput = ko.observable(data.logoutput);
     self.activeTabData = ko.pureComputed(function () {
         const theTab = self.activeTab()
-        return self.tabs().find((e) => e.id === theTab)
+        return self.views().find((e) => e.id === theTab)
     })
     self.scheduled = ko.pureComputed(function () {
         return self.executionState() === 'SCHEDULED';
@@ -1130,50 +1139,12 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         }
     };
     self.showOutput= function (nodestep) {
-        if (!window._rundeck.feature.legacyExecOutputViewer.enabled) {
-            /** Kick the event out to Vue Land and let the new viewer handle display */
-            if (nodestep.executionState() != 'NOT_STARTED')
-                window._rundeck.eventBus.$emit('ko-exec-show-output', nodestep)
-            else
-                nodestep.outputLineCount(0)
-
-            return
-        }
-
-        var node=nodestep.node.name;
-        var stepctx=nodestep.stepctx;
-        var sel = '.wfnodeoutput[data-node="' + node + '"]';
-        if (stepctx) {
-            sel += '[data-stepctx=\'' + stepctx + '\']';
-        } else {
-            sel += '[data-stepctx=]';
-        }
-        var targetElement = jQuery.find(sel);
-        if (!targetElement || targetElement.length!=1) {
-            throw "could not find output area";
-        }
-        targetElement=targetElement[0];
-        var params = {nodename: node};
-        if (stepctx) {
-            jQuery.extend(params, {stepctx: stepctx});
-        }
-        var ctrl = new FollowControl(null, null, {
-            parentElement: targetElement,
-            showClusterExecWarning: false,
-            extraParams: '&' + _genUrlQuery(params),
-            appLinks: {tailExecutionOutput: self.followOutputUrl},
-            finishedExecutionAction: false,
-            autoscroll:false,
-            onAppend:function(){
-                nodestep.outputLineCount(ctrl.getLineCount());
-            }
-        });
-        ctrl.workflow = self.workflow;
-        ctrl.setColNode(false);
-        ctrl.setColStep(null == stepctx);
-        ctrl.beginFollowingOutput();
-        return ctrl;
-    };
+        /** Kick the event out to Vue Land and let the new viewer handle display */
+        if (nodestep.executionState() !== 'NOT_STARTED')
+            window._rundeck.eventBus.$emit('ko-exec-show-output', nodestep)
+        else
+            nodestep.outputLineCount(0)
+    }
 
     self.toggleOutputForNodeStep = function (nodestep,callback) {
         self.stopShowingOutput();

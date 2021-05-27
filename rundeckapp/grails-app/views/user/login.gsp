@@ -30,12 +30,8 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     %{-- Core theme styles from ui-trellis --}%
-    <feature:disabled name="uiNext">
-        <asset:stylesheet href="static/css/components/theme.css"/>
-    </feature:disabled>
-    <feature:enabled name="uiNext">
-        <asset:stylesheet href="static/css/components/theme-next.css"/>
-    </feature:enabled>
+    <asset:stylesheet href="static/css/components/theme.css"/>
+
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -72,12 +68,18 @@
         .sso-login-link {
             flex: auto;
             padding: 4px 10px;
-            border-radius: 0 2px 2px 0;
+            border-radius: 4px;
             border: 1px solid #167df0;
             background-color: #167df0;
             color: #fff;
             vertical-align: middle;
             font-size: 1.2em;
+        }
+        .sso-login-link:hover {
+            border: 1px solid #0e53a0;
+            background-color: #0e53a0;
+            color: #fff;
+            text-decoration: none;
         }
     </style>
 </head>

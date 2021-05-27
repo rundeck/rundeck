@@ -28,7 +28,8 @@
         exception=request.getAttribute('javax.servlet.error.exception').cause
     %>
 </g:if>
-
+<div class="content">
+<div id="layoutBody">
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-12">
@@ -64,6 +65,8 @@
       </g:if>
     </div>
   </div>
+</div>
+</div>
 </div>
 </body>
 </html>
