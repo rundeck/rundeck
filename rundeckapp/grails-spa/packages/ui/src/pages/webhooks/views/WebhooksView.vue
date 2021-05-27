@@ -1,153 +1,146 @@
 <template>
-  <div>
+<div style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
+  <div id="wh-title" class="screen-title" style="display: flex;">
     <h3>{{ $t('message.webhookPageTitle') }}</h3>
-    <div class="row">
-      <div class="col-xs-12">
-        <div class="artifact-grid row row-flex row-flex-wrap">
-          <div class="col-sm-4">
-            <div class="card" style="width:100%; min-height: 500px">
-              <div class="card-header">
-                <a class="btn btn-sm btn-success fr" @click="addNewHook">{{ $t('message.addWebhookBtn') }}</a>
-                <h5 style="margin:0;">{{ $t('message.webhookListTitle') }}</h5>
-              </div>
-              <hr>
-              <div class="card-content" style="margin-top: 0; padding-top: 0;">
-                <table class="table table-striped">
-                  <thead>
-                  <tr>
-                    <th scope="col">{{ $t('message.webhookListNameHdr') }}</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr v-for="hook in webhooks" :key="hook.id" @click="select(hook)" class="clickable"
-                      v-bind:class="{selected: curHook === hook}">
-                    <td>
-                      <div>{{hook.name}} <i class="far fa-clipboard fr clip" @click="copyUrl(hook.id, $event)" @mouseover="toggleUrl(hook.id,true)" @mouseout="toggleUrl(hook.id,false)" title="Copy Url To Clipboard">
-                        <div v-bind:id="'whc-'+hook.id" class="post-url-copy">{{generatePostUrl(hook)}}</div>
-                      </i>
-                      </div>
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
+    <div style="margin-left: auto;">
+      <a class="btn btn-primary fr" @click="addNewHook">{{ $t('message.webhookCreateBtn') }}</a>
+    </div>
+  </div>
+  
+  <div style="display: flex; height: 100%;overflow: hidden;">
+    <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 10px;overflow-x: hidden;overflow-y: auto;">
+      <div style="width:100%; min-height: 500px">
+        <div style="margin-top: 0; padding-top: 0;">
+          <table class="table table-striped">
+            <thead>
+            <tr>
+              <th scope="col">{{ $t('message.webhookListNameHdr') }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="hook in webhooks" :key="hook.id" @click="select(hook)" class="clickable"
+                v-bind:class="{selected: curHook === hook}">
+              <td>
+                <div>{{hook.name}} <i class="far fa-clipboard fr clip" @click="copyUrl(hook.id, $event)" @mouseover="toggleUrl(hook.id,true)" @mouseout="toggleUrl(hook.id,false)" title="Copy Url To Clipboard">
+                  <div v-bind:id="'whc-'+hook.id" class="post-url-copy">{{generatePostUrl(hook)}}</div>
+                </i>
+                </div>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
+      <div>
+        <div id="wh-edit" v-if="curHook">
+          <div id="wh-header">
+                <h3>{{curHook.name}}</h3>
+                <div style="margin-left: auto;display: flex;align-items: center;">
+                  <div><a
+                          v-if="curHook.id"
+                          @click="handleDelete"
+                          class="btn">{{ $t('message.webhookDeleteBtn') }}</a>
+                  </div>
+                  <div>
+                    <a
+                            v-if="!curHook.id"
+                            @click="handleCancel"
+                            class="btn btn-md "
+                    >{{ $t('message.cancel') }}</a>
+                    <a
+                            class="btn btn-cta"
+                            style="margin-left: 5px"
+                            @click="handleSave"
+                    >{{ $t(curHook.isNew?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
+                  </div>
+                </div>
+          </div>
+
+          <div id="wh-edit__body">
+            <div  class="form-group">
+              <div class="well well-sm">
+                <label>{{ $t('message.webhookPostUrlLabel') }}</label>
+                <span class="form-control fc-span-adj" style="height: auto;" v-if="!curHook.isNew">{{postUrl}}</span>
+                <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.isNew">{{$t('message.webhookPostUrlPlaceholder')}}</span>
+                <div class="help-block">
+                  {{$t('message.webhookPostUrlHelp')}}
+                </div>
               </div>
             </div>
-          </div>
-          <div class="col-sm-8 details-output">
-            <div class="flex-col">
-              <div class="card">
-                <div class="card-header">
-                  <h5 style="margin:0;">{{ $t('message.webhookDetailTitle') }}</h5>
-                </div>
-                <hr>
-                <div class="card-content">
-                  <div v-if="curHook">
-                    <div  class="form-group">
-                      <div class="well well-sm">
-                        <label>{{ $t('message.webhookPostUrlLabel') }}</label>
-                        <span class="form-control fc-span-adj" style="height: auto;" v-if="!curHook.isNew">{{postUrl}}</span>
-                        <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.isNew">{{$t('message.webhookPostUrlPlaceholder')}}</span>
-                        <div class="help-block">
-                          {{$t('message.webhookPostUrlHelp')}}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
-                    <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
-                      <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
-                      <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
-                      <div class="help-block">
-                        {{$t('message.webhookUserHelp')}}
-                      </div>
-                    </div>
-                    <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
-                      <div class="help-block">
-                        {{$t('message.webhookRolesHelp')}}
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
-                    </div>
-                    <div class="form-group new-section section-separator">
-
-                      <div class="btn-group">
-                        <button class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
-                          aria-expanded="false" >
-
-                          <plugin-info
-                            :detail="getPluginDescription(curHook.eventPlugin)"
-                            :show-description="false"
-                            v-if="curHook.eventPlugin" />
-                          <span v-else>
-                            {{$t('message.webhookPluginLabel')}}
-                          </span>
-                          <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu ">
-
-                          <li v-for="plugin in webhookPlugins" v-bind:key="plugin.name">
-                            <a href="#" @click="setSelectedPlugin(false,plugin.name)">
-                              <plugin-info :detail="plugin" />
-                            </a>
-                          </li>
-                        </ul>
-                      </div>
-                      </div>
-                      <div v-if="selectedPlugin && curHook.eventPlugin">
-
-                       <plugin-info
-                            :detail="getPluginDescription(curHook.eventPlugin)"
-                            :show-description="true"
-                            :show-icon="false"
-                            :show-title="false" />
-                      </div>
-                    <div v-if="selectedPlugin && showPluginConfig" class="new-section">
-
-                      <plugin-config
-                        :mode="'edit'"
-                        :serviceName="'WebhookEvent'"
-                        v-model="selectedPlugin"
-                        :provider="curHook.eventPlugin"
-                        :key="curHook.name"
-                        :show-title="false"
-                        :show-description="false"
-                        :validation="validation"
-                        v-if="!customConfigComponent"
-                      >
-                      </plugin-config>
-                      <component :is="customConfigComponent" v-else :webhook="curHook" :pluginConfig="curHook.config" :errors="errors"></component>
-                    </div>
-                  </div>
-                </div>
-                <div class="card-footer section-separator" v-if="curHook">
-
-                  <div class="row" style="margin-top: 10px;">
-                    <div class="col-sm-6">
-                      <a
-                              v-if="!curHook.id"
-                              @click="handleCancel"
-                              class="btn btn-md "
-                      >{{ $t('message.cancel') }}</a>
-                      <a
-                              class="btn btn-md btn-success"
-                              style="margin-left: 5px"
-                              @click="handleSave"
-                      >{{ $t(curHook.isNew?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
-                    </div>
-                    <div class="col-sm-6 text-right"><a
-                            v-if="curHook.id"
-                            @click="handleDelete"
-                            class="btn btn-md btn-danger"
-                    >{{ $t('message.webhookDeleteBtn') }}</a></div>
-                  </div>
-                </div>
+            <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
+            <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
+              <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
+              <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
+              <div class="help-block">
+                {{$t('message.webhookUserHelp')}}
               </div>
+            </div>
+            <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
+              <div class="help-block">
+                {{$t('message.webhookRolesHelp')}}
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
+            </div>
+            <div class="form-group new-section section-separator">
+
+              <div class="btn-group">
+                <button class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
+                  aria-expanded="false" >
+
+                  <plugin-info
+                    :detail="getPluginDescription(curHook.eventPlugin)"
+                    :show-description="false"
+                    v-if="curHook.eventPlugin" />
+                  <span v-else>
+                    {{$t('message.webhookPluginLabel')}}
+                  </span>
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu ">
+
+                  <li v-for="plugin in webhookPlugins" v-bind:key="plugin.name">
+                    <a href="#" @click="setSelectedPlugin(false,plugin.name)">
+                      <plugin-info :detail="plugin" />
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              </div>
+              <div v-if="selectedPlugin && curHook.eventPlugin">
+
+                <plugin-info
+                    :detail="getPluginDescription(curHook.eventPlugin)"
+                    :show-description="true"
+                    :show-icon="false"
+                    :show-title="false" />
+              </div>
+            <div v-if="selectedPlugin && showPluginConfig" class="new-section">
+
+              <plugin-config
+                :mode="'edit'"
+                :serviceName="'WebhookEvent'"
+                v-model="selectedPlugin"
+                :provider="curHook.eventPlugin"
+                :key="curHook.name"
+                :show-title="false"
+                :show-description="false"
+                :validation="validation"
+                v-if="!customConfigComponent"
+              >
+              </plugin-config>
+              <component :is="customConfigComponent" v-else :webhook="curHook" :pluginConfig="curHook.config" :errors="errors"></component>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
@@ -374,6 +367,51 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  #wh-title {
+    display: flex;
+    align-items: center;
+    padding: 0 2em 0 2em;
+    flex-basis: 70px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    border-color: #d7d7d7;
+    border-bottom: 2px solid #d7d7d7;
+    h3 {
+      margin: 0;
+      padding: 0;
+      font-weight: 700;
+      color: black;
+    }
+  }
+
+  #wh-list {
+    background-color: #f4f5f7;
+    border-right: 2px solid #d3dbe5;
+  }
+
+  #wh-edit {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #wh-header {
+    display: flex;
+    align-items: center;
+    background-color: #f7f7f7;
+    height: 70px;
+    padding: 0 2em 0 2em;
+
+    h3 {
+      color: black;
+      font-weight: 700;
+      margin: 0;
+    }
+  }
+
+  #wh-edit__body {
+    padding: 0 2em 0 2em;
+  }
+
   .add-btn {
     padding: 2px 6px;
     border: 1px solid #ddd;
