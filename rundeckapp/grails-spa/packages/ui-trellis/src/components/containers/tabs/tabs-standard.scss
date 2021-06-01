@@ -1,0 +1,99 @@
+.rdtabs--standard {
+    .rdtabs__tabheader {
+        border-bottom: 2px #D0D9E1 solid;
+        display: flex;
+        // justify-items: center;
+
+    }
+
+    .rdtabs__tablist {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        position: relative;
+
+
+        // &:before {
+        //     position: absolute;
+
+        //     width: 100%;
+        //     bottom: 0;
+        //     content: '';
+        //     height: 2px;
+        //     border-bottom: 2px #D0D9E1 solid;
+        // }
+
+    }
+
+    .rdtabs__tablist:hover, .rdtabs__tablist:focus-within{
+        .rdtabs__tab--active:before {
+          left: 0%;
+          content: '';
+          position: absolute;
+          height: 3px;
+          border-bottom: 3px solid #F73F39;
+          width: 0%;
+          bottom: -1px;
+          border-radius: 1rem;
+        }
+        .rdtabs__tab--active:hover:before, .rdtabs__tab--active:focus:before {
+          left: 0%;
+          content: '';
+          position: absolute;
+          height: 3px;
+          border-bottom: 3px solid #F73F39;
+          width: 100%;
+          bottom: -1px;
+          border-radius: 1rem;
+        }
+    }
+
+    .rdtabs__tab {
+        position: relative;
+        // border: 1px solid black;
+        font-weight: 700;
+        color: #66615b;
+        padding: 10px 15px;
+    }
+
+    .rdtabs__tab--active {
+        color: black;
+    }
+
+
+    .rdtabs__tab.rdtabs__tab--active:before {
+        left: 0%;
+        content: '';
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid #F73F39;
+        width: 100%;
+        bottom: -1px;
+        border-radius: 1rem;
+    }
+    .rdtabs__tab:active{
+        transition: none;
+    }
+    .rdtabs__tab:before{
+        left: 100%;
+        transition: 0.1s cubic-bezier(0.55, 0, 0.1, 1);
+        content: '';
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid #F73F39;
+        width: 0;
+        bottom: -1px;
+        border-radius: 1rem;
+    }
+    .rdtabs__tab:hover:before, .rdtabs__tab:focus:before{
+        border-bottom-color: #F73F39;
+        width: 100%;
+        bottom: -1px;
+        transition-delay: 0.1s;
+        left: 0;
+    }
+
+    .rdtabs__tab:hover ~ .rdtabs__tab:before, .rdtabs__tab:focus ~ .rdtabs__tab:focus {
+        left: 0;
+    }
+}
