@@ -1261,7 +1261,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
     private def performFlipJobFlagBulk(ApiBulkJobDeleteRequest deleteRequest,String methodName,Map flags, String successCode) {
 
-        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
         def ids = deleteRequest.generateIdSet()
 
         def successful = []
