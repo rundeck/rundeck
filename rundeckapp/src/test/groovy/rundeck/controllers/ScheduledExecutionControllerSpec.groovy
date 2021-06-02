@@ -182,6 +182,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
     def "flip execution disable bulk"() {
         given:
         def job1 = new ScheduledExecution(createJobParams())
+        job1.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -192,8 +193,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getRoles() >> (['test'] as Set)
         }
 
-        params.idList = 'dummy1'
-        params.ids = ['dummy1']
+        params.idList = job1.id
+        params.ids = [job1.id]
         params.project = 'project'
         params.executionEnabled = false
         request.subject=new Subject()
@@ -208,8 +209,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         0 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
         1 * controller.frameworkService.getRundeckFramework()
         0 * controller.frameworkService._(*_)
+        1 * controller.scheduledExecutionService.getByIDorUUID(job1.id.toString()) >> job1
         1 * controller.scheduledExecutionService._doUpdateExecutionFlags(
-                [id: 'dummy1', executionEnabled: false],
+                [id: job1.id.toString(), executionEnabled: false],
                 _,
                 _,
                 _,
@@ -224,6 +226,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
     def "flip execution enable bulk"() {
         given:
         def job1 = new ScheduledExecution(createJobParams())
+        job1.save()
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -234,8 +237,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getRoles() >> (['test'] as Set)
         }
 
-        params.idList = 'dummy1'
-        params.ids = ['dummy1']
+        params.idList = job1.id
+        params.ids = [job1.id]
         params.project = 'project'
         params.executionEnabled = true
         request.subject=new Subject()
@@ -249,9 +252,10 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_) >> auth
         0 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
         1 * controller.frameworkService.getRundeckFramework()
+        1 * controller.scheduledExecutionService.getByIDorUUID(job1.id.toString()) >> job1
         0 * controller.frameworkService._(*_)
         1 * controller.scheduledExecutionService._doUpdateExecutionFlags(
-                [id: 'dummy1', executionEnabled: true],
+                [id: job1.id.toString(), executionEnabled: true],
                 _,
                 _,
                 _,
