@@ -7,7 +7,8 @@
         tabindex=0
         :class="{
             'switch--checked': value,
-            'switch--disabled': disabled
+            'switch--disabled': disabled,
+            'switch--contrast': contrast,
         }"
         @click="handleSelect"
         @keypress.space="handleSelect">
@@ -35,6 +36,10 @@ export default Vue.extend({
         disabled: {
             type: Boolean,
             default: false
+        },
+        contrast: {
+            type: Boolean,
+            default: false
         }
     },
     methods: {
@@ -55,6 +60,13 @@ export default Vue.extend({
     position: relative;
     border-radius: 1000px;
     transition: all var(--animation-duration) ease-out;
+    border-color: transparent;
+
+    &--contrast {
+        border: 2px solid white;
+        height: 24px;
+        width: 41px;
+    }
 
     &--checked {
         // background-color: paleturquoise;

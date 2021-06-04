@@ -1,0 +1,33 @@
+import Vue, {VNode} from 'vue'
+
+export default Vue.extend({
+    name: 'rd-tab',
+    props: {
+        title: String,
+        index: Number,
+        active: {type: Boolean, default: false},
+        keep: {type: Boolean, default: true}
+    },
+    created() {
+        console.log('tab created')
+    },
+    mounted() {
+        console.log('tab mounted')
+    },
+    activated() {
+        console.log('tab activated')
+    },
+    render(h) {
+        let component: VNode
+        if (! this.$slots.default?.length)
+            component = this.$createElement('div')
+        else if (this.$slots.default.length > 1)
+            component = this.$createElement('div', this.$slots.default)
+        else
+            component = this.$slots.default[0]
+
+        console.log(this.keep)
+
+        return component
+    }
+})

@@ -41,13 +41,12 @@ export const inputSwitch = () => {
     })
 }
 
-export const inputSwitchEnabled = () => {
+export const inputSwitchOn = () => {
     return Vue.extend({
         template: `<InputSwitch v-bind="$props"/>`,
         components: {InputSwitch},
         props: {
-            checked: {default: boolean('checked', true)},
-            disabled: {default: boolean('disabled', false)}
+            value: {default: true},
         },
         mounted() {
             setupStory(this)
@@ -65,6 +64,31 @@ export const inputSwitchDisabled = () => {
         },
         mounted() {
             setupStory(this)
+        }
+    })
+}
+
+export const inputSwitchContrast = () => {
+    const chan = addons.getChannel()
+
+    return Vue.extend({
+        template: `
+        <div style="background-color: #e5ebf2;height: 100%;width: 100%">
+        <InputSwitch @input="handleChecked" :value="checked" contrast/>
+        </div>
+        `,
+        components: {InputSwitch},
+        props: {
+            checked: {default: boolean('checked', false)},
+            disabled: {default: boolean('disabled', false)}
+        },
+        mounted() {
+            setupStory(this)
+        },
+        methods: {
+            handleChecked(val: boolean) {
+                chan.emit(CHANGE, {name: 'checked', value: val})
+            }
         }
     })
 }
