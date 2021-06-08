@@ -74,6 +74,25 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
 
 
     }
+    def "configure plugin invalid no errors"() {
+        given:
+        service.rundeckPluginRegistry = Mock(PluginRegistry)
+        def name = 'atest'
+        def config = [:]
+        def project = 'aproject'
+        def framework = null
+        def providerservice = Mock(PluggableProviderService)
+
+        when:
+        def result = service.configurePlugin(name, config, project, framework, providerservice)
+
+        then:
+        result == null
+        1 * service.rundeckPluginRegistry.validatePluginByName('atest', providerservice, null, 'aproject', config) >>
+                new ValidatedPlugin(valid:false,report: null)
+
+
+    }
 
     def "get plugin"() {
         given:
