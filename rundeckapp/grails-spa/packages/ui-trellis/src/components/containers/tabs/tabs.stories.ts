@@ -47,3 +47,31 @@ export const tabs = () => {
         }
     })
 }
+
+export const cardTabs = () => {
+    const chan = addons.getChannel()
+
+    return Vue.extend({
+        template: `
+        <div class="card">
+        <Tabs v-bind="$props">
+            <Tab :index="0" title="Tab Foo"><TabContent>Foo Content</TabContent></Tab>
+            <Tab :index="1" title="Tab Bar"><TabContent><input type="text"/></TabContent></Tab>
+            <Tab :index="2" title="Tab Baz">Baz Content</Tab>
+            <Tab :index="3" title="Tab Batch Processing">Batch Content</Tab>
+        </Tabs>
+        </div>`,
+        components: {Tabs, Tab, TabContent},
+        props: {
+            type: {default: select('style', {standard: 'standard', card: 'card'}, 'card')}
+        },
+        mounted() {
+            setupStory(this)
+        },
+        methods: {
+            handleChecked(val: boolean) {
+                chan.emit(CHANGE, {name: 'checked', value: val})
+            }
+        }
+    })
+}

@@ -1,8 +1,8 @@
 .rdtabs--card {
-    --line-width: 2px;
+    --line-width: 1px;
     --radius: 10px;
 
-    --width: 20px;
+    --width: 19px;
 
     .rdtabs__tab-inner {
         // background-color: red;
@@ -15,6 +15,9 @@
         display: flex;
         // justify-items: center;
 
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        padding-top: 10px;
 
         // Rounded
         background-color: #F9F9F9;
@@ -33,9 +36,9 @@
         .rdtabs__tab-inner {
             clip-path: inset(0 0 8px 0);
             background-color: white;
-            border-top: var(--line-width) solid #DBDBE5;
-            border-left: var(--line-width) solid #DBDBE5;
-            border-right: var(--line-width) solid #DBDBE5;
+            border-top: var(--line-width) solid #D3DBE5;
+            border-left: var(--line-width) solid #D3DBE5;
+            border-right: var(--line-width) solid #D3DBE5;
             border-top-left-radius: var(--radius);
             border-top-right-radius: var(--radius);
 
@@ -49,13 +52,13 @@
         position: absolute;
         content: '';
         border: var(--line-width) solid transparent;
-        border-left: var(--line-width) solid #DBDBE5;
+        border-left: var(--line-width) solid #D3DBE5;
         border-bottom-left-radius: 6px;
         // background-color: #F9F9F9;
         border-radius: 50%;
         transform: rotate(-135deg);
         bottom: calc(var(--line-width) * -1);
-        left: calc(var(--width) * -1 + var(--line-width));
+        left: calc(var(--width) * -1 + 0.5px);
     }
 
     .rdtabs__tab:not(.rdtabs__tab--active) {
@@ -63,18 +66,20 @@
             border-left: var(--line-width) solid #F9F9F9;
             border-right: var(--line-width) solid #F9F9F9;
             border-top: var(--line-width) solid transparent;
-            border-bottom: var(--line-width) solid #DBDBE5;
+            border-bottom: var(--line-width) solid #D3DBE5;
             background-color: #F9F9F9;
         }
 
         .rdtabs__tab-inner:after {
             content: '';
             position: absolute;
-            height: var(--line-width);
+            height: 5px;
             width: 100%;
             bottom: 0;
             left: 0;
-            background-color: #DBDBE5;
+            border-bottom-width: 1px;
+            border-bottom-style: solid;
+            border-bottom-color: #D3DBE5;
 
         }
     }
@@ -120,13 +125,13 @@
         position: absolute;
         content: '';
         border: var(--line-width) solid transparent;
-        border-left: var(--line-width) solid #DBDBE5;
+        border-left: var(--line-width) solid #D3DBE5;
         border-bottom-left-radius: 6px;
         // background-color: #F9F9F9;
         border-radius: 50%;
         transform: rotate(-45deg);
         bottom: 0;
-        left: calc(var(--line-width) * -1);
+        left: calc(var(--line-width) * -0.5);
     }
 
     .rdtabs__tablist {
@@ -139,7 +144,7 @@
     .rdtabs__tab {
         position: relative;
         // border: 1px solid black;
-        font-weight: 700;
+        font-weight: 600;
         color: #66615b;
         height: 100%;
     }

@@ -28,12 +28,8 @@ export default Vue.extend({
         tabs: [] as Array<VNode>,
         activeTab: 0
     }),
-    mounted() {
-        console.log(this.$slots)
-    },
     methods: {
         handleSelect(tab: Tab) {
-            console.log('select')
             this.activeTab = tab.index
         },
         handleKeypress(ev: KeyboardEvent, tab: Tab) {
@@ -42,10 +38,8 @@ export default Vue.extend({
         }
     },
     render(h) {
-        console.log('render')
-        console.log(this.$slots.default)
-
-        const activeNode = this.tabs[this.activeTab]
+        // TODO refactor
+        const activeNode = (this.$slots.default?.filter(s => s.componentOptions) || [])[this.activeTab]
         const activeTab = activeNode.componentOptions?.propsData as any as Tab
 
         return (
@@ -60,7 +54,6 @@ export default Vue.extend({
                         }}><div class="rdtabs__tab-inner"/></div>
                         {this.tabs.map( (node, i) => {
                             const tab = node.componentOptions?.propsData as any as Tab
-                            console.log(tab)
                             return (
                                 <div class={{
                                         "rdtabs__tab": true, 

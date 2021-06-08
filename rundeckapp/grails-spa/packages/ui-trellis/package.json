@@ -65,7 +65,7 @@
     "prex": "^0.4.7",
     "run-script-os": "^1.1.1",
     "sass-loader": "^8.0.2",
-    "typescript": "3.9.3",
+    "typescript": "4.2.3",
     "uiv": "0.33.0",
     "vue-class-component": "7.2.3",
     "vue-moment": "^4.1.0",

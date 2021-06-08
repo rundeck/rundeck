@@ -8,15 +8,6 @@ export default Vue.extend({
         active: {type: Boolean, default: false},
         keep: {type: Boolean, default: true}
     },
-    created() {
-        console.log('tab created')
-    },
-    mounted() {
-        console.log('tab mounted')
-    },
-    activated() {
-        console.log('tab activated')
-    },
     render(h) {
         let component: VNode
         if (! this.$slots.default?.length)
