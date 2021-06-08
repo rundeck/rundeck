@@ -475,8 +475,12 @@ class PluginService implements ResourceFormats {
     private void logValidationErrors(String svcName, String pluginName,Validator.Report report) {
         def sb = new StringBuilder()
         sb<< "${svcName}: configuration was not valid for plugin '${pluginName}': "
-        report?.errors.each { k, v ->
-            sb<<"${k}: ${v}\n"
+        if(report?.errors){
+            report?.errors?.each { k, v ->
+                sb<<"${k}: ${v}\n"
+            }
+        }else{
+            sb<<'(Unknown reason)'
         }
         log.error(sb.toString())
     }
