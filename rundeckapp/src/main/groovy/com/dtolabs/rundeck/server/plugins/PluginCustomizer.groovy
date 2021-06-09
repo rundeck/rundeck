@@ -27,7 +27,7 @@ import org.springframework.scripting.groovy.GroovyObjectCustomizer
  * Time: 3:19 PM
  */
 class PluginCustomizer implements GroovyObjectCustomizer {
-
+    Map pluginRegistry
     public void customize(GroovyObject goo) {
         if (goo instanceof Script) {
             goo.metaClass.rundeckPlugin = { Class clazz, Closure clos ->
@@ -36,6 +36,7 @@ class PluginCustomizer implements GroovyObjectCustomizer {
                     clos.delegate = builder
                     clos.resolveStrategy = Closure.DELEGATE_FIRST
                     clos.call()
+                    pluginRegistry[goo.class.name] = goo.class.name
                     return builder
                 }
                 return goo;
