@@ -202,6 +202,8 @@
             :key="'edit_config'+editIndex+'/'+editNotification.type"
             :show-title="false"
             :show-description="false"
+            :context-autocomplete="true"
+            @handleAutocomplete="handleAutoComplete"
             :validation="editValidation"
             scope="Instance"
             default-scope="Instance"
@@ -445,6 +447,9 @@ export default {
     },
     doRedo(change){
       this.perform(change.operation,change)
+    },
+    handleAutoComplete(){
+      window.setupNotificationAutocomplete("notification-edit-config")
     },
     async perform(operation,change){
       if(operation==='create'){
