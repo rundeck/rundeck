@@ -432,8 +432,14 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             def beanName = pluginRegistryMap["${type}:${name}"] ?: pluginRegistryMap[name]
             if (beanName) {
                 def bean = findBean(beanName)
+                if(!bean){
+                    return null
+                }
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
+                }
+                if(!bean){
+                    return null
                 }
 
                 final Plugin annotation1 = bean.getClass().getAnnotation(Plugin.class);
@@ -446,6 +452,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     desc = ((Describable) bean).description
                 } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                     desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
+                }
+                if(!desc){
+                    return null
                 }
                 return new DescribedPlugin<T>(bean, desc, name, new File(pluginDirectory, name + ".groovy"))
             }
