@@ -8,15 +8,22 @@ const nodeExternals = require('webpack-node-externals');
 
 /** Create a "page" for each component */
 pages = {}
-walk.walkSync('./src', {
+walk.walkSync('./src/components', {
     listeners: {
         file: (root, stat, next) => {
-            if (! ['.vue', '.tsx', '.jsx'].includes(Path.parse(stat.name).ext) )
+            const path = Path.parse(stat.name)
+
+            /** Use this to limit the build to a specific path for testing */
+            // if (!root.includes('plugins'))
+            //   return
+
+            /* We only want to register the following as entry points */
+            if (! ['.vue', '.tsx', '.jsx', '.ts', '.js'].includes(path.ext) || path.name.includes('stories'))
                 return
             const base = root.split(Path.sep).slice(3).join(Path.sep)
             const entry = Path.join(root, stat.name)
 
-            const component = Path.join(base, Path.parse(stat.name).name)
+            const component = Path.join(base, path.name)
 
             pages[component] = {entry, chunks: ['index']}
         }
@@ -64,6 +71,7 @@ module.exports = {
       nodeExternals(),
       /** Externalize local project imports: ie require('../util/Foo') */
       function (context, request, callback) {
+       
         if (/^\..*\.vue$/.test(request)) // Components requiring other components
           return callback(null, request)
 
@@ -72,7 +80,7 @@ module.exports = {
           && !context.endsWith('.scss')
           && !context.includes('node_modules')
           && !request.includes('.vue')) {
-          return callback()
+          return callback(null, request)
         }
 
         if (request.startsWith('.')
