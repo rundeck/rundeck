@@ -544,7 +544,7 @@ export default class LogViewer extends Vue {
 
             if (!this.viewer.completed) {
               this.resp = this.viewer.getOutput(this.batchSize)
-              await new Promise((res, rej) => setTimeout(() => {res()},0))
+              await new Promise<void>((res, rej) => setTimeout(() => {res()},0))
             }
 
             this.execCompleted = this.viewer.execCompleted
