@@ -7,6 +7,8 @@ import { RundeckClient } from "@rundeck/client"
 import { Releases } from "./Releases"
 import { ProjectStore } from "./Projects"
 import { NewsStore } from './News'
+import { PluginStore } from './Plugins'
+import { WebhookStore } from './Webhooks'
 
 export class RootStore {
     executionOutputStore: ExecutionOutputStore
@@ -17,6 +19,8 @@ export class RootStore {
     system: SystemStore
     projects: ProjectStore
     news: NewsStore
+    plugins: PluginStore
+    webhooks: WebhookStore
 
     constructor(readonly client: RundeckClient) {
         this.executionOutputStore = new ExecutionOutputStore(this, client)
@@ -27,5 +31,7 @@ export class RootStore {
         this.releases = new Releases(this, client)
         this.projects = new ProjectStore(this, client)
         this.news = new NewsStore(this, client)
+        this.plugins = new PluginStore(this, client)
+        this.webhooks = new WebhookStore(this, client)
     }
 }

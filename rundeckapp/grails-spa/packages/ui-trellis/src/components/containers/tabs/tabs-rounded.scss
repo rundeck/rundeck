@@ -1,8 +1,8 @@
 .rdtabs--card {
-    --line-width: 1px;
+    --line-width: 0.1em;
     --radius: 10px;
 
-    --width: 19px;
+    --width: 1.5em;
 
     .rdtabs__tab-inner {
         // background-color: red;
@@ -51,14 +51,13 @@
         width: var(--width);
         position: absolute;
         content: '';
-        border: var(--line-width) solid transparent;
-        border-left: var(--line-width) solid #D3DBE5;
+        border: var(--line-width) solid #D3DBE5;
         border-bottom-left-radius: 6px;
         // background-color: #F9F9F9;
         border-radius: 50%;
-        transform: rotate(-135deg);
         bottom: calc(var(--line-width) * -1);
-        left: calc(var(--width) * -1 + 0.5px);
+        left: calc(var(--width) * -1 + var(--line-width));
+        clip-path: inset(calc(var(--width)/2) 0 0 calc(var(--width)/2));
     }
 
     .rdtabs__tab:not(.rdtabs__tab--active) {
@@ -77,7 +76,7 @@
             width: 100%;
             bottom: 0;
             left: 0;
-            border-bottom-width: 1px;
+            border-bottom-width: var(--line-width);
             border-bottom-style: solid;
             border-bottom-color: #D3DBE5;
 
@@ -119,19 +118,16 @@
         position: absolute;
     }
     .rdtabs__tab--active + .rdtabs__tab:after {
-        // background-color: red;
         height: var(--width);
         width: var(--width);
         position: absolute;
         content: '';
-        border: var(--line-width) solid transparent;
-        border-left: var(--line-width) solid #D3DBE5;
+        border: var(--line-width) solid #D3DBE5;
         border-bottom-left-radius: 6px;
-        // background-color: #F9F9F9;
         border-radius: 50%;
-        transform: rotate(-45deg);
         bottom: 0;
-        left: calc(var(--line-width) * -0.5);
+        left: calc(var(--line-width) * -1);
+        clip-path: inset(calc(var(--width)/2) calc(var(--width)/2) 0 0);
     }
 
     .rdtabs__tablist {

@@ -36,7 +36,7 @@ export const getTour = (tourLoader: string, tourKey: string) => {
 }
 
 export const unsetTour = () => {
-  return new Promise((resolve) => {
+  return new Promise<void>((resolve) => {
     Trellis.FilterPrefs.unsetFilterPref('activeTour').then(() => {
       Trellis.FilterPrefs.unsetFilterPref('activeTourStep').then(() => {
         resolve()

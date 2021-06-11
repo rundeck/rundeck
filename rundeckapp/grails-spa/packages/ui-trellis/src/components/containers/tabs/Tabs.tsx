@@ -20,12 +20,9 @@ export default Vue.extend({
         label: {type: String, default: 'Tabs'},
     },
     created() {
-        this.tabs = this.$slots.default?.filter(s => s.componentOptions) || []
-        this.tabs.forEach((t, i) => t.key = i.toString())
         this.activeTab = this.active
     },
     data: () => ({
-        tabs: [] as Array<VNode>,
         activeTab: 0
     }),
     methods: {
@@ -35,24 +32,30 @@ export default Vue.extend({
         handleKeypress(ev: KeyboardEvent, tab: Tab) {
             if (ev.code == 'Space')
                 this.handleSelect(tab)
+        },
+        tabs(): Array<VNode> {
+            const tabs = (this.$slots.default?.filter(s => s.componentOptions) || [])
+            return tabs
         }
     },
     render(h) {
         // TODO refactor
-        const activeNode = (this.$slots.default?.filter(s => s.componentOptions) || [])[this.activeTab]
+        const activeNode = this.tabs()[this.activeTab]
+
+        this.tabs().forEach((t, i) => t.key = i.toString())
+
         const activeTab = activeNode.componentOptions?.propsData as any as Tab
 
         return (
             <div class={["rdtabs", `rdtabs--${this.type}`]}>
-                <div class="rdtabs__tabheader">
-                    
-                    <div class={["rdtabs__tablist"]} role="tablist" aria-label={this.label}>
+                <div class={`rdtabs__tabheader rdtabs__tabheader--${this.type}`}>
+                    <div class={["rdtabs__tablist", `rdtabs__tablist--${this.type}`]} role="tablist" aria-label={this.label}>
                         <div class={{
                             "rdtabs__leftendcap": true,
                             "rdtabs__tab": true,
                             "rdtabs__tab-previous": this.activeTab == 0
                         }}><div class="rdtabs__tab-inner"/></div>
-                        {this.tabs.map( (node, i) => {
+                        {this.tabs().map( (node, i) => {
                             const tab = node.componentOptions?.propsData as any as Tab
                             return (
                                 <div class={{
