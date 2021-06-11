@@ -9,46 +9,42 @@
                         type="text" 
                         class="form-control form-control-sm"
                         v-model="searchTerm"
-                        placeholder="Search all projects"/>
+                        :placeholder="searchText"/>
                 </div>
             </div>
-            <Skeleton :loading="!projects.loaded">
+            <Skeleton :loading="loading">
                 <RecycleScroller @foo="alert('Foo')"
                     ref="scroller"
-                    :items="projects.search(searchTerm)"
-                    :item-size="25"
-                    :key="projects.search(searchTerm).length"
+                    :items="filtered"
+                    :item-size="itemSize"
+                    :key="items.length"
                     v-slot="{ item }"
                     key-field="name"
                     class="scroller"
                 >
-                    <div role="button" tabindex="0" class="scroller__item" :title="item.name" 
-                        @click="itemClicked(item)"
-                        @keypress.enter="itemClicked(item)">
-                        <span>{{item.label || item.name}}</span>
+                    <div style="height: 100%;" role="button" tabindex="0" class="scroller__item" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
+                        <slot name="item" :item="item" scope="item"/>
                     </div>
                 </RecycleScroller>
             </Skeleton>
         </div>
         <div class="widget-section" style="height: 40px; flex-grow: 0; flex-shrink: 0;border-top: solid 1px grey; padding-left: 10px">
-            <a class="text-info" :href="allProjectsLink" @click@keypress.enter="handleSelect">View All Projects</a>
+            <slot name="footer"/>
+            <!-- <a class="text-info" :href="allProjectsLink" @click@keypress.enter="handleSelect">View All Projects</a> -->
         </div>
     </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import {Component, Inject} from 'vue-property-decorator'
+import {Component, Inject, Prop} from 'vue-property-decorator'
 import { autorun } from 'mobx'
 import {Observer} from 'mobx-vue'
 import PerfectScrollbar from 'perfect-scrollbar'
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
-import { getAppLinks } from '../../../rundeckService'
-import {RootStore} from '../../../stores/RootStore'
-import { ProjectStore, Project } from '../../../stores/Projects'
-import Skeleton from '../../skeleton/Skeleton.vue'
+import Skeleton from '../skeleton/Skeleton.vue'
 
 RecycleScroller.updated = function() {
     if (!this.ps)
@@ -73,28 +69,30 @@ RecycleScroller.beforeDestroy = function() {
     RecycleScroller,
     Skeleton
 }})
-export default class ProjectSelect extends Vue {
-    @Inject()
-    private readonly rootStore!: RootStore
-
-    projects!: ProjectStore
-
+export default class FilterList extends Vue {
     ps!: PerfectScrollbar
 
     searchTerm: string = ''
 
-    get allProjectsLink(): string {
-        return getAppLinks().menuHome
-    }
+    @Prop({default: false})
+    loading!: boolean
 
-    created() {
-        this.projects = this.rootStore.projects
-        this.projects.load()
+    @Prop({default: ''})
+    searchText!: String
+
+    @Prop()
+    items!: Array<any>
+
+    @Prop({default: 25})
+    itemSize!: Number 
+
+    get filtered() {
+        return this.items.filter(i => i.name.includes(this.searchTerm))
     }
 
     mounted() {
         autorun(() => {
-            if (this.projects.projects.length) {
+            if (this.items.length) {
                 /** May be necessary for virtual scroller to update */
                 this.$forceUpdate()
             }
@@ -104,12 +102,9 @@ export default class ProjectSelect extends Vue {
         })
     }
 
-    itemClicked(project: Project) {
-        this.$emit('project:selected', project)
-    }
-
-    allClickekd() {
-        this.$emit('project:select-all')
+    itemClicked(item: any) {
+        alert(item.name)
+        this.$emit('item:selected', item)
     }
 }
 </script>
