@@ -14,7 +14,7 @@ walk.walkSync('./src/components', {
             const path = Path.parse(stat.name)
 
             /** Use this to limit the build to a specific path for testing */
-            // if (!root.includes('plugins'))
+            // if (!root.includes('tabs'))
             //   return
 
             /* We only want to register the following as entry points */
@@ -74,6 +74,12 @@ module.exports = {
        
         if (/^\..*\.vue$/.test(request)) // Components requiring other components
           return callback(null, request)
+
+        /** Inline CSS */
+        if (context.startsWith(process.cwd())
+          && request.includes('.scss')) {
+          return callback()
+        }
 
         /** Bundle javascript code inside components */
         if (request.startsWith('./')

@@ -60,34 +60,40 @@
                 </div>
           </div>
 
-          <Tabs style="height: 200px;" :key="curHook.uuid">
+          <Tabs style="height: 200px;">
             <Tab :index="0" title="General">
               <div class="wh-edit__body">
                 <div  class="form-group">
-                  <div class="well well-sm">
+                  <div class="card wh-url-card">
+                  <div class="card-content">
                     <label>{{ $t('message.webhookPostUrlLabel') }}</label>
-                    <span class="form-control fc-span-adj" style="height: auto;" v-if="!curHook.isNew">{{postUrl}}</span>
-                    <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.isNew">{{$t('message.webhookPostUrlPlaceholder')}}</span>
                     <div class="help-block">
                       {{$t('message.webhookPostUrlHelp')}}
                     </div>
+                    <span class="form-control fc-span-adj" style="height: auto; background-color: white;" v-if="!curHook.isNew">{{postUrl}}</span>
+                    <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.isNew">{{$t('message.webhookPostUrlPlaceholder')}}</span>
+                  </div>
                   </div>
                 </div>
-                <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
-                <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
-                  <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
-                  <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
-                  <div class="help-block">
-                    {{$t('message.webhookUserHelp')}}
+                <div class="card">
+                <div class="card-content">
+                  <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
+                  <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
+                    <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
+                    <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
+                    <div class="help-block">
+                      {{$t('message.webhookUserHelp')}}
+                    </div>
+                  </div>
+                  <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
+                    <div class="help-block">
+                      {{$t('message.webhookRolesHelp')}}
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
                   </div>
                 </div>
-                <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
-                  <div class="help-block">
-                    {{$t('message.webhookRolesHelp')}}
-                  </div>
-                </div>
-                <div class="form-group">
-                  <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
                 </div>
               </div>
             </Tab>
@@ -160,6 +166,8 @@ import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vu
 import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
 import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
 
+// import {Tabs, Tab} from '@rundeck/ui-trellis/lib/components/containers/tabs'
+
 import {getServiceProviderDescription,
   getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
 
@@ -193,6 +201,7 @@ export default {
     Tabs,
     Tab
   },
+  inject: ["rootStore"],
   data() {
     return {
       webhooks: [],
@@ -367,6 +376,7 @@ export default {
     }
   },
   mounted() {
+    this.rootStore.plugins.load()
     getPluginProvidersForService("WebhookEvent").then(data => {
       if(data.service){
         this.webhookPlugins = data.descriptions
@@ -391,7 +401,7 @@ export default {
     flex-grow: 0;
     flex-shrink: 0;
     border-color: #d7d7d7;
-    border-bottom: 2px solid #d7d7d7;
+    border-bottom: 0.1em solid #d7d7d7;
     h3 {
       margin: 0;
       padding: 0;
@@ -402,7 +412,7 @@ export default {
 
   #wh-list {
     background-color: #f4f5f7;
-    border-right: 2px solid #d3dbe5;
+    border-right: 0.1em solid #d3dbe5;
     flex-shrink: 0;
   }
 
@@ -434,6 +444,15 @@ export default {
   .wh-edit__body {
     padding: 0 2em 0 2em;
     margin-top: 20px;
+  }
+
+  .wh-card {
+    padding: 1em;
+  }
+
+  .wh-url-card {
+    background: #D8F1EE;
+    border: 0.1em solid #9DDCD4;
   }
 
   .add-btn {

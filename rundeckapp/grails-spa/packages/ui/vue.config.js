@@ -37,10 +37,10 @@ module.exports = {
     /** Workaround for Vue CLI accounting for nested page paths
      * https://github.com/vuejs/vue-cli/issues/4378
     */
-    // extract: {
-    //   filename: '/css/[name].css',
-    //   chunkFilename: '/css/[name].css',
-    // },
+    extract: process.env.VUE_APP_CSS_EXTRACT == 'true' ? {
+      filename: '/css/[name].css',
+      chunkFilename: '/css/[name].css',
+    } : false,
     loaderOptions: {
       less: {
         lessOptions: {
