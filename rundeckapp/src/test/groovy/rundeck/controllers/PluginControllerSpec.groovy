@@ -205,6 +205,38 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
     }
 
+    def "plugin list filters by service"() {
+        given:
+            params.service = a
+            controller.pluginService = Mock(PluginService)
+            controller.pluginApiService = Mock(PluginApiService)
+            controller.uiPluginService = Mock(UiPluginService)
+
+            def plugins = [
+                    [
+                        service: 'WebhookEvent',
+                        providers: [
+                                [:],
+                                [:]],
+                    ],
+                    [
+                        service: 'Foo',
+                        providers: [[:]]
+                    ]
+            ]
+
+        when:
+            def result = controller.listPlugins()
+        then:
+            1 * controller.pluginApiService.listPlugins() >> plugins
+            response.json.size() == b
+
+        where:
+            a                | b
+            null             | 3
+            'WebhookEvent'   | 2
+    }
+
     def "plugin service descriptions"() {
         given:
         controller.pluginService = Mock(PluginService)
