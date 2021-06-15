@@ -138,10 +138,15 @@ class PluginController extends ControllerBase {
     }
 
     def listPlugins() {
+        String service = params.service
+
         def providers = []
         pluginApiService.listPlugins().each { svc ->
+            if (service && service != svc.service)
+                return
+
             svc.providers.each { p ->
-                 def provider = [:]
+                def provider = [:]
                 provider.service = svc.service
                 provider.artifactName = p.pluginName
                 provider.name = p.name
@@ -151,6 +156,8 @@ class PluginController extends ControllerBase {
                 provider.title = p.title
                 provider.description = p.description
                 provider.author = p.pluginAuthor
+                provider.iconUrl = p.iconUrl
+                provider.providerMetadata = p.providerMetadata
                 providers.add(provider)
             }
         }

@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProvide
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.core.GrailsApplication
+import grails.web.mapping.LinkGenerator
 import org.grails.web.util.WebUtils
 import org.springframework.context.NoSuchMessageException
 import org.springframework.web.context.request.RequestContextHolder
@@ -52,6 +53,7 @@ class PluginApiService {
     ExecutionLifecyclePluginService executionLifecyclePluginService
     JobLifecyclePluginService jobLifecyclePluginService
     def rundeckPluginRegistry
+    LinkGenerator grailsLinkGenerator
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -257,7 +259,9 @@ class PluginApiService {
                 String rdVer = meta?.rundeckCompatibilityVersion ?: 'unspecified'
                 String author = meta?.pluginAuthor ?: ''
                 String id = meta?.pluginId ?: PluginUtils.generateShaIdFromName(artifactName)
-                [pluginId   : id,
+
+                def pluginDesc = [
+                 pluginId   : id,
                  pluginName : artifactName,
                  name         : provider.name,
                  title        : provider.title,
@@ -268,7 +272,23 @@ class PluginApiService {
                  rundeckCompatibilityVersion: rdVer,
                  targetHostCompatibility: tgtHost,
                  pluginDate   : toEpoch(dte),
-                 enabled      : true]
+                 enabled      : true] as LinkedHashMap<Object, Object>
+
+                if(service != "UI") {
+                    def uiDesc = uiPluginService.getProfileFor(service, provider.name)
+                    if (uiDesc.icon)
+                        pluginDesc.iconUrl = grailsLinkGenerator.link(
+                                controller: 'plugin',
+                                action: 'pluginIcon',
+                                params: [service: service, name: provider.name],
+                                absolute: true)
+
+                    if (uiDesc.providerMetadata) {
+                        pluginDesc.providerMetadata = uiDesc.providerMetadata
+                    }
+                }
+
+                return pluginDesc
             }
             [service  : it.key,
              desc     : message("framework.service.${service}.description".toString(),locale),
