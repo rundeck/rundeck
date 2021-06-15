@@ -14,11 +14,14 @@ export class PluginStore {
         const plugins = await this.client.sendRequest({
             pathTemplate: `/plugin/list`,
             baseUrl: 'http://localhost:8080/api/33',
+            queryParameters: {
+                service: 'WebhookEvent'
+            },
             method: 'GET'
         })
 
         this.plugins = plugins.parsedBody as Array<Plugin>
-        console.log(plugins)
+        console.log(this.plugins)
     }
 }
 
@@ -28,4 +31,9 @@ interface Plugin {
     description: string
     iconUrl?: string
     artifactName: string
+    providerMetadata?: {
+        glyphicon?: string
+        faicon?: string
+        fabicon?: string
+    }
 }

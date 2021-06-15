@@ -1,6 +1,11 @@
 <template>
-    <FilterList :items="webhooks.webhooks">
-        <template slot="item" scope="{item}"><img style="height: 20px; width: 20px;border-radius: 4px;" :src="item.eventPlugin.iconUrl"/> {{item.name}}</template>
+    <FilterList :items="webhooks.webhooks" searchText="Filter Webhooks" :itemSize="40">
+        <template slot="item" scope="{item}">
+            <div style="height: 40px;display: flex; align-items: center;">
+                <PluginInfo :detail="item.eventPlugin" :showTitle="false" :showDescription="false"/>
+                <span style="margin-left: 10px; font-weight: 600;">{{item.name}}</span>
+            </div>
+        </template>
     </FilterList>
 </template>
 
@@ -15,11 +20,13 @@ import {RootStore} from '../../../stores/RootStore'
 import { PluginStore } from '../../../stores/Plugins'
 import { WebhookStore } from '../../../stores/Webhooks'
 
+import PluginInfo from '../../plugins/PluginInfo.vue'
+
 import FilterList from '../../filter-list/FilterList.vue'
 
 
 @Observer
-@Component({components: {FilterList}})
+@Component({components: {FilterList, PluginInfo}})
 export default class PluginSelect extends Vue {
     @Inject()
     private readonly rootStore!: RootStore
@@ -36,3 +43,10 @@ export default class PluginSelect extends Vue {
     }
 }
 </script>
+
+<style scoped lang="scss">
+::v-deep .plugin-icon {
+    height: 20px !important;
+    width: 20px !important;
+}
+</style>

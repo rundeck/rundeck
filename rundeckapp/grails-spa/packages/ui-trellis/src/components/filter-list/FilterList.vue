@@ -9,20 +9,20 @@
                         type="text" 
                         class="form-control form-control-sm"
                         v-model="searchTerm"
-                        :placeholder="searchPlaceholder"/>
+                        :placeholder="searchText"/>
                 </div>
             </div>
             <Skeleton :loading="loading">
                 <RecycleScroller @foo="alert('Foo')"
                     ref="scroller"
                     :items="filtered"
-                    :item-size="25"
+                    :item-size="itemSize"
                     :key="items.length"
                     v-slot="{ item }"
                     key-field="name"
                     class="scroller"
                 >
-                    <div role="button" tabindex="0" class="scroller__item" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
+                    <div style="height: 100%;" role="button" tabindex="0" class="scroller__item" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
                         <slot name="item" :item="item" scope="item"/>
                     </div>
                 </RecycleScroller>
@@ -78,10 +78,13 @@ export default class FilterList extends Vue {
     loading!: boolean
 
     @Prop({default: ''})
-    searchPlaceholder!: String
+    searchText!: String
 
     @Prop()
     items!: Array<any>
+
+    @Prop({default: 25})
+    itemSize!: Number 
 
     get filtered() {
         return this.items.filter(i => i.name.includes(this.searchTerm))

@@ -8,7 +8,7 @@ import '../../../stories/setup'
 
 import {RootStore} from '../../../stores/RootStore'
 
-import PluginSelect from './PluginSelect.vue'
+import PluginSelect from './WebhookSelect.vue'
 
 // @ts-ignore
 window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN), {baseUri: process.env.STORYBOOK_RUNDECK_URL, httpClient: new BrowserFetchHttpClient()})
