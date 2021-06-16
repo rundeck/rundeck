@@ -65,6 +65,7 @@
 <div class="content">
 <div id="layoutBody">
 <div class="container-fluid">
+  <input id="loginName" name="loginName" type="hidden" value="${user.login}">
   <div class="row">
       <div class="col-xs-12">
         <div class="card">
@@ -75,19 +76,25 @@
           <div class="card">
               <div class="card-content">
                 <div class="row">
-                    <div class="col-xs-6">
-                    <div class="pull-left">
-                      <g:link action="edit"
-                              params="[login: user.login]"
-                              class="btn btn-cta btn-sm"
-                              title="${message(code: 'userController.action.edit.description', args: [user.login])}">
-                          <g:icon name="edit"/>
-                          <g:message code="button.Edit.label"/>
-                      </g:link>
+                    <div class="col-md-4 col-xs-6">
+                        <div class="row">
+                            <div class="col-xs-1">
+                                <g:link action="edit"
+                                        params="[login: user.login]"
+                                        class="btn btn-cta btn-sm"
+                                        title="${message(code: 'userController.action.edit.description', args: [user.login])}">
+                                    <g:icon name="edit"/>
+                                    <g:message code="button.Edit.label"/>
+                                </g:link>
+                            </div>
+                            <div class="col-xs-1">
+                            </div>
+                            <div class="col-xs-1" id="password-manager">
+                            </div>
+                        </div>
                     </div>
-                  </div>
 
-                    <div class="col-xs-6 form-inline">
+                    <div class="col-md-8 col-xs-6 form-inline">
                     <div class="form-group pull-right">
                         <label for="language" class=" control-label"><g:message
                             code="user.profile.language.label"/></label>
