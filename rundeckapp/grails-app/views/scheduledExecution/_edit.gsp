@@ -1330,7 +1330,7 @@ function getCurSEID(){
 </g:if>
             initKoBind(null,{jobeditor:jobeditor})
 
-            jQuery('textarea.form-control.apply_ace').each(function () {
+            jQuery('#tab_execution_plugins .textarea.form-control.apply_ace').each(function () {
                 _setupAceTextareaEditor(this);
             });
         }
