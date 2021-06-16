@@ -64,7 +64,7 @@ public class ScriptVarExpander extends BaseVarExpander {
             return null;
         }
         String step = m.group("STEP");
-        String group = m.group("GROUP");
+        String group = m.group("GROUP").replaceAll("unquotedoption", "option");
         String key = m.group("KEY");
         String qual = m.group("QUAL");
 

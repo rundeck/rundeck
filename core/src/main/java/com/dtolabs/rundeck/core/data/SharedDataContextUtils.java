@@ -47,6 +47,9 @@ public class SharedDataContextUtils {
     public static final String PROPERTY_VIEW_REF_REGEX = "\\$\\{([^\\s}]+)\\}";
     public static final Pattern PROPERTY_REF_PATTERN = Pattern.compile(PROPERTY_REF_REGEX);
     private static final Pattern PROPERTY_VIEW_REF_PATTERN = Pattern.compile(PROPERTY_VIEW_REF_REGEX);
+    public static final String UNQUOTEDPROPERTY_PREFIX = "unquoted";
+    private static final String UNQUOTEDPROPERTY_REF_REGEX = "\\$\\{("+UNQUOTEDPROPERTY_PREFIX+"[^\\s.]+)\\.([^\\s}]+)\\}";
+    public static final Pattern UNQUOTEDPROPERTY_REF_PATTERN = Pattern.compile(UNQUOTEDPROPERTY_REF_REGEX);
 
 
     /**
@@ -138,7 +141,10 @@ public class SharedDataContextUtils {
         final StringBuffer sb = new StringBuffer();
         ArgumentVarExpander argExpander = new ArgumentVarExpander();
         while (m.find()) {
-            final String variableRef = m.group(1);
+            String variableRef = m.group(1);
+            if(m.group(1).startsWith(SharedDataContextUtils.UNQUOTEDPROPERTY_PREFIX)){
+                variableRef = m.group(1).replace(SharedDataContextUtils.UNQUOTEDPROPERTY_PREFIX, "");
+            }
             String value = argExpander.expandVariable(
                     data,
                     currentContext,

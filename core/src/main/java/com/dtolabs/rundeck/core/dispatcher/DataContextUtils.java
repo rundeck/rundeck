@@ -463,7 +463,10 @@ public class DataContextUtils {
         final Matcher m = SharedDataContextUtils.PROPERTY_REF_PATTERN.matcher(input);
         final StringBuffer sb = new StringBuffer();
         while (m.find()) {
-            final String key = m.group(1);
+            String key = m.group(1);
+            if(m.group(1).startsWith(SharedDataContextUtils.UNQUOTEDPROPERTY_PREFIX)){
+                key = m.group(1).replace(SharedDataContextUtils.UNQUOTEDPROPERTY_PREFIX, "");
+            }
             final String nm = m.group(2);
             if (null!=key && null!=nm && null!=data.get(key) && null!= data.get(key).get(nm)) {
                 String value = data.get(key).get(nm);
