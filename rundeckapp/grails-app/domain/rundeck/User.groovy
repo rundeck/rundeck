@@ -18,7 +18,6 @@ package rundeck
 
 
 import rundeck.services.AnyDomainEmailValidator
-import rundeck.services.validator.CharsValidator
 
 class User {
     String login
@@ -42,8 +41,8 @@ class User {
     static hasMany = [reportfilters:ReportFilter,jobfilters:ScheduledExecutionFilter,nodefilters:NodeFilter]
     static constraints={
         login(matches: '^[a-zA-Z0-9\\.,@\\(\\)\\s_\\\\/-]+$')
-        firstName(nullable:true, validator: { val, obj -> new CharsValidator().validate(val) })
-        lastName(nullable:true, validator: { val, obj -> new CharsValidator().validate(val) })
+        firstName(nullable:true)
+        lastName(nullable:true)
         email(nullable:true,validator: { val ->
             (!val || new AnyDomainEmailValidator().isValid(val)) ? null : 'email.invalid'
         })
