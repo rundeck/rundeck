@@ -3573,4 +3573,47 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             'yaml' |null | null       | 'remove'   | null
             'yaml' |null | 'update'   | null       | null
     }
+
+    def "test broken plugin on editing"() {
+
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
+        )
+        se.save()
+
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'bob'
+        }
+
+        params.id = se.id
+        params.project = se.project
+
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+            prepareCreateEditJob(_,
+                    { newScheduledExecution ->
+                        newScheduledExecution.jobName == se.jobName
+                    },
+                    _,
+                    _) >> [scheduledExecution: se]
+            1 * validateJobDefinition(_,_,_,_,_) >> false
+        }
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+            getAuthContextForSubjectAndProject(*_) >> auth
+            authorizeProjectJobAll(_, _, ['update', 'read'], _) >> true
+        }
+
+        when:
+        controller.edit()
+
+        then:
+        controller.response.redirectedUrl == null
+        flash.message != null
+    }
 }
