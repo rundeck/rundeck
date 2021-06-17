@@ -22,7 +22,7 @@
     <meta name="tabpage" content="Webhooks"/>
     <title><g:appTitle/></title>
     <asset:javascript src="ace-bundle.js"/>
-%{--    <asset:stylesheet src="static/css/pages/webhooks.css"/>--}%
+    <asset:stylesheet src="static/css/pages/webhooks.css"/>
 
     <g:templateExists name="prowebhooks">
         <g:render template="prowebhooks" />

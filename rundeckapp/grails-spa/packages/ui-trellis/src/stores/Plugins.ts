@@ -1,39 +1,65 @@
 import {RootStore} from './RootStore'
 import {RundeckClient} from '@rundeck/client'
-import { action, computed, flow, observable } from 'mobx'
+import { observable, IObservableArray } from 'mobx'
+import {ObservableGroupMap, actionAsync, task, asyncAction} from 'mobx-utils'
 
 import { Serial } from '../utilities/Async'
 
 export class PluginStore {
-    @observable plugins: Array<Plugin> = []
+    @observable plugins: IObservableArray<Plugin> = observable.array()
 
-    constructor(readonly root: RootStore, readonly client: RundeckClient) {}
+    @observable.shallow pluginsByService: ObservableGroupMap<string, Plugin>
+    @observable.shallow pluginsById: ObservableGroupMap<string, Plugin>
 
-    @action
-    async load(): Promise<void> {
-        const plugins = await this.client.sendRequest({
-            pathTemplate: `/plugin/list`,
-            baseUrl: 'http://localhost:8080/api/33',
+    constructor(readonly root: RootStore, readonly client: RundeckClient) {
+        this.pluginsByService = new ObservableGroupMap(this.plugins, (p) => `${p.service}`)
+        this.pluginsById = new ObservableGroupMap(this.plugins, (p) => p.id)
+    }
+
+    @Serial
+    @actionAsync
+    async load(service?: string): Promise<void> {
+        const plugins = await task(this.client.apiRequest({
+            pathTemplate: 'api/33/plugin/list',
             queryParameters: {
-                service: 'WebhookEvent'
+                service
             },
             method: 'GET'
-        })
+        }))
 
-        this.plugins = plugins.parsedBody as Array<Plugin>
-        console.log(this.plugins)
+        plugins.parsedBody.forEach((p: any) => {
+            if (this.pluginsById.has(p.id))
+                return
+            else
+                this.plugins.push(p)
+        });
+        return void(0)
+    }
+
+    getServicePlugins(service: string) {
+        return this.pluginsByService.get(service)?.sort((a, b) => a.title.localeCompare(b.title)) || []
     }
 }
 
 
-interface Plugin {
+export interface Plugin {
+    id: string
     name: string
-    description: string
-    iconUrl?: string
     artifactName: string
+    title: string
+    description: string
+    author: string
+    builtin: boolean
+    pluginVersion: string
+    service: string
+    iconUrl?: string
     providerMetadata?: {
         glyphicon?: string
         faicon?: string
         fabicon?: string
     }
+}
+
+export enum ServiceType {
+    WebhookEvent = 'WebhookEvent'
 }

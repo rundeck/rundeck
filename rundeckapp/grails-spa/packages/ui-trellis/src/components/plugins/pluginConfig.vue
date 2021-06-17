@@ -119,6 +119,8 @@ import PluginPropView from './pluginPropView.vue'
 import PluginPropEdit from './pluginPropEdit.vue'
 import {cleanConfigInput,convertArrayInput} from '../../modules/InputUtils'
 
+import {diff} from 'deep-object-diff'
+
 import {getPluginProvidersForService,
   getServiceProviderDescription,
   validatePluginConfig} from '../../modules/pluginService'
@@ -350,6 +352,13 @@ export default Vue.extend({
       },
       deep: true
     },
+    computedConfig: {
+      handler(newValue, oldValue) {
+        if (Object.keys(diff(newValue, oldValue)).length > 0)
+          this.$emit('change')
+      },
+      deep: true
+    },
     mode:{
       handler(newValue,oldValue){
         this.loadForMode()
@@ -422,6 +431,9 @@ export default Vue.extend({
     },
     exportedValues(): any{
       return convertArrayInput(cleanConfigInput(this.exportInputs()))
+    },
+    computedConfig(): any {
+      return Object.assign({}, this.value.config)
     }
   },
   beforeMount () {

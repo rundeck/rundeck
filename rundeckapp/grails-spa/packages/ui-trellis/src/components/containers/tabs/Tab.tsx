@@ -17,8 +17,6 @@ export default Vue.extend({
         else
             component = this.$slots.default[0]
 
-        console.log(this.keep)
-
         return component
     }
 })

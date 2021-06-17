@@ -1,0 +1,37 @@
+<template>
+    <span class="webhook-title">
+        <PluginInfo v-if="webhook.eventPlugin" style="margin-right: 10px" :detail="webhook.eventPlugin" :showTitle="false" :showDescription="false"/><h3>{{webhook.name}}</h3>
+    </span>
+</template>
+
+
+<script lang="ts">
+import Vue from 'vue'
+
+import PluginInfo from '@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue'
+
+import {Webhook} from '@rundeck/ui-trellis/lib/stores/Webhooks'
+
+export default Vue.extend({
+    components: {
+        PluginInfo
+    },
+    props: {
+        webhook: {type: Object}
+    }
+})
+</script>
+
+<style scoped lang="scss">
+.webhook-title {
+    display: flex;
+    align-items: center;
+    align-content: center;
+
+    h3 {
+      color: black;
+      font-weight: 700;
+      margin: 0;
+    }
+}
+</style>
