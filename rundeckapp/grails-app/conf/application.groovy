@@ -27,21 +27,7 @@ grails.controllers.upload.maxRequestSize=26214400
 
 grails.plugin.databasemigration.changelog = "changelog.groovy"
 
-//feature flags settings for all environments
-rundeck.feature.enhancedNodes.enabled = true
-rundeck.feature.optionValuesPlugin.enabled = true
-rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
-rundeck.feature.cleanExecutionsHistoryJob.enabled = true
-rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
-rundeck.feature.executionLifecyclePlugin.enabled = true
-rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
-rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
-rundeck.feature.sidebarProjectListing.enabled= true
-rundeck.feature.userSessionProjectsCache.enabled = true
-rundeck.feature.workflowDesigner.enabled = true
-rundeck.feature.projectKeyStorage.enabled = true
 
-rundeck.feature.notificationsOwnThread.enabled = false /*FYI FALSE*/
 
 environments {
     development{
