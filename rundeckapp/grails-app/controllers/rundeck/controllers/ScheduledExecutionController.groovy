@@ -301,7 +301,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                                   AuthConstants.ACTION_SCM_EXPORT])) {
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
                     model.scmExportEnabled = true
-                    model.scmExportStatus = scmService.exportStatusForJobs(authContext, [scheduledExecution])
+                    model.scmExportStatus = scmService.exportStatusForJobs(params.project, authContext, [scheduledExecution])
                     model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
                 }
             }
@@ -311,7 +311,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                                   AuthConstants.ACTION_SCM_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                     model.scmImportEnabled = true
-                    model.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
+                    model.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
                 }
             }
             render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
@@ -538,7 +538,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                               AuthConstants.ACTION_SCM_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true
-                dataMap.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
+                dataMap.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
             }
         }
 
@@ -2984,23 +2984,28 @@ class ScheduledExecutionController  extends ControllerBase{
         if(!apiService.requireApi(request,response,ApiVersions.V14)){
             return
         }
+
+        //require project parameter
+        if(!apiService.requireParameters(params,response, ['project'])){
+            return
+        }
         log.debug("ScheduledExecutionController: upload " + params)
         def fileformat = params.format ?:params.fileformat ?: 'xml'
         def parseresult
-        if(request.api_version >= ApiVersions.V14 && request.format=='xml'){
+        if(request.format=='xml'){
             //xml input
             parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), 'xml')
-        }else if(request.api_version >= ApiVersions.V14 && request.format=='yaml'){
+        }else if(request.format=='yaml'){
             //yaml input
             parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), 'yaml')
         }else if (!apiService.requireParameters(params,response,['xmlBatch'])) {
             return
-        }else if (request instanceof MultipartHttpServletRequest) {
-            def file = request.getFile("xmlBatch")
-            if (!file) {
+        }else if (request.format=='multipartForm' && request instanceof MultipartHttpServletRequest) {
+            if (!request.fileNames.toList().contains('xmlBatch')) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                         code: 'api.error.jobs.import.missing-file', args: null])
             }
+            def file = request.getFile("xmlBatch")
             parseresult = scheduledExecutionService.parseUploadedFile(file.getInputStream(), fileformat)
         }else if (params.xmlBatch) {
             String fileContent = params.xmlBatch
@@ -3019,21 +3024,12 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.jobs.import.invalid', args: [fileformat,parseresult.error]])
         }
         def jobset = parseresult.jobset
-        if(request.api_version >= ApiVersions.V14){
-            //require project parameter
-            if(!apiService.requireParameters(params,response, ['project'])){
-                return
-            }
-        }
-            //v8 override project using parameter
-        if(params.project){
-            jobset.each{it.job.project=params.project}
-        }
+
+        jobset.each{it.job.project=params.project}
 
         def changeinfo = [user: session.user,method:'apiJobsImport']
         //nb: loadJobs will get correct project auth context
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def option = params.uuidOption
         def loadresults = scheduledExecutionService.loadImportedJobs(jobset,params.dupeOption, option, changeinfo, authContext,
                 (params?.validateJobref=='true'))

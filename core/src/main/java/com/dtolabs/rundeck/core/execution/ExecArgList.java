@@ -213,10 +213,8 @@ public class ExecArgList {
 
         public String convertAndQuote(String s, boolean quoted) {
             String replaced = expand.convert(s);
-            if (quote != null) {
-                if (quoted || !replaced.equals(s)) {
-                    replaced = quote.convert(replaced);
-                }
+            if (quote != null && quoted) {
+                replaced = quote.convert(replaced);
             }
             return replaced;
         }

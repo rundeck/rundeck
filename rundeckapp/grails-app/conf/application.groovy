@@ -39,7 +39,6 @@ environments {
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
-        rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.notificationsOwnThread.enabled = false
@@ -48,6 +47,7 @@ environments {
         rundeck.feature.uiNext.enabled = false
         rundeck.feature.workflowDesigner.enabled = true
         rundeck.feature.projectKeyStorage.enabled = true
+        rundeck.scm.startup.initDeferred=false
 
         dataSource {
             dbCreate = "none" // one of 'create', 'create-drop','update'
@@ -92,7 +92,6 @@ environments {
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
-        rundeck.feature.legacyExecOutputViewer.enabled = false
         rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
         rundeck.feature.notificationsOwnThread.enabled = false
@@ -181,7 +180,7 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
-
+grails.plugin.springsecurity.ajaxHeader = 'AJAX AUTH DISABLED\u0000'
 grails.plugin.springsecurity.logout.handlerNames = [
         'rememberMeServices',
         'securityContextLogoutHandler',

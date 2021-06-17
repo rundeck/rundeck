@@ -19,7 +19,9 @@ package rundeck.services
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
+import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.hibernate.StaleStateException
 import org.springframework.dao.OptimisticLockingFailureException
@@ -29,6 +31,7 @@ import rundeck.User
 
 @Transactional
 class UserService {
+    public static final String G_EVENT_LOGIN_PROFILE_CHANGE = 'user.login.profile.change'
     ConfigurationService configurationService
     FrameworkService frameworkService
     public static final int DEFAULT_TIMEOUT = 30
@@ -167,6 +170,23 @@ class UserService {
         return [user:u,storedpref:storedpref]
     }
 
+    @CompileStatic
+    @Subscriber(G_EVENT_LOGIN_PROFILE_CHANGE)
+    def userLoginProfileChange(UserProfileData data){
+        updateUserProfile(
+            data.username,
+            data.lastName,
+            data.firstName,
+            data.email
+        )
+    }
+    @CompileStatic
+    static class UserProfileData{
+        String username
+        String lastName
+        String firstName
+        String email
+    }
     void updateUserProfile(String username, String lastName, String firstName, String email) {
         User u = findOrCreateUser(username)
         u.firstName = firstName

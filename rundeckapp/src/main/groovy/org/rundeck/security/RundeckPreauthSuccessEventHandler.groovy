@@ -15,6 +15,7 @@
  */
 package org.rundeck.security
 
+import grails.events.bus.EventBusAware
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -29,13 +30,12 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 @CompileStatic
-class RundeckPreauthSuccessEventHandler implements AuthenticationSuccessHandler {
+class RundeckPreauthSuccessEventHandler implements AuthenticationSuccessHandler, EventBusAware {
     private static final Logger LOG = LoggerFactory.getLogger(RundeckPreauthSuccessEventHandler)
     public static final String DEFAULT_FIRST_NAME_HDR   = "X-Forwarded-User-FirstName"
     public static final String DEFAULT_LAST_NAME_HDR    = "X-Forwarded-User-LastName"
     public static final String DEFAULT_EMAIL_HDR        = "X-Forwarded-User-Email"
     ConfigurationService configurationService
-    UserService userService
 
     @Override
     void onAuthenticationSuccess(
@@ -69,12 +69,16 @@ class RundeckPreauthSuccessEventHandler implements AuthenticationSuccessHandler 
                 LOG.debug("Last Name: " + lastName)
                 LOG.debug("Email: " + email)
             }
-            userService.updateUserProfile(
-                    username,
-                    lastName,
-                    firstName,
-                    email
-            )
+            eventBus.
+                notify(
+                    UserService.G_EVENT_LOGIN_PROFILE_CHANGE,
+                    new UserService.UserProfileData(
+                        username: username,
+                        lastName: lastName,
+                        firstName: firstName,
+                        email: email
+                    )
+                )
         }
     }
 }

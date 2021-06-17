@@ -14,6 +14,11 @@ databaseChangeLog = {
     }
 //////////////////////////////////////// Oracle Specific ///////////////////////////////////////////////////////////////
     changeSet(author: "rundeckuser (generated)", id: "1613961122706-29", dbms: "oracle") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                indexExists (tableName:"auth_token", indexName: "IDX_TOKEN")
+            }
+        }
         createIndex(indexName: "IDX_TOKEN", tableName: "auth_token", unique: "true") {
             column(name: "token")
         }
@@ -29,6 +34,11 @@ databaseChangeLog = {
     }
 
     changeSet(author: "rundeckuser (generated)", id: "1613961122706-32", dbms: "oracle") {
+        preConditions(onFail: "MARK_RAN"){
+            not{
+                indexExists (tableName:"project", indexName: "PROJECT_IDX_NAME")
+            }
+        }
         createIndex(indexName: "PROJECT_IDX_NAME", tableName: "project", unique: "true") {
             column(name: "name")
         }
@@ -64,7 +74,7 @@ databaseChangeLog = {
             column(name: "date_started")
         }
     }
-    
+
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-36") {
         preConditions(onFail: "MARK_RAN"){
             not{
@@ -511,6 +521,29 @@ databaseChangeLog = {
         }
         createIndex(indexName: "LOGFILESTORAGE_IDX_1", tableName: "log_file_storage_request") {
             column(name: "completed")
+        }
+    }
+
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-scm-fixes") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(tableName: "plugin_meta", indexName: "PLUGIN_META_INDX1")
+            }
+        }
+        createIndex(indexName: "PLUGIN_META_INDX1", tableName: "plugin_meta") {
+            column(name: "project")
+        }
+    }
+
+    changeSet(author: "rundeckuser (generated)", id: "3.4.0-scm-fixes2") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(tableName: "plugin_meta", indexName: "PLUGIN_META_INDX2")
+            }
+        }
+        createIndex(indexName: "PLUGIN_META_INDX2", tableName: "plugin_meta") {
+            column(name: "project")
+            column(name: "data_key")
         }
     }
 

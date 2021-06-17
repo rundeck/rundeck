@@ -73,6 +73,22 @@ class ImportJobs extends BaseAction implements GitImportAction {
         StringBuilder sb = new StringBuilder()
         boolean success = true
 
+        deletedJobs?.each { jobId ->
+            def importResult = importer.deleteJob(
+                    context.frameworkProject,
+                    jobId
+            )
+            if (!importResult.successful) {
+                success = false
+                sb << ("Failed deleting job with id: ${jobId}: " + importResult.errorMessage)
+            } else {
+                sb << ("Succeeded deleting job with id ${jobId} ")
+            }
+
+        }
+
+        def jobsChanged = []
+
         //walk the repo files and look for possible candidates
         plugin.walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             def path = walk.getPathString()
@@ -95,28 +111,23 @@ class ImportJobs extends BaseAction implements GitImportAction {
                     meta,
                     plugin.config.importPreserve
             )
+
             if (!importResult.successful) {
                 success = false
                 sb << ("Failed importing: ${walk.getPathString()}: " + importResult.errorMessage)
             } else {
+                if(importResult.getJob()){
+                    jobsChanged.add(importResult.getJob())
+                }
                 plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
                 sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
             }
         }
 
-        deletedJobs?.each { jobId ->
-            def importResult = importer.deleteJob(
-                context.frameworkProject,
-                jobId
-            )
-            if (!importResult.successful) {
-                success = false
-                sb << ("Failed deleting job with id: ${jobId}: " + importResult.errorMessage)
-            } else {
-                sb << ("Succeeded deleting job with id ${jobId} ")
-            }
-
+        if(jobsChanged){
+            plugin.refreshJobsStatus(jobsChanged)
         }
+
         def result = new ScmExportResultImpl()
         result.success = success
         result.message = "Git Import " + (success ? "successful" : "failed")

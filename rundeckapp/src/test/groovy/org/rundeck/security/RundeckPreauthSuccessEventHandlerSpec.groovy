@@ -15,6 +15,7 @@
  */
 package org.rundeck.security
 
+import grails.events.bus.EventBus
 import org.springframework.security.core.Authentication
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
@@ -29,6 +30,7 @@ class RundeckPreauthSuccessEventHandlerSpec extends Specification {
     @Unroll
     def "OnAuthenticationSuccess"() {
         setup:
+        def username = 'auser'
         RundeckPreauthSuccessEventHandler handler = new RundeckPreauthSuccessEventHandler()
         handler.configurationService = Mock(ConfigurationService) {
             getBoolean("security.authorization.preauthenticated.userSyncEnabled",false) >> syncEnabled
@@ -36,10 +38,9 @@ class RundeckPreauthSuccessEventHandlerSpec extends Specification {
             getString("security.authorization.preauthenticated.userLastNameHeader",RundeckPreauthSuccessEventHandler.DEFAULT_LAST_NAME_HDR) >> { lastNameHdr ?: RundeckPreauthSuccessEventHandler.DEFAULT_LAST_NAME_HDR }
             getString("security.authorization.preauthenticated.userEmailHeader",RundeckPreauthSuccessEventHandler.DEFAULT_EMAIL_HDR) >> { emailHdr ?: RundeckPreauthSuccessEventHandler.DEFAULT_EMAIL_HDR }
         }
-        def userService = Mock(UserService)
-        handler.userService = userService
+        handler.targetEventBus = Mock(EventBus)
         Authentication auth = Mock(Authentication) {
-            getPrincipal() >> new RundeckUserDetailsService.RundeckUserDetails("auser","role1,role2")
+            getPrincipal() >> new RundeckUserDetailsService.RundeckUserDetails(username, "role1,role2")
         }
         HttpServletResponse rsp = Stub(HttpServletResponse)
         HttpServletRequest rq = new HdrTesterHttpServletRequest(hdrs,Stub(HttpServletRequest))
@@ -48,7 +49,15 @@ class RundeckPreauthSuccessEventHandlerSpec extends Specification {
         handler.onAuthenticationSuccess(rq,rsp,auth)
 
         then:
-        userSvcCall * handler.userService.updateUserProfile(_,{ ln -> ln == expectedLast } ,{ fn -> fn == expectedFirst }, { e -> e == expectedEmail })
+            userSvcCall * handler.eventBus.notify(
+                UserService.G_EVENT_LOGIN_PROFILE_CHANGE,
+                {
+                    it.username == username
+                    it.lastName == expectedLast
+                    it.firstName == expectedFirst
+                    it.email == expectedEmail
+                }
+            )
 
         where:
         userSvcCall | syncEnabled | firstNameHdr | lastNameHdr | emailHdr       | expectedFirst | expectedLast | expectedEmail  | hdrs

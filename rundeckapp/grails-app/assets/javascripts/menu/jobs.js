@@ -15,8 +15,8 @@
  */
 
 //= require momentutil
-//= require knockout.min
-//= require knockout-mapping
+//= require vendor/knockout.min
+//= require vendor/knockout-mapping
 //= require knockout-foreachprop
 //= require nodeFiltersKO
 //= require executionOptions
@@ -221,6 +221,9 @@ function BulkEditor(data){
                 case "CLEAN":
                     text = self.messages['scm.export.status.CLEAN.description'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.export.status.LOADING.description'];
+                    break;
                 default:
                     text = exportStatus;
             }
@@ -248,6 +251,9 @@ function BulkEditor(data){
                 case "UNKNOWN":
                     text += self.messages['scm.import.status.UNKNOWN.description'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.import.status.LOADING.description'];
+                    break;
                 default:
                     text += importStatus;
             }
@@ -260,25 +266,19 @@ function BulkEditor(data){
         switch(self.jobSynchState(jobid)) {
             case "EXPORT_NEEDED":
                 return "text-info";
-                break;
             case "CREATE_NEEDED":
                 return "text-success";
-                break;
             case "UNKNOWN":
                 return "text-primary";
-                break;
             case "IMPORT_NEEDED":
-                return "text-warning";
-                break;
             case "REFRESH_NEEDED":
+            case "LOADING":
                 return "text-warning";
-                break;
             case "DELETED":
                 return "text-danger";
-                break;
             case "CLEAN":
                 return "text-primary";
-                break;
+
         }
         return 'text-primary';
     };
@@ -286,26 +286,20 @@ function BulkEditor(data){
     self.jobIcon = function(jobid){
         switch(self.jobSynchState(jobid)) {
             case "EXPORT_NEEDED":
-                return "glyphicon-exclamation-sign";
-                break;
             case "CREATE_NEEDED":
                 return "glyphicon-exclamation-sign";
-                break;
             case "UNKNOWN":
                 return "glyphicon-question-sign";
-                break;
             case "IMPORT_NEEDED":
-                return "glyphicon-exclamation-sign";
-                break;
             case "REFRESH_NEEDED":
                 return "glyphicon-exclamation-sign";
-                break;
             case "DELETED":
                 return "glyphicon-minus-sign";
-                break;
             case "CLEAN":
                 return "glyphicon-ok";
-                break;
+            case "LOADING":
+                return "glyphicon-refresh";
+
         }
         return 'glyphicon-plus';
     };
@@ -359,6 +353,9 @@ function BulkEditor(data){
                 case "CLEAN":
                     text = self.messages['scm.export.status.CLEAN.display.text'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.export.status.LOADING.display.text'];
+                    break;
             }
             if(!text){
                 text = self.exportState();
@@ -384,6 +381,9 @@ function BulkEditor(data){
                 case "CLEAN":
                     text = self.messages['scm.import.status.CLEAN.display.text'];
                     break;
+                case "LOADING":
+                    text = self.messages['scm.import.status.LOADING.display.text'];
+                    break;
             }
             if(!text){
                 text = self.importState();
@@ -394,7 +394,7 @@ function BulkEditor(data){
     };
 
     self.defaultDisplayText = function(){
-        if(self.exportState() != 'CLEAN'){
+        if(self.exportState()!=null && self.exportState() != 'CLEAN'){
             return self.defaultExportText();
         }else{
             return self.defaultImportText();

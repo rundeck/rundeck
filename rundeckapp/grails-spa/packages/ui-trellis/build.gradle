@@ -17,8 +17,7 @@ def sourceDirs = [
         '.storybook',
         'lib',
         'src',
-        'theme',
-        'theme-next'
+        'theme'
 ]
 def sourceFiles = ['package.json', 'README.md']
 def sources = sourceDirs + sourceFiles

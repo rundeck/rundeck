@@ -21,6 +21,7 @@ export interface AppLinks {
     frameworkCheckResourceModelConfig: string
     frameworkEditResourceModelConfig: string
     frameworkCreateResourceModelConfig: string
+    frameworkCreateProject: string
     frameworkNodes: string
     frameworkNodesFragment: string
     frameworkNodesQueryAjax: string
@@ -36,6 +37,7 @@ export interface AppLinks {
     reportsSaveFilterAjax: string
     reportsDeleteFilterAjax: string
     menuNowrunningAjax: string
+    menuHome: string
     menuHomeAjax: string
     menuHomeSummaryAjax: string
     menuProjectNamesAjax: string

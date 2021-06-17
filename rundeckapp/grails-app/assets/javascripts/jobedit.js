@@ -385,6 +385,14 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
           desc: 'For option: ' + _jobOptionData[x].name
         }
       });
+      expvars.push({
+        value: mkvar('unquotedoption.' + _jobOptionData[x].name),
+        data: {
+          category: 'Options',
+          title: 'Option value',
+          desc: 'Unquoted value for option: ' + _jobOptionData[x].name
+        }
+      });
       if (_jobOptionData[x].multivalued == true) {
         expvars.push({
           value: mkvar('option.' + _jobOptionData[x].name + '.delimiter'),

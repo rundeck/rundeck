@@ -15,8 +15,8 @@
  */
 
 //= require momentutil
-//= require knockout.min
-//= require knockout-mapping
+//= require vendor/knockout.min
+//= require vendor/knockout-mapping
 //= require knockout-foreachprop
 //= require workflow
 //= require nodeFiltersKO
@@ -185,8 +185,6 @@ function continueRunFollow(data) {
         reloadInterval:1500
     });
     nodeflowvm.followFlowState(flowState);
-    if (window._rundeck.feature.legacyExecOutputViewer.enabled)
-        nodeflowvm.logoutput().beginFollowingOutput(data.id);
 
     flowState.beginFollowing();
     /** Base the complete event on the flow view instead of the "log"

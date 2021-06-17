@@ -24,8 +24,8 @@ class SystemReportMenuItem implements AuthMenuItem {
     @Override
     String getHref() {
         return grailsLinkGenerator.link(
-            action: "menu",
-            controller: "systemInfo"
+            action: "systemInfo",
+            controller: "menu"
         )
     }
 
