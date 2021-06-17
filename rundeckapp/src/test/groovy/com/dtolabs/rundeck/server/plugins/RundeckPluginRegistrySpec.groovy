@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
+import org.springframework.context.ApplicationContext
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -184,6 +185,87 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         'plugin1'  | 'aservicename'     | 'plugin1'
         'plugin2'  | 'otherservicename' | 'plugin2'
         'plugin1'  | 'otherservice'     | 'plugin3'
+
+    }
+    @Unroll
+    def "loadBeanDescriptor not describable"() {
+        given:
+
+        defineBeans{
+            SomeBean(InstanceFactoryBean, 'test')
+        }
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = [(pluginname):'SomeBean']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+
+        when:
+        def result = sut.loadBeanDescriptor(pluginname, servicename)
+
+        then:
+        result==null
+
+        where:
+
+        pluginname | servicename
+        'plugin1'  | 'aservicename'
+
+    }
+    @Unroll
+    def "loadBeanDescriptor builder returns null"() {
+        given:
+
+            def builder = Mock(PluginBuilder){
+
+            }
+        defineBeans{
+            SomeBean(InstanceFactoryBean, builder)
+        }
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = [(pluginname):'SomeBean']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+
+
+        when:
+        def result = sut.loadBeanDescriptor(pluginname, servicename)
+
+        then:
+        result==null
+
+        where:
+
+        pluginname | servicename
+        'plugin1'  | 'aservicename'
+
+    }
+    @Unroll
+    def "loadBeanDescriptor null from subcontext"() {
+        given:
+
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = [(pluginname):'SomeBean']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+        sut.subContexts['SomeBean']=Mock(ApplicationContext){
+            getBean('SomeBean')>>null
+        }
+
+
+        when:
+        def result = sut.loadBeanDescriptor(pluginname, servicename)
+
+        then:
+        result==null
+
+        where:
+
+        pluginname | servicename
+        'plugin1'  | 'aservicename'
 
     }
 

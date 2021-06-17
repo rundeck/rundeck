@@ -91,7 +91,7 @@
                 <g:if test="${!jobsjscallback}">
                     <a class="groupname text-primary visibility-hidden "
                     title="Browse job group: ${enc(attr:prefix ? prefix + '/' + group.key : group.key)}"
-                        href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><i class="glyphicon glyphicon-folder-open"></i></a>
+                        href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key,jobListType:params.jobListType])}"><i class="glyphicon glyphicon-folder-open"></i></a>
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">

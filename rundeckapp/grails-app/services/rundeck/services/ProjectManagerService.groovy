@@ -45,6 +45,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -68,7 +69,7 @@ import java.util.concurrent.TimeUnit
 
 @Transactional
 @GrailsCompileStatic
-class ProjectManagerService implements ProjectManager, ApplicationContextAware, InitializingBean {
+class ProjectManagerService implements ProjectManager, ApplicationContextAware, InitializingBean, EventBusAware {
     public static final String ETC_PROJECT_PROPERTIES_PATH = "/etc/project.properties"
     public static final String MIME_TYPE_PROJECT_PROPERTIES = 'text/x-java-properties'
     public static final String DEFAULT_PROJECT_CACHE_SPEC = "expireAfterAccess=10m,refreshAfterWrite=1m"
@@ -495,6 +496,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
         projectCache.invalidate(projectName)
         rundeckNodeService.refreshProjectNodes(projectName)
+
+        eventBus.notify(
+            'project.config.changed',
+            [
+                project: projectName,
+                props  : properties
+            ]
+        )
         return [
                 config      : properties,
                 lastModified: resource.contents.modificationTime,

@@ -30,12 +30,14 @@ cache:
   - "$HOME/.gradle/wrapper/"
 
 before_install:
+- nvm install
 - sudo apt-get update -qq
 - sudo apt-get install -y jq xmlstarlet
 - sudo chsh --shell $(which bash)
 - pip install awscli --upgrade --user
 install: true
 before_script:
+- nvm use
 - source scripts/travis-helpers.sh
 - export -f travis_nanoseconds
 - export -f travis_fold

@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.google.common.cache.LoadingCache
+import grails.events.bus.EventBus
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import org.apache.commons.fileupload.util.Streams
@@ -280,7 +281,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         }
         service.rundeckNodeService=Mock(NodeService)
         service.projectCache=Mock(LoadingCache)
-
+        service.targetEventBus=Mock(EventBus)
         when:
 
         def result = service.createFrameworkProject('test1',props)
@@ -289,6 +290,11 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         1*service.projectCache.invalidate('test1')
         1*service.rundeckNodeService.refreshProjectNodes('test1')
         0*service.rundeckNodeService.getNodes('test1')
+        1*service.eventBus.notify('project.config.changed', {
+            it.project=='test1'
+            it.props.abc=='def'
+            it.props.'project.name'=='test1'
+        })
 
         result.name=='test1'
         (2+ProjectManagerService.DEFAULT_PROJ_PROPS.size())==result.getProjectProperties().size()
@@ -437,13 +443,17 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
 
         service.rundeckNodeService=Mock(NodeService)
         service.projectCache=Mock(LoadingCache)
-
+        service.targetEventBus=Mock(EventBus)
         when:
         def res=service.mergeProjectProperties('test1',props1,[] as Set)
 
         then:
         1*service.projectCache.invalidate('test1')
         1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.eventBus.notify('project.config.changed', {
+            it.project=='test1'
+            it.props==[abc:'def',def:'ghi','project.name':'test1']
+        })
 
         res != null
         res.config.size() == 3
@@ -525,6 +535,7 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
 
         service.rundeckNodeService=Mock(NodeService)
         service.projectCache=Mock(LoadingCache)
+        service.targetEventBus=Mock(EventBus)
 
         when:
         def res=service.setProjectProperties('test1',props1)
@@ -533,6 +544,10 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
 
         1*service.projectCache.invalidate('test1')
         1*service.rundeckNodeService.refreshProjectNodes('test1')
+        1*service.eventBus.notify('project.config.changed', {
+            it.project=='test1'
+            it.props==[def:'ghi','project.name':'test1']
+        })
         res!=null
         res.config.size()==2
         null==res.config['abc']
@@ -738,13 +753,13 @@ class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest
         given:
         service.configStorageService=Stub(ConfigStorageService){
             existsDirResource("projects/test1/my-dir") >> true
-            listDirPaths("projects/test1/my-dir", pat) >> result
+            listDirPaths("projects/test1/my-dir", pat) >> resultDirPaths
             existsDirResource("projects/test1/not-my-resource") >> false
         }
         expect:
         service.listProjectDirPaths("test1", 'my-dir', pat)==expect
         where:
-            pat        | result                                                          | expect
+            pat        | resultDirPaths                                                  | expect
             'file[12]' | ["projects/test1/my-dir/file1", "projects/test1/my-dir/file2",] | ['my-dir/file1', 'my-dir/file2']
             '.*/'      | ["projects/test1/my-dir/etc/"]                                  | ['my-dir/etc/']
     }

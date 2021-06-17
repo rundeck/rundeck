@@ -157,7 +157,6 @@ class BaseGitPlugin {
             outfile = mapper.fileForJob(job)
         }
         AtomicLong counter = fileCounterFor(outfile)
-        logger.debug("Start serialize[${Thread.currentThread().name}]...")
 
         synchronized (counter) {
             //other threads serializing the same job must wait until we complete
@@ -207,7 +206,6 @@ class BaseGitPlugin {
                                 "Failed to serialize job, no content was written for job ${job}"
                         )
                     }
-                    logger.debug("Serialized[${Thread.currentThread().name}] ${job} ${format} to ${outfile}")
 
                     Files.move(temp.toPath(), outfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
                 }finally{
@@ -217,10 +215,9 @@ class BaseGitPlugin {
                 }
             } else {
                 //another thread already serialized this or earlier revision of the job, should not
-                logger.debug("SKIP serialize[${Thread.currentThread().name}] for ${job} to ${outfile}")
+                logger.trace("SKIP serialize[${Thread.currentThread().name}] for ${job} to ${outfile}")
             }
         }
-        logger.debug("Done serialize[${Thread.currentThread().name}]...")
     }
 
     def serializeTemp(final JobExportReference job, String format, boolean preserveId, boolean useSourceId) {
