@@ -42,6 +42,7 @@ class PluginApiServiceIntegrationSpec extends Specification {
                             ServiceNameConstants.ResourceFormatParser,
                             ServiceNameConstants.ResourceFormatGenerator,
                             ServiceNameConstants.Orchestrator,
+                            ServiceNameConstants.OptionValues,
                             ServiceNameConstants.ExecutionLifecycle,
                             ServiceNameConstants.Notification,
                             ServiceNameConstants.StreamingLogReader,
@@ -61,7 +62,7 @@ class PluginApiServiceIntegrationSpec extends Specification {
                             ServiceNameConstants.PasswordUtilityEncrypter,
                     ]
             )
-        pluginList.descriptions.size() == 27
+        pluginList.descriptions.size() == 28
         pluginList.serviceDefaultScopes.size() == 2
         pluginList.bundledPlugins.size() == 7
         pluginList.embeddedFilenames != null
