@@ -413,6 +413,7 @@ if (signArchives) {
 
 clean {
     delete "$projectDir/grails-app/assets/provided"
+    delete "${rootProject.buildDir}/gitbuildinfo/rundeck"
     delete "$projectDir/grails-app/assets/javascripts/vendor"
 }
 
