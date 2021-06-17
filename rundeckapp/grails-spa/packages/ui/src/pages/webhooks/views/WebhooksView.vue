@@ -10,7 +10,8 @@
   
   <div style="display: flex; height: 100%;overflow: hidden;">
     <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 10px;overflow-x: hidden;overflow-y: auto;">
-      <div style="width:100%; min-height: 500px">
+      <WebhookPicker :project="projectName" @item:selected="(item) => select(item)"/>
+      <!-- <div style="width:100%; min-height: 500px">
         <div style="margin-top: 0; padding-top: 0;">
           <table class="table table-striped">
             <thead>
@@ -31,7 +32,7 @@
             </tbody>
           </table>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <div class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
@@ -106,7 +107,7 @@
                         aria-expanded="false" >
 
                         <plugin-info
-                          :detail="getPluginDescription(curHook.eventPlugin)"
+                          :detail="curHook.eventPlugin"
                           :show-description="false"
                           v-if="curHook.eventPlugin" />
                         <span v-else>
@@ -116,8 +117,8 @@
                       </button>
                       <ul class="dropdown-menu ">
 
-                        <li v-for="plugin in webhookPlugins" v-bind:key="plugin.name">
-                          <a href="#" @click="setSelectedPlugin(false,plugin.name)">
+                        <li v-for="plugin in webhookPlugins" v-bind:key="plugin.id">
+                          <a href="#" @click="setSelectedPlugin(false,plugin)">
                             <plugin-info :detail="plugin" />
                           </a>
                         </li>
@@ -165,11 +166,14 @@ import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vu
 
 import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
 import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
+import WebhookPicker from '@rundeck/ui-trellis/lib/components/widgets/webhook-select/WebhookSelect.vue'
 
 // import {Tabs, Tab} from '@rundeck/ui-trellis/lib/components/containers/tabs'
 
 import {getServiceProviderDescription,
   getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
+
+import {ServiceType} from '@rundeck/ui-trellis/lib/stores/Plugins'
 
 var rdBase = "http://localhost:4440"
 var apiVersion = "33"
@@ -199,7 +203,8 @@ export default {
     PluginConfig,
     PluginInfo,
     Tabs,
-    Tab
+    Tab,
+    WebhookPicker,
   },
   inject: ["rootStore"],
   data() {
@@ -212,7 +217,8 @@ export default {
       selectedPlugin: null,
       apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
       customConfigComponent: null,
-      showPluginConfig: false
+      showPluginConfig: false,
+      projectName: projectName
     }
   },
   computed: {
@@ -287,6 +293,7 @@ export default {
       return this.webhookPlugins.find(plugin=>plugin.name===type)
     },
     setSelectedPlugin(preserve, type) {
+      console.log(type)
       if(type){
         this.curHook.eventPlugin=type
       }
@@ -295,7 +302,7 @@ export default {
       if(!preserve){
           this.setValidation(true)
       }
-      getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin).then(data => {
+      getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin.artifactName).then(data => {
         this.customConfigComponent = data.vueConfigComponent
         this.showPluginConfig = this.customConfigComponent || data.props.length > 0
       })
@@ -375,15 +382,18 @@ export default {
       }
     }
   },
-  mounted() {
-    this.rootStore.plugins.load()
-    getPluginProvidersForService("WebhookEvent").then(data => {
-      if(data.service){
-        this.webhookPlugins = data.descriptions
-      }
-    })
-    this.getHooks()
+  async mounted() {
     this.loadProPlugins()
+    await this.rootStore.plugins.load('WebhookEvent')
+    this.webhookPlugins = this.rootStore.plugins.getServicePlugins('WebhookEvent')
+
+    // getPluginProvidersForService("WebhookEvent").then(data => {
+    //   if(data.service){
+    //     this.webhookPlugins = data.descriptions
+    //   }
+    // })
+    this.getHooks()
+    
   }
 }
 </script>

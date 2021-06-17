@@ -28,7 +28,7 @@ export const pluginPicker = () => {
         provide: {rootStore},
         components: {PluginSelect},
         data: () => ({
-
+            project: 'Test'
         }),
         mounted() {
             const el = this.$el as any

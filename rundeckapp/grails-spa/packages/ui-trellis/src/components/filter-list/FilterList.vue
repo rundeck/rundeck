@@ -13,7 +13,7 @@
                 </div>
             </div>
             <Skeleton :loading="loading">
-                <RecycleScroller @foo="alert('Foo')"
+                <RecycleScroller
                     ref="scroller"
                     :items="filtered"
                     :item-size="itemSize"
@@ -22,7 +22,7 @@
                     key-field="name"
                     class="scroller"
                 >
-                    <div style="height: 100%;" role="button" tabindex="0" class="scroller__item" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
+                    <div style="height: 100%;" :ref="item.id" role="button" tabindex="0" class="scroller__item" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
                         <slot name="item" :item="item" scope="item"/>
                     </div>
                 </RecycleScroller>
@@ -103,7 +103,7 @@ export default class FilterList extends Vue {
     }
 
     itemClicked(item: any) {
-        alert(item.name)
+        (<HTMLElement>this.$refs[item.id]).blur()
         this.$emit('item:selected', item)
     }
 }

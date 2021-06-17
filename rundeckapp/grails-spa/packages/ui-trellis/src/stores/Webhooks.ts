@@ -4,6 +4,7 @@ import { action, computed, flow, observable } from 'mobx'
 
 import { Serial } from '../utilities/Async'
 
+import {ServiceType} from './Plugins'
 
 export class WebhookStore {
     @observable webhooks: Array<Plugin> = []
@@ -14,6 +15,7 @@ export class WebhookStore {
 
     @action
     async load(project: string): Promise<void> {
+        console.log('Loading')
         if (this.loaded.get(project))
             return
 
@@ -26,11 +28,15 @@ export class WebhookStore {
             }
         })
 
-        await this.root.plugins.load()
+        console.log('Loading')
+
+        await this.root.plugins.load(ServiceType.WebhookEvent)
+
+        console.log('Setting up ')
 
         this.webhooks = resp.parsedBody.map((i: any) => ({
             ...i,
-            eventPlugin: this.root.plugins.plugins.find(p => p.artifactName == i.eventPlugin)
+            eventPlugin: this.root.plugins.getServicePlugins(ServiceType.WebhookEvent).find(p => p.artifactName == i.eventPlugin)
         }))
 
         console.log(this.webhooks)
@@ -40,11 +46,12 @@ export class WebhookStore {
 }
 
 
-interface Webhook {
+export interface Webhook {
     uuid: string
     enabled: boolean
     name: string
     creator: string
+    config: any
     project: string
     roles: string
     user: string
