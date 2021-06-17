@@ -9,41 +9,20 @@
   </div>
   
   <div style="display: flex; height: 100%;overflow: hidden;">
-    <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 10px;overflow-x: hidden;overflow-y: auto;">
-      <div style="width:100%; min-height: 500px">
-        <div style="margin-top: 0; padding-top: 0;">
-          <table class="table table-striped">
-            <thead>
-            <tr>
-              <th scope="col">{{ $t('message.webhookListNameHdr') }}</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="hook in webhooks" :key="hook.id" @click="select(hook)" class="clickable"
-                v-bind:class="{selected: curHook === hook}">
-              <td>
-                <div>{{hook.name}} <i class="far fa-clipboard fr clip" @click="copyUrl(hook.id, $event)" @mouseover="toggleUrl(hook.id,true)" @mouseout="toggleUrl(hook.id,false)" title="Copy Url To Clipboard">
-                  <div v-bind:id="'whc-'+hook.id" class="post-url-copy">{{generatePostUrl(hook)}}</div>
-                </i>
-                </div>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 20px;overflow-x: hidden;overflow-y: auto;">
+      <WebhookPicker :selected="curHook ? curHook.id : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
     </div>
 
     <div class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
       <div>
         <div id="wh-edit" v-if="curHook">
           <div id="wh-header">
-                <h3>{{curHook.name}}</h3>
+                <WebhookTitle :webhook="this.curHook"/>
                 <div style="margin-left: auto;display: flex;align-items: center;">
                   <div><a
                           v-if="curHook.id"
                           @click="handleDelete"
-                          class="btn">{{ $t('message.webhookDeleteBtn') }}</a>
+                          class="btn btn-transparent">{{ $t('message.webhookDeleteBtn') }}</a>
                   </div>
                   <div>
                     <a
@@ -52,10 +31,11 @@
                             class="btn btn-md "
                     >{{ $t('message.cancel') }}</a>
                     <a
+                            v-if="dirty || curHook.new"
                             class="btn btn-cta"
                             style="margin-left: 5px"
                             @click="handleSave"
-                    >{{ $t(curHook.isNew?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
+                    >{{ $t(curHook.new?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
                   </div>
                 </div>
           </div>
@@ -70,8 +50,8 @@
                     <div class="help-block">
                       {{$t('message.webhookPostUrlHelp')}}
                     </div>
-                    <span class="form-control fc-span-adj" style="height: auto; background-color: white;" v-if="!curHook.isNew">{{postUrl}}</span>
-                    <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.isNew">{{$t('message.webhookPostUrlPlaceholder')}}</span>
+                    <span class="form-control fc-span-adj" style="height: auto; background-color: white;" v-if="!curHook.new">{{postUrl}}</span>
+                    <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.new">{{$t('message.webhookPostUrlPlaceholder')}}</span>
                   </div>
                   </div>
                 </div>
@@ -79,7 +59,7 @@
                 <div class="card-content">
                   <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
                   <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
-                    <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
+                    <input v-model="curHook.user" class="form-control" v-if="curHook.new">
                     <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
                     <div class="help-block">
                       {{$t('message.webhookUserHelp')}}
@@ -106,7 +86,7 @@
                         aria-expanded="false" >
 
                         <plugin-info
-                          :detail="getPluginDescription(curHook.eventPlugin)"
+                          :detail="curHook.eventPlugin"
                           :show-description="false"
                           v-if="curHook.eventPlugin" />
                         <span v-else>
@@ -116,34 +96,37 @@
                       </button>
                       <ul class="dropdown-menu ">
 
-                        <li v-for="plugin in webhookPlugins" v-bind:key="plugin.name">
-                          <a href="#" @click="setSelectedPlugin(false,plugin.name)">
+                        <li v-for="plugin in webhookPlugins" v-bind:key="plugin.id">
+                          <a href="#" @click="setSelectedPlugin(false,plugin)">
                             <plugin-info :detail="plugin" />
                           </a>
                         </li>
                       </ul>
                     </div>
                   </div>
-                  <div v-if="selectedPlugin && curHook.eventPlugin">
-                    <plugin-info
-                        :detail="getPluginDescription(curHook.eventPlugin)"
-                        :show-description="true"
-                        :show-icon="false"
-                        :show-title="false" />
+                  <div v-if="curHook.eventPlugin">
+                    <span>{{curHook.eventPlugin.description}}</span>
                   </div>
                 </div>
                 <div v-if="selectedPlugin && showPluginConfig" class="new-section">
-                  <plugin-config
-                    :mode="'edit'"
-                    :serviceName="'WebhookEvent'"
-                    v-model="selectedPlugin"
-                    :provider="curHook.eventPlugin"
-                    :key="curHook.name"
-                    :show-title="false"
-                    :show-description="false"
-                    :validation="validation"
-                    v-if="!customConfigComponent"/>
-                  <component :is="customConfigComponent" v-else :webhook="curHook" :pluginConfig="curHook.config" :errors="errors"></component>
+                  <div class="card" style="padding: 20px;" v-if="!customConfigComponent">
+                    <plugin-config
+                      @change="input"
+                      :mode="'edit'"
+                      :serviceName="'WebhookEvent'"
+                      v-model="selectedPlugin"
+                      :provider="curHook.eventPlugin.name"
+                      :key="curHook.name"
+                      :show-title="false"
+                      :show-description="false"
+                      :validation="validation"/>
+                  </div>
+                  <component v-else
+                    :is="customConfigComponent"
+                    :webhook="curHook"
+                    :pluginConfig="curHook.config"
+                    :errors="errors"
+                    @change="input"></component>
                 </div>
               </div>
             </Tab>
@@ -160,16 +143,25 @@ import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 import i18n from '../i18n'
 import axios from 'axios'
+
+import {observable, autorun, reaction} from 'mobx'
+import {deepObserve} from 'mobx-utils'
+import {observer} from 'mobx-vue'
+
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue"
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue"
 
 import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
 import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
-
-// import {Tabs, Tab} from '@rundeck/ui-trellis/lib/components/containers/tabs'
+import WebhookPicker from '@rundeck/ui-trellis/lib/components/widgets/webhook-select/WebhookSelect.vue'
 
 import {getServiceProviderDescription,
   getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
+
+import {ServiceType} from '@rundeck/ui-trellis/lib/stores/Plugins'
+
+
+import WebhookTitle from '../components/WebhookTitle.vue'
 
 var rdBase = "http://localhost:4440"
 var apiVersion = "33"
@@ -193,13 +185,15 @@ var i18nInstance = new VueI18n({
   }
 })
 
-export default {
+export default observer(Vue.extend({
   name: "WebhooksView",
   components: {
     PluginConfig,
     PluginInfo,
     Tabs,
-    Tab
+    Tab,
+    WebhookPicker,
+    WebhookTitle
   },
   inject: ["rootStore"],
   data() {
@@ -207,23 +201,29 @@ export default {
       webhooks: [],
       webhookPlugins: [],
       curHook: null,
+      config: null,
       errors: {},
       validation:{valid:true,errors:{}},
       selectedPlugin: null,
       apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
       customConfigComponent: null,
-      showPluginConfig: false
+      showPluginConfig: false,
+      projectName: projectName,
+      dirty: false
     }
   },
   computed: {
     postUrl() {
-      if(this.curHook.isNew) {
+      if(this.curHook.new) {
         return "Webhook endpoint url will appear here after saving."
       }
       return this.generatePostUrl(this.curHook)
     }
   },
   methods: {
+    input() {
+      this.dirty = true
+    },
     toggleUrl(hookId, show) {
       if(show) document.getElementById("whc-" + hookId).style.display = "block";
       else document.getElementById("whc-" + hookId).style.display = "none";
@@ -275,8 +275,29 @@ export default {
       this.validation = {valid:valid, errors}
       this.errors=errors
     },
+    handleSelect(selected) {
+      if (this.dirty) {
+        this.$confirm({
+          title:"Unsaved Changes",
+          content:"You have unsaved changes, do you wish to continue?"
+        }).then(() => {
+          this.select(selected)
+        })
+      } else {
+        this.select(selected)
+      }
+    },
     select(selected) {
-      this.curHook = selected
+      this.curHook = this.rootStore.webhooks.clone(selected)
+
+      this.dirty = false
+
+      reaction(() => {
+        return JSON.stringify(this.curHook.toApi())
+      }, (data) => {
+        this.dirty = true
+      })
+      
       this.setValidation(true)
       this.setSelectedPlugin(true)
     },
@@ -295,36 +316,41 @@ export default {
       if(!preserve){
           this.setValidation(true)
       }
-      getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin).then(data => {
+      getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin.artifactName).then(data => {
         this.customConfigComponent = data.vueConfigComponent
         this.showPluginConfig = this.customConfigComponent || data.props.length > 0
       })
     },
-    handleSave() {
+    async handleSave() {
       if(!this.curHook.eventPlugin) {
         this.setError("You must select a Webhook plugin before saving")
         return
       }
       this.curHook.config = this.selectedPlugin.config
-      this.ajax("post", `${rdBase}webhook/admin/save`, this.curHook).then(response => {
-        if (response.data.err) {
-          this.setError("Failed to save! " + response.data.err)
 
-          this.setValidation(false, response.data.errors)
-        } else {
-          this.setMessage("Saved!")
-          this.setValidation(true)
-          this.getHooks()
-        }
-      }).catch(err => {
-        if (err.response.data.err) {
-          this.setError("Failed to save! " + err.response.data.err)
-          this.setValidation(false, err.response.data.errors)
-        }
-      })
+      let resp
+      if (this.curHook.new)
+        resp = await this.rootStore.webhooks.create(this.curHook)
+      else
+        resp = await this.rootStore.webhooks.save(this.curHook)
+
+      const data = resp.parsedBody
+
+      if (data?.err) {
+        this.setError("Failed to save!" + data.err)
+        this.setValidation(false, data.errors)
+      } else {
+        this.setMessage("Saved!")
+        this.setValidation(true)
+        this.dirty = false
+        this.curHook = null
+        this.rootStore.webhooks.refresh(this.projectName)
+
+      }
     },
     handleCancel(){
-      this.curHook=null
+      this.curHook = null
+      this.config = null
     },
     handleDelete() {
       var self = this
@@ -332,19 +358,20 @@ export default {
         title:"Confirm",
         content:"Are you sure you want to delete this webhook?"
       }).then(() => {
-      this.ajax("delete", `${rdBase}webhook/admin/delete/${this.curHook.id}`).then(response => {
-        if (response.data.err) {
-          this.setError("Failed to delete! " + response.data.err)
+
+        this.rootStore.webhooks.delete(this.curHook).then(response => {
+        const data = response.parsedBody
+        if (data.err) {
+          this.setError("Failed to delete! " + data.err)
+        } else if (response.status != 200) {
+          this.setMessage('Failed')
         } else {
           this.curHook = null
           this.selectedPlugin = null
-          this.getHooks()
           this.setMessage("Deleted!")
         }
       }).catch(err => {
-        if (err.response.data.err) {
-          this.setError("Failed to delete! " + err.response.data.err)
-        }
+        this.setError("Failed to delete! " + err)
       })}).catch(() => {})
     },
     ajax(method, url, payload) {
@@ -364,7 +391,8 @@ export default {
     },
     addNewHook() {
       this.showPluginConfig = false
-      this.curHook = {name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, isNew: true, config: {}}
+      this.curHook = this.rootStore.webhooks.newFromApi({name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, new: true, config: {}})
+      this.config = this.curHook.config
     },
     loadProPlugins() {
       if (window.ProWebhookComponents == undefined)
@@ -375,17 +403,20 @@ export default {
       }
     }
   },
-  mounted() {
-    this.rootStore.plugins.load()
-    getPluginProvidersForService("WebhookEvent").then(data => {
-      if(data.service){
-        this.webhookPlugins = data.descriptions
-      }
-    })
-    this.getHooks()
+  async mounted() {
     this.loadProPlugins()
+    await this.rootStore.plugins.load('WebhookEvent')
+    this.webhookPlugins = this.rootStore.plugins.getServicePlugins('WebhookEvent')
+
+    // getPluginProvidersForService("WebhookEvent").then(data => {
+    //   if(data.service){
+    //     this.webhookPlugins = data.descriptions
+    //   }
+    // })
+    // this.getHooks()
+    
   }
-}
+}))
 </script>
 
 <style scoped>

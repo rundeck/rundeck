@@ -8,17 +8,10 @@ export default Vue.extend({
     },
 
     render(h): VNode {
-        console.log('render')
         if (this.loading)
             return this.skeleton(h)
         else {
             return this.slot(h)
-        }
-    },
-
-    watch: {
-        loading() {
-            console.log('loading change')
         }
     },
 

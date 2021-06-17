@@ -1,10 +1,7 @@
 <template>
-    <FilterList :items="webhooks.webhooks" searchText="Filter Webhooks" :itemSize="40">
-        <template slot="item" scope="{item}">
-            <div style="height: 40px;display: flex; align-items: center;">
-                <PluginInfo :detail="item.eventPlugin" :showTitle="false" :showDescription="false"/>
-                <span style="margin-left: 10px; font-weight: 600;">{{item.name}}</span>
-            </div>
+    <FilterList v-on="$listeners" :items="webhooks.webhooksForProject(project)" :selected="selected" searchText="Filter Webhooks" :itemSize="40">
+        <template v-slot:item="{item}"  >
+            <WebhookItem :webhook="item"/>
         </template>
     </FilterList>
 </template>
@@ -13,7 +10,7 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import {Component, Inject} from 'vue-property-decorator'
+import {Component, Inject, Prop} from 'vue-property-decorator'
 import {Observer} from 'mobx-vue'
 
 import {RootStore} from '../../../stores/RootStore'
@@ -24,12 +21,19 @@ import PluginInfo from '../../plugins/PluginInfo.vue'
 
 import FilterList from '../../filter-list/FilterList.vue'
 
+import WebhookItem from './WebhookSelectItem.vue'
 
 @Observer
-@Component({components: {FilterList, PluginInfo}})
+@Component({components: {FilterList, PluginInfo, WebhookItem}})
 export default class PluginSelect extends Vue {
     @Inject()
     private readonly rootStore!: RootStore
+
+    @Prop()
+    project!: string
+
+    @Prop({default: ''})
+    selected!: string
 
     plugins!: PluginStore
 
@@ -39,7 +43,11 @@ export default class PluginSelect extends Vue {
         this.plugins = this.rootStore.plugins
         this.webhooks = this.rootStore.webhooks
 
-        this.webhooks.load('Test')
+        this.webhooks.load(this.project)
+    }
+
+    itemUpdated() {
+        console.log('Updated webhook select')
     }
 }
 </script>
@@ -48,5 +56,18 @@ export default class PluginSelect extends Vue {
 ::v-deep .plugin-icon {
     height: 20px !important;
     width: 20px !important;
+}
+
+::v-deep .scroller__item {
+    border-radius: 5px;
+    padding-left: 10px;
+
+    &--selected, &:hover {
+        background-color: #DADEE2;
+    }
+
+    &:before {
+        content: none !important;
+    }
 }
 </style>

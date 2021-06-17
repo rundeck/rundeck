@@ -1,28 +1,28 @@
 <template>
     <div class="widget-wrapper">
         <div class="widget-section" style="flex-grow: 1; flex-shrink: 1;">
-            <div style="padding: 10px 10px 0 10px;">
+            <div>
                 <div class="form-group form-group-sm has-feedback has-search">
                     <i class="fas fa-search form-control-feedback"/>
                     <input
                         ref="search"
                         type="text" 
-                        class="form-control form-control-sm"
+                        class="filter-list__input form-control form-control-sm"
                         v-model="searchTerm"
                         :placeholder="searchText"/>
                 </div>
             </div>
             <Skeleton :loading="loading">
-                <RecycleScroller @foo="alert('Foo')"
+                <RecycleScroller
                     ref="scroller"
-                    :items="filtered"
+                    :items="filtered()"
                     :item-size="itemSize"
                     :key="items.length"
                     v-slot="{ item }"
                     key-field="name"
                     class="scroller"
                 >
-                    <div style="height: 100%;" role="button" tabindex="0" class="scroller__item" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
+                    <div style="height: 100%;" :ref="item.id" role="button" tabindex="0" class="scroller__item" :class="{'scroller__item--selected': item.id == selected}" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
                         <slot name="item" :item="item" scope="item"/>
                     </div>
                 </RecycleScroller>
@@ -86,7 +86,10 @@ export default class FilterList extends Vue {
     @Prop({default: 25})
     itemSize!: Number 
 
-    get filtered() {
+    @Prop({default: ''})
+    selected!: string
+
+    filtered() {
         return this.items.filter(i => i.name.includes(this.searchTerm))
     }
 
@@ -103,7 +106,7 @@ export default class FilterList extends Vue {
     }
 
     itemClicked(item: any) {
-        alert(item.name)
+        (<HTMLElement>this.$refs[item.id]).blur()
         this.$emit('item:selected', item)
     }
 }
@@ -133,6 +136,10 @@ export default class FilterList extends Vue {
     overflow-x: hidden;
     padding-right: 5px;
     flex-grow: 1;
+}
+
+.filter-list__input {
+    border-width: 0.2em;
 }
 
 .scroller__item {
