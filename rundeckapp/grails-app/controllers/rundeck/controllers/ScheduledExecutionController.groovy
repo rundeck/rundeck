@@ -1261,23 +1261,26 @@ class ScheduledExecutionController  extends ControllerBase{
 
     private def performFlipJobFlagBulk(ApiBulkJobDeleteRequest deleteRequest,String methodName,Map flags, String successCode) {
 
-        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def ids = deleteRequest.generateIdSet()
 
         def successful = []
         def errs = []
-        def changeinfo = [method: methodName, change: 'modify', user: authContext.username]
         def framework = frameworkService.getRundeckFramework()
         ids.sort().each { jobid ->
-
-            def result = scheduledExecutionService._doUpdateExecutionFlags(
-                    [id: jobid] + flags,
-                    authContext.username,
-                    authContext.roles.join(','),
-                    framework,
-                    authContext,
-                    changeinfo
-            )
+            ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+            def result = [success: false]
+            if(scheduledExecution) {
+                UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
+                def changeinfo = [method: methodName, change: 'modify', user: authContext.username]
+                result = scheduledExecutionService._doUpdateExecutionFlags(
+                        [id: jobid] + flags,
+                        authContext.username,
+                        authContext.roles.join(','),
+                        framework,
+                        authContext,
+                        changeinfo
+                )
+            }
             if (!result.success) {
                 if (result.unauthorized) {
                     errs << [id       : jobid,

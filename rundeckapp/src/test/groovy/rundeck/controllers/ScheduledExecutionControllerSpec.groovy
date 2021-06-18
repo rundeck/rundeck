@@ -178,6 +178,96 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         true      | _
         false     | _
     }
+
+    def "flip execution disable bulk"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams())
+        job1.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        params.idList = job1.id
+        params.ids = [job1.id]
+        params.project = 'project'
+        params.executionEnabled = false
+        request.subject=new Subject()
+        setupFormTokens(params)
+
+        request.method = "POST"
+        when:
+        def result = controller.flipExecutionDisabledBulk()
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_) >> auth
+        0 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
+        1 * controller.frameworkService.getRundeckFramework()
+        0 * controller.frameworkService._(*_)
+        1 * controller.scheduledExecutionService.getByIDorUUID(job1.id.toString()) >> job1
+        1 * controller.scheduledExecutionService._doUpdateExecutionFlags(
+                [id: job1.id.toString(), executionEnabled: false],
+                _,
+                _,
+                _,
+                _,
+                _
+        )>>[success:true, scheduledExecution: job1]
+
+        response.status == 302
+        response.redirectedUrl=='/project/project/jobs'
+    }
+
+    def "flip execution enable bulk"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams())
+        job1.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        params.idList = job1.id
+        params.ids = [job1.id]
+        params.project = 'project'
+        params.executionEnabled = true
+        request.subject=new Subject()
+        setupFormTokens(params)
+
+        request.method = "POST"
+        when:
+        def result = controller.flipExecutionEnabledBulk()
+
+        then:
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_) >> auth
+        0 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_) >> auth
+        1 * controller.frameworkService.getRundeckFramework()
+        1 * controller.scheduledExecutionService.getByIDorUUID(job1.id.toString()) >> job1
+        0 * controller.frameworkService._(*_)
+        1 * controller.scheduledExecutionService._doUpdateExecutionFlags(
+                [id: job1.id.toString(), executionEnabled: true],
+                _,
+                _,
+                _,
+                _,
+                _
+        )>>[success:true, scheduledExecution: job1]
+
+        response.status == 302
+        response.redirectedUrl=='/project/project/jobs'
+    }
+
+
     def "flip schedule enabled"() {
         given:
         def job1 = new ScheduledExecution(createJobParams())
