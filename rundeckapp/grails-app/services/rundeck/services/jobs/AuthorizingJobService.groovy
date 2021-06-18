@@ -23,7 +23,9 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
+import org.rundeck.core.executions.Provenance
 
 /**
  * Extends {@link com.dtolabs.rundeck.core.jobs.JobService} interface to include an AuthContext
@@ -46,65 +48,16 @@ interface AuthorizingJobService {
 
     ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound
 
-    ExecutionReference runJob(
-            UserAndRolesAuthContext auth,
-            JobReference jobReference,
-            String executionType,
-            Map<String, String> provenance,
-            String jobArgString,
-            String jobFilter,
-            String asUser
-    )
-            throws JobNotFound, JobExecutionError
-
-    ExecutionReference runJob(
-        UserAndRolesAuthContext auth,
-        JobReference jobReference,
-        String jobArgString,
-        String jobFilter,
-        String asUser
-    )
+    /**
+     * Run a job
+     *
+     * @param runJob run job request
+     * @return Id of the result execution
+     * @throws JobNotFound       if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
+     */
+    ExecutionReference runJob(UserAndRolesAuthContext auth, JobService.RunJob runJob)
         throws JobNotFound, JobExecutionError
-
-    ExecutionReference runJob(
-            UserAndRolesAuthContext auth,
-            JobReference jobReference,
-            String executionType,
-            Map<String, String> provenance,
-            Map optionData,
-            String jobFilter,
-            String asUser
-    )
-            throws JobNotFound, JobExecutionError
-
-    ExecutionReference runJob(
-            UserAndRolesAuthContext auth,
-            JobReference jobReference,
-            String jobArgString,
-            String jobFilter,
-            String asUser,
-            Map<String, ?> meta
-    )
-            throws JobNotFound, JobExecutionError
-
-    ExecutionReference runJob(
-        UserAndRolesAuthContext auth,
-        JobReference jobReference,
-        Map optionData,
-        String jobFilter,
-        String asUser
-    )
-        throws JobNotFound, JobExecutionError
-
-    ExecutionReference runJob(
-            UserAndRolesAuthContext auth,
-            JobReference jobReference,
-            Map optionData,
-            String jobFilter,
-            String asUser,
-            Map<String, ?> meta
-    )
-            throws JobNotFound, JobExecutionError
 
     Map deleteBulkExecutionIds(AuthContext auth, Collection ids, String asUser)
 

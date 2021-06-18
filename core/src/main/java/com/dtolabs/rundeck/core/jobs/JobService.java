@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.jobs;
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import org.rundeck.app.spi.AppService;
+import org.rundeck.core.executions.Provenance;
 
 import java.util.Collection;
 import java.util.List;
@@ -105,128 +106,36 @@ public interface JobService extends AppService {
      */
     ExecutionReference executionForId(String id, String project) throws ExecutionNotFound;
 
-
-    /**
-     * @param jobReference reference to a job
-     * @param jobArgString argString for the execution
-     * @param jobFilter filter for the execution
-     * @param asUser user to execute the job(null for the same user)
-     * @return Id of the result execution, or null if there was an error
-     * @deprecated use {@link #runJob(JobReference, String, String, String)}
-     * @throws JobNotFound if the specified job was not found
-     */
-    @Deprecated
-    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
-        throws JobNotFound;
-
-    /**
-     * Run a job
-     * @param jobReference reference to a job
-     * @param executionType type of invocation
-     * @param provenance    invocation provenance information
-     * @param jobArgString argString for the execution
-     * @param jobFilter filter for the execution
-     * @param asUser user to execute the job(null for the same user)
-     * @return Id of the result execution
-     * @throws JobNotFound if the specified job was not found
-     * @throws JobExecutionError if an error occurred executing the job
-     */
-    ExecutionReference runJob(
-            JobReference jobReference,
-            String executionType,
-            Map<String, String> provenance,
-            String jobArgString,
-            String jobFilter,
-            String asUser
-    )
-            throws JobNotFound, JobExecutionError;
-    /**
-     * Run a job
-     * @param jobReference reference to a job
-     * @param jobArgString argString for the execution
-     * @param jobFilter filter for the execution
-     * @param asUser user to execute the job(null for the same user)
-     * @return Id of the result execution
-     * @throws JobNotFound if the specified job was not found
-     * @throws JobExecutionError if an error occurred executing the job
-     */
-    ExecutionReference runJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
-        throws JobNotFound, JobExecutionError;
-
     /**
      * Run a job
      *
-     * @param jobReference  reference to a job
-     * @param executionType type of invocation
-     * @param provenance    invocation provenance information
-     * @param optionData    option values
-     * @param jobFilter     filter for the execution
-     * @param asUser        user to execute the job(null for the same user)
+     * @param runJob run job request
      * @return Id of the result execution
      * @throws JobNotFound       if the specified job was not found
      * @throws JobExecutionError if an error occurred executing the job
      */
-    ExecutionReference runJob(
-            JobReference jobReference,
-            String executionType,
-            Map<String, String> provenance,
-            Map optionData,
-            String jobFilter,
-            String asUser
-    )
-            throws JobNotFound, JobExecutionError;
-    /**
-     * Run a job
-     *
-     * @param jobReference reference to a job
-     * @param jobArgString argString for the execution
-     * @param nodeFilter   filter for the execution
-     * @param asUser       user to execute the job(null for the same user)
-     * @param meta         metadata to attach to the execution
-     * @return Id of the result execution
-     * @throws JobNotFound       if the specified job was not found
-     * @throws JobExecutionError if an error occurred executing the job
-     */
-    ExecutionReference runJob(
-            JobReference jobReference,
-            String jobArgString,
-            String nodeFilter,
-            String asUser,
-            Map<String, ?> meta
-    ) throws JobNotFound, JobExecutionError;
+    ExecutionReference runJob(RunJob runJob) throws JobNotFound, JobExecutionError;
 
     /**
-     * Run a job
-     * @param jobReference reference to a job
-     * @param options      option values
-     * @param jobFilter    filter for the execution
-     * @param asUser       user to execute the job(null for the same user)
-     * @return Id of the result execution
-     * @throws JobNotFound if the specified job was not found
-     * @throws JobExecutionError if an error occurred executing the job
+     * Request to run a job
      */
-    ExecutionReference runJob(JobReference jobReference, Map options, String jobFilter, String asUser)
-        throws JobNotFound, JobExecutionError;
+    static interface RunJob {
+        JobReference getJobReference();
 
-    /**
-     * Run a job
-     *
-     * @param jobReference reference to a job
-     * @param options      option values
-     * @param jobFilter    filter for the execution
-     * @param asUser       user to execute the job(null for the same user)
-     * @param meta         metadata to attach to the execution
-     * @return Id of the result execution
-     * @throws JobNotFound       if the specified job was not found
-     * @throws JobExecutionError if an error occurred executing the job
-     */
-    ExecutionReference runJob(
-            JobReference jobReference,
-            Map optionData,
-            String jobFilter,
-            String asUser,
-            Map<String, ?> meta
-    ) throws JobNotFound, JobExecutionError;
+        Provenance getProvenance();
+
+        Map<String, ?> getOptionData();
+        String getArgString();
+
+        String getJobFilter();
+
+        String getAsUser();
+
+        Map<String, ?> getExtraMeta();
+        static RunJobImpl.RunJobImplBuilder builder(){
+            return new RunJobImpl.RunJobImplBuilder();
+        }
+    }
 
     /**
      *

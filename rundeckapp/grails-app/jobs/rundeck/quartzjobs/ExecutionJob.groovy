@@ -326,10 +326,17 @@ class ExecutionJob implements InterruptableJob {
                     project
             )
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
-            def inputMap=[executionType: 'scheduled', provenance: [source: 'job-trigger', cron:initMap.scheduledExecution.generateCrontabExression()]]
+            Map<String,Object> inputMap = new HashMap<>()
+            inputMap.putAll([
+                executionType: 'scheduled',
+                provenance: [
+                    source: 'job-trigger',
+                    cron: initMap.scheduledExecution.generateCrontabExression()
+                ]
+            ])
             def triggerData = context?.trigger?.jobDataMap?.get('scheduleArgs')
             if(triggerData){
-                inputMap.argString = triggerData
+                inputMap.put('argString', triggerData)
             }
             initMap.execution = initMap.executionService.createExecution(
                     initMap.scheduledExecution,

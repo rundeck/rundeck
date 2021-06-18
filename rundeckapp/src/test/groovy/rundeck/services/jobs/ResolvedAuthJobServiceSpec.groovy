@@ -19,6 +19,7 @@ package rundeck.services.jobs
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobNotFound
+import com.dtolabs.rundeck.core.jobs.JobService
 import grails.testing.services.ServiceUnitTest
 import rundeck.services.JobReferenceImpl
 import rundeck.services.execution.ExecutionReferenceImpl
@@ -26,46 +27,47 @@ import spock.lang.Specification
 
 class ResolvedAuthJobServiceSpec extends Specification implements ServiceUnitTest<ResolvedAuthJobService> {
 
-    def "start job (deprecated) success"() {
+    def "run job success"() {
         given:
             service.authContext = Mock(UserAndRolesAuthContext)
             service.authJobService = Mock(AuthorizingJobService)
-            def jobRef = new JobReferenceImpl()
+            def jobRef = Mock(JobService.RunJob)
         when:
-            def result = service.startJob(jobRef, "args", "filter", "asuser")
+            def result = service.runJob(jobRef)
         then:
             result != null
-            result == '123'
-            1 * service.authJobService.runJob(service.authContext, jobRef, "args", "filter", "asuser") >>
+            result.id == '123'
+            1 * service.authJobService.runJob(service.authContext, jobRef) >>
             new ExecutionReferenceImpl(id: '123')
     }
 
-    def "start job (deprecated) not found"() {
+    def "run job not found"() {
         given:
             service.authContext = Mock(UserAndRolesAuthContext)
             service.authJobService = Mock(AuthorizingJobService)
-            def jobRef = new JobReferenceImpl()
+            def jobRef = Mock(JobService.RunJob)
         when:
-            def result = service.startJob(jobRef, "args", "filter", "asuser")
+            def result = service.runJob(jobRef)
         then:
             JobNotFound expected = thrown()
             expected.jobId == '123'
-            1 * service.authJobService.runJob(service.authContext, jobRef, "args", "filter", "asuser") >> {
+            1 * service.authJobService.runJob(service.authContext, jobRef) >> {
                 throw new JobNotFound("not found", "123", "asdf")
             }
 
     }
-    def "start job (deprecated) error"() {
+    def "run job error"() {
         given:
             service.authContext = Mock(UserAndRolesAuthContext)
             service.authJobService = Mock(AuthorizingJobService)
-            def jobRef = new JobReferenceImpl()
+            def jobRef = Mock(JobService.RunJob)
         when:
-            def result = service.startJob(jobRef, "args", "filter", "asuser")
+            def result = service.runJob(jobRef)
         then:
             result==null
+            JobExecutionError expected = thrown()
 
-            1 * service.authJobService.runJob(service.authContext, jobRef, "args", "filter", "asuser") >> {
+            1 * service.authJobService.runJob(service.authContext, jobRef) >> {
                 throw new JobExecutionError("error", "123", "asdf")
             }
 

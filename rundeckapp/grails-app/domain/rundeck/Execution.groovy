@@ -523,7 +523,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
         String targetNodes = genTargetNodes?.call(this)
         return new ExecutionReferenceImpl(
                 project: project,
-                id: id,
+                id: id.toString(),
                 retryOriginalId: retryOriginalId?.toString(),
                 retryPrevId: retryPrevId?.toString(),
                 retryNextId: retryExecution?.id?.toString(),

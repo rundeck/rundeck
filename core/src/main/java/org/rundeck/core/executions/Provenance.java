@@ -32,4 +32,8 @@ public interface Provenance {
      * @return associated metadata
      */
     Map<String, String> getMeta();
+
+    static ProvenanceImpl.ProvenanceImplBuilder builder() {
+        return new ProvenanceImpl.ProvenanceImplBuilder();
+    }
 }
