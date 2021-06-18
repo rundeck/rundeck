@@ -319,6 +319,12 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
 
 }
 
+function setupNotificationAutocomplete(idcompenent){
+  jQuery('#' + idcompenent).each(function (i, elem) {
+    addNotificationAutocomplete(jQuery(elem));
+  });
+}
+
 function addNotificationAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode) {
   var baseVarData = [].concat(_jobVarData());
   baseVarData = baseVarData.concat(_jobGlobalVarData());

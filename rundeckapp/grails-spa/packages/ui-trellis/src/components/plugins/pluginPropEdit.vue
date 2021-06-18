@@ -122,6 +122,7 @@
           size="100"
           type="number"
           class="form-control input-sm"
+          v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
           v-if="['Integer','Long'].indexOf(prop.type)>=0"
         >
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'">
@@ -132,6 +133,7 @@
             rows="10"
             cols="100"
             class="form-control input-sm"
+            v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
           ></textarea>
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='CODE'">
@@ -172,6 +174,7 @@
             readonly
             size="100"
             class="form-control input-sm"
+            v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
             v-bind:title="currentValue"
             v-bind:value="jobName"
           >
@@ -183,6 +186,7 @@
           size="100"
           type="text"
           class="form-control input-sm"
+          v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
           v-else
         >
       </div>
@@ -294,6 +298,11 @@ export default Vue.extend({
         default:'',
         required:false
     },
+    'contextAutocomplete':{
+        type:Boolean,
+        default:false,
+        required:false
+    },
   },
   methods:{
     inputColSize(prop: any) {
@@ -357,6 +366,7 @@ export default Vue.extend({
     }
   },
   mounted(){
+    this.$emit("pluginPropsMounted")
     this.setJobName(this.value)
     if (window._rundeck && window._rundeck.projectName) {
       this.keyPath = 'keys/project/' + window._rundeck.projectName +'/'
