@@ -40,6 +40,7 @@ public class RundeckConfigBase {
     RundeckProjectServiceConfig projectService;
     RundeckProjectManagerServiceConfig projectManagerService;
     RundeckLogFileStorageServiceConfig logFileStorageService;
+    FileUploadServiceConfig fileUploadService;
     RundeckAuthorizationServiceConfig authorizationService;
     RundeckReportServiceConfig reportService;
     RepositoryConfig repository;
@@ -216,6 +217,17 @@ public class RundeckConfigBase {
         @Data
         public static class ResumeIncomplete {
             String strategy;
+        }
+    }
+
+    @Data
+    public static class FileUploadServiceConfig {
+        Tempfile tempfile;
+
+        @Data
+        public static class Tempfile {
+            String maxsize;
+            Long expiration;
         }
     }
 
