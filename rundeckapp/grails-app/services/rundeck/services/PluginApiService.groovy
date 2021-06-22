@@ -274,7 +274,7 @@ class PluginApiService {
                  pluginDate   : toEpoch(dte),
                  enabled      : true] as LinkedHashMap<Object, Object>
 
-                if(service != "UI") {
+                if(service != ServiceNameConstants.UI) {
                     def uiDesc = uiPluginService.getProfileFor(service, provider.name)
                     if (uiDesc.icon)
                         pluginDesc.iconUrl = grailsLinkGenerator.link(
