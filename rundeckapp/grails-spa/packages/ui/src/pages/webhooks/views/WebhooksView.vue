@@ -20,6 +20,7 @@
                 <WebhookTitle :webhook="this.curHook"/>
                 <div style="margin-left: auto;display: flex;align-items: center;">
                   <div><a
+                          style="font-weight: 800;"
                           v-if="curHook.id"
                           @click="handleDelete"
                           class="btn btn-transparent">{{ $t('message.webhookDeleteBtn') }}</a>
@@ -31,9 +32,9 @@
                             class="btn btn-md "
                     >{{ $t('message.cancel') }}</a>
                     <a
-                            v-if="dirty || curHook.new"
+                            :class="{'btn-disabled': !(dirty || curHook.new)}"
                             class="btn btn-cta"
-                            style="margin-left: 5px"
+                            style="margin-left: 5px;font-weight: 800;"
                             @click="handleSave"
                     >{{ $t(curHook.new?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
                   </div>
