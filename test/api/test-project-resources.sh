@@ -91,7 +91,7 @@ APIURL2="${RDURL}/api/${API_VERSION2}"
 runurl2="${APIURL2}/project/${proj}/resources"
 
 docurl ${runurl2}?${params} > ${file} || fail "ERROR: failed request"
-$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/project/${proj}/resources. Reason: Current version: 39" || fail "ERROR: failed request"
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/project/${proj}/resources. Reason: Current version: ${API_CURRENT_VERSION}" || fail "ERROR: failed request"
 
 echo "OK"
 
