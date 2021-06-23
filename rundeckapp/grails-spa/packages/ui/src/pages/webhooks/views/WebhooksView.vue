@@ -4,13 +4,16 @@
 
     <h3>{{ $t('message.webhookPageTitle') }}</h3>
     <div style="margin-left: auto;">
-      <a class="btn btn-primary fr" @click="addNewHook">{{ $t('message.webhookCreateBtn') }}</a>
+      <a class="btn"
+        :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
+        style="font-weight: 800"
+        @click="addNewHook"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
     </div>
   </div>
   
   <div style="display: flex; height: 100%;overflow: hidden;">
     <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 20px;overflow-x: hidden;overflow-y: auto;">
-      <WebhookPicker :selected="curHook ? curHook.id : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
+      <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
     </div>
 
     <div class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
@@ -31,12 +34,12 @@
                             @click="handleCancel"
                             class="btn btn-md "
                     >{{ $t('message.cancel') }}</a>
-                    <a
-                            :class="{'btn-disabled': !(dirty || curHook.new)}"
-                            class="btn btn-cta"
+                    <btn
+                            :disabled="!(dirty || curHook.new)"
+                            type="cta"
                             style="margin-left: 5px;font-weight: 800;"
                             @click="handleSave"
-                    >{{ $t(curHook.new?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
+                    >{{ $t('message.webhookSaveBtn') }}</btn>
                   </div>
                 </div>
           </div>
@@ -344,7 +347,7 @@ export default observer(Vue.extend({
         this.setMessage("Saved!")
         this.setValidation(true)
         this.dirty = false
-        this.curHook = null
+        // this.curHook = null
         this.rootStore.webhooks.refresh(this.projectName)
 
       }
