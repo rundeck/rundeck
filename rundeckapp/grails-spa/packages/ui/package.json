@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "vue-cli-service build --watch --mode development",
+    "dev:live": "vue-cli-service serve --mode live",
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
     "test": "jest",
