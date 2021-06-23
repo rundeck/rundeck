@@ -2,6 +2,7 @@ import {RootStore} from './RootStore'
 import { HttpOperationResponse } from '@azure/ms-rest-js/es/lib/httpOperationResponse'
 import { action, computed, flow, observable, IObservableArray } from 'mobx'
 import { ObservableGroupMap, actionAsync, task } from 'mobx-utils'
+import { v4 as uuidv4 } from 'uuid'
 
 import {RundeckClient} from '@rundeck/client'
 
@@ -57,7 +58,7 @@ export class WebhookStore {
     add(webhook: Webhook) {
         const stored = this.webhooksByUuid.get(webhook.uuid)
         if (stored) {
-            const index = this.webhooks.indexOf(webhook)
+            const index = this.webhooks.indexOf(stored)
             this.webhooks.splice(index, 1, webhook)
         } else {
             this.webhooks.push(webhook)
@@ -72,7 +73,7 @@ export class WebhookStore {
     }
 
     webhooksForProject(project: string) {
-        return this.webhooksByProject.get(project) || []
+        return this.webhooks.filter( wh => wh.project == project) || []
     }
 
     addFromApi(json: any) {
@@ -108,7 +109,6 @@ export class WebhookStore {
     }
 
     async create(webhook: Webhook): Promise<HttpOperationResponse> {
-        console.log(webhook.toApi())
         const resp = await this.client.apiRequest({
             method: 'POST',
             pathTemplate: 'api/32/project/{project}/webhook',
@@ -144,7 +144,7 @@ export class WebhookStore {
 }
 
 export class Webhook {
-    @observable uuid!: string
+    @observable uuid: string = uuidv4()
     @observable id!: string
     @observable enabled!: boolean
     @observable name!: string
@@ -167,7 +167,7 @@ export class Webhook {
     }
 
     fromApi(json: any) {
-        this.uuid = json.uuid
+        this.uuid = json.uuid || this.uuid
         this.id = json.id
         this.enabled = json.enabled
         this.name = json.name

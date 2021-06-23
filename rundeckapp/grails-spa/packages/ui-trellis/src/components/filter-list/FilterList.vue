@@ -22,7 +22,7 @@
                     key-field="name"
                     class="scroller"
                 >
-                    <div style="height: 100%;" :ref="item.id" role="button" tabindex="0" class="scroller__item" :class="{'scroller__item--selected': item.id == selected}" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
+                    <div style="height: 100%;" :ref="item[idField]" role="button" tabindex="0" class="scroller__item" :class="{'scroller__item--selected': item[idField] == selected}" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
                         <slot name="item" :item="item" scope="item"/>
                     </div>
                 </RecycleScroller>
@@ -89,6 +89,9 @@ export default class FilterList extends Vue {
     @Prop({default: ''})
     selected!: string
 
+    @Prop({default: 'id'})
+    idField!: string
+
     filtered() {
         return this.items.filter(i => i.name.includes(this.searchTerm))
     }
@@ -106,7 +109,7 @@ export default class FilterList extends Vue {
     }
 
     itemClicked(item: any) {
-        (<HTMLElement>this.$refs[item.id]).blur()
+        (<HTMLElement>this.$refs[item[this.idField]]).blur()
         this.$emit('item:selected', item)
     }
 }
