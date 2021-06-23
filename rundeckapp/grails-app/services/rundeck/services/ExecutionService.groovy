@@ -2366,7 +2366,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new ExecutionServiceException("executionType is required")
         }
         props.executionType = input['executionType']
-        props.provenance = input['provenance']||[:]
+        props.provenance = input['provenance']?:[:]
 
         if(input['meta'] instanceof Map){
             props['extraMetadataMap'] = input['meta']
