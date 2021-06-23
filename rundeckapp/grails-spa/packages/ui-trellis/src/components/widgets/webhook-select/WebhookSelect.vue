@@ -1,5 +1,5 @@
 <template>
-    <FilterList v-on="$listeners" :items="webhooks.webhooksForProject(project)" :selected="selected" searchText="Filter Webhooks" :itemSize="40">
+    <FilterList v-on="$listeners" :items="webhooks.webhooksForProject(project)" id-field="uuid" :selected="selected" searchText="Filter Webhooks" :itemSize="40">
         <template v-slot:item="{item}"  >
             <WebhookItem :webhook="item"/>
         </template>

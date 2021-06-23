@@ -31,9 +31,10 @@
     "@storybook/vue": "^5.3.18",
     "babel-preset-vue": "^2.0.2",
     "deep-object-diff": "1.1.0",
+    "perfect-scrollbar": "^1.5.0",
+    "uuid": "8.3.2",
     "vue-i18n": "^8.22.4",
     "vue-multiselect": "^2.1.6",
-    "perfect-scrollbar": "^1.5.0",
     "vue-virtual-scroller": "^1.0.10"
   },
   "devDependencies": {
@@ -41,6 +42,7 @@
     "@babel/core": "^7.10.2",
     "@rundeck/client": "0.2.3",
     "@types/node": "14.0.13",
+    "@types/uuid": "^8.3.0",
     "@vue/cli-plugin-babel": "4.5.8",
     "@vue/cli-plugin-typescript": "4.5.8",
     "@vue/cli-plugin-unit-jest": "4.5.8",
