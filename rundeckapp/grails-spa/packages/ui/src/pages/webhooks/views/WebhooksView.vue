@@ -44,7 +44,7 @@
                 </div>
           </div>
 
-          <Tabs style="height: 200px;">
+          <Tabs data-tabkey="webhook-header" style="height: 200px;">
             <Tab :index="0" title="General">
               <div class="wh-edit__body">
                 <div  class="form-group">
@@ -468,10 +468,10 @@ export default observer(Vue.extend({
     }
   }
 
-  ::v-deep #wh-edit .rdtabs__tabheader {
+  ::v-deep [data-tabkey="webhook-header"] > .rdtabs__tabheader {
     background-color: #f7f7f7;
-    border-bottom: none;
-    // padding-left: 20px;
+    border: none;
+    padding: 0 2em;
   }
 
   .wh-edit__body {
