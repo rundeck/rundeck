@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.plugins.ApiPluginListProvider
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -8,7 +9,6 @@ import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
-import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.converters.JSON
 import groovy.transform.CompileStatic
 import org.springframework.web.multipart.MultipartFile
@@ -138,23 +138,35 @@ class PluginController extends ControllerBase {
     }
 
     def listPlugins() {
+        String service = params.service
+
         def providers = []
         pluginApiService.listPlugins().each { svc ->
+            if (service && service != svc.service)
+                return
+
             svc.providers.each { p ->
-                 def provider = [:]
-                provider.service = svc.service
-                provider.artifactName = p.pluginName
-                provider.name = p.name
-                provider.id = p.pluginId
-                provider.builtin = p.builtin
-                provider.pluginVersion = p.pluginVersion
-                provider.title = p.title
-                provider.description = p.description
-                provider.author = p.pluginAuthor
+                ApiPluginListProvider provider = new ApiPluginListProvider([
+                        service: svc.service,
+                        artifactName: p.pluginName,
+                        name: p.name,
+                        id: p.pluginId,
+                        builtin: p.builtin,
+                        pluginVersion: p.pluginVersion,
+                        title: p.title,
+                        description: p.description,
+                        author: p.pluginAuthor,
+                        iconUrl: p.iconUrl,
+                        providerMetadata: p.providerMetadata,
+                ])
+
                 providers.add(provider)
             }
         }
-        render(providers as JSON)
+        respond(
+                providers,
+                [formats: ['json']]
+        )
     }
 
     def listPluginsByService() {

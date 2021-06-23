@@ -17,6 +17,7 @@ export class ProjectStore {
 
         this.projects = []
         const resp = (yield this.client.projectList()) as ProjectListResponse
+        yield new Promise(res => {setTimeout(res, 1000)})
         resp.forEach(p => {
             this.projects.push(Project.FromApi(p))
         })

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//= require knockout.min
+//= require vendor/knockout.min
 /*
  source: http://stackoverflow.com/questions/14838135/how-to-use-knockout-to-iterate-over-an-object-not-array
  */

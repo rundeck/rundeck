@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.core.utils
 
 import spock.lang.Specification
 
+import java.util.concurrent.CountDownLatch
+
 /**
  * @author greg
  * @since 4/19/17
@@ -47,5 +49,40 @@ class ScriptExecUtilSpec extends Specification {
         null      | ["a", "arg"] | '${option.blah}'         | false  | ['sam', '/a/file', 'a', 'arg']
         null      | ["a", "arg"] | '${globals.sudo}'        | false  | ['/bin/sudo', '/a/file', 'a', 'arg']
         null      | ["a", "arg"] | '${globals.sudo} myexec' | false  | ['/bin/sudo', 'myexec', '/a/file', 'a', 'arg']
+    }
+
+    def "interrupt local command should kill subprocess"() {
+
+        when:
+        Map<String, String> envMap = [:]
+        String[] command = ["sleep", "10"]
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream errStream = new ByteArrayOutputStream();
+        def started = new CountDownLatch(1)
+        def main = new CountDownLatch(1)
+        GroovyMock(Runtime, global: true)
+        String interruptedMessageExpected = "Execution interrupted with code: 143"
+        String interruptedMessage = ""
+        def t = new Thread(
+                {
+                    started.countDown()
+                    try {
+                        ScriptExecUtil.runLocalCommand(command, envMap, null, outStream, errStream)
+                    }catch(InterruptedException e){
+                        interruptedMessage = e.getMessage()
+                        Thread.currentThread().interrupt()
+                    } finally {
+                        main.countDown()
+                    }
+                }
+        )
+        t.start()
+        started.await()
+        Thread.sleep(2000)
+        t.interrupt()
+        main.await()
+
+        then:
+        interruptedMessageExpected == interruptedMessage
     }
 }

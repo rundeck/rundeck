@@ -4,8 +4,9 @@ rdeck.base=${rdeck.base}
 
 #rss.enabled if set to true enables RSS feeds that are public (non-authenticated)
 rss.enabled=false
-server.address=${server.hostname}
-grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.context}
+server.address=localhost
+server.port=${server.http.port}
+grails.serverURL=http://localhost:${server.http.port}${server.web.context}
 dataSource.dbCreate = none
 dataSource.url = jdbc:h2:file:${server.datastore.path};DB_CLOSE_ON_EXIT=FALSE
 grails.plugin.databasemigration.updateOnStart=true

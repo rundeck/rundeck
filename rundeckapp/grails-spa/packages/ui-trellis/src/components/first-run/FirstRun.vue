@@ -19,7 +19,7 @@
              To get started, create a new project.
             </p>
             <p>
-              <a href="/resources/createProject" class="btn  btn-cta btn-lg ">
+              <a :href="links.frameworkCreateProject" class="btn  btn-cta btn-lg ">
                   Create New Project <b class="glyphicon glyphicon-plus"></b>
               </a>
             </p>

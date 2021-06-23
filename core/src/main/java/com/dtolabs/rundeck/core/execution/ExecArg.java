@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import java.util.List;
 
 /**
@@ -81,7 +82,11 @@ public abstract class ExecArg {
 
         public StringArg(String arg, boolean quoted) {
             this.arg = arg;
-            setQuoted(quoted);
+            if(SharedDataContextUtils.UNQUOTEDPROPERTY_REF_PATTERN.matcher(arg).matches()) {
+                setQuoted(false);
+            } else {
+                setQuoted(quoted);
+            }
         }
 
 

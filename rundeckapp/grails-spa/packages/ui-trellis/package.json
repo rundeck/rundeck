@@ -38,7 +38,7 @@
   "devDependencies": {
     "@azure/ms-rest-js": "^2.0.7",
     "@babel/core": "^7.10.2",
-    "@rundeck/client": "0.2.1",
+    "@rundeck/client": "0.2.3",
     "@types/node": "14.0.13",
     "@vue/cli-plugin-babel": "4.5.8",
     "@vue/cli-plugin-typescript": "4.5.8",

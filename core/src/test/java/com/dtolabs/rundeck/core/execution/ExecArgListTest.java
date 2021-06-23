@@ -86,6 +86,25 @@ public class ExecArgListTest {
                 DataContextUtils.addContext("option", map("test", "test1"), null),
                 null);
     }
+
+    @Test
+    public void buildExpandOptionRefWhitespace() {
+        testBuildCommandForNode(
+                ExecArgList.fromStrings(true, "a", "command", "${option.test}"),
+                list("a", "command", "'test with blank'"),
+                DataContextUtils.addContext("option", map("test", "test with blank"), null),
+                null);
+    }
+
+    @Test
+    public void buildExpandUnquotedOptionRefWhitespace() {
+        testBuildCommandForNode(
+                ExecArgList.fromStrings(true, "a", "command", "${unquotedoption.test}"),
+                list("a", "command", "test with blank"),
+                DataContextUtils.addContext("option", map("test", "test with blank"), null),
+                null);
+    }
+
     @Test
     public void buildExpandOptionRefMissingIsBlank() {
         testBuildCommandForNode(

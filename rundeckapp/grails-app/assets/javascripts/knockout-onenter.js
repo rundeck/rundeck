@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//= require knockout.min
+//= require vendor/knockout.min
 /*
  */
 ko.bindingHandlers.executeOnEnter = {

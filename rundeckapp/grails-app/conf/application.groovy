@@ -27,6 +27,8 @@ grails.controllers.upload.maxRequestSize=26214400
 
 grails.plugin.databasemigration.changelog = "changelog.groovy"
 
+
+
 environments {
     development{
         grails.serverURL="http://localhost:9090/rundeck"
@@ -34,20 +36,7 @@ environments {
         grails.profiler.disable=false
         rundeck.execution.logs.fileStorage.generateExecutionXml=true
         feature.incubator.'*'=true
-        rundeck.feature.enhancedNodes.enabled = true
-        rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
-        rundeck.feature.cleanExecutionsHistoryJob.enabled = true
-        rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
-        rundeck.feature.executionLifecyclePlugin.enabled = true
-        rundeck.feature.legacyExecOutputViewer.enabled = false
-        rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
-        rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
-        rundeck.feature.notificationsOwnThread.enabled = false
-        rundeck.feature.sidebarProjectListing.enabled=true
-        rundeck.feature.userSessionProjectsCache.enabled=true
-        rundeck.feature.uiNext.enabled = false
-        rundeck.feature.workflowDesigner.enabled = true
-        rundeck.feature.projectKeyStorage.enabled = true
+
         rundeck.scm.startup.initDeferred=false
 
         dataSource {
@@ -66,7 +55,6 @@ environments {
         rdeckbasedir.deleteOnExit()
         System.setProperty("rdeck.base",rdeckbasedir.absolutePath)
         grails.profiler.disable=true
-        rundeck.feature.executionLifecyclePlugin.enabled = true
         dataSource {
             dbCreate = "none"
             url = "jdbc:h2:file:./db/testDb"
@@ -85,22 +73,6 @@ environments {
 
         rundeck.execution.logs.fileStorage.generateExecutionXml=true
 
-        rundeck.feature.enhancedNodes.enabled = true
-        rundeck.feature.optionValuesPlugin.enabled = true
-
-        //enable dynamic workflow step descriptions in GUI by default
-        rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
-        rundeck.feature.cleanExecutionsHistoryJob.enabled = true
-        rundeck.feature.cleanExecutionsHistoryJobAsyncStart.enabled = true
-        rundeck.feature.executionLifecyclePlugin.enabled = true
-        rundeck.feature.legacyExecOutputViewer.enabled = false
-        rundeck.feature.projectManagerServiceBootstrapWarmupCache.enabled = true
-        rundeck.feature.authorizationServiceBootstrapWarmupCache.enabled = true
-        rundeck.feature.notificationsOwnThread.enabled = false
-        rundeck.feature.sidebarProjectListing.enabled=true
-        rundeck.feature.userSessionProjectsCache.enabled=true
-        rundeck.feature.uiNext.enabled = false
-        rundeck.feature.workflowDesigner.enabled = true
         grails.plugin.databasemigration.updateOnStart=true
 
         dataSource {
@@ -182,7 +154,7 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
-
+grails.plugin.springsecurity.ajaxHeader = 'AJAX AUTH DISABLED\u0000'
 grails.plugin.springsecurity.logout.handlerNames = [
         'rememberMeServices',
         'securityContextLogoutHandler',

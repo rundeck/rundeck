@@ -35,6 +35,7 @@ import groovy.transform.CompileStatic
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.acl.ACLCacheControl
 import org.rundeck.app.acl.ACLFileManagerListener
 import org.rundeck.app.acl.AclPolicyFile
 import org.rundeck.app.acl.AppACLContext
@@ -51,7 +52,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @GrailsCompileStatic
-class AuthorizationService implements AuthManager, InitializingBean, EventBusAware{
+class AuthorizationService implements AuthManager, InitializingBean, EventBusAware, ACLCacheControl {
     public static final String SYSTEM_CONFIG_PATH = "system:config"
 
     @Delegate
@@ -288,10 +289,19 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
 
     /**
      * Clean system path caches
-     * @param systemPath
+     * @param systemPath'
+     * @deprecated use @{link #cleanAclCache}
      */
     void cleanSystemCaches(String systemPath) {
         cleanCaches(SourceKey.forContext(AppACLContext.system(), systemPath))
+    }
+
+    /**
+     * Clean context caches
+     * @param path
+     */
+    void cleanAclCache(AppACLContext context, String path) {
+        cleanCaches(SourceKey.forContext(context, path))
     }
 
     void cleanCaches(SourceKey key){
@@ -353,20 +363,19 @@ class AuthorizationService implements AuthManager, InitializingBean, EventBusAwa
      * @param context acl context
      * @param path path
      */
-    private void pathWasModified(AppACLContext context, String path){
+    void pathWasModified(AppACLContext context, String path){
         log.debug("Path modified/deleted: ${path}, invalidating")
-        cleanCaches(SourceKey.forContext(context, path))
-        if(context.system) {
-            if (clusterInfoService.isClusterModeEnabled()) {
-                eventBus.sendAndReceive(
-                        'cluster.clearAclCache',
-                        [
-                                uuidSource: clusterInfoService.getServerUUID(),
-                                path: path
-                        ]
-                ) { Map resp ->
-                    log.debug("Cleaning the cache in the cluster is ${resp.clearCacheState}: ${resp.reason}")
-                }
+        cleanAclCache(context, path)
+        if (clusterInfoService.isClusterModeEnabled()) {
+            eventBus.sendAndReceive(
+                    'cluster.clearAclCache',
+                    [
+                        path      : path,
+                        project   : context.isSystem() ? null : context.project,
+                        system    : context.isSystem()
+                    ]
+            ) { Map resp ->
+                log.debug("Cleaning the cache in the cluster is ${resp.clearCacheState}: ${resp.reason}")
             }
         }
     }

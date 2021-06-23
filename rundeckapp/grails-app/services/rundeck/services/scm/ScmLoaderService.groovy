@@ -5,10 +5,9 @@ import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
-import com.dtolabs.rundeck.plugins.scm.JobState
-import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.annotation.Subscriber
+import grails.events.bus.EventBus
 import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileDynamic
@@ -25,6 +24,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 @CompileStatic
 class ScmLoaderService implements EventBusAware {
@@ -81,7 +81,7 @@ class ScmLoaderService implements EventBusAware {
 
     def startScmLoader(String project, String integration){
 
-        def state = new ScmExportLoaderStateImpl()
+        def state = new ScmLoaderStateImpl()
         //enable project integration cache loader
         def scheduler = scheduledExecutor.scheduleAtFixedRate(
                 {
@@ -95,7 +95,7 @@ class ScmLoaderService implements EventBusAware {
                             if (integration == scmService.EXPORT) {
                                 processScmExportLoader(project, pluginConfigData, state)
                             }else{
-                                processScmImportLoader(project, pluginConfigData)
+                                processScmImportLoader(project, pluginConfigData, state)
                             }
 
                         } catch (Throwable t) {
@@ -141,7 +141,7 @@ class ScmLoaderService implements EventBusAware {
      * state container interface for export loader
      */
     @CompileStatic
-    static interface ScmExportLoaderState {
+    static interface ScmLoaderState {
         boolean getInited()
 
         void setInited(boolean val)
@@ -149,13 +149,25 @@ class ScmLoaderService implements EventBusAware {
         void addJobs(List<ScheduledExecution> jobs)
 
         Map<String, JobRevReference> getScannedJobs()
+
+        /**
+         * Detects jobs that were deleted
+         * @param jobs current job list
+         * @param knownDeletedIds known deleted job Ids
+         * @param handleDeletedIds consume list of deleted job references
+         */
+        void detectDeletedJobs(
+            List<ScheduledExecution> jobs,
+            List<String> knownDeletedIds,
+            Consumer<List<JobRevReference>> handleDeletedIds
+        )
     }
 
     /**
      * state implementation for export loader
      */
     @CompileStatic
-    static class ScmExportLoaderStateImpl implements ScmExportLoaderState {
+    static class ScmLoaderStateImpl implements ScmLoaderState {
         boolean inited
         Map<String, JobRevReference> scannedJobs = new HashMap<>()
 
@@ -174,6 +186,27 @@ class ScmLoaderService implements EventBusAware {
                     )
             }
         }
+
+        @Override
+        void detectDeletedJobs(
+            final List<ScheduledExecution> jobs,
+            List<String> knownDeletedIds,
+            Consumer<List<JobRevReference>> handleDeletedIds
+        ) {
+            List<String> jobids = jobs*.extid
+            List<JobRevReference> deletedRefs=[]
+            if (!jobids.containsAll(scannedJobs.keySet())) {
+                List<String> deleted = []
+                deleted.addAll((Collection<String>) scannedJobs.keySet())
+                deleted.removeAll(jobids)
+                deleted.removeAll(knownDeletedIds)
+                //remove known deleted jobs
+                deletedRefs = deleted.collect{scannedJobs.remove(it)}
+            }
+            scannedJobs.clear()
+            addJobs(jobids.collect { id -> jobs.find { it.extid == id } })
+            handleDeletedIds.accept(deletedRefs)
+        }
     }
 
     /**
@@ -184,7 +217,7 @@ class ScmLoaderService implements EventBusAware {
      * @return
      */
     @Transactional
-    def processScmExportLoader(String project, ScmPluginConfigData pluginConfig, ScmExportLoaderState state) {
+    def processScmExportLoader(String project, ScmPluginConfigData pluginConfig, ScmLoaderState state) {
 
         if (!scmService.projectHasConfiguredExportPlugin(project)) {
             return
@@ -200,37 +233,26 @@ class ScmLoaderService implements EventBusAware {
         def plugin = scmService.getLoadedExportPluginFor(project)
 
         if (plugin) {
-            log.debug("export plugin found")
-
             def username = pluginConfig.getSetting("username")
             def roles = pluginConfig.getSettingList("roles")
             ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
-            //check global status
-            //needed to perform fetch
-            plugin.getStatus(context)
 
             List<ScheduledExecution> jobs = getJobs(project)
-            List<String> deleted = []
             log.debug("processing ${jobs.size()} jobs")
             if (!state.inited) {
                 state.inited = true
                 state.addJobs(jobs)
             } else {
                 //detect deleted jobs
-                List<String> jobids = jobs*.extid
-                if (!jobids.containsAll(state.scannedJobs.keySet())) {
-                    deleted.addAll((Collection<String>) state.scannedJobs.keySet())
-                    deleted.removeAll(jobids)
-                    //remove known deleted jobs
-                    def deletedfiles = scmService.deletedExportFilesForProject(project)
-                    deleted.removeAll(deletedfiles.values()*.id)
-                    if (deleted) {
-                        log.debug("detected deleted jobs: ${deleted}...")
+                def deletedfiles = scmService.deletedExportFilesForProject(project)
+                List<String> knownDeletedIds = []
+                knownDeletedIds.addAll(deletedfiles.values()*.id.collect{it.toString()})
+                state.detectDeletedJobs(jobs, knownDeletedIds) { List<JobRevReference> newDeletedRefs ->
+                    if (newDeletedRefs) {
                         //emit fake job change event
                         eventBus.notify(
                             'multiJobChanged',
-                            deleted.collect { jobid ->
-                                def cacheItem = state.scannedJobs.remove(jobid)
+                            newDeletedRefs.collect { cacheItem ->
                                 new StoredJobChangeEvent(
                                     eventType: JobChangeEvent.JobChangeEventType.DELETE,
                                     jobReference: cacheItem,
@@ -240,8 +262,6 @@ class ScmLoaderService implements EventBusAware {
                         )
                     }
                 }
-                state.scannedJobs.clear()
-                state.addJobs(jobids.collect { id -> jobs.find { it.extid == id } })
             }
 
             Map<String, Map> jobPluginMeta = scmService.getJobsPluginMeta(project)
@@ -272,7 +292,7 @@ class ScmLoaderService implements EventBusAware {
     }
 
     @Transactional
-    def processScmImportLoader(String project, ScmPluginConfigData pluginConfig){
+    def processScmImportLoader(String project, ScmPluginConfigData pluginConfig, ScmLoaderState state){
         log.debug("processing SCM import Loader ${project} / ${pluginConfig.type}")
 
         if (!scmService.projectHasConfiguredImportPlugin(project)) {
@@ -286,14 +306,9 @@ class ScmLoaderService implements EventBusAware {
         def plugin = scmService.getLoadedImportPluginFor(project)
 
         if(plugin){
-            log.debug("import plugin found")
-
             def username = pluginConfig.getSetting("username")
             def roles = pluginConfig.getSettingList("roles")
             ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
-            //check global status
-            //needed to perform fetch
-            plugin.getStatus(context)
 
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
@@ -310,6 +325,27 @@ class ScmLoaderService implements EventBusAware {
                 plugin.refreshJobsStatus(joblist)
 
                 scmProjectInitLoaded.put(key, true)
+            }
+            if(!state.inited){
+                state.inited=true
+                state.addJobs(jobs)
+            }else{
+                //detect deleted jobs
+                state.detectDeletedJobs(jobs, []) { List<JobRevReference> newDeletedIds ->
+                    if (newDeletedIds) {
+                        //emit fake job change event
+                        eventBus.notify(
+                            'multiJobChanged',
+                            newDeletedIds.collect { cacheItem ->
+                                new StoredJobChangeEvent(
+                                    eventType: JobChangeEvent.JobChangeEventType.DELETE,
+                                    jobReference: cacheItem,
+                                    originalJobReference: cacheItem
+                                )
+                            }
+                        )
+                    }
+                }
             }
 
             if(frameworkService.isClusterModeEnabled()){

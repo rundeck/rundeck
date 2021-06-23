@@ -105,7 +105,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * exportStatusForJobs(projectName,_,[],false, _) >> [:]
-            1 * exportFilePathsMapForJobs(projectName, []) >> [:]
+            1 * exportFilePathsMapForJobs(projectName, [], _) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
             [valid: true, nextAction: [id: 'someAction']]
@@ -238,7 +238,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
             ]
-            1 * exportFilePathsMapForJobs(projectName, _) >> [
+            1 * exportFilePathsMapForJobs(projectName, _, _) >> [
                 job1: 'item1',
                 job2: 'item2',
                 job3: 'item3',
@@ -717,7 +717,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * exportStatusForJobs(projectName,_,[],false,_)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(projectName, _)
+            1 * exportFilePathsMapForJobs(projectName, _, _)
             1 * getJobsPluginMeta(projectName)
             0 * exportStatusForJobs(_,_,_,_,_)
             1 * getExportPushActionId('testproj') >> null
@@ -767,7 +767,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * exportStatusForJobs(projectName, _,[], false, _)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(projectName, _)
+            1 * exportFilePathsMapForJobs(projectName, _, _)
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
             1 * getJobsPluginMeta(projectName)
             0 * _(*_)
@@ -811,7 +811,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * controller.scmService.exportFilePathsMapForJobs(project, {
                 it.size()==1
                 it[0].extid=='job2'
-            }) >> [
+            }, _) >> [
                 job2: '/path/to/job2'
             ]
             result.size() == 1
@@ -847,7 +847,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: SynchState.CLEAN)
             ]
-            1 * controller.scmService.exportFilePathsMapForJobs(project, []) >> [:]
+            1 * controller.scmService.exportFilePathsMapForJobs(project, [], _) >> [:]
             result.size() == 1
             result[0].itemId == 'scm/path/to/job3'
             result[0].originalId == null
@@ -881,7 +881,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * controller.scmService.exportFilePathsMapForJobs(project, {
                 it.size()==1
                 it[0].extid=='job2'
-            }) >> [
+            }, _) >> [
                 job2: '/path/to/job2'
             ]
             result.size() == 1
@@ -926,17 +926,17 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * getTrackingItemsForAction(projectName, actionName) >> [
                     Mock(ScmImportTrackedItem){
                         getId()>> job1.id
-                        getJobId()>>job1.id
+                        getJobId()>>job1.uuid
                     },
                     Mock(ScmImportTrackedItem){
                         getId()>>job2.id
-                        getJobId()>>job2.id
+                        getJobId()>>job2.uuid
 
                     }
             ]
             1 * getJobsPluginMeta(projectName)>>meta
             1 * getPluginStatus(_,integration, projectName)
-            1 * importStatusForJobs(projectName, _, {it.size()==2}, false, meta) >> [
+            1 * importStatusForJobs(projectName, _, _, false, meta) >> [
                     job1: Mock(JobImportState){getSynchState()>> ImportSynchState.CLEAN},
                     job2: Mock(JobImportState){getSynchState()>> ImportSynchState.IMPORT_NEEDED}
             ]
@@ -985,7 +985,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * loadProjectPluginDescriptor(projectName, integration)
             1 * getPluginStatus(_,integration, projectName)
             1 * deletedExportFilesForProject(projectName)
-            1 * exportFilePathsMapForJobs(projectName,_)
+            1 * exportFilePathsMapForJobs(projectName,_, _)
             1 * getJobsPluginMeta('testproj')
             0 * exportStatusForJobs(_,_)
             1 * getExportPushActionId('testproj') >> actionName

@@ -490,7 +490,9 @@ beans={
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */
-    pluginCustomizer(PluginCustomizer)
+    pluginCustomizer(PluginCustomizer){
+        pluginRegistry = ref("rundeckPluginRegistryMap")
+    }
     xmlns lang: 'http://www.springframework.org/schema/lang'
 
     appContextEmbeddedPluginFileSource(ApplicationContextPluginFileSource, '/WEB-INF/rundeck/plugins/')
@@ -507,7 +509,6 @@ beans={
                     'refresh-check-delay': application.config.plugin.refreshDelay ?: -1,
                     'customizer-ref':'pluginCustomizer'
             )
-            pluginRegistry[beanName]=beanName
         }
     }
     dbStoragePluginFactory(DbStoragePluginFactory)
@@ -629,7 +630,6 @@ beans={
     if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']) {
         rundeckPreauthSuccessEventHandler(RundeckPreauthSuccessEventHandler) {
             configurationService = ref('configurationService')
-            userService = ref("userService")
         }
         rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
             enabled = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true, 'true']
@@ -689,8 +689,7 @@ beans={
 
     if(grailsApplication.config.rundeck.security.syncLdapUser in [true,'true']) {
         rundeckJaasAuthenticationSuccessEventListener(RundeckJaasAuthenticationSuccessEventListener) {
-            userService = ref("userService")
-            grailsApplication = grailsApplication
+            configurationService = ref('configurationService')
         }
     }
     rundeckConfig(RundeckConfig)

@@ -65,6 +65,8 @@
                 <plugin-prop-edit v-model="inputValues[prop.name]"
                                 :prop="prop"
                                 :input-values="inputValues"
+                                :context-autocomplete="inputContextAutocomplete"
+                                @pluginPropsMounted="notifyHandleAutoComplete"
                                 :validation="validation"
                                 :rkey="'g_'+gindex+'_'+rkey"
                                 :pindex="pindex"/>
@@ -150,7 +152,8 @@ export default Vue.extend({
     'validation',
     'validationWarningText',
     'scope',
-    'defaultScope'
+    'defaultScope',
+    'contextAutocomplete',
   ],
   data () {
     return {
@@ -166,7 +169,8 @@ export default Vue.extend({
       inputSavedProps: (typeof this.savedProps !== 'undefined') ? this.savedProps : ['type'],
       rkey: 'r_' + Math.floor(Math.random() * Math.floor(1024)).toString(16) + '_',
       groupExpand:{} as {[name:string]:boolean},
-      inputLoaded: false
+      inputLoaded: false,
+      inputContextAutocomplete: this.contextAutocomplete !== null ? this.contextAutocomplete : false
     }
   },
   methods: {
@@ -323,6 +327,9 @@ export default Vue.extend({
     },
     notifyHasKeyStorageAccess(){
       this.$emit("hasKeyStorageAccess", this.provider)
+    },
+    notifyHandleAutoComplete(){
+      this.$emit("handleAutocomplete")
     },
     loadForMode(){
       if (this.serviceName && this.provider) {

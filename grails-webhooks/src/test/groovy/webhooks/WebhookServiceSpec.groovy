@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidato
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
 import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
@@ -64,6 +65,8 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         data.sender = "asender"
         data.contentType = "text/plain"
         data.data = new ByteArrayInputStream("my event data".bytes)
+        service.storageService = Mock(MockStorageService)
+
 
         when:
         def mockPropertyResolver = Mock(PropertyResolver)
@@ -88,6 +91,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
                 webhookProviderService
             }
         }
+
         TestWebhookEventPlugin testPlugin = new TestWebhookEventPlugin()
 
         service.pluginService = Mock(MockPluginService) {
@@ -99,9 +103,11 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def responder = service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
 
         then:
+        1 * service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree)
         testPlugin.captured.data.text=="my event data"
         testPlugin.captured.headers["X-Rundeck-TestHdr"] == "Hdr1"
         responder instanceof DefaultWebhookResponder
+
     }
 
     class TestWebhookEventPlugin implements WebhookEventPlugin {
