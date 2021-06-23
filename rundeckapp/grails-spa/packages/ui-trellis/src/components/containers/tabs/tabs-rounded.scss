@@ -6,6 +6,8 @@
 
     .rdtabs__tab-inner {
         // background-color: red;
+        display: flex;
+        align-items: center;
         height: 100%;
         padding: var(--radius) 15px;
     }
@@ -139,7 +141,9 @@
 
     .rdtabs__tab {
         position: relative;
-        // border: 1px solid black;
+        display: flex;
+        align-items: center;
+        height: 100%;
         font-weight: 600;
         color: #66615b;
         height: 100%;
