@@ -118,10 +118,6 @@ export class WebhookStore {
             body: webhook.toApi()
         })
 
-        if (resp.status == 200) {
-            webhook.new = false
-        }
-
         return resp
     }
 
