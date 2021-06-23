@@ -49,17 +49,19 @@ export default Vue.extend({
         return (
             <div class={["rdtabs", `rdtabs--${this.type}`]}>
                 <div class={`rdtabs__tabheader rdtabs__tabheader--${this.type}`}>
+                    <div class="rdtabs__tabheader-inner">
                     <div class={["rdtabs__tablist", `rdtabs__tablist--${this.type}`]} role="tablist" aria-label={this.label}>
                         <div class={{
                             "rdtabs__leftendcap": true,
-                            "rdtabs__tab": true,
+                            "rdtabs__tab-component": true,
                             "rdtabs__tab-previous": this.activeTab == 0
                         }}><div class="rdtabs__tab-inner"/></div>
                         {this.tabs().map( (node, i) => {
                             const tab = node.componentOptions?.propsData as any as Tab
                             return (
                                 <div class={{
-                                        "rdtabs__tab": true, 
+                                        "rdtabs__tab": true,
+                                        "rdtabs__tab-component": true,
                                         "rdtabs__tab--active": i == this.activeTab,
                                         "rdtabs__tab-previous": i == this.activeTab - 1
                                     }}
@@ -74,9 +76,9 @@ export default Vue.extend({
                                 </div>
                             )
                         })}
-                        <div class="rdtabs__rightendcap rdtabs__tab"><div class="rdtabs__tab-inner"/></div>
+                        <div class={{"rdtabs__rightendcap": true, "rdtabs__tab-component": true}}><div class="rdtabs__tab-inner"/></div>
                     </div>
-                    
+                    </div>
                 </div>
                 <div class="rdtabs__pane" role="tabpanel">
                     {

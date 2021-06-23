@@ -1,10 +1,15 @@
 .rdtabs__tabheader--standard {
-    border-bottom: 2px #D0D9E1 solid;
+    
+    .rdtabs__tabheader-inner {
+        border-bottom: 2px #D0D9E1 solid;
+        width: 100%;
+    }
+
     display: flex;
 
     .rdtabs__tablist {
         display: flex;
-        width: 100%;
+        width: fit-content;
         align-items: center;
         position: relative;
 
@@ -48,6 +53,8 @@
         position: relative;
         display: flex;
         align-items: center;
+        align-content: center;
+        text-align: center;
         height: 100%;
         // border: 1px solid black;
         font-weight: 700;
