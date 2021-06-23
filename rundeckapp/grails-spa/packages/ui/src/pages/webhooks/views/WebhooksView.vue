@@ -54,7 +54,7 @@
                     <div class="help-block">
                       {{$t('message.webhookPostUrlHelp')}}
                     </div>
-                    <span class="form-control fc-span-adj" style="height: auto; background-color: white;" v-if="!curHook.new">{{postUrl}}</span>
+                    <span class="form-control fc-span-adj" style="height: auto; background-color: white;" v-if="!curHook.new">{{postUrl()}}</span>
                     <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.new">{{$t('message.webhookPostUrlPlaceholder')}}</span>
                   </div>
                   </div>
@@ -216,14 +216,6 @@ export default observer(Vue.extend({
       dirty: false
     }
   },
-  computed: {
-    postUrl() {
-      if(this.curHook.new) {
-        return "Webhook endpoint url will appear here after saving."
-      }
-      return this.generatePostUrl(this.curHook)
-    }
-  },
   methods: {
     input() {
       this.dirty = true
@@ -231,6 +223,12 @@ export default observer(Vue.extend({
     toggleUrl(hookId, show) {
       if(show) document.getElementById("whc-" + hookId).style.display = "block";
       else document.getElementById("whc-" + hookId).style.display = "none";
+    },
+    postUrl() {
+      if(this.curHook.new) {
+        return "Webhook endpoint url will appear here after saving."
+      }
+      return this.generatePostUrl(this.curHook)
     },
     copyUrl(hookId, evt) {
       let el = document.getElementById("whc-" + hookId);
