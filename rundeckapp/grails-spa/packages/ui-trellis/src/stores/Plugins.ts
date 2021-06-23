@@ -20,7 +20,7 @@ export class PluginStore {
     @actionAsync
     async load(service?: string): Promise<void> {
         const plugins = await task(this.client.apiRequest({
-            pathTemplate: 'api/33/plugin/list',
+            pathTemplate: 'api/40/plugin/list',
             queryParameters: {
                 service
             },

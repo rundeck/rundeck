@@ -36,7 +36,7 @@ export class WebhookStore {
             this.root.plugins.load(ServiceType.WebhookEvent),
             this.client.apiRequest({
                 method: 'GET',
-                pathTemplate: 'api/32/project/{project}/webhooks',
+                pathTemplate: 'api/40/project/{project}/webhooks',
                 pathParameters: {
                     project: project
                 }
@@ -92,7 +92,7 @@ export class WebhookStore {
     async save(webhook: Webhook): Promise<HttpOperationResponse> {
         const resp = await this.client.apiRequest({
             method: 'POST',
-            pathTemplate: 'api/32/project/{project}/webhook/{webhookId}',
+            pathTemplate: 'api/40/project/{project}/webhook/{webhookId}',
             pathParameters: {
                 project: webhook.project,
                 webhookId: webhook.id.toString()
@@ -111,7 +111,7 @@ export class WebhookStore {
     async create(webhook: Webhook): Promise<HttpOperationResponse> {
         const resp = await this.client.apiRequest({
             method: 'POST',
-            pathTemplate: 'api/32/project/{project}/webhook',
+            pathTemplate: 'api/40/project/{project}/webhook',
             pathParameters: {
                 project: webhook.project,
             },
@@ -128,7 +128,7 @@ export class WebhookStore {
     async delete(webhook: Webhook): Promise<HttpOperationResponse> {
         const resp = await this.client.apiRequest({
             method: 'DELETE',
-            pathTemplate: 'api/32/project/{project}/webhook/{webhookId}',
+            pathTemplate: 'api/40/project/{project}/webhook/{webhookId}',
             pathParameters: {
                 project: webhook.project,
                 webhookId: webhook.id.toString()
