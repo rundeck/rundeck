@@ -146,6 +146,7 @@ export class WebhookStore {
 export class Webhook {
     @observable uuid: string = uuidv4()
     @observable id!: string
+    @observable authToken!: string
     @observable enabled!: boolean
     @observable name!: string
     @observable creator!: string
@@ -169,6 +170,7 @@ export class Webhook {
     fromApi(json: any) {
         this.uuid = json.uuid || this.uuid
         this.id = json.id
+        this.authToken = json.authToken
         this.enabled = json.enabled
         this.name = json.name
         this.creator = json.creator
@@ -185,6 +187,7 @@ export class Webhook {
         return {
             uuid: this.uuid,
             id: this.id,
+            authToken: this.authToken,
             enabled: this.enabled,
             name: this.name,
             creator: this.creator,
