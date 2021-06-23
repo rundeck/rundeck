@@ -61,6 +61,7 @@ export default Vue.extend({
     border-radius: 1000px;
     transition: all var(--animation-duration) ease-out;
     border-color: transparent;
+    cursor: pointer;
 
     &--contrast {
         border: 2px solid white;
