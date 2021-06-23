@@ -324,17 +324,19 @@ export default observer(Vue.extend({
       })
     },
     async handleSave() {
-      if(!this.curHook.eventPlugin) {
+      const webhook = this.curHook
+
+      if(!webhook.eventPlugin) {
         this.setError("You must select a Webhook plugin before saving")
         return
       }
-      this.curHook.config = this.selectedPlugin.config
+      webhook.config = this.selectedPlugin.config
 
       let resp
-      if (this.curHook.new)
-        resp = await this.rootStore.webhooks.create(this.curHook)
+      if (webhook.new)
+        resp = await this.rootStore.webhooks.create(webhook)
       else
-        resp = await this.rootStore.webhooks.save(this.curHook)
+        resp = await this.rootStore.webhooks.save(webhook)
 
       const data = resp.parsedBody
 
@@ -345,9 +347,8 @@ export default observer(Vue.extend({
         this.setMessage("Saved!")
         this.setValidation(true)
         this.dirty = false
-        // this.curHook = null
-        this.rootStore.webhooks.refresh(this.projectName)
-
+        await this.rootStore.webhooks.refresh(this.projectName)
+        this.select(this.rootStore.webhooks.webhooksByUuid.get(webhook.uuid))
       }
     },
     handleCancel(){
