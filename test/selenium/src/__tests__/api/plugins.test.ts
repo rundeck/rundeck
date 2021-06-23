@@ -25,7 +25,7 @@ describe('Plugins API', () => {
         expect(found).toBeFalsy()
     })
 
-    it('Returns v40 fieldd', async () => {
+    it('Returns v40 field', async () => {
         /* {
           iconUrl?: String
           providerMetadata?: any
