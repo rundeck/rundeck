@@ -28,7 +28,7 @@ export const tabs = () => {
     return Vue.extend({
         template: `
         <Tabs v-bind="$props">
-            <Tab :index="0" title="Tab Foo"><TabContent>Foo Content</TabContent></Tab>
+            <Tab :index="0" title="Tab"><TabContent>Foo Content</TabContent></Tab>
             <Tab :index="1" title="Tab Bar"><TabContent><input type="text"/></TabContent></Tab>
             <Tab :index="2" title="Tab Baz">Baz Content</Tab>
             <Tab :index="3" title="Tab Batch Processing">Batch Content</Tab>
@@ -55,7 +55,7 @@ export const cardTabs = () => {
         template: `
         <div class="card">
         <Tabs v-bind="$props">
-            <Tab :index="0" title="Tab Foo"><TabContent>Foo Content</TabContent></Tab>
+            <Tab :index="0" title="Tab"><TabContent>Foo Content</TabContent></Tab>
             <Tab :index="1" title="Tab Bar"><TabContent><input type="text"/></TabContent></Tab>
             <Tab :index="2" title="Tab Baz">Baz Content</Tab>
             <Tab :index="3" title="Tab Batch Processing">Batch Content</Tab>
