@@ -607,7 +607,7 @@ public class NotificationService implements ApplicationContextAware{
                 status: e.executionState,
                 summary: executionService.summarizeJob(e.scheduledExecution, e)
             ]
-        },paging,delegate)
+        },paging,delegate,null)
     }
     /*
     * Render execution list json given a List of executions, and a builder delegate
@@ -621,7 +621,7 @@ public class NotificationService implements ApplicationContextAware{
                     status: e.executionState,
                     summary: executionService.summarizeJob(e.scheduledExecution, e)
             ]
-        },paging,delegate)
+        },paging,delegate,null)
     }
     /**
      * Creates a datacontext map from the execution's original context, and user profile data.
