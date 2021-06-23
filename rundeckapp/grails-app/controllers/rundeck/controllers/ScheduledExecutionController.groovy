@@ -60,6 +60,7 @@ import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Toposort
@@ -1663,6 +1664,14 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('redoOPTS');
         }
         def result = scheduledExecutionService.prepareCreateEditJob(params, scheduledExecution, AuthConstants.ACTION_UPDATE, authContext)
+
+        ImportedJob<ScheduledExecution> importedJob = RundeckJobDefinitionManager.importedJob(scheduledExecution, [:])
+        def validation=[:]
+        boolean failed  = !scheduledExecutionService.validateJobDefinition(importedJob, authContext, params, validation, false)
+        if (failed) {
+            flash.message = g.message(code:'scheduledExecution.invalid.message', args: [scheduledExecution.jobName])
+        }
+
         return result
     }
 
