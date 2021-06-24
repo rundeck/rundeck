@@ -54,7 +54,7 @@
                     <div class="help-block">
                       {{$t('message.webhookPostUrlHelp')}}
                     </div>
-                    <span class="form-control fc-span-adj" style="height: auto; background-color: white;" v-if="!curHook.new">{{postUrl()}}</span>
+                    <CopyBox style="max-width: 800px" v-if="!curHook.new" :content="postUrl()"/>
                     <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.new">{{$t('message.webhookPostUrlPlaceholder')}}</span>
                   </div>
                   </div>
@@ -155,6 +155,7 @@ import {observer} from 'mobx-vue'
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue"
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue"
 
+import CopyBox from '@rundeck/ui-trellis/lib/components/containers/copybox/CopyBox.vue'
 import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
 import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
 import WebhookPicker from '@rundeck/ui-trellis/lib/components/widgets/webhook-select/WebhookSelect.vue'
@@ -192,6 +193,7 @@ var i18nInstance = new VueI18n({
 export default observer(Vue.extend({
   name: "WebhooksView",
   components: {
+    CopyBox,
     PluginConfig,
     PluginInfo,
     Tabs,
