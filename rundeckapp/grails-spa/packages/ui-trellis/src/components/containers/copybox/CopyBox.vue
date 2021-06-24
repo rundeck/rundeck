@@ -34,11 +34,11 @@ export default Vue.extend({
 
             const sel = window.getSelection()
             sel?.removeAllRanges()
-            sel?.addRange(range)
 
             navigator.clipboard.writeText(this.content)
             this.active = true
             setTimeout(() => this.active = false, 400)
+            setTimeout(() => {sel?.addRange(range)}, 700)
         }
     }
 })
