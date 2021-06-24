@@ -58,6 +58,10 @@ sourceSets {
         }
     }
 }
+java{
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 dependencies {
     agent "org.springframework:springloaded:1.2.8.RELEASE"
     //Rundeck plugin dependencies
