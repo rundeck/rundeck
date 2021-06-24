@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.logging.FilterStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -27,6 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Used to log that a threshold was reached, and optionally truncate further output
  */
 class ThresholdLogWriter extends FilterStreamingLogWriter {
+    static final Logger LOG = LoggerFactory.getLogger(ThresholdLogWriter.class)
+
     LoggingThreshold threshold
     final boolean truncate
     AtomicBoolean limitReached = new AtomicBoolean(false)
@@ -46,7 +50,9 @@ class ThresholdLogWriter extends FilterStreamingLogWriter {
         getWriter().addEvent(event)
 
         if (!limit && threshold.isThresholdExceeded() && limitReached.compareAndSet(false, true)) {
-            getWriter().addEvent(LogUtil.logError("Log output limit exceeded: " + threshold.description))
+            String msgError = "Log output limit exceeded: ${threshold.description}"
+            LOG.error(msgError)
+            getWriter().addEvent(LogUtil.logError(msgError))
         }
     }
 }
