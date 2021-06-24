@@ -71,15 +71,21 @@ axios.get(TourConstants.tourManifestUrl, cfg)
         i18n
       })
 
+      let pad = false
       // creating the dom element that will contain the tour application
       let tourDisplayAnchor = document.createElement('span')
       // selecting the navbar menu
       let layoutBody = document.getElementById('layoutBody')
+
+      if (layoutBody) {
       // setting the id attribute that Vue will use as the application element
       tourDisplayAnchor.setAttribute('id', 'tour-vue-display')
       // prepending the 'anchor' element (created above) to the menu (container)
       layoutBody.parentNode.insertBefore(tourDisplayAnchor, layoutBody.nextSibling)
       // the app is now bootstraped to an created element
+      } else {
+        pad = true
+      }
 
       /* eslint-disable no-new */
       new Vue({
@@ -95,8 +101,11 @@ axios.get(TourConstants.tourManifestUrl, cfg)
         components: {
           TourDisplay
         },
-        template: '<tour-display :event-bus="EventBus"/>',
-        i18n
+        template: '<tour-display :event-bus="EventBus" :pad="pad"/>',
+        i18n,
+        props: {
+          pad: {default: pad}
+        }
       })
     }
   })

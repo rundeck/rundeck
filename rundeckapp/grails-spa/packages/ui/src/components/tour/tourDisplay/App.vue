@@ -1,5 +1,5 @@
 <template>
-  <div id="tour-display" class="card" v-if="tour">
+  <div id="tour-display" class="card" :class="{'tour-display--pad': pad}" v-if="tour">
     <div class="card-header">
       <div class="tour-card-indicator" :style="{'background-color':tour.titleBackgroundColor}">
         <span v-if="tour.title">{{tour.title}}</span>
@@ -53,7 +53,7 @@
 
   export default Vue.extend({
     name: "TourDisplay",
-    props: ["eventBus"],
+    props: ["eventBus", "pad"],
     data() {
       return {
         modal: {
@@ -287,6 +287,11 @@
       padding-top: 10px;
     }
   }
+
+  .tour-display--pad {
+    margin: 2em;
+  }
+
   #tour-vue-indicator {
     position: absolute;
     z-index: 1000;
