@@ -232,18 +232,6 @@ export default observer(Vue.extend({
       }
       return this.generatePostUrl(this.curHook)
     },
-    copyUrl(hookId, evt) {
-      let el = document.getElementById("whc-" + hookId);
-      let range = document.createRange();
-      range.selectNode(el);
-      window.getSelection().removeAllRanges();
-      window.getSelection().addRange(range);
-      document.execCommand("copy")
-      evt.stopImmediatePropagation()
-      window.getSelection().removeAllRanges();
-      this.toggleUrl(hookId, false)
-      this.setMessage("Copied url to clipboard")
-    },
     generatePostUrl(hook) {
       return `${this.apiBasePostUrl}${hook.authToken}#${encodeURI(hook.name.replace(/ /g, '_'))}`
     },
@@ -419,14 +407,6 @@ export default observer(Vue.extend({
     this.loadProPlugins()
     await this.rootStore.plugins.load('WebhookEvent')
     this.webhookPlugins = this.rootStore.plugins.getServicePlugins('WebhookEvent')
-
-    // getPluginProvidersForService("WebhookEvent").then(data => {
-    //   if(data.service){
-    //     this.webhookPlugins = data.descriptions
-    //   }
-    // })
-    // this.getHooks()
-    
   }
 }))
 </script>
