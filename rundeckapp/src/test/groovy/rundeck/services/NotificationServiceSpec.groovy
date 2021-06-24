@@ -1006,6 +1006,68 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
 
     }
 
+    def "generate notification with export context"() {
+        given:
+        def (job, execution) = createTestJob()
+
+        def globalContext = new BaseDataContext([globals: [testmail: 'bob@example.com'], job:[name: job.jobName, project: job.project, id: job.uuid],
+                                                 ])
+
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> shared
+                },
+                export: [exportVarGroup1:[testName: 'test', description: 'test description'],
+                         exportVarGroup2:[testSubject: 'test123', testTitle: 'test2']]
+
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'HttpNotificationPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService) {
+            getEffectiveSuccessNodeList(_) >> []
+        }
+
+        when:
+
+        def execMap = null
+        Map context = null
+        (context, execMap) = service.generateNotificationContext(execution, content, job)
+
+        then:
+        context != null
+        context.exportVarGroup1 != null
+        context.exportVarGroup2 != null
+        context.exportVarGroup1.description == 'test description'
+        context.exportVarGroup1.testName == 'test'
+        context.exportVarGroup2.testSubject == 'test123'
+        context.exportVarGroup2.testTitle == 'test2'
+
+    }
+
     class TestReader implements StreamingLogReader {
         List<LogEvent> logs;
         int index = -1;
