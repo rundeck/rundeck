@@ -1,5 +1,5 @@
 <template>
-<div style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
+<div id="wh-view" style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
   <div id="wh-title" class="screen-title" style="display: flex;">
 
     <h3>{{ $t('message.webhookPageTitle') }}</h3>
@@ -416,6 +416,10 @@ export default observer(Vue.extend({
 </style>
 
 <style lang="scss" scoped>
+  #wh-view {
+    box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.11);
+  }
+
   #wh-title {
     display: flex;
     align-items: center;
