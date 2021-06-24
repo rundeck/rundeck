@@ -7,7 +7,7 @@
       <a class="btn"
         :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
         style="font-weight: 800"
-        @click="addNewHook"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
+        @click="handleAddNew"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
     </div>
   </div>
   
@@ -280,16 +280,7 @@ export default observer(Vue.extend({
       this.errors=errors
     },
     handleSelect(selected) {
-      if (this.dirty) {
-        this.$confirm({
-          title:"Unsaved Changes",
-          content:"You have unsaved changes, do you wish to continue?"
-        }).then(() => {
-          this.select(selected)
-        })
-      } else {
-        this.select(selected)
-      }
+      this.cleanAction(() => this.select(selected))
     },
     select(selected) {
       this.curHook = this.rootStore.webhooks.clone(selected)
@@ -394,10 +385,26 @@ export default observer(Vue.extend({
       }
       return axios(params)
     },
+    cleanAction(callback) {
+      if (this.dirty) {
+        this.$confirm({
+          title:"Unsaved Changes",
+          content:"You have unsaved changes, do you wish to continue?"
+        }).then(() => {
+          callback()
+        })
+      } else {
+        callback()
+      }
+    },
+    handleAddNew() {
+      this.cleanAction(() => this.addNewHook())
+    },
     addNewHook() {
       this.showPluginConfig = false
       this.curHook = this.rootStore.webhooks.newFromApi({name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, new: true, config: {}})
       this.config = this.curHook.config
+      this.dirty = true
     },
     loadProPlugins() {
       if (window.ProWebhookComponents == undefined)
