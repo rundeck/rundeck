@@ -1,6 +1,6 @@
 <template>
     <div class="rd-copybox" :title="title()" @click="handleClick">
-        <div class="rd-copybox__content" :class="{'rd-copybox__content--active': active}">
+        <div ref="content" class="rd-copybox__content" :class="{'rd-copybox__content--active': active}">
             {{content}}
         </div>
         <div class="rd-copybox__spacer" :class="{'rd-copybox__content--active': active}"/>
@@ -27,7 +27,15 @@ export default Vue.extend({
             return this.content
         },
         handleClick() {
-            console.log('Copy!')
+            const content = (<HTMLElement>this.$refs['content'])
+
+            const range = document.createRange()
+            range.selectNode(content)
+
+            const sel = window.getSelection()
+            sel?.removeAllRanges()
+            sel?.addRange(range)
+
             navigator.clipboard.writeText(this.content)
             this.active = true
             setTimeout(() => this.active = false, 400)
