@@ -567,7 +567,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
     }
 
 
-    def "Test UI plugin bean registry and resource loading."() {
+    def "Test UI plugin bean registry and resource loading"() {
         setup:
 
         RundeckPluginRegistry registry = new RundeckPluginRegistry()

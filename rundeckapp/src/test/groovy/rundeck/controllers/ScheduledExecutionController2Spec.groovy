@@ -1874,7 +1874,6 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
 
     public void testShow() {
         when:
-        def sec = controller
 
         def se = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1898,7 +1897,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         assert null!=se.id
 
         //try to do update of the ScheduledExecution
-        sec.frameworkService = mockWith(FrameworkService){
+        controller.frameworkService = mockWith(FrameworkService){
 
             getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
             isClusterModeEnabled{-> false }
@@ -1919,7 +1918,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
                 0 * _(*_)
             }
 
-        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
+        controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getByIDorUUID { id -> return se }
             isScheduled(1..1){ job -> return se.scheduled }
             nextExecutionTime { job -> null }
@@ -1927,25 +1926,24 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
             userAuthorizedForJob { user, schedexec, framework -> return true }
         }
 
-        sec.notificationService = mockWith(NotificationService){
+        controller.notificationService = mockWith(NotificationService){
             listNotificationPlugins() {->
                 []
             }
         }
-        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+        controller.orchestratorPluginService=mockWith(OrchestratorPluginService){
             getOrchestratorPlugins(){->null}
         }
-        sec.pluginService = mockWith(PluginService) {
+        controller.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
-        sec.featureService=mockWith(FeatureService){
+        controller.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
         }
-        def params = [id: se.id.toString(),project:'project1']
-        sec.params.putAll(params)
-        def model = sec.show()
+        params.putAll([id: se.id.toString(),project:'project1'])
+        def model = controller.show()
         then:
-        assertNull sec.response.redirectedUrl
+        assertNull response.redirectedUrl
         assert null!=model
         assertNotNull(model.scheduledExecution)
         assertNull(model.selectedNodes)
@@ -1970,7 +1968,6 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
      */
     public void testUploadFormContentShouldCreate() {
         when:
-        def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -1998,7 +1995,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
 
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.proxyInstance()
+        controller.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input,format ->
@@ -2016,7 +2013,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         mock2.demand.issueJobChangeEvents {event->}
         mock2.demand.isScheduled {job-> job.scheduled}
         mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.proxyInstance()
+        controller.scheduledExecutionService = mock2.proxyInstance()
 
         def xml = '''
 <joblist>
@@ -2039,15 +2036,15 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
         request.setAttribute("subject", subject)
-        sec.params.project="project1"
+        controller.params.project="project1"
 
-        setupFormTokens(sec)
+        setupFormTokens(controller)
 
-        sec.uploadPost()
-        def result=sec.modelAndView.model
-        assertNull sec.response.redirectedUrl
-        assertNull "Result had an error: ${sec.flash.error}", sec.flash.error
-        assertNull "Result had an error: ${sec.flash.message}", sec.flash.message
+        controller.uploadPost()
+        def result=controller.modelAndView.model
+        assertNull controller.response.redirectedUrl
+        assertNull "Result had an error: ${controller.flash.error}", controller.flash.error
+        assertNull "Result had an error: ${controller.flash.message}", controller.flash.message
         assert null!=result
         assertTrue result.didupload
         assert null!=result.jobs
@@ -2070,7 +2067,6 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
      */
     public void testUpload_invalidToken() {
         when:
-        def sec = controller
 
         ScheduledExecution expectedJob = new ScheduledExecution(
                 uuid: 'testUUID',
@@ -2097,7 +2093,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
 
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.proxyInstance()
+        controller.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes { joblist -> return [] }
@@ -2113,7 +2109,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
                     skipjobs: []
             ]
         }
-        sec.scheduledExecutionService = mock2.proxyInstance()
+        controller.scheduledExecutionService = mock2.proxyInstance()
 
         def xml = '''
 <joblist>
@@ -2136,15 +2132,15 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         subject.principals << new Username('test')
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
         request.setAttribute("subject", subject)
-        sec.params.project="project1"
+        controller.params.project="project1"
 
         //don't set up form tokens
 
-        sec.uploadPost()
+        controller.uploadPost()
 
         then:
-        assertNull sec.flash.savedJob
-        assertNull sec.flash.savedJobMessage
+        assertNull controller.flash.savedJob
+        assertNull controller.flash.savedJobMessage
         assertEquals('/scheduledExecution/upload', view)
         assertEquals("request.error.invalidtoken.message", request.getAttribute('warn'))
     }
@@ -2152,7 +2148,6 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
 
     public void testUploadProjectParameter() {
         when:
-        def sec = controller
 
 
         ScheduledExecution expectedJob = new ScheduledExecution(
@@ -2181,7 +2176,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
 
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.proxyInstance()
+        controller.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
         def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input,format ->
@@ -2199,7 +2194,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         mock2.demand.issueJobChangeEvents {event->}
         mock2.demand.isScheduled { job -> job.scheduled }
         mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.proxyInstance()
+        controller.scheduledExecutionService = mock2.proxyInstance()
 
         def xml = '''
 <joblist>
@@ -2224,12 +2219,12 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         subject.principals.addAll(['userrole', 'test'].collect { new Group(it) })
         request.setAttribute("subject", subject)
         request.addFile(new MockMultipartFile('xmlBatch', 'test.xml', 'text/xml', xml as byte[]))
-        sec.params.project = "BProject"
+        controller.params.project = "BProject"
 
-        setupFormTokens(sec)
+        setupFormTokens(controller)
 
-        sec.uploadPost()
-        def result = sec.modelAndView.model
+        controller.uploadPost()
+        def result = controller.modelAndView.model
         //[jobs: jobs, errjobs: errjobs, skipjobs: skipjobs, nextExecutions:scheduledExecutionService.nextExecutionTimes(jobs.grep{ it.scheduled }), messages: msgs, didupload: true]
 
         then:

@@ -827,8 +827,6 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     public void testApiExecutionsStatusWhenActive() {
 
         given:
-        def controller = controller
-
         params.api_version = 32
         request.contentType = "application/json"
 
