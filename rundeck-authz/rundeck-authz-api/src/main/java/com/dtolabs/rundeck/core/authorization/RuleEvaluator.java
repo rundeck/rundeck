@@ -573,7 +573,7 @@ public class RuleEvaluator implements AclRuleSetAuthorization {
         static Set<String> getCollection(final String str) {
             final HashSet<String> hs = new HashSet<>();
             //treat o as comma-seperated list of strings
-            final String[] split = str.split(",");
+            final String[] split = null != str ? str.split(",") : new String[]{};
             for (final String s : split) {
                 hs.add(s.trim());
             }
