@@ -74,8 +74,7 @@ class RuleEvaluatorSpec extends Specification {
         def result = eval.evaluate(
                 [
                         type   : 'job',
-                        jobName: 'bob',
-                        aaa: 'sss'
+                        jobName: 'bob'
                 ],
                 basicSubject("bob","admin","user"),
                 "EXECUTE",
