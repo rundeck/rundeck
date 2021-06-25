@@ -9,7 +9,6 @@
     tr > th,
     tr > td{
       border-top: 1px solid $table-line-color;
-      word-break: break-word;
     }
     tr.success{
       th,td{
@@ -238,5 +237,12 @@
   table-layout: fixed;
   > tbody > tr > td:first-child{
       width: 145px !important;
+  }
+
+  tfoot{
+    tr > th,
+    tr > td{
+      word-break: break-word;
+    }
   }
 }
