@@ -1,17 +1,17 @@
 import Vue from 'vue'
 import {array ,object, withKnobs} from '@storybook/addon-knobs'
 
-import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
+import { Rundeck, RundeckClient, TokenCredentialProvider } from '@rundeck/client'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
 
 import '../../../stories/setup'
 
 import {RootStore} from '../../../stores/RootStore'
 
-import PluginSelect from './WebhookSelect.vue'
+import WebhookSelect from './WebhookSelect.vue'
 
 // @ts-ignore
-window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN), {baseUri: process.env.STORYBOOK_RUNDECK_URL, httpClient: new BrowserFetchHttpClient()})
+window._rundeck.rundeckClient = new RundeckClient(new TokenCredentialProvider(process.env.STORYBOOK_RUNDECK_TOKEN), {baseUri: process.env.STORYBOOK_RUNDECK_URL, httpClient: new BrowserFetchHttpClient()})
 
 
 export default {
@@ -24,11 +24,12 @@ export const pluginPicker = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
     
     return Vue.extend({
-        template: `<PluginSelect v-bind="$data"/>`,
+        template: `<WebhookSelect project="Test" @item:selected="() => {}"/>`,
         provide: {rootStore},
-        components: {PluginSelect},
+        components: {WebhookSelect},
         data: () => ({
-            project: 'Test'
+            project: 'Test',
+            selected: ''
         }),
         mounted() {
             const el = this.$el as any

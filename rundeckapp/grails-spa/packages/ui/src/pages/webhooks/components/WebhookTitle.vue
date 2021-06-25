@@ -23,6 +23,12 @@ export default Vue.extend({
 </script>
 
 <style scoped lang="scss">
+::v-deep .plugin-icon {
+    border-radius: 4px;
+    height: 35px !important;
+    width: 35px !important;
+}
+
 .webhook-title {
     display: flex;
     align-items: center;
