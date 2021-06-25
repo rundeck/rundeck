@@ -943,13 +943,11 @@ class RuleEvaluatorSpec extends Specification {
                         sourceIdentity: "test1",
                         description   : "bob job allow exec, deny delete for admin group",
                         equalsResource: [
-                                tag: 'bob'
+                                jobName: 'bob'
                         ],
                         resourceType  : 'job',
                         regexMatch    : false,
-                        containsMatch : [
-                                tag: 'bob'
-                        ],
+                        containsMatch : false,
                         equalsMatch : true,
                         username      : null,
                         group         : 'admin',
