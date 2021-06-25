@@ -420,7 +420,13 @@ search
         <div class="subtitle-head-item flex-container flex-align-items-baseline">
             <div class="flex-item-auto text-h3">
 
-                <span class="label label-secondary has_tooltip" title="${totalauthorized} Jobs Found"><g:enc>${totalauthorized}</g:enc></span>
+                <span
+                    class="label label-secondary has_tooltip"
+                    data-container="#section-content"
+                    data-placement="auto bottom"
+                    title="${totalauthorized} Jobs Found">
+                        <g:enc>${totalauthorized}</g:enc>
+                </span>
 
 
                 <g:if test="${wasfiltered && wasfiltered.contains('groupPath') && !filterName}">
