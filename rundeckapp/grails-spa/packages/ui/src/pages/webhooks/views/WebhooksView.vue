@@ -332,9 +332,13 @@ export default observer(Vue.extend({
         this.select(this.rootStore.webhooks.webhooksByUuid.get(webhook.uuid))
       }
     },
-    handleCancel(){
+    handleCancel() {
+      this.cleanAction(this.cancel)
+    },
+    cancel() {
       this.curHook = null
       this.config = null
+      this.dirty = false
     },
     handleDelete() {
       var self = this
