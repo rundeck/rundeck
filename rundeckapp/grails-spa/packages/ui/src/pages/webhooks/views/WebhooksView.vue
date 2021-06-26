@@ -44,7 +44,7 @@
                 </div>
           </div>
 
-          <Tabs data-tabkey="webhook-header" style="height: 200px;">
+          <Tabs data-tabkey="webhook-header" style="height: 200px;" :key="curHook.new ? curHook.uuid : ''">
             <Tab :index="0" title="General">
               <div class="wh-edit__body">
                 <div  class="form-group">
