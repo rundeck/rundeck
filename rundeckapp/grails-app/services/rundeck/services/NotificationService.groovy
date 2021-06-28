@@ -779,18 +779,18 @@ public class NotificationService implements ApplicationContextAware{
 
     String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger, Map export){
         def state= exec.executionState
+        def props = export ? [export: export] : [:]
+
         /**
          * Expand the URL string's embedded property references of the form
          * ${job.PROPERTY} and ${execution.PROPERTY}.  available properties are
          * limited
          */
-        def props=[
+         props << [
             job:[id:job.extid,name:job.jobName,group:job.groupPath?:'',project:job.project],
             execution:[id:exec.id,status:state,user:exec.user],
             notification:[trigger:trigger]
         ]
-        if(export)
-            props << export
 
         def invalid = []
         def keys= props.keySet().join('|')
