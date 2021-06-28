@@ -28,6 +28,7 @@ import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
+import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
 
 /**
@@ -413,6 +414,34 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
         result.error == 'Invalid'
         result.option != null
     }
+    
+    def "invalid save returns fields in map"() {
+        given:
+        request.method = 'POST'
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        setupFormTokens(session)
+
+        params.scheduledExecutionId = null
+        params.name='test1'
+        params.newoption = 'insert'
+        params.num = 'testNum'
+        controller.fileUploadService = Mock(FileUploadService)
+        controller.optionValuesService = Mock(OptionValuesService)
+
+        when:
+        views['/scheduledExecution/_optEdit.gsp'] = 'mock template contents'
+        controller.save()
+
+        then:
+        model.edit == true
+        model.name == params.num
+        model.newoption == params.newoption
+        model.scheduledExecutionId == params.scheduledExecutionId
+        model.origName == null
+        1* controller.fileUploadService.getPluginDescription()
+        1* controller.optionValuesService.listOptionValuesPlugins()
+    }
+
 
     def "apply option action remove not found"() {
         given:
