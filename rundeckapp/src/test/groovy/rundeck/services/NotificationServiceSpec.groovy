@@ -1011,23 +1011,22 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         def (job, execution) = createTestJob()
 
         when:
-        def export = [var:"testVar", job:[id:222,jobName:"testName"], execution:[id:444]]
+        def export = [var:"testVar", job:[id:222,jobName:"testName"], execution:[id:"fakeId"]]
         String url = "http://test.com?id=${execution.id}&status=${execution.status}&exportVar=${export.var}&jobName=${job.jobName}"
         String updatedUrl = service.expandWebhookNotificationUrl(url, execution, job,"trigger", export )
 
         then:
-        updatedUrl.equalsIgnoreCase('http://test.com?id=1&status=succeeded&exportVar=testVar&jobName=red color')
+        updatedUrl.equals("http://test.com?id="+execution.id +"&status=succeeded&exportVar=testVar&jobName=red color")
         job.jobName == "red color"
-        execution.id == 1
+        execution.id != export.execution.id
 
         when:
         url = "http://test.com?id=${execution.id}&status=${execution.status}&jobName=${job.jobName}"
         updatedUrl = service.expandWebhookNotificationUrl(url, execution, job,"trigger", null )
 
         then:
-        updatedUrl.equalsIgnoreCase('http://test.com?id=1&status=succeeded&jobName=red color')
+        updatedUrl.equals("http://test.com?id="+execution.id+"&status=succeeded&jobName=red color")
         job.jobName == "red color"
-        execution.id == 1
 
     }
 
