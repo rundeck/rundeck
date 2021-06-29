@@ -779,7 +779,7 @@ public class NotificationService implements ApplicationContextAware{
 
     String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger, Map export){
         def state= exec.executionState
-        def props = export ? [export: export] : [:]
+        def props = export ?: [:]
 
         /**
          * Expand the URL string's embedded property references of the form

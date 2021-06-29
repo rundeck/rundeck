@@ -41,6 +41,7 @@ import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import grails.testing.web.GrailsWebUnitTest
 import grails.util.Holders
 import grails.web.mapping.LinkGenerator
 import okhttp3.mockwebserver.MockResponse
@@ -63,7 +64,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 7/12/16.
  */
-class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService> {
+class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest {
 
     List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
 
@@ -1009,24 +1010,23 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
     def "export variables replace values in webhook url"() {
         given:
         def (job, execution) = createTestJob()
+        def exportMap = [export:[export:[var:"testVar"], job:[id:222,name: "testName"], execution:[user:"fakeUser", status: "failed"]]]
 
         when:
-        def export = [var:"testVar", job:[id:222,jobName:"testName"], execution:[id:"fakeId"]]
-        String url = "http://test.com?id=${execution.id}&status=${execution.status}&exportVar=${export.var}&jobName=${job.jobName}"
-        String updatedUrl = service.expandWebhookNotificationUrl(url, execution, job,"trigger", export )
+        String url = 'http://test.com?id=${job.id}&user=${execution.user}&status=${execution.status}&exportVar=${export.var}&jobName=${job.name}'
+        String updatedUrl = service.expandWebhookNotificationUrl(url, execution, job,"trigger", exportMap.export )
 
         then:
-        updatedUrl.equals("http://test.com?id="+execution.id +"&status=succeeded&exportVar=testVar&jobName=red color")
-        job.jobName == "red color"
-        execution.id != export.execution.id
+        updatedUrl.equals("http://test.com?id=test1&user=bob&status=succeeded&exportVar=testVar&jobName=red+color")
+        job.jobName.toString().encodeAsURL() == "red+color"
 
         when:
-        url = "http://test.com?id=${execution.id}&status=${execution.status}&jobName=${job.jobName}"
+        url = 'http://test.com?user=${execution.user}&status=${execution.status}&jobName=${job.name}'
         updatedUrl = service.expandWebhookNotificationUrl(url, execution, job,"trigger", null )
 
         then:
-        updatedUrl.equals("http://test.com?id="+execution.id+"&status=succeeded&jobName=red color")
-        job.jobName == "red color"
+        updatedUrl.equals("http://test.com?user=bob&status=succeeded&jobName=red+color")
+        job.jobName.toString().encodeAsURL() == "red+color"
 
     }
 
