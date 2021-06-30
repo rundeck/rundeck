@@ -79,9 +79,14 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
      */
     static final String PROJECT_LOG_OUTPUT_LIMIT = "framework.project.log.output.limit"
     /**
-     *
+     * Log limit action applied over all projects
      */
     static final String PROJECT_LOG_LIMIT_ACTION = "framework.project.log.limit.action"
+    /**
+     * Log size warning
+     */
+    static final String PROJECT_LOG_SIZE_WARNING = "framework.project.log.output.warning.size"
+
 
     def ApplicationContext applicationContext
     def gormEventStoreService
@@ -154,6 +159,15 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         return rundeckFramework
                 .getPropertyRetriever()
                 .getProperty(PROJECT_LOG_LIMIT_ACTION)
+    }
+
+    /**
+     * @return the log size warning from framework.properties file
+     */
+    String getProjectLogSizeWarning() {
+        return rundeckFramework
+                .getPropertyRetriever()
+                .getProperty(PROJECT_LOG_SIZE_WARNING)
     }
 
     String getServerHostname() {
