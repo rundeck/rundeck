@@ -3249,7 +3249,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         false        | 'failure'
     }
 
-    def "export variables n job ref are added to output context"(){
+    def "export variables on job ref are added to output context"(){
         given:
         def jobname = 'abc'
         def group = 'path'
