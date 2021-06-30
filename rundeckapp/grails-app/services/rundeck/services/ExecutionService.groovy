@@ -1045,7 +1045,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         String outputLimit = scheduledExecution?.logOutputThreshold ?: frameworkService.getProjectLogOutputLimit()
         executionStatusLogger.info("Logging output limit: ${outputLimit}")
         def thresholdMap = ScheduledExecution.parseLogOutputThreshold(outputLimit)
-        def threshold = LoggingThreshold.fromMap(thresholdMap,scheduledExecution?.logOutputThresholdAction)
+
+        String limitAction = frameworkService.getProjectLogOutputLimit() ?
+                frameworkService.getProjectLogLimitAction() : scheduledExecution?.logOutputThresholdAction
+        executionStatusLogger.info("Logging limit action: ${limitAction}")
+        def threshold = LoggingThreshold.fromMap(thresholdMap, limitAction)
 
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(
                 execution,
