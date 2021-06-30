@@ -32,9 +32,10 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
     /**
      * Warning log file size value in bytes (300MB)
      */
-    public static final Long   WARNING_SIZE    = 1024//314572800
+    public static final Long WARN_SIZE_DEFAULT = 314572800
 
     Long maxValue
+    Long warningSize
     ValueHolder<Long> valueHolder
     String action
     String description
@@ -114,6 +115,6 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
      * @return true if log file size is over a warning size alert
      */
     boolean isWarningSizeReached() {
-        return getValue() > WARNING_SIZE
+        return getValue() > warningSize
     }
 }
