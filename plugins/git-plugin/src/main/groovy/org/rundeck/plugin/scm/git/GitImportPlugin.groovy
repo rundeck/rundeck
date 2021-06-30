@@ -528,14 +528,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 break;
 
             case JobChangeEvent.JobChangeEventType.MODIFY_RENAME:
-                if(importTracker.originalValue(newpath)){
-                    //if a job was imported with a new name traker needs to be cleaned
-                    def oldPath=importTracker.originalValue(newpath)
-                    importTracker.renamedTrackedItems.trackItem(oldPath, oldPath)
-                    importTracker.untrackPath(oldPath)
-                }else{
-                    importTracker.jobRenamed(reference, path, newpath)
-                }
+                importTracker.jobRenamed(reference, path, newpath)
         //TODO
 //            case JobChangeEvent.JobChangeEventType.CREATE:
 //            case JobChangeEvent.JobChangeEventType.MODIFY:

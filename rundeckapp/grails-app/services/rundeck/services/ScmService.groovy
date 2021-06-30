@@ -476,8 +476,8 @@ class ScmService {
     {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
-            def scmRef = scmImportJobRef(event.jobReference, serializer)
-            def origScmRef = event.originalJobReference?scmOrigJobRef(event.originalJobReference, null):null
+            def scmRef = scmJobRef(event.jobReference, false, serializer)
+            def origScmRef = event.originalJobReference?scmOrigJobRef(event.originalJobReference, false, null):null
             plugin.jobChanged(new StoredJobChangeEvent(
                     eventType: event.eventType,
                     originalJobReference: origScmRef,
@@ -498,8 +498,8 @@ class ScmService {
         @Override
         void jobChangeEvent(final JobChangeEvent event, final JobSerializer serializer) {
             log.debug("job change event: " + event)
-            JobScmReference scmRef = service.scmExportJobRef(event.jobReference, serializer)
-            JobScmReference origScmRef = event.originalJobReference?service.scmOrigExportJobRef(event.originalJobReference, null):null
+            JobScmReference scmRef = service.scmJobRef(event.jobReference,true, serializer)
+            JobScmReference origScmRef = event.originalJobReference?service.scmOrigJobRef(event.originalJobReference, true,null):null
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
                 //record deleted path
                 service.recordDeletedJob(
@@ -710,7 +710,6 @@ class ScmService {
         try{
             def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config, false)
             try{
-
                 jobMetadataService.removeProjectPluginMeta(project, integration == EXPORT ? STORAGE_NAME_EXPORT:STORAGE_NAME_IMPORT)
                 loaded?.provider?.totalClean()
             }finally{
@@ -846,9 +845,8 @@ class ScmService {
         def plugin = getLoadedExportPluginFor project
         if (plugin) {
             jobs.each { ScheduledExecution job ->
-                Map metadata = jobMetadata[job.extid]
-                def jobReference = scmExportJobRef(job, metadata)
-                files[job.extid] = plugin.getRelativePathForJob(jobReference)
+                Map metadata = jobMetadata[job.extid] ?: getJobPluginMeta(job, STORAGE_NAME_EXPORT)
+                files[job.extid] = plugin.getRelativePathForJob(scmJobRef(job, null, metadata))
             }
         }
         files
@@ -890,9 +888,18 @@ class ScmService {
 
     List<JobExportReference> exportjobRefsForJobs(List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
         jobs.collect { ScheduledExecution job ->
-            def jobPluginMeta = jobsPluginMeta?.get(job.uuid)
-            scmExportJobRef(job,  jobPluginMeta)
+            if(jobsPluginMeta){
+                def jobPluginMeta = jobsPluginMeta.get(job.uuid)
+                exportJobRef(job, jobPluginMeta)
+            }else{
+                scmJobRef(job, true)
+            }
+
         }
+    }
+
+    private JobExportReference exportJobRef(ScheduledExecution job, Map jobPluginMeta=null) {
+        scmJobRef(job, null, jobPluginMeta)
     }
 
     static class LazySerializer implements JobSerializer {
@@ -917,14 +924,28 @@ class ScmService {
     }
 
 
-    List<JobScmReference> scmImportJobRefsForJobs(List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
+    List<JobScmReference> scmJobRefsForJobs(List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta = null) {
         jobs.collect { ScheduledExecution job ->
-            def jobPluginMeta = jobsPluginMeta?.get(job.uuid)
-            scmImportJobRef(job, jobPluginMeta)
+            if(jobsPluginMeta){
+                def jobPluginMeta = jobsPluginMeta.get(job.uuid)
+                scmJobRef(job, null, jobPluginMeta)
+            }else{
+                scmJobRef(job, false)
+            }
 
         }
     }
 
+    /**
+     * Create reference for job with scm import metadata and serializer
+     * @param job job
+     * @param serializer predefined serializer, or null to create lazy serializer
+     * @return JobScmReference
+     */
+    JobScmReference scmJobRef(ScheduledExecution job, boolean exportIntegration) {
+        def metadata = getJobPluginMeta(job, exportIntegration? STORAGE_NAME_EXPORT: STORAGE_NAME_IMPORT)
+        scmJobRef(job, null, metadata)
+    }
 
     /**
      * Get metadata for a single job
@@ -933,32 +954,6 @@ class ScmService {
      */
     public Map getJobPluginMeta(ScheduledExecution job, String type) {
         jobMetadataService.getJobPluginMeta(job, type)
-    }
-
-    /**
-     * Create reference for job with scm import metadata and serializer
-     * @param job job
-     * @param serializer predefined serializer, or null to create lazy serializer
-     * @return JobScmReference
-     */
-    JobScmReference scmImportJobRef(ScheduledExecution job, Map metadata = null) {
-        if(!metadata){
-            metadata = getJobPluginMeta(job, STORAGE_NAME_IMPORT)
-        }
-        scmJobRef(job, null , metadata)
-    }
-
-    /**
-     * Create reference for job with scm import metadata and serializer
-     * @param job job
-     * @param serializer predefined serializer, or null to create lazy serializer
-     * @return JobScmReference
-     */
-    JobScmReference scmExportJobRef(ScheduledExecution job, Map metadata = null) {
-        if(!metadata){
-            metadata = getJobPluginMeta(job, STORAGE_NAME_EXPORT)
-        }
-        scmJobRef(job, null, metadata)
     }
 
     JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null, Map metadata) {
@@ -970,6 +965,29 @@ class ScmService {
         )
         impl.jobSerializer = serializer ?: lazySerializerForJob(job)
         impl
+    }
+    /**
+     * Create reference for job with scm import metadata and serializer
+     * @param job job
+     * @param serializer predefined serializer, or null to create lazy serializer
+     * @return JobScmReference
+     */
+    JobScmReference scmOrigJobRef(JobReference reference, boolean exportIntegration, JobSerializer serializer) {
+        if (reference instanceof JobRevReference) {
+            return scmJobRef((JobRevReference) reference, exportIntegration, (JobSerializer)serializer)
+        } else {
+            return scmJobRef(jobOrigRevReference(reference), exportIntegration, (JobSerializer) serializer, )
+        }
+    }
+    /**
+     * Create reference for job with scm import metadata and serializer
+     * @param job job
+     * @param serializer predefined serializer, or null to create lazy serializer
+     * @return JobScmReference
+     */
+    JobScmReference scmJobRef(JobRevReference reference, boolean exportIntegration, JobSerializer serializer) {
+        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, exportIntegration?STORAGE_NAME_EXPORT:STORAGE_NAME_IMPORT)
+        scmJobRef(reference, metadata, serializer)
     }
     /**
      * Create reference for job with scm import metadata and serializer
@@ -990,60 +1008,6 @@ class ScmService {
         impl.jobSerializer = serializer
         impl
     }
-
-    /**
-     * Create reference for job with scm import metadata and serializer
-     * @param job job
-     * @param serializer predefined serializer, or null to create lazy serializer
-     * @return JobScmReference
-     */
-    JobScmReference scmImportJobRef(JobRevReference reference, JobSerializer serializer) {
-        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, STORAGE_NAME_IMPORT)
-        scmJobRef(reference, metadata, serializer)
-    }
-
-    /**
-     * Create reference for job with scm export metadata and serializer
-     * @param job job
-     * @param serializer predefined serializer, or null to create lazy serializer
-     * @return JobScmReference
-     */
-    JobScmReference scmExportJobRef(JobRevReference reference, JobSerializer serializer) {
-        def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, STORAGE_NAME_EXPORT)
-        scmJobRef(reference, metadata, serializer)
-    }
-
-    /**
-     * Create reference for job with scm import metadata and serializer
-     * @param job job
-     * @param serializer predefined serializer, or null to create lazy serializer
-     * @return JobScmReference
-     */
-    JobScmReference scmOrigJobRef(JobReference reference, JobSerializer serializer) {
-        if (reference instanceof JobRevReference) {
-            return scmImportJobRef((JobRevReference) reference, (JobSerializer)serializer)
-        } else {
-            return scmImportJobRef(jobOrigRevReference(reference), (JobSerializer) serializer)
-        }
-    }
-
-
-
-    /**
-     * Create reference for job with scm export metadata and serializer
-     * @param job job
-     * @param serializer predefined serializer, or null to create lazy serializer
-     * @return JobScmReference
-     */
-    JobScmReference scmOrigExportJobRef(JobReference reference, JobSerializer serializer) {
-        if (reference instanceof JobRevReference) {
-            return scmExportJobRef((JobRevReference) reference, (JobSerializer)serializer)
-        } else {
-            return scmExportJobRef(jobOrigRevReference(reference), (JobSerializer) serializer)
-        }
-    }
-
-
 
     /**
      * List of tracked items for the action
@@ -1158,8 +1122,15 @@ class ScmService {
         def plugin = getLoadedExportPluginFor project
         if (plugin) {
             jobs.each { job ->
-                def jobPluginMeta = jobsPluginMeta?.get(job.uuid)
-                def jobReference = scmExportJobRef(job, jobPluginMeta)
+                def jobPluginMeta = null
+                if (!jobsPluginMeta) {
+                    jobPluginMeta = getJobPluginMeta(job, STORAGE_NAME_EXPORT)
+                } else {
+                    jobPluginMeta = jobsPluginMeta.get(job.uuid)
+                }
+
+                def jobReference = exportJobRef(job, jobPluginMeta)
+
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
                 JobState jobState = plugin.getJobStatus(jobReference, originalPath)
                 status[jobReference.id] = jobState
@@ -1177,9 +1148,10 @@ class ScmService {
      */
     Map<String, JobState> exportStatusForJob(ScheduledExecution job) {
         def status = [:]
-        def plugin = getLoadedExportPluginFor job.project
+        def metadata = getJobPluginMeta(job, STORAGE_NAME_EXPORT)
+        def jobReference = exportJobRef(job, metadata)
+        def plugin = getLoadedExportPluginFor jobReference.project
         if (plugin) {
-            def jobReference = scmExportJobRef(job)
             def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
             status[jobReference.id] = plugin.getJobStatus(jobReference, originalPath, false)
             log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
@@ -1201,8 +1173,13 @@ class ScmService {
         def plugin = getLoadedImportPluginFor project
         if (plugin) {
             jobs.collect { ScheduledExecution job ->
-                def jobPluginMeta = jobsPluginMeta?.get(job.uuid)
-                def jobReference = scmImportJobRef(job, jobPluginMeta)
+                def jobReference
+                if(jobsPluginMeta){
+                    def jobPluginMeta = jobsPluginMeta.get(job.uuid)
+                    jobReference = scmJobRef(job, null, jobPluginMeta)
+                }else{
+                    jobReference = scmJobRef(job, false)
+                }
 
                 //TODO: deleted job paths?
 //                def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
@@ -1221,7 +1198,7 @@ class ScmService {
         def status = [:]
         def plugin = getLoadedImportPluginFor job.project
         if (plugin) {
-            JobScmReference jobReference = scmImportJobRef(job)
+            JobScmReference jobReference = scmJobRef(job, false)
             status[jobReference.id] = plugin.getJobStatus(jobReference)
             log.debug("Status for job ${jobReference}: ${status[jobReference.id]},")
         }
@@ -1321,13 +1298,14 @@ class ScmService {
     }
 
     ScmDiffResult exportDiff(String project, ScheduledExecution job) {
-        def jobref = scmExportJobRef(job)
+        def metadata = getJobPluginMeta(job, STORAGE_NAME_EXPORT)
+        def jobref = exportJobRef(job, metadata)
         def plugin = getLoadedExportPluginFor project
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
 
     ScmImportDiffResult importDiff(String project, ScheduledExecution job) {
-        def jobref = scmImportJobRef(job)
+        def jobref = scmJobRef(job, false)
         def plugin = getLoadedImportPluginFor project
         plugin.getFileDiff(jobref, getRenamedPathForJobId(project, job.extid))
     }
@@ -1433,7 +1411,7 @@ class ScmService {
             def plugin = getLoadedImportPluginFor project
             if(plugin) {
                 def context = scmOperationContext(auth, project)
-                def joblist = scmImportJobRefsForJobs(jobs)
+                def joblist = scmJobRefsForJobs(jobs)
                 def originalPaths = joblist.collectEntries{[it.id,getRenamedPathForJobId(it.project, it.id)]}
                 plugin?.clusterFixJobs(context, joblist, originalPaths)
             }
@@ -1491,7 +1469,7 @@ class ScmService {
             }
 
             if(renameProcess){
-                def origScmRef = scmExportJobRef(job,jobPluginMeta)
+                def origScmRef = (JobScmReference)exportJobRef(job,jobPluginMeta)
                 origScmRef.jobName = jobPluginMeta.name
                 origScmRef.groupPath = jobPluginMeta.groupPath
 
@@ -1520,8 +1498,8 @@ class ScmService {
 
     def refreshExportPluginMetadata(String project, ScmExportPlugin plugin, List<ScheduledExecution> jobs, Map<String, Map> jobsPluginMeta ){
         jobs.each { job ->
-            Map jobPluginMeta =  jobsPluginMeta?.get(job.uuid)
-            JobExportReference jobReference = scmExportJobRef(job, jobPluginMeta)
+            Map jobPluginMeta =  jobsPluginMeta.get(job.uuid)
+            JobExportReference jobReference = exportJobRef(job, jobPluginMeta)
 
             if(jobPluginMeta){
                 //check if job was renamed
