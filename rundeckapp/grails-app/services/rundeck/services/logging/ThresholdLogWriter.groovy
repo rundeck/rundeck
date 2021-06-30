@@ -31,9 +31,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 class ThresholdLogWriter extends FilterStreamingLogWriter {
     static final Logger LOG = LoggerFactory.getLogger(ThresholdLogWriter.class)
 
+    static final String MSG_WARN_SIZE = "The log file size achieved more than 300MB - current size in bytes: {}"
+
     LoggingThreshold threshold
     final boolean truncate
     AtomicBoolean limitReached = new AtomicBoolean(false)
+    AtomicBoolean warningReached = new AtomicBoolean(false)
 
     ThresholdLogWriter(final StreamingLogWriter writer, final LoggingThreshold threshold) {
         super(writer)
@@ -44,10 +47,15 @@ class ThresholdLogWriter extends FilterStreamingLogWriter {
     @Override
     void addEvent(final LogEvent event) {
         def limit = limitReached.get()
+        boolean warning = warningReached.get()
         if (truncate && limit) {
             return
         }
         getWriter().addEvent(event)
+
+        if (!warning && threshold.isWarningSizeReached() && warningReached.compareAndSet(false, true)) {
+            LOG.warn(MSG_WARN_SIZE  , threshold.getValue())
+        }
 
         if (!limit && threshold.isThresholdExceeded() && limitReached.compareAndSet(false, true)) {
             String msgError = "Log output limit exceeded: ${threshold.description}"

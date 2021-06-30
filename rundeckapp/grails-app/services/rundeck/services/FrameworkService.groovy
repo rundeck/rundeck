@@ -75,13 +75,13 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     public static final String FIRST_LOGIN_FILE  = ".firstLogin"
     static final String SYS_PROP_SERVER_ID       = "rundeck.server.uuid"
     /**
-     * Log output limit key applied over all projects
+     * Log output limit applied over all projects
      */
-    static final String PROJECT_LOG_OUTPUT_LIMIT = "rundeck.project.log.output.limit"
+    static final String PROJECT_LOG_OUTPUT_LIMIT = "framework.project.log.output.limit"
     /**
-     * Default log output limit expressed as bytes (3MB)
+     *
      */
-    static final String DEFAULT_LOG_OUTPUT_LIMIT = "3145728"
+    static final String PROJECT_LOG_LIMIT_ACTION = "framework.project.log.limit.action"
 
     def ApplicationContext applicationContext
     def gormEventStoreService
@@ -139,12 +139,21 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     }
 
     /**
-     * @return the log output limit number from framework.properties file
+     * @return the log output limit size from framework.properties file
      */
     String getProjectLogOutputLimit() {
         return rundeckFramework
                 .getPropertyRetriever()
-                .getProperty(PROJECT_LOG_OUTPUT_LIMIT) ?: DEFAULT_LOG_OUTPUT_LIMIT
+                .getProperty(PROJECT_LOG_OUTPUT_LIMIT)
+    }
+
+    /**
+     * @return the log limit action from framework.properties file
+     */
+    String getProjectLogLimitAction() {
+        return rundeckFramework
+                .getPropertyRetriever()
+                .getProperty(PROJECT_LOG_LIMIT_ACTION)
     }
 
     String getServerHostname() {
