@@ -3787,14 +3787,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             }
 
+            // Get a new object attached to the new session
+            Map<String, String> data = ((WorkflowExecutionResult) wresult.result)?.getSharedContext()?.consolidate()?.getData(ContextView.global())
+            if (data?.get("export")) {
+                executionContext.getOutputContext().addOutput(ContextView.global(), "export", data.get("export"))
+            }
             if(!jitem.ignoreNotifications) {
-                // Get a new object attached to the new session
-                Map<String, String> data = ((WorkflowExecutionResult) wresult.result)?.getSharedContext()?.consolidate()
-                                                                                     ?.getData(ContextView.global())
-                if (data?.get("export")) {
-                    executionContext.getOutputContext().addOutput(ContextView.global(), "export", data.get("export"))
-                }
-
                 if (averageDuration > 0 && duration > averageDuration) {
                     avgDurationExceeded(id, [
                             execution: execution,
