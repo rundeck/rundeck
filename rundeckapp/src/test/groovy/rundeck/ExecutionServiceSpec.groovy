@@ -23,7 +23,9 @@ import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
+import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import groovy.time.TimeCategory
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -3247,7 +3249,126 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         false        | 'failure'
     }
 
+    def "export variables on job ref are added to output context"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        def sharedContext = SharedDataContextUtils.sharedContext()
+        sharedContext.merge(ContextView.global(), DataContextUtils.context("export", [globular: "globalvalue"]))
 
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test', argString: '-delay 12'])]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id], data:[testVar: "test"]]
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
+            _ * filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+            authorizeProjectJobAll(*_) >> true
+        }
+        service.frameworkService = Mock(FrameworkService) {
+
+        }
+
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> Mock(Framework)
+            getOutputContext()>>new DataOutput(ContextView.global())
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false,
+                ignoreNotifications,
+                false
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>success
+            getSharedContext() >> Mock(WFSharedContext) {
+                consolidate()>>sharedContext
+            }
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        origContext.getOutputContext().getSharedContext().getData(ContextView.global()) == ["export":[globular: "globalvalue"]]
+
+        where:
+        success      | ignoreNotifications
+        true         | true
+        false        | true
+        true         | false
+        false        | false
+    }
 
     def "respect disabled execution on job ref"(){
         given:
