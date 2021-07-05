@@ -17,6 +17,7 @@
 package rundeck.services.scm
 
 import com.dtolabs.rundeck.plugins.scm.ImportResult
+import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -42,7 +43,7 @@ class ScmJobImporter implements ContextJobImporter {
             final InputStream input,
             final Map importMetadata,
             final boolean preserveUuid,
-            final Map renamedJob
+            final JobRenamed renamedJob
     )
     {
 
@@ -76,7 +77,7 @@ class ScmJobImporter implements ContextJobImporter {
             ImportedJob<ScheduledExecution> jobData,
             final Map importMetadata,
             boolean preserveUuid,
-            final Map renamedJob
+            final JobRenamed renamedJob
     )
     {
         if(renamedJob){
@@ -133,7 +134,7 @@ class ScmJobImporter implements ContextJobImporter {
         } catch (Throwable e) {
             return ImporterResult.fail("Failed to construct job definition map: " + e.message)
         }
-        importJob(context, jobset[0], importMetadata, preserveUuid, [:])
+        importJob(context, jobset[0], importMetadata, preserveUuid, null)
     }
 
     @Override

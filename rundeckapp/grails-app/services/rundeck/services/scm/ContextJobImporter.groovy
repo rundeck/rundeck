@@ -16,8 +16,9 @@
 
 package rundeck.services.scm
 
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+
 import com.dtolabs.rundeck.plugins.scm.ImportResult
+import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 
 /**
@@ -31,7 +32,7 @@ interface ContextJobImporter {
             final InputStream input,
             final Map importMetadata,
             final boolean preserveUuid,
-            final Map renamedJob
+            final JobRenamed renamedJob
     )
 
     ImportResult importFromMap(

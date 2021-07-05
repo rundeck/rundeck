@@ -1,5 +1,6 @@
 package rundeck.services.scm
 
+import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
@@ -37,7 +38,7 @@ class ScmJobImporterSpec extends Specification {
             AtomicInteger counter=new AtomicInteger(0)
 
         when:
-            def result = sut.importFromStream(ctx, format, input, meta, preserve,[:])
+            def result = sut.importFromStream(ctx, format, input, meta, preserve,null)
         then:
             result
             result.successful
@@ -132,7 +133,7 @@ class ScmJobImporterSpec extends Specification {
         sut.scheduledExecutionService = Mock(ScheduledExecutionService)
         sut.jobMetadataService = Mock(JobMetadataService)
         AtomicInteger counter=new AtomicInteger(0)
-        def renamedJob = [uuid: "123", sourceId: "456"]
+        def renamedJob = new JobRenamedImpTemp(uuid: "123", sourceId: "456")
 
         when:
         def result = sut.importFromStream(ctx, format, input, meta, preserve,renamedJob)
@@ -158,4 +159,10 @@ class ScmJobImporterSpec extends Specification {
         job.uuid == "123"
     }
 
+}
+
+
+class JobRenamedImpTemp implements JobRenamed{
+    String uuid
+    String sourceId
 }
