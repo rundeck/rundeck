@@ -17,4 +17,11 @@ public interface JobRenamed {
      * @return sourceID
      */
     String getSourceId();
+
+    /**
+     * get the job the renamed path
+     *
+     * @return renamedPath
+     */
+    String getRenamedPath();
 }

@@ -270,10 +270,25 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 tracked = true
             }
             if(!tracked && importTracker.getTrackedJobIds().get(walk.getPathString()) && jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))){
-                def jobState = jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))
-                if(!ImportSynchState.CLEAN.equals(jobState.get("synch"))){
-                    importNeeded++
+
+                def originalValue = importTracker.originalValue(walk.getPathString())
+                def renamedJob = null
+                if(originalValue){
+                    renamedJob = importTracker.wasRenamed(originalValue)
+                    if(renamedJob){
+                        //item is tracked to a job which was renamed
+                        expected.remove(originalValue)
+                        renamed.add(walk.getPathString())
+                        tracked = true
+                    }
                 }
+                if(!renamedJob){
+                    def jobState = jobStateMap.get(importTracker.getTrackedJobIds().get(walk.getPathString()))
+                    if(!ImportSynchState.CLEAN.equals(jobState.get("synch"))){
+                        importNeeded++
+                    }
+                }
+
             }
         }
 
@@ -499,7 +514,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
-        return createJobImportStatus(status,jobActionsForStatus(status))
+        JobRenamed jobRenamed = null
+        if(importTracker.wasRenamed(path)){
+            jobRenamed = new JobRenamedImp()
+            jobRenamed.sourceId = job.sourceId
+            jobRenamed.uuid = job.id
+            jobRenamed.renamedPath = importTracker.renamedValue(path)
+        }
+        return createJobImportStatus(status,jobActionsForStatus(status), jobRenamed)
     }
 
     List<Action> jobActionsForStatus(Map status) {
@@ -614,7 +636,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         path = originalPath ?: getRelativePathForJob(job)
         def temp = serializeTemp(job, config.format, config.importPreserve, config.importArchive)
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
+
         def id = latestCommit ? lookupId(latestCommit, path) : null
+
+        if(importTracker.wasRenamed(path)){
+            def newPath =  importTracker.renamedValue(path)
+            id = latestCommit ? lookupId(latestCommit, newPath) : null
+        }
+        
         if (!latestCommit || !id) {
             return new GitDiffResult(newNotFound: true)
         }
