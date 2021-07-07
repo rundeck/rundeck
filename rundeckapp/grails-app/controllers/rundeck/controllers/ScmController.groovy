@@ -1721,10 +1721,17 @@ class ScmController extends ControllerBase {
         def jobMetaMap = [(id):scmService.getJobPluginMeta(job, type)]
         def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job], true, jobMetaMap) : null
         def importStatus = isExport ? null : scmService.importStatusForJobs(project, authContext, [job])
-        def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs(project, [job]) : null
+        def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs(project, [job]) : scmService.importFilePathsMapForJobs(project, [job])
         def diffResult = isExport ? scmService.exportDiff(project, job) : scmService.importDiff(project, job)
-        def scmExportRenamedPath = isExport ? scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid) :
-                null
+
+        def scmImportRenamedPath = null
+        if(!isExport){
+            JobRenamed scmImportRenamed = importStatus.get(job.extid).jobRenamed
+            scmImportRenamedPath = scmImportRenamed.renamedPath
+        }
+
+        def scmExportRenamedPath = isExport ? scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid) : null
+
         if (params.download == 'true') {
             if (params.download) {
                 response.addHeader("Content-Disposition", "attachment; filename=\"${job.extid}.diff\"")
@@ -1739,7 +1746,8 @@ class ScmController extends ControllerBase {
                 job                 : job,
                 isScheduled         : scheduledExecutionService.isScheduled(job),
                 scmFilePaths        : scmFilePaths,
-                scmExportRenamedPath: scmExportRenamedPath,
+                scmExportRenamedPath : scmExportRenamedPath,
+                scmImportRenamedPath : scmImportRenamedPath,
                 integration         : integration
         ]
     }

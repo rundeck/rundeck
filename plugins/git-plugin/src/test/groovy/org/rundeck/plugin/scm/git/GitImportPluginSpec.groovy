@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.plugins.scm.ImportResult
 import com.dtolabs.rundeck.plugins.scm.ImportSynchState
 import com.dtolabs.rundeck.plugins.scm.JobImporter
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
+import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.util.FileUtils
@@ -467,6 +468,125 @@ class GitImportPluginSpec extends Specification {
         plugin.importTracker.renamedTrackedItems !=null
         plugin.importTracker.renamedTrackedItems.wasRenamed('job1-123.xml')
         plugin.importTracker.renamedTrackedItems.originalValue('job1-rename-123.xml') == 'job1-123.xml'
+    }
+
+    def "getStatusInternal import needed job renamed"(){
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        def commit4 = GitExportPluginSpec.renameCommitFile(origindir, git, 'job1-123.xml', 'job1-rename-123.xml', 'blah 333')
+
+        git.close()
+        ScmOperationContext context = Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(context)
+
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [commitId: commit.name, url: origindir.absolutePath]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getImportVersion() >> 12L
+            getVersion() >> 12L
+        }
+
+        plugin.getJobStatus(job, null)
+
+        when:
+        def result = plugin.getStatusInternal(context, false)
+        then:
+        result.state == ImportSynchState.IMPORT_NEEDED
+        result.message == "1 file(s) were renamed"
+    }
+
+    def "get job status renamed job"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        def commit4 = GitExportPluginSpec.renameCommitFile(origindir, git, 'job1-123.xml', 'job1-rename-123.xml', 'blah 333')
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        )
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [commitId: commit.name, url: origindir.absolutePath]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getImportVersion() >> 12L
+            getVersion() >> 12L
+        }
+
+        when:
+        def status = plugin.getJobStatus(job, null)
+
+        then:
+        status.synchState == ImportSynchState.IMPORT_NEEDED
+        status.jobRenamed != null
+        status.jobRenamed.renamedPath == "job1-rename-123.xml"
+    }
+
+    def "get diff status renamed job"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+        def commit = GitExportPluginSpec.addCommitFile(origindir, git, 'job1-123.xml', 'blah')
+        def commit4 = GitExportPluginSpec.renameCommitFile(origindir, git, 'job1-123.xml', 'job1-rename-123.xml', 'blah 333')
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        )
+        def job = Mock(JobScmReference) {
+            getScmImportMetadata() >> [commitId: commit.name, url: origindir.absolutePath]
+            getProject() >> projectName
+            getId() >> '123'
+            getJobName() >> 'job1'
+            getGroupPath() >> ''
+            getJobAndGroup() >> 'job1'
+            getImportVersion() >> 12L
+            getVersion() >> 12L
+        }
+
+        job.getJobSerializer() >> Mock(JobSerializer) {
+            1 * serialize(_, !null, _, _) >> { args ->
+                args[1].write('data'.bytes)
+            }
+        }
+
+        plugin.getJobStatus(job, null)
+
+        when:
+        def status = plugin.getFileDiff(job, null)
+
+        then:
+        status != null
+        status.incomingCommit != null
+        status.content !=null
     }
 
 }

@@ -852,6 +852,22 @@ class ScmService {
         files
     }
 
+    /**
+     * @param jobs list of {@link ScheduledExecution} objects
+     * @return map of job ID to file path
+     */
+    Map<String, String> importFilePathsMapForJobs(String project, List<ScheduledExecution> jobs, Map<String,Map> jobMetadata=[:]) {
+        def files = [:]
+        def plugin = getLoadedImportPluginFor project
+        if (plugin) {
+            jobs.each { ScheduledExecution job ->
+                Map metadata = jobMetadata[job.extid] ?: getJobPluginMeta(job, STORAGE_NAME_IMPORT)
+                files[job.extid] = plugin.getRelativePathForJob(scmJobRef(job, null, metadata))
+            }
+        }
+        files
+    }
+
     List<JobRevReference> jobRefsForIds(List<String> ids) {
         jobRefsForJobs(
                 ids.collect {
