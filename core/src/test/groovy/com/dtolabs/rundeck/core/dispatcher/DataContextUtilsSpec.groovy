@@ -16,8 +16,8 @@
 
 package com.dtolabs.rundeck.core.dispatcher
 
-import spock.lang.Specification
 
+import spock.lang.Specification
 /**
  * @author greg
  * @since 5/9/17
@@ -77,6 +77,32 @@ class DataContextUtilsSpec extends Specification {
         dataContext.get('test').put('key2', null);
         then:
         DataContextUtils.replaceDataReferencesInString('test ${test.key2}', dataContext) == 'test ${test.key2}'
+
+        when:
+        // can resolve option.key. Note that the value will not be quoted or
+        // changed in any way because there is no converter supplied as
+        // arg of replaceDataReferencesInString
+        dataContext.clear()
+        dataContext.put('option', new HashMap<String, String>());
+        dataContext.get('option').put('key', 'a value');
+        then:
+        DataContextUtils.replaceDataReferencesInString(
+          'this is ${option.key}',
+          dataContext
+        ) == 'this is a value'
+
+        when:
+        // can resolve option.key. Note that the value will not be quoted or
+        // changed in any way because there is no converter supplied as
+        // arg of replaceDataReferencesInString
+        dataContext.clear()
+        dataContext.put('option', new HashMap<String, String>());
+        dataContext.get('option').put('key', 'a value');
+        then:
+        DataContextUtils.replaceDataReferencesInString(
+          'this is ${unquotedoption.key}',
+          dataContext
+        ) == 'this is a value'
     }
 
     def testReplaceDataReferencesArray() {

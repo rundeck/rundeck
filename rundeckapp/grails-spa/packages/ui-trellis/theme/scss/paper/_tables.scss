@@ -232,3 +232,17 @@
     background-color: transparent;
   }
 }
+
+.table.table-fixed {
+  table-layout: fixed;
+  > tbody > tr > td:first-child{
+      width: 145px !important;
+  }
+
+  tfoot{
+    tr > th,
+    tr > td{
+      word-break: break-word;
+    }
+  }
+}

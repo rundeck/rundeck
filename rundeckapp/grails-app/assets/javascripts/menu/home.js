@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-//= require knockout.min
-//= require knockout-mapping
+//= require vendor/knockout.min
+//= require vendor/knockout-mapping
 //= require knockout-onenter
 //= require ko/binding-url-path-param
 //= require ko/binding-message-template
@@ -432,7 +432,7 @@ function batchInitWaypoints(arr,handler,count){
     "use strict";
     var arr2=arr.splice(0,count);
     if(arr2.length>0) {
-        jQuery(arr2).waypoint(handler, {context:'#main-panel',offset: '100%'});
+        jQuery(arr2).children('.row').waypoint(handler, {context:'#main-panel',offset: '100%'});
         if (arr.length > 0) {
             _waypointBatchTimer=setTimeout(function(){batchInitWaypoints(arr, handler,count);}, 500);
         }

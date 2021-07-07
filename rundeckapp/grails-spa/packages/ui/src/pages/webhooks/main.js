@@ -6,11 +6,15 @@ import VueFuse from 'vue-fuse'
 import * as uiv from 'uiv'
 import App from './App.vue'
 import VueI18n from 'vue-i18n'
+
+import {getRundeckContext} from '@rundeck/ui-trellis'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 
 import AceEditor from '@rundeck/ui-trellis/lib/components/utils/AceEditor.vue'
 
 import international from './i18n'
+
+const rootStore = getRundeckContext().rootStore
 
 Vue.config.productionTip = false
 
@@ -49,5 +53,6 @@ new Vue({
   i18n,
   el: '#webhook-vue',
   components: { App },
+  provide: {rootStore},
   template: "<App/>"
 })

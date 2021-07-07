@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
+import grails.web.mapping.LinkGenerator
 import spock.lang.Specification
 
 import java.text.SimpleDateFormat
@@ -43,6 +44,8 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         fwk.getPluginManager() >> Mock(ServiceProviderLoader)
         service.frameworkService = fwksvc
         service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.uiPluginService = Mock(UiPluginService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
 
         def pluginDescs = [
                 "Notification": [new FakePluginDescription()]
@@ -63,6 +66,8 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
 
         when:
         1 * service.rundeckPluginRegistry.getPluginMetadata(_,_) >> fakeMeta
+        1 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo']
+        1 * service.grailsLinkGenerator.link(_) >> 'http://localhost:8080/icon'
         def response = service.listPlugins()
         def service = response[0]
         def entry = service.providers[0]
@@ -80,7 +85,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         entry.pluginVersion == "1.0"
         entry.pluginDate == 1534253342000
         entry.enabled == true
-
+        entry.iconUrl == 'http://localhost:8080/icon'
     }
 
     def "list installed plugin ids"() {
@@ -93,6 +98,8 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         service.frameworkService = fwksvc
         service.pluginService = Mock(PluginService)
         service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.uiPluginService = Mock(UiPluginService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
 
         def pluginDescs = [
                 "Notification": [new FakePluginDescription()]
@@ -119,6 +126,8 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             getPluginId() >> uipluginid
         }
         1 * service.pluginService.listPlugins(_,_) >> ["oneuiplugin":new FakeUIDescribedPlugin(uiplugin,uiplugindesc,"oneuiplugin")]
+        1 * service.uiPluginService.getProfileFor(_, _) >> [icon: 'foo']
+        1 * service.grailsLinkGenerator.link(_) >> 'http://localhost:8080/icon'
         1 * service.rundeckPluginRegistry.getPluginMetadata('Notification',_) >> fakeMeta
         1 * service.rundeckPluginRegistry.getPluginMetadata('UI',_) >> uiMeta
         def idList = service.listInstalledPluginIds()
@@ -337,4 +346,3 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         }
     }
 }
-

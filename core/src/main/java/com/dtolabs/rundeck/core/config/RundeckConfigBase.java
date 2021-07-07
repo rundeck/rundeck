@@ -40,6 +40,7 @@ public class RundeckConfigBase {
     RundeckProjectServiceConfig projectService;
     RundeckProjectManagerServiceConfig projectManagerService;
     RundeckLogFileStorageServiceConfig logFileStorageService;
+    FileUploadServiceConfig fileUploadService;
     RundeckAuthorizationServiceConfig authorizationService;
     RundeckReportServiceConfig reportService;
     RepositoryConfig repository;
@@ -220,6 +221,17 @@ public class RundeckConfigBase {
     }
 
     @Data
+    public static class FileUploadServiceConfig {
+        Tempfile tempfile;
+
+        @Data
+        public static class Tempfile {
+            String maxsize;
+            Long expiration;
+        }
+    }
+
+    @Data
     public static class RundeckReportServiceConfig {
         Startup startup;
 
@@ -327,13 +339,11 @@ public class RundeckConfigBase {
         Enabled legacyProjectNodesUi = new Enabled();
         Enabled jobLifecyclePlugin = new Enabled();
         Enabled executionLifecyclePlugin = new Enabled();
-        Enabled legacyExecOutputViewer = new Enabled();
         Enabled sidebarProjectListing = new Enabled(true);
         Enabled userSessionProjectsCache = new Enabled(true);
         Enabled authorizationServiceBootstrapWarmupCache = new Enabled();
         Enabled projectManagerServiceBootstrapWarmupCache = new Enabled();
         Enabled notificationsOwnThread = new Enabled();
-        Enabled uiNext = new Enabled(false);
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStorage = new Enabled(true);

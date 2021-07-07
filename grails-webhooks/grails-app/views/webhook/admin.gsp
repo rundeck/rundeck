@@ -35,13 +35,13 @@
 </head>
 
 <body>
-<div class="content">
-<div id="layoutBody">
-<div class="container-fluid">
-    <div id=webhook-vue></div>
+<div style="display: flex;height: 100%;">
+    <div style="flex-grow: 1">
+        <div id=webhook-vue></div>
+    </div>
+    <div style="flex-grow: 0;"><div id="tour-vue-display"></div></div>
 </div>
-</div>
-</div>
+
 <asset:javascript src="static/pages/webhooks.js"/>
 </body>
 </html>

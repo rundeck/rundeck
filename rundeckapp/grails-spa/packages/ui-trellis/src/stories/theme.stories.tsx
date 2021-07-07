@@ -34,6 +34,7 @@ export const buttons = () => (Vue.extend({
                     <button class="btn btn-success">Success</button>
                     <button class="btn btn-warning">Warning</button>
                     <button class="btn btn-danger">Danger</button>
+                    <button class="btn btn-transparent">Transparent</button>
                 </div>
             </div>
         )

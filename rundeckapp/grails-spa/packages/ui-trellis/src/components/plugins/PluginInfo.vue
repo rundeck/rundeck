@@ -2,7 +2,7 @@
   <span>
     <slot></slot>
     <span v-if="showIcon">
-      <img :src="iconUrl" v-if="iconUrl" width="16px" height="16px">
+      <img class="plugin-icon" :src="iconUrl" v-if="iconUrl">
       <i :class="'glyphicon glyphicon-'+glyphicon" v-else-if="glyphicon"></i>
       <i :class="'fas fa-'+faicon" v-else-if="faicon"></i>
       <i :class="'fab fa-'+fabicon" v-else-if="fabicon"></i>
@@ -117,3 +117,11 @@ export default Vue.extend({
 
 })
 </script>
+
+<style scoped lang="scss">
+.plugin-icon {
+    width: 16px;
+    height: 16px;
+}
+
+</style>

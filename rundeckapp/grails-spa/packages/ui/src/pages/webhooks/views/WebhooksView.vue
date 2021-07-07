@@ -1,153 +1,145 @@
 <template>
-  <div>
+<div id="wh-view" style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
+  <div id="wh-title" class="screen-title" style="display: flex;">
+
     <h3>{{ $t('message.webhookPageTitle') }}</h3>
-    <div class="row">
-      <div class="col-xs-12">
-        <div class="artifact-grid row row-flex row-flex-wrap">
-          <div class="col-sm-4">
-            <div class="card" style="width:100%; min-height: 500px">
-              <div class="card-header">
-                <a class="btn btn-sm btn-success fr" @click="addNewHook">{{ $t('message.addWebhookBtn') }}</a>
-                <h5 style="margin:0;">{{ $t('message.webhookListTitle') }}</h5>
-              </div>
-              <hr>
-              <div class="card-content" style="margin-top: 0; padding-top: 0;">
-                <table class="table table-striped">
-                  <thead>
-                  <tr>
-                    <th scope="col">{{ $t('message.webhookListNameHdr') }}</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr v-for="hook in webhooks" :key="hook.id" @click="select(hook)" class="clickable"
-                      v-bind:class="{selected: curHook === hook}">
-                    <td>
-                      <div>{{hook.name}} <i class="far fa-clipboard fr clip" @click="copyUrl(hook.id, $event)" @mouseover="toggleUrl(hook.id,true)" @mouseout="toggleUrl(hook.id,false)" title="Copy Url To Clipboard">
-                        <div v-bind:id="'whc-'+hook.id" class="post-url-copy">{{generatePostUrl(hook)}}</div>
-                      </i>
-                      </div>
-                    </td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-8 details-output">
-            <div class="flex-col">
-              <div class="card">
-                <div class="card-header">
-                  <h5 style="margin:0;">{{ $t('message.webhookDetailTitle') }}</h5>
+    <div style="margin-left: auto;">
+      <a class="btn"
+        :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
+        style="font-weight: 800"
+        @click="handleAddNew"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
+    </div>
+  </div>
+  
+  <div style="display: flex; height: 100%;overflow: hidden;">
+    <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 20px;overflow-x: hidden;overflow-y: auto;">
+      <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
+    </div>
+
+    <div class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
+      <div>
+        <div id="wh-edit" v-if="curHook">
+          <div id="wh-header">
+                <WebhookTitle :webhook="this.curHook"/>
+                <div style="margin-left: auto;display: flex;align-items: center;">
+                  <div><a
+                          style="font-weight: 800;"
+                          v-if="curHook.id"
+                          @click="handleDelete"
+                          class="btn btn-transparent">{{ $t('message.webhookDeleteBtn') }}</a>
+                  </div>
+                  <div>
+                    <a
+                            v-if="!curHook.id"
+                            @click="handleCancel"
+                            class="btn btn-md "
+                    >{{ $t('message.cancel') }}</a>
+                    <btn
+                            :disabled="!(dirty || curHook.new)"
+                            type="cta"
+                            style="margin-left: 5px;font-weight: 800;"
+                            @click="handleSave"
+                    >{{ $t('message.webhookSaveBtn') }}</btn>
+                  </div>
                 </div>
-                <hr>
+          </div>
+
+          <Tabs data-tabkey="webhook-header" style="height: 200px;" :key="curHook.new ? curHook.uuid : ''">
+            <Tab :index="0" title="General">
+              <div class="wh-edit__body">
+                <div  class="form-group">
+                  <div class="card wh-url-card">
+                  <div class="card-content">
+                    <label>{{ $t('message.webhookPostUrlLabel') }}</label>
+                    <div class="help-block">
+                      {{$t('message.webhookPostUrlHelp')}}
+                    </div>
+                    <CopyBox style="max-width: 800px" v-if="!curHook.new" :content="postUrl()"/>
+                    <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.new">{{$t('message.webhookPostUrlPlaceholder')}}</span>
+                  </div>
+                  </div>
+                </div>
+                <div class="card">
                 <div class="card-content">
-                  <div v-if="curHook">
-                    <div  class="form-group">
-                      <div class="well well-sm">
-                        <label>{{ $t('message.webhookPostUrlLabel') }}</label>
-                        <span class="form-control fc-span-adj" style="height: auto;" v-if="!curHook.isNew">{{postUrl}}</span>
-                        <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.isNew">{{$t('message.webhookPostUrlPlaceholder')}}</span>
-                        <div class="help-block">
-                          {{$t('message.webhookPostUrlHelp')}}
-                        </div>
-                      </div>
+                  <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
+                  <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
+                    <input v-model="curHook.user" class="form-control" v-if="curHook.new">
+                    <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
+                    <div class="help-block">
+                      {{$t('message.webhookUserHelp')}}
                     </div>
-                    <div class="form-group"><label>{{ $t('message.webhookNameLabel') }}</label><input v-model="curHook.name" class="form-control"></div>
-                    <div class="form-group"><label>{{ $t('message.webhookUserLabel') }}</label>
-                      <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
-                      <span class="form-control readonly fc-span-adj" v-else>{{curHook.user}}</span>
-                      <div class="help-block">
-                        {{$t('message.webhookUserHelp')}}
-                      </div>
+                  </div>
+                  <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
+                    <div class="help-block">
+                      {{$t('message.webhookRolesHelp')}}
                     </div>
-                    <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
-                      <div class="help-block">
-                        {{$t('message.webhookRolesHelp')}}
-                      </div>
-                    </div>
-                    <div class="form-group">
-                      <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
-                    </div>
-                    <div class="form-group new-section section-separator">
-
-                      <div class="btn-group">
-                        <button class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
-                          aria-expanded="false" >
-
-                          <plugin-info
-                            :detail="getPluginDescription(curHook.eventPlugin)"
-                            :show-description="false"
-                            v-if="curHook.eventPlugin" />
-                          <span v-else>
-                            {{$t('message.webhookPluginLabel')}}
-                          </span>
-                          <span class="caret"></span>
-                        </button>
-                        <ul class="dropdown-menu ">
-
-                          <li v-for="plugin in webhookPlugins" v-bind:key="plugin.name">
-                            <a href="#" @click="setSelectedPlugin(false,plugin.name)">
-                              <plugin-info :detail="plugin" />
-                            </a>
-                          </li>
-                        </ul>
-                      </div>
-                      </div>
-                      <div v-if="selectedPlugin && curHook.eventPlugin">
-
-                       <plugin-info
-                            :detail="getPluginDescription(curHook.eventPlugin)"
-                            :show-description="true"
-                            :show-icon="false"
-                            :show-title="false" />
-                      </div>
-                    <div v-if="selectedPlugin && showPluginConfig" class="new-section">
-
-                      <plugin-config
-                        :mode="'edit'"
-                        :serviceName="'WebhookEvent'"
-                        v-model="selectedPlugin"
-                        :provider="curHook.eventPlugin"
-                        :key="curHook.name"
-                        :show-title="false"
-                        :show-description="false"
-                        :validation="validation"
-                        v-if="!customConfigComponent"
-                      >
-                      </plugin-config>
-                      <component :is="customConfigComponent" v-else :webhook="curHook" :pluginConfig="curHook.config" :errors="errors"></component>
-                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
                   </div>
                 </div>
-                <div class="card-footer section-separator" v-if="curHook">
-
-                  <div class="row" style="margin-top: 10px;">
-                    <div class="col-sm-6">
-                      <a
-                              v-if="!curHook.id"
-                              @click="handleCancel"
-                              class="btn btn-md "
-                      >{{ $t('message.cancel') }}</a>
-                      <a
-                              class="btn btn-md btn-success"
-                              style="margin-left: 5px"
-                              @click="handleSave"
-                      >{{ $t(curHook.isNew?'message.webhookCreateBtn':'message.webhookSaveBtn') }}</a>
-                    </div>
-                    <div class="col-sm-6 text-right"><a
-                            v-if="curHook.id"
-                            @click="handleDelete"
-                            class="btn btn-md btn-danger"
-                    >{{ $t('message.webhookDeleteBtn') }}</a></div>
-                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </Tab>
+            <Tab :index="1" title="Handler Configuration">
+              <div class="wh-edit__body">
+                <div class="card" style="padding: 1em;">
+                  <div class="form-group">
+                    <div class="btn-group">
+                      <button class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
+                        aria-expanded="false" >
+
+                        <plugin-info
+                          :detail="curHook.eventPlugin"
+                          :show-description="false"
+                          v-if="curHook.eventPlugin" />
+                        <span v-else>
+                          {{$t('message.webhookPluginLabel')}}
+                        </span>
+                        <span class="caret"></span>
+                      </button>
+                      <ul class="dropdown-menu ">
+
+                        <li v-for="plugin in webhookPlugins" v-bind:key="plugin.id">
+                          <a href="#" @click="setSelectedPlugin(false,plugin)">
+                            <plugin-info :detail="plugin" />
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div v-if="curHook.eventPlugin">
+                    <span>{{curHook.eventPlugin.description}}</span>
+                  </div>
+                </div>
+                <div v-if="selectedPlugin && showPluginConfig" class="new-section">
+                  <div class="card" style="padding: 20px;" v-if="!customConfigComponent">
+                    <plugin-config
+                      @change="input"
+                      :mode="'edit'"
+                      :serviceName="'WebhookEvent'"
+                      v-model="selectedPlugin"
+                      :provider="curHook.eventPlugin.name"
+                      :key="curHook.name"
+                      :show-title="false"
+                      :show-description="false"
+                      :validation="validation"/>
+                  </div>
+                  <component v-else
+                    :is="customConfigComponent"
+                    :webhook="curHook"
+                    :pluginConfig="curHook.config"
+                    :errors="errors"
+                    @change="input"></component>
+                </div>
+              </div>
+            </Tab>
+          </Tabs>
         </div>
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
@@ -155,10 +147,26 @@ import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 import i18n from '../i18n'
 import axios from 'axios'
+
+import {observable, autorun, reaction} from 'mobx'
+import {deepObserve} from 'mobx-utils'
+import {observer} from 'mobx-vue'
+
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue"
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue"
+
+import CopyBox from '@rundeck/ui-trellis/lib/components/containers/copybox/CopyBox.vue'
+import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
+import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
+import WebhookPicker from '@rundeck/ui-trellis/lib/components/widgets/webhook-select/WebhookSelect.vue'
+
 import {getServiceProviderDescription,
   getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
+
+import {ServiceType} from '@rundeck/ui-trellis/lib/stores/Plugins'
+
+
+import WebhookTitle from '../components/WebhookTitle.vue'
 
 var rdBase = "http://localhost:4440"
 var apiVersion = "33"
@@ -182,49 +190,47 @@ var i18nInstance = new VueI18n({
   }
 })
 
-export default {
+export default observer(Vue.extend({
   name: "WebhooksView",
   components: {
+    CopyBox,
     PluginConfig,
-    PluginInfo
+    PluginInfo,
+    Tabs,
+    Tab,
+    WebhookPicker,
+    WebhookTitle
   },
+  inject: ["rootStore"],
   data() {
     return {
       webhooks: [],
       webhookPlugins: [],
       curHook: null,
+      config: null,
       errors: {},
       validation:{valid:true,errors:{}},
       selectedPlugin: null,
       apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
       customConfigComponent: null,
-      showPluginConfig: false
-    }
-  },
-  computed: {
-    postUrl() {
-      if(this.curHook.isNew) {
-        return "Webhook endpoint url will appear here after saving."
-      }
-      return this.generatePostUrl(this.curHook)
+      showPluginConfig: false,
+      projectName: projectName,
+      dirty: false
     }
   },
   methods: {
+    input() {
+      this.dirty = true
+    },
     toggleUrl(hookId, show) {
       if(show) document.getElementById("whc-" + hookId).style.display = "block";
       else document.getElementById("whc-" + hookId).style.display = "none";
     },
-    copyUrl(hookId, evt) {
-      let el = document.getElementById("whc-" + hookId);
-      let range = document.createRange();
-      range.selectNode(el);
-      window.getSelection().removeAllRanges();
-      window.getSelection().addRange(range);
-      document.execCommand("copy")
-      evt.stopImmediatePropagation()
-      window.getSelection().removeAllRanges();
-      this.toggleUrl(hookId, false)
-      this.setMessage("Copied url to clipboard")
+    postUrl() {
+      if(this.curHook.new) {
+        return "Webhook endpoint url will appear here after saving."
+      }
+      return this.generatePostUrl(this.curHook)
     },
     generatePostUrl(hook) {
       return `${this.apiBasePostUrl}${hook.authToken}#${encodeURI(hook.name.replace(/ /g, '_'))}`
@@ -261,8 +267,20 @@ export default {
       this.validation = {valid:valid, errors}
       this.errors=errors
     },
+    handleSelect(selected) {
+      this.cleanAction(() => this.select(selected))
+    },
     select(selected) {
-      this.curHook = selected
+      this.curHook = this.rootStore.webhooks.clone(selected)
+
+      this.dirty = false
+
+      reaction(() => {
+        return JSON.stringify(this.curHook.toApi())
+      }, (data) => {
+        this.dirty = true
+      })
+      
       this.setValidation(true)
       this.setSelectedPlugin(true)
     },
@@ -281,36 +299,46 @@ export default {
       if(!preserve){
           this.setValidation(true)
       }
-      getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin).then(data => {
+      getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin.artifactName).then(data => {
         this.customConfigComponent = data.vueConfigComponent
         this.showPluginConfig = this.customConfigComponent || data.props.length > 0
       })
     },
-    handleSave() {
-      if(!this.curHook.eventPlugin) {
+    async handleSave() {
+      const webhook = this.curHook
+
+      if(!webhook.eventPlugin) {
         this.setError("You must select a Webhook plugin before saving")
         return
       }
-      this.curHook.config = this.selectedPlugin.config
-      this.ajax("post", `${rdBase}webhook/admin/save`, this.curHook).then(response => {
-        if (response.data.err) {
-          this.setError("Failed to save! " + response.data.err)
+      webhook.config = this.selectedPlugin.config
 
-          this.setValidation(false, response.data.errors)
-        } else {
-          this.setMessage("Saved!")
-          this.setValidation(true)
-          this.getHooks()
-        }
-      }).catch(err => {
-        if (err.response.data.err) {
-          this.setError("Failed to save! " + err.response.data.err)
-          this.setValidation(false, err.response.data.errors)
-        }
-      })
+      let resp
+      if (webhook.new)
+        resp = await this.rootStore.webhooks.create(webhook)
+      else
+        resp = await this.rootStore.webhooks.save(webhook)
+
+      const data = resp.parsedBody
+
+      if (data?.err) {
+        this.setError("Failed to save!" + data.err)
+        this.setValidation(false, data.errors)
+      } else {
+        this.setMessage("Saved!")
+        this.setValidation(true)
+        this.dirty = false
+        await this.rootStore.webhooks.refresh(this.projectName)
+        this.select(this.rootStore.webhooks.webhooksByUuid.get(webhook.uuid))
+      }
     },
-    handleCancel(){
-      this.curHook=null
+    handleCancel() {
+      this.cleanAction(this.cancel)
+    },
+    cancel() {
+      this.curHook = null
+      this.config = null
+      this.dirty = false
     },
     handleDelete() {
       var self = this
@@ -318,19 +346,20 @@ export default {
         title:"Confirm",
         content:"Are you sure you want to delete this webhook?"
       }).then(() => {
-      this.ajax("delete", `${rdBase}webhook/admin/delete/${this.curHook.id}`).then(response => {
-        if (response.data.err) {
-          this.setError("Failed to delete! " + response.data.err)
+
+        this.rootStore.webhooks.delete(this.curHook).then(response => {
+        const data = response.parsedBody
+        if (data.err) {
+          this.setError("Failed to delete! " + data.err)
+        } else if (response.status != 200) {
+          this.setMessage('Failed')
         } else {
           this.curHook = null
           this.selectedPlugin = null
-          this.getHooks()
           this.setMessage("Deleted!")
         }
       }).catch(err => {
-        if (err.response.data.err) {
-          this.setError("Failed to delete! " + err.response.data.err)
-        }
+        this.setError("Failed to delete! " + err)
       })}).catch(() => {})
     },
     ajax(method, url, payload) {
@@ -348,9 +377,26 @@ export default {
       }
       return axios(params)
     },
+    cleanAction(callback) {
+      if (this.dirty) {
+        this.$confirm({
+          title:"Unsaved Changes",
+          content:"You have unsaved changes, do you wish to continue?"
+        }).then(() => {
+          callback()
+        })
+      } else {
+        callback()
+      }
+    },
+    handleAddNew() {
+      this.cleanAction(() => this.addNewHook())
+    },
     addNewHook() {
       this.showPluginConfig = false
-      this.curHook = {name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, isNew: true, config: {}}
+      this.curHook = this.rootStore.webhooks.newFromApi({name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, new: true, config: {}})
+      this.config = this.curHook.config
+      this.dirty = true
     },
     loadProPlugins() {
       if (window.ProWebhookComponents == undefined)
@@ -361,19 +407,85 @@ export default {
       }
     }
   },
-  mounted() {
-    getPluginProvidersForService("WebhookEvent").then(data => {
-      if(data.service){
-        this.webhookPlugins = data.descriptions
-      }
-    })
-    this.getHooks()
+  async mounted() {
     this.loadProPlugins()
+    await this.rootStore.plugins.load('WebhookEvent')
+    this.webhookPlugins = this.rootStore.plugins.getServicePlugins('WebhookEvent')
   }
-}
+}))
 </script>
 
+<style scoped>
+
+</style>
+
 <style lang="scss" scoped>
+  #wh-view {
+    box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.11);
+  }
+
+  #wh-title {
+    display: flex;
+    align-items: center;
+    padding: 0 2em 0 2em;
+    flex-basis: 70px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    border-color: #d7d7d7;
+    border-bottom: 0.1em solid #d7d7d7;
+    h3 {
+      margin: 0;
+      padding: 0;
+      font-weight: 700;
+      color: black;
+    }
+  }
+
+  #wh-list {
+    background-color: #f4f5f7;
+    border-right: 0.1em solid #d3dbe5;
+    flex-shrink: 0;
+  }
+
+  #wh-edit {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #wh-header {
+    display: flex;
+    align-items: center;
+    background-color: #f7f7f7;
+    height: 70px;
+    padding: 0 2em 0 2em;
+
+    h3 {
+      color: black;
+      font-weight: 700;
+      margin: 0;
+    }
+  }
+
+  ::v-deep [data-tabkey="webhook-header"] > .rdtabs__tabheader {
+    background-color: #f7f7f7;
+    border: none;
+    padding: 0 2em;
+  }
+
+  .wh-edit__body {
+    padding: 0 2em 0 2em;
+    margin-top: 20px;
+  }
+
+  .wh-card {
+    padding: 1em;
+  }
+
+  .wh-url-card {
+    background: #D8F1EE;
+    border: 0.1em solid #9DDCD4;
+  }
+
   .add-btn {
     padding: 2px 6px;
     border: 1px solid #ddd;

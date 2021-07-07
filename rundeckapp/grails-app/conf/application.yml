@@ -267,8 +267,35 @@ rundeck:
             enabled: true
             spec: 'refreshInterval=30s'
     feature:
+        #feature flags settings for all environments
         webhooks:
             enabled: true
+        enhancedNodes:
+            enabled: true
+        optionValuesPlugin:
+            enabled: true
+        workflowDynamicStepSummaryGUI:
+            enabled: true
+        cleanExecutionsHistoryJob:
+            enabled: true
+        cleanExecutionsHistoryJobAsyncStart:
+            enabled: true
+        executionLifecyclePlugin:
+            enabled: true
+        projectManagerServiceBootstrapWarmupCache:
+            enabled: true
+        authorizationServiceBootstrapWarmupCache:
+            enabled: true
+        sidebarProjectListing:
+            enabled: true
+        userSessionProjectsCache:
+            enabled: true
+        workflowDesigner:
+            enabled: true
+        projectKeyStorage:
+            enabled: true
+        notificationsOwnThread:
+            enabled: false #FYI FALSE
 ---
 
 beans:

@@ -215,7 +215,8 @@ class EditOptsController extends ControllerBase{
                     edit                       : true,
                     regexError                 : result.regexError,
                     configMapValidate          : result.configMapValidate,
-                    fileUploadPluginDescription: fileUploadService.pluginDescription
+                    fileUploadPluginDescription: fileUploadService.pluginDescription,
+                    optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()
             ]
             return render(template: "/scheduledExecution/optEdit", model: model
             )

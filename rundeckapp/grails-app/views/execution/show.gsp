@@ -65,7 +65,7 @@
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
-      <g:jsMessages codes="['execution.show.mode.Log.title','execution.show.mode.LogLegacy.title','execution.page.show.tab.Nodes.title']"/>
+      <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
 
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
@@ -186,7 +186,7 @@ search
     <div class="content">
     <div id="layoutBody">
         <div class="container-fluid">
-          
+
               <nav id="subtitlebar" class=" subtitlebar has-content execution-page">
                 <div class="subtitle-head flex-container reverse flex-align-items-stretch" data-ko-bind="nodeflow">
                     <div class="subtitle-head-item execution-head-info flex-item-1">
@@ -569,13 +569,14 @@ search
                     </g:if>
                 </div>
               </nav>
-      
-   
+
+
               <div class="row">
                   <div class="col-sm-12">
                       <div class="card card-plain " data-ko-bind="nodeflow">
-                          <div class="btn-group " data-bind="if: tabs().length>2">
+                          <div class="btn-group " data-bind="if: views().length>2">
                               <button class="btn btn-default btn-sm dropdown-toggle "
+                                      id="views_dropdown_button"
                                       data-target="#"
                                       data-toggle="dropdown">
                                   <span class="colon-after"><g:message code="view"/></span>
@@ -584,43 +585,34 @@ search
                                   </span>
                                   <i class="caret"></i>
                               </button>
-                              <ul class="dropdown-menu pull-left" role="menu" data-bind="foreach: tabs">
+                              <ul class="dropdown-menu pull-left" role="menu" data-bind="foreach: views">
 
                                   <li data-bind="attr: {id: 'tab_link_'+id }">
                                       <a href="#"
-                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }, text: title">
+                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }">
+                                          <span data-bind="text: title"></span>
+                                          <!-- ko if: $root.activeTab()===id -->
+                                          <i class="fas fa-check" style="margin-left:1em"></i>
+                                          <!-- /ko -->
                                       </a>
                                   </li>
 
                               </ul>
 
                           </div>
-                          <a href="#state"
-                             data-bind="click: function(){activeTab('nodes')}, visible: activeTab()!=='nodes'"
+                          <!-- ko foreach: viewButtons -->
+                          <a href="#"
+                             data-bind="click:function(){$root.activeTab(id)}, attr: {href: '#'+id, id: 'btn_view_'+id }, visible: $root.activeTab()!==id"
                              class="btn btn-sm">
-                              <g:message code="execution.page.show.tab.Nodes.title"/>  &raquo;
+                              <span data-bind="text: title"></span> &raquo;
                           </a>
-                          <a href="#output"
-                             data-bind="click: function(){activeTab('output')}, visible: activeTab()!=='output'"
-                             class="btn btn-sm">
-                              <g:message code="execution.show.mode.Log.title"/> &raquo;
-                          </a>
+                          <!-- /ko -->
 
-%{--                          <a href="#output-plus"--}%
-%{--                             data-bind="click: function(){activeTab('output-plus')}, visible: activeTab()!=='output-plus'"--}%
-%{--                             class="btn btn-sm">--}%
-%{--                              <g:message code="execution.show.mode.LogPlus.title"/> &raquo;--}%
-%{--                          </a>--}%
 
                           <span data-bind="visible: activeTab().startsWith('output')">
 
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
-
-                                  <a data-bind="visible: activeTab() == 'output-legacy'" href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
-                                      <g:message code="execution.page.view.options.title"/>
-                                      <i class="glyphicon glyphicon-cog"></i>
-                                  </a>
 
                                   <span class="btn-group">
                                       <button type="button" class="btn btn-xs dropdown-toggle"
@@ -842,6 +834,11 @@ search
 
                               <div class="tab-content" id="exec-main-view">
 
+                                  <!-- ko foreach: contentViews -->
+                                  <div class="tab-pane" data-bind="css: {active: $root.activeTab()===id}, attr: {id:id}">
+                                      <span data-bind="attr: {id:id+'_content'}, html:content"></span>
+                                  </div>
+                                  <!-- /ko -->
                                   <div class="tab-pane " id="nodes" data-bind="css: {active: activeTab()==='nodes'}">
                                       <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
                                           <g:render template="wfstateNodeModelDisplay" bean="${workflowState}"
@@ -855,11 +852,6 @@ search
                                        data-bind="visible: activeTab() === 'output' || activeTab().startsWith('outputL')"
                                   >
                                       <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true"></div>
-                                  </div>
-
-                                  <div class="tab-pane " id="output-legacy" data-bind="css: {active: activeTab()==='output-legacy'}">
-                                      <g:render template="/execution/showFragment"
-                                                model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                                   </div>
 
                               </div>
@@ -895,13 +887,6 @@ search
 
                           </g:if>
                     </div>
-
-                      <div data-ko-bind="nodeflow"
-                           data-bind="visible: logoutput().fileLoadError() && activeTab()==='output-legacy'"
-                           class="alert alert-warning"
-                           style="display:none">
-                          <span data-bind="text: logoutput().fileLoadError" ></span>
-                      </div>
                   </div>
           <g:if test="${scheduledExecution}">
 
@@ -1082,7 +1067,7 @@ search
     <span data-bind="text: stepinfo.stepdesc"></span>
     </span>
   </script>
-
+  <g:jsonToken id="exec_cancel_token" url="${request.forwardURI}"/>
   <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
         <script type="application/javascript">
     var workflow=null;
@@ -1166,7 +1151,11 @@ search
                     showStep:${enc(js: !isAdhoc)},
                     showNodeCol:false,
                 }
-            } )
+            } ),
+            views: [
+                {id: 'nodes', title: message('execution.page.show.tab.Nodes.title'), showButton: true},
+                {id: 'output', title: message('execution.show.mode.Log.title'), showButton: true}
+            ]
         }
         );
         flowState = new FlowState('${enc(js: execution?.id)}','flowstate',{
@@ -1175,11 +1164,6 @@ search
         outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
         selectedOutputStatusId:'selectedoutputview',
         reloadInterval:1500,
-            tabs:[
-                {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
-                {id: 'output', title: message('execution.show.mode.Log.title')},
-                {id: 'output-legacy', title: message('execution.show.mode.LogLegacy.title')}
-            ]
      });
 
       nodeflowvm.followFlowState(flowState,true);
@@ -1205,8 +1189,6 @@ search
             window.location.hash = "#" + val
             if (val === 'nodes') {
                 followState();
-           }else if(val==='output-legacy'){
-                followOutput();
            }
         });
 
@@ -1271,14 +1253,12 @@ search
         });
         followState();
         var outDetails = window.location.hash;
-        if(outDetails.startsWith('#output') && !outDetails.includes('legacy')) {
+        if(outDetails.startsWith('#output')) {
             nodeflowvm.activeTab(outDetails.slice(1))
-        } else if (outDetails === '#output-legacy') {
-            nodeflowvm.activeTab("output-legacy")
         } else if (outDetails === '#nodes') {
             nodeflowvm.activeTab("nodes");
         }else{
-            //default to nodes tab, original options of 'summary' and 'monitor' will go here
+            //default to nodes tab
             nodeflowvm.activeTab("nodes");
         }
         initKoBind(null, {nodeflow: nodeflowvm})

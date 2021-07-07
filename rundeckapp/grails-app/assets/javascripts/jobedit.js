@@ -319,6 +319,12 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
 
 }
 
+function setupNotificationAutocomplete(idcompenent){
+  jQuery('#' + idcompenent).each(function (i, elem) {
+    addNotificationAutocomplete(jQuery(elem));
+  });
+}
+
 function addNotificationAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode) {
   var baseVarData = [].concat(_jobVarData());
   baseVarData = baseVarData.concat(_jobGlobalVarData());
@@ -383,6 +389,14 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
           category: 'Options',
           title: 'Option value',
           desc: 'For option: ' + _jobOptionData[x].name
+        }
+      });
+      expvars.push({
+        value: mkvar('unquotedoption.' + _jobOptionData[x].name),
+        data: {
+          category: 'Options',
+          title: 'Option value',
+          desc: 'Unquoted value for option: ' + _jobOptionData[x].name
         }
       });
       if (_jobOptionData[x].multivalued == true) {

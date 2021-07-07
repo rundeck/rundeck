@@ -34,10 +34,8 @@
           kind: 'event'
   )}"/>
 
-    <feature:disabled name="legacyExecOutputViewer">
-      <asset:javascript src="static/css/pages/command.css"/>
-      <asset:javascript src="static/pages/command.js"/>
-    </feature:disabled>
+    <asset:javascript src="static/css/pages/command.css"/>
+    <asset:javascript src="static/pages/command.js"/>
     <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>

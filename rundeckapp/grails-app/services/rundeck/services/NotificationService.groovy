@@ -520,7 +520,7 @@ public class NotificationService implements ApplicationContextAware{
                     def webhookfailure=false
                     urlarr.each{String urlstr->
                         //perform token expansion within URL.
-                        String newurlstr=expandWebhookNotificationUrl(urlstr,exec,source,trigger)
+                        String newurlstr=expandWebhookNotificationUrl(urlstr,exec,source,trigger, content?.export)
                         try{
                             def result= postDataUrl(newurlstr, n.format,payloadStr, trigger, state, exec.id.toString(), method)
                             if(!result.success){
@@ -648,6 +648,8 @@ public class NotificationService implements ApplicationContextAware{
         def dcontext = content.context?.getSharedDataContext()?.consolidate()?.getData(ContextView.global())?.getData() ?: [:] //usage of modified global context
         def mailcontext = DataContextUtils.addContext("job", userData, null)
         def context = DataContextUtils.merge(dcontext, mailcontext)
+        def exportcontext = content.export ?:[:]
+        context = DataContextUtils.merge(context, exportcontext)
         context
     }
     /**
@@ -775,18 +777,21 @@ public class NotificationService implements ApplicationContextAware{
         true
     }
 
-    String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger){
+    String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger, Map export){
         def state= exec.executionState
+        def props = export ?: [:]
+
         /**
          * Expand the URL string's embedded property references of the form
          * ${job.PROPERTY} and ${execution.PROPERTY}.  available properties are
          * limited
          */
-        def props=[
+         props << [
             job:[id:job.extid,name:job.jobName,group:job.groupPath?:'',project:job.project],
             execution:[id:exec.id,status:state,user:exec.user],
             notification:[trigger:trigger]
         ]
+
         def invalid = []
         def keys= props.keySet().join('|')
         String srcUrl = url.replaceAll("(\\\$\\{(${keys})\\.(.+?)\\})",

@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+_Note: Bug Reports not following this template may be closed without feedback._
+
 **Getting Help**
 Please use this issue template for reporting identified or suspected **bugs** *only*. For support on configuration or troubleshooting please see [Getting Help](https://docs.rundeck.com/docs/manual/02-getting-help.html#enterprise-support) for the appropriate channels.
 

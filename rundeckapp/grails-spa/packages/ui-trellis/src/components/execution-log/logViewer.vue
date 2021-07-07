@@ -305,8 +305,11 @@ export default class LogViewer extends Vue {
 
     @Watch('logSize')
     checkForOversize(val: number, oldVal: number) {
-      if (val > this.maxLogSize)
+      if (val > this.maxLogSize) {
         this.overSize = true
+        this.nextProgress = 100
+        this.completed = true
+      }
     }
 
     @Watch('consumeLogs')
@@ -368,7 +371,7 @@ export default class LogViewer extends Vue {
 
         if (viewer.execCompleted && viewer.size > this.maxLogSize) {
           this.logSize = viewer.size
-          this.nextProgress = -1
+          this.nextProgress = 0
           this.updateProgress(100)
           return
         }
@@ -442,10 +445,10 @@ export default class LogViewer extends Vue {
       (async (cancel: CancellationToken) => {
         const update = () => {this.progress = this.nextProgress}
         setTimeout(update, delay)
-        while(!cancel.cancellationRequested && this.progress > -1) {
+        while(!cancel.cancellationRequested) {
           await new Promise((res, rej) => {setTimeout(res, 1000)})
           if (this.progress == 100)
-            this.nextProgress = -1
+            this.cancelProgress?.cancel()
           update()
         }
       })(this.cancelProgress.token)
@@ -541,7 +544,7 @@ export default class LogViewer extends Vue {
 
             if (!this.viewer.completed) {
               this.resp = this.viewer.getOutput(this.batchSize)
-              await new Promise((res, rej) => setTimeout(() => {res()},0))
+              await new Promise<void>((res, rej) => setTimeout(() => {res()},0))
             }
 
             this.execCompleted = this.viewer.execCompleted

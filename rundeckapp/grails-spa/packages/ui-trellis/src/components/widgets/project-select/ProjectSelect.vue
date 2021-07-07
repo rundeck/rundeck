@@ -12,24 +12,26 @@
                         placeholder="Search all projects"/>
                 </div>
             </div>
-            <RecycleScroller @foo="alert('Foo')"
-                ref="scroller"
-                :items="projects.search(searchTerm)"
-                :item-size="25"
-                :key="projects.search(searchTerm).length"
-                v-slot="{ item }"
-                key-field="name"
-                class="scroller"
-            >
-                <div role="button" tabindex="0" class="scroller__item" :title="item.name" 
-                    @click="itemClicked(item)"
-                    @keypress.enter="itemClicked(item)">
-                    <span>{{item.label || item.name}}</span>
-                </div>
-            </RecycleScroller>
+            <Skeleton :loading="!projects.loaded">
+                <RecycleScroller @foo="alert('Foo')"
+                    ref="scroller"
+                    :items="projects.search(searchTerm)"
+                    :item-size="25"
+                    :key="projects.search(searchTerm).length"
+                    v-slot="{ item }"
+                    key-field="name"
+                    class="scroller"
+                >
+                    <div role="button" tabindex="0" class="scroller__item" :title="item.name" 
+                        @click="itemClicked(item)"
+                        @keypress.enter="itemClicked(item)">
+                        <span>{{item.label || item.name}}</span>
+                    </div>
+                </RecycleScroller>
+            </Skeleton>
         </div>
         <div class="widget-section" style="height: 40px; flex-grow: 0; flex-shrink: 0;border-top: solid 1px grey; padding-left: 10px">
-            <a class="text-info" href="/" @click@keypress.enter="handleSelect">View All Projects</a>
+            <a class="text-info" :href="allProjectsLink" @click@keypress.enter="handleSelect">View All Projects</a>
         </div>
     </div>
 </template>
@@ -37,19 +39,16 @@
 <script lang="ts">
 import Vue from 'vue'
 import {Component, Inject} from 'vue-property-decorator'
+import { autorun } from 'mobx'
 import {Observer} from 'mobx-vue'
-
+import PerfectScrollbar from 'perfect-scrollbar'
 import { RecycleScroller } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 
+import { getAppLinks } from '../../../rundeckService'
 import {RootStore} from '../../../stores/RootStore'
-
 import { ProjectStore, Project } from '../../../stores/Projects'
-
-import PerfectScrollbar from 'perfect-scrollbar'
-
-import { autorun } from 'mobx'
-
+import Skeleton from '../../skeleton/Skeleton.vue'
 
 RecycleScroller.updated = function() {
     if (!this.ps)
@@ -61,13 +60,18 @@ RecycleScroller.updated = function() {
 const destroy = RecycleScroller.beforeDestroy
 RecycleScroller.beforeDestroy = function() {
     destroy.bind(this)()
-    this.ps.destroy()
-    this.ps = null
+    if (this.ps) {
+        try {
+            this.ps.destroy()
+            this.ps = null
+        } catch {}
+    }
 }
 
 @Observer
 @Component({components: {
-    RecycleScroller
+    RecycleScroller,
+    Skeleton
 }})
 export default class ProjectSelect extends Vue {
     @Inject()
@@ -78,6 +82,10 @@ export default class ProjectSelect extends Vue {
     ps!: PerfectScrollbar
 
     searchTerm: string = ''
+
+    get allProjectsLink(): string {
+        return getAppLinks().menuHome
+    }
 
     created() {
         this.projects = this.rootStore.projects
@@ -162,4 +170,10 @@ export default class ProjectSelect extends Vue {
     padding-right: 12px;
     padding-left: 34px;
 }
+
+.skeleton {
+    --skel-color: #eeeeee !important;
+    margin: 0 10px 0 10px;
+}
+
 </style>

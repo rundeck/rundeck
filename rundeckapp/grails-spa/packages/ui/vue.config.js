@@ -10,7 +10,6 @@ module.exports = {
     'components/project-picker': { entry: './src/components/project-picker/main.ts'},
     'components/first-run': { entry: './src/components/first-run/main.ts' },
     'components/theme': { entry: './src/components/theme/main.ts'},
-    'components/theme-next': { entry: './src/components/theme/next.ts'},
     'components/tour': { entry: './src/components/tour/main.js'},
     'components/version-notification': { entry: './src/components/version-notification/main.js'},
     'components/version': { entry: './src/components/version/main.js'},
@@ -38,10 +37,10 @@ module.exports = {
     /** Workaround for Vue CLI accounting for nested page paths
      * https://github.com/vuejs/vue-cli/issues/4378
     */
-    extract: {
+    extract: process.env.VUE_APP_CSS_EXTRACT == 'true' ? {
       filename: '/css/[name].css',
       chunkFilename: '/css/[name].css',
-    },
+    } : false,
     loaderOptions: {
       less: {
         lessOptions: {
@@ -72,6 +71,17 @@ module.exports = {
     output: {
       filename: '[name].js',
       library: 'rundeckCore',
+    },
+    devServer: {
+      hot: true,
+      watchOptions: {
+        followSymlinks: true,
+      },
+      proxy: {
+        ".": {
+          target: "http://localhost:4440"
+        }
+      }
     },
     externals: {'vue': 'Vue'},
     plugins: [

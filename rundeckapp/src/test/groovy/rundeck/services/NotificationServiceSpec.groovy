@@ -41,6 +41,7 @@ import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import grails.testing.web.GrailsWebUnitTest
 import grails.util.Holders
 import grails.web.mapping.LinkGenerator
 import okhttp3.mockwebserver.MockResponse
@@ -63,7 +64,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 7/12/16.
  */
-class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService> {
+class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest {
 
     List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
 
@@ -1003,6 +1004,91 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
 
         then:
         1 * service.frameworkService.getProjectGlobals("Test")
+
+    }
+
+    def "export variables replace values in webhook url"() {
+        given:
+        def (job, execution) = createTestJob()
+        def exportMap = [export:[export:[var:"testVar"], job:[id:222,name: "testName"], execution:[user:"fakeUser", status: "failed"]]]
+
+        when:
+        String url = 'http://test.com?id=${job.id}&user=${execution.user}&status=${execution.status}&exportVar=${export.var}&jobName=${job.name}'
+        String updatedUrl = service.expandWebhookNotificationUrl(url, execution, job,"trigger", exportMap.export )
+
+        then:
+        updatedUrl.equals("http://test.com?id=test1&user=bob&status=succeeded&exportVar=testVar&jobName=red+color")
+        job.jobName.toString().encodeAsURL() == "red+color"
+
+        when:
+        url = 'http://test.com?user=${execution.user}&status=${execution.status}&jobName=${job.name}'
+        updatedUrl = service.expandWebhookNotificationUrl(url, execution, job,"trigger", null )
+
+        then:
+        updatedUrl.equals("http://test.com?user=bob&status=succeeded&jobName=red+color")
+        job.jobName.toString().encodeAsURL() == "red+color"
+
+    }
+
+    def "generate notification with export context"() {
+        given:
+        def (job, execution) = createTestJob()
+
+        def globalContext = new BaseDataContext([globals: [testmail: 'bob@example.com'], job:[name: job.jobName, project: job.project, id: job.uuid],
+                                                 ])
+
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
+
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    1 * getSharedDataContext() >> shared
+                },
+                export: [exportVarGroup1:[testName: 'test', description: 'test description'],
+                         exportVarGroup2:[testSubject: 'test123', testTitle: 'test2']]
+
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'HttpNotificationPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+        service.executionService = Mock(ExecutionService) {
+            getEffectiveSuccessNodeList(_) >> []
+        }
+
+        when:
+
+        def execMap = null
+        Map context = null
+        (context, execMap) = service.generateNotificationContext(execution, content, job)
+
+        then:
+        context != null
+        context.exportVarGroup1 != null
+        context.exportVarGroup2 != null
+        context.exportVarGroup1.description == 'test description'
+        context.exportVarGroup1.testName == 'test'
+        context.exportVarGroup2.testSubject == 'test123'
+        context.exportVarGroup2.testTitle == 'test2'
 
     }
 
