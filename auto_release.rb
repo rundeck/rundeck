@@ -8,7 +8,7 @@ class AutoRelease
     }
     
     def initialize(mode: ARGV[0])
-        sanitized_arg = mode.match(/^--(.*)$/i).captures
+        sanitized_arg = mode.match(/^(--)?(.*)$/i).captures
 
         @app_url = nil
         @version = nil
@@ -16,7 +16,7 @@ class AutoRelease
         @full_version = nil
         @release_tag = nil
         @release_branch = nil
-        @mode = sanitized_arg[0].downcase || "live"
+        @mode = sanitized_arg[1].downcase || "live"
         @debug = @mode == "test" ? true : false
     end
 
@@ -25,9 +25,16 @@ class AutoRelease
         pass_count = 0
 
         puts "---Auto-Releaser Power On Self Test---"
-        if @mode == "test"
+        case @mode
+        when "test"
             puts "✓ TEST MODE ACTIVE"
             @mode = "auto_release_test"
+        when "help", "noop", "live"
+            puts "✓ Valid mode selected"
+        else
+            puts @mode
+            puts "Invalid mode selected! Please try again using a valid argument. Launch using --help for details."
+            user_exit(1)
         end
 
         if GH_URLS.key?(current_dir.downcase.to_sym)
@@ -45,7 +52,7 @@ class AutoRelease
             puts "✓ No uncommitted changes"
         end
 
-        if pass_count <= 3
+        if pass_count >= 3
             @app_url = GH_URLS[current_dir]
             puts "Mode is #{@mode}"
             puts "Startup check complete!"
@@ -72,6 +79,7 @@ class AutoRelease
         Usage:
         "./auto_release.rb --noop" - Steps you through the prompts and flow of the script and shows you the commands that are run, but makes no actual changes.
         "./auto_release.rb --help" - Brings up this dialog.
+        "./auto_release.rb --test" - Will make changes to a test repo when run from there ('git clone git@github.com:rundeck/auto_release_test.git').
         TEXT
     end
 
