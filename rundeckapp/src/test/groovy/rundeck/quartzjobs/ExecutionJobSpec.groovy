@@ -35,7 +35,6 @@ import rundeck.services.JobSchedulesService
 /**
  * Created by greg on 4/12/16.
  */
-//@Mock([ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats])
 class ExecutionJobSpec extends HibernateSpec {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats] }
@@ -91,6 +90,46 @@ class ExecutionJobSpec extends HibernateSpec {
 
         then:
             1 * jobSchedulerService.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.skip
+            job.executionId == e.id
+    }
+    def "execute catches exception during executeAsyncBegin"() {
+        given:
+            ScheduledExecution se = createJob()
+            Execution e = createExecution(se)
+            ExecutionService es = Mock(ExecutionService)
+            ExecutionUtilService eus = Mock(ExecutionUtilService)
+            FrameworkService fwk = Mock(FrameworkService)
+            JobSchedulesService jobSchedulesService = Mock(JobSchedulesService)
+            JobSchedulerService jobSchedulerService = Mock(JobSchedulerService)
+            AuthContextProvider authContextProvider = Mock(AuthContextProvider)
+            def datamap = new JobDataMap([
+                executionId: e.id.toString(),
+                scheduledExecutionId: se.id.toString(),
+                executionService:es,
+                executionUtilService: eus,
+                frameworkService: fwk,
+                jobSchedulerService: jobSchedulerService,
+                jobSchedulesService: jobSchedulesService,
+                authContext:Mock(UserAndRolesAuthContext),
+                authContextProvider:authContextProvider
+            ])
+            ExecutionJob job = new ExecutionJob()
+            def context = Mock(JobExecutionContext) {
+                getJobDetail() >> Mock(JobDetail) {
+                    getJobDataMap() >> datamap
+                }
+            }
+            1 * es.executeAsyncBegin(*_)>>{
+                throw new Exception("failed to start execution")
+            }
+
+        when:
+            job.execute(context)
+
+        then:
+            1 * jobSchedulerService.beforeExecution(_, _, _) >> JobScheduleManager.BeforeExecutionBehavior.proceed
+            1 * jobSchedulerService.afterExecution(_, _, _)
+            1 * es.saveExecutionState(se.id, e.id, { it.status == 'failed' }, null, !null)
             job.executionId == e.id
     }
 
