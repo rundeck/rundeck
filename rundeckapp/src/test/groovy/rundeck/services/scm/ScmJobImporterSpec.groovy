@@ -165,4 +165,5 @@ class ScmJobImporterSpec extends Specification {
 class JobRenamedImpTemp implements JobRenamed{
     String uuid
     String sourceId
+    String renamedPath
 }
