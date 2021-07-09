@@ -1031,7 +1031,9 @@ class ScmService {
                 if(!metadata){
                     metadata = ["srcId": importMetadata["srcId"]]
                 }else{
-                    metadata["srcId"] = importMetadata["srcId"]
+                    if(!metadata["srcId"]) {
+                        metadata["srcId"] = importMetadata["srcId"]
+                    }
                 }
             }
         }
