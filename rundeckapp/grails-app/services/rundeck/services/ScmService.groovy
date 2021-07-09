@@ -969,7 +969,28 @@ class ScmService {
      * @return metadata map
      */
     public Map getJobPluginMeta(ScheduledExecution job, String type) {
-        jobMetadataService.getJobPluginMeta(job, type)
+        Map meta = jobMetadataService.getJobPluginMeta(job, type)
+
+        if(type == STORAGE_NAME_EXPORT){
+            def importPluginMeta = jobMetadataService.getJobPluginMeta(job, STORAGE_NAME_IMPORT)
+
+            def importSourceId = null
+            if(importPluginMeta && importPluginMeta["srcId"]){
+                importSourceId = importPluginMeta["srcId"]
+            }
+
+            if(importSourceId){
+                if (!meta){
+                    meta = ["srcId":importSourceId]
+                }else{
+                    if(!meta["srcId"]) {
+                        meta["srcId"] = importSourceId
+                    }
+                }
+            }
+        }
+
+        meta
     }
 
     JobScmReference scmJobRef(ScheduledExecution job, JobSerializer serializer = null, Map metadata) {
@@ -1003,6 +1024,19 @@ class ScmService {
      */
     JobScmReference scmJobRef(JobRevReference reference, boolean exportIntegration, JobSerializer serializer) {
         def metadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, exportIntegration?STORAGE_NAME_EXPORT:STORAGE_NAME_IMPORT)
+
+        if(exportIntegration){
+            def importMetadata = jobMetadataService.getJobPluginMeta(reference.project, reference.id, STORAGE_NAME_IMPORT)
+            if(importMetadata && importMetadata["srcId"]){
+                if(!metadata){
+                    metadata = ["srcId": importMetadata["srcId"]]
+                }else{
+                    metadata["srcId"] = importMetadata["srcId"]
+                }
+            }
+        }
+
+
         scmJobRef(reference, metadata, serializer)
     }
     /**
@@ -1436,7 +1470,28 @@ class ScmService {
 
     Map<String, Map> getJobsPluginMeta(String project, boolean isExport){
         String type = isExport ? STORAGE_NAME_EXPORT:STORAGE_NAME_IMPORT
-        getJobsPluginMeta(project, type)
+        Map<String, Map> pluginMeta = getJobsPluginMeta(project, type)
+        if(isExport){
+            // check if import plugin has sourceId set
+            Map<String, Map> importPluginMeta = getJobsPluginMeta(project, STORAGE_NAME_IMPORT)
+            importPluginMeta?.each {id, meta->
+                if(pluginMeta.get(id)){
+                    def exportMeta = pluginMeta.get(id)
+                    if(meta["srcId"] && !exportMeta["srcId"]){
+                        exportMeta["srcId"] = meta["srcId"]
+                        pluginMeta.put(id, exportMeta)
+                    }
+                }else{
+                    if(meta["srcId"]){
+                        pluginMeta.put(id, ["srcId": meta["srcId"]])
+                    }
+                }
+
+            }
+        }
+        pluginMeta
+
+
     }
 
     Map<String, Map> getJobsPluginMeta(String project, String type){
@@ -1451,6 +1506,9 @@ class ScmService {
         if(jobReference.scmImportMetadata == null){
             if(jobStatus.commit){
                 def newmeta = [name: job.getJobName(),groupPath: job.getGroupPath(),version: job.version, pluginMeta: jobStatus.commit.asMap()]
+                if(jobReference.sourceId){
+                    newmeta.put("srcId", jobReference.sourceId)
+                }
                 jobMetadataService.setJobPluginMeta(
                         job,
                         STORAGE_NAME_EXPORT,
