@@ -1726,8 +1726,10 @@ class ScmController extends ControllerBase {
 
         def scmImportRenamedPath = null
         if(!isExport){
-            JobRenamed scmImportRenamed = importStatus.get(job.extid).jobRenamed
-            scmImportRenamedPath = scmImportRenamed.renamedPath
+            JobRenamed scmImportRenamed = importStatus.get(job.extid)?.jobRenamed
+            if(scmImportRenamed){
+                scmImportRenamedPath = scmImportRenamed.renamedPath
+            }
         }
 
         def scmExportRenamedPath = isExport ? scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid) : null
