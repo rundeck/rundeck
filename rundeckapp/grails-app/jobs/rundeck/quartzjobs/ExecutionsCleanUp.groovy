@@ -12,7 +12,6 @@ import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.services.*
-import rundeck.services.jobs.ResolvedAuthJobService
 
 class ExecutionsCleanUp implements InterruptableJob {
     static Logger logger = LoggerFactory.getLogger(ExecutionsCleanUp)
@@ -320,18 +319,6 @@ class ExecutionsCleanUp implements InterruptableJob {
             throw new RuntimeException("JobDataMap contained invalid ExecutionService type: " + es.getClass().getName())
         }
         return es
-
-    }
-
-    private ResolvedAuthJobService fetchResolvedAuthJobService(def jobDataMap) {
-        def raj = jobDataMap.get("resolvedAuthJobService")
-        if (raj==null) {
-            throw new RuntimeException("ResolvedAuthJobService could not be retrieved from JobDataMap!")
-        }
-        if (! (raj instanceof ResolvedAuthJobService)) {
-            throw new RuntimeException("JobDataMap contained invalid ResolvedAuthJobService type: " + raj.getClass().getName())
-        }
-        return raj
 
     }
 

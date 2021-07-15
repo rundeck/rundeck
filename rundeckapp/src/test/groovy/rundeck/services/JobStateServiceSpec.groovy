@@ -16,6 +16,12 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.jobs.JobService
+import org.rundeck.core.executions.Provenance
+import spock.lang.Unroll
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
@@ -499,12 +505,65 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             }
         }
         when:
-            def ref = service.runJob(auth, job, (String) null, null, null)
+            def ref = service.runJob(auth, Mock(JobService.RunJob){
+                getJobReference()>>job
+            })
         then:
         ref
             ref.id == e1.id.toString()
             ref.job
             ref.job.id == jobUuid
+    }
+
+    @Unroll
+    void "start job with provenance"() {
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def projectName = 'testProj'
+        JobReference job = new JobReferenceImpl()
+        job.project = projectName
+        job.id = jobUuid
+        def auth = new SubjectAuthContext(null, null)
+
+        service.frameworkService = Stub(FrameworkService) {
+            kickJob(!null, !null, null, { it.provenance == provenance && it.executionType == expectedExecType }) >> {
+                Map<String, Object> ret = new HashMap<>()
+                ret.success = true
+                ret.executionId = '1'
+                ret.execution = [
+                    asReference: {
+                        Mock(ExecutionReference){
+                            getId()>>'1'
+                            getJob()>>Mock(JobReference){
+                                getId()>>jobUuid
+                            }
+                        }
+                    }
+                ]
+                ret
+            }
+        }
+        given:
+            setTestExecutions(projectName, jobUuid)
+
+        when:
+            def ref = service.runJob(auth, Mock(JobService.RunJob){
+               getJobReference()>>job
+                getProvenance()>>Mock(Provenance){
+                    getType()>>execType
+                    getMeta()>>provenance
+                }
+            })
+        then:
+            ref
+            ref.id == '1'
+            ref.job
+            ref.job.id == jobUuid
+        where:
+            execType | provenance      | expectedExecType
+            'user'   | [source: 'xyz'] | 'user'
+            'xyz'    | [source: 'xyz'] | 'xyz'
+            null     | [source: 'xyz'] | 'user'
+            null     | null            | 'user'
     }
 
     void "start job without auth"(){
@@ -523,7 +582,9 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         setTestExecutions(projectName,jobUuid)
 
         when:
-            def ref = service.runJob(null, job, (String) null, null, null)
+            def ref = service.runJob(null,Mock(JobService.RunJob){
+                getJobReference()>>job
+            })
         then:
         !ref
         JobNotFound ex = thrown()
@@ -614,7 +675,11 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             def execRef = Mock(ExecutionReference)
 
         when:
-            def result = service.runJob(auth, ref, opts, null, null, meta)
+            def result = service.runJob(auth, Mock(JobService.RunJob){
+                getJobReference()>>ref
+                getOptionData()>>opts
+                getExtraMeta()>>meta
+            })
         then:
             1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(auth, job, _, projectName) >> true
             1 * service.frameworkService.kickJob(

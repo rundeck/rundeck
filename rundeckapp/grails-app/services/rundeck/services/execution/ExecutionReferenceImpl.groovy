@@ -2,6 +2,7 @@ package rundeck.services.execution
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobReference
+import org.rundeck.core.executions.Provenance
 import rundeck.services.JobReferenceImpl
 
 
@@ -24,6 +25,7 @@ class ExecutionReferenceImpl implements ExecutionReference {
     Map metadata
     boolean scheduled
     String executionType
+    Provenance provenance
 
     @Override
     String toString() {

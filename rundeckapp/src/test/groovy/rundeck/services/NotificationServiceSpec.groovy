@@ -47,6 +47,8 @@ import grails.web.mapping.LinkGenerator
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import org.grails.plugins.converters.ConvertersGrailsPlugin
+import org.grails.web.converters.configuration.ConvertersConfigurationHolder
 import org.rundeck.app.spi.Services
 import rundeck.CommandExec
 import rundeck.Execution
@@ -68,7 +70,13 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
 
     List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
 
+    void setupSpec() {
+        defineBeans(new ConvertersGrailsPlugin())
+    }
 
+    void cleanupSpec() {
+        ConvertersConfigurationHolder.clear()
+    }
     private List createTestJob() {
 
         def job = new ScheduledExecution(
@@ -766,30 +774,38 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         httpServer.start()
         httpServer.enqueue(new MockResponse().setResponseCode(200).setBody("ok"))
         String endpoint = httpServer.url("hook/endpoint").toString()
-        String chkBody = null
-        service.metaClass.createJsonNotificationPayload = { String trigger, Execution exec ->
-            chkBody = jsonBody
-        }
-        service.metaClass.createXmlNotificationPayload = { String trigger, Execution exec ->
-            chkBody = xmlBody
-        }
 
         job.notifications = [new Notification(eventTrigger:"onsuccess",type: "url",format:format,content:endpoint)]
         job.save()
+        service.grailsLinkGenerator=Mock(LinkGenerator)
+        service.executionService=Mock(ExecutionService)
+        service.apiService=Mock(ApiService){
+            (format=='json'?1:0 )* renderExecutionsJson(_,_,_,_)>>{
+                it[2].executions=it[0]
+                it[2].paging=it[1]
+            }
+            (format=='json'?0:1 ) * renderExecutionsXml(_,_,_,_)>>{
+                it[2].executions(it[0])
+            }
+        }
 
 
         when:
         service.triggerJobNotification("success",job,content)
         RecordedRequest rq = httpServer.takeRequest()
 
+        def result = rq.body.readUtf8()
         then:
-        rq.body.readUtf8() == chkBody
+        result.startsWith(starts)
+        result.endsWith(ends)
 
+        cleanup:
+        httpServer.shutdown()
         where:
-        format  | jsonBody   | xmlBody
-        "json"  | "{}"       | null
-        "xml"   | null       | "<xml></xml>"
-        null    | null       | "<xml></xml>"
+        format | starts          | ends
+        "json" | "{"             | "}"
+        "xml"  | '<notification' | "</notification>"
+        null   | '<notification' | "</notification>"
     }
 
     @Unroll

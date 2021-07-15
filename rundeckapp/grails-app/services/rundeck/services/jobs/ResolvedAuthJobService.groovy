@@ -25,7 +25,10 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
+import grails.plugins.mail.MailMessageBuilder
 import groovy.transform.CompileStatic
+import org.rundeck.core.executions.Provenance
+import org.springframework.context.ApplicationContext
 
 /**
  * Created by greg on 2/3/15.
@@ -69,45 +72,24 @@ class ResolvedAuthJobService implements JobService {
     }
 
 
-    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
-        throws JobNotFound, JobExecutionError {
-        try {
-            authJobService.runJob(authContext, jobReference, jobArgString, jobFilter, asUser).id
-        } catch (JobExecutionError ignored) {
-            return null;
-        }
+    @Override
+    ExecutionReference runJob(final RunJob runJob) throws JobNotFound, JobExecutionError {
+        authJobService.runJob(authContext, runJob)
     }
 
-    ExecutionReference runJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
-        throws JobNotFound, JobExecutionError {
-        authJobService.runJob(authContext, jobReference, jobArgString, jobFilter, asUser)
+    @Override
+    Object sendMail(@DelegatesTo(strategy = 1, value = MailMessageBuilder.class) final Closure dsl) {
+        return null
     }
 
-    ExecutionReference runJob(
-            JobReference jobReference,
-            String jobArgString,
-            String nodeFilter,
-            String asUser,
-            Map<String, ?> meta
-    )
-            throws JobNotFound, JobExecutionError {
-        authJobService.runJob(authContext, jobReference, jobArgString, nodeFilter, asUser, meta)
+    @Override
+    ApplicationContext getApplicationContext() {
+        return null
     }
 
-    ExecutionReference runJob(JobReference jobReference, Map optionData, String jobFilter, String asUser)
-        throws JobNotFound, JobExecutionError {
-        authJobService.runJob(authContext, jobReference, optionData, jobFilter, asUser)
-    }
+    @Override
+    void setApplicationContext(final ApplicationContext applicationContext) {
 
-    ExecutionReference runJob(
-            JobReference jobReference,
-            Map optionData,
-            String jobFilter,
-            String asUser,
-            Map<String, ?> meta
-    )
-            throws JobNotFound, JobExecutionError {
-        authJobService.runJob(authContext, jobReference, optionData, jobFilter, asUser, meta)
     }
 
     Map deleteBulkExecutionIds(Collection ids, String asUser){

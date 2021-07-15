@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.gorm.transactions.Transactional
+import org.rundeck.core.executions.Provenance
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -238,59 +239,26 @@ class JobStateService implements AuthorizingJobService {
 
 
     @Override
-    ExecutionReference runJob(
-        UserAndRolesAuthContext auth,
-        JobReference jobReference,
-        String jobArgString,
-        String jobFilter,
-        String asUser
-    )
+    ExecutionReference runJob(final UserAndRolesAuthContext auth, final JobService.RunJob runJobRequest)
         throws JobNotFound, JobExecutionError {
-        runJob(auth, jobReference, jobArgString, jobFilter, asUser, null)
-    }
-
-    @Override
-    ExecutionReference runJob(
-            UserAndRolesAuthContext auth,
-            JobReference jobReference,
-            String jobArgString,
-            String jobFilter,
-            String asUser,
-            Map<String, ?> meta
-    )
-            throws JobNotFound, JobExecutionError {
-        def inputOpts = ["argString": jobArgString]
-        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser, meta)
-    }
-
-    @Override
-    ExecutionReference runJob(
-        UserAndRolesAuthContext auth,
-        JobReference jobReference,
-        Map optionData,
-        String jobFilter,
-        String asUser
-    )
-        throws JobNotFound, JobExecutionError {
-        runJob(auth, jobReference, optionData, jobFilter, asUser, null)
-    }
-
-    @Override
-    ExecutionReference runJob(
-            UserAndRolesAuthContext auth,
-            JobReference jobReference,
-            Map optionData,
-            String jobFilter,
-            String asUser,
-            Map<String, ?> meta
-    )
-            throws JobNotFound, JobExecutionError {
-        def inputOpts = [:]
-        optionData.each { k, v ->
-            inputOpts['option.' + k] = v
+        def inputOpts = [executionType: runJobRequest.provenance?.type, provenance: runJobRequest.provenance?.meta]
+        if(runJobRequest.argString){
+            inputOpts['argString']=runJobRequest.argString
+        }else {
+            runJobRequest.optionData?.each { k, v ->
+                inputOpts['option.' + k] = v
+            }
         }
-        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser, meta)
+        return doRunJob(
+            runJobRequest.jobFilter,
+            inputOpts,
+            runJobRequest.jobReference,
+            auth,
+            runJobRequest.asUser,
+            runJobRequest.extraMeta
+        )
     }
+
 
     ExecutionReference doRunJob(
             String jobFilter,
@@ -319,7 +287,9 @@ class JobStateService implements AuthorizingJobService {
             }
         }
 
-        inputOpts['executionType'] = 'user'
+        if (!inputOpts['executionType']) {
+            inputOpts['executionType'] = 'user'
+        }
 
         def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
         if (!se || !rundeckAuthContextEvaluator.authorizeProjectJobAny(

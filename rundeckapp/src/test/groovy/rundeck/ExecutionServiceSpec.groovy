@@ -213,6 +213,51 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e2 != null
         e2.executionType == 'scheduled'
     }
+    void "retry execution new execution provenance"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        def exec = new Execution(
+                scheduledExecution: job,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'user',
+                project: 'AProject',
+                executionType: 'scheduled',
+                provenance: [a:'b']
+        ).save()
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
+        when:
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12',executionType: 'scheduled',provenance:[a:'b']], true, exec.id)
+
+        then:
+        e2 != null
+        e2.executionType == 'scheduled'
+        e2.provenanceInfo.type=='scheduled'
+        e2.provenanceInfo.meta==[a:'b']
+    }
 
     void "create execution as user"() {
 

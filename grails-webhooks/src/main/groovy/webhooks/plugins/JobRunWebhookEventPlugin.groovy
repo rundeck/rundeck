@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.text.SimpleTemplateEngine
+import org.rundeck.core.executions.Provenance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -118,10 +119,20 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
             )
             ExecutionReference exec =
                     jobService.runJob(
-                            jobReference,
-                            expandedArgString,
-                            expandedNodeFilter,
-                            expandedAsUser
+                        JobService.RunJob.builder()
+                                  .jobReference(jobReference)
+                                  .argString(expandedArgString)
+                                  .jobFilter(expandedNodeFilter)
+                                  .asUser(expandedAsUser)
+                                  .provenance(
+                                      Provenance.builder()
+                                                .type("webhook")
+                                                .meta([
+                                                    eventId: data.id,
+                                                ])
+                                                .build()
+                                  )
+                                  .build()
                     )
             log.info("job result: ${exec}")
             return new DefaultJsonWebhookResponder([jobId:exec.job.id, executionId:exec.id])
