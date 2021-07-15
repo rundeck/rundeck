@@ -34,6 +34,8 @@ class ScmLoaderService implements EventBusAware {
     ConfigurationService configurationService
     public static final long DEFAULT_LOADER_DELAY = 0
     public static final long DEFAULT_LOADER_INTERVAL_SEC = 20
+    public static final long INIT_RETRY_TIMES = 5
+    public static final long INIT_RETRY_TIMES_DELAY = 1000
 
     /**
      * scheduledExecutor to load job SCM cache
@@ -115,18 +117,33 @@ class ScmLoaderService implements EventBusAware {
                         scmPluginMeta.put(projectIntegration, pluginConfigData)
                     }
                     if(pluginConfigData && pluginConfigData.enabled){
-                        try {
-                            if (integration == scmService.EXPORT) {
-                                processScmExportLoader(project, pluginConfigData, state)
-                            }else{
-                                processScmImportLoader(project, pluginConfigData, state)
-                            }
+                        boolean process = false
+                        int retryCount = 0
+                        long retryTimes = getScmLoaderInitialRetryTimes()
+                        long retryDelay = getScmLoaderInitialRetryDelay()
 
-                        } catch (Throwable t) {
-                            log.error("processMessages error: $project/$integration: ${t.message}")
-                            scmFailedProjectInit.put(projectIntegration, pluginConfigData)
-                            removingLoaderProcess(project, integration)
+                        while (!process){
+                            try {
+                                if (integration == scmService.EXPORT) {
+                                    processScmExportLoader(project, pluginConfigData, state)
+                                }else{
+                                    processScmImportLoader(project, pluginConfigData, state)
+                                }
+                                process = true
+
+                            } catch (Throwable t) {
+                                retryCount++
+                                log.error("processMessages error: $project/$integration: ${t.message} retrying ${retryCount}/${retryTimes}")
+                                Thread.sleep(retryDelay)
+
+                                if(retryCount>retryTimes){
+                                    scmFailedProjectInit.put(projectIntegration, pluginConfigData)
+                                    process = true
+                                    removingLoaderProcess(project, integration)
+                                }
+                            }
                         }
+
                     }else{
                         removingLoaderProcess(project, integration)
                     }
@@ -150,6 +167,15 @@ class ScmLoaderService implements EventBusAware {
 
     long getScmLoaderInitialDelaySeconds() {
         configurationService?.getLong('scmLoader.delay', DEFAULT_LOADER_DELAY) ?: DEFAULT_LOADER_DELAY
+    }
+
+
+    long getScmLoaderInitialRetryTimes() {
+        configurationService?.getLong('scmLoader.init.retry', INIT_RETRY_TIMES) ?: INIT_RETRY_TIMES
+    }
+
+    long getScmLoaderInitialRetryDelay() {
+        configurationService?.getLong('scmLoader.init.delay', INIT_RETRY_TIMES_DELAY) ?: INIT_RETRY_TIMES_DELAY
     }
 
     long getScmLoaderIntervalSeconds() {
