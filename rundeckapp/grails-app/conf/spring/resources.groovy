@@ -103,6 +103,10 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import org.springframework.session.MapSessionRepository
+import org.springframework.session.web.http.CookieHttpSessionIdResolver
+import org.springframework.session.web.http.DefaultCookieSerializer
+import org.springframework.session.web.http.SessionRepositoryFilter
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.ExecutionValidatorService
@@ -120,6 +124,7 @@ import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
 
 import javax.security.auth.login.Configuration
+import java.util.concurrent.ConcurrentHashMap
 
 beans={
     xmlns context: "http://www.springframework.org/schema/context"
@@ -144,6 +149,24 @@ beans={
             log.warn("rundeck.multiURL enabled but no grails.serverURL found. This feature will be disabled.")
         }
     }
+
+    def defaultCookieSerializer = new DefaultCookieSerializer()
+
+    if (application.config.rundeck.security?.cookie?.domainNamePattern && !"".equals(application.config.rundeck.security.cookie.domainNamePattern)) {
+        defaultCookieSerializer.setDomainNamePattern(application.config.rundeck.security.cookie.domainNamePattern);
+    }
+
+    if (application.config.rundeck.security?.cookie?.name && !"".equals(application.config.rundeck.security.cookie.name)) {
+        defaultCookieSerializer.setCookieName(application.config.rundeck.security?.cookie?.name ? application.config.rundeck.security.cookie.name : "JSESSIONID")
+    }
+
+    def sessionFilter = new MapSessionRepository(new ConcurrentHashMap<>())
+    def sessionIdResolver = new CookieHttpSessionIdResolver()
+    sessionIdResolver.setCookieSerializer(defaultCookieSerializer)
+    springSessionRepositoryFilter(SessionRepositoryFilter, sessionFilter) {
+        httpSessionIdResolver =  sessionIdResolver
+    }
+
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
         services=[grailsApplication: ref('grailsApplication'),
