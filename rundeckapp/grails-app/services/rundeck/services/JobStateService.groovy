@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
@@ -35,7 +36,7 @@ import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.gorm.transactions.Transactional
-import org.rundeck.core.executions.Provenance
+import org.rundeck.core.executions.provenance.Provenance
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -46,7 +47,7 @@ import java.util.concurrent.TimeUnit
 
 @Transactional
 class JobStateService implements AuthorizingJobService {
-    def frameworkService
+    FrameworkService frameworkService
     AppAuthContextEvaluator rundeckAuthContextEvaluator
 
     @Override
@@ -238,10 +239,25 @@ class JobStateService implements AuthorizingJobService {
     }
 
 
+
     @Override
     ExecutionReference runJob(final UserAndRolesAuthContext auth, final JobService.RunJob runJobRequest)
         throws JobNotFound, JobExecutionError {
-        def inputOpts = [executionType: runJobRequest.provenance?.type, provenance: runJobRequest.provenance?.meta]
+        if(!runJobRequest.executionType){
+            throw new JobExecutionError(
+                "executionType is required",
+                runJobRequest.jobReference.id,
+                runJobRequest.jobReference.project
+            )
+        }
+        if(!runJobRequest.provenance){
+            throw new JobExecutionError(
+                "Provenance is required",
+                runJobRequest.jobReference.id,
+                runJobRequest.jobReference.project
+            )
+        }
+        Map inputOpts = new HashMap()
         if(runJobRequest.argString){
             inputOpts['argString']=runJobRequest.argString
         }else {
@@ -249,37 +265,9 @@ class JobStateService implements AuthorizingJobService {
                 inputOpts['option.' + k] = v
             }
         }
-        return doRunJob(
-            runJobRequest.jobFilter,
-            inputOpts,
-            runJobRequest.jobReference,
-            auth,
-            runJobRequest.asUser,
-            runJobRequest.extraMeta
-        )
-    }
 
-
-    ExecutionReference doRunJob(
-            String jobFilter,
-            Map inputOpts,
-            JobReference jobReference,
-            UserAndRolesAuthContext auth,
-            String asUser
-    ) {
-        doRunJob(jobFilter, inputOpts, jobReference, auth, asUser, null)
-    }
-
-    ExecutionReference doRunJob(
-            String jobFilter,
-            Map inputOpts,
-            JobReference jobReference,
-            UserAndRolesAuthContext auth,
-            String asUser,
-            Map<String, ?> meta
-    ) {
-        if (jobFilter) {
-            inputOpts.filter = jobFilter
+        if (runJobRequest.jobFilter) {
+            inputOpts.filter = runJobRequest.jobFilter
             inputOpts['_replaceNodeFilters'] = 'true'
             inputOpts['doNodedispatch'] = true
             if (null == inputOpts['nodeExcludePrecedence']) {
@@ -287,31 +275,31 @@ class JobStateService implements AuthorizingJobService {
             }
         }
 
-        if (!inputOpts['executionType']) {
-            inputOpts['executionType'] = 'user'
-        }
-
-        def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
+        def se = ScheduledExecution.
+            findByUuidAndProject(runJobRequest.jobReference.id, runJobRequest.jobReference.project)
         if (!se || !rundeckAuthContextEvaluator.authorizeProjectJobAny(
             auth,
             se,
             [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
             se.project
         )) {
-            throw new JobNotFound("Not found", jobReference.id, jobReference.project)
+            throw new JobNotFound("Not found", runJobRequest.jobReference.id, runJobRequest.jobReference.project)
         }
-        if (meta) {
-            inputOpts['meta'] = meta
+        if (runJobRequest.extraMeta) {
+            inputOpts['meta'] = runJobRequest.extraMeta
         }
-        def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
+        Map result = frameworkService.kickJob(se, auth, runJobRequest.asUser, inputOpts, runJobRequest.executionType, runJobRequest.provenance)
         if (result && result.success && result.execution) {
             return result.execution.asReference()
         }
-        throw new JobExecutionError(
-            result?.message ?: result?.error ?: "Unknown: ${result}",
-            jobReference.id,
-            jobReference.project
-        )
+        String errorMsg=result?.get('message')
+        if (!errorMsg) {
+            errorMsg = result?.get('error')
+        }
+        if(!errorMsg){
+            errorMsg = "Unknown: ${result}"
+        }
+        throw new JobExecutionError(errorMsg, runJobRequest.jobReference.id, runJobRequest.jobReference.project)
     }
 
 

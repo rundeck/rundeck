@@ -35,6 +35,7 @@ import groovy.mock.interceptor.StubFor
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import org.springframework.context.MessageSource
 import rundeck.services.*
 
@@ -110,7 +111,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
         try{
-            svc.createExecution(se,createAuthContext("user1"),null)
+            svc.createExecution(se,createAuthContext("user1"),null,[:],false,-1,'user',[ProvenanceUtil.generic(test:'value')])
             fail("should fail")
         }catch(ExecutionServiceException ex){
             assertTrue(ex.message.contains('running executions has been reached'))
@@ -121,7 +122,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         1 == 1
     }
     void testCreateExecutionRunningMultiple(){
-        when:
+        given:
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
             project: 'AProject',
@@ -164,7 +165,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
-        def execution=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
+        when:
+        def execution=svc.createExecution(se,createAuthContext("user1"),null,[:],false,-1,'user',[ProvenanceUtil.generic(test:'value')])
         assertNotNull(execution)
 
         then:
@@ -194,8 +199,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             1 * beforeJobExecution(_,_)
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'scheduled'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,'scheduled',[ProvenanceUtil.scheduler(null,null,'asdf')])
         se.refresh()
         then:
             null != (e2)
@@ -247,12 +255,15 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = svc.createExecution(
                 se,
                 createAuthContext("user1", ['a', 'b'] as Set),
                 null,
-                [executionType: 'scheduled']
+                'scheduled',[ProvenanceUtil.scheduler(null,null,'asdf')]
         )
 
         then:
@@ -299,12 +310,16 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = svc.createExecution(
                 se,
                 createAuthContext("user1", ['a,asd', 'b'] as Set),
                 null,
-                [executionType: 'scheduled']
+                'scheduled',
+                [ProvenanceUtil.scheduler(null,null,'asdf')]
         )
 
         then:
@@ -345,8 +360,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['executionType':'user'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,'user',[ProvenanceUtil.generic(test:'value')])
 
         then:
         assertNotNull(e2)
@@ -385,8 +403,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['executionType':'user-scheduled'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,'user-scheduled',[ProvenanceUtil.generic(test:'value')])
 
         then:
         assertNotNull(e2)
@@ -427,8 +448,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user','extra.option.test':'12'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['extra.option.test':'12'],'user',[ProvenanceUtil.generic(test:'value')])
 
         then:
         assertNotNull(e2)
@@ -539,8 +563,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
 
-        Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',('option.test'): testOptionValue])
+        Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [('option.test'): testOptionValue],'user',[ProvenanceUtil.generic(test:'value')])
 
         assertNotNull(e2)
         assertEquals(argString, e2.argString)
@@ -586,9 +613,12 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            0 * setProvenanceForExecution(_,_)
+        }
 
         try{
-            Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',('option.test'): testOptionValue])
+            Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [('option.test'): testOptionValue],'user',[ProvenanceUtil.generic(test:'data')])
             fail("expected exception")
         }catch (ExecutionServiceException e){
             assertEquals(exceptionMessage,e.message)
@@ -629,8 +659,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",filter:'name: monkey'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",filter:'name: monkey'],'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         assertNotNull(e2)
@@ -669,9 +702,12 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
 
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'],'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         assertNotNull(e2)
@@ -711,8 +747,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']],'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         assertNotNull(e2)
@@ -757,8 +796,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e=svc.createExecution(se,createAuthContext('bob'),null,[executionType: 'user'])
+        Execution e=svc.createExecution(se,createAuthContext('bob'),null,'user',[ProvenanceUtil.generic(test:'value')])
 
         then:
         assertNotNull(e)
@@ -807,8 +849,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType: 'user'])
+        Execution e=svc.createExecution(se,createAuthContext("user1"),null,'user',[ProvenanceUtil.generic(test:'value')])
         then:
         assertNotNull(e)
         assertEquals('-a b -c d',e.argString)
@@ -839,9 +884,12 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         assertNull(se.executions)
         when:
-        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test1 asdf -test2 val2b -test4 asdf4'])
+        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[argString:'-test1 asdf -test2 val2b -test4 asdf4'],'user',[ProvenanceUtil.generic(test:'data')])
         then:
         assertNotNull(e)
         assertEquals("secure option value should not be stored",'-test1 asdf -test2 val2b -test3 val3',e.argString)
@@ -871,8 +919,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         }
 
         assertNull(se.executions)
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test2 val2b -test4 asdf4'])
+        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[argString:'-test2 val2b -test4 asdf4'],'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         assertNotNull(e)
@@ -903,8 +954,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         }
 
         assertNull(se.executions)
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test2 val2b -test3 monkey3'])
+        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[argString:'-test2 val2b -test3 monkey3'],'user',[ProvenanceUtil.generic(test:'data')])
         then:
         assertNotNull(e)
         assertEquals('-test1 val1 -test2 val2b -test3 monkey3',e.argString)
@@ -946,8 +1000,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
 //            }
 //        }
             //enforced value failure on test2
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            0 * setProvenanceForExecution(_,_)
+        }
         try {
-            Execution e = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',argString: '-test2 val2D -test3 monkey4'])
+            Execution e = svc.createExecution(se,createAuthContext("user1"),null, [argString: '-test2 val2D -test3 monkey4'],'user',[ProvenanceUtil.generic(test:'data')])
             fail("shouldn't succeed")
         } catch (ExecutionServiceException e) {
             assertTrue(e.message,e.message.contains("domain.Option.validation.allowed.invalid"))
@@ -986,10 +1043,13 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         ms.demand.asBoolean(0..99) { -> true  }
         ms.demand.asBoolean(0..99) { obj -> true  }
         ms.demand.getMessage(2) { error, data,locale -> error.toString()  }
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            0 * setProvenanceForExecution(_,_)
+        }
         svc.messageSource = ms.proxyInstance()
             //regex failure on test3
             try {
-                Execution e = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',argString: '-test2 val2b -test3 monkey4'])
+                Execution e = svc.createExecution(se,createAuthContext("user1"),null, [argString: '-test2 val2b -test3 monkey4'],'user',[ProvenanceUtil.generic(test:'data')])
                 fail("shouldn't succeed")
             } catch (ExecutionServiceException e) {
                 assertTrue(e.message,e.message.contains("domain.Option.validation.regex.invalid"))
@@ -2501,9 +2561,12 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
         svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
             beforeJobExecution(1..1){job,event->}
         }
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
 
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeoverride: 'filter',nodefilter:'tags: linux'])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",nodeoverride: 'filter',nodefilter:'tags: linux'],'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         assertNotNull(e2)
@@ -2549,8 +2612,11 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution ex=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user','extra.option.test':'12'])
+        Execution ex=svc.createExecution(se,createAuthContext("user1"),null,['extra.option.test':'12'],'user',[ProvenanceUtil.generic(test:'data')])
         then:
         assertNotNull(ex)
         assertEquals('-a b -c d', ex.argString)
@@ -2611,7 +2677,10 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             beforeJobExecution(1..1){job,event->}
         }
 
-        Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',('option.test'): testOptionValue])
+        svc.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
+        Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [('option.test'): testOptionValue],'user',[ProvenanceUtil.generic(test:'data')])
 
         assertNotNull(e2)
         assertEquals(argString, e2.argString)

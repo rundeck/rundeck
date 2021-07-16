@@ -39,23 +39,9 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.converters.JSON
 import org.apache.commons.collections.list.TreeList
-import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
-import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.AuthCache
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.client.utils.DateUtils
-import org.apache.http.impl.auth.BasicScheme
-import org.apache.http.impl.client.BasicAuthCache
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.impl.client.StandardHttpRequestRetryHandler
-import org.apache.http.impl.cookie.DateParseException
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -63,6 +49,8 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.executions.provenance.Provenance
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -2513,7 +2501,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         withForm{
 
-            results = scheduleJob(null)
+            results = scheduleJob(null,[ProvenanceUtil.webRequest(request.requestURI)])
 
             if(results.error=='invalid'){
                 session.jobexecOptionErrors=results.errors
@@ -2562,7 +2550,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         withForm {
-            results = scheduleJob(params.runAtTime)
+            results = scheduleJob(params.runAtTime,[ProvenanceUtil.webRequest(request.requestURI)])
 
             if (results.error == 'invalid') {
                 session.jobexecOptionErrors = results.errors
@@ -2599,10 +2587,12 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     public def runJobNow(RunJobCommand runParams, ExtraCommand extra) {
-        return runOrScheduleJob(runParams, extra, true)
+        return runOrScheduleJob(runParams, extra, true,[
+            ProvenanceUtil.webRequest(request.requestURI)
+        ])
     }
 
-    public def runOrScheduleJob(RunJobCommand runParams, ExtraCommand extra, boolean runNow) {
+    public def runOrScheduleJob(RunJobCommand runParams, ExtraCommand extra, boolean runNow, List<Provenance<?>> provenances) {
         if ([runParams, extra].any{it.hasErrors()}) {
             request.errors= [runParams, extra].find { it.hasErrors() }.errors
             def model = show()
@@ -2610,7 +2600,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def results=[:]
         withForm{
-            results = scheduleJob(runNow ? null : params.runAtTime)
+            results = scheduleJob(runNow ? null : params.runAtTime, provenances)
         }.invalidToken{
             results.error = "Invalid request token"
             results.code = HttpServletResponse.SC_BAD_REQUEST
@@ -2656,7 +2646,7 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     public def runJobLater(RunJobCommand runParams, ExtraCommand extra) {
         // Prepare and schedule
-        return runOrScheduleJob(runParams, extra, false)
+        return runOrScheduleJob(runParams, extra, false,[ProvenanceUtil.webRequest(request.requestURI)])
     }
 
     /**
@@ -2665,7 +2655,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * @params runAtTime if scheduling in the future, the time to run the job, otherwise it will be run immediately
      * @return  the result in JSON
      */
-    private Map scheduleJob(String runAtTime = null) {
+    private Map scheduleJob(String runAtTime = null, List<Provenance<?>> provenances) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!scheduledExecution) {
             return [error: "No Job found for id: " + params.id, code: 404]
@@ -2717,13 +2707,14 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (runAtTime) {
             inputOpts['runAtTime'] = runAtTime
-            inputOpts['provenance'] = [source: 'gui', user: session.user, remoteAddr: request.remoteHost]
 
             def scheduleResult = executionService.scheduleAdHocJob(
                     scheduledExecution,
                     authContext,
                     session.user,
-                    inputOpts
+                    inputOpts,
+                    'user-scheduled',
+                    provenances
             )
             if (null == scheduleResult) {
                 return [success: false, failed: true, error: 'error', message: "Unable to schedule job"]
@@ -2736,10 +2727,8 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             return scheduleResult
         } else {
-            inputOpts['executionType'] = 'user'
-            inputOpts['provenance'] = [source: 'gui', user: session.user, remoteAddr: request.remoteHost]
-
-            def result = executionService.executeJob(scheduledExecution, authContext, session.user, inputOpts)
+            def result = executionService.
+                executeJob(scheduledExecution, authContext, session.user, inputOpts, 'user', provenances)
 
             if (result.error) {
                 result.failed = true
@@ -3228,19 +3217,18 @@ class ScheduledExecutionController  extends ControllerBase{
             inputOpts.meta = new HashMap<>(params.meta)
         }
 
+        def provenances = [
+            ProvenanceUtil.apiRequest(request.requestURI)
+        ]
         def result
         if (request.api_version > ApiVersions.V17 && jobRunAtTime) {
             inputOpts["runAtTime"] = jobRunAtTime
-            inputOpts['provenance'] = [source: 'api', user: session.user]
-            result = executionService.scheduleAdHocJob(scheduledExecution,
-                        authContext, username, inputOpts)
+            result = executionService.
+                scheduleAdHocJob(scheduledExecution, authContext, username, inputOpts, 'user-scheduled', provenances)
         }
 
         if (request.api_version <= ApiVersions.V17 || !jobRunAtTime) {
-            inputOpts['executionType'] = 'user'
-            inputOpts['provenance'] = [source: 'api', user: session.user]
-            result = executionService.executeJob(scheduledExecution,
-                        authContext, username, inputOpts)
+            result = executionService.executeJob(scheduledExecution, authContext, username, inputOpts, 'user', provenances)
         }
 
         if (!result.success) {

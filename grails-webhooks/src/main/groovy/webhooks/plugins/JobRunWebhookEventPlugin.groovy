@@ -37,7 +37,8 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.text.SimpleTemplateEngine
-import org.rundeck.core.executions.Provenance
+import org.rundeck.core.executions.provenance.WebhookEventProvenance
+import org.rundeck.core.executions.provenance.WebhookProvenance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -125,12 +126,10 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
                                   .jobFilter(expandedNodeFilter)
                                   .asUser(expandedAsUser)
                                   .provenance(
-                                      Provenance.builder()
-                                                .type("webhook")
-                                                .meta([
-                                                    eventId: data.id,
-                                                ])
-                                                .build()
+                                      [
+                                          WebhookProvenance.from(data),
+                                          WebhookEventProvenance.from(data),
+                                      ]
                                   )
                                   .build()
                     )

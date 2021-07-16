@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
-import org.rundeck.core.executions.Provenance
 
 /**
  * Extends {@link com.dtolabs.rundeck.core.jobs.JobService} interface to include an AuthContext

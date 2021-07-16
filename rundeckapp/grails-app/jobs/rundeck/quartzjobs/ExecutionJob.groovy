@@ -33,6 +33,8 @@ import groovy.transform.CompileStatic
 import org.quartz.InterruptableJob
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
+import org.rundeck.core.executions.provenance.Provenance
+import org.rundeck.core.executions.provenance.SchedulerProvenance
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -327,22 +329,24 @@ class ExecutionJob implements InterruptableJob {
             )
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
             Map<String,Object> inputMap = new HashMap<>()
-            inputMap.putAll([
-                executionType: 'scheduled',
-                provenance: [
-                    source: 'job-trigger',
-                    cron: initMap.scheduledExecution.generateCrontabExression()
-                ]
-            ])
+
             def triggerData = context?.trigger?.jobDataMap?.get('scheduleArgs')
             if(triggerData){
                 inputMap.put('argString', triggerData)
+            }
+            def schedulerProvenance = context.mergedJobDataMap.get('provenance')
+            if(!(schedulerProvenance instanceof SchedulerProvenance)){
+                throw new RuntimeException("Could not schedule execution, no provenance data")
             }
             initMap.execution = initMap.executionService.createExecution(
                     initMap.scheduledExecution,
                     initMap.authContext,
                     null,
-                    inputMap
+                    inputMap,
+                false,
+                -1,
+                'scheduled',
+                [schedulerProvenance] as List<Provenance<?>>
             )
         }
         if (!initMap.authContext) {

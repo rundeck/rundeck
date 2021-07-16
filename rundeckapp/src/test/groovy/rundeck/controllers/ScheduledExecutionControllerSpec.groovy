@@ -337,10 +337,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
-                _,
-                _,
-                _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz'}
+            _,
+            _,
+            _,
+            { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' },
+            'user',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
@@ -376,10 +378,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
-                _,
-                _,
-                _,
-                { it['_replaceNodeFilters'] == replaceNodeFilters}
+            _,
+            _,
+            _,
+            { it['_replaceNodeFilters'] == replaceNodeFilters }, 'user',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
@@ -417,10 +420,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
-                _,
-                _,
-                _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+            _,
+            _,
+            _,
+            { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }, 'user',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
@@ -450,10 +454,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
-                _,
-                _,
-                _,
-                [executionType: 'user', provenance: [source: 'api', user: 'aUser']]
+            _,
+            _,
+            _,
+            _,
+            'user',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
@@ -487,7 +493,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                [runAtTime: 'timetorun', provenance: [source: 'api', user: 'aUser']]
+                [runAtTime: 'timetorun'],
+            'user-scheduled',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
@@ -524,7 +532,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                [runAtTime: 'timetorun', provenance: [source: 'api', user: 'aUser']]
+                [runAtTime: 'timetorun'],
+            'user-scheduled',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
@@ -814,9 +824,13 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            1 * executeJob(se, testcontext, _,  {opts->
-                opts['runAtTime']==null && opts['executionType']=='user'
-            }) >> [executionId: exec.id]
+            1 * executeJob(
+                se, testcontext, _, { opts ->
+                opts['runAtTime'] == null
+            },
+                'user',
+                _
+            ) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
 
@@ -875,9 +889,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            1 * executeJob(se, testcontext, _,  {opts->
-                    opts['runAtTime']==null && opts['executionType']=='user' && opts['option.emptyOpt'] == ''
-            }) >> [executionId: exec.id]
+            1 * executeJob(
+                se, testcontext, _, { opts ->
+                opts['runAtTime'] == null  && opts['option.emptyOpt'] == ''
+            }, 'user',
+                _
+            ) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
 
@@ -940,9 +957,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            1 * executeJob(se, testcontext, _,  {opts->
-                    opts['runAtTime']==null && opts['executionType']=='user' && opts['option.emptyOpt'] == ''
-            }) >> [executionId: exec.id]
+            1 * executeJob(
+                se, testcontext, _, { opts ->
+                opts['runAtTime'] == null  && opts['option.emptyOpt'] == ''
+            }, 'user',
+                _
+            ) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
 
@@ -1011,9 +1031,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            1 * executeJob(se, testcontext, _,  {opts->
-                opts['runAtTime']==null && opts['executionType']=='user'
-            }) >> [executionId: exec.id]
+            1 * executeJob(
+                se, testcontext, _, { opts ->
+                opts['runAtTime'] == null
+            }, 'user',
+                _
+            ) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService){
             //assert the empty file will be uploaded
@@ -1083,9 +1106,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            1 * executeJob(se, testcontext, _,  {opts->
-                opts['runAtTime']==null && opts['executionType']=='user'
-            }) >> [executionId: exec.id]
+            1 * executeJob(
+                se, testcontext, _, { opts ->
+                opts['runAtTime'] == null
+            }, 'user',
+                _
+            ) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
 
@@ -1168,10 +1194,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            0 * executeJob(*_)
+            0 * executeJob(*_, 'user')
             1 * scheduleAdHocJob(se, testcontext, _, { opts ->
-                opts['runAtTime'] == 'dummy' /*&& opts['executionType'] == 'user-scheduled'*/
-            }
+                opts['runAtTime'] == 'dummy'
+            },
+                'user-scheduled',
+                _
             ) >> [executionId: exec.id, id: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
@@ -1238,10 +1266,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            0 * executeJob(*_)
+            0 * executeJob(*_, 'user')
             1 * scheduleAdHocJob(se, testcontext, _, { opts ->
-                opts['runAtTime'] == 'dummy' /*&& opts['executionType'] == 'user-scheduled'*/
-            }
+                opts['runAtTime'] == 'dummy'
+            },
+                                 'user-scheduled',
+                                 _
             ) >> [executionId: exec.id, id: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
@@ -1324,10 +1354,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            0 * executeJob(*_)
+            0 * executeJob(*_, 'user')
             1 * scheduleAdHocJob(se, testcontext, _, {opts->
-                opts['runAtTime']=='dummy' /*&& opts['executionType']=='user-scheduled'*/
-            }) >> [executionId: exec.id]
+                opts['runAtTime']=='dummy'
+            },
+                                 'user-scheduled',
+                                 _) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
 
@@ -1385,7 +1417,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             0 * getExecutionsAreActive() >> true
-            0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
+            0 * executeJob(se, testcontext, _, _, 'user',_) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
 
@@ -1449,7 +1481,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> executionModeActive
-            0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
+            0 * executeJob(se, testcontext, _, _, 'user',_) >> [executionId: exec.id]
             0 * _(*_)
         }
         controller.fileUploadService = Mock(FileUploadService)
@@ -1679,7 +1711,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> true
-            0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
+            0 * executeJob(se, testcontext, _, _, 'user',_) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
 
@@ -2062,10 +2094,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.apiService.requireAuthorized(_,_,_)>>true
         3 * controller.apiService.requireExists(_,_,_)>>true
         1 * controller.executionService.executeJob(
-                _,
-                _,
-                _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+            _,
+            _,
+            _,
+            { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' },
+            'user',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
@@ -2135,10 +2169,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.apiService.requireAuthorized(_, _, _) >> true
         3 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
-                _,
-                _,
-                _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+            _,
+            _,
+            _,
+            { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }, 'user',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
@@ -2631,7 +2666,8 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }, 'user',
+                _
             ) >> [success: true]
             0 * controller.executionService.respondExecutionsXml(_, _, _)
             0 * controller.executionService._(*_)
@@ -2697,10 +2733,11 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.apiService.requireAuthorized(_, _, _) >> true
         3 * controller.apiService.requireExists(_, _, _) >> true
         1 * controller.executionService.executeJob(
-                _,
-                _,
-                _,
-                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+            _,
+            _,
+            _,
+            { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }, 'user',
+            _
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)

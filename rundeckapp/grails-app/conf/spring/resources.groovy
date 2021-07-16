@@ -110,6 +110,7 @@ import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
 import rundeck.services.audit.AuditEventsService
+import rundeck.services.execution.BuiltinProvenanceComponent
 import rundeck.services.jobs.JobQueryService
 import rundeck.services.jobs.LocalJobQueryService
 import rundeck.services.scm.ScmJobImporter
@@ -699,4 +700,6 @@ beans={
     rundeckConfigReloader(RundeckConfigReloader)
     pluginCachePreloader(PluginCachePreloader)
     interceptorHelper(DefaultInterceptorHelper)
+
+    builtinProvenanceComponent(BuiltinProvenanceComponent)
 }

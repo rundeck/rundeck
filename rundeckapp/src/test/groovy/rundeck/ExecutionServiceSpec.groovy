@@ -18,7 +18,6 @@ package rundeck
 
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
@@ -28,7 +27,6 @@ import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import groovy.time.TimeCategory
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -57,11 +55,10 @@ import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.json.JSONObject
 import org.rundeck.app.services.ExecutionFile
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
-import rundeck.*
-import rundeck.quartzjobs.ExecutionJob
 import rundeck.services.*
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
@@ -69,7 +66,6 @@ import spock.lang.Unroll
 
 import java.time.Duration
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
@@ -162,8 +158,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            0 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec2.id)
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec2.id,'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         ExecutionServiceException e = thrown()
@@ -206,8 +205,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+            service.executionProvenanceService=Mock(ExecutionProvenanceService){
+                1 * setProvenanceForExecution(_,_)
+            }
         when:
-        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12',executionType: 'scheduled'], true, exec.id)
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec.id,'scheduled',[ProvenanceUtil.scheduler(null,null,'asdf')])
 
         then:
         e2 != null
@@ -237,8 +239,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 dateCompleted: null,
                 user: 'user',
                 project: 'AProject',
-                executionType: 'scheduled',
-                provenance: [a:'b']
+                executionType: 'scheduled'
         ).save()
         service.frameworkService = Stub(FrameworkService) {
             getServerUUID() >> null
@@ -249,14 +250,15 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12',executionType: 'scheduled',provenance:[a:'b']], true, exec.id)
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec.id,'scheduled',[ProvenanceUtil.scheduler(null,null,'asdf')])
 
         then:
         e2 != null
         e2.executionType == 'scheduled'
-        e2.provenanceInfo.type=='scheduled'
-        e2.provenanceInfo.meta==[a:'b']
     }
 
     void "create execution as user"() {
@@ -287,12 +289,17 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
                 authContext,
                 'testuser',
-                ['extra.option.test': '12', executionType: 'user']
+                ['extra.option.test': '12'],
+                'user',
+                [ProvenanceUtil.generic(test:'data')]
         )
 
         then:
@@ -328,12 +335,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
                 authContext,
                 null,
-                [executionType: 'user']
+                'user',
+                [ProvenanceUtil.generic(test:'value')]
         )
 
         then:
@@ -366,6 +377,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         service.frameworkService = Stub(FrameworkService) {
             getServerUUID() >> null
+        }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
         }
         when:
         Execution e2 = service.createExecutionAndPrep(
@@ -417,8 +431,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        def result = service.executeJob(job, authContext, 'test2', [executionType: 'user'])
+        def result = service.executeJob(job, authContext, 'test2', [:],'user',[ProvenanceUtil.generic(test:'value')])
 
         then:
         1 * service.scheduledExecutionService.scheduleTempJob(job, 'test2', authContext, _, [:], [:], 0) >> { args ->
@@ -476,8 +493,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
 
 
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        def result = service.scheduleAdHocJob(job, authContext, 'test2', params)
+        def result = service.scheduleAdHocJob(job, authContext, 'test2', params,'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         1 * service.scheduledExecutionService.scheduleAdHocJob(*_) >> { args ->
@@ -2395,8 +2415,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ).save()
         Map params = [runAtTime: "2080-07-05T16:05:45.000+0000"]
 
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        def result = service.scheduleAdHocJob(job, authContext, "user1", params)
+        def result = service.scheduleAdHocJob(job, authContext, "user1", params,'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         1 * service.scheduledExecutionService.scheduleAdHocJob(*_) >> { args ->
@@ -2443,8 +2466,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 )
         ).save()
 
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            0 * setProvenanceForExecution(_,_)
+        }
         when:
-        def result = service.scheduleAdHocJob(job, authContext, "user1", [:])
+        def result = service.scheduleAdHocJob(job, authContext, "user1", [:],'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         result.success == false
@@ -2484,8 +2510,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ).save()
         def Map params  = [runAtTime: "1999-01-01T01:02:42.000+0000"]
 
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            0 * setProvenanceForExecution(_,_)
+        }
         when:
-        def result = service.scheduleAdHocJob(job, authContext, "user1", params)
+        def result = service.scheduleAdHocJob(job, authContext, "user1", params,'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         result.success == false
@@ -2526,8 +2555,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ).save()
         def Map params  = [runAtTime: runAtTime]
 
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        def result = service.scheduleAdHocJob(job, authContext, "user1", params)
+        def result = service.scheduleAdHocJob(job, authContext, "user1", params,'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         1 * service.scheduledExecutionService.scheduleAdHocJob(*_) >> { args ->
@@ -2624,8 +2656,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ).save()
         def Map params  = [runAtTime: time]
 
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            0 * setProvenanceForExecution(_,_)
+        }
         when:
-        def result = service.scheduleAdHocJob(job, authContext, "user1", params)
+        def result = service.scheduleAdHocJob(job, authContext, "user1", params,'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         result.success == false
@@ -3559,12 +3594,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
                 authContext,
                 'testuser',
-                [executionType: 'user']
+                'user',
+                [ProvenanceUtil.generic(test:'value')]
         )
 
         then:
@@ -3601,12 +3640,18 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
                 authContext,
                 'testuser',
-                [ executionType: 'user']
+                [ :],
+                'user',
+                [ProvenanceUtil.generic(test:'data')]
         )
 
         then:
@@ -3652,12 +3697,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
                 authContext,
                 'testuser',
-                [executionType: 'user']
+                'user',
+                [ProvenanceUtil.generic(test:'value')]
         )
 
         then:
@@ -4842,12 +4891,18 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
                 authContext,
                 'testuser',
-                ['extra.option.test': '12', executionType: 'user']
+                ['extra.option.test': '12'],
+                'user',
+                [ProvenanceUtil.generic(test:'data')]
         )
 
         then:
@@ -4950,12 +5005,18 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
         Execution e2 = service.createExecution(
                 job,
                 authContext,
                 'testuser',
-                ['_replaceNodeFilters': 'true', 'nodeIncludeName':'SelectedNode', executionType: 'user','nodeoverride':'cherrypick']
+                ['_replaceNodeFilters': 'true', 'nodeIncludeName':'SelectedNode','nodeoverride':'cherrypick'],
+                'user',
+                [ProvenanceUtil.generic(test:'data')]
         )
 
         then:
@@ -5302,6 +5363,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
 
         def securedOpts = ["securedOption1" : "secured option original value"]
         def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
@@ -5310,9 +5374,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 job,
                 authContext,
                 'testuser',
-                ['extra.option.test': '12', executionType: 'user'],
+                ['extra.option.test': '12'],
                 false,
                 -1,
+                'user',
+                [ProvenanceUtil.generic(test:'data')],
                 securedOpts,
                 securedExposedOpts
         )
@@ -5360,6 +5426,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
 
         def securedOpts = ["securedOption1" : "secured option original value"]
         def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
@@ -5371,6 +5440,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 ['extra.option.test': '12', executionType: 'user'],
                 false,
                 -1,
+                'user',
+                [ProvenanceUtil.generic(test:'data')],
                 securedOpts,
                 securedExposedOpts
         )
@@ -5420,6 +5491,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
 
         def securedOpts = ["securedOption1" : "secured option original value"]
         def securedExposedOpts = ["securedExposedOption1" : "secured exposed option original value"]
@@ -5428,9 +5502,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 job,
                 authContext,
                 'testuser',
-                ['extra.option.test': '12', executionType: 'user'],
+                ['extra.option.test': '12'],
                 false,
                 -1,
+                'user',
+                [ProvenanceUtil.generic(test:'data')],
                 securedOpts,
                 securedExposedOpts
         )

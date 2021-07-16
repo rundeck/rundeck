@@ -3,6 +3,7 @@ package webhooks
 import grails.plugins.*
 import grails.util.Environment
 import webhooks.component.project.WebhooksProjectComponent
+import webhooks.component.provenance.WebhookProvenanceComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
 import webhooks.menu.WebhooksMenuItem
@@ -66,6 +67,7 @@ Brief summary/description of the plugin.
                 webhookService = ref('webhookService')
             }
             webhooksProjectComponent(WebhooksProjectComponent)
+            webhooksProvenanceComponent(WebhookProvenanceComponent)
         }
     }}
 

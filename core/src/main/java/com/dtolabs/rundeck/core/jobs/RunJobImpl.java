@@ -1,10 +1,10 @@
 package com.dtolabs.rundeck.core.jobs;
 
 import lombok.Builder;
-import lombok.Data;
 import lombok.Getter;
-import org.rundeck.core.executions.Provenance;
+import org.rundeck.core.executions.provenance.Provenance;
 
+import java.util.List;
 import java.util.Map;
 
 @Builder
@@ -14,7 +14,8 @@ public class RunJobImpl
 {
     private final JobReference jobReference;
 
-    private final Provenance provenance;
+    private final List<Provenance<?>> provenance;
+    private final String executionType;
 
     private final String argString;
     private final Map<String, ?> optionData;

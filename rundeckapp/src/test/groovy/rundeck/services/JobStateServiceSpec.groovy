@@ -16,15 +16,13 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobService
-import org.rundeck.core.executions.Provenance
+import org.rundeck.core.executions.provenance.Provenance
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import spock.lang.Unroll
-
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
@@ -39,8 +37,6 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-
-import static org.junit.Assert.assertNotNull
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
@@ -60,7 +56,7 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             }
         }
         service.frameworkService=Mock(FrameworkService){
-            kickJob(!null, !null, null,!null)>>{
+            kickJob(!null, !null, null,!null,_,_)>>{
                 Map<String, Object> ret = new HashMap<>()
                 ret.success = true
                 ret.executionId = '1'
@@ -496,7 +492,7 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             filterAuthorizedProjectExecutionsAll(null,!null,!null)>>{auth2, exec,actions->
                 return exec
             }
-            kickJob(!null, !null, null,!null)>>{
+            kickJob(!null, !null, null,!null,_,_)>>{
                 Map<String, Object> ret = new HashMap<>()
                 ret.success = true
                 ret.executionId = e1.id.toString()
@@ -507,6 +503,10 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         when:
             def ref = service.runJob(auth, Mock(JobService.RunJob){
                 getJobReference()>>job
+                getExecutionType()>>'user'
+                getProvenance()>>[
+                    ProvenanceUtil.generic(test:'value')
+                ]
             })
         then:
         ref
@@ -525,7 +525,7 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         def auth = new SubjectAuthContext(null, null)
 
         service.frameworkService = Stub(FrameworkService) {
-            kickJob(!null, !null, null, { it.provenance == provenance && it.executionType == expectedExecType }) >> {
+            kickJob(!null, !null, null, _, expectedExecType, provenance) >> {
                 Map<String, Object> ret = new HashMap<>()
                 ret.success = true
                 ret.executionId = '1'
@@ -546,12 +546,10 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             setTestExecutions(projectName, jobUuid)
 
         when:
-            def ref = service.runJob(auth, Mock(JobService.RunJob){
-               getJobReference()>>job
-                getProvenance()>>Mock(Provenance){
-                    getType()>>execType
-                    getMeta()>>provenance
-                }
+            def ref = service.runJob(auth, Mock(JobService.RunJob) {
+                getJobReference() >> job
+                getExecutionType() >> execType
+                getProvenance() >> provenance
             })
         then:
             ref
@@ -559,11 +557,38 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             ref.job
             ref.job.id == jobUuid
         where:
-            execType | provenance      | expectedExecType
-            'user'   | [source: 'xyz'] | 'user'
-            'xyz'    | [source: 'xyz'] | 'xyz'
-            null     | [source: 'xyz'] | 'user'
-            null     | null            | 'user'
+            execType | provenance                              | expectedExecType
+            'user'   | [ProvenanceUtil.generic(source: 'xyz')] | 'user'
+            'xyz'    | [ProvenanceUtil.generic(source: 'xyz')] | 'xyz'
+    }
+    @Unroll
+    void "start job missing executionType or provenance"() {
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def projectName = 'testProj'
+        JobReference job = new JobReferenceImpl()
+        job.project = projectName
+        job.id = jobUuid
+        def auth = new SubjectAuthContext(null, null)
+
+        service.frameworkService = Stub(FrameworkService)
+        given:
+            setTestExecutions(projectName, jobUuid)
+
+        when:
+            def ref = service.runJob(auth, Mock(JobService.RunJob) {
+                getJobReference() >> job
+                getExecutionType() >> execType
+                getProvenance() >> provenance
+            })
+        then:
+            JobExecutionError e = thrown()
+            e.message.contains(expectedError+' is required')
+        where:
+            execType | provenance                              | expectedError
+            null     | [ProvenanceUtil.generic(source: 'xyz')] | 'executionType'
+            null     | null                                    | 'executionType'
+            'user'     | null                                    | 'Provenance'
+            'user'     | []                                    | 'Provenance'
     }
 
     void "start job without auth"(){
@@ -584,6 +609,10 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         when:
             def ref = service.runJob(null,Mock(JobService.RunJob){
                 getJobReference()>>job
+                getExecutionType()>>'user'
+                getProvenance()>>[
+                    ProvenanceUtil.generic(test:'value')
+                ]
             })
         then:
         !ref
@@ -639,7 +668,7 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         ).save()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: projectName, loglevel: 'WARN',
                 doNodedispatch: false, scheduledExecution: se, status: 'incomplete', dateStarted: dateStarted, id:1)
-        assertNotNull(e.save())
+        assert null!=(e.save())
         def seB = new ScheduledExecution(
                 jobName: 'def',
                 groupPath: 'grp',
@@ -649,7 +678,7 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
         ).save()
         Execution eB = new Execution(argString: "-test args", user: "testuser", project: projectName, loglevel: 'WARN',
                 doNodedispatch: false, scheduledExecution: seB, status: 'incomplete', dateStarted: dateStartedB, id:2)
-        assertNotNull(eB.save())
+        assert null!=(eB.save())
         return e
     }
 
@@ -679,13 +708,19 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
                 getJobReference()>>ref
                 getOptionData()>>opts
                 getExtraMeta()>>meta
+                getExecutionType()>>'user'
+                getProvenance()>>[
+                    ProvenanceUtil.generic(test:'value')
+                ]
             })
         then:
             1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(auth, job, _, projectName) >> true
             1 * service.frameworkService.kickJob(
                     job, auth, _, {
                 it['meta'] == meta
-            }
+            },
+                'user',
+                _
             ) >> [
                     success  : true,
                     execution: [asReference: { ->

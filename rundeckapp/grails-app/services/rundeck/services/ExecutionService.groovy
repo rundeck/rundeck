@@ -69,6 +69,8 @@ import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.executions.provenance.Provenance
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
@@ -141,6 +143,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def executorService
     JobLifecyclePluginService jobLifecyclePluginService
     def executionLifecyclePluginService
+    ExecutionProvenanceService executionProvenanceService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -972,12 +975,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         jobcontext.execid = execution.id.toString()
         jobcontext.executionType = execution.executionType
-        def provenanceMeta = execution.provenanceInfo.meta
-        if (provenanceMeta) {
-            provenanceMeta.each { k, v ->
-                jobcontext.put('provenance.' + k, v)
-            }
-        }
+//        def provenanceMeta = execution.provenanceInfo.meta
+//        if (provenanceMeta) {
+//            provenanceMeta.each { k, v ->
+//                jobcontext.put('provenance.' + k, v)
+//            }
+//        }
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
         jobcontext.serverUUID = execution.serverNodeUUID
@@ -1951,7 +1954,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
 
-   def Execution createExecution(Map params) {
+   def Execution createExecution(Map params, String executionType, List<Provenance<?>> provenances) {
         def Execution execution
         if (params.project && params.workflow) {
             execution = new Execution(project:params.project,
@@ -1967,8 +1970,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       nodeRankAttribute:params.nodeRankAttribute,
                                       workflow:params.workflow,
                                       argString:params.argString,
-                                      executionType: params.executionType ?: 'scheduled',
-                                      provenance: params.provenance ?: [:],
+                                      executionType: executionType,
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retryOriginalId:params.retryOriginalId?:null,
@@ -1981,6 +1983,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
 
             execution.userRoles = params.userRoles
+            executionProvenanceService.setProvenanceForExecution(execution, provenances)
 
 
             //parse options
@@ -2040,7 +2043,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(!props.user){
             props.user=user
         }
-        def Execution execution = createExecution(props)
+        def Execution execution = createExecution(props,'adhoc',[])//TODO
         execution.dateStarted = new Date()
 
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
@@ -2066,7 +2069,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Run a job,
-     * @param scheduledExecution
+     * @param executionType @param USER @param scheduledExecution
      * @param framework
      * @param authContext
      * @param subject
@@ -2074,10 +2077,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param input, map of input overrides, allowed keys: nodeIncludeName: Collection/String, loglevel: String, argString: String, optparams: Map,   option.*: String, option: Map, _replaceNodeFilters:true/false, filter: String
      * @return
      */
-    public Map executeJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext, String user, Map input) {
+    public Map executeJob(
+        ScheduledExecution scheduledExecution,
+        UserAndRolesAuthContext authContext,
+        String user,
+        Map input,
+        String executionType,
+        List<Provenance<?>> provenances
+    ) {
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
-        return retryExecuteJob(scheduledExecution, authContext, user, input, secureOpts, secureOptsExposed, 0,-1, -1)
+        return retryExecuteJob(
+            scheduledExecution,
+            authContext,
+            user,
+            input,
+            executionType,
+            provenances,
+            secureOpts,
+            secureOptsExposed,
+            0,
+            -1,
+            -1
+        )
     }
     /**
      * retry a job execution
@@ -2092,9 +2114,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param attempt
      * @return
      */
-    public Map retryExecuteJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext,
-                               String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt,
-                               long prevId, long originalId) {
+    public Map retryExecuteJob(
+        ScheduledExecution scheduledExecution,
+        UserAndRolesAuthContext authContext,
+        String user,
+        Map input,
+        String executionType,
+        List<Provenance<?>> provenances,
+        Map secureOpts = [:],
+        Map secureOptsExposed = [:],
+        int attempt,
+        long prevId,
+        long originalId
+    ) {
         if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
@@ -2124,11 +2156,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
 
             Map allowedOptions = input.subMap(
-                    ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter', 'executionType','provenance',
+                    ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter',
                      'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId','retryPrevId','meta']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
-            e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
+            e = createExecution(
+                scheduledExecution,
+                authContext,
+                user,
+                allowedOptions,
+                attempt > 0,
+                prevId,
+                executionType,
+                provenances,
+                secureOpts,
+                secureOptsExposed
+            )
 
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
@@ -2168,7 +2211,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param input, map of input overrides, allowed keys: nodeIncludeName: Collection/String, loglevel: String, argString: String, optparams: Map,   option.*: String, option: Map, _replaceNodeFilters:true/false, filter: String, runAtTime: String
      * @return
      */
-    public Map scheduleAdHocJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext, String user, Map input) {
+    public Map scheduleAdHocJob(
+        ScheduledExecution scheduledExecution,
+        UserAndRolesAuthContext authContext,
+        String user,
+        Map input,
+        String executionType,
+        List<Provenance<?>> provenances
+    ) {
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
 
@@ -2191,9 +2241,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter',
                                                'nodeoverride', 'nodefilter',
-                                               'executionType',
                                                'meta',
-                                               'provenance',
                                                'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll {
                         it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
@@ -2224,7 +2272,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!allowedOptions['executionType']){
                 allowedOptions['executionType'] = 'user-scheduled'
             }
-            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
+            def Execution e = createExecution(
+                scheduledExecution,
+                authContext,
+                user,
+                allowedOptions,
+                false,
+                -1,
+                executionType,
+                provenances,
+                secureOpts,
+                secureOptsExposed
+            )
 
             // Update execution
             e.dateStarted       = startTime
@@ -2301,10 +2360,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,
             String runAsUser,
+            String executionType,
+            List<Provenance> provenance,
             Map input,
             Map securedOpts,
             Map secureExposedOpts
     ) {
+        if (!executionType) {
+            throw new ExecutionServiceException("executionType is required")
+        }
+        if (!provenance) {
+            throw new ExecutionServiceException("provenance is required")
+        }
         def props = [:]
 
         se = ScheduledExecution.get(se.id)
@@ -2362,12 +2429,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
-        if (!(input && input['executionType'])) {
-            throw new ExecutionServiceException("executionType is required")
-        }
-        props.executionType = input['executionType']
-        props.provenance = input['provenance']?:[:]
-
         if(input['meta'] instanceof Map){
             props['extraMetadataMap'] = input['meta']
         }
@@ -2418,7 +2479,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //create duplicate workflow
         props.workflow = workflow
 
-        Execution execution = createExecution(props)
+        Execution execution = createExecution(props, executionType, provenance)
         execution.dateStarted = new Date()
 
         def newstr = expandDateStrings(execution.argString, execution.dateStarted)
@@ -2463,6 +2524,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map input = [:],
             boolean retry=false,
             long prevId=-1,
+            String executionType,
+            List<Provenance> provenance,
             Map securedOpts = [:],
             Map secureExposedOpts = [:]
     )
@@ -2476,7 +2539,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}}: Limit of running executions has been reached.', 'conflict')
         }
 
-        return int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
+        return int_createExecution(se, authContext, runAsUser, executionType, provenance, input, securedOpts, secureExposedOpts)
 
     }
 
@@ -2907,17 +2970,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     argString    : execution.argString,
                     executionType: execution.executionType,
                     provenance   : execution.provenance,
-                            loglevel     : execution.loglevel,
-                            filter       : execution.filter //TODO: failed nodes?
-                    ]
-                    def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
-                            retryContext.user, input, retryContext.secureOpts,
-                            retryContext.secureOptsExposed, count + 1,execution.id,originalId)
-                    if (result.success) {
-                        execution.retryExecution = result.execution
-                    }
+                    loglevel     : execution.loglevel,
+                    filter       : execution.filter //TODO: failed nodes?
+                ]
+                def result = retryExecuteJob(
+                    scheduledExecution,
+                    retryContext.authContext,
+                    retryContext.user,
+                    input,
+                    execution.executionType,
+                    [ProvenanceUtil.retry(execution.id.toString(), 'Job retry configuration')],
+                    retryContext.secureOpts,
+                    retryContext.secureOptsExposed,
+                    count + 1,
+                    execution.id,
+                    originalId
+                )
+                if (result.success) {
+                    execution.retryExecution = result.execution
                 }
             }
+        }
 
         if (execution.save(flush: true)) {
             log.debug("saved execution status. id: ${execution.id}")

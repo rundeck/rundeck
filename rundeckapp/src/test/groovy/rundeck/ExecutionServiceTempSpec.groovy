@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.test.hibernate.HibernateSpec
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import rundeck.services.*
 
 /**
@@ -216,8 +217,12 @@ class ExecutionServiceTempSpec extends HibernateSpec {
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
         }
+            service.executionProvenanceService=Mock(ExecutionProvenanceService){
+                0 * setProvenanceForExecution(_,_)
+            }
         when:
-        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12', executionType: 'user'])
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'],'user',[
+            ProvenanceUtil.generic(test:'data')])
 
         then:
         ExecutionServiceException e = thrown()
@@ -275,8 +280,11 @@ class ExecutionServiceTempSpec extends HibernateSpec {
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionProvenanceService=Mock(ExecutionProvenanceService){
+            1 * setProvenanceForExecution(_,_)
+        }
         when:
-        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12', executionType: 'user'])
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'],'user',[ProvenanceUtil.generic(test:'data')])
 
         then:
         e2

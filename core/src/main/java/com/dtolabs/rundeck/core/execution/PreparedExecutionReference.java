@@ -1,7 +1,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.jobs.JobReference;
-import org.rundeck.core.executions.Provenance;
+import org.rundeck.core.executions.provenance.Provenance;
 
 /**
  * Details about an execution that has no state

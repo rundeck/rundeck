@@ -25,8 +25,7 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.core.JsonParseException
-import org.rundeck.core.executions.Provenance
-import org.rundeck.core.executions.ProvenanceImpl
+import org.rundeck.core.executions.provenance.Provenance
 import grails.gorm.DetachedCriteria
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
@@ -333,10 +332,10 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
             provenanceData = null
         }
     }
-    public Provenance getProvenanceInfo(){
-        Map<String,String> provenanceMap=getProvenance()
-        return ProvenanceImpl.builder().type(executionType).meta(provenanceMap).build()
-    }
+//    public Provenance getProvenanceInfo(){
+//        Map<String,String> provenanceMap=getProvenance()
+//        return ProvenanceImpl.builder().type(executionType).meta(provenanceMap).build()
+//    }
 
     def Map toMap(){
         def map=[:]
@@ -538,8 +537,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                 targetNodes: targetNodes,
                 metadata: extraMetadataMap,
                 scheduled: executionType in ['scheduled','user-scheduled'],
-                executionType: executionType,
-                provenance: provenanceInfo
+                executionType: executionType
         )
     }
 

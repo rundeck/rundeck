@@ -989,12 +989,12 @@ class ApiService {
                     if (null != e.dateCompleted) {
                         delegate.'date-ended'(unixtime: e.dateCompleted.time, w3cDateValue(e.dateCompleted))
                     }
-                    if (api_version && api_version < ApiVersions.V32) {
+//                    if (api_version && api_version < ApiVersions.V32) {
                         delegate.'executionType'(e.executionType)
-                    } else {
-                        def provenance = e.provenanceInfo
-                        delegate.provenance([type: provenance.type] + provenance.meta)
-                    }
+//                    } else {
+//                        def provenance = e.provenanceInfo
+//                        delegate.provenance([type: provenance.type] + provenance.meta)
+//                    }
 
                     if(e.customStatusString){
                         customStatus(e.customStatusString)
@@ -1080,12 +1080,12 @@ class ApiService {
                         status: status,
                         project: e.project,
                 ]
-            if (api_version && api_version < ApiVersions.V32) {
+//            if (api_version && api_version < ApiVersions.V32) {
                 execMap.executionType = e.executionType
-            } else {
-                def provenance = e.provenanceInfo
-                execMap.provenance = [type: provenance.type, meta: provenance.meta]
-            }
+//            } else {
+//                def provenance = e.provenanceInfo
+//                execMap.provenance = [type: provenance.type, meta: provenance.meta]
+//            }
             if(execdata.customStatus){
                 execMap['customStatus']=execdata.customStatus
             }

@@ -19,7 +19,7 @@ package com.dtolabs.rundeck.core.jobs;
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import org.rundeck.app.spi.AppService;
-import org.rundeck.core.executions.Provenance;
+import org.rundeck.core.executions.provenance.Provenance;
 
 import java.util.Collection;
 import java.util.List;
@@ -122,7 +122,14 @@ public interface JobService extends AppService {
     static interface RunJob {
         JobReference getJobReference();
 
-        Provenance getProvenance();
+
+        /**
+         * Defines the provenance chain, where the first entry is nearest cause, and is caused by the next entry.
+         *
+         * @return list of provenance data objects
+         */
+        List<Provenance<?>> getProvenance();
+        String getExecutionType();
 
         Map<String, ?> getOptionData();
         String getArgString();

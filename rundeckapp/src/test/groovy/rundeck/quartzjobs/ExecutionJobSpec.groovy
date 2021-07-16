@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.test.hibernate.HibernateSpec
 import org.quartz.*
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
@@ -438,6 +439,7 @@ class ExecutionJobSpec extends HibernateSpec {
                     jobSchedulesService : jobSchedulesService,
                     jobSchedulerService : jobSchedulerService,
                     authContextProvider : authContextProvider,
+                    provenance: ProvenanceUtil.scheduler(null, null, 'crontab')
                 ]
             )
             ExecutionJob job = new ExecutionJob()
@@ -450,6 +452,7 @@ class ExecutionJobSpec extends HibernateSpec {
                     getJobDataMap() >> datamap
                     getKey() >> ajobKey
                 }
+                getMergedJobDataMap()>>datamap
 
                 getScheduler() >> quartzScheduler
                 getTrigger() >> trigger
@@ -464,7 +467,7 @@ class ExecutionJobSpec extends HibernateSpec {
 
         then: "execution args are set"
             0 * quartzScheduler.deleteJob(ajobKey)
-            1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
+            1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' },false,-1,'scheduled',_) >> e
     }
 
     def "average notification threshold from options"() {

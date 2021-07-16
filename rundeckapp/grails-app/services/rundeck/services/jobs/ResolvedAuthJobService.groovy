@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import grails.plugins.mail.MailMessageBuilder
 import groovy.transform.CompileStatic
-import org.rundeck.core.executions.Provenance
 import org.springframework.context.ApplicationContext
 
 /**

@@ -968,7 +968,12 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
             return true
         }
-        sec.executionService = eServiceControl.proxyInstance()
+        sec.executionService = Mock(ExecutionService){
+            1 * executeJob ( _, _, _, _,_,_ )>>{
+
+                return [executionId: exec.id, name: it[0].jobName, execution: exec,success:true]
+            }
+        }
 
         def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req,resp ->
@@ -1040,23 +1045,20 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         seServiceControl.demand.getByIDorUUID { id -> return se }
         sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assert null!=exec.save()
-        eServiceControl.demand.executeJob { ScheduledExecution scheduledExecution, AuthContext authContext,
-                                            String user,
-                                            Map input ->
-            assert userName == user
-            return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
 
+        sec.executionService = Mock(ExecutionService){
+            1 * executeJob ( _,_,userName, _,_,_ )>>{
+
+                return [executionId: exec.id, name: it[0].jobName, execution: exec,success:true]
+
+            }
+            respondExecutionsXml (_,_,_)>>true
         }
-        eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
-            return true
-        }
-        sec.executionService = eServiceControl.proxyInstance()
 
         def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req, resp ->
