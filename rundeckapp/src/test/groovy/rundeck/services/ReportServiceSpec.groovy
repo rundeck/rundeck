@@ -16,23 +16,35 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
+import grails.gorm.DetachedCriteria
 import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
+import org.grails.datastore.mapping.query.Query
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.springframework.context.ApplicationContext
+import rundeck.CommandExec
+import rundeck.ExecReport
+import rundeck.Execution
+import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
+import rundeck.Workflow
 import spock.lang.Specification
 
 import javax.security.auth.Subject
+import javax.sql.DataSource
+import java.sql.Connection
+import java.sql.DatabaseMetaData
 
 class ReportServiceSpec extends HibernateSpec implements ServiceUnitTest<ReportService> {
-    List<Class> getDomainClasses() { [ScheduledExecution] }
+    List<Class> getDomainClasses() { [ScheduledExecution, ReferencedExecution, CommandExec, ExecReport] }
 
     def "executions history authorizations"(){
         given:
@@ -59,6 +71,94 @@ class ReportServiceSpec extends HibernateSpec implements ServiceUnitTest<ReportS
         then:
             result[ReportService.DENIED_VIEW_HISTORY_JOBS] == ['agroup2/aname2']
 
+    }
+
+    def "Test hack to avoid error ORA-01795 maximum number of expressions in a list is 1000"() {
+        given:
+        service.applicationContext = Mock(ApplicationContext){
+            getBean(_, _) >> Mock(DataSource){
+                getConnection() >> Mock(Connection){
+                    getMetaData() >> Mock(DatabaseMetaData){
+                        getDatabaseProductName() >> (isOracle ? "Oracle" : "otherDB")
+                    }
+                }
+            }
+        }
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        List execIds = []
+
+        (0..1001).each {
+            Execution e1 = new Execution(
+                    project: project,
+                    user: 'bob',
+                    dateStarted: new Date(),
+                    dateCompleted: new Date(),
+                    status: 'successful'
+
+            )
+            e1.save()
+            execIds.push("${e1.id}")
+
+            ReferencedExecution refexec = new ReferencedExecution(status: 'running',scheduledExecution: job, execution: e1)
+            refexec.save()
+
+            ExecReport execReport = new ExecReport(
+                    jcExecId: e1.id,
+                    jcJobId: job.id,
+                    ctxProject: "AProject",
+                    author: 'admin',
+                    title: "title",
+                    message: "message",
+                    dateCompleted: e1.dateCompleted,
+                    dateStarted: e1.dateStarted,
+                    status: 'success',
+                    actionType: "type"
+            )
+            execReport.save(flush: true, failOnError: true)
+        }
+        ExecQuery query =  new ExecQuery()
+        query.execIdFilter = execIds
+        query.projFilter = "AProject"
+        query.jobIdFilter = "${job.id}"
+        when:
+        List result = ExecReport.createCriteria().list {
+            service.applyExecutionCriteria(query, delegate)
+        }
+
+        DetachedCriteria detachedCriteria1 =  new DetachedCriteria(ExecReport).build {
+            service.applyExecutionCriteria(query, delegate)
+        }
+
+
+        def criteria = detachedCriteria1.getCriteria()[0].criteria[0]
+
+        then:
+        result
+        result.size() == query.execIdFilter.size()
+        criteriaQuery.isCase(criteria)
+
+        where:
+        isOracle| criteriaQuery
+        true    | Query.Disjunction
+        false   | Query.In
     }
 
     private Decision newDecisionInstance(

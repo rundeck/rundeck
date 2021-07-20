@@ -293,7 +293,17 @@ class ReportService  {
 
                 if (query.execIdFilter) {
                     or {
-                        'in'('jcExecId', query.execIdFilter)
+                        if(isOracleDatasource()){
+                            //Hack to avoid error: ORA-01795: maximum number of expressions in a list is 1000
+                            or {
+                                List execIdFilterPartioned = Lists.partition(query.execIdFilter, 1000)
+                                execIdFilterPartioned.each { List partition ->
+                                    'in'('jcExecId', partition)
+                                }
+                            }
+                        } else {
+                            'in'('jcExecId', query.execIdFilter)
+                        }
                         and{
                                     jobfilters.each { key, val ->
                                         if (query["${key}Filter"] == 'null') {
