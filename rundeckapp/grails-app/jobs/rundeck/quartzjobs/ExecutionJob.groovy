@@ -548,10 +548,10 @@ class ExecutionJob implements InterruptableJob {
         ExecutionService.AsyncStarted execmap
     )
     {
-        Map<String, NodeStepResult> failedNodes = execmap.noderecorder?.getFailedNodes()
-        Set<String> succeededNodes = execmap.noderecorder?.getSuccessfulNodes()
+        Map<String, NodeStepResult> failedNodes = execmap?.noderecorder?.getFailedNodes()
+        Set<String> succeededNodes = execmap?.noderecorder?.getSuccessfulNodes()
 
-        if(wasThreshold && execmap.threshold?.action==LoggingThreshold.ACTION_HALT){
+        if(wasThreshold && execmap?.threshold?.action==LoggingThreshold.ACTION_HALT){
             //use custom status or fail
             success=false
             statusString = initMap.scheduledExecution?.logOutputThresholdStatus?:'failed'
