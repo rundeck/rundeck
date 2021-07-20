@@ -23,7 +23,6 @@ export class NewsStore {
         resp.data.objects.forEach( (o: any) => {
            this.articles.push(Article.FromApi(o))
         })
-        // yield new Promise(res => setTimeout(res, 5000))
         this.loaded = true
     })
 
