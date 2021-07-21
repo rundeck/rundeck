@@ -51,6 +51,10 @@ public class JobOptionImpl implements JobOption, Comparable {
     private Boolean sortValues = false;
     private List<String> optionValues;
 
+    public static class JobOptionImplBuilder{
+        /* declared to satisfy javadoc */
+    }
+
 
     public static JobOptionImpl fromOptionMap(LinkedHashMap option) throws ValidationException {
         JobOptionImplBuilder builder = JobOptionImpl.builder();
