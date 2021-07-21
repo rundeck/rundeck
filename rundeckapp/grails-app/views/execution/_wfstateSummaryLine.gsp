@@ -69,7 +69,7 @@
                 <span class="timerel execution-completed text-secondary" data-bind="visible: completed()">
 
                     <g:message code="at"/>
-                    <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: endTime() }">
+                    <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: formatTimeInLocalTimeZone(endTime()) }">
                         <g:if test="${execution.dateCompleted}">
                             <g:relativeDate atDate="${execution.dateCompleted}"/>
                         </g:if>
@@ -87,22 +87,20 @@
                     <!-- /ko -->
                 </dt>
                 <dd>
-                    <span data-bind="text: startTime()">
-                    <g:if test="${execution.dateStarted}">
-                        ${execution.dateStarted}
-                        <g:relativeDate atDate="${execution.dateStarted}"/>
-                    </g:if>
+                    <span data-bind="text: formatTimeInLocalTimeZone(startTime())">
+                        <g:if test="${execution.dateStarted}">
+                            <g:relativeDateFomater atDate="${execution.dateStarted}"/>
+                        </g:if>
                     </span>
 
                 </dd>
                 <!-- ko if: completed() -->
                 <dt><g:message code="end" /> (<span data-bind="text: endTimeAgo()"></span>)</dt>
                 <dd >
-                    <span data-bind="text: endTime()">
-                    <g:if test="${execution.dateCompleted}">
-                        ${execution.dateCompleted}
-                        <g:relativeDate atDate="${execution.dateCompleted}"/>
-                    </g:if>
+                    <span data-bind="text: formatTimeInLocalTimeZone(endTime())">
+                        <g:if test="${execution.dateCompleted}">
+                            <g:relativeDateFomater atDate="${execution.dateCompleted}"/>
+                        </g:if>
                     </span>
 
                 </dd>
