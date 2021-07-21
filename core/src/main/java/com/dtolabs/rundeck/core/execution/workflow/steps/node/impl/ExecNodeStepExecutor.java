@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
@@ -33,6 +34,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.utils.QuotedArgsUtil;
 
 
 /**
@@ -53,6 +55,15 @@ public class ExecNodeStepExecutor implements NodeStepExecutor {
     public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node)
         throws NodeStepException {
         final ExecCommand cmd = (ExecCommand) item;
+        if(cmd instanceof ExecCommandBase){
+            if(((ExecCommandBase)cmd).isPreserveQuotes()){
+                return framework.getExecutionService().
+                        executeCommand(
+                                context,
+                                ExecArgList.fromStrings(QuotedArgsUtil.argsNeedsQuoting, cmd.getCommand()),
+                                node);
+            }
+        }
         return framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
     }
 

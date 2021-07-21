@@ -237,7 +237,20 @@ public class ExecutionItemFactory {
     )
     {
 
-        return new CommandItem(label, command, handler, keepgoingOnSuccess, filterConfigs);
+        return new CommandItem(label, command, handler, keepgoingOnSuccess, false, filterConfigs);
+    }
+
+    public static StepExecutionItem createExecCommand(
+            final String[] command,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final boolean preserveQuotes,
+            final String label,
+            final List<PluginConfiguration> filterConfigs
+    )
+    {
+
+        return new CommandItem(label, command, handler, keepgoingOnSuccess, preserveQuotes, filterConfigs);
     }
 
     /**
@@ -616,6 +629,7 @@ public class ExecutionItemFactory {
         private final String[] command;
         private final StepExecutionItem handler;
         private final boolean keepgoingOnSuccess;
+        private final boolean preserveQuotes;
         private final List<PluginConfiguration> filterConfigs;
 
         public CommandItem(
@@ -623,6 +637,7 @@ public class ExecutionItemFactory {
                 final String[] command,
                 final StepExecutionItem handler,
                 final boolean keepgoingOnSuccess,
+                final boolean preserveQuotes,
                 final List<PluginConfiguration> filterConfigs
         )
         {
@@ -630,6 +645,7 @@ public class ExecutionItemFactory {
             this.command = command;
             this.handler = handler;
             this.keepgoingOnSuccess = keepgoingOnSuccess;
+            this.preserveQuotes = preserveQuotes;
             this.filterConfigs = filterConfigs;
         }
 
@@ -650,6 +666,10 @@ public class ExecutionItemFactory {
         @Override
         public boolean isKeepgoingOnSuccess() {
             return keepgoingOnSuccess;
+        }
+
+        public boolean isPreserveQuotes() {
+            return preserveQuotes;
         }
 
         @Override

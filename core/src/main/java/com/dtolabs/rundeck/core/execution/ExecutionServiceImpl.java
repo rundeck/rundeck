@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
+import com.dtolabs.rundeck.core.utils.QuotedArgsUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;

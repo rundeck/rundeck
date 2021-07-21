@@ -34,6 +34,7 @@ public class CommandExec extends WorkflowStep  {
     String fileExtension
     Boolean interpreterArgsQuoted
     Boolean expandTokenInScriptFile
+    Boolean preserveQuotes
     static transients = ['nodeStep']
 
     static mapping = {
@@ -55,6 +56,7 @@ public class CommandExec extends WorkflowStep  {
         sb << (fileExtension ? "ext: ${fileExtension} " : '')
         sb << (interpreterArgsQuoted ? "quoted?: ${interpreterArgsQuoted} " : '')
         sb << (expandTokenInScriptFile ? "expandTokens?: ${expandTokenInScriptFile} " : '')
+        sb << (preserveQuotes ? "preserveQuotes?: ${preserveQuotes} " : '')
         sb << (argString ? "scriptargs: ${argString}" : '')
         sb << (description ? "description: ${description}" : '')
         sb << (errorHandler ? " [handler: ${errorHandler}]" : '')
@@ -86,6 +88,7 @@ public class CommandExec extends WorkflowStep  {
         scriptInterpreter(nullable:true)
         interpreterArgsQuoted(nullable:true)
         expandTokenInScriptFile(nullable:true)
+        preserveQuotes(nullable:true)
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
         fileExtension(nullable: true, maxSize: 255)
@@ -123,6 +126,9 @@ public class CommandExec extends WorkflowStep  {
         if(scriptInterpreter && !adhocRemoteString) {
             map.scriptInterpreter = scriptInterpreter
             map.interpreterArgsQuoted = !!interpreterArgsQuoted
+        }
+        if(preserveQuotes){
+            map.preserveQuotes = preserveQuotes
         }
         if(fileExtension && !adhocRemoteString) {
             map.fileExtension = fileExtension
@@ -190,6 +196,9 @@ public class CommandExec extends WorkflowStep  {
         if(data.scriptInterpreter != null && !ce.adhocRemoteString){
             ce.scriptInterpreter=data.scriptInterpreter
             ce.interpreterArgsQuoted = !!data.interpreterArgsQuoted
+        }
+        if(data.preserveQuotes){
+            ce.preserveQuotes = data.preserveQuotes
         }
         if(data.fileExtension != null && !ce.adhocRemoteString){
             ce.fileExtension=data.fileExtension
