@@ -7,7 +7,6 @@ import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.annotation.Subscriber
-import grails.events.bus.EventBus
 import grails.events.bus.EventBusAware
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileDynamic
@@ -35,6 +34,8 @@ class ScmLoaderService implements EventBusAware {
     ConfigurationService configurationService
     public static final long DEFAULT_LOADER_DELAY = 0
     public static final long DEFAULT_LOADER_INTERVAL_SEC = 20
+    public static final long INIT_RETRY_TIMES = 5
+    public static final long INIT_RETRY_TIMES_DELAY = 1000
 
     /**
      * scheduledExecutor to load job SCM cache
@@ -43,6 +44,7 @@ class ScmLoaderService implements EventBusAware {
     final Map<String, ScheduledFuture> scmProjectLoaderProcess = Collections.synchronizedMap([:])
     final Map<String, Boolean> scmProjectInitLoaded = Collections.synchronizedMap([:])
     final Map<String, ScmPluginConfigData> scmPluginMeta = Collections.synchronizedMap([:])
+    final Map<String, ScmPluginConfigData> scmFailedProjectInit = Collections.synchronizedMap([:])
 
     @Subscriber("rundeck.bootstrap")
     @CompileDynamic
@@ -54,19 +56,21 @@ class ScmLoaderService implements EventBusAware {
                     {
                         for (String project : frameworkService.projectNames()) {
                             for (String integration : scmService.INTEGRATIONS) {
-                                String projectIntegration = project + "-" + integration
+                                String projectIntegration = getProjectIntegration(project, integration)
                                 ScmPluginConfigData pluginConfigData = scmService.loadScmConfig(project, integration)
-                                if(!scmProjectLoaderProcess.get(projectIntegration)){
+                                if(projectIntegrationEnabled(project, integration, pluginConfigData)){
                                     if(pluginConfigData && pluginConfigData.enabled) {
                                         scmProjectLoaderProcess.put(projectIntegration, startScmLoader(project, integration))
                                     }
                                 }else{
                                     //cleanup: if scm was disabled or the project was deleted
                                     if(pluginConfigData && !pluginConfigData.enabled || !pluginConfigData) {
-                                        ScheduledFuture scheduler = scmProjectLoaderProcess.get(projectIntegration)
-                                        scheduler.cancel(true)
-                                        scmProjectLoaderProcess.remove(projectIntegration)
-                                        cleanUpScmPlugin(project, integration)
+                                        if(scmProjectLoaderProcess.get(projectIntegration)){
+                                            ScheduledFuture scheduler = scmProjectLoaderProcess.get(projectIntegration)
+                                            scheduler.cancel(true)
+                                            scmProjectLoaderProcess.remove(projectIntegration)
+                                            cleanUpScmPlugin(project, integration)
+                                        }
                                     }
                                 }
                             }
@@ -79,34 +83,69 @@ class ScmLoaderService implements EventBusAware {
         }
     }
 
+    String getProjectIntegration(String project, String integration){
+        project + "-" + integration
+    }
+
+    boolean projectIntegrationEnabled(String project, String integration,  ScmPluginConfigData pluginConfigData){
+        String projectIntegration = getProjectIntegration(project, integration)
+        if(!scmProjectLoaderProcess.get(projectIntegration) && !scmFailedProjectInit.get(projectIntegration)){
+            if(pluginConfigData && pluginConfigData.enabled) {
+                return true
+            }
+        }else{
+            if(scmFailedProjectInit.get(projectIntegration)){
+                if(reloadPlugin(project, integration, pluginConfigData)){
+                    scmFailedProjectInit.remove(projectIntegration)
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
     def startScmLoader(String project, String integration){
 
         def state = new ScmLoaderStateImpl()
         //enable project integration cache loader
         def scheduler = scheduledExecutor.scheduleAtFixedRate(
                 {
-                    String projectIntegration = project + "-" + integration
+                    String projectIntegration = getProjectIntegration(project, integration)
                     ScmPluginConfigData pluginConfigData = scmService.loadScmConfig(project, integration)
                     if(!scmPluginMeta.get(projectIntegration)){
                         scmPluginMeta.put(projectIntegration, pluginConfigData)
                     }
                     if(pluginConfigData && pluginConfigData.enabled){
-                        try {
-                            if (integration == scmService.EXPORT) {
-                                processScmExportLoader(project, pluginConfigData, state)
-                            }else{
-                                processScmImportLoader(project, pluginConfigData, state)
-                            }
+                        boolean process = false
+                        int retryCount = 0
+                        long retryTimes = getScmLoaderInitialRetryTimes()
+                        long retryDelay = getScmLoaderInitialRetryDelay()
 
-                        } catch (Throwable t) {
-                            log.error("processMessages error: $project/$integration: ${t.message}")
+                        while (!process){
+                            try {
+                                if (integration == scmService.EXPORT) {
+                                    processScmExportLoader(project, pluginConfigData, state)
+                                }else{
+                                    processScmImportLoader(project, pluginConfigData, state)
+                                }
+                                process = true
+
+                            } catch (Throwable t) {
+                                retryCount++
+                                log.error("processMessages error: $project/$integration: ${t.message} retrying ${retryCount}/${retryTimes}")
+                                Thread.sleep(retryDelay)
+
+                                if(retryCount>retryTimes){
+                                    scmFailedProjectInit.put(projectIntegration, pluginConfigData)
+                                    process = true
+                                    removingLoaderProcess(project, integration)
+                                }
+                            }
                         }
+
                     }else{
-                        //removing task
-                        log.debug("removing thread ${projectIntegration}")
-                        scmProjectLoaderProcess.remove(projectIntegration)
-                        cleanUpScmPlugin(project, integration)
-                        throw new RuntimeException("SCM disabled or project removed");
+                        removingLoaderProcess(project, integration)
                     }
                 },
                 scmLoaderInitialDelaySeconds,
@@ -116,8 +155,27 @@ class ScmLoaderService implements EventBusAware {
         scheduler
     }
 
+    def removingLoaderProcess(String project, String integration){
+        String projectIntegration = getProjectIntegration(project, integration)
+
+        //removing task
+        log.debug("removing thread ${projectIntegration}")
+        scmProjectLoaderProcess.remove(projectIntegration)
+        cleanUpScmPlugin(project, integration)
+        throw new RuntimeException("SCM disabled or project removed");
+    }
+
     long getScmLoaderInitialDelaySeconds() {
         configurationService?.getLong('scmLoader.delay', DEFAULT_LOADER_DELAY) ?: DEFAULT_LOADER_DELAY
+    }
+
+
+    long getScmLoaderInitialRetryTimes() {
+        configurationService?.getLong('scmLoader.init.retry', INIT_RETRY_TIMES) ?: INIT_RETRY_TIMES
+    }
+
+    long getScmLoaderInitialRetryDelay() {
+        configurationService?.getLong('scmLoader.init.delay', INIT_RETRY_TIMES_DELAY) ?: INIT_RETRY_TIMES_DELAY
     }
 
     long getScmLoaderIntervalSeconds() {
@@ -219,6 +277,15 @@ class ScmLoaderService implements EventBusAware {
     @Transactional
     def processScmExportLoader(String project, ScmPluginConfigData pluginConfig, ScmLoaderState state) {
 
+        def username = pluginConfig.getSetting("username")
+        def roles = pluginConfig.getSettingList("roles")
+        ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
+        def loaded = scmService.loadPluginWithConfig(scmService.EXPORT, context, pluginConfig.type, pluginConfig.config)
+
+        if(!loaded){
+            return
+        }
+
         if (!scmService.projectHasConfiguredExportPlugin(project)) {
             return
         }
@@ -233,9 +300,7 @@ class ScmLoaderService implements EventBusAware {
         def plugin = scmService.getLoadedExportPluginFor(project)
 
         if (plugin) {
-            def username = pluginConfig.getSetting("username")
-            def roles = pluginConfig.getSettingList("roles")
-            ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
+            log.debug("export plugin found")
 
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
@@ -294,6 +359,15 @@ class ScmLoaderService implements EventBusAware {
     @Transactional
     def processScmImportLoader(String project, ScmPluginConfigData pluginConfig, ScmLoaderState state){
         log.debug("processing SCM import Loader ${project} / ${pluginConfig.type}")
+        def username = pluginConfig.getSetting("username")
+        def roles = pluginConfig.getSettingList("roles")
+        ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
+
+        def loaded = scmService.loadPluginWithConfig(scmService.IMPORT, context, pluginConfig.type, pluginConfig.config)
+
+        if(!loaded){
+            return
+        }
 
         if (!scmService.projectHasConfiguredImportPlugin(project)) {
             return
@@ -306,9 +380,7 @@ class ScmLoaderService implements EventBusAware {
         def plugin = scmService.getLoadedImportPluginFor(project)
 
         if(plugin){
-            def username = pluginConfig.getSetting("username")
-            def roles = pluginConfig.getSettingList("roles")
-            ScmOperationContext context = scmService.scmOperationContext(username, roles, project)
+            log.debug("import plugin found")
 
             List<ScheduledExecution> jobs = getJobs(project)
             log.debug("processing ${jobs.size()} jobs")
@@ -360,13 +432,17 @@ class ScmLoaderService implements EventBusAware {
     }
 
     boolean reloadPlugin(String project, String integration, ScmPluginConfigData pluginConfig){
-        String key = project + "-" + integration
-        def pluginConfigCache = scmPluginMeta.get(key)
-        if(pluginConfigCache && pluginConfig.getProperties() != pluginConfigCache.getProperties()){
-            scmService.unregisterPlugin(integration, project)
-            scmService.initProject(project, integration)
-            scmPluginMeta.remove(key)
-            return true
+        String key = getProjectIntegration(project, integration)
+        try{
+            def pluginConfigCache = scmPluginMeta.get(key)
+            if(pluginConfigCache && pluginConfig.getProperties() != pluginConfigCache.getProperties()){
+                scmService.unregisterPlugin(integration, project)
+                scmService.initProject(project, integration)
+                scmPluginMeta.remove(key)
+                return true
+            }
+        }catch(Exception e){
+            return false
         }
 
         return false
