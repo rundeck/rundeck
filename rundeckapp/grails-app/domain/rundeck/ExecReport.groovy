@@ -144,4 +144,10 @@ class ExecReport extends BaseReport{
         ret = this.failedNodeList?ret+ this.failedNodeList:ret
         ret
     }
+
+    static void deleteByCtxProject(String project) {
+        ExecReport.where {
+            ctxProject == project
+        }.deleteAll()
+    }
 }

@@ -1702,12 +1702,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
             try {
                 //delete all reports
-                BaseReport.findAllByCtxProject(project.name).each { e ->
-                    e.delete(flush: true)
-                }
-                ExecReport.findAllByCtxProject(project.name).each { e ->
-                    e.delete(flush: true)
-                }
+                BaseReport.deleteByCtxProject(project.name)
+                ExecReport.deleteByCtxProject(project.name)
+
                 //delete all jobs with their executions
                 ScheduledExecution.findAllByProject(project.name).each{ se->
                     def sedresult=scheduledExecutionService.deleteScheduledExecution(se, true, authContext,username)
