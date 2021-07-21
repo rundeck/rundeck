@@ -56,9 +56,17 @@ class ImportTracker {
     }
 
     void jobRenamed(JobScmReference job, String oldpath, String newpath) {
-        untrackPath(oldpath)
-        trackJobAtPath(job, newpath)
-        renamedTrackedItems.trackItem(oldpath, newpath)
+        if(oldpath == newpath){
+            def originalPath=originalValue(newpath)
+            if(originalPath){
+                renamedTrackedItems.trackItem(originalPath, originalPath)
+                untrackPath(originalPath)
+            }
+        }else{
+            untrackPath(oldpath)
+            trackJobAtPath(job, newpath)
+            renamedTrackedItems.trackItem(oldpath, newpath)
+        }
     }
 
     void trackJobAtPath(JobScmReference job, String path) {

@@ -17,6 +17,7 @@
 package rundeck.services.scm
 
 import com.dtolabs.rundeck.plugins.scm.ImportResult
+import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -41,7 +42,8 @@ class ScmJobImporter implements ContextJobImporter {
             final String format,
             final InputStream input,
             final Map importMetadata,
-            final boolean preserveUuid
+            final boolean preserveUuid,
+            final JobRenamed renamedJob
     )
     {
 
@@ -67,16 +69,21 @@ class ScmJobImporter implements ContextJobImporter {
             )
         }
 
-        importJob(context, parseresult.jobset[0], importMetadata, preserveUuid)
+        return importJob(context, parseresult.jobset[0], importMetadata, preserveUuid, renamedJob)
     }
 
     private ImportResult importJob(
             final ScmOperationContext context,
             ImportedJob<ScheduledExecution> jobData,
             final Map importMetadata,
-            final boolean preserveUuid
+            boolean preserveUuid,
+            final JobRenamed renamedJob
     )
     {
+        if(renamedJob){
+            jobData.job.uuid = renamedJob.uuid
+            preserveUuid = true
+        }
 
         jobData.job.project = context.frameworkProject
         def loadresults = scheduledExecutionService.loadImportedJobs(
@@ -97,6 +104,10 @@ class ScmJobImporter implements ContextJobImporter {
         if (loadresults.idMap?.get(job.extid)) {
             data.srcId = loadresults.idMap[job.extid]
         }
+        if(renamedJob && renamedJob.sourceId){
+            data.srcId = renamedJob.sourceId
+        }
+
         jobMetadataService.setJobPluginMeta(job, 'scm-import', data)
 
         def result = new ImporterResult()
@@ -123,7 +134,7 @@ class ScmJobImporter implements ContextJobImporter {
         } catch (Throwable e) {
             return ImporterResult.fail("Failed to construct job definition map: " + e.message)
         }
-        importJob(context, jobset[0], importMetadata, preserveUuid)
+        importJob(context, jobset[0], importMetadata, preserveUuid, null)
     }
 
     @Override

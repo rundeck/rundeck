@@ -39,4 +39,8 @@ public interface JobImportState {
      * @return Actions available
      */
     List<Action> getActions();
+
+    default JobRenamed getJobRenamed(){
+        return null;
+    }
 }

@@ -16,9 +16,10 @@
 
 package rundeck.services.scm
 
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+
 import com.dtolabs.rundeck.plugins.scm.ImportResult
 import com.dtolabs.rundeck.plugins.scm.JobImporter
+import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 
 /**
@@ -52,10 +53,11 @@ class ResolvedJobImporter implements JobImporter {
             final String format,
             final InputStream input,
             final Map importMetadata,
-            boolean preserveUuid
+            boolean preserveUuid,
+            JobRenamed renamedJob
     )
     {
-        return jobImporter.importFromStream(context, format, input, importMetadata, preserveUuid)
+        return jobImporter.importFromStream(context, format, input, importMetadata, preserveUuid, renamedJob)
     }
 
     @Override

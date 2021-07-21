@@ -575,6 +575,27 @@ class GitExportPluginSpec extends Specification {
         commit1.call()
     }
 
+    static RevCommit renameCommitFile(final File gitdir, final Git git, final String oldPath, final String newPath, final String content) {
+        def outfile = new File(gitdir, oldPath)
+        def newfile = new File(gitdir, newPath)
+        outfile.renameTo(newfile)
+        newfile.withOutputStream {
+            it.write(content.bytes)
+        }
+        outfile.delete()
+        git.add().addFilepattern(oldPath).call()
+        git.add().addFilepattern(newPath).call()
+
+        CommitCommand commit1 = git.commit().setMessage('rename commit').setCommitter(new PersonIdent(
+                'test user1',
+                'test@example.com'
+        )
+        )
+        commit1.setOnly(oldPath)
+        commit1.setOnly(newPath)
+        commit1.call()
+    }
+
     def "get local file and path for job"() {
         given:
 

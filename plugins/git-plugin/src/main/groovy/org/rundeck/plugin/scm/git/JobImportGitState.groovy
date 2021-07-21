@@ -19,6 +19,7 @@ package org.rundeck.plugin.scm.git
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.plugins.scm.ImportSynchState
 import com.dtolabs.rundeck.plugins.scm.JobImportState
+import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
 
 /**
@@ -30,6 +31,8 @@ class JobImportGitState implements JobImportState {
     ScmCommitInfo commit
 
     List<Action> actions
+
+    JobRenamed jobRenamed
 
     @Override
     public String toString() {
