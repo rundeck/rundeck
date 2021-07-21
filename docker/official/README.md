@@ -166,6 +166,34 @@ Set to `FILE` to log into `/home/rundeck/server/logs` .
 
 Set to anything enables audit logging. This can be very verbose so use with caution.
 
+### `RUNDECK_LOGGING_LEVEL_*`
+
+Change logging level for the specified module.
+
+Examples:
+
+1. Set log level for the most of defined loggers to the `debug` level:
+
+```shell
+RUNDECK_LOGGING_LOGLEVEL_DEFAULT: debug
+RUNDECK_LOGGING_LOGLEVEL_ROOT: debug
+```
+
+2. Set log level for all loggers to the `debug` level:
+
+```shell
+RUNDECK_LOGGING_LOGLEVEL_DEFAULT: debug
+RUNDECK_LOGGING_LOGLEVEL_ROOT: debug
+RUNDECK_LOGGING_LOGLEVEL_HIBERNATE: debug
+RUNDECK_LOGGING_LOGLEVEL_SPRING: debug
+RUNDECK_LOGGING_LOGLEVEL_SPRINGBEAN: debug
+RUNDECK_LOGGING_LOGLEVEL_INTERNALS: debug
+RUNDECK_LOGGING_LOGLEVEL_GRAILS: debug
+RUNDECK_LOGGING_LOGLEVEL_JETTY: debug
+```
+
+Valid options are: `debug`, `info`, `warn`, `error`, etc.
+
 ### `RUNDECK_STORAGE_PROVIDER_#_[[TYPE|PATH]|CONFIG_[...]]`
 ### `RUNDECK_STORAGE_CONVERTER_#_[[TYPE|PATH]|CONFIG_[...]]`
 
