@@ -109,6 +109,7 @@ dependencies {
 
     compile "org.springframework.boot:spring-boot-starter-log4j2"
     compile "org.springframework.boot:spring-boot-autoconfigure"
+    compile 'org.springframework.session:spring-session-core'
 
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
