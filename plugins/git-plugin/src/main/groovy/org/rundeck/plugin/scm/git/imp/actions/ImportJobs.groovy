@@ -18,6 +18,7 @@ package org.rundeck.plugin.scm.git.imp.actions
 
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.JobImporter
+import com.dtolabs.rundeck.plugins.scm.JobRenamed
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
@@ -28,6 +29,7 @@ import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
+import org.rundeck.plugin.scm.git.JobRenamedImp
 
 
 /**
@@ -105,11 +107,23 @@ class ImportJobs extends BaseAction implements GitImportAction {
             def meta = GitUtil.metaForCommit(commit)
             meta.url = plugin.config.url
 
+            JobRenamedImp renamedJob = null
+            if(plugin.importTracker.originalValue(path)){
+                def originalPath = plugin.importTracker.originalValue(path)
+                def jobUUID = plugin.importTracker.trackedJob(originalPath)
+                def jobCache = plugin.jobStateMap[jobUUID]
+                renamedJob = new JobRenamedImp(uuid: jobUUID)
+                if(jobCache?.sourceId){
+                    renamedJob.sourceId = jobCache.sourceId
+                }
+            }
+
             def importResult = importer.importFromStream(
                     plugin.config.format,
                     new ByteArrayInputStream(bytes),
                     meta,
-                    plugin.config.importPreserve
+                    plugin.config.importPreserve,
+                    renamedJob
             )
 
             if (!importResult.successful) {

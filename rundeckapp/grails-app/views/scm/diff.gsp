@@ -70,7 +70,7 @@
                             importCommit: importStatus?.commit,
                     ]"/>
                     </span>
-                    <g:if test="${scmFilePaths && scmFilePaths[job.extid]}">
+                    <g:if test="${scmFilePaths && scmFilePaths[job.extid] && integration=='export'}">
                         <g:if test="${scmExportRenamedPath}">
                             <div>
                                 <span class="has_tooltip text-primary" title="Original repo path" data-viewport="#section-content">
@@ -87,6 +87,25 @@
                             <g:icon name="file"/>
                             ${scmFilePaths[job.extid]}
                         </span>
+                    </g:if>
+
+                    <g:if test="${scmFilePaths && scmFilePaths[job.extid] && integration=='import'}">
+                        <span class="has_tooltip" title="Original repo path" data-viewport="#section-content">
+                            <g:icon name="file"/>
+                            ${scmFilePaths[job.extid]}
+                        </span>
+
+                        <g:if test="${scmImportRenamedPath}">
+                            <g:if test="${scmImportRenamedPath}">
+                                <g:icon name="arrow-right"/>
+                            </g:if>
+                            <div>
+                                <span class="has_tooltip text-primary" title="Repo file path" data-viewport="#section-content">
+                                    <g:icon name="file"/>
+                                    ${scmImportRenamedPath}
+                                </span>
+                            </div>
+                        </g:if>
                     </g:if>
                 </div>
                 

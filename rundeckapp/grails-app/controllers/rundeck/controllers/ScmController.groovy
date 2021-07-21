@@ -603,7 +603,7 @@ class ScmController extends ControllerBase {
             return
         }
 
-        def isExport = apiProjStatusIntRequest.integration == 'export'
+        boolean isExport = apiProjStatusIntRequest.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
         def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
@@ -619,7 +619,7 @@ class ScmController extends ControllerBase {
                 def query=new ScheduledExecutionQuery()
                 query.projFilter = params.project
                 def jobs = scheduledExecutionService.listWorkflows(query, params)
-                def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
+                def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, isExport)
                 //relaod all jobs to get project status
                 scmService.exportStatusForJobs(params.project, authContext, jobs.schedlist, true, jobsPluginMeta)
             }
@@ -828,7 +828,7 @@ class ScmController extends ControllerBase {
             }.findAll { it }
         } else {
             jobs = ScheduledExecution.findAllByProject(project)
-            jobPluginMeta = scmService.getJobsPluginMeta(project)
+            jobPluginMeta = scmService.getJobsPluginMeta(project, true)
         }
 
         scmJobStatus = scmService.exportStatusForJobs(project, null, jobs, true, jobPluginMeta).findAll {k,v->
@@ -991,7 +991,7 @@ class ScmController extends ControllerBase {
             List<ScheduledExecution> alljobs = ScheduledExecution.findAllByProject(project)
             Map<String, ScheduledExecution> jobMap = alljobs.collectEntries { [it.extid, it] }
 
-            def jobsPluginMeta = scmService.getJobsPluginMeta(project)
+            def jobsPluginMeta = scmService.getJobsPluginMeta(project, isExport)
 
             Map scmJobStatus = scmService.exportStatusForJobs(project, authContext, alljobs,false, jobsPluginMeta).findAll {
                 it.value.synchState != SynchState.CLEAN
@@ -1163,8 +1163,9 @@ class ScmController extends ControllerBase {
 
         def jobMap = [:]
         def scmStatus = []
-        def jobsPluginMeta = scmService.getJobsPluginMeta(project)
-        if (integration == 'export') {
+        boolean isExport = integration == 'export'
+        def jobsPluginMeta = scmService.getJobsPluginMeta(project, isExport)
+        if (isExport) {
             if(actionId && !actionId.equals(scmService.getExportPushActionId(project))){
                 jobs = jobIds.collect {
                     ScheduledExecution.getByIdOrUUID(it)
@@ -1285,7 +1286,8 @@ class ScmController extends ControllerBase {
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
         def result
-        if (integration == 'export') {
+        boolean isExport = integration == 'export'
+        if (isExport) {
             result = scmService.performExportAction(
                     actionId,
                     authContext,
@@ -1325,7 +1327,7 @@ class ScmController extends ControllerBase {
             renamedJobPaths.values().each {
                 deletedPaths.remove(it)
             }
-            def jobsPluginMeta = scmService.getJobsPluginMeta(project)
+            def jobsPluginMeta = scmService.getJobsPluginMeta(project, isExport)
             def scmStatus = integration == 'export' ? scmService.exportStatusForJobs(project, authContext, jobs, false, jobsPluginMeta) : null
             def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(project, jobs, jobsPluginMeta) : null
 
@@ -1717,13 +1719,23 @@ class ScmController extends ControllerBase {
             return redirect(action: 'index', params: [project: project])
         }
         def job = ScheduledExecution.getByIdOrUUID(id)
-        def jobMetaMap = [(id):scmService.getJobPluginMeta(job)]
+        String type = isExport ? scmService.STORAGE_NAME_EXPORT : scmService.STORAGE_NAME_IMPORT
+        def jobMetaMap = [(id):scmService.getJobPluginMeta(job, type)]
         def exportStatus = isExport ? scmService.exportStatusForJobs(project, authContext, [job], true, jobMetaMap) : null
         def importStatus = isExport ? null : scmService.importStatusForJobs(project, authContext, [job])
-        def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs(project, [job]) : null
+        def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs(project, [job]) : scmService.importFilePathsMapForJobs(project, [job])
         def diffResult = isExport ? scmService.exportDiff(project, job) : scmService.importDiff(project, job)
-        def scmExportRenamedPath = isExport ? scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid) :
-                null
+
+        def scmImportRenamedPath = null
+        if(!isExport){
+            JobRenamed scmImportRenamed = importStatus.get(job.extid)?.jobRenamed
+            if(scmImportRenamed){
+                scmImportRenamedPath = scmImportRenamed.renamedPath
+            }
+        }
+
+        def scmExportRenamedPath = isExport ? scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid) : null
+
         if (params.download == 'true') {
             if (params.download) {
                 response.addHeader("Content-Disposition", "attachment; filename=\"${job.extid}.diff\"")
@@ -1738,7 +1750,8 @@ class ScmController extends ControllerBase {
                 job                 : job,
                 isScheduled         : scheduledExecutionService.isScheduled(job),
                 scmFilePaths        : scmFilePaths,
-                scmExportRenamedPath: scmExportRenamedPath,
+                scmExportRenamedPath : scmExportRenamedPath,
+                scmImportRenamedPath : scmImportRenamedPath,
                 integration         : integration
         ]
     }

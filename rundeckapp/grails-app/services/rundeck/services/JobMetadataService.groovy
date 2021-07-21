@@ -39,7 +39,7 @@ class JobMetadataService {
      * @return map of metadata set by import plugin
      */
     List<PluginMeta> getJobsPluginMeta(final String project, final String type) {
-        def found = PluginMeta.findAllByProject(project)
+        def found = PluginMeta.findAllByProjectAndKeyLike(project, "%/${type}")
         return found
     }
 
@@ -87,13 +87,8 @@ class JobMetadataService {
      * Remove scm metadata for the project
      * @param project project
      */
-    def removeProjectPluginMeta(final String project) {
-        def pluginMeta = PluginMeta.findAllByProject(project)
-        if (pluginMeta) {
-            pluginMeta.each {meta->
-                meta.delete(flush: true)
-            }
-        }
+    def removeProjectPluginMeta(final String project, final String type) {
+        PluginMeta.executeUpdate('delete PluginMeta where project=:project and data_key like :data_key' , [project: project, data_key: "%/${type}"], [flush: true])
     }
 
     /**

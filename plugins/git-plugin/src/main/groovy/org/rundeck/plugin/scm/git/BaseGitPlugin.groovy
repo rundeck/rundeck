@@ -468,12 +468,13 @@ class BaseGitPlugin {
         )
     }
 
-    JobImportState createJobImportStatus(final Map map, final List<Action> actions = []) {
+    JobImportState createJobImportStatus(final Map map, final List<Action> actions = [], JobRenamed jobRenamed = null) {
         //TODO: include scm status
         return new JobImportGitState(
                 synchState: map['synch'],
                 commit: map.commitMeta ? new GitScmCommit(map.commitMeta) : null,
-                actions: actions
+                actions: actions,
+                jobRenamed: jobRenamed
         )
     }
 

@@ -48,6 +48,7 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
+import rundeck.PluginMeta
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
@@ -609,7 +610,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
 
         //store metadata about commit
-        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: 1, pluginMeta: commitMetadata, 'name': 'test', 'groupPath': 'test'])
+        1 * service.jobMetadataService.setJobPluginMeta(job, 'scm-export', [version: 1, pluginMeta: commitMetadata, 'name': 'test', 'groupPath': 'test'])
 
         result.valid
         result.commitId == 'a-commit-id'
@@ -856,7 +857,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             def job = new ScheduledExecution()
             service.jobMetadataService=Mock(JobMetadataService)
         when:
-            def result = service.getJobPluginMeta(job)
+            def result = service.getJobPluginMeta(job, "scm-import")
         then:
             1 * service.jobMetadataService.getJobPluginMeta(job, ScmService.STORAGE_NAME_IMPORT)>>expect
             result == expect
@@ -900,14 +901,14 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         }
 
         service.jobMetadataService = Mock(JobMetadataService){
-            getJobPluginMeta(_,'scm-import')>>originalMeta
+            getJobPluginMeta(_,'scm-export')>>originalMeta
         }
         ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
 
         when:
         service.refreshExportPluginMetadata(project,plugin, jobs, jobsPluginMeta)
         then:
-        jobMetadataCalls * service.jobMetadataService.setJobPluginMeta(job, 'scm-import', _)
+        jobMetadataCalls * service.jobMetadataService.setJobPluginMeta(job, 'scm-export', _)
 
         where:
         originalMeta                                                    | jobMetadataCalls
@@ -953,7 +954,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
                  1 * getProvider()>>provider
                  1 * close()
             }
-            1 * service.jobMetadataService.removeProjectPluginMeta(project)
+            1 * service.jobMetadataService.removeProjectPluginMeta(project, _)
         where:
             integration << ['export','import']
             project = 'aproj'
@@ -985,9 +986,9 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         when:
             def result = service.exportFilePathsMapForJobs(project, jobs)
         then:
-            0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_IMPORT)
-            1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_IMPORT)
-            1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_IMPORT)
+            0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_EXPORT)
+            1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_EXPORT)
+            1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_EXPORT)
             1 * plugin.getRelativePathForJob({it.id== 'job1id' })>> '/a/path/job1'
             1 * plugin.getRelativePathForJob({it.id=='job2id' })>>'/a/path/job2'
             result == [
@@ -1080,7 +1081,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             1 * plugin.getRelativePathForJob({
                 it.id=='123'
             })>>'/a/path'
-            1 * service.jobMetadataService.getJobPluginMeta(project,'123','scm-import')
+            1 * service.jobMetadataService.getJobPluginMeta(project,'123','scm-export')
             1 * plugin.jobChanged({ it.eventType==evtType },_)
             service.deletedJobsCache[project]['/a/path']!=null
         where:
@@ -1169,6 +1170,96 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
             evtType                                  | _
             JobChangeEvent.JobChangeEventType.CREATE | _
             JobChangeEvent.JobChangeEventType.MODIFY | _
+    }
+
+    def "get srcId jobs export plugin metadata"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        def project = "test"
+        def job = new ScheduledExecution()
+        job.uuid = "1234"
+        job.version = 1
+        job.jobName = "test"
+        job.groupPath = "test"
+
+
+        PluginMeta importPluginMeta = new PluginMeta()
+        importPluginMeta.key = "1234/scm-import"
+        importPluginMeta.project = project
+        importPluginMeta.jsonData = '{"name":"test","groupPath":"test","srcId":"456"}'
+
+        PluginMeta exportPluginMeta = new PluginMeta()
+        exportPluginMeta.key = jobsExportMetaKey
+        exportPluginMeta.project = project
+        exportPluginMeta.jsonData = jobsExportMetaKeyJson
+
+        def jobsImportMeta = [importPluginMeta]
+        def jobsExportMeta = [exportPluginMeta]
+
+        when:
+        def result = service.getJobsPluginMeta(project,isExport)
+
+        then:
+
+        service.jobMetadataService = Mock(JobMetadataService){
+            1 * getJobsPluginMeta(_,'scm-import')>>jobsImportMeta
+            calls * getJobsPluginMeta(_,'scm-export')>>jobsExportMeta
+        }
+
+        result.get("1234")["srcId"] == checkResult
+
+        where:
+        isExport    | jobsExportMetaKey   | jobsExportMetaKeyJson                                   | calls | checkResult
+        true        | "xxx/scm-export"    | "{}"                                                    | 1     | "456"
+        false       | "xxx/scm-export"    | "{}"                                                    | 0     | "456"
+        true        | "1234/scm-export"   | '{"name":"test","groupPath":"test"}'                    | 1     | "456"
+        true        | "1234/scm-export"   | '{"name":"test","groupPath":"test","srcId":"1234"}'     | 1     | "1234"
+    }
+
+    def "get srcId job export plugin metadata"() {
+        given:
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+        }
+        service.storageService = Mock(StorageService)
+        service.pluginService = Mock(PluginService)
+        service.jobEventsService = Mock(JobEventsService)
+
+        def job = new ScheduledExecution()
+        job.uuid = "1234"
+        job.version = 1
+        job.jobName = "test"
+        job.groupPath = "test"
+
+        when:
+        def result = service.getJobPluginMeta(job,type)
+
+        then:
+
+        service.jobMetadataService = Mock(JobMetadataService){
+            1 * getJobPluginMeta(_,'scm-import')>>importMeta
+            calls * getJobPluginMeta(_,'scm-export')>>exportMeta
+        }
+
+        result["srcId"] == checkResult
+
+        where:
+        type            | exportMeta                                          | importMeta      | calls | checkResult
+        "scm-export"    | null                                                | [srcId:"456"]   | 1     | "456"
+        "scm-import"    | "{}"                                                | [srcId:"456"]   | 0     | "456"
+        "scm-export"    | [name: 'test', groupPath: 'test']                   | [srcId:"456"]   | 1     | "456"
+        "scm-export"    | [name: 'test', groupPath: 'test', srcId:"1234"]     | [srcId:"456"]   | 1     | "1234"
+        "scm-export"    | [name: 'test', groupPath: 'test', srcId:"1234"]     | null            | 1     | "1234"
+        "scm-export"    | [name: 'test', groupPath: 'test']                   | null            | 1     | null
+
     }
 
 }
