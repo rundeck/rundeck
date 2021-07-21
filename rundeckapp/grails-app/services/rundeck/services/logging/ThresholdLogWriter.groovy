@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.logging.FilterStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -27,9 +29,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Used to log that a threshold was reached, and optionally truncate further output
  */
 class ThresholdLogWriter extends FilterStreamingLogWriter {
+    static final Logger LOG = LoggerFactory.getLogger(ThresholdLogWriter.class)
+
+    static final String MSG_WARN_SIZE = "The log file size achieved more than {} bytes - current size: {} bytes"
+
     LoggingThreshold threshold
     final boolean truncate
     AtomicBoolean limitReached = new AtomicBoolean(false)
+    AtomicBoolean warningReached = new AtomicBoolean(false)
 
     ThresholdLogWriter(final StreamingLogWriter writer, final LoggingThreshold threshold) {
         super(writer)
@@ -40,13 +47,20 @@ class ThresholdLogWriter extends FilterStreamingLogWriter {
     @Override
     void addEvent(final LogEvent event) {
         def limit = limitReached.get()
+        boolean warning = warningReached.get()
         if (truncate && limit) {
             return
         }
         getWriter().addEvent(event)
 
+        if (!warning && threshold.isWarningSizeReached() && warningReached.compareAndSet(false, true)) {
+            LOG.warn(MSG_WARN_SIZE  , threshold.warningSize, threshold.getValue())
+        }
+
         if (!limit && threshold.isThresholdExceeded() && limitReached.compareAndSet(false, true)) {
-            getWriter().addEvent(LogUtil.logError("Log output limit exceeded: " + threshold.description))
+            String msgError = "Log output limit exceeded: ${threshold.description}"
+            LOG.error(msgError)
+            getWriter().addEvent(LogUtil.logError(msgError))
         }
     }
 }

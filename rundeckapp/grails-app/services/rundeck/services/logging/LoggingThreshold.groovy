@@ -24,12 +24,18 @@ import rundeck.services.execution.ValueWatcher
  * Defines a threshold for some logging statistic
  */
 class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
-    public static final String TOTAL_LINES = "lines"
-    public static final String LINES_PER_NODE = "linesPerNode"
+    public static final String TOTAL_LINES     = "lines"
+    public static final String LINES_PER_NODE  = "linesPerNode"
     public static final String TOTAL_FILE_SIZE = "size"
-    public static final String ACTION_HALT = "halt"
+    public static final String ACTION_HALT     = "halt"
     public static final String ACTION_TRUNCATE = "truncate"
+    /**
+     * Warning log file size value in bytes (300MB)
+     */
+    public static final Long WARN_SIZE_DEFAULT = 314572800
+
     Long maxValue
+    Long warningSize
     ValueHolder<Long> valueHolder
     String action
     String description
@@ -103,5 +109,12 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
      */
     boolean isTruncateOnLimitReached() {
         action == ACTION_TRUNCATE
+    }
+
+    /**
+     * @return true if log file size is over a warning size alert
+     */
+    boolean isWarningSizeReached() {
+        return getValue() > warningSize
     }
 }

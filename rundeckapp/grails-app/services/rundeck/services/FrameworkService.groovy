@@ -71,9 +71,22 @@ import java.util.function.Predicate
 @GrailsCompileStatic
 class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     static transactional = false
-    public static final String REMOTE_CHARSET = 'remote.charset.default'
-    public static final String FIRST_LOGIN_FILE = ".firstLogin"
-    static final String SYS_PROP_SERVER_ID = "rundeck.server.uuid"
+    public static final String REMOTE_CHARSET    = 'remote.charset.default'
+    public static final String FIRST_LOGIN_FILE  = ".firstLogin"
+    static final String SYS_PROP_SERVER_ID       = "rundeck.server.uuid"
+    /**
+     * Log output limit applied over all projects
+     */
+    static final String PROJECT_LOG_OUTPUT_LIMIT = "framework.project.log.output.limit"
+    /**
+     * Log limit action applied over all projects
+     */
+    static final String PROJECT_LOG_LIMIT_ACTION = "framework.project.log.limit.action"
+    /**
+     * Log size warning
+     */
+    static final String PROJECT_LOG_SIZE_WARNING = "framework.project.log.output.warning.size"
+
 
     def ApplicationContext applicationContext
     def gormEventStoreService
@@ -128,6 +141,33 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 
     String getServerUUID() {
         System.getProperty(SYS_PROP_SERVER_ID)
+    }
+
+    /**
+     * @return the log output limit size from framework.properties file
+     */
+    String getProjectLogOutputLimit() {
+        return rundeckFramework
+                .getPropertyRetriever()
+                .getProperty(PROJECT_LOG_OUTPUT_LIMIT)
+    }
+
+    /**
+     * @return the log limit action from framework.properties file
+     */
+    String getProjectLogLimitAction() {
+        return rundeckFramework
+                .getPropertyRetriever()
+                .getProperty(PROJECT_LOG_LIMIT_ACTION)
+    }
+
+    /**
+     * @return the log size warning from framework.properties file
+     */
+    String getProjectLogSizeWarning() {
+        return rundeckFramework
+                .getPropertyRetriever()
+                .getProperty(PROJECT_LOG_SIZE_WARNING)
     }
 
     String getServerHostname() {
