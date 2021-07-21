@@ -132,14 +132,14 @@ class ScmLoaderService implements EventBusAware {
                                 process = true
 
                             } catch (Throwable t) {
-                                retryCount++
-                                log.error("processMessages error: $project/$integration: ${t.message} retrying ${retryCount}/${retryTimes}")
-                                Thread.sleep(retryDelay)
-
                                 if(retryCount>retryTimes){
                                     scmFailedProjectInit.put(projectIntegration, pluginConfigData)
                                     process = true
                                     removingLoaderProcess(project, integration)
+                                }else{
+                                    log.error("processMessages error: $project/$integration: ${t.message} retrying ${retryCount}/${retryTimes}")
+                                    Thread.sleep(retryDelay*retryCount)
+                                    retryCount++
                                 }
                             }
                         }
