@@ -270,6 +270,7 @@ public class Option implements Comparable{
             }else{
                 opt.valuesListDelimiter=DEFAULT_DELIMITER
             }
+            opt.optionValues=new ArrayList<String>(data.values);
             opt.valuesList = opt.produceValuesList()
             opt.values = null
         }
@@ -302,10 +303,13 @@ public class Option implements Comparable{
      * Return the string equivalent of the values set member
      */
     public String produceValuesList(){
-        if(values){
-            if(valuesListDelimiter==null){
-                valuesListDelimiter = DEFAULT_DELIMITER
-            }
+        if (valuesListDelimiter == null) {
+            valuesListDelimiter = DEFAULT_DELIMITER
+        }
+
+        if(optionValues) {
+            valuesList = optionValues.join(valuesListDelimiter)
+        } else if(values) {
             valuesList = values.join(valuesListDelimiter)
             values = null
             return valuesList
