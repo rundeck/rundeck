@@ -152,13 +152,12 @@ beans={
 
     def defaultCookieSerializer = new DefaultCookieSerializer()
 
-    if (application.config.rundeck.security?.cookie?.domainNamePattern && !"".equals(application.config.rundeck.security.cookie.domainNamePattern)) {
-        defaultCookieSerializer.setDomainNamePattern(application.config.rundeck.security.cookie.domainNamePattern);
+    if (application.config.rundeck.security?.cookie?.domainNamePattern?.trim()) {
+        defaultCookieSerializer.setDomainNamePattern(application.config.rundeck.security.cookie.domainNamePattern.toString().trim());
     }
 
-    if (application.config.rundeck.security?.cookie?.name && !"".equals(application.config.rundeck.security.cookie.name)) {
-        defaultCookieSerializer.setCookieName(application.config.rundeck.security?.cookie?.name ? application.config.rundeck.security.cookie.name : "JSESSIONID")
-    }
+    def cookieName = application.config.rundeck.security?.cookie?.name?.trim() ?: "JSESSIONID"
+    defaultCookieSerializer.setCookieName(cookieName)
 
     def sessionFilter = new MapSessionRepository(new ConcurrentHashMap<>())
     def sessionIdResolver = new CookieHttpSessionIdResolver()
