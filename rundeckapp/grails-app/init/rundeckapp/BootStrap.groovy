@@ -220,6 +220,17 @@ class BootStrap {
 
                 if(!primaryServerId) log.warn("Running in cluster mode without rundeck.primaryServerId set. Please set rundeck.primaryServerId to the UUID of the primary server in the cluster")
             }
+
+            if (grailsApplication.config.rundeck.session?.storeType in ['redis']) {
+                def redisHost = grailsApplication.config.rundeck.session?.redis?.host?.trim()
+                def redisPort = grailsApplication.config.rundeck.session?.redis?.port?.isInteger() ? grailsApplication.config.rundeck.session.redis.port.toInteger() : 6379
+                if (!redisHost) {
+                    log.warn("Redis session not enabled. Please set rundeck.session.redis.host.")
+                } else {
+                    log.warn("Redis session enabled: ${redisHost}:${redisPort}")
+                }
+            }
+
             //auth tokens stored in file
             def tokensfile = properties.getProperty("rundeck.tokens.file")
             if (tokensfile) {

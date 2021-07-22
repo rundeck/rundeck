@@ -6,21 +6,21 @@ import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration
+import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.env.PropertiesPropertySource
 import rundeckapp.init.ReloadableRundeckPropertySource
+import rundeckapp.init.RundeckDbMigration
 import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.RundeckInitializer
-import rundeckapp.init.RundeckDbMigration
-import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 
 import java.nio.file.Files
 import java.nio.file.Paths
 
-@EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
+@EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration, SessionAutoConfiguration])
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static final String SYS_PROP_RUNDECK_CONFIG_INITTED = "rundeck.config.initted"
     static RundeckInitConfig rundeckConfig = null

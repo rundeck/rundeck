@@ -90,6 +90,9 @@ import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
@@ -104,6 +107,7 @@ import org.springframework.security.web.authentication.session.SessionFixationPr
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import org.springframework.session.MapSessionRepository
+import org.springframework.session.data.redis.RedisOperationsSessionRepository
 import org.springframework.session.web.http.CookieHttpSessionIdResolver
 import org.springframework.session.web.http.DefaultCookieSerializer
 import org.springframework.session.web.http.SessionRepositoryFilter
@@ -157,14 +161,38 @@ beans={
         cookieName = application.config.rundeck.security?.cookie?.name?.toString()?.trim() ?: "JSESSIONID"
     }
 
-    rundeckMapSessionRepository(MapSessionRepository, new ConcurrentHashMap())
-
     rundeckSessionIdResolver(CookieHttpSessionIdResolver){
         cookieSerializer = ref('rundeckCookieSerializer')
     }
 
-    springSessionRepositoryFilter(SessionRepositoryFilter, ref('rundeckMapSessionRepository')) {
-        httpSessionIdResolver =  ref('rundeckSessionIdResolver')
+    if (application.config.rundeck.session?.storeType in ['redis'] && application.config.rundeck.session?.redis?.host?.trim()) {
+        redisStandaloneConfiguration(RedisStandaloneConfiguration, application.config.rundeck.session.redis.host.toString().trim(),
+                application.config.rundeck.session?.redis?.port?.isInteger() ? application.config.rundeck.session.redis.port.toInteger() : 6379) {}
+
+        jedisConnectionFactory(JedisConnectionFactory, ref('redisStandaloneConfiguration')) {
+            poolConfig.maxTotal = application.config.rundeck.session?.redis?.maxTotal?.toString()?.isInteger() ? application.config.rundeck.session.redis.maxTotal.toInteger() : 100
+            poolConfig.maxIdle = application.config.rundeck.session?.redis?.maxIdle?.toString()?.isInteger() ? application.config.rundeck.session.redis.maxIdle.toInteger() : 100
+            poolConfig.minIdle = application.config.rundeck.session?.redis?.minIdle?.toString()?.isInteger() ? application.config.rundeck.session.redis.minIdle.toInteger() : 10
+        }
+
+        redisTemplate(RedisTemplate) {
+            connectionFactory = ref('jedisConnectionFactory')
+            enableDefaultSerializer = true
+            enableTransactionSupport = true
+        }
+
+        redisTemplate.afterPropertiesSet()
+        rundeckRedisSessionRepository(RedisOperationsSessionRepository, ref('redisTemplate')){}
+
+        springSessionRepositoryFilter(SessionRepositoryFilter, ref('rundeckRedisSessionRepository')) {
+            httpSessionIdResolver =  ref('rundeckSessionIdResolver')
+        }
+    } else {
+        rundeckMapSessionRepository(MapSessionRepository, new ConcurrentHashMap())
+
+        springSessionRepositoryFilter(SessionRepositoryFilter, ref('rundeckMapSessionRepository')) {
+            httpSessionIdResolver =  ref('rundeckSessionIdResolver')
+        }
     }
 
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
