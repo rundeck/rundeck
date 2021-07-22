@@ -222,8 +222,8 @@ class BootStrap {
             }
 
             if (grailsApplication.config.rundeck.session?.storeType in ['redis']) {
-                def redisHost = grailsApplication.config.rundeck.session?.redis?.host?.trim()
-                def redisPort = grailsApplication.config.rundeck.session?.redis?.port?.isInteger() ? grailsApplication.config.rundeck.session.redis.port.toInteger() : 6379
+                def redisHost = grailsApplication.config.rundeck.session?.redis?.host?.toString()?.trim()
+                def redisPort = grailsApplication.config.rundeck.session?.redis?.port?.toString()?.isInteger() ? grailsApplication.config.rundeck.session.redis.port.toInteger() : 6379
                 if (!redisHost) {
                     log.warn("Redis session not enabled. Please set rundeck.session.redis.host.")
                 } else {
