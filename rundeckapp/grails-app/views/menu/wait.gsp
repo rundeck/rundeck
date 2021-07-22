@@ -27,8 +27,8 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
     <title><g:message code="archive.request.please.wait.pagetitle.wait" default="Export archive"/></title>
-    <asset:javascript src="knockout.min.js"/>
-    <asset:javascript src="knockout-mapping.js"/>
+    <asset:javascript src="vendor/knockout.min.js"/>
+    <asset:javascript src="vendor/knockout-mapping.js"/>
     <g:embedJSON data="${[
             ready:ready,
             token:token,
@@ -111,7 +111,8 @@
         <g:if test="${!params.instance}">
         <g:link controller="project" action="exportWait"
                 params="[project: params.project ?: request.project, token: params.token, download: true]"
-                class="btn btn-success">
+                class="btn btn-success"
+                elementId="export-download-btn">
             <i class="glyphicon glyphicon-download-alt"></i>
             <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar
         </g:link>
