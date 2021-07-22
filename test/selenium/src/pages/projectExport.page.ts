@@ -18,10 +18,11 @@ import {By, WebElementPromise} from 'selenium-webdriver'
 import {Page} from '@rundeck/testdeck/page'
 import { Context } from '@rundeck/testdeck/context';
 
-export enum Elems {
-
+export const Elems = {
     /** @todo This button could use an id */
-    submitBtn = '//button[@type="submit"]',
+    submitBtn: By.xpath('//button[@type="submit"]'),
+    downloadBtn: By.xpath('//*[@id="export-download-btn"]'),
+    errorPanels: By.css('.panel-danger')
 }
 export const Checkboxes=[
     'exportAll',
@@ -57,5 +58,9 @@ export class ProjectExportPage extends Page {
   }
   async getRadio( name:string){
     return await this.ctx.driver.findElement(By.xpath(`//input[@type="radio"][@id="${name}"]`))
+  }
+  async export() {
+    const btn = await this.ctx.driver.findElement(Elems.submitBtn)
+    await btn.click()
   }
 }
