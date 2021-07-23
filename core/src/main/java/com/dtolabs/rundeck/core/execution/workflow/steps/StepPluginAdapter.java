@@ -28,9 +28,9 @@ import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils;
 import com.dtolabs.rundeck.core.jobs.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.storage.StorageTree;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -38,13 +38,12 @@ import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.rundeck.app.spi.Services;
 import org.rundeck.core.executions.provenance.Provenance;
+import org.rundeck.core.executions.provenance.ProvenanceUtil;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -65,6 +64,15 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
         public StepExecutor convert(final StepPlugin plugin) {
             return new StepPluginAdapter(plugin);
         }
+    }
+
+    @Override
+    public Map<String, Object> dynamicProperties(final Map<String, Object> projectAndFrameworkValues) {
+        if(plugin instanceof DynamicProperties){
+            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues);
+        }
+
+        return null;
     }
 
     @Override
@@ -94,15 +102,15 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
     @Override
     public StepExecutionResult executeWorkflowStep(final StepExecutionContext executionContext,
                                                    final StepExecutionItem item) throws StepException
-        {
+    {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
-            Description description = getDescription();
-            Map<String,Boolean> blankIfUnexMap = new HashMap<>();
-            if(description != null) {
-                description.getProperties().forEach(p -> {
-                    blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
-                });
-            }
+        Description description = getDescription();
+        Map<String, Boolean> blankIfUnexMap = new HashMap<>();
+        if (description != null) {
+            description.getProperties().forEach(p -> {
+                blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
+            });
+        }
         if (null != instanceConfiguration) {
             instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
                     instanceConfiguration,
