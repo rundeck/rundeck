@@ -117,6 +117,14 @@ public interface JobService extends AppService {
     ExecutionReference runJob(RunJob runJob) throws JobNotFound, JobExecutionError;
 
     /**
+     *
+     * @param id exec id
+     * @return provenance list for execution
+     * @throws ExecutionNotFound if not found
+     */
+    List<Provenance<?>> getExecutionProvenance(String id, String project) throws ExecutionNotFound;
+
+    /**
      * Request to run a job
      */
     static interface RunJob {

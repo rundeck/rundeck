@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import grails.plugins.mail.MailMessageBuilder
 import groovy.transform.CompileStatic
+import org.rundeck.core.executions.provenance.Provenance
 import org.springframework.context.ApplicationContext
 
 /**
@@ -74,6 +75,11 @@ class ResolvedAuthJobService implements JobService {
     @Override
     ExecutionReference runJob(final RunJob runJob) throws JobNotFound, JobExecutionError {
         authJobService.runJob(authContext, runJob)
+    }
+
+    @Override
+    List<Provenance<?>> getExecutionProvenance(final String id, String project) throws ExecutionNotFound {
+        authJobService.getExecutionProvenance(authContext, id, project)
     }
 
     @Override

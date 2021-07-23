@@ -801,5 +801,23 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             ExecutionNotFound exc = thrown()
             1 * service.rundeckAuthContextEvaluator.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, ['read'], project) >> false
     }
+    def "provenance for execution id"() {
+        given:
+            def project = 'test'
+            def provList=[
+                ProvenanceUtil.generic(a:'b')
+            ]
+            def e=setTestExecutions(project,'test-uuid')
+            def id = e.id.toString()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+            service.executionProvenanceService=Mock(ExecutionProvenanceService)
+        when:
+            def result = service.getExecutionProvenance(auth, id, project)
+        then:
+            result==provList
+            1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(auth, _, ['read', 'view'], project) >> true
+            1 * service.executionProvenanceService.getProvenanceForExecution(e)>>provList
+    }
 
 }

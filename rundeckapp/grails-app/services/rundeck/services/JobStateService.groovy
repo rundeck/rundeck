@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit
 class JobStateService implements AuthorizingJobService {
     FrameworkService frameworkService
     AppAuthContextEvaluator rundeckAuthContextEvaluator
+    ExecutionProvenanceService executionProvenanceService
 
     @Override
     JobReference jobForID(AuthContext auth, String uuid, String project) throws JobNotFound {
@@ -214,31 +215,43 @@ class JobStateService implements AuthorizingJobService {
 
     @Override
     ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound{
+        Execution exec = getExecution(id, project, auth)
+        return exec.asReference()
+    }
+
+    private Execution getExecution(String id, String project, AuthContext auth) {
         long exid = Long.valueOf(id)
-        def exec = Execution.findByIdAndProject(exid,project)
-        if(!exec){
+        def exec = Execution.findByIdAndProject(exid, project)
+        if (!exec) {
             throw new ExecutionNotFound("Execution not found", id, project)
         }
         ScheduledExecution se = exec.scheduledExecution
         def isAuth = null
-        if(se){
+        if (se) {
             isAuth = rundeckAuthContextEvaluator.authorizeProjectJobAny(
                 auth,
                 se,
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
                 se.project
             )
-        }else if(!se){
-            isAuth=rundeckAuthContextEvaluator.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, [AuthConstants.ACTION_READ],
-                    exec.project)
+        } else if (!se) {
+            isAuth = rundeckAuthContextEvaluator.authorizeProjectResourceAll(
+                auth, AuthConstants.RESOURCE_ADHOC, [AuthConstants.ACTION_READ],
+                exec.project
+            )
         }
-        if(!isAuth){
+        if (!isAuth) {
             throw new ExecutionNotFound("Execution not found", id, project)
         }
-        return exec.asReference()
+        exec
     }
 
-
+    @Override
+    List<Provenance<?>> getExecutionProvenance(final UserAndRolesAuthContext auth, final String id, final String project)
+        throws ExecutionNotFound {
+        Execution exec = getExecution(id, project, auth)
+        executionProvenanceService.getProvenanceForExecution(exec)
+    }
 
     @Override
     ExecutionReference runJob(final UserAndRolesAuthContext auth, final JobService.RunJob runJobRequest)

@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
+import org.rundeck.core.executions.provenance.Provenance
 
 /**
  * Extends {@link com.dtolabs.rundeck.core.jobs.JobService} interface to include an AuthContext
@@ -57,6 +58,14 @@ interface AuthorizingJobService {
      */
     ExecutionReference runJob(UserAndRolesAuthContext auth, JobService.RunJob runJob)
         throws JobNotFound, JobExecutionError
+
+    /**
+     *
+     * @param id exec id
+     * @return provenance list for execution
+     * @throws ExecutionNotFound if not found
+     */
+    List<Provenance<?>> getExecutionProvenance(UserAndRolesAuthContext auth, String id, String project) throws ExecutionNotFound;
 
     Map deleteBulkExecutionIds(AuthContext auth, Collection ids, String asUser)
 
