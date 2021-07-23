@@ -23,7 +23,6 @@ class ExecutionReferenceImpl implements ExecutionReference {
     Map metadata
     boolean scheduled
     String executionType
-    Provenance provenance
 
     @Override
     String toString() {
