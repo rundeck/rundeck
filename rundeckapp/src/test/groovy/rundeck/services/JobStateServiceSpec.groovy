@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobService
 import org.rundeck.core.executions.provenance.Provenance
@@ -729,6 +730,76 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             ]
             result == execRef
 
+    }
+
+    def "execution for id with job ok"() {
+        given:
+            def project = 'test'
+            def e=setTestExecutions(project,'test-uuid')
+            def id = e.id.toString()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        when:
+            def result = service.executionForId(auth, id, project)
+        then:
+            result != null
+            result.id == id
+            1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(auth, _, ['read', 'view'], project) >> true
+    }
+    def "execution for id with job unauthorized"() {
+        given:
+            def project = 'test'
+            def e=setTestExecutions(project,'test-uuid')
+            def id = e.id.toString()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        when:
+            def result = service.executionForId(auth, id, project)
+        then:
+            ExecutionNotFound exc = thrown()
+            1 * service.rundeckAuthContextEvaluator.authorizeProjectJobAny(auth, _, ['read', 'view'], project) >> false
+    }
+    def "execution for id with job not found"() {
+        given:
+            def project = 'test'
+            def id = '11'
+            def auth = Mock(UserAndRolesAuthContext)
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        when:
+            def result = service.executionForId(auth, id, project)
+        then:
+            ExecutionNotFound e = thrown()
+    }
+    def "execution for id adhoc ok"() {
+        given:
+            def project = 'test'
+            def e=setTestExecutions(project,'test-uuid')
+            e.scheduledExecution=null
+            e.save()
+            def id = e.id.toString()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        when:
+            def result = service.executionForId(auth, id, project)
+        then:
+            result != null
+            result.id == id
+            1 * service.rundeckAuthContextEvaluator.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, ['read'], project) >> true
+    }
+    def "execution for id adhoc unauthorized"() {
+        given:
+            def project = 'test'
+            def e=setTestExecutions(project,'test-uuid')
+            e.scheduledExecution=null
+            e.save()
+            def id = e.id.toString()
+            def auth = Mock(UserAndRolesAuthContext)
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
+        when:
+            def result = service.executionForId(auth, id, project)
+        then:
+            ExecutionNotFound exc = thrown()
+            1 * service.rundeckAuthContextEvaluator.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, ['read'], project) >> false
     }
 
 }
