@@ -364,7 +364,7 @@ class RuleEvaluatorSpec extends Specification {
     }
 
     @Unroll
-    def "evaluate rule #testRule - #testType - #testValue"() {
+    def "evaluate rule#testRule - #testType - #testKey : #testValue"() {
         when:
         def matchResourceName = [match: 'regexResource']
         Authorization eval = newRuleEvaluator(basicRules([
@@ -373,7 +373,7 @@ class RuleEvaluatorSpec extends Specification {
                 subsetMatch                                             : testType == 'subset',
                 equalsMatch                                             : testType == 'equals',
                 (matchResourceName[testType] ?: (testType + 'Resource')): [
-                        jobName: testRule
+                        (testKey): testRule
                 ],
                 resourceType                                            : 'job',
                 allowActions                                            : ['EXECUTE'] as Set,
@@ -396,32 +396,33 @@ class RuleEvaluatorSpec extends Specification {
         result.action == "EXECUTE"
 
         where:
-        testValue       | testRule          | testType   | isauthorized
-        'bob'           | 'bob'             | 'match'    | true
-        'boblinkious'   | 'bob.*'           | 'match'    | true
-        'abboblinkious' | 'bob.*'           | 'match'    | false
+        testKey  | testValue       | testRule          | testType   | isauthorized
+        'jobName'| 'bob'           | 'bob'             | 'match'    | true
+        'jobName'| 'boblinkious'   | 'bob.*'           | 'match'    | true
+        'jobName'| 'abboblinkious' | 'bob.*'           | 'match'    | false
 
-        'bob'           | 'bob'             | 'equals'   | true
-        'bob'           | 'bobasdf'         | 'equals'   | false
-        'asdfbob'       | 'bob'             | 'equals'   | false
+        'jobName'| 'bob'           | 'bob'             | 'equals'   | true
+        'jobName'| 'bob'           | 'bobasdf'         | 'equals'   | false
+        'jobName'| 'asdfbob'       | 'bob'             | 'equals'   | false
 
-        'val1'          | 'val1'            | 'contains' | true
-        'val1'          | ['val1']          | 'contains' | true
-        'val1,val2'     | 'val1'            | 'contains' | true
-        'val1,val2'     | 'val2'            | 'contains' | true
-        'val1,val2'     | ['val1', 'val2']  | 'contains' | true
-        'val1,val2'     | ['val2', 'val1']  | 'contains' | true
-        'val1,val2'     | ['val3', 'val1']  | 'contains' | false
-        'val1,val3'     | ['val12', 'val1'] | 'contains' | false
+        'jobName'| 'val1'          | 'val1'            | 'contains' | true
+        'jobName'| 'val1'          | ['val1']          | 'contains' | true
+        'jobName'| 'val1,val2'     | 'val1'            | 'contains' | true
+        'jobName'| 'val1,val2'     | 'val2'            | 'contains' | true
+        'jobName'| 'val1,val2'     | ['val1', 'val2']  | 'contains' | true
+        'jobName'| 'val1,val2'     | ['val2', 'val1']  | 'contains' | true
+        'jobName'| 'val1,val2'     | ['val3', 'val1']  | 'contains' | false
+        'jobName'| 'val1,val3'     | ['val12', 'val1'] | 'contains' | false
+        'tag1'   | 'val1'          | 'val1'            | 'contains' | false
 
-        'val1'          | 'val1'            | 'subset'   | true
-        'val1'          | ['val1']          | 'subset'   | true
-        'val1,val2'     | 'val1'            | 'subset'   | false
-        'val1,val2'     | 'val2'            | 'subset'   | false
-        'val1,val2'     | ['val1', 'val2']  | 'subset'   | true
-        'val1,val2'     | ['val2', 'val1']  | 'subset'   | true
-        'val1,val2'     | ['val3', 'val1']  | 'subset'   | false
-        'val1,val3'     | ['val12', 'val1'] | 'subset'   | false
+        'jobName'| 'val1'          | 'val1'            | 'subset'   | true
+        'jobName'| 'val1'          | ['val1']          | 'subset'   | true
+        'jobName'| 'val1,val2'     | 'val1'            | 'subset'   | false
+        'jobName'| 'val1,val2'     | 'val2'            | 'subset'   | false
+        'jobName'| 'val1,val2'     | ['val1', 'val2']  | 'subset'   | true
+        'jobName'| 'val1,val2'     | ['val2', 'val1']  | 'subset'   | true
+        'jobName'| 'val1,val2'     | ['val3', 'val1']  | 'subset'   | false
+        'jobName'| 'val1,val3'     | ['val12', 'val1'] | 'subset'   | false
 
     }
 
