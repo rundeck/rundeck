@@ -111,7 +111,8 @@ dependencies {
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile 'org.springframework.session:spring-session-core'
     compile 'org.springframework.session:spring-session-data-redis'
-    compile 'redis.clients:jedis'
+    compile 'io.lettuce:lettuce-core'
+    compile 'org.apache.commons:commons-pool2'
 
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
@@ -138,6 +139,10 @@ dependencies {
     compile "com.fasterxml.jackson.core:jackson-core"
     compile "com.fasterxml.jackson.core:jackson-annotations"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.5"
+
+    // redis xml de/serialization
+    compile 'com.thoughtworks.xstream:xstream:1.4.10'
+
     compile "org.eclipse.jetty:jetty-jaas"
     compile "org.eclipse.jetty:jetty-util"
     compile "org.eclipse.jetty:jetty-security"

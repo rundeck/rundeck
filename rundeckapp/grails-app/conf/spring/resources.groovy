@@ -68,6 +68,9 @@ import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import groovy.io.FileType
+import io.lettuce.core.ClientOptions
+import io.lettuce.core.ReadFrom
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig
 import org.rundeck.app.AppRestarter
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.BaseAuthContextEvaluator
@@ -90,9 +93,14 @@ import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import org.springframework.data.redis.connection.RedisPassword
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
+import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.serializer.OxmSerializer
+import org.springframework.data.redis.serializer.StringRedisSerializer
+import org.springframework.oxm.xstream.XStreamMarshaller
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
@@ -165,24 +173,56 @@ beans={
         cookieSerializer = ref('rundeckCookieSerializer')
     }
 
-    if (application.config.rundeck.session?.storeType in ['redis'] && application.config.rundeck.session?.redis?.host?.trim()) {
-        redisStandaloneConfiguration(RedisStandaloneConfiguration, application.config.rundeck.session.redis.host.toString().trim(),
-                application.config.rundeck.session?.redis?.port?.isInteger() ? application.config.rundeck.session.redis.port.toInteger() : 6379) {}
+    if (application.config.rundeck.session?.storeType in ['redis'] && application.config.rundeck.session?.redis?.host?.toString()?.trim()) {
+        redisStandaloneConfiguration(RedisStandaloneConfiguration,
+                application.config.rundeck.session.redis.host.toString().trim(),
+                application.config.rundeck.session?.redis?.port?.toString()?.isInteger() ? application.config.rundeck.session.redis.port.toInteger() : 6379) {
 
-        jedisConnectionFactory(JedisConnectionFactory, ref('redisStandaloneConfiguration')) {
-            poolConfig.maxTotal = application.config.rundeck.session?.redis?.maxTotal?.toString()?.isInteger() ? application.config.rundeck.session.redis.maxTotal.toInteger() : 100
-            poolConfig.maxIdle = application.config.rundeck.session?.redis?.maxIdle?.toString()?.isInteger() ? application.config.rundeck.session.redis.maxIdle.toInteger() : 100
-            poolConfig.minIdle = application.config.rundeck.session?.redis?.minIdle?.toString()?.isInteger() ? application.config.rundeck.session.redis.minIdle.toInteger() : 10
+            if (application.config.rundeck.session?.redis?.password) {
+                password = RedisPassword.of(application.config.rundeck.session.redis.password.toString().trim())
+            }
+
+            if (application.config.rundeck.session?.redis?.database?.toString()?.isInteger()) {
+                database = application.config.rundeck.session.redis.database.toString().toInteger()
+            }
         }
+
+        def redisPoolConfig = new GenericObjectPoolConfig()
+        redisPoolConfig.setMaxTotal(application.config.rundeck.session?.redis?.maxTotal?.toString()?.isInteger() ? application.config.rundeck.session.redis.maxTotal.toInteger() : 100)
+        redisPoolConfig.setMaxIdle(application.config.rundeck.session?.redis?.maxIdle?.toString()?.isInteger() ? application.config.rundeck.session.redis.maxIdle.toInteger() : 100)
+        redisPoolConfig.setMinIdle(application.config.rundeck.session?.redis?.minIdle?.toString()?.isInteger() ? application.config.rundeck.session.redis.minIdle.toInteger() : 10)
+
+        redisConnectionFactory(LettuceConnectionFactory, ref('redisStandaloneConfiguration'), LettucePoolingClientConfiguration.builder()
+                .readFrom(ReadFrom.SLAVE_PREFERRED)
+                .clientOptions(ClientOptions
+                        .builder()
+                        .pingBeforeActivateConnection(true)
+                        .build())
+                .poolConfig(redisPoolConfig)
+                .build()) {
+        }
+
+        redisKeySerializer(StringRedisSerializer){}
+
+        xStreamMarshaller(XStreamMarshaller){
+            afterPropertiesSet()
+        }
+
+        redisValueSerializer(OxmSerializer, ref('xStreamMarshaller'), ref('xStreamMarshaller'))
 
         redisTemplate(RedisTemplate) {
-            connectionFactory = ref('jedisConnectionFactory')
-            enableDefaultSerializer = true
+            connectionFactory = ref('redisConnectionFactory')
+            keySerializer = ref('redisKeySerializer')
+            valueSerializer = ref('redisValueSerializer')
+            hashKeySerializer = ref('redisKeySerializer')
+            hashValueSerializer = ref('redisValueSerializer')
             enableTransactionSupport = true
+            afterPropertiesSet()
         }
 
-        redisTemplate.afterPropertiesSet()
-        rundeckRedisSessionRepository(RedisOperationsSessionRepository, ref('redisTemplate')){}
+        rundeckRedisSessionRepository(RedisOperationsSessionRepository, ref('redisTemplate')){
+            redisKeyNamespace = "rdk:s"
+        }
 
         springSessionRepositoryFilter(SessionRepositoryFilter, ref('rundeckRedisSessionRepository')) {
             httpSessionIdResolver =  ref('rundeckSessionIdResolver')

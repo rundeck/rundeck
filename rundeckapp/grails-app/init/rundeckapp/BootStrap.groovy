@@ -227,7 +227,9 @@ class BootStrap {
                 if (!redisHost) {
                     log.warn("Redis session not enabled. Please set rundeck.session.redis.host.")
                 } else {
-                    log.warn("Redis session enabled: ${redisHost}:${redisPort}")
+                    def redisPassword = grailsApplication.config.rundeck.session?.redis?.password ? "yes" : "no"
+                    def redisDatabase = grailsApplication.config.rundeck.session?.redis?.database ?: "0"
+                    log.warn("Redis session enabled: ${redisHost}:${redisPort} - using password: ${redisPassword} - database: ${redisDatabase}")
                 }
             }
 
