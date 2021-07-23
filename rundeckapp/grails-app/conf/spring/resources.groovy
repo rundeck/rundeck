@@ -150,20 +150,21 @@ beans={
         }
     }
 
-    def defaultCookieSerializer = new DefaultCookieSerializer()
-
-    if (application.config.rundeck.security?.cookie?.domainNamePattern?.trim()) {
-        defaultCookieSerializer.setDomainNamePattern(application.config.rundeck.security.cookie.domainNamePattern.toString().trim());
+    rundeckCookieSerializer(DefaultCookieSerializer) {
+        if (application.config.rundeck.security?.cookie?.domainNamePattern?.toString()?.trim()) {
+            domainNamePattern = application.config.rundeck.security.cookie.domainNamePattern.toString().trim()
+        }
+        cookieName = application.config.rundeck.security?.cookie?.name?.toString()?.trim() ?: "JSESSIONID"
     }
 
-    def cookieName = application.config.rundeck.security?.cookie?.name?.trim() ?: "JSESSIONID"
-    defaultCookieSerializer.setCookieName(cookieName)
+    rundeckMapSessionRepository(MapSessionRepository, new ConcurrentHashMap())
 
-    def sessionFilter = new MapSessionRepository(new ConcurrentHashMap<>())
-    def sessionIdResolver = new CookieHttpSessionIdResolver()
-    sessionIdResolver.setCookieSerializer(defaultCookieSerializer)
-    springSessionRepositoryFilter(SessionRepositoryFilter, sessionFilter) {
-        httpSessionIdResolver =  sessionIdResolver
+    rundeckSessionIdResolver(CookieHttpSessionIdResolver){
+        cookieSerializer = ref('rundeckCookieSerializer')
+    }
+
+    springSessionRepositoryFilter(SessionRepositoryFilter, ref('rundeckMapSessionRepository')) {
+        httpSessionIdResolver =  ref('rundeckSessionIdResolver')
     }
 
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
