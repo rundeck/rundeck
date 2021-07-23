@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.rundeck.app.spi.Services;
+import org.rundeck.core.executions.provenance.Provenance;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -200,6 +201,14 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
         @Override
         public ExecutionReference executionForId(final String id, final String project) throws ExecutionNotFound {
             return delegate.executionForId(id, project);
+        }
+
+        @Override
+        public List<Provenance<?>> getExecutionProvenance(
+                final String id, final String project
+        ) throws ExecutionNotFound
+        {
+            return delegate.getExecutionProvenance(id, project);
         }
 
         @Override
