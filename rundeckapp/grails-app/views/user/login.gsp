@@ -128,7 +128,7 @@
                       </div>
                     </g:if>
                     <!--SSO Login Feature-->
-                    <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled in [true,'true']}">
+                    <g:if test="${request.getAttribute("showSSOButton") && grailsApplication.config.rundeck.sso.loginButton.enabled in [true,'true']}">
                           <div class="sso-login">
                               <div class='form-group'>
                                   <div class="sso-login-container">
