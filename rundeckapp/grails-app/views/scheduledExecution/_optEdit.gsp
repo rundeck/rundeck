@@ -388,7 +388,7 @@
                         </div>
                 <feature:enabled name="optionValuesPlugin">
                     <!--List OptionValuesPlugins here -->
-                    <g:each in="${optionValuesPlugins?.sort{a,b->a.key<=>b.key}}" var="optionValPlugin">
+                    <g:each in="${optionValuesPlugins}" var="optionValPlugin">
                         <div class="radio">
                             <g:radio name="valuesType" value="${optionValPlugin.key}"
                                      checked="${option?.optionValuesPluginType == optionValPlugin.key}"
