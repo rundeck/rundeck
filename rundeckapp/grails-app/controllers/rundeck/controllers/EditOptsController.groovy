@@ -116,7 +116,7 @@ class EditOptsController extends ControllerBase{
                 newoption                  : params['newoption'],
                 edit                       : true,
                 fileUploadPluginDescription: fileUploadService.pluginDescription,
-                optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()
+                optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()?.sort{a,b->a.key<=>b.key}
         ]
         return render(template: "/scheduledExecution/optEdit", model: model + outparams)
     }
@@ -216,7 +216,7 @@ class EditOptsController extends ControllerBase{
                     regexError                 : result.regexError,
                     configMapValidate          : result.configMapValidate,
                     fileUploadPluginDescription: fileUploadService.pluginDescription,
-                    optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()
+                    optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()?.sort{a,b->a.key<=>b.key}
             ]
             return render(template: "/scheduledExecution/optEdit", model: model
             )
