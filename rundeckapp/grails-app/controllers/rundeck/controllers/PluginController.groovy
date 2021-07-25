@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.api.plugins.ApiPluginListProvider
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -17,6 +18,8 @@ import rundeck.services.FrameworkService
 import rundeck.services.PluginApiService
 import rundeck.services.PluginService
 import rundeck.services.UiPluginService
+import rundeck.services.feature.FeatureService
+
 import java.text.SimpleDateFormat
 
 import static org.springframework.http.HttpStatus.NOT_FOUND
@@ -31,6 +34,7 @@ class PluginController extends ControllerBase {
     AppAuthContextProcessor rundeckAuthContextProcessor
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def messageSource
+    FeatureService featureService
 
     def pluginIcon(PluginResourceReq resourceReq) {
         if (resourceReq.hasErrors()) {
@@ -420,6 +424,12 @@ class PluginController extends ControllerBase {
     }
 
     def uploadPlugin() {
+
+        if(featureService.featurePresent(Features.PLUGIN_SECURITY)){
+            renderErrorCodeAsJson("request.error.unauthorized.plugin.upload")
+            return
+        }
+
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext,
                                                           "system",

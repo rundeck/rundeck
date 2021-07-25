@@ -33,6 +33,7 @@ public enum Features {
     PROJMGR_SVC_BOOTSTRAP_WARMUP_CACHE("projectManagerServiceBootstrapWarmupCache"),
     NOTIFICATIONS_OWN_THREAD("notificationsOwnThread"),
     EVENT_STORE("eventStore"),
+    PLUGIN_SECURITY("pluginSecurity"),
     PROJECT_KEY_STORAGE("projectKeyStorage");
 
     private final String propertyName;
