@@ -337,7 +337,7 @@ class ExecutionJob implements InterruptableJob {
             }
             def schedulerProvenance = context.mergedJobDataMap.get('provenance')
             if(!(schedulerProvenance instanceof SchedulerProvenance)){
-                throw new RuntimeException("Could not schedule execution, no provenance data")
+                throw new RuntimeException("Could not schedule execution of job ${initMap.scheduledExecution.extid}, no provenance data: ${schedulerProvenance}")
             }
             def triggerProv = ProvenanceUtil.scheduledTrigger(context.getScheduledFireTime(), context.getFireTime())
             initMap.execution = initMap.executionService.createExecution(
