@@ -1,7 +1,9 @@
 package rundeck.services
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.jsontype.NamedType
+import com.fasterxml.jackson.databind.util.StdDateFormat
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
@@ -33,6 +35,9 @@ class ExecutionProvenanceService implements ApplicationContextAware {
                 mapper.registerSubtypes(new NamedType(it.value, it.key));
             }
         }
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        // StdDateFormat is ISO8601 since jackson 2.9
+        mapper.setDateFormat(new StdDateFormat().withColonInTimeZone(true))
         mapper
     }
 
