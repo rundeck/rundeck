@@ -158,7 +158,7 @@ class ExecutionProvenanceServiceSpec extends Specification
         where:
             provenance | json
             ProvenanceUtil.generic(test: 'data')|'{"provenances":[{"type":"generic","data":{"test":"data"}}]}'
-            ProvenanceUtil.scheduler('a','b','c')|'{"provenances":[{"type":"schedule","data":{"name":"a","id":"b","crontabExpression":"c"}}]}'
+            ProvenanceUtil.scheduler('builtin','a','b','c')|'{"provenances":[{"type":"schedule","data":{"type":"builtin","name":"a","id":"b","crontabExpression":"c"}}]}'
             ProvenanceUtil.apiRequest('uri')|'{"provenances":[{"type":"api-request","data":{"requestUri":"uri"}}]}'
             ProvenanceUtil.webRequest('uri2')|'{"provenances":[{"type":"web-request","data":{"requestUri":"uri2"}}]}'
             ProvenanceUtil.executionFollowup('eid')|'{"provenances":[{"type":"execution","data":{"executionId":"eid"}}]}'

@@ -203,7 +203,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
             1 * setProvenanceForExecution(_,_)
         }
         when:
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,'scheduled',[ProvenanceUtil.scheduler(null,null,'asdf')])
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,'scheduled',[ProvenanceUtil.scheduler('builtin',null,null,'asdf')])
         se.refresh()
         then:
             null != (e2)
@@ -263,7 +263,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 se,
                 createAuthContext("user1", ['a', 'b'] as Set),
                 null,
-                'scheduled',[ProvenanceUtil.scheduler(null,null,'asdf')]
+                'scheduled',[ProvenanceUtil.scheduler('builtin',null,null,'asdf')]
         )
 
         then:
@@ -319,7 +319,7 @@ class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<Exe
                 createAuthContext("user1", ['a,asd', 'b'] as Set),
                 null,
                 'scheduled',
-                [ProvenanceUtil.scheduler(null,null,'asdf')]
+                [ProvenanceUtil.scheduler('builtin',null,null,'asdf')]
         )
 
         then:

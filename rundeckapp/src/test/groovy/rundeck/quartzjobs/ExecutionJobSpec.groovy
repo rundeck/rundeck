@@ -439,7 +439,7 @@ class ExecutionJobSpec extends HibernateSpec {
                     jobSchedulesService : jobSchedulesService,
                     jobSchedulerService : jobSchedulerService,
                     authContextProvider : authContextProvider,
-                    provenance: ProvenanceUtil.scheduler(null, null, 'crontab')
+                    provenance: ProvenanceUtil.scheduler('builtin',null, null, 'crontab')
                 ]
             )
             ExecutionJob job = new ExecutionJob()

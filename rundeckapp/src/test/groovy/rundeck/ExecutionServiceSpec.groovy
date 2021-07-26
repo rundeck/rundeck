@@ -209,7 +209,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 1 * setProvenanceForExecution(_,_)
             }
         when:
-        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec.id,'scheduled',[ProvenanceUtil.scheduler(null,null,'asdf')])
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec.id,'scheduled',[ProvenanceUtil.scheduler('builtin',null,null,'asdf')])
 
         then:
         e2 != null
@@ -254,7 +254,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * setProvenanceForExecution(_,_)
         }
         when:
-        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec.id,'scheduled',[ProvenanceUtil.scheduler(null,null,'asdf')])
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec.id,'scheduled',[ProvenanceUtil.scheduler('builtin',null,null,'asdf')])
 
         then:
         e2 != null
