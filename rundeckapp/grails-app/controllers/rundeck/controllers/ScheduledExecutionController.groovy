@@ -2592,7 +2592,7 @@ class ScheduledExecutionController  extends ControllerBase{
         ])
     }
 
-    public def runOrScheduleJob(RunJobCommand runParams, ExtraCommand extra, boolean runNow, List<Provenance<?>> provenances) {
+    protected def runOrScheduleJob(RunJobCommand runParams, ExtraCommand extra, boolean runNow, List<Provenance<?>> provenances) {
         if ([runParams, extra].any{it.hasErrors()}) {
             request.errors= [runParams, extra].find { it.hasErrors() }.errors
             def model = show()
