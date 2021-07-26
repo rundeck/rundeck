@@ -3,7 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import org.quartz.*
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
-import org.rundeck.core.executions.provenance.SchedulerProvenance
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import rundeck.ScheduledExecution
 
 class JobSchedulesService implements SchedulesManager {
@@ -84,7 +84,8 @@ class LocalJobSchedulesManager implements SchedulesManager {
         def se = ScheduledExecution.findByUuid(jobUUID)
         def jobDetail = scheduledExecutionService.createJobDetail(se, se.generateJobScheduledName(), se.generateJobGroupName())
         def trigger = createTriggerBuilder(se)
-        jobDetail.getJobDataMap().put("provenance", SchedulerProvenance.from(
+        jobDetail.getJobDataMap().put("provenance", ProvenanceUtil.scheduler(
+            "builtin",
             null,
             null,
             se.generateCrontabExression()

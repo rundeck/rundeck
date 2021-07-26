@@ -8,6 +8,7 @@ import org.rundeck.core.executions.provenance.GenericProvenance
 import org.rundeck.core.executions.provenance.PluginProvenance
 import org.rundeck.core.executions.provenance.Provenance
 import org.rundeck.core.executions.provenance.RetryProvenance
+import org.rundeck.core.executions.provenance.ScheduledTrigger
 import org.rundeck.core.executions.provenance.SchedulerProvenance
 import org.rundeck.core.executions.provenance.StepPluginProvenance
 import org.rundeck.core.executions.provenance.WebRequestProvenance
@@ -17,14 +18,15 @@ class BuiltinProvenanceComponent extends BaseProvenanceComponent {
     private final Map<String, Class<? extends Provenance<?>>> provenanceTypes = Collections.
         unmodifiableMap(
             [
-                generic      : GenericProvenance,
-                'step-plugin': StepPluginProvenance,
-                plugin       : PluginProvenance,
-                execution    : ExecutionFollowupProvenance,
-                schedule     : SchedulerProvenance,
-                'web-request': WebRequestProvenance,
-                'api-request': ApiRequest,
-                retry        : RetryProvenance
+                generic           : GenericProvenance,
+                'step-plugin'     : StepPluginProvenance,
+                plugin            : PluginProvenance,
+                execution         : ExecutionFollowupProvenance,
+                schedule          : SchedulerProvenance,
+                'schedule-trigger': ScheduledTrigger,
+                'web-request'     : WebRequestProvenance,
+                'api-request'     : ApiRequest,
+                retry             : RetryProvenance
             ]
         )
 

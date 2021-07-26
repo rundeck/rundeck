@@ -34,6 +34,7 @@ import org.quartz.InterruptableJob
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
 import org.rundeck.core.executions.provenance.Provenance
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import org.rundeck.core.executions.provenance.SchedulerProvenance
 import org.rundeck.util.Sizes
 import rundeck.Execution
@@ -338,6 +339,7 @@ class ExecutionJob implements InterruptableJob {
             if(!(schedulerProvenance instanceof SchedulerProvenance)){
                 throw new RuntimeException("Could not schedule execution, no provenance data")
             }
+            def triggerProv = ProvenanceUtil.scheduledTrigger(context.getScheduledFireTime(), context.getFireTime())
             initMap.execution = initMap.executionService.createExecution(
                     initMap.scheduledExecution,
                     initMap.authContext,
@@ -346,7 +348,7 @@ class ExecutionJob implements InterruptableJob {
                 false,
                 -1,
                 'scheduled',
-                [schedulerProvenance] as List<Provenance<?>>
+                [triggerProv, schedulerProvenance] as List<Provenance<?>>
             )
         }
         if (!initMap.authContext) {

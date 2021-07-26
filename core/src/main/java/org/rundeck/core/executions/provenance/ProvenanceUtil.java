@@ -1,5 +1,6 @@
 package org.rundeck.core.executions.provenance;
 
+import java.util.Date;
 import java.util.Map;
 
 public class ProvenanceUtil {
@@ -31,8 +32,22 @@ public class ProvenanceUtil {
         return new RetryProvenance(new RetryProvenance.RetryData(executionId, reason));
     }
 
-    public static SchedulerProvenance scheduler(final String name, final String id, final String crontab) {
-        return SchedulerProvenance.from(name, id, crontab);
+    public static SchedulerProvenance scheduler(
+            final String type,
+            final String name,
+            final String id,
+            final String crontab
+    )
+    {
+        return SchedulerProvenance.from(type, name, id, crontab);
+    }
+
+    public static ScheduledTrigger scheduledTrigger(
+            final Date scheduledTime,
+            final Date actualTime
+    )
+    {
+        return ScheduledTrigger.from(scheduledTime, actualTime);
     }
 
 }

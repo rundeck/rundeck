@@ -17,6 +17,7 @@ public class SchedulerProvenance
     @Override
     public String toString() {
         return "Schedule "
+               + (data.type != null ? "[" + data.type + "]" : "")
                + (data.name != null ? data.name : "")
                + (data.id != null ? (" ID: " + data.id) : "")
                + " Cron: "
@@ -26,13 +27,14 @@ public class SchedulerProvenance
     @Getter
     @RequiredArgsConstructor
     static class ScheduleData {
+        private final String type;
         private final String name;
         private final String id;
         private final String crontabExpression;
     }
 
-    public static SchedulerProvenance from(String name, String id, String crontab) {
-        return new SchedulerProvenance(new ScheduleData(name, id, crontab));
+    public static SchedulerProvenance from(String type, String name, String id, String crontab) {
+        return new SchedulerProvenance(new ScheduleData(type, name, id, crontab));
     }
 
 }
