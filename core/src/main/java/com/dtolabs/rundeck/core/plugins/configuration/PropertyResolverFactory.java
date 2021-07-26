@@ -16,14 +16,13 @@
 
 /*
 * PropertyResolverFactory.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 12/3/12 4:13 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
@@ -96,9 +95,9 @@ public class PropertyResolverFactory {
 
         return createResolver(instanceRetriever(instanceProperties),
                                            projectRetriever(projectPrefix,
-                                                            context.getFramework(),
+                                                            context.getIFramework(),
                                                             context.getFrameworkProject()),
-                                           frameworkRetriever(frameworkPrefix, context.getFramework())
+                                           frameworkRetriever(frameworkPrefix, context.getIFramework())
         );
     }
     /**
@@ -116,7 +115,7 @@ public class PropertyResolverFactory {
 
         return createPluginRuntimeResolver(
             context.getFrameworkProject(),
-            context.getFramework(),
+            context.getIFramework(),
             instanceProperties,
             pluginType,
             providerName
