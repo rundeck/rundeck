@@ -123,13 +123,21 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
             );
         }
         final String providerName = item.getType();
-        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
+        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(
+                executionContext,
                 instanceConfiguration,
                 ServiceNameConstants.WorkflowStep,
                 providerName
         );
-        StepExecutionContext newContext = prepareContext(executionContext);
-        final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
+        StepExecutionContext
+                newContext =
+                prepareContext(
+                        executionContext,
+                        ServiceNameConstants.WorkflowStep,
+                        description.getName(),
+                        generateStepContext(executionContext)
+                );
+        final PluginStepContext stepContext = PluginStepContextImpl.from(newContext);
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description,
                 plugin, PropertyScope.InstanceOnly);
         try {
@@ -158,8 +166,41 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
         }
         return new StepExecutionResultImpl();
     }
-    static class ProvenanceJobService implements JobService{
-        JobService delegate;
+
+    private String generateStepContext(final StepExecutionContext executionContext) {
+        return StateUtils.stepIdentifierToString(
+                StateUtils.stepIdentifier(
+                        executionContext.getStepContext().stream().map(
+                                s -> StateUtils.stepContextId(s, false)
+                        ).collect(Collectors.toList())
+                )
+        );
+    }
+
+    /**
+     * A facade that overrides runJob to inject default provenance
+     * information when running jobs
+     */
+    static class ProvenanceJobService
+            implements JobService
+    {
+        private final JobService delegate;
+        private final String serviceName;
+        private final String providerName;
+        private final String stepCtx;
+
+        public ProvenanceJobService(
+                final JobService delegate,
+                final String serviceName,
+                final String providerName,
+                final String stepCtx
+        )
+        {
+            this.delegate = delegate;
+            this.serviceName = serviceName;
+            this.providerName = providerName;
+            this.stepCtx = stepCtx;
+        }
 
         @Override
         public JobReference jobForID(final String uuid, final String project) throws JobNotFound {
@@ -221,11 +262,16 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
 
         @Override
         public ExecutionReference runJob(final RunJob runJob) throws JobNotFound, JobExecutionError {
+            List<Provenance<?>> provenance1 = runJob.getProvenance();
+            List<Provenance<?>> provenance = new ArrayList<>();
+            if(provenance1!=null){
+                provenance.addAll(provenance1);
+            }
+            provenance.add(ProvenanceUtil.stepPlugin(providerName, serviceName, stepCtx));
             return delegate.runJob(
-                    RunJob.builder()
-                          .jobFilter(runJob.getJobFilter())
-
-                    .build()
+                    RunJob.builder(runJob)
+                          .provenance(provenance)
+                          .build()
             );
         }
 
@@ -240,9 +286,29 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
         }
     }
 
-    private StepExecutionContext prepareContext(final StepExecutionContext executionContext) {
-        executionContext.getJobService();
+    /**
+     * Prepare a context used by the plugin to record execution provenance for invoking jobs via the jobservice
+     *
+     * @param executionContext original context
+     * @param stepCtx
+     * @return new context
+     */
+    private StepExecutionContext prepareContext(
+            final StepExecutionContext executionContext,
+            String service,
+            String provider,
+            final String stepCtx
+    )
+    {
         return ExecutionContextImpl.builder(executionContext)
+                                   .jobService(
+                                           new ProvenanceJobService(
+                                                   executionContext.getJobService(),
+                                                   service,
+                                                   provider,
+                                                   stepCtx
+                                           )
+                                   )
                                    .build();
     }
 

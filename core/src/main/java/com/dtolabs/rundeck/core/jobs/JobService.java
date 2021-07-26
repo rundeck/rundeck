@@ -150,6 +150,18 @@ public interface JobService extends AppService {
         static RunJobImpl.RunJobImplBuilder builder(){
             return new RunJobImpl.RunJobImplBuilder();
         }
+        static RunJobImpl.RunJobImplBuilder builder(RunJob source){
+            RunJobImpl.RunJobImplBuilder builder = new RunJobImpl.RunJobImplBuilder();
+            builder.jobReference(source.getJobReference());
+            builder.provenance(source.getProvenance());
+            builder.executionType(source.getExecutionType());
+            builder.optionData(source.getOptionData());
+            builder.argString(source.getArgString());
+            builder.jobFilter(source.getJobFilter());
+            builder.asUser(source.getAsUser());
+            builder.extraMeta(source.getExtraMeta());
+            return builder;
+        }
     }
 
     /**

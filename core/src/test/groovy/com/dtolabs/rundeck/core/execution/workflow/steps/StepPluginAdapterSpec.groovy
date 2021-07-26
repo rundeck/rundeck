@@ -1,13 +1,26 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps
 
+import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import com.dtolabs.rundeck.plugins.step.StepPlugin
 import org.rundeck.app.spi.Services
+import org.rundeck.core.executions.provenance.GenericProvenance
+import org.rundeck.core.executions.provenance.ProvenanceUtil
+import org.rundeck.core.executions.provenance.StepPluginProvenance
 import spock.lang.Specification
 
 class StepPluginAdapterSpec extends Specification {
@@ -115,5 +128,139 @@ class StepPluginAdapterSpec extends Specification {
             result.title == 'something'
     }
 
+    @Plugin(service = ServiceNameConstants.WorkflowStep, name = 'testplugin4')
+    @PluginDescription(title = 'something')
+    static class TestPlugin4 implements StepPlugin {
+        @Delegate
+        StepPlugin delegate
+    }
 
+    def "execution workflow step"() {
+        given:
+            def project = 'aproject'
+            def mock = Mock(StepPlugin)
+            def mockPlugin = new TestPlugin4(delegate: mock)
+            def sut = new StepPluginAdapter(mockPlugin)
+            def stepContext = Mock(StepExecutionContext) {
+                getFrameworkProject() >> project
+                getIFramework() >> Mock(com.dtolabs.rundeck.core.common.IFramework) {
+                    getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                        getFrameworkProject(project) >> Mock(IRundeckProject)
+                    }
+                    getPropertyRetriever() >> Mock(PropertyRetriever)
+                }
+                getStepContext() >> [1, 2]
+            }
+            def stepItem = Mock(StepExecutionItem) {
+
+            }
+        when:
+            def result = sut.executeWorkflowStep(stepContext, stepItem)
+        then:
+            result
+            1 * mock.executeStep(_, _) >> {
+
+            }
+
+    }
+
+    def "execution workflow step run job sets provenance no input provenance"() {
+        given:
+            def project = 'aproject'
+            def jobRun = JobService.RunJob.builder().
+                jobReference(Mock(JobReference))
+                                   .build()
+            def mock = Mock(StepPlugin) {
+                1 * executeStep(_, _) >> {
+                    it[0].executionContext.jobService.runJob(jobRun)
+                }
+            }
+            def mockPlugin = new TestPlugin4(delegate: mock)
+            def sut = new StepPluginAdapter(mockPlugin)
+            def jobService = Mock(JobService)
+            def stepContext = Mock(StepExecutionContext) {
+                getFrameworkProject() >> project
+                getIFramework() >> Mock(com.dtolabs.rundeck.core.common.IFramework) {
+                    getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                        getFrameworkProject(project) >> Mock(IRundeckProject)
+                    }
+                    getPropertyRetriever() >> Mock(PropertyRetriever)
+                }
+                getStepContext() >> [1, 2]
+                getJobService() >> jobService
+                getExecutionListener() >> Mock(ExecutionListener) {
+                    log(_, _) >> {
+                        System.err.println(it[0] + ": " + it[1])
+                    }
+                }
+            }
+            def stepItem = Mock(StepExecutionItem) {
+
+            }
+        when:
+            def result = sut.executeWorkflowStep(stepContext, stepItem)
+        then:
+            result
+            1 * jobService.runJob(
+                { JobService.RunJob req ->
+                    req.provenance != null
+                    req.provenance.size() == 1
+                    req.provenance[0] instanceof StepPluginProvenance
+                    ((StepPluginProvenance) req.provenance[0]).data.provider == 'testplugin4'
+                    ((StepPluginProvenance) req.provenance[0]).data.service == ServiceNameConstants.WorkflowStep
+                    ((StepPluginProvenance) req.provenance[0]).data.stepCtx == '1/2'
+                }
+            ) >> Mock(ExecutionReference)
+    }
+    def "execution workflow step run job sets provenance with input provenance"() {
+        given:
+            def project = 'aproject'
+            def jobRun = JobService.RunJob.builder().
+                jobReference(Mock(JobReference))
+                .provenance([ProvenanceUtil.generic(test:'data')])
+                                   .build()
+            def mock = Mock(StepPlugin) {
+                1 * executeStep(_, _) >> {
+                    it[0].executionContext.jobService.runJob(jobRun)
+                }
+            }
+            def mockPlugin = new TestPlugin4(delegate: mock)
+            def sut = new StepPluginAdapter(mockPlugin)
+            def jobService = Mock(JobService)
+            def stepContext = Mock(StepExecutionContext) {
+                getFrameworkProject() >> project
+                getIFramework() >> Mock(com.dtolabs.rundeck.core.common.IFramework) {
+                    getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                        getFrameworkProject(project) >> Mock(IRundeckProject)
+                    }
+                    getPropertyRetriever() >> Mock(PropertyRetriever)
+                }
+                getStepContext() >> [1, 2]
+                getJobService() >> jobService
+                getExecutionListener() >> Mock(ExecutionListener) {
+                    log(_, _) >> {
+                        System.err.println(it[0] + ": " + it[1])
+                    }
+                }
+            }
+            def stepItem = Mock(StepExecutionItem) {
+
+            }
+        when:
+            def result = sut.executeWorkflowStep(stepContext, stepItem)
+        then:
+            result
+            1 * jobService.runJob(
+                { JobService.RunJob req ->
+                    req.provenance != null
+                    req.provenance.size() == 2
+                    req.provenance[0] instanceof GenericProvenance
+                    ((GenericProvenance) req.provenance[0]).data==[test:'data']
+                    req.provenance[1] instanceof StepPluginProvenance
+                    ((StepPluginProvenance) req.provenance[1]).data.provider == 'testplugin4'
+                    ((StepPluginProvenance) req.provenance[1]).data.service == ServiceNameConstants.WorkflowStep
+                    ((StepPluginProvenance) req.provenance[1]).data.stepCtx == '1/2'
+                }
+            ) >> Mock(ExecutionReference)
+    }
 }
