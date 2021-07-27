@@ -43,7 +43,6 @@
 <g:set var="pluginSecurityEnabled" value="${grailsApplication.config.rundeck?.feature?.pluginSecurity?.enabled in [true,'true']}"/>
 
 <style>
-<style>
 .dropdown-submenu {
   position: relative;
 }
