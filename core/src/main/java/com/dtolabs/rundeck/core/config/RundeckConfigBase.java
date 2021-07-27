@@ -346,8 +346,8 @@ public class RundeckConfigBase {
         Enabled notificationsOwnThread = new Enabled();
         Enabled workflowDesigner = new Enabled(true);
         Enabled eventStore = new Enabled(true);
-        Enabled projectKeyStorage = new Enabled(true);
-        Enabled pluginSecurity = new Enabled(false);
+        Enabled projectKeyStorage = new Enabled(false);
+        Enabled pluginSecurity = new Enabled(true);
 
         @Data
         public static class Enabled {
