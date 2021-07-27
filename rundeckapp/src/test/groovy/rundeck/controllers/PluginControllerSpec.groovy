@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
@@ -313,6 +314,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
     void "upload plugin no file specified"() {
         setup:
+        controller.featureService = Mock(FeatureService)
         controller.frameworkService = Mock(FrameworkService)
 
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
@@ -323,8 +325,25 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
         response.text == '{"err":"A plugin file must be specified"}'
+    }
+
+    void "upload plugin, plugin security enabled"() {
+        setup:
+        controller.featureService = Mock(FeatureService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        messageSource.addMessage("request.error.unauthorized.plugin.upload",Locale.ENGLISH,"Unable to upload plugins using Rundeck OnDemand")
+
+        when:
+        controller.uploadPlugin()
+
+        then:
+        1 * controller.featureService.featurePresent(_) >> true
+        response.text == '{"err":"Unable to upload plugins using Rundeck OnDemand"}'
     }
 
     void "install plugin no plugin url specified"() {
@@ -348,6 +367,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         File uploaded = new File(uploadTestTargetDir,PLUGIN_FILE)
         def fwksvc = Mock(FrameworkService)
 
+        controller.featureService = Mock(FeatureService)
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         def fwk = Mock(Framework) {
             getBaseDir() >> uploadTestBaseDir
@@ -365,6 +385,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+        1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
         response.text == '{"msg":"done"}'
         uploaded.exists()

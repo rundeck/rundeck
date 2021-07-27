@@ -31,10 +31,10 @@ class PluginController extends ControllerBase {
     PluginService pluginService
     PluginApiService pluginApiService
     FrameworkService frameworkService
+    def featureService
     AppAuthContextProcessor rundeckAuthContextProcessor
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def messageSource
-    FeatureService featureService
 
     def pluginIcon(PluginResourceReq resourceReq) {
         if (resourceReq.hasErrors()) {
