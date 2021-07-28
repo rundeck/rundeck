@@ -64,16 +64,17 @@ export default class NavigationBar extends Vue {
 
         const mainGroup = this.$refs['group-main'] as HTMLElement
 
-        if (el.offsetHeight != el.scrollHeight) {
+        if (el.offsetHeight - el.scrollHeight < 0) {
             this.navBar.overflowOne()
-            /** 
+            /**
              * Continue to force layout until no longer overflowing.
              * This provides for the least amount of flicker on page load.
              **/
             this.$forceUpdate()
-            this.overflow()
-        } else if (mainGroup.offsetTop + mainGroup.offsetHeight + 230 < el.offsetHeight) {
+            window.requestAnimationFrame(this.overflow)
+        } else if (mainGroup.offsetTop + mainGroup.offsetHeight + 240 < el.offsetHeight) {
             this.navBar.showOne()
+            window.requestAnimationFrame(this.overflow)
         }
     }
 }
