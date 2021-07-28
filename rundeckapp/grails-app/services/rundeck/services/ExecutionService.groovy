@@ -1042,13 +1042,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //
 
         //set up log output threshold
-        String outputLimit = scheduledExecution?.logOutputThreshold ?: frameworkService.getProjectLogOutputLimit()
-        executionStatusLogger.info("Logging output limit: ${outputLimit}")
+        boolean logGlobalConfig = frameworkService.getProjectLogGlobalConfig()
+
+        boolean limitFramework = false
+        String outputLimit = getOutputLimit(logGlobalConfig, scheduledExecution, limitFramework)
         def thresholdMap = ScheduledExecution.parseLogOutputThreshold(outputLimit)
 
-        String limitAction = frameworkService.getProjectLogOutputLimit() ?
-                frameworkService.getProjectLogLimitAction() : scheduledExecution?.logOutputThresholdAction
-        executionStatusLogger.info("Logging limit action: ${limitAction}")
+        String limitAction = getLimitAction(logGlobalConfig, limitFramework, scheduledExecution)
         def threshold = LoggingThreshold.fromMap(thresholdMap, limitAction)
 
         String warnSize = frameworkService.getProjectLogSizeWarning() ?: LoggingThreshold.WARN_SIZE_DEFAULT
@@ -1256,6 +1256,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             loghandler.close()
             return null
         }
+    }
+
+    private String getOutputLimit(boolean logGlobalCongif, ScheduledExecution scheduledExecution, boolean limitFramework) {
+        String outputLimit = ""
+        if (logGlobalCongif) {
+            outputLimit = frameworkService.getProjectLogOutputLimit()
+            limitFramework = true
+        } else {
+            outputLimit = scheduledExecution?.logOutputThreshold
+            if (!outputLimit) {
+                outputLimit = frameworkService.getProjectLogOutputLimit()
+                limitFramework = true
+            }
+        }
+        log.info("Logging output limit: ${outputLimit}")
+        return outputLimit
+    }
+
+    private String getLimitAction(boolean logGlobalConfig, boolean limitFramework, ScheduledExecution scheduledExecution) {
+        String limitAction = scheduledExecution?.logOutputThresholdAction
+        if (logGlobalConfig) {
+            limitAction = frameworkService.getProjectLogLimitAction()
+        } else {
+            if (limitFramework) {
+                limitAction = frameworkService.getProjectLogLimitAction() ?: scheduledExecution?.logOutputThresholdAction
+            }
+        }
+        log.info("Logging limit action: ${limitAction}")
+        return limitAction
     }
 
     /**
