@@ -244,20 +244,22 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                         userRoleList: 'a,b'
                 )
         ).save()
-        def scheduleDate = new Date()
+//        def scheduleDate = new Date()
 
         when:
-        def result = service.scheduleJob(job, null, null)
+        def result = service.scheduleJob(job, null, null, false, remoteAssgined)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
-        1 * service.jobSchedulesService.handleScheduleDefinitions(_, _) >> [nextTime: scheduleDate]
+        (remoteAssgined ? 0 : 1) * service.jobSchedulesService.handleScheduleDefinitions(_, _) >> [nextTime: scheduleDate]
         result == [scheduleDate, serverNodeUUID]
 
         where:
-        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled | clusterEnabled | serverNodeUUID
-        true                | true            | true             | true        | true            | false          | null
-        true                | true            | true             | true        | true            | true           | 'uuid'
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled | clusterEnabled | serverNodeUUID | remoteAssgined | scheduleDate
+        true                | true            | true             | true        | true            | false          | null           | false          | new Date()
+        true                | true            | true             | true        | true            | true           | 'uuid'         | false          | new Date()
+        true                | true            | true             | true        | true            | false          | null           | true           | null
+        true                | true            | true             | true        | true            | true           | null           | true           | null
     }
 
     @Unroll
