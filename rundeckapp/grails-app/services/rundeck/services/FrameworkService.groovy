@@ -77,15 +77,19 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     /**
      * Log output limit applied over all projects
      */
-    static final String PROJECT_LOG_OUTPUT_LIMIT = "framework.project.log.output.limit"
+    static final String PROJECT_LOG_OUTPUT_LIMIT = "framework.projects.log.output.limit"
     /**
      * Log limit action applied over all projects
      */
-    static final String PROJECT_LOG_LIMIT_ACTION = "framework.project.log.limit.action"
+    static final String PROJECT_LOG_LIMIT_ACTION = "framework.projects.log.limit.action"
     /**
      * Log size warning
      */
-    static final String PROJECT_LOG_SIZE_WARNING = "framework.project.log.output.warning.size"
+    static final String PROJECT_LOG_SIZE_WARNING = "framework.projects.log.output.warning.size"
+    /**
+     * Log global config
+     */
+    static final String PROJECT_LOG_GLOBAL_CONFIG = "framework.projects.log.global.config"
 
 
     def ApplicationContext applicationContext
@@ -141,6 +145,16 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 
     String getServerUUID() {
         System.getProperty(SYS_PROP_SERVER_ID)
+    }
+
+    /**
+     * @return the log global config from framework.properties file
+     */
+    boolean getProjectLogGlobalConfig() {
+        String res = rundeckFramework
+                .getPropertyRetriever()
+                .getProperty(PROJECT_LOG_GLOBAL_CONFIG) ?: Boolean.toString(false)
+        return res.toBoolean()
     }
 
     /**
