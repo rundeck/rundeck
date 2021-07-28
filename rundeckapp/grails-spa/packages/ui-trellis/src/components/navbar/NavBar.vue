@@ -64,6 +64,11 @@ export default class NavigationBar extends Vue {
 
         const mainGroup = this.$refs['group-main'] as HTMLElement
 
+        /**
+         * Check for overflow. At different zoom levels this could be off by one in the positive
+         * even though no overflow is occuring. Testing indicates checking for negative difference
+         * works at all zoom levels.
+         */
         if (el.offsetHeight - el.scrollHeight < 0) {
             this.navBar.overflowOne()
             /**
