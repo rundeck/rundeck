@@ -106,11 +106,11 @@
   </li>
 </g:if>
 <g:if test="${pluginInstall && !repoEnabled && !pluginSecurityEnabled}">
-    <li>
-      <a href="${g.createLink(uri:'/artifact/index/upload')}">
-        <g:message code="gui.menu.UploadPlugin"/>
-      </a>
-    </li>
+  <li>
+    <a href="${g.createLink(uri:'/artifact/index/upload')}">
+      <g:message code="gui.menu.UploadPlugin"/>
+    </a>
+  </li>
 </g:if>
   <li>
     <g:link controller="passwordUtility" action="index">
