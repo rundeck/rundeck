@@ -7,7 +7,7 @@ echo "current NUMBER: $CUR_VERSION"
 echo "current TAG: $CUR_TAG"
 
 if [ -z "$1" ] ; then
-echo "usage: setversion.sh <version> [GA]"
+echo "usage: setversion.sh <version> [GA|rcX]"
 exit 2
 fi
 
@@ -25,6 +25,7 @@ fi
 
 echo "new NUMBER: $VNUM"
 echo "new DATE: $VDATE"
+echo "new TAG: $VTAG"
 echo "new VERSION: $VNAME"
 
 #alter version.properties
