@@ -43,8 +43,19 @@ class RepositoryController {
             String repoName = params.repoName
 
             def installedPluginIds = pluginApiService.listInstalledPluginIds()
-            def artifacts = repoName ? repoClient.listArtifactsByRepository(repoName,params.offset?.toInteger(),params.limit?.toInteger())
-                                     : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
+            if(featureService.featurePresent(Features.PLUGIN_SECURITY)){
+                //call to azure to get all atrifacts
+                //call to function in pluginApiService to translate azure response to Collection<ManifestSearchResult>
+            }
+
+            else {
+                def artifacts = repoName ? repoClient.listArtifactsByRepository(repoName,params.offset?.toInteger(),params.limit?.toInteger())
+                        : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
+            }
+
+
+
+
             artifacts.each {
                 it.results.each {
                     it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
