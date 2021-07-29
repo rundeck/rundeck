@@ -17,7 +17,7 @@
             v-model="value"
             v-on:input="$emit('input', $event.target.value)"
             type="checkbox"
-            style="height: 0;width: 0;"/>
+            style="height: 0;width: 0;appearance: none;"/>
         <span 
             class="switch__slider"
             :class="{'switch__slider--checked': value}"/>

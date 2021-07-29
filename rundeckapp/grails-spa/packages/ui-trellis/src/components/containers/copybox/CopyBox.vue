@@ -14,6 +14,8 @@
 <script lang="ts">
 import Vue, { VNode } from 'vue'
 
+import {CopyToClipboard} from '../../../utilities/Clipboard'
+
 export default Vue.extend({
     name: 'rd-copybox',
     props: {
@@ -26,7 +28,7 @@ export default Vue.extend({
         title() {
             return this.content
         },
-        handleClick() {
+        async handleClick() {
             const content = (<HTMLElement>this.$refs['content'])
 
             const range = document.createRange()
@@ -35,7 +37,7 @@ export default Vue.extend({
             const sel = window.getSelection()
             sel?.removeAllRanges()
 
-            navigator.clipboard.writeText(this.content)
+            await CopyToClipboard(this.content)
             this.active = true
             setTimeout(() => this.active = false, 400)
             setTimeout(() => {sel?.addRange(range)}, 700)
