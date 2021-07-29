@@ -336,7 +336,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.frameworkService = Mock(FrameworkService)
 
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
-        messageSource.addMessage("request.error.unauthorized.plugin.upload",Locale.ENGLISH,"Unable to upload plugins")
+        messageSource.addMessage("plugin.error.unauthorized.upload",Locale.ENGLISH,"Unable to upload plugins")
 
         when:
         controller.uploadPlugin()
