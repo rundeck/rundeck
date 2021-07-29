@@ -336,14 +336,14 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.frameworkService = Mock(FrameworkService)
 
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
-        messageSource.addMessage("request.error.unauthorized.plugin.upload",Locale.ENGLISH,"Unable to upload plugins using Rundeck OnDemand")
+        messageSource.addMessage("request.error.unauthorized.plugin.upload",Locale.ENGLISH,"Unable to upload plugins")
 
         when:
         controller.uploadPlugin()
 
         then:
         1 * controller.featureService.featurePresent(_) >> true
-        response.text == '{"err":"Unable to upload plugins using Rundeck OnDemand"}'
+        response.text == '{"err":"Unable to upload plugins"}'
     }
 
     void "install plugin no plugin url specified"() {
