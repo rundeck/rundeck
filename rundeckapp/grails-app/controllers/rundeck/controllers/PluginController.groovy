@@ -426,7 +426,7 @@ class PluginController extends ControllerBase {
     def uploadPlugin() {
 
         if(featureService.featurePresent(Features.PLUGIN_SECURITY)){
-            renderErrorCodeAsJson("request.error.unauthorized.plugin.upload")
+            renderErrorCodeAsJson("plugin.error.unauthorized.upload")
             return
         }
 
