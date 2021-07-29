@@ -142,8 +142,6 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     void "upload artifact, plugin security enabled"() {
         when:
-        ResponseBatch successBatch = new ResponseBatch()
-        successBatch.addMessage(ResponseMessage.success())
         controller.featureService = Mock(FeatureService){
             featurePresent(_) >> true
         }
