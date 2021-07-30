@@ -50,6 +50,7 @@ import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.server.SynchronizerTokensHolderFilter
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -186,6 +187,9 @@ beans={
                 database = application.config.rundeck.session.redis.database.toString().toInteger()
             }
         }
+
+        // deals with withForm tokens
+        synchronizerTokensHolderFilter(SynchronizerTokensHolderFilter) { }
 
         def redisPoolConfig = new GenericObjectPoolConfig()
         redisPoolConfig.setMaxTotal(application.config.rundeck.session?.redis?.maxTotal?.toString()?.isInteger() ? application.config.rundeck.session.redis.maxTotal.toInteger() : 100)
