@@ -44,7 +44,7 @@ class RepositoryController {
 
             def installedPluginIds = pluginApiService.listInstalledPluginIds()
             def artifacts = repoName ? repoClient.listArtifactsByRepository(repoName,params.offset?.toInteger(),params.limit?.toInteger())
-                    : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
+                                     : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
             artifacts.each {
                 it.results.each {
                     it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
