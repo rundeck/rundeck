@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.util.StdDateFormat
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
-import org.rundeck.core.executions.provenance.GenericProvenance
 import org.rundeck.core.executions.provenance.Provenance
 import org.rundeck.core.executions.provenance.ProvenanceComponent
 import org.rundeck.core.executions.provenance.ProvenanceList
