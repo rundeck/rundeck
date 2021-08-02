@@ -30,9 +30,9 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
     public static final String ACTION_HALT     = "halt"
     public static final String ACTION_TRUNCATE = "truncate"
     /**
-     * Warning log file size value in bytes (300MB)
+     * Warning log file size value
      */
-    public static final Long WARN_SIZE_DEFAULT = 314572800
+    public static final String WARN_SIZE_DEFAULT = "300MB"
 
     Long maxValue
     Long warningSize
