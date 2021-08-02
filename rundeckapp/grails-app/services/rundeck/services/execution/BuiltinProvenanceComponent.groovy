@@ -4,6 +4,7 @@ import grails.compiler.GrailsCompileStatic
 import org.rundeck.core.executions.provenance.ApiRequest
 import org.rundeck.core.executions.provenance.BaseProvenanceComponent
 import org.rundeck.core.executions.provenance.ExecutionFollowupProvenance
+import org.rundeck.core.executions.provenance.ExternalLink
 import org.rundeck.core.executions.provenance.GenericProvenance
 import org.rundeck.core.executions.provenance.PluginProvenance
 import org.rundeck.core.executions.provenance.Provenance
@@ -26,7 +27,8 @@ class BuiltinProvenanceComponent extends BaseProvenanceComponent {
                 'schedule-trigger': ScheduledTrigger,
                 'web-request'     : WebRequestProvenance,
                 'api-request'     : ApiRequest,
-                retry             : RetryProvenance
+                retry             : RetryProvenance,
+                link              : ExternalLink
             ]
         )
 

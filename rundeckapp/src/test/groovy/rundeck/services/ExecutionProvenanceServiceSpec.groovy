@@ -169,5 +169,6 @@ class ExecutionProvenanceServiceSpec extends Specification
             ProvenanceUtil.plugin('a','b')|'{"provenances":[{"type":"plugin","data":{"provider":"a","service":"b"}}]}'
             ProvenanceUtil.stepPlugin('a','b','1/2')|'{"provenances":[{"type":"step-plugin","data":{"provider":"a","service":"b","stepCtx":"1/2"}}]}'
             ProvenanceUtil.retry('eid','reason')|'{"provenances":[{"type":"retry","data":{"executionId":"eid","reason":"reason"}}]}'
+            ProvenanceUtil.link('blah','http://something')|'{"provenances":[{"type":"link","data":{"name":"blah","url":"http://something"}}]}'
     }
 }
