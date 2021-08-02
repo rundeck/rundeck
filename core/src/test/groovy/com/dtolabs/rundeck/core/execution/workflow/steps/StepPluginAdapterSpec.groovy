@@ -255,7 +255,8 @@ class StepPluginAdapterSpec extends Specification {
                     req.provenance != null
                     req.provenance.size() == 2
                     req.provenance[0] instanceof GenericProvenance
-                    ((GenericProvenance) req.provenance[0]).data==[test:'data']
+                    ((GenericProvenance) req.provenance[0]).data.description=='other'
+                    ((GenericProvenance) req.provenance[0]).data.data==[test:'data']
                     req.provenance[1] instanceof StepPluginProvenance
                     ((StepPluginProvenance) req.provenance[1]).data.provider == 'testplugin4'
                     ((StepPluginProvenance) req.provenance[1]).data.service == ServiceNameConstants.WorkflowStep

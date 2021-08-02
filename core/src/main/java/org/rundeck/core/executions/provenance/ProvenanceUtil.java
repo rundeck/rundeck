@@ -4,9 +4,19 @@ import java.util.Date;
 import java.util.Map;
 
 public class ProvenanceUtil {
+
     public static GenericProvenance generic(Map data) {
-        return new GenericProvenance(data);
+        return GenericProvenance.from("other", data);
     }
+
+    public static GenericProvenance generic(final String generic, Map data) {
+        return GenericProvenance.from(generic, data);
+    }
+
+    public static ExternalLink link(final String name, String url) {
+        return ExternalLink.from(name, url);
+    }
+
 
     public static ExecutionFollowupProvenance executionFollowup(String executionId) {
         return new ExecutionFollowupProvenance(new ExecutionFollowupProvenance.ExecutionData(executionId));

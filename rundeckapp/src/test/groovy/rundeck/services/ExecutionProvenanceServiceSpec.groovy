@@ -159,7 +159,8 @@ class ExecutionProvenanceServiceSpec extends Specification
             e.provenanceData == json
         where:
             provenance | json
-            ProvenanceUtil.generic(test: 'data')|'{"provenances":[{"type":"generic","data":{"test":"data"}}]}'
+            ProvenanceUtil.generic(test: 'data')|'{"provenances":[{"type":"generic","data":{"description":"other","data":{"test":"data"}}}]}'
+            ProvenanceUtil.generic("blah",[test: 'data'])|'{"provenances":[{"type":"generic","data":{"description":"blah","data":{"test":"data"}}}]}'
             ProvenanceUtil.scheduler('builtin','a','b','c')|'{"provenances":[{"type":"schedule","data":{"type":"builtin","name":"a","id":"b","crontabExpression":"c"}}]}'
             ProvenanceUtil.scheduledTrigger(schedule1,schedule2)|'{"provenances":[{"type":"schedule-trigger","data":{"scheduleTime":"2021-07-26T23:22:30.923+00:00","fireTime":"2021-07-26T23:23:00.923+00:00"}}]}'
             ProvenanceUtil.apiRequest('uri')|'{"provenances":[{"type":"api-request","data":{"requestUri":"uri"}}]}'
