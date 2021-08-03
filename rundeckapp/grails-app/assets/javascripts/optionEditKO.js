@@ -20,6 +20,10 @@
 
 function OptionEditor(data) {
     var self = this;
+    self.valuesList = ko.observable(data.valuesList);
+    self.valuesUrl = ko.observable(data.valuesUrl);
+    self.showDefaultValue = ko.observable(data.showDefaultValue);
+    self.defaultValue = ko.observable(data.defaultValue);
     self.optionType = ko.observable(data.optionType);
     self.name=ko.observable(data.name);
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
@@ -51,5 +55,22 @@ function OptionEditor(data) {
 
     self.isRegexEnforceType = ko.computed(function () {
         return self.enforceType() === "regex";
+    });
+    self.clearDefaultValue = function(showDefaultValueInput){
+        self.defaultValue('');
+        self.valuesList('');
+        self.valuesUrl('');
+        self.enforceType('none');
+        self.showDefaultValue(showDefaultValueInput);
+        return true;
+    };
+    self.shouldShowDefaultValue = ko.computed(function(){
+        return JSON.parse(self.showDefaultValue());
+    });
+    self.shouldShowDefaultStorage = ko.computed(function(){
+        return !JSON.parse(self.showDefaultValue());
+    });
+    self.isNonSecure = ko.computed(function(){
+        return JSON.parse(self.showDefaultValue());
     });
 }
