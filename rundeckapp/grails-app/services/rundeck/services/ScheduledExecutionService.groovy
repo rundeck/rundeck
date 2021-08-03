@@ -2480,14 +2480,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def oldJob = new OldJob(
-                oldjobname: scheduledExecution.generateJobScheduledName(),
-                oldjobgroup: scheduledExecution.generateJobGroupName(),
-                oldsched: jobSchedulesService.isScheduled(scheduledExecution.uuid),
-                originalCron: scheduledExecution.generateCrontabExression(),
-                originalSchedule: scheduledExecution.scheduleEnabled,
-                originalExecution: scheduledExecution.executionEnabled,
-                originalTz: scheduledExecution.timeZone,
-                originalRef: jobEventRevRef(scheduledExecution)
+            oldjobname: scheduledExecution.generateJobScheduledName(),
+            oldjobgroup: scheduledExecution.generateJobGroupName(),
+            isScheduled: jobSchedulesService.isScheduled(scheduledExecution.uuid),
+            localScheduled: scheduledExecution.scheduled,
+            originalCron: scheduledExecution.generateCrontabExression(),
+            originalSchedule: scheduledExecution.scheduleEnabled,
+            originalExecution: scheduledExecution.executionEnabled,
+            originalTz: scheduledExecution.timeZone,
+            originalRef: jobEventRevRef(scheduledExecution)
         )
         ImportedJob<ScheduledExecution> importedJob2 = updateJobDefinition(importedJob, params, authContext, scheduledExecution)
 
@@ -3359,7 +3360,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 oldjob.originalSchedule != scheduledExecution.scheduleEnabled ||
                 oldjob.originalExecution != scheduledExecution.executionEnabled ||
                 oldjob.originalTz != scheduledExecution.timeZone ||
-                oldjob.oldsched != scheduledExecution.scheduled ||
+                oldjob.localScheduled != scheduledExecution.scheduled ||
                 renamed
             ) {
                 modify = jobSchedulerService.updateScheduleOwner(scheduledExecution.asReference())
@@ -3422,7 +3423,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         rescheduleJob(
             scheduledExecution,
-            oldjob.oldsched,
+            oldjob.isScheduled,
             renamed ? oldjob.oldjobname : scheduledExecution.generateJobScheduledName(),
             renamed ? oldjob.oldjobgroup : scheduledExecution.generateJobGroupName(),
             false, !modify
@@ -4476,7 +4477,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 class OldJob{
     String oldjobname
     String oldjobgroup
-    Boolean oldsched
+    Boolean isScheduled
+    Boolean localScheduled
     String originalCron
     Boolean originalSchedule
     Boolean originalExecution
