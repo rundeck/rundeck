@@ -26,7 +26,7 @@ export const Elems= {
     option0UsageSession: By.css('#optvis_0 > div.optEditForm > div > section.section-separator-solo'),
     option0Type: By.xpath('//*[starts-with(@id,"sectrue")]'),
     option0KeySelector: By.xpath('//*[starts-with(@id,"defaultStoragePath")]'),
-    option0OpenKeyStorage: By.xpath('//*[starts-with(@id,"optedit")]/div[7]/div/div/span[2]/a'),
+    option0OpenKeyStorage: By.css('.btn.btn-default.obs-select-storage-path'),
     option0li: By.css('#optli_0'),
 
     storagebrowse: By.xpath('//*[starts-with(@id,"storagebrowse")]'),
