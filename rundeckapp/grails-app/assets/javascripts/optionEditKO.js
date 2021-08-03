@@ -25,9 +25,10 @@ function OptionEditor(data) {
     self.showDefaultValue = ko.observable(data.showDefaultValue);
     self.defaultValue = ko.observable(data.defaultValue);
     self.optionType = ko.observable(data.optionType);
-    self.name=ko.observable(data.name);
+    self.name = ko.observable(data.name);
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
     self.enforceType = ko.observable(data.enforceType);
+    self.originalIsNonSecure = data.showDefaultValue;
     self.tofilebashvar = function (str) {
         return self.bashVarPrefix + "FILE_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
     };
@@ -72,5 +73,8 @@ function OptionEditor(data) {
     });
     self.isNonSecure = ko.computed(function(){
         return JSON.parse(self.showDefaultValue());
+    });
+    var subscription = this.optionType.subscribe(function(newValue) {
+        self.showDefaultValue(self.originalIsNonSecure);
     });
 }
