@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.rundeck.plugin.objectstore.directorysource
+package org.rundeck.plugin.azureobjectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import io.minio.MinioClient
-import org.rundeck.plugin.objectstore.stream.LazyAccessObjectStoreInputStream
-import org.rundeck.plugin.objectstore.tree.ObjectStoreResource
-import org.rundeck.plugin.objectstore.tree.ObjectStoreUtils
+import org.rundeck.plugin.azureobjectstore.stream.LazyAccessObjectStoreInputStream
+import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreResource
+import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreUtils
 import org.rundeck.storage.api.Resource
 
 /*

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.rundeck.plugin.objectstore.directorysource
+package org.rundeck.plugin.azureobjectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import org.rundeck.storage.api.Resource

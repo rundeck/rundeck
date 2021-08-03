@@ -13,34 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.rundeck.plugin.objectstore.stream
+package org.rundeck.plugin.azureobjectstore.stream
 
 import com.dtolabs.utils.Streams
-import io.minio.MinioClient
 import org.rundeck.storage.api.HasInputStream
 
-class LazyAccessObjectStoreInputStream implements HasInputStream {
 
-    private final MinioClient mClient
-    private final String bucket
-    private final String objectKey
+class CloseAfterCopyStream implements HasInputStream {
+    InputStream inputStream
 
-    LazyAccessObjectStoreInputStream(MinioClient mClient, String bucket, String objectKey) {
-        this.objectKey = objectKey
-        this.bucket = bucket
-        this.mClient = mClient
+    CloseAfterCopyStream(InputStream inputStream) {
+        this.inputStream = inputStream
     }
-
     @Override
     InputStream getInputStream() throws IOException {
-        return mClient.getObject(bucket,objectKey)
+        return inputStream
     }
 
     @Override
     long writeContent(final OutputStream outputStream) throws IOException {
-        InputStream inStream = getInputStream()
-        long copied = Streams.copyStream(inStream, outputStream)
-        inStream.close()
+        long copied = Streams.copyStream(inputStream, outputStream)
+        inputStream.close()
         return copied
     }
 }

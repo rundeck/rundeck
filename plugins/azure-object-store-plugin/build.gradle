@@ -2,7 +2,7 @@ plugins {
     id 'groovy'
 }
 
-ext.pluginClassNames='org.rundeck.plugin.objectstore.ObjectStorePlugin'
+ext.pluginClassNames='org.rundeck.plugin.azureobjectstore.ObjectStorePlugin'
 ext.pluginName = 'Azure Object Store Plugin'
 ext.pluginDescription = 'Stores data in an Amazon S3 compliant object store'
 
@@ -43,7 +43,7 @@ task copyToLib(type: Copy) {
 jar {
     from "$buildDir/output"
     manifest {
-        // attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
         attributes 'Rundeck-Plugin-Name': pluginName
         attributes 'Rundeck-Plugin-Description': pluginDescription
         def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
