@@ -3683,6 +3683,69 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             [scheduleEnabled: false]  | _
             [executionEnabled: false] | _
     }
+
+    @Unroll
+    def "do update job with external schedule, should not change owner"() {
+        def params = [:]
+
+        def se = new ScheduledExecution(createJobParams(scheduled:false)).save()
+        assert se.id!=null
+        def oldQuartzJob=se.generateJobScheduledName()
+        def oldQuartzGroup=se.generateJobGroupName()
+
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>'bob'
+            getRoles()>>['a']
+        }
+        setupDoUpdateJob()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProperties() >> [:]
+                getProjectProperties() >> [:]
+            }
+            _ * existsFrameworkProject('BProject') >> true
+            _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+            _ * isClusterModeEnabled() >> true
+            _ * getServerUUID() >> null
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * frameworkNodeName () >> null
+            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * filterNodeSet(*_) >> null
+        }
+
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            0 * authorizeProjectJobAll(_,_,_,_)
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * filterAuthorizedNodes(*_) >> null
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+        }
+        service.jobSchedulesService=Mock(SchedulesManager)
+        service.jobSchedulerService=Mock(JobSchedulerService)
+        1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
+        1 * service.jobSchedulesService.shouldScheduleExecution(_) >> true
+        1 * service.jobSchedulesService.isScheduled(_) >> true
+
+        given: "modify job without modifying scheduling params"
+            def job = new ScheduledExecution(createJobParams([scheduled:false,description:'a new description']))
+            def importedJob = RundeckJobDefinitionManager.importedJob(job, [:])
+
+        when: "save the updated the job"
+            def results = service._doupdateJobOrParams(se.id, importedJob, params, auth)
+
+        then: "job should not have schedule owner changed"
+            results.success
+            0 * service.jobSchedulerService.deleteJobSchedule(oldQuartzJob, oldQuartzGroup)
+            0 * service.jobSchedulerService.updateScheduleOwner(_)
+    }
     @Unroll
     def "do update job, enabled execution should register quartz"() {
         def params = [:]
