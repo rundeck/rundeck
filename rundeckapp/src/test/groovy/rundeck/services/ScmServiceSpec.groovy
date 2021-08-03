@@ -857,11 +857,7 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         def job = new ScheduledExecution()
         service.jobMetadataService=Mock(JobMetadataService)
         when:
-<<<<<<< HEAD
-        def result = service.getJobPluginMeta(job)
-=======
-            def result = service.getJobPluginMeta(job, "scm-import")
->>>>>>> f573db1da3 (split plugin meta per integration)
+        def result = service.getJobPluginMeta(job, "scm-import")
         then:
         1 * service.jobMetadataService.getJobPluginMeta(job, ScmService.STORAGE_NAME_IMPORT)>>expect
         result == expect
@@ -952,23 +948,13 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         when:
         service.cleanPlugin(integration,project,type,auth)
         then:
-<<<<<<< HEAD
         (integration == 'import' ? 2 : 1) * service.pluginConfigService.loadScmConfig(project, _, _) >> config
         1 * service.pluginConfigService.storeConfig(config,project,_)
         1 * service.pluginService.retainPlugin(type,_)>>Mock(CloseableProvider){
             1 * getProvider()>>provider
             1 * close()
         }
-        1 * service.jobMetadataService.removeProjectPluginMeta(project)
-=======
-            (integration == 'import' ? 2 : 1) * service.pluginConfigService.loadScmConfig(project, _, _) >> config
-            1 * service.pluginConfigService.storeConfig(config,project,_)
-            1 * service.pluginService.retainPlugin(type,_)>>Mock(CloseableProvider){
-                 1 * getProvider()>>provider
-                 1 * close()
-            }
-            1 * service.jobMetadataService.removeProjectPluginMeta(project, _)
->>>>>>> b8947515a7 (clean project job metadata per integration)
+        1 * service.jobMetadataService.removeProjectPluginMeta(project, _)
         where:
         integration << ['export','import']
         project = 'aproj'
@@ -1000,27 +986,15 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         when:
         def result = service.exportFilePathsMapForJobs(project, jobs)
         then:
-<<<<<<< HEAD
-        0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_IMPORT)
-        1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_IMPORT)
-        1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_IMPORT)
+        0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_EXPORT)
+        1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_EXPORT)
+        1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_EXPORT)
         1 * plugin.getRelativePathForJob({it.id== 'job1id' })>> '/a/path/job1'
         1 * plugin.getRelativePathForJob({it.id=='job2id' })>>'/a/path/job2'
         result == [
-            job1id:'/a/path/job1',
-            job2id:'/a/path/job2'
-        ]
-=======
-            0 * service.jobMetadataService.getJobsPluginMeta(project, ScmService.STORAGE_NAME_EXPORT)
-            1 * service.jobMetadataService.getJobPluginMeta(job1, ScmService.STORAGE_NAME_EXPORT)
-            1 * service.jobMetadataService.getJobPluginMeta(job2, ScmService.STORAGE_NAME_EXPORT)
-            1 * plugin.getRelativePathForJob({it.id== 'job1id' })>> '/a/path/job1'
-            1 * plugin.getRelativePathForJob({it.id=='job2id' })>>'/a/path/job2'
-            result == [
                 job1id:'/a/path/job1',
                 job2id:'/a/path/job2'
-            ]
->>>>>>> f573db1da3 (split plugin meta per integration)
+        ]
     }
     def "getExportPushActionId"(){
         given:

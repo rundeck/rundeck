@@ -55,55 +55,29 @@
             <g:set var="jobstatus" value="${integration=='export'?scmExportStatus?.get(job.extid):scmImportStatus?.get(job.extid)}"/>
 
             <div class="list-group-item">
-<<<<<<< HEAD
-                <g:set var="exportStatus" value="${scmExportStatus?.get(job.extid)}"/>
-                <g:set var="importStatus" value="${scmImportStatus?.get(job.extid)}"/>
-                <g:render template="/scm/statusBadge" model="[
-                        showClean:true,
-                        exportStatus: exportStatus?.synchState?.toString(),
-                        importStatus: importStatus?.synchState?.toString(),
-                        text  : '',
-                        integration:integration,
-                        exportCommit: exportStatus?.commit,
-                        importCommit: importStatus?.commit,
-                ]"/>
-                <g:if test="${scmFilePaths && scmFilePaths[job.extid]}">
-                    <g:if test="${scmExportRenamedPath}">
-                        <div>
-                            <span class="has_tooltip text-primary" title="Original repo path">
-                                <g:icon name="file"/>
-                                ${scmExportRenamedPath}
-                            </span>
-                        </div>
-                    </g:if>
-                    <span class="has_tooltip" title="Repo file path">
-=======
                 <div class="flex">
                     <g:set var="exportStatus" value="${scmExportStatus?.get(job.extid)}"/>
                     <g:set var="importStatus" value="${scmImportStatus?.get(job.extid)}"/>
                     <span style="margin-right: 10px;">
-                    <g:render template="/scm/statusBadge" model="[
-                            showClean:true,
-                            exportStatus: exportStatus?.synchState?.toString(),
-                            importStatus: importStatus?.synchState?.toString(),
-                            text  : '',
-                            integration:integration,
-                            exportCommit: exportStatus?.commit,
-                            importCommit: importStatus?.commit,
-                    ]"/>
+                        <g:render template="/scm/statusBadge" model="[
+                                showClean:true,
+                                exportStatus: exportStatus?.synchState?.toString(),
+                                importStatus: importStatus?.synchState?.toString(),
+                                text  : '',
+                                integration:integration,
+                                exportCommit: exportStatus?.commit,
+                                importCommit: importStatus?.commit,
+                        ]"/>
                     </span>
                     <g:if test="${scmFilePaths && scmFilePaths[job.extid] && integration=='export'}">
->>>>>>> b254e16a79 (- fix "diff" page to show the job was renamed)
                         <g:if test="${scmExportRenamedPath}">
-                            <g:icon name="arrow-right"/>
+                            <div>
+                                <span class="has_tooltip text-primary" title="Original repo path" data-viewport="#section-content">
+                                    <g:icon name="file"/>
+                                    ${scmExportRenamedPath}
+                                </span>
+                            </div>
                         </g:if>
-<<<<<<< HEAD
-
-                        <g:icon name="file"/>
-                        ${scmFilePaths[job.extid]}
-                    </span>
-                </g:if>
-=======
                         <span class="has_tooltip" title="Repo file path" data-viewport="#section-content">
                             <g:if test="${scmExportRenamedPath}">
                                 <g:icon name="arrow-right"/>
@@ -133,8 +107,7 @@
                         </g:if>
                     </g:if>
                 </div>
-                
->>>>>>> b254e16a79 (- fix "diff" page to show the job was renamed)
+
             </div>
             <g:if test="${jobstatus?.commit}">
                 <div class="list-group-item">

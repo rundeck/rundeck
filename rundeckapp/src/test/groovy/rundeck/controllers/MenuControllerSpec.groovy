@@ -1465,34 +1465,27 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
-                                                                               AuthConstants.ACTION_EXPORT,
-                                                                               AuthConstants.ACTION_SCM_EXPORT]) >> true
+                                                                                          AuthConstants.ACTION_EXPORT,
+                                                                                          AuthConstants.ACTION_SCM_EXPORT]) >> true
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
-                                                                               AuthConstants.ACTION_IMPORT,
-                                                                               AuthConstants.ACTION_SCM_IMPORT]) >> true
-        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
-        1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
+                                                                                          AuthConstants.ACTION_IMPORT,
+                                                                                          AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
+        1 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
         1 * scmConfig.getEnabled() >> enabled
-<<<<<<< HEAD
-        (count) * controller.scmService.getJobsPluginMeta(project)
-        (count) * controller.scmService.exportStatusForJobs(project,_, _, _, _)
-        (count) * controller.scmService.exportPluginStatus(_,project)
-        (count) * controller.scmService.exportPluginActions(_,project)
-        (count) * controller.scmService.getRenamedJobPathsForProject(project)
-=======
         (count) * controller.scmService.getJobsPluginMeta(project, false)
         (count) * controller.scmService.importStatusForJobs(project,_, _, _, _)
         (count) * controller.scmService.importPluginStatus(_,project)
         (count) * controller.scmService.importPluginActions(_,project,_)
         0 * controller.scmService.getRenamedJobPathsForProject(project)
->>>>>>> f573db1da3 (split plugin meta per integration)
 
         0 * controller.scmService.initProject(project,'export')
         0 * controller.scmService.initProject(project,'import')
 
         response.json
-        response.json.scmExportEnabled==enabled
-        !response.json.scmImportEnabled
+        !response.json.scmExportEnabled
+        response.json.scmImportEnabled==enabled
         where:
         enabled | count
         true    | 1

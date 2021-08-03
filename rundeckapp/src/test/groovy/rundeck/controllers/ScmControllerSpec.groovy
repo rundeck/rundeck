@@ -108,13 +108,8 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
             1 * exportFilePathsMapForJobs(projectName, [], _) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
-<<<<<<< HEAD
                     [valid: true, nextAction: [id: 'someAction']]
-            1 * getJobsPluginMeta(projectName)
-=======
-            [valid: true, nextAction: [id: 'someAction']]
             1 * getJobsPluginMeta(projectName, true)
->>>>>>> f573db1da3 (split plugin meta per integration)
             0 * _(*_)
         }
 
@@ -805,31 +800,19 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         when:
         def result=controller.getViewExportActionItems(project,jobs)
         then:
-<<<<<<< HEAD
         result
         1 * controller.scmService.deletedExportFilesForProject(project)
         1 * controller.scmService.getRenamedJobPathsForProject(project) >> [:]
-        1 * controller.scmService.getJobsPluginMeta(project) >> meta
+        1 * controller.scmService.getJobsPluginMeta(project,true) >> meta
         1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
-=======
-            result
-            1 * controller.scmService.deletedExportFilesForProject(project)
-            1 * controller.scmService.getRenamedJobPathsForProject(project) >> [:]
-            1 * controller.scmService.getJobsPluginMeta(project,true) >> meta
-            1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
->>>>>>> f573db1da3 (split plugin meta per integration)
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: state)
-            ]
-        1 * controller.scmService.exportFilePathsMapForJobs(
-            project,
-            {
-                it.size()==1
-                it[0].extid=='job2'
-            },
-            _
-        ) >> [
-            job2: '/path/to/job2'
+        ]
+        1 * controller.scmService.exportFilePathsMapForJobs(project, {
+            it.size()==1
+            it[0].extid=='job2'
+        }, _) >> [
+                job2: '/path/to/job2'
         ]
         result.size() == 1
         result[0].itemId == '/path/to/job2'
@@ -857,17 +840,10 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         result
         1 * controller.scmService.deletedExportFilesForProject(project)>>[
                 'scm/path/to/job3': [id: 'job3', jobName: 'job', groupPath: 'a', jobNameAndGroup: 'a/job']
-<<<<<<< HEAD
         ]
         1 * controller.scmService.getRenamedJobPathsForProject(project) >> [:]
-        1 * controller.scmService.getJobsPluginMeta(project) >> meta
+        1 * controller.scmService.getJobsPluginMeta(project, true) >> meta
         1 * controller.scmService.exportStatusForJobs(project, _, _, true, meta) >> [
-=======
-            ]
-            1 * controller.scmService.getRenamedJobPathsForProject(project) >> [:]
-            1 * controller.scmService.getJobsPluginMeta(project, true) >> meta
-            1 * controller.scmService.exportStatusForJobs(project, _, _, true, meta) >> [
->>>>>>> f573db1da3 (split plugin meta per integration)
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: SynchState.CLEAN)
         ]
@@ -895,29 +871,18 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         result
         1 * controller.scmService.deletedExportFilesForProject(project)>>[
                 '/oldscm/path/to/job2': [id: 'job2', jobName: 'blah', groupPath: 'bloo', jobNameAndGroup: 'bloo/blah']
-<<<<<<< HEAD
         ]
         1 * controller.scmService.getRenamedJobPathsForProject(project) >> [job2:'/oldscm/path/to/job2']
-        1 * controller.scmService.getJobsPluginMeta(project) >> meta
+        1 * controller.scmService.getJobsPluginMeta(project, true) >> meta
         1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
-=======
-            ]
-            1 * controller.scmService.getRenamedJobPathsForProject(project) >> [job2:'/oldscm/path/to/job2']
-            1 * controller.scmService.getJobsPluginMeta(project, true) >> meta
-            1 * controller.scmService.exportStatusForJobs(project, _, {it.size()==2}, true, meta) >> [
->>>>>>> f573db1da3 (split plugin meta per integration)
                 job1: new JobStateImpl(synchState: SynchState.CLEAN),
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED)
-            ]
-        1 * controller.scmService.exportFilePathsMapForJobs(
-            project,
-            {
-                it.size()==1
-                it[0].extid=='job2'
-            },
-            _
-        ) >> [
-            job2: '/path/to/job2'
+        ]
+        1 * controller.scmService.exportFilePathsMapForJobs(project, {
+            it.size()==1
+            it[0].extid=='job2'
+        }, _) >> [
+                job2: '/path/to/job2'
         ]
         result.size() == 1
         result[0].itemId == '/path/to/job2'
