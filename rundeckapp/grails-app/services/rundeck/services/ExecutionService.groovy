@@ -1053,7 +1053,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         String warnSize = frameworkService.getProjectLogSizeWarning() ?: LoggingThreshold.WARN_SIZE_DEFAULT
         Map<String, Long> warnSizeMap = ScheduledExecution.parseLogOutputThreshold(warnSize)
-        threshold.warningSize = warnSizeMap["maxSizeBytes"] ?: warnSizeMap["maxLines"]
+        threshold?.warningSize = warnSizeMap[LoggingThreshold.MAX_SIZE_BYTES] ?: warnSizeMap[LoggingThreshold.MAX_LINES]
 
         def ExecutionLogWriter loghandler= loggingService.openLogWriter(
                 execution,
@@ -1284,7 +1284,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         log.info("Logging limit action: ${limitAction}")
-        return limitAction
+        return limitAction ?: LoggingThreshold.ACTION_HALT
     }
 
     /**
