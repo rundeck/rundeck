@@ -16,24 +16,33 @@
 package org.rundeck.plugin.azureobjectstore.stream
 
 import com.dtolabs.utils.Streams
+import com.microsoft.azure.storage.CloudStorageAccount
+import com.microsoft.azure.storage.blob.CloudBlobClient
+import com.microsoft.azure.storage.blob.CloudBlobContainer
+import com.microsoft.azure.storage.blob.CloudBlockBlob
 import io.minio.MinioClient
 import org.rundeck.storage.api.HasInputStream
 
 class LazyAccessObjectStoreInputStream implements HasInputStream {
 
-    private final MinioClient mClient
+    private final CloudStorageAccount storageAccount
     private final String bucket
     private final String objectKey
 
-    LazyAccessObjectStoreInputStream(MinioClient mClient, String bucket, String objectKey) {
+    LazyAccessObjectStoreInputStream(CloudStorageAccount storageAccount, String bucket, String objectKey) {
         this.objectKey = objectKey
         this.bucket = bucket
-        this.mClient = mClient
+        this.storageAccount = storageAccount
     }
 
     @Override
     InputStream getInputStream() throws IOException {
-        return mClient.getObject(bucket,objectKey)
+        CloudBlobClient client = storageAccount.createCloudBlobClient()
+        CloudBlobContainer container = client.getContainerReference(bucket)
+        OutputStream stream = null
+        container.getBlockBlobReference(objectKey) //gotta get an inputstream
+        InputStream inputStream
+        return inputStream
     }
 
     @Override

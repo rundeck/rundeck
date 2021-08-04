@@ -18,6 +18,7 @@ package org.rundeck.plugin.azureobjectstore.tree
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.microsoft.azure.storage.CloudStorageAccount
+import com.microsoft.azure.storage.blob.CloudBlobClient
 import io.minio.MinioClient
 import io.minio.PutObjectOptions
 import org.rundeck.plugin.azureobjectstore.directorysource.ObjectStoreDirectorySource
@@ -38,7 +39,7 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
     private final CloudStorageAccount storageAccount
     private final ObjectStoreDirectorySource directorySource
 
-    ObjectStoreTree(MinioClient mClient, String bucket) {
+    ObjectStoreTree(CloudStorageAccount storageAccount, String bucket) {
         this(storageAccount,bucket,new ObjectStoreMemoryDirectorySource(storageAccount, bucket))
     }
 
@@ -50,8 +51,9 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
     }
 
     private void init() {
-        if(!mClient.bucketExists(bucket)) {
-            mClient.makeBucket(bucket)
+        CloudBlobClient client = storageAccount.createCloudBlobClient()
+        if(!ObjectStoreUtils.checkContainerExists(client, bucket)) {
+            throw new Exception("Container doesnt exist in Azure")
         }
     }
 

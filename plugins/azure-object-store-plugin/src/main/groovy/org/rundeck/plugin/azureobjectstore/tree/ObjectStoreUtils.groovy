@@ -16,6 +16,8 @@
 package org.rundeck.plugin.azureobjectstore.tree
 
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.microsoft.azure.storage.blob.CloudBlobClient
+import com.microsoft.azure.storage.blob.CloudBlobContainer
 import com.microsoft.azure.storage.blob.CloudBlockBlob
 import io.minio.Time
 import io.minio.ObjectStat
@@ -47,6 +49,17 @@ class ObjectStoreUtils {
             meta[StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME] = StorageUtil.formatDate(lastModified)
         }*/
         return meta
+    }
+
+    static boolean checkContainerExists(CloudBlobClient client, String container){
+
+        try{
+            CloudBlobContainer containerObject = client.getContainerReference(container)
+            return true
+        }
+        catch (Exception e){
+            return false
+        }
     }
 
     private static String fixKeyName(String prefixedKey) {
