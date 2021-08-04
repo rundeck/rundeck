@@ -25,7 +25,7 @@ class ExecutionProvenanceService implements ApplicationContextAware {
     }
 
 
-    private ObjectMapper createMapper() {
+    ObjectMapper createMapper() {
         ObjectMapper mapper = new ObjectMapper()
         //load  subtypes
         mapper.registerSubtypes(Provenance)

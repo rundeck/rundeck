@@ -34,6 +34,7 @@ class UrlMappings {
         "/api/$api_version/execution/$id"(controller: 'execution'){
             action=[GET:'apiExecution',DELETE: 'apiExecutionDelete']
         }
+        "/api/$api_version/execution/$id/provenance"(controller: 'execution', action: 'apiExecutionProvenance')
         "/api/$api_version/execution/$id/state"(controller: 'execution', action: 'apiExecutionState')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
         "/api/$api_version/execution/$id/input/files"(controller: 'execution', action: 'apiExecutionInputFiles')

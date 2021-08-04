@@ -44,6 +44,7 @@ import org.quartz.JobExecutionContext
 import org.rundeck.app.AppConstants
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.executions.provenance.ProvenanceList
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
@@ -70,6 +71,7 @@ class ExecutionController extends ControllerBase{
     FileUploadService fileUploadService
     PluginService pluginService
     ConfigurationService configurationService
+    ExecutionProvenanceService executionProvenanceService
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -1757,6 +1759,27 @@ setTimeout(function(){
         return g.createLink(controller: 'menu', action: 'index', absolute: true)
     }
 
+    def apiExecutionProvenance(){
+        if (!apiService.requireApi(request, response, ApiVersions.V39)) {
+            return
+        }
+        def Execution e = Execution.get(params.id)
+        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
+            return
+        }
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
+        if(!apiService.requireAuthorized(
+            rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext,e,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
+            response,
+            [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[])){
+            return
+        }
+        def provenances = executionProvenanceService.getProvenanceForExecution(e)
+        def mapper = executionProvenanceService.createMapper()
+        response.contentType = 'application/json'
+        mapper.writeValue(response.outputStream, new ProvenanceList(provenances))
+        response.outputStream.flush()
+    }
     /**
      * API: /api/execution/{id} , version 1
      */
