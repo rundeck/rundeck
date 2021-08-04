@@ -17,6 +17,10 @@ package org.rundeck.plugin.azureobjectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import com.microsoft.azure.storage.CloudStorageAccount
+import com.microsoft.azure.storage.blob.CloudBlobClient
+import com.microsoft.azure.storage.blob.CloudBlobContainer
+import com.microsoft.azure.storage.blob.CloudBlockBlob
+import com.microsoft.azure.storage.blob.ListBlobItem
 import io.minio.MinioClient
 import io.minio.errors.ErrorResponseException
 import io.minio.messages.Item
@@ -40,6 +44,7 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
     private static final String DIR_MARKER = "/"
     private final String bucket
     private final CloudStorageAccount storageAccount
+    MinioClient mClient
 
     ObjectStoreDirectAccessDirectorySource(CloudStorageAccount storageAccount, String bucket) {
         this.storageAccount = storageAccount
@@ -48,14 +53,18 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
 
     @Override
     boolean checkPathExists(final String path) {
-        def items = mClient.listObjects(bucket, path)
+        CloudBlobClient client = storageAccount.createCloudBlobClient()
+        CloudBlobContainer container = client.getContainerReference(bucket)
+        def items = container.listBlobs()
         return items.size() > 0
     }
 
     @Override
     boolean checkResourceExists(final String path) {
         try {
-            mClient.statObject(bucket, path)
+            CloudBlobClient client = storageAccount.createCloudBlobClient()
+            CloudBlobContainer container = client.getContainerReference(bucket)
+            CloudBlockBlob blob = container.getBlockBlobReference(path)
             return true
         } catch(ErrorResponseException erex) {
             if(erex.response.code() == 404) return false
@@ -73,7 +82,9 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
 
     @Override
     Map<String, String> getEntryMetadata(final String path) {
-        return ObjectStoreUtils.objectStatToMap(mClient.statObject(bucket, path))
+        CloudBlobClient client = storageAccount.createCloudBlobClient()
+        CloudBlobContainer container = client.getContainerReference(bucket)
+        return ObjectStoreUtils.objectStatToMap(container.getBlockBlobReference(path))
     }
 
     @Override
@@ -83,8 +94,10 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
         String lstPath = path == "" ? null : path
         Pattern directSubDirMatch = ObjectStoreUtils.createSubdirCheckForPath(lstPath)
 
-        mClient.listObjects(bucket, lstPath, true).each { result ->
-            Matcher m = directSubDirMatch.matcher(result.get().objectName())
+        CloudBlobClient client = storageAccount.createCloudBlobClient()
+        CloudBlobContainer container = client.getContainerReference(bucket)
+        Iterable<ListBlobItem> items = container.listBlobs().each { result ->
+            Matcher m = directSubDirMatch.matcher(result.uri //manipulate to get name?)
             if(m.matches()) {
                 subdirs.add(m.group(1))
             }

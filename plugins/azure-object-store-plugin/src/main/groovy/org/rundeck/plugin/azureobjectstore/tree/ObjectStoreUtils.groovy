@@ -16,6 +16,7 @@
 package org.rundeck.plugin.azureobjectstore.tree
 
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.microsoft.azure.storage.blob.CloudBlockBlob
 import io.minio.Time
 import io.minio.ObjectStat
 
@@ -30,9 +31,9 @@ class ObjectStoreUtils {
         return ~/${path}\/(.*?)\/.*/
     }
 
-    static Map<String,String> objectStatToMap(ObjectStat objectStat) {
+    static Map<String,String> objectStatToMap(CloudBlockBlob objectStat) {
         Map<String,String> meta = [:]
-        meta["etag"] = objectStat.etag()
+        /*meta["etag"] = objectStat.etag()
         Set rundeckMetaKeys = objectStat.httpHeaders().keySet().findAll { it.startsWith(ObjectStoreTree.RUNDECK_CUSTOM_HEADER_PREFIX) }
         rundeckMetaKeys.each { prefixedKey ->
             meta[fixKeyName(prefixedKey)] = objectStat.httpHeaders()[prefixedKey][0]
@@ -44,7 +45,7 @@ class ObjectStoreUtils {
         if(!meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME)) {
             Date lastModified = Date.from(ZonedDateTime.parse(objectStat.httpHeaders()["last-modified"][0], Time.HTTP_HEADER_DATE_FORMAT).toInstant())
             meta[StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME] = StorageUtil.formatDate(lastModified)
-        }
+        }*/
         return meta
     }
 
