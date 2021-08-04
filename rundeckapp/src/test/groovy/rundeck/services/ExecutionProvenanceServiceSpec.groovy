@@ -129,6 +129,19 @@ class ExecutionProvenanceServiceSpec extends Specification
             new TestProvenance(data:new TestData(name:'x',id:'z'))|'{"provenances":[{"type":"test","data":{"name":"x","id":"z"}}]}'
     }
     @Unroll
+    void "test getProvenanceForExecution null json"() {
+        given:
+            def e = new Execution()
+            e.provenanceData=null
+            defineBeans{
+                builtinProvenanceComponent(BuiltinProvenanceComponent)
+            }
+        when:
+            def provenances=service.getProvenanceForExecution(e)
+        then:
+            provenances==[]
+    }
+    @Unroll
     void "test getProvenanceForExecution test types"() {
         given:
             def e = new Execution()

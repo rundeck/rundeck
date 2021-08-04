@@ -55,6 +55,9 @@ class ExecutionProvenanceService implements ApplicationContextAware {
     List<Provenance<?>> getProvenanceForExecution(Execution e) {
         //find provenance component for executionType
         String jsonData = getProvenanceJson(e)
+        if(!jsonData){
+            return []
+        }
         ObjectMapper mapper = createMapper()
         ProvenanceList list = mapper.readValue(jsonData, ProvenanceList)
         list.getProvenances()
