@@ -76,9 +76,9 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
 
         CloudStorageAccount account = CloudStorageAccount.parse(storageConnectionString)
         if(uncachedObjectLookup) {
-            delegateTree = new ObjectStoreTree(mClient,bucket,new ObjectStoreDirectAccessDirectorySource(mClient,bucket))
+            delegateTree = new ObjectStoreTree(account,bucket,new ObjectStoreDirectAccessDirectorySource(mClient,bucket))
         } else {
-            delegateTree = new ObjectStoreTree(mClient, bucket)
+            delegateTree = new ObjectStoreTree(account, bucket)
         }
     }
 }
