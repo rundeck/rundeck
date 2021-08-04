@@ -370,6 +370,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             return state
         }
 
+        if(originalPath && originalPath!=path){
+            //job renamed can lost last commit track, so not check it again
+            if(state && state.synch == SynchState.EXPORT_NEEDED){
+                return state
+            }
+        }
+
         def commit = lastCommitForPath(path)
         String ident = createStatusCacheIdent(job, commit)
 

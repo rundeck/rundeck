@@ -3340,7 +3340,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
                         if (pluginData.scmExportEnabled) {
-                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
+                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, true)
                             pluginData.scmStatus = scmService.exportStatusForJobs(params.project, authContext, result.nextScheduled, false, jobsPluginMeta)
                             pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                             pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
@@ -3363,7 +3363,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
                         pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
                         if (pluginData.scmImportEnabled) {
-                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project)
+                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, false)
                             pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
                             pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
                             pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
