@@ -34,7 +34,7 @@ class ObjectStoreUtils {
     }
 
     static Map<String,String> objectStatToMap(CloudBlockBlob objectStat) {
-        Map<String,String> meta = [:]
+        Map<String,String> meta = objectStat.getMetadata()
         /*meta["etag"] = objectStat.etag()
         Set rundeckMetaKeys = objectStat.httpHeaders().keySet().findAll { it.startsWith(ObjectStoreTree.RUNDECK_CUSTOM_HEADER_PREFIX) }
         rundeckMetaKeys.each { prefixedKey ->

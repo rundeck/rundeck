@@ -25,22 +25,15 @@ import org.rundeck.storage.api.HasInputStream
 
 class LazyAccessObjectStoreInputStream implements HasInputStream {
 
-    private final CloudStorageAccount storageAccount
-    private final String bucket
-    private final String objectKey
+    private final CloudBlockBlob object
 
-    LazyAccessObjectStoreInputStream(CloudStorageAccount storageAccount, String bucket, String objectKey) {
-        this.objectKey = objectKey
-        this.bucket = bucket
-        this.storageAccount = storageAccount
+    LazyAccessObjectStoreInputStream(CloudBlockBlob object) {
+        this.object = object
     }
 
     @Override
     InputStream getInputStream() throws IOException {
-        CloudBlobClient client = storageAccount.createCloudBlobClient()
-        CloudBlobContainer container = client.getContainerReference(bucket)
-        OutputStream stream = null
-        container.getBlockBlobReference(objectKey) //gotta get an inputstream
+        //object.downloadRangeToByteArray()
         InputStream inputStream
         return inputStream
     }

@@ -22,21 +22,18 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.microsoft.azure.storage.CloudStorageAccount
-import io.minio.MinioClient
+import com.microsoft.azure.storage.blob.CloudBlobClient
+import com.microsoft.azure.storage.blob.CloudBlobContainer
 import org.rundeck.plugin.azureobjectstore.directorysource.ObjectStoreDirectAccessDirectorySource
 import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreTree
 import org.rundeck.storage.api.Tree
 import org.rundeck.storage.impl.DelegateTree
 
-import java.util.concurrent.TimeUnit
-
 @Plugin(name = 'azure-repository-object-store', service = ServiceNameConstants.Storage)
 @PluginDescription(title = 'Azure Object Storage', description = 'Use Azure object store as storage layer.')
 class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlugin {
-    @PluginProperty(title = 'Bucket', description = 'Base bucket into which objects are stored')
-    String bucket;
-    @PluginProperty(title = 'Object Store Url', description = 'The URL endpoint of the s3 compatible service')
-    String objectStoreUrl;
+    @PluginProperty(title = 'Container', description = 'Container into which objects are stored')
+    String container;
     @PluginProperty(title = "Storage Account", description = "Azure Storage Account")
     private String storageAccount;
     @PluginProperty(title = "Access Key", description = "Azure Storage Access Key")
@@ -45,6 +42,8 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
     private String defaultEndpointProtocol
     @PluginProperty(title = "Extra connection string settings", description = "Extra connection settings, see https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#store-a-connection-string")
     private String extraConnectionSettings
+
+
     @PluginProperty(title = 'Uncached Object Lookup', description = """Use object store directly to list directory resources, check object existence, etc. 
                                                                     Depending on the directory structure and number of objects, enabling this option could have
                                                                     performance issues. This option will work better in a cluster because all servers in the cluster will
@@ -65,7 +64,7 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
     }
 
     void initTree() {
-        if (!bucket) {
+        if (!container) {
             throw new IllegalArgumentException("bucket property is required")
         }
         if (!objectStoreUrl) {
@@ -75,10 +74,15 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
         String storageConnectionString = "DefaultEndpointsProtocol="+defaultEndpointProtocol+";AccountName=" + storageAccount+ ";AccountKey=" + accessKey;
 
         CloudStorageAccount account = CloudStorageAccount.parse(storageConnectionString)
+        CloudBlobClient serviceClient = account.createCloudBlobClient();
+
+        CloudBlobContainer container = serviceClient.getContainerReference(container)
+        container.createIfNotExists()
+
         if(uncachedObjectLookup) {
-            delegateTree = new ObjectStoreTree(account,bucket,new ObjectStoreDirectAccessDirectorySource(mClient,bucket))
+            delegateTree = new ObjectStoreTree(account, this.container,new ObjectStoreDirectAccessDirectorySource(mClient, this.container))
         } else {
-            delegateTree = new ObjectStoreTree(account, bucket)
+            delegateTree = new ObjectStoreTree(account, this.container)
         }
     }
 }
