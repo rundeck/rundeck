@@ -1786,6 +1786,8 @@ class ScheduledExecutionController  extends ControllerBase{
             EditOptsController.getSessionOptions(session,null,editopts)
         }
         def model = scheduledExecutionService.prepareCreateEditJob(params, newScheduledExecution , AuthConstants.ACTION_CREATE, authContext)
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
+        model["jobComponentValues"] = jobComponentValues
         model["iscopy"] = true
 
         render(
