@@ -360,6 +360,11 @@ task copySpa(type: Copy) {
 assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
 
+node{
+    download = project.hasProperty('node.install')
+    version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
+}
+
 task vendorAssetDeps(type: NpmTask) { it ->
     def baseDir = "${projectDir}/grails-app/assets/javascripts"
 
