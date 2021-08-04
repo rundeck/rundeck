@@ -1079,13 +1079,8 @@ class ApiService {
                         permalink: execdata.permalink,
                         status: status,
                         project: e.project,
+                        executionType:e.executionType
                 ]
-//            if (api_version && api_version < ApiVersions.V32) {
-                execMap.executionType = e.executionType
-//            } else {
-//                def provenance = e.provenanceInfo
-//                execMap.provenance = [type: provenance.type, meta: provenance.meta]
-//            }
             if(execdata.customStatus){
                 execMap['customStatus']=execdata.customStatus
             }
