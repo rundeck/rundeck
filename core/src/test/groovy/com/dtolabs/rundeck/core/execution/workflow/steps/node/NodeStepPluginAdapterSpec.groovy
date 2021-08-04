@@ -85,6 +85,7 @@ class NodeStepPluginAdapterSpec extends Specification {
         shared.merge(ContextView.global(), optionContext)
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> framework
             getDataContext() >> optionContext
             getSharedDataContext() >> shared
             getFrameworkProject() >> PROJECT_NAME
@@ -132,6 +133,7 @@ class NodeStepPluginAdapterSpec extends Specification {
         shared.merge(ContextView.global(), optionContext)
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> framework
             getDataContext() >> optionContext
             getSharedDataContext() >> shared
             getFrameworkProject() >> PROJECT_NAME

@@ -54,6 +54,7 @@ class ScriptPluginNodeExecutorSpec extends Specification {
 
         ExecutionContext context = Mock(ExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> framework
             getDataContext() >> optionContext
             getDataContextObject() >> dataContext
             getPrivateDataContext() >> privateDataContext

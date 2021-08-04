@@ -140,6 +140,7 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
 
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> framework
             getFrameworkProject() >> PROJECT_NAME
             getDataContextObject() >> dataContext
             getSharedDataContext() >> sharedContext
@@ -341,6 +342,7 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
 
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
+            getIFramework() >> framework
             getFrameworkProject() >> PROJECT_NAME
             getDataContextObject() >> dataContext
             getSharedDataContext() >> sharedContext

@@ -112,10 +112,11 @@ class AbstractDescribableScriptPluginSpec extends Specification{
         ExecutionContext context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
             getFramework() >> framework
+            getIFramework() >> framework
             getDataContext() >> new BaseDataContext(localDataContext)
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
-                getFramework() >> framework
+                getIFramework() >> framework
                 getFrameworkProject() >> PROJECT_NAME
             }
         }
@@ -153,10 +154,11 @@ class AbstractDescribableScriptPluginSpec extends Specification{
         ExecutionContext context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
             getFramework() >> framework
+            getIFramework() >> framework
             getDataContext() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
-                getFramework() >> framework
+                getIFramework() >> framework
                 getFrameworkProject() >> PROJECT_NAME
             }
         }
