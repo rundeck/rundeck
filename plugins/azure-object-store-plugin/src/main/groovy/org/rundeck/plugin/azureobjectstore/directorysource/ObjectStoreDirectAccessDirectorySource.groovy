@@ -97,7 +97,7 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
         CloudBlobClient client = storageAccount.createCloudBlobClient()
         CloudBlobContainer container = client.getContainerReference(bucket)
         Iterable<ListBlobItem> items = container.listBlobs().each { result ->
-            Matcher m = directSubDirMatch.matcher(result.uri //manipulate to get name?)
+            Matcher m = directSubDirMatch.matcher(result.uri) //manipulate to get name?)
             if(m.matches()) {
                 subdirs.add(m.group(1))
             }
