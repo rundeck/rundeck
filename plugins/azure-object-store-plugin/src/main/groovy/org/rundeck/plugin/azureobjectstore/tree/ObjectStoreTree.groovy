@@ -17,6 +17,7 @@ package org.rundeck.plugin.azureobjectstore.tree
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.microsoft.azure.storage.CloudStorageAccount
 import io.minio.MinioClient
 import io.minio.PutObjectOptions
 import org.rundeck.plugin.azureobjectstore.directorysource.ObjectStoreDirectorySource
@@ -34,15 +35,15 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
     private static final String DIR_MARKER = "/"
 
     private final String bucket
-    private final MinioClient mClient
+    private final CloudStorageAccount storageAccount
     private final ObjectStoreDirectorySource directorySource
 
     ObjectStoreTree(MinioClient mClient, String bucket) {
-        this(mClient,bucket,new ObjectStoreMemoryDirectorySource(mClient, bucket))
+        this(storageAccount,bucket,new ObjectStoreMemoryDirectorySource(storageAccount, bucket))
     }
 
-    ObjectStoreTree(MinioClient mClient, String bucket, ObjectStoreDirectorySource directorySource) {
-        this.mClient = mClient
+    ObjectStoreTree(CloudStorageAccount storageAccount, String bucket, ObjectStoreDirectorySource directorySource) {
+        this.storageAccount = storageAccount
         this.bucket = bucket
         this.directorySource = directorySource
         init()

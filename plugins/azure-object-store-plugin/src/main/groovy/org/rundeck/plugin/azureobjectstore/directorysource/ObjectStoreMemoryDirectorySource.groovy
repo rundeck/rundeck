@@ -16,6 +16,7 @@
 package org.rundeck.plugin.azureobjectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
+import com.microsoft.azure.storage.CloudStorageAccount
 import io.minio.MinioClient
 import org.rundeck.plugin.azureobjectstore.stream.LazyAccessObjectStoreInputStream
 import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreResource
@@ -37,10 +38,10 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     private static final String DIR_MARKER = "/"
     DirectoryNode root = new DirectoryNode("")
     private final String bucket
-    private final MinioClient mClient
+    private final CloudStorageAccount storageAccount
 
-    ObjectStoreMemoryDirectorySource(MinioClient mClient, String bucket) {
-        this.mClient = mClient
+    ObjectStoreMemoryDirectorySource(CloudStorageAccount storageAccount, String bucket) {
+        this.storageAccount = storageAccount
         this.bucket = bucket
         init()
     }

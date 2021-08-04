@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
+import com.microsoft.azure.storage.CloudStorageAccount
 import io.minio.MinioClient
 import org.rundeck.plugin.azureobjectstore.directorysource.ObjectStoreDirectAccessDirectorySource
 import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreTree
@@ -29,19 +30,21 @@ import org.rundeck.storage.impl.DelegateTree
 
 import java.util.concurrent.TimeUnit
 
-@Plugin(name = 'azure-repository-object-store')//, service = ServiceNameConstants.Storage)
+@Plugin(name = 'azure-repository-object-store', service = ServiceNameConstants.Storage)
 @PluginDescription(title = 'Azure Object Storage', description = 'Use Azure object store as storage layer.')
 class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlugin {
     @PluginProperty(title = 'Bucket', description = 'Base bucket into which objects are stored')
     String bucket;
     @PluginProperty(title = 'Object Store Url', description = 'The URL endpoint of the s3 compatible service')
     String objectStoreUrl;
-    @PluginProperty(title = 'Secret Key', description = 'The secret key used by the client to connect to the service')
-    String secretKey;
-    @PluginProperty(title = 'Access Key', description = 'The access key used by the client to connect to the service')
-    String accessKey;
-    @PluginProperty(title = 'Region', description = 'The region used by the client to connect to the service')
-    String region;
+    @PluginProperty(title = "Storage Account", description = "Azure Storage Account")
+    private String storageAccount;
+    @PluginProperty(title = "Access Key", description = "Azure Storage Access Key")
+    private String accessKey;
+    @PluginProperty(title = "Endpoint Protocol", description = "Default Endpoint Protocol: http or https ", defaultValue = "http")
+    private String defaultEndpointProtocol
+    @PluginProperty(title = "Extra connection string settings", description = "Extra connection settings, see https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#store-a-connection-string")
+    private String extraConnectionSettings
     @PluginProperty(title = 'Uncached Object Lookup', description = """Use object store directly to list directory resources, check object existence, etc. 
                                                                     Depending on the directory structure and number of objects, enabling this option could have
                                                                     performance issues. This option will work better in a cluster because all servers in the cluster will
@@ -69,9 +72,9 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
             throw new IllegalArgumentException("objectStoreUrl property is required")
         }
 
-        MinioClient mClient = region ? new MinioClient(objectStoreUrl, accessKey, secretKey, region) : new MinioClient(objectStoreUrl, accessKey, secretKey)
-        if(!connectionTimeout) connectionTimeout = 180L
-        mClient.setTimeout(TimeUnit.SECONDS.toMillis(connectionTimeout),TimeUnit.SECONDS.toMillis(connectionTimeout),TimeUnit.SECONDS.toMillis(connectionTimeout))
+        String storageConnectionString = "DefaultEndpointsProtocol="+defaultEndpointProtocol+";AccountName=" + storageAccount+ ";AccountKey=" + accessKey;
+
+        CloudStorageAccount account = CloudStorageAccount.parse(storageConnectionString)
         if(uncachedObjectLookup) {
             delegateTree = new ObjectStoreTree(mClient,bucket,new ObjectStoreDirectAccessDirectorySource(mClient,bucket))
         } else {

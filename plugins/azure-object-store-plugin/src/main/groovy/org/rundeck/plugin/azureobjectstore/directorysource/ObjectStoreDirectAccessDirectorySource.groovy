@@ -16,6 +16,7 @@
 package org.rundeck.plugin.azureobjectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
+import com.microsoft.azure.storage.CloudStorageAccount
 import io.minio.MinioClient
 import io.minio.errors.ErrorResponseException
 import io.minio.messages.Item
@@ -38,10 +39,10 @@ import java.util.regex.Pattern
 class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySource {
     private static final String DIR_MARKER = "/"
     private final String bucket
-    private final MinioClient mClient
+    private final MinioClient storageAccount
 
-    ObjectStoreDirectAccessDirectorySource(MinioClient mClient, String bucket) {
-        this.mClient = mClient
+    ObjectStoreDirectAccessDirectorySource(CloudStorageAccount storageAccount, String bucket) {
+        this.storageAccount = storageAccount
         this.bucket = bucket
     }
 
