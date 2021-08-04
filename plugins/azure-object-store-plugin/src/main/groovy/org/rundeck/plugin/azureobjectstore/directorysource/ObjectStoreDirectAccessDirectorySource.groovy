@@ -39,7 +39,7 @@ import java.util.regex.Pattern
 class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySource {
     private static final String DIR_MARKER = "/"
     private final String bucket
-    private final MinioClient storageAccount
+    private final CloudStorageAccount storageAccount
 
     ObjectStoreDirectAccessDirectorySource(CloudStorageAccount storageAccount, String bucket) {
         this.storageAccount = storageAccount
