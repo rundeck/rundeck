@@ -1,14 +1,17 @@
 package org.rundeck.core.executions.provenance;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
-public class ApiRequest implements Provenance<WebRequestProvenance.RequestInfo>{
-    private final WebRequestProvenance.RequestInfo data;
 
-    public ApiRequest(final WebRequestProvenance.RequestInfo data) {
-        this.data = data;
-    }
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class ApiRequest implements Provenance<WebRequestProvenance.RequestInfo>{
+    private WebRequestProvenance.RequestInfo data;
 
     @Override
     public String toString() {

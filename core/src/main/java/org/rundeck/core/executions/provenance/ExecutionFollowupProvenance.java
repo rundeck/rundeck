@@ -1,20 +1,24 @@
 package org.rundeck.core.executions.provenance;
 
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class ExecutionFollowupProvenance
         implements Provenance<ExecutionFollowupProvenance.ExecutionData>
 {
-    private final ExecutionData data;
+    private ExecutionData data;
 
     @Getter
-    @RequiredArgsConstructor
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     static class ExecutionData {
-        private final String executionId;
+        private String executionId;
 
     }
 

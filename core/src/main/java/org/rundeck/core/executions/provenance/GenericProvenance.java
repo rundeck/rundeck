@@ -2,25 +2,29 @@ package org.rundeck.core.executions.provenance;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import lombok.Data;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.util.Map;
 
 @Getter
-@RequiredArgsConstructor
+
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonTypeName("generic")
+@EqualsAndHashCode
 public class GenericProvenance
         implements Provenance<GenericProvenance.GenericData>
 {
-    private final GenericData data;
+    private GenericData data;
 
     @Getter
-    @RequiredArgsConstructor
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     static class GenericData {
-        private final String description;
-        private final Map data;
+        private String description;
+        private Map data;
 
     }
 

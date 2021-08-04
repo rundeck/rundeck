@@ -1,18 +1,17 @@
 package org.rundeck.core.executions.provenance;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
+
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class RetryProvenance
         implements Provenance<RetryProvenance.RetryData>
 {
 
-    private final RetryData data;
-
-    public RetryProvenance(final RetryData data) {
-        this.data = data;
-    }
+    private RetryData data;
 
     @Override
     public String toString() {
@@ -21,10 +20,13 @@ public class RetryProvenance
     }
 
     @Getter
-    @RequiredArgsConstructor
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     static class RetryData {
-        private final String executionId;
-        private final String reason;
+        private String executionId;
+        private String reason;
     }
 
     public static RetryProvenance from(String executionId, String reason) {

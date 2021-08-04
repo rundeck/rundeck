@@ -1,14 +1,16 @@
 package org.rundeck.core.executions.provenance;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
-@RequiredArgsConstructor
+
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class StepPluginProvenance
         implements Provenance<StepPluginProvenance.StepPluginData>
 {
-    private final StepPluginData data;
+    private StepPluginData data;
 
     @Override
     public String toString() {
@@ -16,11 +18,14 @@ public class StepPluginProvenance
     }
 
     @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     public static class StepPluginData
             extends PluginProvenance.PluginData
     {
 
-        private final String stepCtx;
+        private String stepCtx;
 
         public StepPluginData(final String provider, final String service, final String stepCtx) {
             super(provider, service);

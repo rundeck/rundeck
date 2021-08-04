@@ -1,17 +1,16 @@
 package org.rundeck.core.executions.provenance;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
+
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class WebRequestProvenance
         implements Provenance<WebRequestProvenance.RequestInfo>
 {
-    private final RequestInfo data;
-
-    public WebRequestProvenance(final RequestInfo data) {
-        this.data = data;
-    }
+    private RequestInfo data;
 
     @Override
     public String toString() {
@@ -19,9 +18,12 @@ public class WebRequestProvenance
     }
 
     @Getter
-    @RequiredArgsConstructor
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     static class RequestInfo {
-        private final String requestUri;
+        private String requestUri;
     }
 
     public static WebRequestProvenance from(String requestUri) {

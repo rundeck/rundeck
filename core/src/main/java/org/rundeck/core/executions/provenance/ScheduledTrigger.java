@@ -1,25 +1,26 @@
 package org.rundeck.core.executions.provenance;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class ScheduledTrigger
         implements Provenance<ScheduledTrigger.TriggerData>
 {
-    private final TriggerData data;
+    private TriggerData data;
 
-    public ScheduledTrigger(final TriggerData data) {
-        this.data = data;
-    }
 
     @Getter
-    @RequiredArgsConstructor
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @EqualsAndHashCode
     public static class TriggerData {
-        private final Date scheduleTime;
-        private final Date fireTime;
+        private Date scheduleTime;
+        private Date fireTime;
     }
 
     @Override

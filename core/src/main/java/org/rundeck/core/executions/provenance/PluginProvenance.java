@@ -1,14 +1,15 @@
 package org.rundeck.core.executions.provenance;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class PluginProvenance
         implements Provenance<PluginProvenance.PluginData>
 {
-    private final PluginData data;
+    private PluginData data;
 
     @Override
     public String toString() {
@@ -16,14 +17,11 @@ public class PluginProvenance
     }
 
     @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     public static class PluginData {
-
-        private final String provider;
-        private final String service;
-
-        public PluginData(final String provider, final String service) {
-            this.provider = provider;
-            this.service = service;
-        }
+        private String provider;
+        private String service;
     }
 }

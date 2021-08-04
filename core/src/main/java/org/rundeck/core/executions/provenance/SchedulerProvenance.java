@@ -1,18 +1,16 @@
 package org.rundeck.core.executions.provenance;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
 
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class SchedulerProvenance
         implements Provenance<SchedulerProvenance.ScheduleData>
 {
-    private final ScheduleData data;
-
-    public SchedulerProvenance(final ScheduleData data) {
-        this.data = data;
-    }
+    private ScheduleData data;
 
     @Override
     public String toString() {
@@ -24,13 +22,16 @@ public class SchedulerProvenance
                + data.crontabExpression;
     }
 
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     @Getter
-    @RequiredArgsConstructor
     static class ScheduleData {
-        private final String type;
-        private final String name;
-        private final String id;
-        private final String crontabExpression;
+        private String type;
+        private String name;
+        private String id;
+        private String crontabExpression;
     }
 
     public static SchedulerProvenance from(String type, String name, String id, String crontab) {

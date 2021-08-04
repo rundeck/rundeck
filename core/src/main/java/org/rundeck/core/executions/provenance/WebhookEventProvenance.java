@@ -1,16 +1,15 @@
 package org.rundeck.core.executions.provenance;
 
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
-public class WebhookEventProvenance  implements Provenance<WebhookEventProvenance.EventData>{
-    private final EventData data;
 
-    WebhookEventProvenance(final EventData data) {
-        this.data = data;
-    }
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class WebhookEventProvenance  implements Provenance<WebhookEventProvenance.EventData>{
+    private EventData data;
 
     @Override
     public String toString() {
@@ -19,9 +18,12 @@ public class WebhookEventProvenance  implements Provenance<WebhookEventProvenanc
 
 
     @Getter
-    @RequiredArgsConstructor
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     static class EventData {
-        private final String id;
+        private String id;
 
     }
 

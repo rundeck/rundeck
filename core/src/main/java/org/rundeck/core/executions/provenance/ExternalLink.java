@@ -1,20 +1,23 @@
 package org.rundeck.core.executions.provenance;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Getter
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class ExternalLink
         implements Provenance<ExternalLink.LinkData>
 {
-    private final LinkData data;
+    private LinkData data;
 
     @Getter
-    @RequiredArgsConstructor
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
     public static class LinkData {
-        private final String name;
-        private final String url;
+        private String name;
+        private String url;
     }
 
     public static ExternalLink from(String name, String url) {
