@@ -36,6 +36,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.executions.provenance.ProvenanceUtil
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -429,6 +430,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
     }
+    @Unroll
     def "api run job now"() {
         given:
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
@@ -439,8 +441,12 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
 
 
         when:
-        request.api_version = 18
+        request.api_version = api_version
         request.method = 'POST'
+        request.requestURI='/some/uri'
+        inputheaders.each{k,v->
+            request.addHeader(k,v)
+        }
         params.id = 'ajobid'
         session.user = 'aUser'
         def result = controller.apiJobRun()
@@ -459,10 +465,17 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             _,
             _,
             'user',
-            _
+            provenance
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
+        where:
+            inputheaders |api_version| provenance
+            [:] |18| [ProvenanceUtil.apiRequest('/some/uri')]
+            ['x-rundeck-execution-source-desc':'abc','x-rundeck-execution-source-link':'a-link'] |41| [ProvenanceUtil.apiRequest('/some/uri'), ProvenanceUtil.link('abc','a-link')]
+            ['x-rundeck-execution-source-desc':'abc','x-rundeck-execution-source-link':'a-link'] |40| [ProvenanceUtil.apiRequest('/some/uri')]
+            ['x-rundeck-execution-source-link':'a-link'] |41| [ProvenanceUtil.apiRequest('/some/uri'),ProvenanceUtil.link(null,'a-link')]
+            ['x-rundeck-execution-source-link':'a-link'] |40| [ProvenanceUtil.apiRequest('/some/uri')]
     }
     def "api run job at time"() {
         given:

@@ -3217,9 +3217,17 @@ class ScheduledExecutionController  extends ControllerBase{
             inputOpts.meta = new HashMap<>(params.meta)
         }
 
-        def provenances = [
-            ProvenanceUtil.apiRequest(request.requestURI)
-        ]
+        def provenances = []
+        provenances.add ProvenanceUtil.apiRequest(request.requestURI)
+        if (request.api_version > ApiVersions.V40) {
+            if(request.getHeader('x-rundeck-execution-source-link')){
+                provenances.add ProvenanceUtil.link(
+                    request.getHeader('x-rundeck-execution-source-desc'),
+                    request.getHeader('x-rundeck-execution-source-link')
+                )
+            }
+        }
+
         def result
         if (request.api_version > ApiVersions.V17 && jobRunAtTime) {
             inputOpts["runAtTime"] = jobRunAtTime
