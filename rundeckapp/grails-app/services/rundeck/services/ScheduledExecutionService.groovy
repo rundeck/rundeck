@@ -3354,15 +3354,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
         def modify = true
+        boolean schedulingWasChanged = oldjob.schedulingWasChanged(scheduledExecution)
         if(frameworkService.isClusterModeEnabled()){
-
-            if (oldjob.originalCron != scheduledExecution.generateCrontabExression() ||
-                oldjob.originalSchedule != scheduledExecution.scheduleEnabled ||
-                oldjob.originalExecution != scheduledExecution.executionEnabled ||
-                oldjob.originalTz != scheduledExecution.timeZone ||
-                oldjob.localScheduled != scheduledExecution.scheduled ||
-                renamed
-            ) {
+            if (schedulingWasChanged) {
                 modify = jobSchedulerService.updateScheduleOwner(scheduledExecution.asReference())
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
@@ -3426,7 +3420,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             oldjob.isScheduled,
             renamed ? oldjob.oldjobname : scheduledExecution.generateJobScheduledName(),
             renamed ? oldjob.oldjobgroup : scheduledExecution.generateJobGroupName(),
-            false, !modify
+            false, !schedulingWasChanged || !modify
         )
 
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
@@ -4487,5 +4481,14 @@ class OldJob{
 
     boolean wasRenamed(String jobName, String groupPath) {
         originalRef.jobName != jobName || originalRef.groupPath != groupPath
+    }
+
+    boolean schedulingWasChanged(ScheduledExecution scheduledExecution){
+        return originalCron != scheduledExecution.generateCrontabExression() ||
+                originalSchedule != scheduledExecution.scheduleEnabled ||
+                originalExecution != scheduledExecution.executionEnabled ||
+                originalTz != scheduledExecution.timeZone ||
+                localScheduled != scheduledExecution.scheduled ||
+                wasRenamed(scheduledExecution.jobName,scheduledExecution.groupPath)
     }
 }
