@@ -1760,7 +1760,7 @@ setTimeout(function(){
     }
 
     def apiExecutionProvenance(){
-        if (!apiService.requireApi(request, response, ApiVersions.V39)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V41)) {
             return
         }
         def Execution e = Execution.get(params.id)
