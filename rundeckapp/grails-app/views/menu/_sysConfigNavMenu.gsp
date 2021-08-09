@@ -40,6 +40,8 @@
 )}"/>
 <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled in [true,'true']}"/>
 
+<g:set var="pluginSecurityEnabled" value="${grailsApplication.config.rundeck?.feature?.pluginSecurity?.enabled in [true,'true']}"/>
+
 <style>
 .dropdown-submenu {
   position: relative;
@@ -86,11 +88,13 @@
           <g:message code="gui.menu.InstalledPlugins"/>
         </a>
       </li>
-      <li>
-        <a href="${g.createLink(uri:'/artifact/index/upload')}">
-          <g:message code="gui.menu.UploadPlugin"/>
-        </a>
-      </li>
+      <g:if test="${!pluginSecurityEnabled}">
+        <li>
+          <a href="${g.createLink(uri:'/artifact/index/upload')}">
+            <g:message code="gui.menu.UploadPlugin"/>
+          </a>
+        </li>
+      </g:if>
     </ul>
   </li>
 </g:if>
@@ -101,7 +105,7 @@
     </a>
   </li>
 </g:if>
-<g:if test="${pluginInstall && !repoEnabled}">
+<g:if test="${pluginInstall && !repoEnabled && !pluginSecurityEnabled}">
   <li>
     <a href="${g.createLink(uri:'/artifact/index/upload')}">
       <g:message code="gui.menu.UploadPlugin"/>

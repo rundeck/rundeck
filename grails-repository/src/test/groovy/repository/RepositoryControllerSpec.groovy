@@ -3,6 +3,7 @@ package repository
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
@@ -129,10 +130,25 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         successBatch.addMessage(ResponseMessage.success())
         1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
         1 * client.uploadArtifact(_,_) >> successBatch
+        controller.featureService = Mock(FeatureService){
+            featurePresent(_) >> false
+        }
         controller.uploadArtifact()
 
         then:
         response.json == ["msg":"Upload succeeded"]
+
+    }
+
+    void "upload artifact, plugin security enabled"() {
+        when:
+        controller.featureService = Mock(FeatureService){
+            featurePresent(_) >> true
+        }
+        controller.uploadArtifact()
+
+        then:
+        response.json == ["error": "Unable to upload plugins, see find plugins page for all available plugins"]
 
     }
 

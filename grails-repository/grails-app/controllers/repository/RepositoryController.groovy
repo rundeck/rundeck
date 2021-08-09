@@ -3,6 +3,7 @@ package repository
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.rundeck.repository.artifact.RepositoryArtifact
@@ -19,6 +20,7 @@ class RepositoryController {
         def repositoryPluginService
         def pluginApiService
         def frameworkService
+        def featureService
         AuthContextProcessor rundeckAuthContextProcessor
 
         def listRepositories() {
@@ -115,6 +117,12 @@ class RepositoryController {
         }
 
         def uploadArtifact() {
+
+            if(featureService.featurePresent(Features.PLUGIN_SECURITY)){
+                specifyPluginSecurityError()
+                return
+            }
+
             if (!authorized(PLUGIN_RESOURCE,"install")) {
                 specifyUnauthorizedError()
                 return
@@ -268,6 +276,13 @@ class RepositoryController {
             def err = [error:"You must specify a repository"]
             render err as JSON
         }
+
+    private def specifyPluginSecurityError() {
+        response.setStatus(400)
+        def err = [error: "Unable to upload plugins, see find plugins page for all available plugins"]
+        render err as JSON
+    }
+
 
         private def specifyUnauthorizedError() {
             response.setStatus(400)
