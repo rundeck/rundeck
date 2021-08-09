@@ -5190,6 +5190,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         true    | 'optionValue'      | 'optionValue'
         false   | ''                 | ''
         false   | 'optionValue'      | 'optionValue'
+        true    | null               | 'keyStorageValue'
     }
 }
 

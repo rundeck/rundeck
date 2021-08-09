@@ -3850,7 +3850,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     void fillSecureOptionsWithStorage(ScheduledExecution scheduledExecution, Map mapConfig, def authContext){
         if(authContext){
-            def emptyValueOptions = mapConfig?.extra?.option?.findAll{it.value.isEmpty()}
+            def emptyValueOptions = mapConfig?.extra?.option?.findAll{it.value == null || it.value?.isEmpty()}
             if(emptyValueOptions){
                 def keystore = storageService.storageTreeWithContext(authContext)
                 emptyValueOptions.each{
