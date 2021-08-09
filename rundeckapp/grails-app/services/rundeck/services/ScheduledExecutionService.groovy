@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import org.grails.web.json.JSONArray
 import org.hibernate.criterion.DetachedCriteria
@@ -118,6 +120,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def JobScheduleManager rundeckJobScheduleManager
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    def StorageService storageService
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -3839,6 +3842,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         deleteScheduledExecutionById(jobid, authContext, false, user, callingAction)
     }
 
+    /**
+     * Load options values from default storage path when the original option value is empty
+     * @param scheduledExecution
+     * @param mapConfig
+     * @param authContext
+     */
+    void fillSecureOptionsWithStorage(ScheduledExecution scheduledExecution, Map mapConfig, def authContext){
+        if(authContext){
+            def emptyValueOptions = mapConfig?.extra?.option?.findAll{it.value.isEmpty()}
+            if(emptyValueOptions){
+                def keystore = storageService.storageTreeWithContext(authContext)
+                emptyValueOptions.each{
+                    Option opt = scheduledExecution.options.find {option -> option.name == it.key }
+                    if(opt && opt.defaultStoragePath && keystore.hasPassword(opt.defaultStoragePath)){
+                        mapConfig.extra.option[it.key] = new String(keystore.readPassword(opt.defaultStoragePath))
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Load options values from remote URL
@@ -3846,11 +3869,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param mapConfig
      * @return option remote
      */
-    def Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
+    def Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username, def authContext = null) {
         //load expand variables in URL source
-        Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
+        def newMapConfig = new JsonSlurper().parseText(JsonOutput.toJson(mapConfig))
+        Option opt = scheduledExecution.options.find { it.name == newMapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
-        String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
+        fillSecureOptionsWithStorage(scheduledExecution, newMapConfig, authContext)
+        String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, newMapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
         String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
         def remoteResult = [:]
         def result = null
@@ -3961,7 +3986,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             err.srcUrl = cleanUrl
             log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
         }
-        logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
+        logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: newMapConfig.option, user: username])
         //validate result contents
         boolean valid = true;
         def validationerrors = []

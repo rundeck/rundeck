@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
@@ -5162,6 +5163,34 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         output[3].workflow == [[script:"script"]]
 
     }
+
+    def "fill option value from default storage path"() {
+        given:
+        setupDoValidate()
+        def se = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'opt1', defaultStoragePath: 'keys/example/test.pass', enforced: true)
+        ])).save()
+        def paramsMap = ['extra':['option':['opt1':defaultOptionValue]]]
+        def authContext = Mock(UserAndRolesAuthContext)
+        when:
+        def keyStorageMock = Mock(KeyStorageTree){
+            hasPassword('keys/example/test.pass') >> found
+            readPassword('keys/example/test.pass') >> 'keyStorageValue'
+        }
+        service.storageService=Mock(StorageService){
+            storageTreeWithContext(authContext) >> keyStorageMock
+        }
+
+        service.fillSecureOptionsWithStorage(se, paramsMap, authContext)
+        then:
+        paramsMap.extra.option.opt1 == result
+        where:
+        found   | defaultOptionValue | result
+        true    | ''                 | 'keyStorageValue'
+        true    | 'optionValue'      | 'optionValue'
+        false   | ''                 | ''
+        false   | 'optionValue'      | 'optionValue'
+    }
 }
 
 class TriggersExtenderImpl implements TriggersExtender {
@@ -5257,4 +5286,5 @@ class TriggersExtenderImpl implements TriggersExtender {
         result.nodeStepDescriptions.size() == 1
 
     }
+
 }

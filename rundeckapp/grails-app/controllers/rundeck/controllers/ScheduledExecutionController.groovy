@@ -760,7 +760,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
             Option opt = scheduledExecution.options.find {it.name == params.option}
             if (opt.realValuesUrl) {
-                Map optionRemoteValues = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, params, session.user)
+                Map optionRemoteValues = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, params, session.user, authContext)
                 def model = [optionSelect : optionRemoteValues.optionSelect,
                              values       : optionRemoteValues.values,
                              srcUrl       : optionRemoteValues.srcUrl,
