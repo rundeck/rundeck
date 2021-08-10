@@ -17,6 +17,9 @@ import org.junit.Test
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
+import org.rundeck.core.executions.provenance.ProvenanceUtil
+import org.rundeck.core.executions.provenance.ScheduledTrigger
+import org.rundeck.core.executions.provenance.SchedulerProvenance
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
@@ -462,7 +465,10 @@ class ExecutionJobIntegrationSpec extends Specification {
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
             def jobSchedulerServiceMock = Mock(JobSchedulerService)
             1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
-            1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
+            1 * mockes.createExecution(se, { it.username == se.user },null, _, false,-1,'scheduled', {
+                it[0] instanceof ScheduledTrigger
+                it[1] instanceof SchedulerProvenance
+            }) >> e
 
             def proj = Mock(IRundeckProject) {
                 2 * getProjectProperties() >> [:]
@@ -485,10 +491,14 @@ class ExecutionJobIntegrationSpec extends Specification {
                 authContext: mockAuth,
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
-                authContextProvider: authProvider
+                authContextProvider: authProvider,
+                provenance: ProvenanceUtil.scheduler(null,null,null,'crontab')
             )
+            def jobCtx = Mock(JobExecutionContext){
+                getMergedJobDataMap()>>contextMock
+            }
         when:
-            def result = job.initialize(null, contextMock)
+            def result = job.initialize(jobCtx, contextMock)
 
         then:
             Assert.assertEquals(se.id, result.scheduledExecutionId)
@@ -637,7 +647,10 @@ class ExecutionJobIntegrationSpec extends Specification {
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
             def jobSchedulerServiceMock = Mock(JobSchedulerService)
             1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
-            1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
+            1 * mockes.createExecution(se, { it.username == se.user }, null,_, false,-1,'scheduled',{
+                it[0] instanceof ScheduledTrigger
+                it[1] instanceof SchedulerProvenance
+            }) >> e
 
             def proj = Mock(IRundeckProject) {
                 2 * getProjectProperties() >> [:]
@@ -661,11 +674,13 @@ class ExecutionJobIntegrationSpec extends Specification {
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
                 authContextProvider: authProvider,
+                provenance: ProvenanceUtil.scheduler(null,null,null,'crontab')
             )
             def qjobContext = Mock(JobExecutionContext){
                 getJobDetail()>>Mock(JobDetail){
                     getJobDataMap()>>contextMock
                 }
+                getMergedJobDataMap()>>contextMock
             }
         when:
             job.execute(qjobContext)
@@ -701,7 +716,10 @@ class ExecutionJobIntegrationSpec extends Specification {
             def jobSchedulesServiceMock = Mock(JobSchedulesService)
             def jobSchedulerServiceMock = Mock(JobSchedulerService)
             1 * mockes.selectSecureOptionInput(se, _, true) >> [test: 'input']
-            1 * mockes.createExecution(se, { it.username == se.user }, _, { it.executionType == 'scheduled' }) >> e
+            1 * mockes.createExecution(se, { it.username == se.user }, null,_, false,-1,'scheduled',{
+                it[0] instanceof ScheduledTrigger
+                it[1] instanceof SchedulerProvenance
+            }) >> e
 
             def proj = Mock(IRundeckProject) {
                 2 * getProjectProperties() >> [:]
@@ -725,11 +743,13 @@ class ExecutionJobIntegrationSpec extends Specification {
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
                 authContextProvider: authProvider,
+                provenance: ProvenanceUtil.scheduler(null,null,null,'crontab')
             )
             def qjobContext = Mock(JobExecutionContext){
                 getJobDetail()>>Mock(JobDetail){
                     getJobDataMap()>>contextMock
                 }
+                getMergedJobDataMap()>>contextMock
             }
             WorkflowExecutionServiceThread stb = new TestWEServiceThread(null, null, null, null, null)
             stb.successful = true
