@@ -19,7 +19,7 @@ import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import org.rundeck.storage.api.Resource
 
 
-interface ObjectStoreDirectorySource {
+interface AzureObjectStoreDirectorySource {
     boolean checkPathExists(String path)
     boolean checkResourceExists(String path)
     boolean checkPathExistsAndIsDirectory(String path)

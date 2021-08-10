@@ -24,14 +24,14 @@ import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.microsoft.azure.storage.CloudStorageAccount
 import com.microsoft.azure.storage.blob.CloudBlobClient
 import com.microsoft.azure.storage.blob.CloudBlobContainer
-import org.rundeck.plugin.azureobjectstore.directorysource.ObjectStoreDirectAccessDirectorySource
-import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreTree
+import org.rundeck.plugin.azureobjectstore.directorysource.AzureObjectStoreDirectAccessDirectorySource
+import org.rundeck.plugin.azureobjectstore.tree.AzureObjectStoreTree
 import org.rundeck.storage.api.Tree
 import org.rundeck.storage.impl.DelegateTree
 
 @Plugin(name = 'azure-repository-object-store', service = ServiceNameConstants.Storage)
 @PluginDescription(title = 'Azure Object Storage', description = 'Use Azure object store as storage layer.')
-class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlugin {
+class AzureObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlugin {
     @PluginProperty(title = 'Container', description = 'Container into which objects are stored')
     String container;
     @PluginProperty(title = "Storage Account", description = "Azure Storage Account")
@@ -65,10 +65,14 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
 
     void initTree() {
         if (!container) {
-            throw new IllegalArgumentException("bucket property is required")
+            throw new IllegalArgumentException("container property is required")
         }
-        if (!objectStoreUrl) {
-            throw new IllegalArgumentException("objectStoreUrl property is required")
+        if (!storageAccount) {
+            throw new IllegalArgumentException("storageAccount property is required")
+        }
+
+        if (!accessKey) {
+            throw new IllegalArgumentException("accessKey property is required")
         }
 
         String storageConnectionString = "DefaultEndpointsProtocol="+defaultEndpointProtocol+";AccountName=" + storageAccount+ ";AccountKey=" + accessKey;
@@ -80,9 +84,9 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
         container.createIfNotExists()
 
         if(uncachedObjectLookup) {
-            delegateTree = new ObjectStoreTree(account, this.container,new ObjectStoreDirectAccessDirectorySource(mClient, this.container))
+            delegateTree = new AzureObjectStoreTree(this.container,new AzureObjectStoreDirectAccessDirectorySource(this.container))
         } else {
-            delegateTree = new ObjectStoreTree(account, this.container)
+            delegateTree = new AzureObjectStoreTree(this.container)
         }
     }
 }

@@ -21,17 +21,17 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 
 
-class ObjectStoreResource implements Resource<BaseStreamResource> {
+class AzureObjectStoreResource implements Resource<BaseStreamResource> {
     private Path resourcePath
     private BaseStreamResource content
     private boolean isDir
 
-    ObjectStoreResource(String resourcePath, BaseStreamResource content) {
+    AzureObjectStoreResource(String resourcePath, BaseStreamResource content) {
         this.resourcePath = PathUtil.asPath(resourcePath)
         this.content = content
     }
 
-    ObjectStoreResource(String resourcePath, BaseStreamResource content, boolean isDirectory) {
+    AzureObjectStoreResource(String resourcePath, BaseStreamResource content, boolean isDirectory) {
         this(resourcePath,content)
         this.isDir = isDirectory
     }

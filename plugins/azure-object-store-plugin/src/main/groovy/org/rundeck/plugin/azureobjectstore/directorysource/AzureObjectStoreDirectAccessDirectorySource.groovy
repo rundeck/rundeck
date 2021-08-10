@@ -16,19 +16,13 @@
 package org.rundeck.plugin.azureobjectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
-import com.microsoft.azure.storage.CloudStorageAccount
-import com.microsoft.azure.storage.blob.CloudBlobClient
 import com.microsoft.azure.storage.blob.CloudBlobContainer
 import com.microsoft.azure.storage.blob.CloudBlobDirectory
 import com.microsoft.azure.storage.blob.CloudBlockBlob
 import com.microsoft.azure.storage.blob.ListBlobItem
-import io.minio.MinioClient
-import io.minio.errors.ErrorResponseException
-import io.minio.messages.Item
 import org.rundeck.plugin.azureobjectstore.stream.LazyAccessObjectStoreInputStream
-import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreResource
-import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreTree
-import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreUtils
+import org.rundeck.plugin.azureobjectstore.tree.AzureObjectStoreResource
+import org.rundeck.plugin.azureobjectstore.tree.AzureObjectStoreUtils
 import org.rundeck.storage.api.Resource
 
 import java.util.regex.Matcher
@@ -41,11 +35,11 @@ import java.util.regex.Pattern
  * This store works best when the object store is going to be accessed by multiple cluster members
  * or the object store is regularly updated by third party tools
  */
-class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySource {
+class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDirectorySource {
     private static final String DIR_MARKER = "/"
     CloudBlobContainer container
 
-    ObjectStoreDirectAccessDirectorySource(CloudBlobContainer container) {
+    AzureObjectStoreDirectAccessDirectorySource(CloudBlobContainer container) {
         this.container = container
     }
 
@@ -105,7 +99,7 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
         if(blob==null){
             return null
         }
-        return ObjectStoreUtils.objectStatToMap(blob)
+        return AzureObjectStoreUtils.objectStatToMap(blob)
     }
 
     @Override
@@ -113,7 +107,7 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
         def resources = []
         def subdirs = [] as Set
         String lstPath = path == "" ? null : path
-        Pattern directSubDirMatch = ObjectStoreUtils.createSubdirCheckForPath(lstPath)
+        Pattern directSubDirMatch = AzureObjectStoreUtils.createSubdirCheckForPath(lstPath)
         /*
         container.listBlobs().each { object ->
             if(object instanceof CloudBlobDirectory){
@@ -143,14 +137,14 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
                 subdirs.add(m.group(1))
             }
         }
-        subdirs.sort().each { String dirname -> resources.add(new ObjectStoreResource(path+ "/"+dirname, null, true)) }
+        subdirs.sort().each { String dirname -> resources.add(new AzureObjectStoreResource(path+ "/"+dirname, null, true)) }
         return resources
     }
 
     @Override
     Set<Resource<BaseStreamResource>> listEntriesAndSubDirectoriesAt(final String path) {
         def resources = []
-        Pattern directSubDirMatch = ObjectStoreUtils.createSubdirCheckForPath(path)
+        Pattern directSubDirMatch = AzureObjectStoreUtils.createSubdirCheckForPath(path)
         def subdirs = [] as Set
 
         /*
@@ -187,7 +181,7 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
         }
 
          */
-        subdirs.sort().each { String dirname -> resources.add(new ObjectStoreResource(dirname, null, true)) }
+        subdirs.sort().each { String dirname -> resources.add(new AzureObjectStoreResource(dirname, null, true)) }
         return resources
     }
 
@@ -216,10 +210,10 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
         return resources
     }
 
-    private ObjectStoreResource createResourceListItemWithMetadata(final CloudBlockBlob item) {
+    private AzureObjectStoreResource createResourceListItemWithMetadata(final CloudBlockBlob item) {
         BaseStreamResource content = new BaseStreamResource(getEntryMetadata(item.getName()),
                                      new LazyAccessObjectStoreInputStream(item))
-        return new ObjectStoreResource(item.getName(), content)
+        return new AzureObjectStoreResource(item.getName(), content)
     }
 
     @Override

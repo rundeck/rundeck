@@ -15,19 +15,15 @@
  */
 package org.rundeck.plugin.azureobjectstore.tree
 
-import com.dtolabs.rundeck.core.storage.StorageUtil
+
 import com.microsoft.azure.storage.blob.CloudBlobClient
 import com.microsoft.azure.storage.blob.CloudBlobContainer
 import com.microsoft.azure.storage.blob.CloudBlockBlob
-import io.minio.Time
-import io.minio.ObjectStat
 
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
 import java.util.regex.Pattern
 
 
-class ObjectStoreUtils {
+class AzureObjectStoreUtils {
     static Pattern createSubdirCheckForPath(String path) {
         if(!path) return ~/(.*?)\/.*/
         return ~/${path}\/(.*?)\/.*/
@@ -63,7 +59,13 @@ class ObjectStoreUtils {
     }
 
     private static String fixKeyName(String prefixedKey) {
-        String key = prefixedKey.replaceAll(ObjectStoreTree.RUNDECK_CUSTOM_HEADER_PREFIX, "")
+        String key = prefixedKey.replaceAll(AzureObjectStoreTree.RUNDECK_CUSTOM_HEADER_PREFIX, "")
         return key.startsWith("rundeck") ? key.capitalize() : key
+    }
+
+
+    static CloudBlockBlob getBlobFile(CloudBlobContainer container, String path){
+        CloudBlockBlob blob = container.getBlockBlobReference(path);
+        return blob
     }
 }

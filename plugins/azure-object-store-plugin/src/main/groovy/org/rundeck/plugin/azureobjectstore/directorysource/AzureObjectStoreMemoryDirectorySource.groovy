@@ -16,11 +16,11 @@
 package org.rundeck.plugin.azureobjectstore.directorysource
 
 import com.dtolabs.rundeck.core.storage.BaseStreamResource
-import com.microsoft.azure.storage.CloudStorageAccount
-import io.minio.MinioClient
+import com.microsoft.azure.storage.blob.CloudBlobContainer
+import com.microsoft.azure.storage.blob.CloudBlockBlob
 import org.rundeck.plugin.azureobjectstore.stream.LazyAccessObjectStoreInputStream
-import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreResource
-import org.rundeck.plugin.azureobjectstore.tree.ObjectStoreUtils
+import org.rundeck.plugin.azureobjectstore.tree.AzureObjectStoreResource
+import org.rundeck.plugin.azureobjectstore.tree.AzureObjectStoreUtils
 import org.rundeck.storage.api.Resource
 
 /*
@@ -34,26 +34,13 @@ import org.rundeck.storage.api.Resource
 * will be done through the object tree.
  */
 
-class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
+class AzureObjectStoreMemoryDirectorySource implements AzureObjectStoreDirectorySource {
     private static final String DIR_MARKER = "/"
     DirectoryNode root = new DirectoryNode("")
-    private final String bucket
-    private final CloudStorageAccount storageAccount
+    private final CloudBlobContainer container
 
-    ObjectStoreMemoryDirectorySource(CloudStorageAccount storageAccount, String bucket) {
-        this.storageAccount = storageAccount
-        this.bucket = bucket
-        init()
-    }
-
-    private init() {
-        try {
-            if (mClient.bucketExists(bucket)) {
-                resyncDirectory()
-            }
-        } catch(SocketTimeoutException stex) {
-            throw new RuntimeException("Unable to connect to the server. Please check your firewall, or make sure your server is accepting connections.")
-        }
+    AzureObjectStoreMemoryDirectorySource(CloudBlobContainer container) {
+        this.container = container
     }
 
     @Override
@@ -93,7 +80,7 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
         List<String> parts = path.split(DIR_MARKER)
         DirectoryNode dir = getDir(parts)
         if(!dir) return []
-        return dir.listSubDirs().collect { entry -> new ObjectStoreResource(path+ "/"+ entry, null, true) }
+        return dir.listSubDirs().collect { entry -> new AzureObjectStoreResource(path+ "/"+ entry, null, true) }
     }
 
     @Override
@@ -103,10 +90,12 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
         def resources = []
         if(!dir) return resources
         dir.listEntries().each { entry ->
-            resources.add(new ObjectStoreResource(path+ "/"+ entry.nodeName, new BaseStreamResource(entry.meta, new LazyAccessObjectStoreInputStream(mClient, bucket, path+ "/"+ entry.nodeName))))
+            CloudBlockBlob blob = AzureObjectStoreUtils.getBlobFile(this.container, path+ "/"+ entry.nodeName)
+            def lazyAccessObject = new LazyAccessObjectStoreInputStream(blob)
+            resources.add(new AzureObjectStoreResource(path+ "/"+ entry.nodeName, new BaseStreamResource(entry.meta, lazyAccessObject)))
         }
         dir.listSubDirs().each { entry ->
-            resources.add(new ObjectStoreResource(path+ "/"+ entry, null, true))
+            resources.add(new AzureObjectStoreResource(path+ "/"+ entry, null, true))
         }
         return resources
     }
@@ -117,7 +106,9 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
         DirectoryNode dir = getDir(parts)
         if(!dir) return []
         return dir.listEntries().collect { entry ->
-            new ObjectStoreResource(path+ "/"+ entry.nodeName, new BaseStreamResource(entry.meta, new LazyAccessObjectStoreInputStream(mClient, bucket, path+ "/"+ entry.nodeName)))
+            CloudBlockBlob blob = AzureObjectStoreUtils.getBlobFile(this.container, path+ "/"+ entry.nodeName)
+            def lazyAccessObject = new LazyAccessObjectStoreInputStream(blob)
+            new AzureObjectStoreResource(path+ "/"+ entry.nodeName, new BaseStreamResource(entry.meta, lazyAccessObject))
         }
     }
 
@@ -156,10 +147,13 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     @Override
     void resyncDirectory() {
         root = new DirectoryNode("")
+        /*
         mClient.listObjects(bucket).each {
-            def meta = ObjectStoreUtils.objectStatToMap(mClient.statObject(bucket, it.get().objectName()))
+            def meta = AzureObjectStoreUtils.objectStatToMap(mClient.statObject(bucket, it.get().objectName()))
             updateEntry(it.get().objectName(),meta)
         }
+
+         */
     }
 
     private DirectoryNode getDir(List<String> pathParts) {

@@ -19,10 +19,11 @@ import com.dtolabs.rundeck.core.storage.BaseStreamResource
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.microsoft.azure.storage.CloudStorageAccount
 import com.microsoft.azure.storage.blob.CloudBlobClient
-import io.minio.MinioClient
+import com.microsoft.azure.storage.blob.CloudBlobContainer
+import com.microsoft.azure.storage.blob.CloudBlockBlob
 import io.minio.PutObjectOptions
-import org.rundeck.plugin.azureobjectstore.directorysource.ObjectStoreDirectorySource
-import org.rundeck.plugin.azureobjectstore.directorysource.ObjectStoreMemoryDirectorySource
+import org.rundeck.plugin.azureobjectstore.directorysource.AzureObjectStoreDirectorySource
+import org.rundeck.plugin.azureobjectstore.directorysource.AzureObjectStoreMemoryDirectorySource
 import org.rundeck.plugin.azureobjectstore.stream.CloseAfterCopyStream
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.Resource
@@ -31,30 +32,20 @@ import org.rundeck.storage.api.Tree
 import java.util.regex.Pattern
 
 
-class ObjectStoreTree implements Tree<BaseStreamResource> {
+class AzureObjectStoreTree implements Tree<BaseStreamResource> {
     public static final String RUNDECK_CUSTOM_HEADER_PREFIX = "x-amz-meta-rdk-"
     private static final String DIR_MARKER = "/"
 
-    private final String bucket
-    private final CloudStorageAccount storageAccount
-    private final ObjectStoreDirectorySource directorySource
+    private final CloudBlobContainer container
+    private final AzureObjectStoreDirectorySource directorySource
 
-    ObjectStoreTree(CloudStorageAccount storageAccount, String bucket) {
-        this(storageAccount,bucket,new ObjectStoreMemoryDirectorySource(storageAccount, bucket))
+    AzureObjectStoreTree(CloudBlobContainer container) {
+        this(container,new AzureObjectStoreMemoryDirectorySource(container))
     }
 
-    ObjectStoreTree(CloudStorageAccount storageAccount, String bucket, ObjectStoreDirectorySource directorySource) {
-        this.storageAccount = storageAccount
-        this.bucket = bucket
+    AzureObjectStoreTree(CloudBlobContainer container, AzureObjectStoreDirectorySource directorySource) {
+        this.container = container
         this.directorySource = directorySource
-        init()
-    }
-
-    private void init() {
-        CloudBlobClient client = storageAccount.createCloudBlobClient()
-        if(!ObjectStoreUtils.checkContainerExists(client, bucket)) {
-            throw new Exception("Container doesnt exist in Azure")
-        }
     }
 
     @Override
@@ -94,7 +85,7 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
 
     @Override
     Resource<BaseStreamResource> getPath(final String path) {
-        if(hasDirectory(path)) return new ObjectStoreResource(path+ DIR_MARKER, null, true)
+        if(hasDirectory(path)) return new AzureObjectStoreResource(path+ DIR_MARKER, null, true)
         return getResource(path)
     }
 
@@ -105,8 +96,12 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
 
     @Override
     Resource<BaseStreamResource> getResource(final String path) {
-        BaseStreamResource content = new BaseStreamResource(directorySource.getEntryMetadata(path), new CloseAfterCopyStream(mClient.getObject(bucket, path)))
-        ObjectStoreResource resource = new ObjectStoreResource(path, content)
+
+        CloudBlockBlob blob = AzureObjectStoreUtils.getBlobFile(container, path)
+        CloseAfterCopyStream closeAfterCopyStream = new CloseAfterCopyStream(blob.openInputStream())
+
+        BaseStreamResource content = new BaseStreamResource(directorySource.getEntryMetadata(path), closeAfterCopyStream)
+        AzureObjectStoreResource resource = new AzureObjectStoreResource(path, content)
         return resource
     }
 
@@ -147,7 +142,8 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
 
     @Override
     boolean deleteResource(final String path) {
-        mClient.removeObject(bucket, path)
+        CloudBlockBlob blob = AzureObjectStoreUtils.getBlobFile(container, path)
+        blob.delete()
         directorySource.deleteEntry(path)
         return true
     }
@@ -170,18 +166,18 @@ class ObjectStoreTree implements Tree<BaseStreamResource> {
     @Override
     Resource<BaseStreamResource> updateResource(final String path, final BaseStreamResource content) {
         def customHeaders = createCustomHeadersFromRundeckMeta(content.meta)
+        CloudBlockBlob blob = AzureObjectStoreUtils.getBlobFile(container, path)
 
         if(content.contentLength > -1) {
-            PutObjectOptions putOpts = new PutObjectOptions(content.contentLength,-1)
-            putOpts.headers = customHeaders
-            mClient.putObject(bucket, path, content.inputStream, putOpts)
+            blob.setMetadata(customHeaders)
+            blob.upload(content.inputStream, content.contentLength)
         } else {
             File tmpFile = File.createTempFile("_obj_store_tmp_","_data_")
             tmpFile << content.inputStream
             customHeaders[RUNDECK_CUSTOM_HEADER_PREFIX+ StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH] = tmpFile.size().toString()
-            PutObjectOptions putOpts = new PutObjectOptions(tmpFile.size(),-1)
-            putOpts.headers = customHeaders
-            mClient.putObject(bucket, path, tmpFile.newInputStream(), putOpts)
+
+            blob.setMetadata(customHeaders)
+            blob.upload(tmpFile.newInputStream(), tmpFile.length())
             tmpFile.delete()
         }
         directorySource.updateEntry(path,content.meta)
