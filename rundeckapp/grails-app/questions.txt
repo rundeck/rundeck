@@ -1,3 +1,0 @@
-Artifacts?
-
-views/framework/_nodesEmbed.gsp
