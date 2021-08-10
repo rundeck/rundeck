@@ -73,8 +73,8 @@
                 </g:select>
             </div>
         </div>
-        <!-- ko if: isFileType()-->
-        <div class="form-group">
+
+        <div class="form-group" data-bind="visible: isFileType()">
             <div class="col-sm-10 col-sm-offset-2">
                 <g:if test="${fileUploadPluginDescription}">
                     <stepplugin:pluginIcon service="FileUpload"
@@ -116,7 +116,7 @@
                 </g:if>
             </div>
         </div>
-        <!-- /ko -->
+
         <div class="form-group">
 
             <label for="optname_${rkey}"
@@ -182,23 +182,23 @@
         </div>
         <!-- ko if: !isFileType() -->
         <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')} opt_keystorage_disabled"
-             style="${wdgt.styleVisible(unless:option?.defaultStoragePath||option?.isDate || option?.secureInput || option?.secureExposed)}">
+             data-bind="visible: shouldShowDefaultValue">
             <label class="col-sm-2 control-label"><g:message code="form.option.defaultValue.label" /></label>
             <div class="col-sm-10">
                             <input type="text"
                                    class="form-control"
                                    name="defaultValue"
                                    id="opt_defaultValue"
-                                   value="${enc(attr:option?.defaultValue)}"
                                    size="40"
                                    placeholder="Default value"
+                                   data-bind="value: defaultValue"
                             />
             </div>
 
         </div>
 
         <div class="opt_sec_enabled form-group ${hasErrors(bean: option, field: 'defaultStoragePath', 'has-error')}"
-             style="${wdgt.styleVisible(if: option?.secureInput)}">
+             data-bind="visible: shouldShowDefaultStorage">
             <label class="col-sm-2 control-label">
                 <g:message code="form.option.defaultStoragePath.label"/>
             </label>
@@ -256,14 +256,14 @@
 
 
                     <div class="radio">
-                        <g:radio name="inputType" value="plain" checked="${!option?.secureInput && !option?.isDate}" id="inputplain_${rkey}"/>
+                        <g:radio name="inputType" value="plain" checked="${!option?.secureInput && !option?.isDate}" id="inputplain_${rkey}" data-bind="click: clearDefaultValue.bind($data, 'true')"/>
                         <label for="inputplain_${rkey}">
                             <g:message code="form.option.secureInput.false.label"/>
                         </label>
                     </div>
 
                     <div class="radio">
-                        <g:radio name="inputType" value="date" checked="${option?.isDate}" id="inputdate_${rkey}"/>
+                        <g:radio name="inputType" value="date" checked="${option?.isDate}" id="inputdate_${rkey}" data-bind="click: clearDefaultValue.bind($data, 'true')"/>
                         <label for="inputdate_${rkey}">
                           <g:message code="form.option.date.label"/>
                         </label>
@@ -293,6 +293,7 @@
                                 value="secureExposed"
                                 checked="${option?.secureInput && option?.secureExposed}"
                                 id="sectrue_${rkey}"
+                                data-bind="click: clearDefaultValue.bind($data, 'false')"
                         />
                         <label for="sectrue_${rkey}">
                             <g:message code="form.option.secureExposed.true.label"/> <span class="text-danger small">&dagger;</span>
@@ -306,7 +307,8 @@
                     <div class="radio">
                         <g:radio name="inputType" value="secure"
                                  checked="${option?.secureInput && !option?.secureExposed}"
-                                 id="secexpfalse_${rkey}"/>
+                                 id="secexpfalse_${rkey}"
+                                 data-bind="click: clearDefaultValue.bind($data, 'false')"/>
                         <label for="secexpfalse_${rkey}">
                             <g:message code="form.option.secureExposed.false.label"/>
                             <span class="text-danger small">&dagger;</span>
@@ -363,7 +365,7 @@
             </wdgt:eventHandler>
 
         </div>
-        <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
+        <div class="form-group opt_keystorage_disabled" data-bind="visible: isNonSecure">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
             <div class="col-sm-3">
                 <g:set var="valueTypeListChecked" value="${!option || (!option.realValuesUrl && !option.optionValuesPluginType) ? true : false}"/>
@@ -414,7 +416,7 @@
 
                     <g:textField name="valuesList"
                                  class="form-control"
-                                 value="${listvalue ? listvalue : listjoin ? listjoin.join(',') : ''}"
+                                 data-bind="value: valuesList"
                                  size="60"
                                  placeholder="${message(code:"form.option.valuesList.placeholder")}"
                                  id="vlist_${rkey}"
@@ -427,7 +429,7 @@
                     <g:textField type="url"
                                  class=" form-control"
                                  name="valuesUrl"
-                                 value="${option?.realValuesUrl?.toString()}"
+                                 data-bind="value: valuesUrl"
                                  size="60"
                                  placeholder="${message(code:"form.option.valuesURL.placeholder")}"
                                  id="vurl_${rkey}"
@@ -506,7 +508,7 @@
                 <g:message code="form.option.valuesDelimiter.description"/>
             </span>
         </div>
-        <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
+        <div class="form-group opt_keystorage_disabled" data-bind="visible: isNonSecure">
             <label class="col-sm-2 control-label"><g:message code="form.option.enforcedType.label" /></label>
             <div class="col-sm-10">
                 <div class="radio">
@@ -770,7 +772,17 @@
           } else if(isRegex) {
               currentEnforceType = "regex";
           }
-          var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}",enforceType:currentEnforceType});
+          var listvalue = "${option?.valuesList}";
+          var listjoin = "${option?.values}";
+
+          var editor=new OptionEditor({name:"${option?.name}",
+          bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',
+          optionType:"${option?.optionType}",
+          enforceType:currentEnforceType,
+          defaultValue:"${enc(attr:option?.defaultValue)}",
+          showDefaultValue:"${!option?.secureInput && !option?.isDate}",
+          valuesList:"${listvalue ? listvalue : listjoin ? listjoin.join(',') : ''}",
+          valuesUrl:"${option?.getRealValuesUrl()?.toString()}"});
           ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
       });
     </g:javascript>
