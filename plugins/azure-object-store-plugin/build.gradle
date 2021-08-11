@@ -2,7 +2,7 @@ plugins {
     id 'groovy'
 }
 
-ext.pluginClassNames='org.rundeck.plugin.azureobjectstore.ObjectStorePlugin'
+ext.pluginClassNames='org.rundeck.plugin.azureobjectstore.AzureObjectStorePlugin'
 ext.pluginName = 'Azure Object Store Plugin'
 ext.pluginDescription = 'Stores data in an Amazon S3 compliant object store'
 

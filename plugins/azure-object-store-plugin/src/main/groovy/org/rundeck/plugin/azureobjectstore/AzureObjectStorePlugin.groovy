@@ -80,13 +80,13 @@ class AzureObjectStorePlugin extends DelegateTree<ResourceMeta> implements Stora
         CloudStorageAccount account = CloudStorageAccount.parse(storageConnectionString)
         CloudBlobClient serviceClient = account.createCloudBlobClient();
 
-        CloudBlobContainer container = serviceClient.getContainerReference(container)
-        container.createIfNotExists()
+        CloudBlobContainer blobContainer = serviceClient.getContainerReference(container)
+        blobContainer.createIfNotExists()
 
         if(uncachedObjectLookup) {
-            delegateTree = new AzureObjectStoreTree(this.container,new AzureObjectStoreDirectAccessDirectorySource(this.container))
+            delegateTree = new AzureObjectStoreTree(blobContainer,new AzureObjectStoreDirectAccessDirectorySource(this.container))
         } else {
-            delegateTree = new AzureObjectStoreTree(this.container)
+            delegateTree = new AzureObjectStoreTree(blobContainer)
         }
     }
 }
