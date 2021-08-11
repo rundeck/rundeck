@@ -364,6 +364,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     void "install plugin no plugin url specified"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
+        controller.featureService = Mock(FeatureService)
 
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("plugin.error.missing.url",Locale.ENGLISH,"The plugin URL is required")
@@ -374,6 +375,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.installPlugin()
 
         then:
+        1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
         response.text == '{"err":"The plugin URL is required"}'
@@ -484,6 +486,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         fwksvc.getRundeckFramework() >> fwk
         controller.frameworkService = fwksvc
         controller.apiService=Mock(ApiService)
+        controller.featureService = Mock(FeatureService)
+
         when:
         request.method='POST'
         setupFormTokens(params)
@@ -493,6 +497,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.installPlugin()
 
         then:
+        1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
         response.text == '{"msg":"done"}'
@@ -578,6 +583,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     void "unauthorized install plugin fails"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
+        controller.featureService = Mock(FeatureService)
 
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("request.error.unauthorized.title",Locale.ENGLISH,"Unauthorized")
@@ -590,9 +596,28 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.installPlugin()
 
         then:
+        1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> false
         response.text == '{"err":"Unauthorized"}'
+    }
+
+    void "pluginSecurity install plugin fails"() {
+        setup:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.featureService = Mock(FeatureService)
+
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        messageSource.addMessage("plugin.error.unauthorized.upload",Locale.ENGLISH,"Plugin Security Enabled")
+
+        when:
+        def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
+        params.pluginUrl = pluginUrl.toString()
+        controller.installPlugin()
+
+        then:
+        1 * controller.featureService.featurePresent(_) >> true
+        response.text == '{"err":"Plugin Security Enabled"}'
     }
 
     def "plugin detail for ui plugin"() {

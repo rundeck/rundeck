@@ -485,9 +485,16 @@ class PluginController extends ControllerBase {
     }
 
     def installPlugin() {
+
         if(!requireAjaxFormToken()){
             return
         }
+
+        if(featureService.featurePresent(Features.PLUGIN_SECURITY)){
+            renderErrorCodeAsJson("plugin.error.unauthorized.upload")
+            return
+        }
+
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext,
                                                                                "system",
