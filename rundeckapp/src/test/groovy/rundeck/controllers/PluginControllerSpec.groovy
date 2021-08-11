@@ -18,7 +18,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.testing.web.controllers.ControllerUnitTest
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import rundeck.UtilityTagLib
+import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginApiService
 import rundeck.services.PluginApiServiceSpec
@@ -26,6 +29,7 @@ import rundeck.services.PluginService
 import rundeck.services.UiPluginService
 import rundeck.services.FrameworkService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class PluginControllerSpec extends Specification implements ControllerUnitTest<PluginController> {
 
@@ -39,6 +43,12 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 "actions.entry[dbd3da9c_1].type":"testaction1","actions.entry[dbd3da9c_1].config.actions._type":"embedded",
 "actions.entry[dbd3da9c_1].config.actions.type":"","actions.entry[dbd3da9c_1].config.actions.config.stringvalue":"asdf",
 "actions.entry[dbd3da9c_1].config.actions":"{stringvalue=asdf}"},"report":{}}'''
+
+    def setup(){
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        mockTagLib(UtilityTagLib)
+    }
 
     void "validate"() {
         given:
@@ -319,8 +329,10 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("plugin.error.missing.upload.file",Locale.ENGLISH,"A plugin file must be specified")
-
+        controller.apiService=Mock(ApiService)
         when:
+        request.method='POST'
+        setupFormTokens(params)
         controller.uploadPlugin()
 
         then:
@@ -339,6 +351,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         messageSource.addMessage("plugin.error.unauthorized.upload",Locale.ENGLISH,"Unable to upload plugins")
 
         when:
+            request.method='POST'
         controller.uploadPlugin()
 
         then:
@@ -350,10 +363,12 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         setup:
         controller.frameworkService = Mock(FrameworkService)
 
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("plugin.error.missing.url",Locale.ENGLISH,"The plugin URL is required")
-
+        controller.apiService=Mock(ApiService)
         when:
+        request.method='POST'
+        setupFormTokens(params)
         controller.installPlugin()
 
         then:
@@ -375,9 +390,10 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         }
         fwksvc.getRundeckFramework() >> fwk
         controller.frameworkService = fwksvc
-
-
+        controller.apiService=Mock(ApiService)
         when:
+        request.method='POST'
+        setupFormTokens(params)
         !uploaded.exists()
         def pluginInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(PLUGIN_FILE)
         request.addFile(new GrailsMockMultipartFile("pluginFile",PLUGIN_FILE,"application/octet-stream",pluginInputStream))
@@ -393,6 +409,30 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         cleanup:
         uploaded.delete()
     }
+    @Unroll
+    void "upload plugin requires POST method"() {
+        setup:
+        def fwksvc = Mock(FrameworkService)
+
+        controller.featureService = Mock(FeatureService)
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def fwk = Mock(Framework) {
+            getBaseDir() >> uploadTestBaseDir
+            getLibextDir() >> uploadTestTargetDir
+        }
+        fwksvc.getRundeckFramework() >> fwk
+        controller.frameworkService = fwksvc
+        controller.apiService=Mock(ApiService)
+        when:
+        request.method=method
+        setupFormTokens(params)
+        controller.uploadPlugin()
+
+        then:
+        response.status==405
+        where:
+            method << ['get', 'put', 'delete', 'head']
+    }
 
     void "install plugin"() {
         setup:
@@ -406,8 +446,10 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         }
         fwksvc.getRundeckFramework() >> fwk
         controller.frameworkService = fwksvc
-
+        controller.apiService=Mock(ApiService)
         when:
+        request.method='POST'
+        setupFormTokens(params)
         !installed.exists()
         def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
         params.pluginUrl = pluginUrl.toString()
@@ -422,6 +464,42 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         cleanup:
         installed.delete()
     }
+    @Unroll
+    void "install plugin requires POST method"() {
+        setup:
+        File installed = new File(uploadTestTargetDir,PLUGIN_FILE)
+        def fwksvc = Mock(FrameworkService)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def fwk = Mock(Framework) {
+            getBaseDir() >> uploadTestBaseDir
+            getLibextDir() >> uploadTestTargetDir
+        }
+        fwksvc.getRundeckFramework() >> fwk
+        controller.frameworkService = fwksvc
+        controller.apiService=Mock(ApiService)
+        when:
+        request.method=method
+        setupFormTokens(params)
+        !installed.exists()
+        def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
+        params.pluginUrl = pluginUrl.toString()
+        controller.installPlugin()
+
+        then:
+            response.status==405
+
+        cleanup:
+        installed.delete()
+        where:
+            method << ['get', 'put', 'delete', 'head']
+    }
+
+    protected setupFormTokens(params) {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
 
     void "unauthorized install plugin fails"() {
         setup:
@@ -429,8 +507,10 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("request.error.unauthorized.title",Locale.ENGLISH,"Unauthorized")
-
+        controller.apiService=Mock(ApiService)
         when:
+        request.method='POST'
+        setupFormTokens(params)
         def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
         params.pluginUrl = pluginUrl.toString()
         controller.installPlugin()

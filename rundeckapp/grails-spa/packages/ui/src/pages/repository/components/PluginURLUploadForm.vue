@@ -18,7 +18,7 @@
   </div>
 </template>
 <script>
-import axios from "axios";
+import {client} from "@rundeck/ui-trellis/lib/modules/rundeckClient"
 export default {
   name: "PluginUrlUploadForm",
   data() {
@@ -32,26 +32,38 @@ export default {
         loadingMessage: "Installing",
         loadingSpinner: true
       });
-      axios({
-        method: "post",
-        headers: {
-          "x-rundeck-ajax": true
+      client.sendRequest({
+        baseUrl: window._rundeck.rdBase,
+        pathTemplate: `/plugin/installPlugin`,
+        queryParameters: {
+          pluginUrl: this.pluginURL
         },
-        url: `${window._rundeck.rdBase}plugin/installPlugin?pluginUrl=${
-          this.pluginURL
-        }`,
-        withCredentials: true
+        method: 'POST'
       }).then(response => {
-        this.$store.dispatch("overlay/openOverlay");
-        if (response.data.err) {
+        if (response.status === 200) {
+          this.$store.dispatch("overlay/openOverlay");
+          if (response.parsedBody.err) {
+            this.$alert({
+              title: "Error Uploading",
+              content: response.parsedBody.err
+            });
+          } else {
+            this.$alert({
+              title: "Plugin Installed",
+              content: response.parsedBody.msg
+            });
+          }
+        }else if (response.status >= 300) {
+          this.$store.dispatch("overlay/openOverlay");
+          let message = `Error: ${response.status}`
+          if (response.parsedBody && response.parsedBody.message) {
+            message = response.parsedBody.message
+          }else if (response.parsedBody && response.parsedBody.error) {
+            message = response.parsedBody.error
+          }
           this.$alert({
             title: "Error Uploading",
-            content: response.data.err
-          });
-        } else {
-          this.$alert({
-            title: "Plugin Installed",
-            content: response.data.msg
+            content: message
           });
         }
       });
