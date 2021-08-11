@@ -84,7 +84,7 @@ class AzureObjectStorePlugin extends DelegateTree<ResourceMeta> implements Stora
         blobContainer.createIfNotExists()
 
         if(uncachedObjectLookup) {
-            delegateTree = new AzureObjectStoreTree(blobContainer,new AzureObjectStoreDirectAccessDirectorySource(this.container))
+            delegateTree = new AzureObjectStoreTree(blobContainer,new AzureObjectStoreDirectAccessDirectorySource(blobContainer))
         } else {
             delegateTree = new AzureObjectStoreTree(blobContainer)
         }
