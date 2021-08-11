@@ -1,6 +1,5 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.api.plugins.ApiPluginListProvider
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.config.Features

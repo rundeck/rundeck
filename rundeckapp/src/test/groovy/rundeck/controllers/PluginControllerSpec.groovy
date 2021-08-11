@@ -30,6 +30,8 @@ import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.servlet.http.HttpServletResponse
+
 class PluginControllerSpec extends Specification implements ControllerUnitTest<PluginController> {
 
     String fakePluginId = "fake".encodeAsSHA256().substring(0,12)
@@ -360,7 +362,6 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         setup:
         def fwksvc = Mock(FrameworkService)
 
-        controller.featureService = Mock(FeatureService)
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         def fwk = Mock(Framework) {
             getBaseDir() >> uploadTestBaseDir
@@ -369,7 +370,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         fwksvc.getRundeckFramework() >> fwk
         controller.frameworkService = fwksvc
         controller.apiService=Mock(ApiService)
-        when:
+        when: "request made without POST method"
         request.method=method
         setupFormTokens(params)
         controller.uploadPlugin()
@@ -378,6 +379,39 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         response.status==405
         where:
             method << ['get', 'put', 'delete', 'head']
+    }
+    void "upload plugin requires synch token"() {
+        setup:
+            File uploaded = new File(uploadTestTargetDir,PLUGIN_FILE)
+            def fwksvc = Mock(FrameworkService)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            def fwk = Mock(Framework) {
+                getBaseDir() >> uploadTestBaseDir
+                getLibextDir() >> uploadTestTargetDir
+            }
+            fwksvc.getRundeckFramework() >> fwk
+            controller.frameworkService = fwksvc
+            controller.apiService=Mock(ApiService)
+        when: "request made without synch token"
+            request.method='POST'
+            !uploaded.exists()
+            def pluginInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(PLUGIN_FILE)
+            request.addFile(new GrailsMockMultipartFile("pluginFile",PLUGIN_FILE,"application/octet-stream",pluginInputStream))
+            controller.uploadPlugin()
+
+        then:
+            0 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            0 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
+            response.text != '{"msg":"done"}'
+            !uploaded.exists()
+            1 * controller.apiService.renderErrorFormat(_,{
+                it.status== HttpServletResponse.SC_BAD_REQUEST
+                it.code== 'request.error.invalidtoken.message'
+            })
+
+        cleanup:
+            uploaded.delete()
     }
 
     void "install plugin"() {
@@ -424,7 +458,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         fwksvc.getRundeckFramework() >> fwk
         controller.frameworkService = fwksvc
         controller.apiService=Mock(ApiService)
-        when:
+        when: "request made without POST method"
         request.method=method
         setupFormTokens(params)
         !installed.exists()
@@ -434,11 +468,48 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
         then:
             response.status==405
+            0 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            0 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
+            response.text != '{"msg":"done"}'
+            !installed.exists()
 
         cleanup:
         installed.delete()
         where:
             method << ['get', 'put', 'delete', 'head']
+    }
+
+    void "install plugin requires synch token"() {
+        setup:
+        File installed = new File(uploadTestTargetDir,PLUGIN_FILE)
+        def fwksvc = Mock(FrameworkService)
+
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+        def fwk = Mock(Framework) {
+            getBaseDir() >> uploadTestBaseDir
+            getLibextDir() >> uploadTestTargetDir
+        }
+        fwksvc.getRundeckFramework() >> fwk
+        controller.frameworkService = fwksvc
+        controller.apiService=Mock(ApiService)
+        when: "request made without synch token"
+        request.method='POST'
+        !installed.exists()
+        def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
+        params.pluginUrl = pluginUrl.toString()
+        controller.installPlugin()
+
+        then:
+            1 * controller.apiService.renderErrorFormat(_,{
+                it.status== HttpServletResponse.SC_BAD_REQUEST
+                it.code== 'request.error.invalidtoken.message'
+            })
+            0 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            0 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
+            response.text != '{"msg":"done"}'
+            !installed.exists()
+        cleanup:
+        installed.delete()
     }
 
     protected setupFormTokens(params) {
