@@ -15,7 +15,7 @@
  */
 package org.rundeck.plugin.azureobjectstore.tree
 
-
+import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.microsoft.azure.storage.blob.CloudBlobClient
 import com.microsoft.azure.storage.blob.CloudBlobContainer
 import com.microsoft.azure.storage.blob.CloudBlockBlob
@@ -30,21 +30,23 @@ class AzureObjectStoreUtils {
     }
 
     static Map<String,String> objectStatToMap(CloudBlockBlob objectStat) {
+        objectStat.downloadAttributes()
+
         Map<String,String> meta = objectStat.getMetadata()
-        /*meta["etag"] = objectStat.etag()
-        Set rundeckMetaKeys = objectStat.httpHeaders().keySet().findAll { it.startsWith(ObjectStoreTree.RUNDECK_CUSTOM_HEADER_PREFIX) }
-        rundeckMetaKeys.each { prefixedKey ->
-            meta[fixKeyName(prefixedKey)] = objectStat.httpHeaders()[prefixedKey][0]
+        Map<String,String> metaResult = [:]
+
+        meta.each {key, value->
+            String rundeckKey = key.replace("_","-")
+            metaResult.put(fixKeyName(rundeckKey),value)
         }
-        meta[StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH] = objectStat.length().toString()
-        if(!meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME)) {
-            meta[StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME] = StorageUtil.formatDate(Date.from(objectStat.createdTime().toInstant()))
+        if(!metaResult.get(StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME)) {
+            metaResult[StorageUtil.RES_META_RUNDECK_CONTENT_CREATION_TIME] = StorageUtil.formatDate(objectStat.getProperties().getLastModified())
         }
-        if(!meta.get(StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME)) {
-            Date lastModified = Date.from(ZonedDateTime.parse(objectStat.httpHeaders()["last-modified"][0], Time.HTTP_HEADER_DATE_FORMAT).toInstant())
-            meta[StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME] = StorageUtil.formatDate(lastModified)
-        }*/
-        return meta
+        if(!metaResult.get(StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME)) {
+            metaResult[StorageUtil.RES_META_RUNDECK_CONTENT_MODIFY_TIME] = StorageUtil.formatDate(objectStat.getProperties().getLastModified())
+        }
+
+        return metaResult
     }
 
     static boolean checkContainerExists(CloudBlobClient client, String container){
@@ -58,9 +60,14 @@ class AzureObjectStoreUtils {
         }
     }
 
-    public static String fixKeyName(String prefixedKey) {
-        String key = prefixedKey.replaceAll("-", "").replaceAll("_", "")
-        return key.capitalize()
+    static String cleanAzureKeyName(String prefixedKey) {
+        String key = prefixedKey.replaceAll("-", "_")
+        return key
+    }
+
+    private static String fixKeyName(String prefixedKey) {
+        String key = prefixedKey.replaceAll(AzureObjectStoreTree.RUNDECK_CUSTOM_HEADER_PREFIX, "")
+        return key.startsWith("rundeck") ? key.capitalize() : key
     }
 
 

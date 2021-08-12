@@ -185,28 +185,51 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
         return resources
     }
 
+    def listBlobsFromDirectory = { CloudBlobDirectory directory ->
+
+        List<CloudBlockBlob> listBlobs = []
+        directory.listBlobs().each{item->
+            if(item instanceof CloudBlobDirectory){
+                CloudBlobDirectory folder = (CloudBlobDirectory) item
+                listBlobs.addAll(listBlobsFromDirectory(folder))
+            }else{
+                listBlobs.add((CloudBlockBlob)item)
+            }
+        }
+
+        return listBlobs
+    }
+
     @Override
     Set<Resource<BaseStreamResource>> listResourceEntriesAt(final String path) {
         def resources = []
         String lstPath = path == "" ? null : path
         String rPath = path == "" ?: path+"/"
 
-        /*
-        container.listBlobs(path).each { object ->
-            if(!(object instanceof CloudBlobDirectory)){
-                directory = true
+        List<CloudBlockBlob> listBlobs = []
+
+        container.listBlobs(lstPath).forEach{item->
+            if(item instanceof CloudBlobDirectory){
+                CloudBlobDirectory folder = (CloudBlobDirectory) item
+                listBlobs.addAll(listBlobsFromDirectory(folder))
+            }else{
+                listBlobs.add((CloudBlockBlob)item)
             }
         }
 
-
-        mClient.listObjects(bucket, lstPath, true)
-               .findAll {
-            !(it.get().objectName().replaceAll(rPath,"").contains("/"))
-        }.each { result ->
-            resources.add(createResourceListItemWithMetadata(result.get()))
+        listBlobs.each { result ->
+            CloudBlockBlob blob = (CloudBlockBlob)result
+            resources.add(createResourceListItemWithMetadata(blob))
         }
 
-         */
+        /*
+        mClient.listObjects(bucket, lstPath, true)
+              .findAll {
+           !(it.get().objectName().replaceAll(rPath,"").contains("/"))
+        }.each { result ->
+           resources.add(createResourceListItemWithMetadata(result.get()))
+        }
+        */
         return resources
     }
 

@@ -33,9 +33,7 @@ class LazyAccessObjectStoreInputStream implements HasInputStream {
 
     @Override
     InputStream getInputStream() throws IOException {
-        //object.downloadRangeToByteArray()
-        InputStream inputStream
-        return inputStream
+        return object.openInputStream()
     }
 
     @Override
