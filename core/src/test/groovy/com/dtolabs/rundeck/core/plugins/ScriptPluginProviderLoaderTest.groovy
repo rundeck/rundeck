@@ -16,6 +16,10 @@
 package com.dtolabs.rundeck.core.plugins
 
 import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta
+import com.dtolabs.rundeck.core.plugins.metadata.ProviderDef
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.constructor.SafeConstructor
+import org.yaml.snakeyaml.error.YAMLException
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -45,18 +49,167 @@ class ScriptPluginProviderLoaderTest extends Specification {
 
     def "LoadMetadataYaml"() {
         setup:
-        File tmpCacheDir = File.createTempDir()
+            File tmpCacheDir = File.createTempDir()
 
-        when:
-        String pluginName = "Test script plugin"
-        ScriptPluginProviderLoader loader = new ScriptPluginProviderLoader(File.createTempFile("throwaway","unneeded"),tmpCacheDir)
-        def pluginYaml = createPluginYaml(pluginName,"1.2")
+            String pluginName = "Test script plugin"
+            ScriptPluginProviderLoader loader = new ScriptPluginProviderLoader(File.createTempFile("throwaway","unneeded"),tmpCacheDir)
+            def pluginYaml = createPluginYaml(pluginName,"1.2",[
+                author:'author',
+                date:'adate',
+                version:'aversion',
+                url:'aurl',
+                resourcesDir:'adir',
+                resourcesList:['res1','res2'],
+                providers:[
+                    [
+                        'name':'aprov',
+                        'service':'aservice',
+                        'script-file':'afile',
+                        'script-args':'args',
+                        'script-interpreter':'interp',
+                        'interpreter-args-quoted':true,
+                        'plugin-type':'type',
+                        'plugin-meta':[
+                            'meta1':'metaA',
+                            'meta2':'metaB'
+                        ],
+                    ]
+                ],
+            ])
+        when: "load plugin yaml"
+            def meta = loader.loadMetadataYaml(pluginYaml)
+
+        then: "expected values are defined"
+            meta.name == pluginName
+            meta.rundeckPluginVersion == "1.2"
+            meta.date == 'adate'
+            meta.version == 'aversion'
+            meta.url == 'aurl'
+            meta.resourcesDir == 'adir'
+            meta.resourcesList == ['res1','res2']
+            meta.providers.size()==1
+            meta.pluginDefs.size()==1
+            meta.pluginDefs[0] instanceof ProviderDef
+            meta.pluginDefs[0].name=='aprov'
+            meta.pluginDefs[0].service=='aservice'
+            meta.pluginDefs[0].scriptFile=='afile'
+            meta.pluginDefs[0].scriptArgs=='args'
+            meta.pluginDefs[0].scriptInterpreter=='interp'
+            meta.pluginDefs[0].interpreterArgsQuoted==true
+            meta.pluginDefs[0].pluginType=='type'
+            meta.pluginDefs[0].providerMeta==[
+                'meta1':'metaA',
+                'meta2':'metaB'
+            ]
+    }
+    def "LoadMetadataYaml args array"() {
+        setup:
+        File tmpCacheDir = File.createTempDir()
+            String pluginName = "Test script plugin"
+            ScriptPluginProviderLoader loader = new ScriptPluginProviderLoader(File.createTempFile("throwaway","unneeded"),tmpCacheDir)
+            def pluginYaml = createPluginYaml(pluginName,"1.2",[
+                author:'author',
+                date:'adate',
+                version:'aversion',
+                url:'aurl',
+                resourcesDir:'adir',
+                resourcesList:['res1','res2'],
+                providers:[
+                    [
+                        'name':'aprov',
+                        'service':'aservice',
+                        'script-file':'afile',
+                        'script-args':[
+                            'args1',
+                            'args2'
+                        ],
+                        'script-interpreter':'interp',
+                        'interpreter-args-quoted':true,
+                        'plugin-type':'type',
+                        'plugin-meta':[
+                            'meta1':'metaA',
+                            'meta2':'metaB'
+                        ],
+                    ]
+                ],
+            ])
+        when: "yaml has script-args with a sequence value"
         def meta = loader.loadMetadataYaml(pluginYaml)
 
-        then:
+        then: "scriptArgsArray is set in the ProviderDef"
         meta.name == pluginName
         meta.rundeckPluginVersion == "1.2"
-        meta.date == null
+        meta.date == 'adate'
+        meta.version == 'aversion'
+        meta.url == 'aurl'
+        meta.resourcesDir == 'adir'
+        meta.resourcesList == ['res1','res2']
+        meta.providers.size()==1
+        meta.pluginDefs.size()==1
+        meta.pluginDefs[0] instanceof ProviderDef
+        meta.pluginDefs[0].name=='aprov'
+        meta.pluginDefs[0].service=='aservice'
+        meta.pluginDefs[0].scriptFile=='afile'
+        meta.pluginDefs[0].scriptArgs==null
+        meta.pluginDefs[0].scriptArgsArray.toList()==['args1','args2']
+        meta.pluginDefs[0].scriptInterpreter=='interp'
+        meta.pluginDefs[0].interpreterArgsQuoted==true
+        meta.pluginDefs[0].pluginType=='type'
+        meta.pluginDefs[0].providerMeta==[
+            'meta1':'metaA',
+            'meta2':'metaB'
+        ]
+    }
+
+    static final String TEST_YAML1='''name: plugin-name
+version: 1.0
+rundeckPluginVersion: 1.2
+providers:
+    - name: zingbat
+      plugin-meta:
+        test: !!java.lang.Object
+      '''
+    static final String TEST_YAML2='''name: plugin-name
+version: 1.0
+rundeckPluginVersion: 1.2
+providers:
+    - !!java.lang.Object
+      '''
+    static final String TEST_YAML3='''name: plugin-name
+version: 1.0
+rundeckPluginVersion: 1.2
+resourcesList:
+    - !!java.lang.Object
+providers:
+    - name: zingbat
+      '''
+    static final String TEST_YAML4='''name: plugin-name
+version: 1.0
+rundeckPluginVersion: 1.2
+tags:
+    - !!java.lang.Object
+providers:
+    - name: zingbat
+      '''
+
+    def "LoadMetadataYaml unsafe"() {
+        setup:
+            File tmpCacheDir = File.createTempDir()
+            ScriptPluginProviderLoader loader = new ScriptPluginProviderLoader(File.createTempFile("throwaway","unneeded"),tmpCacheDir)
+            def pluginYaml =  new ByteArrayInputStream(testYaml.bytes)
+        when: "load yaml with java class tags"
+            def meta = loader.loadMetadataYaml(pluginYaml)
+
+        then: "should throw exception"
+            YAMLException e = thrown()
+            e.message.contains 'could not determine a constructor for the tag tag:yaml.org,2002:java.lang.Object'
+        where:
+            testYaml<<[
+                TEST_YAML1,
+                TEST_YAML2,
+                TEST_YAML3,
+                TEST_YAML4,
+            ]
     }
 
     @Unroll
@@ -86,13 +239,18 @@ class ScriptPluginProviderLoaderTest extends Specification {
     }
 
 
+    /**
+     * create yaml stream
+     * @param pluginName `name` value
+     * @param pluginVersion `rundeckPluginVersion` value
+     * @param props additional yaml structure
+     * @return inputstream of yaml string representing the structure
+     */
     ByteArrayInputStream createPluginYaml(String pluginName, String pluginVersion, Map props = [:]) {
-        StringBuilder yaml = new StringBuilder()
-        yaml.append("name: ${pluginName}\n")
-        yaml.append("rundeckPluginVersion: ${pluginVersion}\n")
-        props.each { k, v ->
-            yaml.append("$k : ${v}\n")
-        }
-        new ByteArrayInputStream(yaml.toString().bytes)
+        Yaml yaml = new Yaml()
+        def map = [name:pluginName,rundeckPluginVersion: pluginVersion] + props
+        def writer=new StringWriter()
+        yaml.dump(map,writer)
+        new ByteArrayInputStream(writer.toString().bytes)
     }
 }
