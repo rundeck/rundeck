@@ -17,7 +17,7 @@
 <%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; rundeck.ScheduledExecution; rundeck.User; org.rundeck.core.auth.AuthConstants" %>
 
 <g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
-
+<g:set var="ukey" value="${g.rkey()}" />
 <g:if test="${flash.message}">
     <div class="list-group-item">
       <div class="alert alert-info">
@@ -44,7 +44,7 @@
 
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
-             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
+             data="${[filterName: params.filterName, matchedNodesMaxCount: matchedNodesMaxCount?:100, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
 <g:embedJSON id="jobDefinitionJSON"
              data="${[jobName:scheduledExecution?.jobName,groupPath:scheduledExecution?.groupPath, uuid: scheduledExecution?.uuid,
                      href:scheduledExecution?.id?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
@@ -334,6 +334,14 @@
                       </g:if>
                       <g:render template="/framework/nodeFilterInputGroup"
                                 model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName]"/>
+
+                      %{--  Form for saving/deleting node filters--}%
+                      <g:form class="form form-horizontal" useToken="true">
+                          <g:hiddenField name="project" value="${params.project}"/>
+                      %{--          <g:render template="/framework/nodeFiltersHidden"/>--}%
+                          <g:render template="/common/queryFilterManagerModal"
+                                    model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>
+                      </g:form>
                   </span>
 
           <div class=" collapse" id="queryFilterHelp">
@@ -1297,7 +1305,7 @@ function getCurSEID(){
                     appLinks.frameworkNodes,
                     Object.assign(filterParams, {
                         nodeSummary:nodeSummary,
-                        maxShown:100,
+                        maxShown:filterParams.matchedNodesMaxCount,
                         nodefilterLinkId: '#nodegroupitem',
                          project: selFrameworkProject,
                          view:'embed',

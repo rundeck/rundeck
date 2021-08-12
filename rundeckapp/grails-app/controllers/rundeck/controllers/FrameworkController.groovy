@@ -306,7 +306,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (usedFilter) {
             model['filterName'] = usedFilter
         }
-        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty()]
+        return model + [runCommand: runCommand, emptyQuery: query.nodeFilterIsEmpty(), matchedNodesMaxCount: scheduledExecutionService.getMatchedNodesMaxCount()]
     }
 
     /**
