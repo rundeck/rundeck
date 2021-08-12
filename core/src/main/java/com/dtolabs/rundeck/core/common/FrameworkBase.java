@@ -68,7 +68,7 @@ public class FrameworkBase implements IFramework{
     /**
      * Standard constructor
      */
-    FrameworkBase(
+    public FrameworkBase(
             final ProjectManager projectManager,
             final IPropertyLookup lookup,
             final IFrameworkServices services,
@@ -96,6 +96,11 @@ public class FrameworkBase implements IFramework{
     @Override
     public FrameworkSupportService getService(final String name) {
         return frameworkServices.getService(name);
+    }
+
+    @Override
+    public void overrideService(final String name, final FrameworkSupportService service) {
+        frameworkServices.overrideService(name,service);
     }
 
     @Override

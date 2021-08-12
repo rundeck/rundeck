@@ -24,17 +24,25 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.data.BaseDataContext;
 import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.proxy.DefaultSecretBundle;
+import com.dtolabs.rundeck.core.execution.proxy.ProxySecretBundleCreator;
+import com.dtolabs.rundeck.core.execution.proxy.SecretBundle;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.core.utils.ScriptExecHelper;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
+import org.rundeck.storage.api.Resource;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -48,7 +56,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
+public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin implements ProxySecretBundleCreator {
     /**
      * can be replaced with test mock
      */
@@ -219,5 +227,69 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
 
     public void setScriptExecHelper(ScriptExecHelper scriptExecHelper) {
         this.scriptExecHelper = scriptExecHelper;
+    }
+
+
+    @Override
+    public SecretBundle prepareSecretBundle(
+            final ExecutionContext context, final INodeEntry node
+    ) {
+        DefaultSecretBundle bundle = new DefaultSecretBundle();
+        Description pluginDesc = getDescription();
+
+        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+                context.getFramework(),
+                context.getFrameworkProject(),
+                context.getDataContext()
+        );
+
+        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
+                context,
+                loadInstanceDataFromNodeAttributes(node, pluginDesc),
+                getProvider().getService(),
+                getProvider().getName()
+        );
+
+        final Map<String, Object> config =
+                PluginAdapterUtility.mapDescribedProperties(
+                        resolver,
+                        pluginDesc,
+                        PropertyScope.Instance
+                );
+
+        //expand properties
+        Map<String, Object> expanded =
+                DataContextUtils.replaceDataReferences(
+                        config,
+                        localDataContext
+                );
+
+        Map<String, String> data = MapData.toStringStringMap(expanded);
+        for (Property property : pluginDesc.getProperties()) {
+            String name = property.getName();
+            String propValue = data.get(name);
+            if (null == propValue) {
+                continue;
+            }
+            Map<String, Object> renderingOptions = property.getRenderingOptions();
+            if (renderingOptions != null) {
+                Object conversion = renderingOptions.get(StringRenderingConstants.VALUE_CONVERSION_KEY);
+
+                if (StringRenderingConstants.ValueConversion.STORAGE_PATH_AUTOMATIC_READ.equalsOrString(conversion)) {
+                    Resource<ResourceMeta> r = context.getStorageTree().getResource(propValue);
+                    if(r != null) {
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        try {
+                            r.getContents().writeContent(byteArrayOutputStream);
+                            bundle.addSecret(propValue, byteArrayOutputStream.toByteArray());
+                        } catch (IOException iex) {
+                            context.getExecutionLogger().log(0,String.format("IOException Unable to add secret value to secret bundle for: %s",name));
+                        }
+                    }
+
+                }
+            }
+        }
+        return bundle;
     }
 }

@@ -64,7 +64,7 @@ public class NodeExecutorService
     public List<String> getBundledProviderNames() {
         return Collections.unmodifiableList(new ArrayList<>(registry.keySet()));
     }
-    NodeExecutorService(Framework framework) {
+    public NodeExecutorService(Framework framework) {
         super(framework,true);
 
         registry.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);

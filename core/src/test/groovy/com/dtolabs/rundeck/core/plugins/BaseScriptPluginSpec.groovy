@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.storage.ResourceMeta
@@ -401,6 +402,81 @@ class BaseScriptPluginSpec extends Specification {
 
         1 * storageTree.getResource(_) >> {
             throw new StorageException("Not found", StorageException.Event.READ, PathUtil.asPath('keys/test'))
+        }
+
+    }
+
+    def "create secret bundle"() {
+        given:
+        def node = new NodeEntryImpl('anode')
+
+        def pluginMeta = [
+                (BaseScriptPlugin.SETTING_MERGE_ENVIRONMENT): false,
+                config                                      :
+                        [
+                                [
+                                        type            : 'String',
+                                        name            : 'c',
+                                        renderingOptions: [
+                                                (StringRenderingConstants.VALUE_CONVERSION_KEY): 'STORAGE_PATH_AUTOMATIC_READ',
+                                        ]
+                                ]
+                        ]
+        ]
+        File tempFile = File.createTempFile("test", "zip");
+        tempFile.deleteOnExit()
+        File basedir = File.createTempFile("test", "dir");
+        basedir.deleteOnExit()
+
+        ScriptPluginProvider provider = Mock(ScriptPluginProvider) {
+            getName() >> 'test1'
+            getService() >> 'NodeExecutor'
+            getDefaultMergeEnvVars() >> false
+            getMetadata() >> pluginMeta
+            getArchiveFile() >> tempFile
+            getScriptFile() >> tempFile
+            getContentsBasedir() >> basedir
+            getProviderMeta() >> null
+        }
+
+        def storageTree = Mock(StorageTree)
+
+        TestScriptPlugin plugin = new TestScriptPlugin(provider, framework)
+
+        def proj = framework.frameworkProjectMgr.getFrameworkProject(PROJECT_NAME)
+        Properties props = new Properties()
+        props.putAll(proj.getProjectProperties())
+        props.put("project.plugin.NodeExecutor.test1.c","keys/test")
+        proj.setProjectProperties(props)
+
+        PluginStepContext context = Mock(PluginStepContext) {
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContext() >> new BaseDataContext([:])
+            getLogger() >> Mock(PluginLogger)
+            getExecutionContext() >> Mock(ExecutionContext) {
+                getFramework() >> framework
+                getFrameworkProject() >> PROJECT_NAME
+                getDataContext() >> new BaseDataContext([:])
+
+                getStorageTree() >> storageTree
+            }
+        }
+        def config = [a: 'b', c: 'keys/test']
+
+        when:
+        def result = plugin.prepareSecretBundle(context.getExecutionContext(), node)
+
+
+        then:
+        new String(result.getValue("keys/test")) == "myvalue"
+
+        1 * storageTree.getResource('keys/test') >> Mock(Resource) {
+            1 * getContents() >> Mock(ResourceMeta) {
+                1 * writeContent(_) >> { args ->
+                    args[0].write('myvalue'.bytes)
+                    7L
+                }
+            }
         }
 
     }

@@ -332,6 +332,11 @@ public class TestDefaultFileCopierUtil extends TestCase {
         }
 
         @Override
+        public void overrideService(final String name, final FrameworkSupportService service) {
+
+        }
+
+        @Override
         public OrchestratorService getOrchestratorService() {
             return null;
         }

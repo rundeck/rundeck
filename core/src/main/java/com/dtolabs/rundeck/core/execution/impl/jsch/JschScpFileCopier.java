@@ -28,6 +28,9 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
+import com.dtolabs.rundeck.core.execution.proxy.DefaultSecretBundle;
+import com.dtolabs.rundeck.core.execution.proxy.ProxySecretBundleCreator;
+import com.dtolabs.rundeck.core.execution.proxy.SecretBundle;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
@@ -37,15 +40,19 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.dtolabs.utils.Streams;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -53,7 +60,8 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier, Describable {
+public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier, Describable,
+                                                                 ProxySecretBundleCreator {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-scp";
 
 
@@ -323,4 +331,10 @@ public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier
         return copyMultipleFiles(context, basedir, files, remotePath, node);
     }
 
+    @Override
+    public SecretBundle prepareSecretBundle(
+            final ExecutionContext context, final INodeEntry node
+    ) {
+        return JschSecretBundleUtil.createBundle(context,node);
+    }
 }

@@ -34,7 +34,6 @@ import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -50,9 +49,9 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor {
+public class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor {
 
-    ScriptPluginNodeExecutor(final ScriptPluginProvider provider, final Framework framework) {
+    public ScriptPluginNodeExecutor(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
     }
 

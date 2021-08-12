@@ -23,7 +23,11 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
+import org.rundeck.storage.api.Path
+import org.rundeck.storage.api.Resource
 import spock.lang.Specification
 
 /**

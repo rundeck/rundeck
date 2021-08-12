@@ -29,6 +29,9 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
+import com.dtolabs.rundeck.core.execution.proxy.DefaultSecretBundle;
+import com.dtolabs.rundeck.core.execution.proxy.ProxySecretBundleCreator;
+import com.dtolabs.rundeck.core.execution.proxy.SecretBundle;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
@@ -41,6 +44,7 @@ import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
+import com.dtolabs.utils.Streams;
 import com.jcraft.jsch.JSchException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -64,7 +68,7 @@ import java.util.concurrent.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JschNodeExecutor implements NodeExecutor, Describable {
+public class JschNodeExecutor implements NodeExecutor, Describable, ProxySecretBundleCreator {
     public static final Logger logger                           = LoggerFactory.getLogger(JschNodeExecutor.class.getName());
     public static final String SERVICE_PROVIDER_TYPE            = "jsch-ssh";
     public static final String FWK_PROP_AUTH_CANCEL_MSG         = "framework.messages.error.ssh.authcancel";
@@ -601,6 +605,13 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             errormsg = e.getMessage();
         }
         return new ExtractFailure(errormsg, failureReason);
+    }
+
+    @Override
+    public SecretBundle prepareSecretBundle(
+            final ExecutionContext context, final INodeEntry node
+    ) {
+        return JschSecretBundleUtil.createBundle(context,node);
     }
 
     static ExtractFailure extractJschFailure(final INodeEntry node,
