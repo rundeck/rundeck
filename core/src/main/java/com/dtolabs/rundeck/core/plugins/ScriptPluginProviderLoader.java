@@ -16,10 +16,10 @@
 
 /*
 * ScriptFileProviderLoader.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 4/13/11 10:07 AM
-* 
+*
 */
 package com.dtolabs.rundeck.core.plugins;
 
@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.Tag;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -395,11 +397,24 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
     }
 
     /**
+     * define only constructor for single type
+     */
+    static class SingleTypeConstructor extends Constructor{
+        public SingleTypeConstructor(Class<?> clazz) {
+            super(clazz);
+            this.yamlConstructors.put(null, undefinedConstructor);
+            this.yamlConstructors.put(new Tag(clazz), new SubtypeConstructYamlObject());
+        }
+        //required because ConstructYamlObject is protected
+        class SubtypeConstructYamlObject extends ConstructYamlObject{
+
+        }
+    }
+    /**
      * return loaded yaml plugin metadata from the stream
      */
     static PluginMeta loadMetadataYaml(final InputStream stream) {
-        final Yaml yaml = new Yaml();
-
+        final Yaml yaml = new Yaml(new SingleTypeConstructor(PluginMeta.class));
         return yaml.loadAs(stream, PluginMeta.class);
     }
 
