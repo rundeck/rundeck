@@ -175,8 +175,11 @@
                 <g:embedJSON id="logFilterData_${enc(attr:i)}" data="${[
                         num:i,
                         description:item.description,
-                        filters:item?.getPluginConfigForType('LogFilter')?:[]]
-                }"/>
+                        filters:item?.getPluginConfigForType('LogFilter')?:[]
+                ]}"/>
+                <script id="wfItemData_${enc(attr:i)}" data-json-type="wfItem" type="text/json">
+                        ${raw(enc(json:[num:i,item:item]))}
+                </script>
                 <script type="text/javascript">
                 fireWhenReady("pfctrls_${enc(attr:i)}",function(){
                     var step=workflowEditor.bindStepFilters('logfilter_${i}','logFilter_${enc(attr:i)}',loadJsonData('logFilterData_${enc(attr:i)}'));
