@@ -174,7 +174,7 @@ class AzureObjectStoreTree implements Tree<BaseStreamResource> {
         } else {
             File tmpFile = File.createTempFile("_obj_store_tmp_","_data_")
             tmpFile << content.inputStream
-            customHeaders[RUNDECK_CUSTOM_HEADER_PREFIX+ StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH] = tmpFile.size().toString()
+            customHeaders[AzureObjectStoreUtils.fixKeyName(RUNDECK_CUSTOM_HEADER_PREFIX+ StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH)] = tmpFile.size().toString()
 
             blob.setMetadata(customHeaders)
             blob.upload(tmpFile.newInputStream(), tmpFile.length())
@@ -187,7 +187,7 @@ class AzureObjectStoreTree implements Tree<BaseStreamResource> {
     static Map<String,String> createCustomHeadersFromRundeckMeta(Map rundeckMeta) {
         Map<String,String> custom = [:]
         rundeckMeta.each { k, v ->
-            custom[RUNDECK_CUSTOM_HEADER_PREFIX+k] = String.valueOf(v)
+            custom[AzureObjectStoreUtils.fixKeyName(RUNDECK_CUSTOM_HEADER_PREFIX+k)] = String.valueOf(v)
         }
         custom
     }

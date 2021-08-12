@@ -58,9 +58,9 @@ class AzureObjectStoreUtils {
         }
     }
 
-    private static String fixKeyName(String prefixedKey) {
-        String key = prefixedKey.replaceAll(AzureObjectStoreTree.RUNDECK_CUSTOM_HEADER_PREFIX, "")
-        return key.startsWith("rundeck") ? key.capitalize() : key
+    public static String fixKeyName(String prefixedKey) {
+        String key = prefixedKey.replaceAll("-", "").replaceAll("_", "")
+        return key.capitalize()
     }
 
 
