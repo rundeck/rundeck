@@ -13,7 +13,7 @@ export class PluginStore {
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         this.pluginsByService = new ObservableGroupMap(this.plugins, (p) => `${p.service}`)
-        this.pluginsById = new ObservableGroupMap(this.plugins, (p) => p.id)
+        this.pluginsById = new ObservableGroupMap(this.plugins, (p) => p.name)
     }
 
     @Serial
@@ -28,7 +28,7 @@ export class PluginStore {
         }))
 
         plugins.parsedBody.forEach((p: any) => {
-            if (this.pluginsById.has(p.id))
+            if (this.pluginsById.has(p.name))
                 return
             else
                 this.plugins.push(p)
