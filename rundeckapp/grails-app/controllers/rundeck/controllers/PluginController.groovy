@@ -13,13 +13,15 @@ import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import grails.converters.JSON
 import groovy.transform.CompileStatic
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.servlet.support.RequestContextUtils
+import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginApiService
 import rundeck.services.PluginService
 import rundeck.services.UiPluginService
-import rundeck.services.feature.FeatureService
 
+import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 
 import static org.springframework.http.HttpStatus.NOT_FOUND
@@ -27,10 +29,15 @@ import static org.springframework.http.HttpStatus.NOT_FOUND
 class PluginController extends ControllerBase {
     private static final String RELATIVE_PLUGIN_UPLOAD_DIR = "var/tmp/pluginUpload"
     private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
+    static def allowedMethods = [
+        installPlugin: ['POST'],
+        uploadPlugin: ['POST']
+    ]
     UiPluginService uiPluginService
     PluginService pluginService
     PluginApiService pluginApiService
     FrameworkService frameworkService
+    ApiService apiService
     def featureService
     AppAuthContextProcessor rundeckAuthContextProcessor
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
@@ -422,11 +429,29 @@ class PluginController extends ControllerBase {
             stream.close()
         }
     }
+    protected boolean requireAjaxFormToken(){
+        boolean valid = false
+        withForm {
+            g.refreshFormTokensHeader()
+            valid = true
+        }.invalidToken {
+        }
+        if (!valid) {
+            apiService.renderErrorFormat(response, [
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code: 'request.error.invalidtoken.message',
+            ])
+        }
+        return valid
+    }
 
     def uploadPlugin() {
 
         if(featureService.featurePresent(Features.PLUGIN_SECURITY)){
             renderErrorCodeAsJson("plugin.error.unauthorized.upload")
+            return
+        }
+        if(!requireAjaxFormToken()){
             return
         }
 
@@ -438,15 +463,16 @@ class PluginController extends ControllerBase {
             renderErrorCodeAsJson("request.error.unauthorized.title")
             return
         }
-        if(!params.pluginFile || params.pluginFile.isEmpty()) {
+        if(!(request instanceof MultipartHttpServletRequest && request.getFile('pluginFile'))){
             renderErrorCodeAsJson("plugin.error.missing.upload.file")
             return
         }
+        def file = request.getFile('pluginFile')
         ensureUploadLocation()
-        File tmpFile = new File(frameworkService.getRundeckFramework().baseDir,RELATIVE_PLUGIN_UPLOAD_DIR+"/"+params.pluginFile.originalFilename)
+        File tmpFile = new File(frameworkService.getRundeckFramework().baseDir,RELATIVE_PLUGIN_UPLOAD_DIR+"/"+file.originalFilename)
         if(tmpFile.exists()) tmpFile.delete()
-        tmpFile << ((MultipartFile)params.pluginFile).inputStream
-        def errors = validateAndCopyPlugin(params.pluginFile.originalFilename, tmpFile)
+        tmpFile << file.inputStream
+        def errors = validateAndCopyPlugin(file.originalFilename, tmpFile)
         tmpFile.delete()
         def msg = [:]
         if(!errors.isEmpty()) {
@@ -459,6 +485,9 @@ class PluginController extends ControllerBase {
     }
 
     def installPlugin() {
+        if(!requireAjaxFormToken()){
+            return
+        }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext,
                                                                                "system",
