@@ -377,7 +377,7 @@ for:
         !validation.valid
         validation.errors.size()==1
         validation.errors['test1[1]'] ==
-                ['Error parsing the policy document: Expected \'for: { blah: <...> }\' to be a Seqence, but was [mapping]']
+                ['Error parsing the policy document: Expected \'for: { blah: <...> }\' to be a Sequence, but was [mapping]']
     }
     def "validate for value cannot be null"(){
         when:
