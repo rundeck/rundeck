@@ -52,6 +52,18 @@ public class JschSecretBundleUtil {
                         pkData.toByteArray()
                 );
             }
+            if(nodeAuthentication.getSudoPasswordStoragePath(JschNodeExecutor.SUDO_OPT_PREFIX) != null) {
+                secretBundle.addSecret(
+                        nodeAuthentication.getSudoPasswordStoragePath(JschNodeExecutor.SUDO_OPT_PREFIX),
+                        nodeAuthentication.getSudoPasswordStorageData(JschNodeExecutor.SUDO_OPT_PREFIX)
+                );
+            }
+            if(nodeAuthentication.getSudoPasswordStoragePath(JschNodeExecutor.SUDO2_OPT_PREFIX) != null) {
+                secretBundle.addSecret(
+                        nodeAuthentication.getSudoPasswordStoragePath(JschNodeExecutor.SUDO2_OPT_PREFIX),
+                        nodeAuthentication.getSudoPasswordStorageData(JschNodeExecutor.SUDO2_OPT_PREFIX)
+                );
+            }
             return secretBundle;
         } catch(IOException iex) {
             throw new RuntimeException("Unable to prepare secret bundle", iex);

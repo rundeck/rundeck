@@ -44,10 +44,14 @@ class JschSecretBundleUtilSpec extends Specification {
         String privkey = "-----PRIV KEY-----"
         String privkeyPwd = "privKeyPwd"
         String sshPwd = "sshPwd"
+        String sudoPwd = "sudoPwd"
+        String sudo2Pwd = "sudo2Pwd"
         def storageTree = Mock(StorageTree) {
             1 * getResource("keys/ssh/priv") >> new MockResource(privkey)
             1 * getResource("keys/ssh/privk.pwd") >> new MockResource(privkeyPwd)
             1 * getResource("keys/ssh/pwd") >> new MockResource(sshPwd)
+            1 * getResource("keys/ssh/sudo") >> new MockResource(sudoPwd)
+            1 * getResource("keys/ssh/sudo2") >> new MockResource(sudo2Pwd)
         }
         def context = Mock(ExecutionContext) {
             getFrameworkProject() >> PROJECT_NAME
@@ -61,6 +65,8 @@ class JschSecretBundleUtilSpec extends Specification {
         node.setAttribute(JschNodeExecutor.NODE_ATTR_SSH_KEY_RESOURCE,"keys/ssh/priv")
         node.setAttribute(JschNodeExecutor.NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH,"keys/ssh/privk.pwd")
         node.setAttribute(JschNodeExecutor.NODE_ATTR_SSH_PASSWORD_STORAGE_PATH,"keys/ssh/pwd")
+        node.setAttribute(JschNodeExecutor.SUDO_OPT_PREFIX+JschNodeExecutor.NODE_ATTR_SUDO_PASSWORD_STORAGE_PATH,"keys/ssh/sudo")
+        node.setAttribute(JschNodeExecutor.SUDO2_OPT_PREFIX+JschNodeExecutor.NODE_ATTR_SUDO_PASSWORD_STORAGE_PATH,"keys/ssh/sudo2")
 
         when:
         def secretBundle = JschSecretBundleUtil.createBundle(context,node)
@@ -70,6 +76,8 @@ class JschSecretBundleUtilSpec extends Specification {
         secretBundle.getValue("keys/ssh/priv") == privkey.bytes
         secretBundle.getValue("keys/ssh/privk.pwd") == privkeyPwd.bytes
         secretBundle.getValue("keys/ssh/pwd") == sshPwd.bytes
+        secretBundle.getValue("keys/ssh/sudo") == sudoPwd.bytes
+        secretBundle.getValue("keys/ssh/sudo2") == sudo2Pwd.bytes
     }
 
     class MockResource implements Resource<ResourceMeta> {
