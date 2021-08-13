@@ -41,7 +41,22 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
      * Log maximum size bytes
      */
     public static final String MAX_SIZE_BYTES = "maxSizeBytes"
-
+    /**
+     * Log output limit applied over all projects
+     */
+    static final String EXECUTION_LOGS_OUTPUT_LIMIT = "execution.logs.output.limit"
+    /**
+     * Log limit action applied over all projects
+     */
+    static final String EXECUTION_LOGS_LIMIT_ACTION = "execution.logs.output.limitAction"
+    /**
+     * Log size warning
+     */
+    static final String EXECUTION_LOGS_SIZE_WARNING = "execution.logs.output.warningSize"
+    /**
+     * Log global config
+     */
+    static final String EXECUTION_LOGS_GLOBAL_CONFIG = "execution.logs.output.globalConfig"
 
     Long maxValue
     Long warningSize
