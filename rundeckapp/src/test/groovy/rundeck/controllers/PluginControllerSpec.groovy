@@ -605,12 +605,15 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     void "pluginSecurity install plugin fails"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
+        controller.apiService=Mock(ApiService)
         controller.featureService = Mock(FeatureService)
 
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         messageSource.addMessage("plugin.error.unauthorized.upload",Locale.ENGLISH,"Plugin Security Enabled")
 
         when:
+        request.method='POST'
+        setupFormTokens(params)
         def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
         params.pluginUrl = pluginUrl.toString()
         controller.installPlugin()
