@@ -125,15 +125,13 @@
                     <div class="col-sm-10 col-sm-offset-2">
                         <!-- ko if: !nameFixed() -->
                         <div class="checkbox">
-                            <label>
-
                                 <g:checkBox name="overwrite"
                                             value="true"
                                             id="acl_upload_overwrite"
                                             checked="false"
                                             data-bind="checked: overwrite"/>
-
-                                <g:message code="aclpolicy.file.upload.overwrite.label"/>
+                            <label for="acl_upload_overwrite">
+                            <g:message code="aclpolicy.file.upload.overwrite.label"/>
                             </label>
                         </div>
                         <!-- /ko -->
