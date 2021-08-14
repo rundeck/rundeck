@@ -74,6 +74,7 @@
                                ],
                                [
                                        css    : 'btn-cta',
+                                       id: (uploadModalId?:'aclUpload' )+ '_submit_btn',
                                        message: message(code: 'button.action.Upload'),
                                ]]
             ]">
@@ -82,6 +83,7 @@
 
                     <div class="col-sm-10">
                         <input type="file" name="uploadFile"
+                            id="${uploadModalId}_input_file"
                                data-bind="event: { change: fileChanged }"/>
                         <!-- ko if: fileError -->
                         <span class="help-block">
@@ -97,7 +99,7 @@
 
                     <div class="col-sm-10">
                         <!-- ko if: !nameFixed() -->
-                        <g:textField name="name" class="form-control" data-bind="value: name"/>
+                        <g:textField name="name" class="form-control" data-bind="value: name" id="${uploadModalId}_input_name"/>
                         <span class="help-block">
                             <g:message code="policy.name.description"/>
                         </span>
@@ -127,6 +129,7 @@
 
                                 <g:checkBox name="overwrite"
                                             value="true"
+                                            id="acl_upload_overwrite"
                                             checked="false"
                                             data-bind="checked: overwrite"/>
 
