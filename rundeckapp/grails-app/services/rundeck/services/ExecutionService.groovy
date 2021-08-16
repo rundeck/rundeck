@@ -1041,17 +1041,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //        }
 //
 
-        //set up log output threshold
-        boolean logGlobalConfig = frameworkService.getProjectLogGlobalConfig()
+        // Getting execution log global configuration
+        boolean logGlobalConfig = configurationService.getBoolean(LoggingThreshold.EXECUTION_LOGS_GLOBAL_CONFIG, false)
 
-        boolean limitFramework = false
-        String outputLimit = getOutputLimit(logGlobalConfig, scheduledExecution, limitFramework)
+        // Output limit
+        String outputLimit = getOutputLimit(scheduledExecution)
         def thresholdMap = ScheduledExecution.parseLogOutputThreshold(outputLimit)
 
-        String limitAction = getLimitAction(logGlobalConfig, limitFramework, scheduledExecution)
+        // Output limit action
+        String limitAction = getLimitAction(scheduledExecution)
         def threshold = LoggingThreshold.fromMap(thresholdMap, limitAction)
 
-        String warnSize = frameworkService.getProjectLogSizeWarning() ?: LoggingThreshold.WARN_SIZE_DEFAULT
+        String warnSize = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_SIZE_WARNING, LoggingThreshold.WARN_SIZE_DEFAULT)
         Map<String, Long> warnSizeMap = ScheduledExecution.parseLogOutputThreshold(warnSize)
         threshold?.warningSize = warnSizeMap[LoggingThreshold.MAX_SIZE_BYTES] ?: warnSizeMap[LoggingThreshold.MAX_LINES]
 
@@ -1258,33 +1259,49 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    private String getOutputLimit(boolean logGlobalCongif, ScheduledExecution scheduledExecution, boolean limitFramework) {
+    private String getOutputLimit(ScheduledExecution scheduledExecution) {
         String outputLimit = ""
-        if (logGlobalCongif) {
-            outputLimit = frameworkService.getProjectLogOutputLimit()
-            limitFramework = true
-        } else {
-            outputLimit = scheduledExecution?.logOutputThreshold
-            if (!outputLimit) {
-                outputLimit = frameworkService.getProjectLogOutputLimit()
-                limitFramework = true
-            }
+        String globalLimit = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_OUTPUT_LIMIT)
+        String jobLimit = scheduledExecution?.logOutputThreshold
+
+        if (!globalLimit) {
+            outputLimit = jobLimit
+        }
+        else if (globalLimit && jobLimit) {
+            outputLimit = String.valueOf(Math.min(Long.valueOf(globalLimit), Long.valueOf(jobLimit)))
+        }
+        else if (globalLimit && !jobLimit) {
+            outputLimit = globalLimit
         }
         log.info("Logging output limit: ${outputLimit}")
         return outputLimit
     }
 
-    private String getLimitAction(boolean logGlobalConfig, boolean limitFramework, ScheduledExecution scheduledExecution) {
-        String limitAction = scheduledExecution?.logOutputThresholdAction
-        if (logGlobalConfig) {
-            limitAction = frameworkService.getProjectLogLimitAction()
-        } else {
-            if (limitFramework) {
-                limitAction = frameworkService.getProjectLogLimitAction() ?: scheduledExecution?.logOutputThresholdAction
-            }
+    private String getLimitAction(ScheduledExecution scheduledExecution) {
+        String limitAction       = LoggingThreshold.ACTION_HALT
+        String globalLimit       = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_OUTPUT_LIMIT)
+        String globalLimitAction = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_LIMIT_ACTION)
+        String jobLimit          = scheduledExecution?.logOutputThreshold
+        String jobLimitAction    = scheduledExecution?.logOutputThresholdAction
+
+        if (jobLimit && !globalLimit) {
+            limitAction = jobLimitAction
         }
+        else if (jobLimit && globalLimit && globalLimitAction == LoggingThreshold.ACTION_HALT) {
+            limitAction = globalLimitAction
+        }
+        else if (jobLimit && globalLimit && globalLimitAction == LoggingThreshold.ACTION_TRUNCATE) {
+            limitAction = jobLimitAction
+        }
+        else if (jobLimit && globalLimit && !globalLimitAction) {
+            limitAction = jobLimitAction
+        }
+        else if (!jobLimit && globalLimit) {
+            limitAction = globalLimitAction ?: LoggingThreshold.ACTION_TRUNCATE
+        }
+
         log.info("Logging limit action: ${limitAction}")
-        return limitAction ?: LoggingThreshold.ACTION_HALT
+        return limitAction
     }
 
     /**
