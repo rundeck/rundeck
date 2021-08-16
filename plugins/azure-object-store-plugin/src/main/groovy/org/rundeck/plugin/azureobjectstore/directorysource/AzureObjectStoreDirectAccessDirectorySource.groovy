@@ -102,18 +102,18 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
         def resources = []
         String lstPath = path == "" ? null : path
 
-        List<CloudBlockBlob> listBlobs = []
+        List<CloudBlobDirectory> listBlobs = []
 
         container.listBlobs(lstPath).forEach{item->
             if(item instanceof CloudBlobDirectory){
                 CloudBlobDirectory folder = (CloudBlobDirectory) item
-                listBlobs.addAll(listBlobsFromDirectory(folder))
+                listBlobs.add(folder)
             }
         }
 
         listBlobs.each { result ->
-            CloudBlockBlob blob = (CloudBlockBlob)result
-            resources.add(createSubDirectoryResourceListItemWithMetadata(blob))
+            ListBlobItem item = (ListBlobItem) result
+            resources.add(createSubDirectoryResourceListItemWithMetadata(result))
         }
 
         return resources
@@ -125,12 +125,12 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
         String lstPath = path == "" ? null : path
 
         List<CloudBlockBlob> listBlobEntries = []
-        List<CloudBlockBlob> listSubDirEntries = []
+        List<CloudBlobDirectory> listSubDirEntries = []
 
         container.listBlobs(lstPath).forEach{item->
             if(item instanceof CloudBlobDirectory){
                 CloudBlobDirectory folder = (CloudBlobDirectory) item
-                listSubDirEntries.addAll(listBlobsFromDirectory(folder))
+                listSubDirEntries.add(folder)
             }
             else{
                 listBlobEntries.add((CloudBlockBlob)item)
@@ -142,15 +142,13 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
             resources.add(createResourceListItemWithMetadata(blob))
         }
         listSubDirEntries.each { result ->
-            CloudBlockBlob blob = (CloudBlockBlob)result
-            resources.add(createSubDirectoryResourceListItemWithMetadata(blob))
+            resources.add(createSubDirectoryResourceListItemWithMetadata(result))
         }
 
         return resources
     }
 
-    def listBlobsFromDirectory = { CloudBlobDirectory directory ->
-
+    List<CloudBlockBlob> listBlobsFromDirectory(CloudBlobDirectory directory){
         List<CloudBlockBlob> listBlobs = []
         directory.listBlobs().each{item->
             if(item instanceof CloudBlobDirectory){
@@ -192,10 +190,8 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
                                      new LazyAccessObjectStoreInputStream(item))
         return new AzureObjectStoreResource(item.getName(), content)
     }
-    private AzureObjectStoreResource createSubDirectoryResourceListItemWithMetadata(final CloudBlockBlob item) {
-        BaseStreamResource content = new BaseStreamResource(getEntryMetadata(item.getName()),
-                new LazyAccessObjectStoreInputStream(item))
-        return new AzureObjectStoreResource(item.getName(), content, true)
+    private static AzureObjectStoreResource createSubDirectoryResourceListItemWithMetadata(final CloudBlobDirectory item) {
+        return new AzureObjectStoreResource(item.getPrefix(), null, true)
     }
 
     @Override
