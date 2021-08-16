@@ -41,9 +41,9 @@ function PolicyUpload(data) {
         if (!self.nameError() && !self.overwrite()) {
             //check existing policies
             self.overwriteError(
-                ko.utils.arrayFirst(self.policies(), function (val) {
+                self.policies().some(function (val) {
                     return val.name() === self.name();
-                }) !== null
+                })
             );
         }
         if (self.overwrite()) {
@@ -225,9 +225,9 @@ function PolicyFiles(data,loadableEndpoint) {
         if (policies.length < 1) {
             return true;
         }
-        return ko.utils.arrayFirst(policies, function (p) {
+        return !policies.some(function (p) {
             return !p.valid();
-        }) === null;
+        })
     });
     self.selectedPolicy = ko.observable();
     self.showModal = function (id, policy) {
