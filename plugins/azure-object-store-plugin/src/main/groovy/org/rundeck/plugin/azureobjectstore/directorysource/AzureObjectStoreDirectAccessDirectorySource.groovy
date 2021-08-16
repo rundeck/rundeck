@@ -101,7 +101,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
     Set<Resource<BaseStreamResource>> listSubDirectoriesAt(final String path) {
         def resources = []
         String lstPath = path == "" ? null : path
-        String rPath = path == "" ?: path+"/"
 
         List<CloudBlockBlob> listBlobs = []
 
@@ -124,7 +123,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
     Set<Resource<BaseStreamResource>> listEntriesAndSubDirectoriesAt(final String path) {
         def resources = []
         String lstPath = path == "" ? null : path
-        String rPath = path == "" ?: path+"/"
 
         List<CloudBlockBlob> listBlobEntries = []
         List<CloudBlockBlob> listSubDirEntries = []
@@ -170,7 +168,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
     Set<Resource<BaseStreamResource>> listResourceEntriesAt(final String path) {
         def resources = []
         String lstPath = path == "" ? null : path
-        String rPath = path == "" ?: path+"/"
 
         List<CloudBlockBlob> listBlobs = []
 
