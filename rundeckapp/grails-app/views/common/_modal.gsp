@@ -38,9 +38,9 @@
                     </button>
                 </g:if>
                 <span id="${modalid}_buttons">
-                    <g:each in="${buttons}" var="button">
+                    <g:each in="${buttons}" var="button" status="n">
                         <button class="btn ${button.css ?: 'btn-default'} " data-bind="${button.bind ?: ''}"
-                                onclick="${button.js ?: ''}">
+                                onclick="${button.js ?: ''}" id="${button.id?:modalid+'_btn_'+n}">
                             ${button.message ?: button.messageCode ? message(code: button.messageCode) : 'button'}
                         </button>
                     </g:each>

@@ -56,6 +56,7 @@
                             href="#"
                             icon="remove"
                             code="button.action.Delete"
+                            class="acl_menu__action_delete"
                             data-bind="click: function(){ \$root.showModal('${deleteModalId}', \$data);}"></bs:menuitem>
 
                 </bs:dropdown>

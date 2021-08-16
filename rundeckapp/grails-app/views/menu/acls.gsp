@@ -232,18 +232,20 @@
 
               </g:if>
 
-              <div class="card-header clearfix">
+              <div class="card-header clearfix" id="storedPolicies_header">
                   <h3 class="card-title pull-left">
                       <g:message code="stored.acl.policy.files.title"/>
                       <span class="badge" style="font-size:1em">${aclStoredList.size()}</span>
                   </h3>
                   <g:if test="${hasCreateAuth}">
                       <div class="btn-group pull-right">
-                          <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload">
+                          <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload"
+                                id="storage_acl_upload_btn">
                               <g:icon name="upload"/>
                               <g:message code="button.action.Upload"/>
                           </span>
                           <g:link controller="menu"
+                                  id="storage_acl_create_btn"
                                   action="createSystemAclFile"
                                   params="${[fileType: 'storage']}"
                                   class="btn btn-sm btn-cta">
@@ -258,7 +260,7 @@
                   <div>
                       <g:render template="aclsPagingKO" model="[name: 'acl-stored']"/>
                       <g:render template="aclKOTemplates"/>
-                      <div data-bind="foreach: policiesView">
+                      <div data-bind="foreach: policiesView" id="storedPolicies_list">
                           <g:render template="/menu/aclValidationRowKO"
                                     model="${[
                                             hasEditAuth  : hasEditAuth,
