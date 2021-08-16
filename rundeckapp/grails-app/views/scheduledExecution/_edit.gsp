@@ -335,13 +335,11 @@
                       <g:render template="/framework/nodeFilterInputGroup"
                                 model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName]"/>
 
-                      %{--  Form for saving/deleting node filters--}%
-                      <g:form class="form form-horizontal" useToken="true">
-                          <g:hiddenField name="project" value="${params.project}"/>
-                      %{--          <g:render template="/framework/nodeFiltersHidden"/>--}%
-                          <g:render template="/common/queryFilterManagerModal"
-                                    model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>
-                      </g:form>
+
+                      <g:hiddenField name="project" value="${params.project}"/>
+                      <g:render template="/framework/nodeFiltersHidden"/>
+                      <g:render template="/common/queryFilterManagerModal"
+                                model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>
                   </span>
 
           <div class=" collapse" id="queryFilterHelp">
