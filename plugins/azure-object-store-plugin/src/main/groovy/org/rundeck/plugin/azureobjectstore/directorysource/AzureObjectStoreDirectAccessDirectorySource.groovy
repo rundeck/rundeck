@@ -86,11 +86,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
         }
 
         return directory
-
-        //container.listBlobs(path)
-        //def items = mClient.listObjects(bucket, path, false)
-        //if(items.size() != 1) return false
-        //return items[0].get().objectName().endsWith(DIR_MARKER)
     }
 
     @Override
@@ -105,83 +100,54 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
     @Override
     Set<Resource<BaseStreamResource>> listSubDirectoriesAt(final String path) {
         def resources = []
-        def subdirs = [] as Set
         String lstPath = path == "" ? null : path
-        Pattern directSubDirMatch = AzureObjectStoreUtils.createSubdirCheckForPath(lstPath)
-        /*
-        container.listBlobs().each { object ->
-            if(object instanceof CloudBlobDirectory){
-                CloudBlobDirectory folder = (CloudBlobDirectory) object
-                list.add([name:folder.getUri().toString(),
-                          container:folder.getContainer().getName(),
-                          uri:"",
-                          lastModified:"",
-                          length:"",
-                          type:"FOLDER",
-                          contentType:""])
+        String rPath = path == "" ?: path+"/"
 
-                if(recursive){
-                    list.addAll(listBlobs(folder.listBlobs()))
-                }
+        List<CloudBlockBlob> listBlobs = []
 
-            }else{
-                list.add(printBlob(object))
-            }
-
-        }
-         */
-
-        Iterable<ListBlobItem> items = container.listBlobs().each { result ->
-            Matcher m = directSubDirMatch.matcher(result.uri) //manipulate to get name?)
-            if(m.matches()) {
-                subdirs.add(m.group(1))
+        container.listBlobs(lstPath).forEach{item->
+            if(item instanceof CloudBlobDirectory){
+                CloudBlobDirectory folder = (CloudBlobDirectory) item
+                listBlobs.addAll(listBlobsFromDirectory(folder))
             }
         }
-        subdirs.sort().each { String dirname -> resources.add(new AzureObjectStoreResource(path+ "/"+dirname, null, true)) }
+
+        listBlobs.each { result ->
+            CloudBlockBlob blob = (CloudBlockBlob)result
+            resources.add(createSubDirectoryResourceListItemWithMetadata(blob))
+        }
+
         return resources
     }
 
     @Override
     Set<Resource<BaseStreamResource>> listEntriesAndSubDirectoriesAt(final String path) {
         def resources = []
-        Pattern directSubDirMatch = AzureObjectStoreUtils.createSubdirCheckForPath(path)
-        def subdirs = [] as Set
+        String lstPath = path == "" ? null : path
+        String rPath = path == "" ?: path+"/"
 
-        /*
-        container.listBlobs().each { object ->
-            if(object instanceof CloudBlobDirectory){
-                CloudBlobDirectory folder = (CloudBlobDirectory) object
-                list.add([name:folder.getUri().toString(),
-                          container:folder.getContainer().getName(),
-                          uri:"",
-                          lastModified:"",
-                          length:"",
-                          type:"FOLDER",
-                          contentType:""])
+        List<CloudBlockBlob> listBlobEntries = []
+        List<CloudBlockBlob> listSubDirEntries = []
 
-                if(recursive){
-                    list.addAll(listBlobs(folder.listBlobs()))
-                }
-
-            }else{
-                list.add(printBlob(object))
+        container.listBlobs(lstPath).forEach{item->
+            if(item instanceof CloudBlobDirectory){
+                CloudBlobDirectory folder = (CloudBlobDirectory) item
+                listSubDirEntries.addAll(listBlobsFromDirectory(folder))
             }
-
-        }
-         */
-
-        /*
-        mClient.listObjects(bucket, path, true).each { result ->
-            Matcher m = directSubDirMatch.matcher(result.get().objectName())
-            if(m.matches()) {
-                subdirs.add(path+DIR_MARKER+m.group(1))
-            } else {
-                resources.add(createResourceListItemWithMetadata(result.get()))
+            else{
+                listBlobEntries.add((CloudBlockBlob)item)
             }
         }
 
-         */
-        subdirs.sort().each { String dirname -> resources.add(new AzureObjectStoreResource(dirname, null, true)) }
+        listBlobEntries.each { result ->
+            CloudBlockBlob blob = (CloudBlockBlob)result
+            resources.add(createResourceListItemWithMetadata(blob))
+        }
+        listSubDirEntries.each { result ->
+            CloudBlockBlob blob = (CloudBlockBlob)result
+            resources.add(createSubDirectoryResourceListItemWithMetadata(blob))
+        }
+
         return resources
     }
 
@@ -221,15 +187,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
             CloudBlockBlob blob = (CloudBlockBlob)result
             resources.add(createResourceListItemWithMetadata(blob))
         }
-
-        /*
-        mClient.listObjects(bucket, lstPath, true)
-              .findAll {
-           !(it.get().objectName().replaceAll(rPath,"").contains("/"))
-        }.each { result ->
-           resources.add(createResourceListItemWithMetadata(result.get()))
-        }
-        */
         return resources
     }
 
@@ -237,6 +194,11 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
         BaseStreamResource content = new BaseStreamResource(getEntryMetadata(item.getName()),
                                      new LazyAccessObjectStoreInputStream(item))
         return new AzureObjectStoreResource(item.getName(), content)
+    }
+    private AzureObjectStoreResource createSubDirectoryResourceListItemWithMetadata(final CloudBlockBlob item) {
+        BaseStreamResource content = new BaseStreamResource(getEntryMetadata(item.getName()),
+                new LazyAccessObjectStoreInputStream(item))
+        return new AzureObjectStoreResource(item.getName(), content, true)
     }
 
     @Override
