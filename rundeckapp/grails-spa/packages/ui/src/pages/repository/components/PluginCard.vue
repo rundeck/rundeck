@@ -2,7 +2,7 @@
   <div v-show="displayCard" class="px-3">
     <div class="card w-full p-6">
       <div class="col-md-3">
-        <div v-if="result.record.images.thumbnail.url">
+        <div v-if="result.record && result.record.images.thumbnail.url">
           <div :style="{ backgroundImage: `url( ${result.record.images.thumbnail.url} )` }" class="w-full thumbnail"></div>
         </div>
       </div>

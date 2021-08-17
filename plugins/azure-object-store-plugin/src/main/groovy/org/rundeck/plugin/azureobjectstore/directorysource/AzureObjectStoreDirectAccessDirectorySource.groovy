@@ -173,7 +173,8 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
         container.listBlobs(lstPath).forEach{item->
             if(item instanceof CloudBlobDirectory){
                 CloudBlobDirectory folder = (CloudBlobDirectory) item
-                listSubDirEntries.add(folder)
+                listBlobs.addAll(listBlobsFromDirectory(folder))
+                //listSubDirEntries.add(folder)
             }else{
                 listBlobs.add((CloudBlockBlob)item)
             }
