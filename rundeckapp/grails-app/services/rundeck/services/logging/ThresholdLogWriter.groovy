@@ -65,7 +65,8 @@ class ThresholdLogWriter extends FilterStreamingLogWriter {
         }
 
         if (!limit && threshold.isThresholdExceeded() && limitReached.compareAndSet(false, true)) {
-            String msgError = "Log output limit exceeded: ${threshold.description}, job execution: ${execution?.scheduledExecution?.jobName}"
+            String jobName = execution?.scheduledExecution?.jobName ?: "Unknown"
+            String msgError = "Log output limit exceeded: ${threshold.description}, job execution: ${jobName}"
             LOG.error(msgError)
             getWriter().addEvent(LogUtil.logError(msgError))
         }
