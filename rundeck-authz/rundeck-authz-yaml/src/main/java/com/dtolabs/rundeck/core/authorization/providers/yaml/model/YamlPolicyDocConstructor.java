@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.core.authorization.providers.yaml.model;
 
-import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.error.YAMLException;
 import org.yaml.snakeyaml.nodes.*;
@@ -30,51 +29,28 @@ import java.util.*;
 public class YamlPolicyDocConstructor extends Constructor {
     public YamlPolicyDocConstructor() {
         super(ACLPolicyDoc.class);
-//        rootTag = new Tag(YamlPolicyDoc.class);
-        this.yamlConstructors.put(null, new TestObjConstruct());
+        this.yamlConstructors.put(null, undefinedConstructor);
+        yamlConstructors.put(new Tag(ACLPolicyDoc.class), new ACLPolicyDocConstructYamlObject());
         yamlClassConstructors.put(NodeId.mapping, new YamlPolicyDocConstruct());
-
-//        TypeDescription policyDesc = new TypeDescription(ACLPolicyDoc.class);
-//        policyDesc.putMapPropertyType("for", String.class, ACLPolicyDoc.For.class);
-//        addTypeDescription(policyDesc);
-//        policyDesc.putMapPropertyType("context", String.class, YamlPolicyDoc.PolicyContext.class);
-//        policyDesc.putMapPropertyType("by", String.class, YamlPolicyDoc.PolicyBy.class);
-//        policyDesc.putMapPropertyType("description", String.class, String.class);
-//        addTypeDescription(policyDesc);
-//        yamlClassConstructors.put(NodeId.mapping, new YamlPolicyDocConstruct());
-//        TypeDescription docdesc = new TypeDescription(ACLPolicyDoc.class);
-//        docdesc.putMapPropertyType("for", String.class, List.class);
-//        addTypeDescription(docdesc);
-
-
-//        TypeDescription rulesDesc = new TypeDescription(ACLPolicyDoc.For.class);
-//        rulesDesc.putListPropertyType("job", ACLPolicyDoc.TypeRule.class);
-//        rulesDesc.putListPropertyType("resource", ACLPolicyDoc.TypeRule.class);
-//        rulesDesc.putListPropertyType("node", ACLPolicyDoc.TypeRule.class);
-//        rulesDesc.putListPropertyType("user", ACLPolicyDoc.TypeRule.class);
-//        rulesDesc.putListPropertyType("adhoc", ACLPolicyDoc.TypeRule.class);
-//        rulesDesc.putListPropertyType("project", ACLPolicyDoc.TypeRule.class);
-//        rulesDesc.putListPropertyType("apitoken", ACLPolicyDoc.TypeRule.class);
-//        rulesDesc.putListPropertyType("type", ACLPolicyDoc.TypeRule.class);
-//        addTypeDescription(rulesDesc);
+        yamlClassConstructors.put(NodeId.scalar, new ACLPolicyDocEmptyConstructScalar());
     }
 
-    class TestObjConstruct extends Constructor.ConstructYamlObject {
+    /**
+     * return null if root node is blank scalar, e.g. doc separator in yaml with empty content
+     */
+    class ACLPolicyDocEmptyConstructScalar
+            extends Constructor.ConstructScalar {
         @Override
-        public Object construct(final Node node) {
-            if (node instanceof ScalarNode) {
-                ScalarNode scalarNode = (ScalarNode) node;
-                if ("".equals(scalarNode.getValue())) {
-                    return null;
+        public Object construct(final Node nnode) {
+            if(nnode.getType()==ACLPolicyDoc.class){
+                if (nnode instanceof ScalarNode) {
+                    ScalarNode scalarNode = (ScalarNode) nnode;
+                    if ("".equals(scalarNode.getValue())) {
+                        return null;
+                    }
                 }
             }
-            Object construct = super.construct(node);
-            return construct;
-        }
-
-        @Override
-        public void construct2ndStep(final Node node, final Object object) {
-            super.construct2ndStep(node, object);
+            return super.construct(nnode);
         }
     }
 
@@ -84,23 +60,24 @@ public class YamlPolicyDocConstructor extends Constructor {
     static Set<String> ALLOWED_CONTEXT_KEYS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "project","application"
     )));
+
+    /**
+     * allow AclPolicyDoc type to be constructed
+     */
+    class ACLPolicyDocConstructYamlObject
+            extends Constructor.ConstructYamlObject {
+        //subtype required due to protected class
+    }
+
+    /**
+     * validate document structure to match expectations and fail with readable messages
+     */
     class YamlPolicyDocConstruct extends Constructor.ConstructMapping {
-        @Override
-        public Object construct(final Node node) {
-            return super.construct(node);
-        }
-
-        @Override
-        public void construct2ndStep(final Node node, final Object object) {
-            super.construct2ndStep(node, object);
-        }
-
 
         @Override
         protected Object constructJavaBean2ndStep(MappingNode node, Object object) {
-            Class type = node.getType();
+            Class<?> type = node.getType();
             if (type.equals(ACLPolicyDoc.Context.class)) {
-
                 for (NodeTuple tuple : node.getValue()) {
                     ScalarNode keyNode;
                     if (tuple.getKeyNode() instanceof ScalarNode) {
@@ -109,7 +86,6 @@ public class YamlPolicyDocConstructor extends Constructor {
                     } else {
                         throw new YAMLException("Keys must be scalars but found: " + tuple.getKeyNode());
                     }
-                    Node valueNode = tuple.getValueNode();
                     // keys can only be Strings
                     keyNode.setType(String.class);
                     String key = (String) constructObject(keyNode);
@@ -183,7 +159,7 @@ public class YamlPolicyDocConstructor extends Constructor {
                                     } else {
                                         throw new YAMLException("Expected 'for: { " +
                                                                 forkey +
-                                                                ": <...> }' to be a Seqence, but was [" +
+                                                                ": <...> }' to be a Sequence, but was [" +
                                                                 listNode.getNodeId() +
                                                                 "]");
                                     }
