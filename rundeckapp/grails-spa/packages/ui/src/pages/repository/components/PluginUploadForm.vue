@@ -27,6 +27,7 @@
 <script>
 import { mapState, mapActions } from "vuex";
 import axios from "axios";
+import {client} from "@rundeck/ui-trellis/lib/modules/rundeckClient"
 export default {
   name: "UploadPluginForm",
   computed: {
@@ -52,17 +53,22 @@ export default {
         loadingMessage: "Installing",
         loadingSpinner: true
       });
+      //use axios instead of RundeckClient, to allow multipart form with file upload
       axios({
         method: "post",
         headers: {
           "x-rundeck-ajax": true,
-          "Content-Type": "multipart/form-data"
+          "Content-Type": "multipart/form-data",
+          "X-RUNDECK-TOKEN-KEY": client.token,
+          "X-RUNDECK-TOKEN-URI": client.uri
         },
         data: formData,
         url: `${window._rundeck.rdBase}plugin/uploadPlugin`,
         withCredentials: true
       }).then(response => {
         this.$store.dispatch("overlay/openOverlay");
+        client.token = response.headers['x-rundeck-token-key'] || client.token
+        client.uri = response.headers['x-rundeck-token-uri'] || client.uri
         if (response.data.err) {
           this.$alert({
             title: "Error Uploading",
@@ -74,6 +80,16 @@ export default {
             content: response.data.msg
           });
         }
+      }).catch(result=>{
+        this.$store.dispatch("overlay/openOverlay");
+        let message=result.message
+        if(result.response && result.response.data && result.response.data.message){
+          message=result.response.data.message
+        }
+        this.$alert({
+          title: "Error Uploading",
+          content: message
+        });
       });
     },
     handleFilesUploads() {
