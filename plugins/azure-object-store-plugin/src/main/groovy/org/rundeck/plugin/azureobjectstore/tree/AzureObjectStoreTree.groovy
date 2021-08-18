@@ -21,7 +21,6 @@ import com.microsoft.azure.storage.CloudStorageAccount
 import com.microsoft.azure.storage.blob.CloudBlobClient
 import com.microsoft.azure.storage.blob.CloudBlobContainer
 import com.microsoft.azure.storage.blob.CloudBlockBlob
-import io.minio.PutObjectOptions
 import org.rundeck.plugin.azureobjectstore.directorysource.AzureObjectStoreDirectorySource
 import org.rundeck.plugin.azureobjectstore.directorysource.AzureObjectStoreMemoryDirectorySource
 import org.rundeck.plugin.azureobjectstore.stream.CloseAfterCopyStream

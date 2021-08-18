@@ -148,19 +148,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
         return resources
     }
 
-    List<CloudBlockBlob> listBlobsFromDirectory(CloudBlobDirectory directory){
-        List<CloudBlockBlob> listBlobs = []
-        directory.listBlobs().each{item->
-            if(item instanceof CloudBlobDirectory){
-                CloudBlobDirectory folder = (CloudBlobDirectory) item
-                listBlobs.addAll(listBlobsFromDirectory(folder))
-            }else{
-                listBlobs.add((CloudBlockBlob)item)
-            }
-        }
-
-        return listBlobs
-    }
 
     @Override
     Set<Resource<BaseStreamResource>> listResourceEntriesAt(final String path) {
@@ -173,7 +160,7 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
         container.listBlobs(lstPath).forEach{item->
             if(item instanceof CloudBlobDirectory){
                 CloudBlobDirectory folder = (CloudBlobDirectory) item
-                listBlobs.addAll(listBlobsFromDirectory(folder))
+                listBlobs.addAll(AzureObjectStoreUtils.listBlobsFromDirectory(folder))
                 //listSubDirEntries.add(folder)
             }else{
                 listBlobs.add((CloudBlockBlob)item)

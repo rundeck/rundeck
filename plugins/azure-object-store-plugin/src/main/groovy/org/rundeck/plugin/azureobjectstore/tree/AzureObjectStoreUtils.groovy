@@ -16,18 +16,12 @@
 package org.rundeck.plugin.azureobjectstore.tree
 
 import com.dtolabs.rundeck.core.storage.StorageUtil
-import com.microsoft.azure.storage.blob.CloudBlobClient
 import com.microsoft.azure.storage.blob.CloudBlobContainer
+import com.microsoft.azure.storage.blob.CloudBlobDirectory
 import com.microsoft.azure.storage.blob.CloudBlockBlob
-
-import java.util.regex.Pattern
 
 
 class AzureObjectStoreUtils {
-    static Pattern createSubdirCheckForPath(String path) {
-        if(!path) return ~/(.*?)\/.*/
-        return ~/${path}\/(.*?)\/.*/
-    }
 
     static Map<String,String> objectStatToMap(CloudBlockBlob objectStat) {
         objectStat.downloadAttributes()
@@ -49,16 +43,6 @@ class AzureObjectStoreUtils {
         return metaResult
     }
 
-    static boolean checkContainerExists(CloudBlobClient client, String container){
-
-        try{
-            CloudBlobContainer containerObject = client.getContainerReference(container)
-            return true
-        }
-        catch (Exception e){
-            return false
-        }
-    }
 
     static String cleanAzureKeyName(String prefixedKey) {
         String key = prefixedKey.replaceAll("-", "_")
@@ -74,5 +58,33 @@ class AzureObjectStoreUtils {
     static CloudBlockBlob getBlobFile(CloudBlobContainer container, String path){
         CloudBlockBlob blob = container.getBlockBlobReference(path);
         return blob
+    }
+
+    static List<CloudBlockBlob> listBlobs(CloudBlobContainer container){
+        List<CloudBlockBlob> listBlobs = []
+
+        container.listBlobs().forEach{item->
+            if(item instanceof CloudBlobDirectory){
+                CloudBlobDirectory folder = (CloudBlobDirectory) item
+                listBlobs.addAll(AzureObjectStoreUtils.listBlobsFromDirectory(folder))
+            }else{
+                listBlobs.add((CloudBlockBlob)item)
+            }
+        }
+        listBlobs
+    }
+
+    static List<CloudBlockBlob> listBlobsFromDirectory(CloudBlobDirectory directory){
+        List<CloudBlockBlob> listBlobs = []
+        directory.listBlobs().each{item->
+            if(item instanceof CloudBlobDirectory){
+                CloudBlobDirectory folder = (CloudBlobDirectory) item
+                listBlobs.addAll(listBlobsFromDirectory(folder))
+            }else{
+                listBlobs.add((CloudBlockBlob)item)
+            }
+        }
+
+        return listBlobs
     }
 }

@@ -147,13 +147,13 @@ class AzureObjectStoreMemoryDirectorySource implements AzureObjectStoreDirectory
     @Override
     void resyncDirectory() {
         root = new DirectoryNode("")
-        /*
-        mClient.listObjects(bucket).each {
-            def meta = AzureObjectStoreUtils.objectStatToMap(mClient.statObject(bucket, it.get().objectName()))
-            updateEntry(it.get().objectName(),meta)
-        }
 
-         */
+        List<CloudBlockBlob> blobList = AzureObjectStoreUtils.listBlobs(container)
+
+        blobList.each {blob->
+            def meta = AzureObjectStoreUtils.objectStatToMap(blob)
+            updateEntry(blob.getName(),meta)
+        }
     }
 
     private DirectoryNode getDir(List<String> pathParts) {
