@@ -11,7 +11,7 @@ $grey-900:                   #18181B;
 $blue-100:                   #BFDBFE;
 $blue-200:                   #93C5FD;
 $blue-300:                   #60A5FA;
-$blue-500:                   #2563EB;
+$blue-500:                   #134ECD;
 $blue-700:                   #1E40AF;
 
 $green-100:                  #BBF7D0;
@@ -128,16 +128,16 @@ $primary-states-color:       darken($primary-color,11%) !default;
 $primary-highlight-color:    lighten($primary-color, 11%) !default;
 
 $success-color:              $green-500 !default;
-$success-states-color:       darken($success-color,11%) !default;
+$success-states-color:       $green-500 !default;
 
-$info-color:                 $cyan-300 !default;
-$info-states-color:          darken($info-color,11%) !default;
+$info-color:                 $blue-500 !default;
+$info-states-color:          $blue-500 !default;
 
 $warning-color:              $yellow-500 !default;
-$warning-states-color:       darken($warning-color,11%) !default;
+$warning-states-color:       $yellow-700 !default;
 
-$danger-color:               $orange-500 !default;
-$danger-states-color:        darken($danger-color,11%) !default;
+$danger-color:               $red-500 !default;
+$danger-states-color:         $red-500 !default;
 
 $link-disabled-color:        $grey-600 !default;
 
@@ -159,7 +159,8 @@ $light-azure:                rgba($info-color, .2);
 $light-green:                rgba($success-color, .2);
 $light-orange:               rgba($warning-color, .2);
 $light-red:                  rgba($danger-color, .2);
-$placeholder-gray:           #C3C3C3 !default;
+
+$placeholder-gray:           $grey-400 !default;
 
 
 /*           Social buttons            */
@@ -365,60 +366,64 @@ $border-radius-small-top:     $border-radius-small $border-radius-small 0 0 !def
 
 
 //variables used in cards
-$card-black-color:          #252422 !default;
-$card-muted-color:          #ccc5b9 !default;
+$card-black-color:          $black !default;
+$card-black-color:          $black !default;
+$card-muted-color:          $grey-400 !default;
 
-$card-background-blue:      #b8d8d8 !default;
-$card-font-blue:            #506568 !default;
-$card-subtitle-blue:        #7a9e9f !default;
+$card-background-blue:      $teal-100 !default;
+$card-font-blue:            $teal-700 !default;
+$card-subtitle-blue:        $teal-500 !default;
 
-$card-background-green:      #d5e5a3 !default;
-$card-font-green:            #60773d !default;
-$card-subtitle-green:        #92ac56 !default;
+$card-background-green:      $green-100 !default;
+$card-font-green:            $green-700 !default;
+$card-subtitle-green:        $green-500 !default;
 
-$card-background-yellow:      #ffe28c !default;
-$card-font-yellow:            #b25825 !default;
-$card-subtitle-yellow:        #d88715 !default;
+$card-background-yellow:      $yellow-200 !default;
+$card-font-yellow:            $yellow-700 !default;
+$card-subtitle-yellow:        $yellow-500 !default;
 
 $card-background-brown:      #d6c1ab !default;
 $card-font-brown:            #75442e !default;
 $card-subtitle-brown:        #a47e65 !default;
 
-$card-background-purple:      #baa9ba !default;
-$card-font-purple:            #3a283d !default;
-$card-subtitle-purple:        #5a283d !default;
+$card-background-purple:      $purple-200 !default;
+$card-font-purple:            $purple-700 !default;
+$card-subtitle-purple:        $purple-300 !default;
 
-$card-background-orange:      #ff8f5e !default;
-$card-font-orange:            #772510 !default;
-$card-subtitle-orange:        #e95e37 !default;
+$card-background-orange:      $orange-200 !default;
+$card-font-orange:            $orange-700 !default;
+$card-subtitle-orange:        $orange-500 !default;
+
 
 
 //variables used for sidebar
-$sidebar-background-dark-blue: #506367;
+$sidebar-background-dark-blue: $teal-700;
 
-$sidebar-background-blue:      #b8d8d8 !default;
-$sidebar-font-blue:            #506568 !default;
-$sidebar-subtitle-blue:        #7a9e9f !default;
+$sidebar-background-blue:      $teal-100 !default;
+$sidebar-font-blue:            $teal-700 !default;
+$sidebar-subtitle-blue:        $teal-500 !default;
 
-$sidebar-background-green:      #d5e5a3 !default;
-$sidebar-font-green:            #60773d !default;
-$sidebar-subtitle-green:        #92ac56 !default;
+$sidebar-background-green:      $green-100 !default;
+$sidebar-font-green:            $green-700 !default;
+$sidebar-subtitle-green:        $green-300 !default;
 
-$sidebar-background-yellow:      #ffe28c !default;
-$sidebar-font-yellow:            #b25825 !default;
-$sidebar-subtitle-yellow:        #d88715 !default;
+$sidebar-background-yellow:      $yellow-100 !default;
+$sidebar-font-yellow:            $yellow-700 !default;
+$sidebar-subtitle-yellow:        $yellow-500 !default;
 
 $sidebar-background-brown:      #d6c1ab !default;
 $sidebar-font-brown:            #75442e !default;
 $sidebar-subtitle-brown:        #a47e65 !default;
 
-$sidebar-background-purple:      #baa9ba !default;
-$sidebar-font-purple:            #3a283d !default;
-$sidebar-subtitle-purple:        #5a283d !default;
+$sidebar-background-purple:      $purple-100 !default;
+$sidebar-font-purple:            $purple-700 !default;
+$sidebar-subtitle-purple:        $purple-300 !default;
 
-$sidebar-background-orange:      #ff8f5e !default;
-$sidebar-font-orange:            #772510 !default;
-$sidebar-subtitle-orange:        #e95e37 !default;
+
+$sidebar-background-orange:      $orange-100 !default;
+$sidebar-font-orange:            $orange-700 !default;
+$sidebar-subtitle-orange:        $orange-300 !default;
+
 
 // Small screen / tablet
 //** Deprecated `$screen-sm` as of v3.0.1
@@ -448,21 +453,25 @@ $filter-orange:       darken($warning-color, 10%);
 $filter-red:          darken($danger-color, 10%);
 
 // variable used in footers
-$black-footer-bg:            #252422 !default;
-$brown-font-color:    #A49E9E !default;
-$brown-font-color-hover: #F1EAE0 !default;
+$black-footer-bg:            $black !default;
+
+$brown-font-color:    $grey-200 !default;
+$brown-font-color-hover: $grey-400 !default;
+
 
 
 // variables for Bootstrap Select 1.12.1
-$color-red-error: rgb(185, 74, 72) !default;
-$color-grey-arrow: rgba(204, 204, 204, 0.2) !default;
+$color-red-error: $red-300 !default;
+$color-grey-arrow: rgba($grey-700, 0.2) !default;
+
 
 $width-default: 100% !default; // 3 960px-grid columns
 
 $zindex-select-dropdown: 1060 !default; // must be higher than a modal background (1050)
 
 //** Placeholder text color
-$input-color-placeholder: #999 !default;
+$input-color-placeholder: $grey-500 !default;
 
-$legend-color:                   $dark-gray !default;
-$legend-border-color:            #e5e5e5 !default;
+$legend-color:                   $grey-500 !default;
+$legend-border-color:            $grey-300 !default;
+
