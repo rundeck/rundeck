@@ -1041,9 +1041,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //        }
 //
 
-        // Getting execution log global configuration
-        boolean logGlobalConfig = configurationService.getBoolean(LoggingThreshold.EXECUTION_LOGS_GLOBAL_CONFIG, false)
-
         // Output limit
         String outputLimit = getOutputLimit(scheduledExecution)
         def thresholdMap = ScheduledExecution.parseLogOutputThreshold(outputLimit)

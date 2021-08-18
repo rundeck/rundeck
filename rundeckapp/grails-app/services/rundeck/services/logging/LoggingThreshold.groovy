@@ -53,10 +53,6 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
      * Log size warning
      */
     static final String EXECUTION_LOGS_SIZE_WARNING = "execution.logs.output.warningSize"
-    /**
-     * Log global config
-     */
-    static final String EXECUTION_LOGS_GLOBAL_CONFIG = "execution.logs.output.globalConfig"
 
     Long maxValue
     Long warningSize
