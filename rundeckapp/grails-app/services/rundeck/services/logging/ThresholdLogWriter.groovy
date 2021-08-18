@@ -36,7 +36,7 @@ class ThresholdLogWriter extends FilterStreamingLogWriter {
 
     LoggingThreshold threshold
     final boolean truncate
-    Execution execution
+    String jobName
     AtomicBoolean limitReached = new AtomicBoolean(false)
     AtomicBoolean warningReached = new AtomicBoolean(false)
 
@@ -46,9 +46,9 @@ class ThresholdLogWriter extends FilterStreamingLogWriter {
         this.truncate = threshold.isTruncateOnLimitReached()
     }
 
-    ThresholdLogWriter(final StreamingLogWriter writer, final LoggingThreshold threshold, final Execution execution) {
+    ThresholdLogWriter(final StreamingLogWriter writer, final LoggingThreshold threshold, final String jobName) {
         this(writer, threshold)
-        this.execution = execution
+        this.jobName = jobName
     }
 
     @Override
@@ -65,8 +65,8 @@ class ThresholdLogWriter extends FilterStreamingLogWriter {
         }
 
         if (!limit && threshold.isThresholdExceeded() && limitReached.compareAndSet(false, true)) {
-            String jobName = execution?.scheduledExecution?.jobName ?: "Unknown"
-            String msgError = "Log output limit exceeded: ${threshold.description}, job execution: ${jobName}"
+            String job = jobName ?: "Unknown"
+            String msgError = "Log output limit exceeded: ${threshold.description}, job execution: ${job}"
             LOG.error(msgError)
             getWriter().addEvent(LogUtil.logError(msgError))
         }
