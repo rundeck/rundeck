@@ -42,14 +42,6 @@ class AzureObjectStorePlugin extends DelegateTree<ResourceMeta> implements Stora
     private String defaultEndpointProtocol
     @PluginProperty(title = "Extra connection string settings", description = "Extra connection settings, see https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string#store-a-connection-string")
     private String extraConnectionSettings
-
-
-    @PluginProperty(title = 'Uncached Object Lookup', description = """Use object store directly to list directory resources, check object existence, etc. 
-                                                                    Depending on the directory structure and number of objects, enabling this option could have
-                                                                    performance issues. This option will work better in a cluster because all servers in the cluster will
-                                                                    have coordinated access to the objects managed by the plugins. NOTE: The cached object directory does
-                                                                    not share the cache between servers, so it is not best to use it when operating a Rundeck cluster.""")
-    boolean uncachedObjectLookup = false;
     @PluginProperty(title = "Connection Timeout", description = "Timeout in seconds for the http connection to the server (0 means no timeout)",defaultValue = "180")
     Long connectionTimeout
 
@@ -83,10 +75,7 @@ class AzureObjectStorePlugin extends DelegateTree<ResourceMeta> implements Stora
         CloudBlobContainer blobContainer = serviceClient.getContainerReference(container)
         blobContainer.createIfNotExists()
 
-        if(uncachedObjectLookup) {
-            delegateTree = new AzureObjectStoreTree(blobContainer,new AzureObjectStoreDirectAccessDirectorySource(blobContainer))
-        } else {
-            delegateTree = new AzureObjectStoreTree(blobContainer)
-        }
+        delegateTree = new AzureObjectStoreTree(blobContainer,new AzureObjectStoreDirectAccessDirectorySource(blobContainer))
+
     }
 }

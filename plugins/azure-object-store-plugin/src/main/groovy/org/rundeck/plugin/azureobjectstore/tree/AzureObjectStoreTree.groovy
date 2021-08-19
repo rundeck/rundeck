@@ -22,7 +22,6 @@ import com.microsoft.azure.storage.blob.CloudBlobClient
 import com.microsoft.azure.storage.blob.CloudBlobContainer
 import com.microsoft.azure.storage.blob.CloudBlockBlob
 import org.rundeck.plugin.azureobjectstore.directorysource.AzureObjectStoreDirectorySource
-import org.rundeck.plugin.azureobjectstore.directorysource.AzureObjectStoreMemoryDirectorySource
 import org.rundeck.plugin.azureobjectstore.stream.CloseAfterCopyStream
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.Resource
@@ -37,10 +36,6 @@ class AzureObjectStoreTree implements Tree<BaseStreamResource> {
 
     private final CloudBlobContainer container
     private final AzureObjectStoreDirectorySource directorySource
-
-    AzureObjectStoreTree(CloudBlobContainer container) {
-        this(container,new AzureObjectStoreMemoryDirectorySource(container))
-    }
 
     AzureObjectStoreTree(CloudBlobContainer container, AzureObjectStoreDirectorySource directorySource) {
         this.container = container

@@ -36,7 +36,6 @@ import java.util.regex.Pattern
  * or the object store is regularly updated by third party tools
  */
 class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDirectorySource {
-    private static final String DIR_MARKER = "/"
     CloudBlobContainer container
 
     AzureObjectStoreDirectAccessDirectorySource(CloudBlobContainer container) {
@@ -56,12 +55,8 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
             }
             return blob.exists()
         } catch (Exception e) {
-            //logger.log(Level.SEVERE, e.getMessage());
-            //logger.log(Level.FINE, e.getMessage(), e);
             throw new Exception(e.getMessage(), e)
         }
-
-        return false
     }
 
     @Override
@@ -77,7 +72,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
     @Override
     boolean checkPathExistsAndIsDirectory(final String path) {
         boolean directory = false
-
 
         container.listBlobs(path).each { object ->
             if(object instanceof CloudBlobDirectory){
@@ -161,7 +155,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
             if(item instanceof CloudBlobDirectory){
                 CloudBlobDirectory folder = (CloudBlobDirectory) item
                 listBlobs.addAll(AzureObjectStoreUtils.listBlobsFromDirectory(folder))
-                //listSubDirEntries.add(folder)
             }else{
                 listBlobs.add((CloudBlockBlob)item)
             }
@@ -182,6 +175,7 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
                                      new LazyAccessObjectStoreInputStream(item))
         return new AzureObjectStoreResource(item.getName(), content)
     }
+
     private static AzureObjectStoreResource createSubDirectoryResourceListItemWithMetadata(final CloudBlobDirectory item) {
         return new AzureObjectStoreResource(item.getPrefix(), null, true)
     }
