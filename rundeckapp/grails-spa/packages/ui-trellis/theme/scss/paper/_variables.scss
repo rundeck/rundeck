@@ -107,23 +107,23 @@ $black-hr:                   $grey-700 !default;
 $brown-background-color:        $font-color !default;
 
 $very-light-gray:            $grey-100 !default;
-$light-gray:                 $grey-200 !default;
-$medium-gray:                $grey-400 !default;
-$dark-gray:                  $grey-500 !default;
+$light-gray:                 $grey-300 !default;
+$medium-gray:                $grey-500 !default;
+$dark-gray:                  $grey-800 !default;
 
 $gray-input-bg:              $grey-200 !default;
 $gray-input-outline:         $grey-300 !default;
 $light-input-bg:             $grey-100 !default;
-$danger-input-bg:            $orange-100 !default;
+$danger-input-bg:            $red-100 !default;
 $success-input-bg:           $green-100 !default;
 
 $other-medium-gray:          $grey-500 !default;
 $transparent-bg:             transparent !default;
 
-$default-color:              $grey-600 !default;
-$default-states-color:       darken($default-color,11%) !default;
+$default-color:              $grey-700 !default;
+$default-states-color:       $grey-600 !default;
 
-$primary-color:              $grey-600 !default;
+$primary-color:              $grey-800 !default;
 $primary-states-color:       darken($primary-color,11%) !default;
 $primary-highlight-color:    lighten($primary-color, 11%) !default;
 
@@ -475,3 +475,4 @@ $input-color-placeholder: $grey-500 !default;
 $legend-color:                   $grey-500 !default;
 $legend-border-color:            $grey-300 !default;
 
+$dropdown-link-hover-bg:         $grey-300 !default;
