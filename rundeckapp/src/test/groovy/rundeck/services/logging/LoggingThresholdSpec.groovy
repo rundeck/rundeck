@@ -50,6 +50,54 @@ class LoggingThresholdSpec extends Specification {
         thresholdMap.maxSizeBytes == 102400
     }
 
+    void "test limit action with job limit null"() {
+        given:
+        def globalLimitMap = ScheduledExecution.parseLogOutputThreshold("100KB")
+        def jobLimitMap    = null
+        def globalLimitAction = LoggingThreshold.ACTION_TRUNCATE
+        def jobLimitAction    = LoggingThreshold.ACTION_HALT
+        when:
+        String limitAction = LoggingThreshold.getLimitAction(globalLimitMap, globalLimitAction, jobLimitMap, jobLimitAction)
+        then:
+        limitAction == globalLimitAction
+    }
+
+    void "test limit action with global limit null"() {
+        given:
+        def globalLimitMap = null
+        def jobLimitMap    = ScheduledExecution.parseLogOutputThreshold("100KB")
+        def globalLimitAction = LoggingThreshold.ACTION_TRUNCATE
+        def jobLimitAction    = LoggingThreshold.ACTION_HALT
+        when:
+        String limitAction = LoggingThreshold.getLimitAction(globalLimitMap, globalLimitAction, jobLimitMap, jobLimitAction)
+        then:
+        limitAction == jobLimitAction
+    }
+
+    void "test limit action with global action as truncate"() {
+        given:
+        def globalLimitMap = ScheduledExecution.parseLogOutputThreshold("100KB")
+        def jobLimitMap    = ScheduledExecution.parseLogOutputThreshold("100KB")
+        def globalLimitAction = LoggingThreshold.ACTION_TRUNCATE
+        def jobLimitAction    = LoggingThreshold.ACTION_HALT
+        when:
+        String limitAction = LoggingThreshold.getLimitAction(globalLimitMap, globalLimitAction, jobLimitMap, jobLimitAction)
+        then:
+        limitAction == jobLimitAction
+    }
+
+    void "test limit action with global action as halt"() {
+        given:
+        def globalLimitMap = ScheduledExecution.parseLogOutputThreshold("100KB")
+        def jobLimitMap    = ScheduledExecution.parseLogOutputThreshold("100KB")
+        def globalLimitAction = LoggingThreshold.ACTION_HALT
+        def jobLimitAction    = LoggingThreshold.ACTION_TRUNCATE
+        when:
+        String limitAction = LoggingThreshold.getLimitAction(globalLimitMap, globalLimitAction, jobLimitMap, jobLimitAction)
+        then:
+        limitAction == globalLimitAction
+    }
+
     void "test From Map Blank"() {
         when:
         def thresholdBlank = LoggingThreshold.fromMap([:], "blah")
