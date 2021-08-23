@@ -1047,7 +1047,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def thresholdMap       = LoggingThreshold.getOutputLimit(globalThresholdMap, jobThresholdMap)
 
         // Output limit action
-        String limitAction = getLimitAction(scheduledExecution)
+        String limitAction = LoggingThreshold.getLimitAction(
+                globalThresholdMap,
+                getGlobalLimitAction(),
+                jobThresholdMap,
+                getJobLimitAction(scheduledExecution))
         LoggingThreshold threshold = LoggingThreshold.fromMap(thresholdMap, limitAction)
 
         String warnSize = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_SIZE_WARNING, LoggingThreshold.WARN_SIZE_DEFAULT)
@@ -1267,49 +1271,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return ScheduledExecution.parseLogOutputThreshold(jobLimit)
     }
 
-    private String getOutputLimit(ScheduledExecution scheduledExecution) {
-        String outputLimit = ""
-        String globalLimit = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_OUTPUT_LIMIT)
-        String jobLimit = scheduledExecution?.logOutputThreshold
-
-        if (!globalLimit) {
-            outputLimit = jobLimit
-        }
-        else if (globalLimit && jobLimit) {
-            outputLimit = String.valueOf(Math.min(Long.valueOf(globalLimit), Long.valueOf(jobLimit)))
-        }
-        else if (globalLimit && !jobLimit) {
-            outputLimit = globalLimit
-        }
-        log.info("Logging output limit: ${outputLimit}")
-        return outputLimit
+    private String getGlobalLimitAction() {
+        return configurationService.getString(LoggingThreshold.EXECUTION_LOGS_LIMIT_ACTION)
     }
 
-    private String getLimitAction(ScheduledExecution scheduledExecution) {
-        String limitAction       = LoggingThreshold.ACTION_HALT
-        String globalLimit       = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_OUTPUT_LIMIT)
-        String globalLimitAction = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_LIMIT_ACTION)
-        String jobLimit          = scheduledExecution?.logOutputThreshold
-        String jobLimitAction    = scheduledExecution?.logOutputThresholdAction
-
-        if (jobLimit && !globalLimit) {
-            limitAction = jobLimitAction
-        }
-        else if (jobLimit && globalLimit && globalLimitAction == LoggingThreshold.ACTION_HALT) {
-            limitAction = globalLimitAction
-        }
-        else if (jobLimit && globalLimit && globalLimitAction == LoggingThreshold.ACTION_TRUNCATE) {
-            limitAction = jobLimitAction
-        }
-        else if (jobLimit && globalLimit && !globalLimitAction) {
-            limitAction = jobLimitAction
-        }
-        else if (!jobLimit && globalLimit) {
-            limitAction = globalLimitAction ?: LoggingThreshold.ACTION_TRUNCATE
-        }
-
-        log.info("Logging limit action: ${limitAction}")
-        return limitAction
+    private String getJobLimitAction(ScheduledExecution scheduledExecution) {
+        return scheduledExecution?.logOutputThresholdAction
     }
 
     /**

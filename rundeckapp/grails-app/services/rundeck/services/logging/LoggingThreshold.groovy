@@ -98,6 +98,12 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         return t
     }
 
+    /**
+     * Gets a map with the log output limit data
+     * @param globalLimitMap
+     * @param jobLimitMap
+     * @return a output limit map
+     */
     static Map getOutputLimit(Map globalLimitMap, Map jobLimitMap) {
         Map thresholdMap = null
 
@@ -122,6 +128,36 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         }
 
         return thresholdMap
+    }
+
+    /**
+     * Gets the log output limit action
+     * @param globalLimitMap
+     * @param globalLimitAction
+     * @param jobLimitMap
+     * @param jobLimitAction
+     * @return log limit action
+     */
+    static String getLimitAction(Map globalLimitMap, String globalLimitAction, Map jobLimitMap, String jobLimitAction) {
+        String limitAction = ACTION_HALT
+
+        if (jobLimitMap && !globalLimitMap) {
+            limitAction = jobLimitAction
+        }
+        else if (jobLimitMap && globalLimitMap && globalLimitAction == ACTION_HALT) {
+            limitAction = globalLimitAction
+        }
+        else if (jobLimitMap && globalLimitMap && globalLimitAction == ACTION_TRUNCATE) {
+            limitAction = jobLimitAction
+        }
+        else if (jobLimitMap && globalLimitMap && !globalLimitAction) {
+            limitAction = jobLimitAction
+        }
+        else if (!jobLimitMap && globalLimitMap) {
+            limitAction = globalLimitAction ?: ACTION_TRUNCATE
+        }
+
+        return limitAction
     }
 
     /**
