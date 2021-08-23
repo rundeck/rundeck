@@ -98,6 +98,32 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         return t
     }
 
+    static Map getOutputLimit(Map globalLimitMap, Map jobLimitMap) {
+        Map thresholdMap = null
+
+        if (!globalLimitMap) {
+            thresholdMap = jobLimitMap
+        }
+        else if (globalLimitMap && !jobLimitMap) {
+            thresholdMap = globalLimitMap
+        }
+        else if (globalLimitMap.size() != jobLimitMap.size()) {
+            thresholdMap = globalLimitMap
+        }
+        else if (globalLimitMap && jobLimitMap) {
+            String globalLimit = globalLimitMap.maxSizeBytes ?: globalLimitMap.maxLines
+            String jobLimit    = jobLimitMap.maxSizeBytes ?: jobLimitMap.maxLines
+            Long min = Math.min(Long.valueOf(globalLimit), Long.valueOf(jobLimit))
+            if (min == globalLimitMap.maxSizeBytes || min == globalLimitMap.maxLines) {
+                thresholdMap = globalLimitMap
+            } else {
+                thresholdMap = jobLimitMap
+            }
+        }
+
+        return thresholdMap
+    }
+
     /**
      * @param type statistic name
      * @return watcher to receive a holder, or null
