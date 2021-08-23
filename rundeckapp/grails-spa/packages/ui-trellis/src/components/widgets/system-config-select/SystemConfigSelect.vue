@@ -1,5 +1,5 @@
 <template>
-    <FilterList v-on="$listeners" :items="categories" id-field="name" :selected="selected" searchText="Filter System Configurations" :itemSize="40">
+    <FilterList v-on="$listeners" :items="correctedCategories()" id-field="name" :selected="selected" searchText="Filter System Configurations" :itemSize="40">
         <template v-slot:item="{item}">
             <SystemConfigSelectItem :category="item"/>
         </template>
@@ -20,18 +20,27 @@ import SystemConfigSelectItem from './SystemConfigSelectItem.vue'
 @Observer
 @Component({components: {FilterList, SystemConfigSelectItem}})
 export default class SystemConfigSelect extends Vue {
+    // prop is opened to any type until we can change SystemConfiguration.vue payload to match
+    // the format FilterList supports
     @Prop()
-    categories!: {[k:string]:any}[]
+    categories!: any
 
     @Prop({default: ''})
     selected!: string
 
-    created() {
-        console.log(`Created SysConfig select, nestedCategories: ${JSON.stringify(this.categories)}`)
-    }
-
     itemUpdated() {
         console.log(`Updated SysConfig select, nestedCategories: ${JSON.stringify(this.categories)}`)
+    }
+
+    correctedCategories() {
+        // format current SystemConfiguration.vue category payload to match needed FilterList props
+        if (!Array.isArray(this.categories)) {
+            return Object.entries(this.categories).map(
+                (e) => ( { name: e[0], idField: e[0], configs: e[1] } )
+            );
+        } else {
+            return this.categories;
+        }
     }
 }
 </script>

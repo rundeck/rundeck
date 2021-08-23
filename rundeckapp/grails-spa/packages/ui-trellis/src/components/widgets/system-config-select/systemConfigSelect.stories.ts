@@ -21,15 +21,55 @@ export default {
 export const pluginPicker = () => {    
 
     return Vue.extend({
-        template: `<SystemConfigSelect :categories="categories" @item:selected="() => {}"/>`,
+        template: `<SystemConfigSelect :categories="currentCategories" @item:selected="() => {}"/>`,
 
         components: {SystemConfigSelect},
         data: () => ({
-            categories: [
+            currentCategories: {"Plugins":
+            [{
+                    "key": "azure.tenantId",
+                    "visibility": "Standard",
+                    "category": "Plugins",
+                    "strata": "default",
+                    "required": false,
+                    "restart": false,
+                    "label": "Azure Tenant ID",
+                    "datatype": "String",
+                    "encrypted": false,
+                    "defaultValue": ""
+                  },
+                  {
+                    "key": "datadog.api-key-storage-path",
+                    "visibility": "Standard",
+                    "category": "Plugins",
+                    "strata": "default",
+                    "required": false,
+                    "restart": false,
+                    "label": "DataDog API Key Path",
+                    "datatype": "storage-key",
+                    "encrypted": false,
+                    "defaultValue": ""
+                  }],
+                  "Cluster": [
+                    {
+                        "key": "rundeck.clusterMode.remoteExecution.policy",
+                        "visibility": "Standard",
+                        "category": "Cluster",
+                        "strata": "default",
+                        "required": false,
+                        "restart": true,
+                        "label": "Cluster Remote Exection - Policy",
+                        "datatype": "List",
+                        "encrypted": false,
+                        "defaultValue": "None"
+                      },
+                  ]
+            },
+            idealNewCategories: [
                 {name: "Cluster", isSubcat: false, parentCategory: null},
                 {name: "Plugins", isSubcat: false, parentCategory: null},
-                {name: "Azure", isSubcat: true, parentCategory: "Plugins"},
-                {name: "Datadoge", isSubcat: true, parentCategory: "Plugins"}
+                {name: "Azure", isSubcat: true, parentCategory: "Plugins", aliases: ["Plugins"]},
+                {name: "Datadoge", isSubcat: true, parentCategory: "Plugins", aliases: ["Plugins"]}
             ],
             selected: ''
         }),
@@ -40,6 +80,6 @@ export const pluginPicker = () => {
             el.parentNode.style.position = 'relative'
             el.parentNode.style.padding = '20px'
             document.body.style.overflow = 'hidden'
-        }
+        },
     })
 }

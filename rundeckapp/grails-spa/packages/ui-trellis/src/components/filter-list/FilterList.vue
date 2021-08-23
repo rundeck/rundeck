@@ -93,7 +93,26 @@ export default class FilterList extends Vue {
     idField!: string
 
     filtered() {
-        return this.items.filter(i => i.name.includes(this.searchTerm))
+        let results = this.items.filter(i => i.name.toLowerCase().includes(this.searchTerm.toLowerCase()));
+        if (this.items.some(i => i.hasOwnProperty('aliases'))) {
+            return this.handleAliases(results)
+        } else {
+            return results;
+        };
+    }
+
+    handleAliases(results: any) {
+        let itemsWithAliases = this.items.filter((i: any) => i.hasOwnProperty('aliases'));
+        results.push(...itemsWithAliases.filter((i: any) => i.aliases.some((i: any) => i.toLowerCase().includes(this.searchTerm.toLowerCase()))));
+        results = results.reduce((acc: any, current: any) => {
+            const x = acc.find((item: any) => item.name === current.name);
+            if (!x) {
+                return acc.concat([current]);
+            } else {
+                return acc;
+            }
+            }, []);
+        return results;
     }
 
     mounted() {
