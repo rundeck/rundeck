@@ -164,9 +164,6 @@ class AzureObjectStoreDirectAccessDirectorySource implements AzureObjectStoreDir
             CloudBlockBlob blob = (CloudBlockBlob)result
             resources.add(createResourceListItemWithMetadata(blob))
         }
-        listSubDirEntries.each { result ->
-            resources.add(createSubDirectoryResourceListItemWithMetadata(result))
-        }
         return resources
     }
 
