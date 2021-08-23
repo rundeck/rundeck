@@ -1042,18 +1042,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //
 
         // Output limit
-        String outputLimit = getOutputLimit(scheduledExecution)
-        def thresholdMap = ScheduledExecution.parseLogOutputThreshold(outputLimit)
+        def globalThresholdMap = getGlobalThresholdLimit()
+        def jobThresholdMap    = getJobThresholdLimit(scheduledExecution)
+        def thresholdMap       = LoggingThreshold.getOutputLimit(globalThresholdMap, jobThresholdMap)
 
         // Output limit action
         String limitAction = getLimitAction(scheduledExecution)
-        def threshold = LoggingThreshold.fromMap(thresholdMap, limitAction)
+        LoggingThreshold threshold = LoggingThreshold.fromMap(thresholdMap, limitAction)
 
         String warnSize = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_SIZE_WARNING, LoggingThreshold.WARN_SIZE_DEFAULT)
         Map<String, Long> warnSizeMap = ScheduledExecution.parseLogOutputThreshold(warnSize)
         threshold?.warningSize = warnSizeMap[LoggingThreshold.MAX_SIZE_BYTES] ?: warnSizeMap[LoggingThreshold.MAX_LINES]
 
-        def ExecutionLogWriter loghandler= loggingService.openLogWriter(
+        def ExecutionLogWriter loghandler = loggingService.openLogWriter(
                 execution,
                 logLevelForString(execution.loglevel),
                 [user:execution.user, node: framework.getFrameworkNodeName()],
@@ -1254,6 +1255,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             loghandler.close()
             return null
         }
+    }
+
+    private Map getGlobalThresholdLimit() {
+        String globalLimit = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_OUTPUT_LIMIT)
+        return ScheduledExecution.parseLogOutputThreshold(globalLimit)
+    }
+
+    private Map getJobThresholdLimit(ScheduledExecution scheduledExecution) {
+        String jobLimit = scheduledExecution?.logOutputThreshold
+        return ScheduledExecution.parseLogOutputThreshold(jobLimit)
     }
 
     private String getOutputLimit(ScheduledExecution scheduledExecution) {
