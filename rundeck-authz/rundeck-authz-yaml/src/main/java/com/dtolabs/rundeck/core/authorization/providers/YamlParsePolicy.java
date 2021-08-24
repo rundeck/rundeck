@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.yaml.model.ACLPolicyDoc;
 import com.dtolabs.rundeck.core.authorization.providers.yaml.model.YamlPolicyDocConstructor;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.ConstructorException;
 import org.yaml.snakeyaml.error.MarkedYAMLException;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -28,6 +27,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -173,83 +173,10 @@ public class YamlParsePolicy implements Policy {
             urn = policyDoc.getNotBy().getUrn();
         }
 
-        if (null != u) {
-            if (u instanceof String) {
-                addUsername((String) u);
-            } else if (u instanceof Collection) {
-                for (final Object o : (Collection) u) {
-                    if (o instanceof String) {
-                        addUsername((String) o);
-                    } else {
-                        throw new AclPolicySyntaxException(
-                                "Section '" +
-                                USERNAME_KEY +
-                                ":' should contain only Strings, but saw a: " +
-                                o.getClass().getName()
-                        );
-                    }
-                }
-            } else {
-                throw new AclPolicySyntaxException(
-                        "Section '" +
-                        USERNAME_KEY +
-                        ":' should be a list or a String, but it was: " +
-                        u.getClass().getName()
-                );
-            }
-        }
+        validateStringOrList(u, USERNAME_KEY, this::addUsername);
+        validateStringOrList(g, GROUP_KEY, this::addGroup);
+        validateStringOrList(urn, URN_KEY, this::addUrn);
 
-        if (null != g) {
-            if (g instanceof String) {
-                addGroup((String) g);
-            } else if (g instanceof Collection) {
-                for (final Object o : (Collection) g) {
-                    if (o instanceof String) {
-                        addGroup((String) o);
-                    } else {
-                        throw new AclPolicySyntaxException(
-                                "Section '" +
-                                GROUP_KEY +
-                                ":' should contain only Strings, but saw a: " +
-                                o.getClass().getName()
-                        );
-                    }
-                }
-            } else {
-                throw new AclPolicySyntaxException(
-                        "Section '" +
-                        GROUP_KEY +
-                        ":' should be a list or a String, but it was: " +
-                        g.getClass().getName()
-                );
-            }
-        }
-
-        if (null != urn) {
-            if (urn instanceof String) {
-                addUrn((String) urn);
-            } else if (g instanceof Collection) {
-                for (final Object o : (Collection) urn) {
-                    if (o instanceof String) {
-                        addUrn((String) o);
-                    } else {
-                        throw new AclPolicySyntaxException(
-                                "Section '" +
-                                        URN_KEY +
-                                        ":' should contain only Strings, but saw a: " +
-                                        o.getClass().getName()
-                        );
-                    }
-                }
-            } else {
-                throw new AclPolicySyntaxException(
-                        "Section '" +
-                                URN_KEY +
-                                ":' should be a list or a String, but it was: " +
-                                urn.getClass().getName()
-                );
-            }
-        }
         if (groups.size() < 1 && usernames.size() < 1 && urns.size() < 1) {
             if (null != validation) {
                 validation.addError(
@@ -263,6 +190,34 @@ public class YamlParsePolicy implements Policy {
                         ":' and/or '" +
                         URN_KEY +
                         ":'"
+                );
+            }
+        }
+    }
+
+    private void validateStringOrList(final Object u, final String sectionName, Consumer<String> consumer) {
+        if (null != u) {
+            if (u instanceof String) {
+                consumer.accept((String)u);
+            } else if (u instanceof Collection) {
+                for (final Object o : (Collection) u) {
+                    if (o instanceof String) {
+                        consumer.accept((String)o);
+                    } else {
+                        throw new AclPolicySyntaxException(
+                                "Section '" +
+                                sectionName +
+                                ":' should contain only Strings, but saw a: " +
+                                o.getClass().getName()
+                        );
+                    }
+                }
+            } else {
+                throw new AclPolicySyntaxException(
+                        "Section '" +
+                        sectionName +
+                        ":' should be a list or a String, but it was: " +
+                        u.getClass().getName()
                 );
             }
         }
