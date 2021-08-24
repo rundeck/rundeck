@@ -71,8 +71,84 @@ $indigo-700:                 #3730A3;
 $white:                      #FFFFFF;
 $black:                      $grey-900;
 
+:root {
+    --grey-100: #{$grey-100};
+    --grey-200: #{$grey-200};
+    --grey-300: #{$grey-300};
+    --grey-400: #{$grey-400};
+    --grey-500: #{$grey-500};
+    --grey-600: #{$grey-600};
+    --grey-700: #{$grey-700};
+    --grey-800: #{$grey-800};
+    --grey-900: #{$grey-900};
 
+    --blue-100: #{$blue-100};
+    --blue-200: #{$blue-200};
+    --blue-300: #{$blue-300};
+    --blue-500: #{$blue-500};
+    --blue-700: #{$blue-700};
 
+    --green-100: #{$green-100};
+    --green-200: #{$green-200};
+    --green-300: #{$green-300};
+    --green-500: #{$green-500};
+    --green-700: #{$green-700};
+
+    --red-100: #{$red-100};
+    --red-200: #{$red-200};
+    --red-300: #{$red-300};
+    --red-500: #{$red-500};
+    --red-700: #{$red-700};
+
+    --orange-100: #{$orange-100};
+    --orange-200: #{$orange-200};
+    --orange-300: #{$orange-300};
+    --orange-500: #{$orange-500};
+    --orange-700: #{$orange-700};
+
+    --yellow-100: #{$yellow-100};
+    --yellow-200: #{$yellow-200};
+    --yellow-300: #{$yellow-300};
+    --yellow-500: #{$yellow-500};
+    --yellow-700: #{$yellow-700};
+
+    --teal-100: #{$teal-100};
+    --teal-200: #{$teal-200};
+    --teal-300: #{$teal-300};
+    --teal-500: #{$teal-500};
+    --teal-700: #{$teal-700};
+
+    --cyan-100: #{$cyan-100};
+    --cyan-200: #{$cyan-200};
+    --cyan-300: #{$cyan-300};
+    --cyan-500: #{$cyan-500};
+    --cyan-700: #{$cyan-700};
+
+    --pink-100: #{$pink-100};
+    --pink-200: #{$pink-200};
+    --pink-300: #{$pink-300};
+    --pink-500: #{$pink-500};
+    --pink-700: #{$pink-700};
+
+    --purple-100: #{$purple-100};
+    --purple-200: #{$purple-200};
+    --purple-300: #{$purple-300};
+    --purple-500: #{$purple-500};
+    --purple-700: #{$purple-700};
+
+    --indigo-100: #{$indigo-100};
+    --indigo-200: #{$indigo-200};
+    --indigo-300: #{$indigo-300};
+    --indigo-500: #{$indigo-500};
+    --indigo-700: #{$indigo-700};
+
+    --white: #{$white};
+    --black: #{$black};
+}
+
+/**
+Theme colors
+**/
 $white-background-color: $white !default;
 $black-background-color: $black !default;
 $darkblue-background-color: #35495E !default; // this is the dark blue color from Vue.js branding
@@ -141,6 +217,76 @@ $danger-states-color:         $red-500 !default;
 
 $link-disabled-color:        $grey-600 !default;
 
+:root {
+    --white-background-color: var(--white);
+    --black-background-color: var(--black);
+    --darkblue-background-color: #35495E; // this is the dark blue color from Vue.js branding
+    --default-background-color: var(--grey-200);
+
+    --font-color:                 var(--grey-700);
+    --fill-font-color:            #{rgba($white, 0.85)};
+
+    --none:                       0;
+    --border-thin:                1px;
+    --border-thick:               2px;
+
+    --white-color:                var(--white);
+    --white-bg:                   var(--white);
+
+    --smoke-bg:                   var(--grey-100);
+    --pale-bg:                    var(--grey-200);
+    --medium-pale-bg:             var(--grey-300);
+
+    --table-line-color:           var(--grey-300);
+    --muted-color:                var(--grey-500);
+
+    --black-bg:                   #{rgba($black,.97)};
+
+    --popover-color:              var(--grey-100);
+
+
+
+    --black-color:                var(--black);
+    --black-hr:                   var(--grey-700);
+
+    --brown-background-color:     #{$font-color};
+
+    --very-light-gray:            var(--grey-100);
+    --light-gray:                 var(--grey-300);
+    --medium-gray:                var(--grey-500);
+    --dark-gray:                  var(--grey-800);
+
+    --gray-input-bg:              var(--grey-200);
+    --gray-input-outline:         var(--grey-300);
+    --light-input-bg:             var(--grey-100);
+    --danger-input-bg:            var(--red-100);
+    --success-input-bg:           var(--green-100);
+
+    --other-medium-gray:          var(--grey-500);
+    --transparent-bg:             transparent;
+
+    --default-color:              var(--grey-700);
+    --default-states-color:       var(--grey-600);
+
+    --primary-color:              var(--grey-800);
+    --primary-states-color:       #{darken($primary-color,11%)};
+    --primary-highlight-color:    #{lighten($primary-color, 11%)};
+
+    --success-color:              var(--green-500);
+    --success-states-color:       var(--green-500);
+
+    --info-color:                 var(--blue-500);
+    --info-states-color:          var(--blue-500);
+
+    --warning-color:              var(--yellow-500);
+    --warning-states-color:       var(--yellow-700);
+
+    --danger-color:               var(--red-500);
+    --danger-states-color:        var(--red-500);
+
+    --link-disabled-color:        var(--grey-600);
+}
+
 // General Colors
 
 $color-azure:                $cyan-500;
@@ -150,6 +296,16 @@ $color-green:                $green-500;
 $color-orange:               $orange-300;
 $color-blue:                 $blue-500;
 $color-black:                $grey-800;
+
+:root {
+    --color-azure:                var(--cyan-500);
+    --color-purple:               var(--purple-500);
+    --color-red:                  var(--red-500);
+    --color-green:                var(--green-500);
+    --color-orange:               var(--orange-300);
+    --color-blue:                 var(--blue-500);
+    --color-black:                var(--grey-800);
+}
 
 
 /*      light colors - used for select dropdown         */
@@ -161,6 +317,16 @@ $light-orange:               rgba($warning-color, .2);
 $light-red:                  rgba($danger-color, .2);
 
 $placeholder-gray:           $grey-400 !default;
+
+:root {
+    --light-blue:                 #{rgba($primary-color, .2)};
+    --light-azure:                #{rgba($info-color, .2)};
+    --light-green:                #{rgba($success-color, .2)};
+    --light-orange:               #{rgba($warning-color, .2)};
+    --light-red:                  #{rgba($danger-color, .2)};
+
+    --placeholder-gray:           #{$grey-400};
+}
 
 
 /*           Social buttons            */

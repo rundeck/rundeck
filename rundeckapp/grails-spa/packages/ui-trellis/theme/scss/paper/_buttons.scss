@@ -9,7 +9,7 @@
 
   padding: $padding-base-vertical $padding-base-horizontal;
 
-  @include btn-styles($default-color, $default-states-color);
+  @include btn-styles(--default-color, --default-states-color);
   @include transition($fast-transition-time, linear);
 
   &:hover,
@@ -49,39 +49,39 @@
 
 .navbar .navbar-nav>li>a.btn.btn-primary,
 .btn-cta {
-  @include btn-styles($primary-color, $primary-states-color);
+  @include btn-styles(--primary-color, --primary-states-color);
 }
 
 // Apply the mixin to the buttons
 //.btn-default { @include btn-styles($default-color, $default-states-color); }
 .navbar .navbar-nav>li>a.btn.btn-primary,
 .btn-primary {
-  @include btn-styles($primary-color, $primary-states-color);
+  @include btn-styles(--primary-color, --primary-states-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-success,
 .btn-cta {
-  @include btn-styles($success-color, $success-states-color);
+  @include btn-styles(--success-color, --success-states-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-success,
 .btn-success {
-  @include btn-styles($success-color, $success-states-color);
+  @include btn-styles(--success-color, --success-states-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-info,
 .btn-info {
-  @include btn-styles($info-color, $info-states-color);
+  @include btn-styles(--info-color, --info-states-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-warning,
 .btn-warning {
-  @include btn-styles($warning-color, $warning-states-color);
+  @include btn-styles(--warning-color, --warning-states-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-danger,
 .btn-danger {
-  @include btn-styles($danger-color, $danger-states-color);
+  @include btn-styles(--danger-color, --danger-states-color);
 }
 
 .btn.btn-primary {
@@ -93,14 +93,14 @@
 }
 
 .btn-neutral {
-  @include btn-styles($white-color, $white-color);
+  @include btn-styles(--white-color, --white-color);
 
   &:hover,
   &:focus {
-    color: $default-color;
+    color: var(--default-color);
 
     i {
-      color: $default-color;
+      color: var(--default-color);
       opacity: 1;
     }
   }
@@ -108,30 +108,30 @@
   &:active,
   &.active,
   .open>&.dropdown-toggle {
-    background-color: $white-color;
-    color: $default-color;
+    background-color: var(--white-color);
+    color: var(--default-color);
 
     i {
-      color: $default-color;
+      color: var(--default-color);
       opacity: 1;
     }
   }
 
   &.btn-fill {
-    color: $default-color;
+    color: var(--default-color);
 
     i {
-      color: $default-color;
+      color: var(--default-color);
       opacity: 1;
     }
   }
 
   &.btn-fill:hover,
   &.btn-fill:focus {
-    color: $default-states-color;
+    color: var(--default-states-color);
 
     i {
-      color: $default-states-color;
+      color: var(--default-states-color);
       opacity: 1;
     }
   }
@@ -231,11 +231,11 @@
 }
 
 .btn-muted {
-  border-color: $light-gray;
-  color: $dark-gray;
+  border-color: (--light-gray);
+  color: var(--dark-gray);
 }
 
 .btn-secondary {
-  border-color: $medium-gray;
-  color: $dark-gray;
+  border-color: var(--medium-gray);
+  color: var(--dark-gray);
 }
