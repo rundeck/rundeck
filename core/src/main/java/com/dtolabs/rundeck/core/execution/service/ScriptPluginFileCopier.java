@@ -36,8 +36,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureRea
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
-import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
@@ -53,7 +52,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
+public class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
     @Override
     public boolean isAllowCustomProperties() {
         return true;
@@ -64,7 +63,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
         return true;
     }
 
-    ScriptPluginFileCopier(final ScriptPluginProvider provider, final Framework framework) {
+    public ScriptPluginFileCopier(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
     }
 

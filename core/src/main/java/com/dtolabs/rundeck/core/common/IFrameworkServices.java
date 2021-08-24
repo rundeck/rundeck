@@ -48,6 +48,7 @@ public interface IFrameworkServices {
      * @param service service
      */
     void setService(String name, FrameworkSupportService service);
+    void overrideService(String name, FrameworkSupportService service);
 
     ExecutionService getExecutionService();
     OrchestratorService getOrchestratorService();

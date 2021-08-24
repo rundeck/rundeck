@@ -94,6 +94,13 @@ public class ServiceSupport implements IFrameworkServices {
     }
 
     @Override
+    public void overrideService(final String name, final FrameworkSupportService service) {
+        synchronized (services) {
+            services.put(name, service);
+        }
+    }
+
+    @Override
     public OrchestratorService getOrchestratorService() {
         return OrchestratorService.getInstanceForFramework(getFramework());
     }

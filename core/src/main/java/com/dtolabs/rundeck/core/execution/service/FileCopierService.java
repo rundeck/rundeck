@@ -66,7 +66,7 @@ public class FileCopierService
         return Collections.unmodifiableList(new ArrayList<>(registry.keySet()));
     }
 
-    FileCopierService(Framework framework) {
+    public FileCopierService(Framework framework) {
         super(framework, true);
 
         //TODO: use plugin framework to configure available FileCopier implementations.
