@@ -462,15 +462,20 @@ $width-icon:					 64px !default;
 $padding-icon:					 12px !default;
 $border-radius-icon:		     15px !default;
 
-
+// TODO: Remove these unused vars
 $white-navbar:              rgba($white, .96);
 $blue-navbar:               rgba($cyan-500, .98);
 
+// TODO: Remove these unused vars
 $azure-navbar:              rgba($cyan-300, .98);
 $green-navbar:              rgba($green-300, .98);
 $orange-navbar:             rgba($orange-300, .98);
 $red-navbar:                rgba($red-300, .98);
 
+
+/**
+Background colors
+**/
 $bg-mainpanel:          $grey-200 !default;
 $bg-mainheader:         $white !default;
 $bg-subheader:          $grey-100 !default;
@@ -486,17 +491,37 @@ $border-warning:        $orange-300 !default;
 $bg-danger:             $red-100 !default;
 $border-danger:         $red-300 !default;
 
+:root {
+    --bg-mainpanel:          var(--grey-200);
+    --bg-mainheader:         var(--white);
+    --bg-subheader:          var(--grey-100);
+
+    --bg-default:            var(--grey-700);
+    --bg-default-inverse:    var(--grey-300);
+
+    --bg-primary:            var(--grey-500);
+    --bg-info:               var(--cyan-100);
+    --bg-success:            var(--green-100);
+    --bg-warning:            var(--orange-100);
+    --border-warning:        var(--orange-300);
+    --bg-danger:             var(--red-100);
+    --border-danger:         var(--red-300);
+}
+
+
+// TODO: Associate these with _dropdown(only placed used)
 $background-light-grey:     $grey-300 !default;
 $background-lighter-grey:   $grey-200 !default;
 $font-background-light-grey: $grey-500 !default;
 $font-hover-background-light-grey: $grey-600 !default;
 
-
+// TODO: Remove as used for old topbar
 $topbar-x:             topbar-x !default;
 $topbar-back:          topbar-back !default;
 $bottombar-x:          bottombar-x !default;
 $bottombar-back:       bottombar-back !default;
 
+// TODO: Unify all animation timings for use with calc and global scaling factor
 $transition-linear:                                   linear !default;
 $transition-bezier:         cubic-bezier(0.34, 1.61, 0.7, 1) !default;
 $transition-ease:           ease 0s;
@@ -514,8 +539,10 @@ $ultra-fast-transition-time:     100ms  !default;
 
 $select-coordinates:         50% -40px !default;
 
+// TODO: Remove
 $padding-zero:                   0px !default;
 
+// TODO: Consider wiring these into new sidebar or remove
 $sidebar-width:               calc(100% - 260px) !default;
 $sidebar-mini-width:          calc(100% - 80px) !default;
 
@@ -530,7 +557,7 @@ $border-radius-none:            0px !default;
 $border-radius-none-top:      $border-radius-none $border-radius-none 0 0 !default;
 $border-radius-small-top:     $border-radius-small $border-radius-small 0 0 !default;
 
-
+// TODO: Replace these with semantic names describing the card flavor purpose
 //variables used in cards
 $card-black-color:          $black !default;
 $card-black-color:          $black !default;
@@ -560,8 +587,42 @@ $card-background-orange:      $orange-200 !default;
 $card-font-orange:            $orange-700 !default;
 $card-subtitle-orange:        $orange-500 !default;
 
+:root {
+    --card-default-background-color: var(--white);
+    --card-default-border-color: #d3dbe5;
+    --card-default-color: var(--black);
+
+    --card-black-color:          var(--black);
+    --card-black-color:          var(--black);
+    --card-muted-color:          var(--grey-400);
+
+    --card-background-blue:      var(--teal-100);
+    --card-font-blue:            var(--teal-700);
+    --card-subtitle-blue:        var(--teal-500);
+
+    --card-background-green:      var(--green-100);
+    --card-font-green:            var(--green-700);
+    --card-subtitle-green:        var(--green-500);
+
+    --card-background-yellow:      var(--yellow-200);
+    --card-font-yellow:            var(--yellow-700);
+    --card-subtitle-yellow:        var(--yellow-500);
+
+    --card-background-brown:      #d6c1ab;
+    --card-font-brown:            #75442e;
+    --card-subtitle-brown:        #a47e65;
+
+    --card-background-purple:      var(--purple-200);
+    --card-font-purple:            var(--purple-700);
+    --card-subtitle-purple:        var(--purple-300);
+
+    --card-background-orange:      var(--orange-200);
+    --card-font-orange:            var(--orange-700);
+    --card-subtitle-orange:        var(--orange-500);
+}
 
 
+// TODO: Remove and replace with custom props that drive new sidebar
 //variables used for sidebar
 $sidebar-background-dark-blue: $teal-700;
 
