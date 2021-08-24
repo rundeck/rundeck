@@ -1,0 +1,171 @@
+@import './overrides';
+// suggested by wifey
+.vgt-table.rd-table{
+  border: 0 solid;
+  background-color: $table-bg;
+
+  & tr.clickable {
+    &:hover{
+      background-color: $highlight-color;
+    }
+  }
+
+  // td
+  & td {
+    border-left: 0 solid;
+    border-right: 0 solid;
+    border-bottom:  1px solid $border-color;
+    color: $text-color;
+  }
+
+  //th
+  & th.line-numbers, & th.vgt-checkbox-col {
+    color: $text-color;
+    border-right: 0 solid;
+    background: $white;
+  }
+  thead{
+    border: 1px solid $border-color;
+    .vgt-checkbox-col{
+      background: $grey-200;
+      border-right: 0 solid;
+    }
+  }
+  tbody{
+    border-right: 1px solid $border-color;
+  }
+  thead th{
+    color: $text-color;
+    border-bottom:  1px solid $border-color;
+    background: $grey-200;
+    border: 0 solid;
+    &.sortable {
+      // color: lighten($text-color, 15%);
+      &:before{
+        border-top-color: $chevron-color;
+      }
+      &:after{
+        border-bottom-color: $chevron-color;
+      }
+      &.sorting-asc{
+        color: $indigo-500;
+        &:after{
+          border-bottom-color: $link-color;
+        }
+      }
+      &.sorting-desc {
+        color: $indigo-500;
+        &:before{
+          border-top-color: $link-color;
+        }
+      }
+    }
+  }
+  
+  //bordered
+  &.bordered td, &.bordered th {
+    border-top: 1px solid $border-color;
+    border-bottom: 1px solid $border-color;
+  }
+
+  //input
+  .vgt-input, .vgt-select{
+    color: $text-color;
+    background-color: darken($thead-bg-color-2, 5%);
+    border: 1px solid $input-border-color;
+    &::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+      color: $text-color;
+      opacity: 0.3; /* Firefox */
+    }
+  }
+}
+.vgt-inner-wrap{
+  box-shadow: none;
+}
+
+
+.vgt-wrap.nocturnal{
+  .vgt-wrap__footer{
+    color: $text-color;
+    border: 1px solid $border-color;
+    background: linear-gradient($thead-bg-color-1, $thead-bg-color-2);
+    .footer__row-count{
+      position: relative;
+      &__label{
+        color: $secondary-text-color;
+      }
+      &__select{
+        color:  $text-color;
+        background: darken($thead-bg-color-2, 5%);
+        border: none;
+        -webkit-appearance: none; 
+        -moz-appearance: none;
+        appearance: none;
+        padding-right: 15px;
+        padding-left: 10px;
+        border-radius: 3px;
+        text-align: center;
+        &:focus{
+          border-color: $link-color;
+        }
+      }
+      &::after{
+        content: '';
+        display: block;
+        position: absolute;
+        height: 0px;
+        width: 0px;
+        right: 6px;
+        top: 50%;
+        margin-top: -1px;
+        border-top:  6px solid $text-color;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-bottom: none;
+        pointer-events: none
+      }
+    }
+    .footer__navigation{
+      &__page-btn{
+        color: $text-color;
+        &.disabled,
+        &.disabled:hover {
+          .chevron.left:after{
+            border-right-color: $text-color;
+          }
+          .chevron.right:after{
+            border-left-color: $text-color;
+          }
+        }
+      }
+      &__info, &__page-info{
+        color: $secondary-text-color;
+      }
+    }
+  }
+
+  // control bar
+  .vgt-global-search{
+    border:  1px solid $border-color;
+    background: linear-gradient($thead-bg-color-1, $thead-bg-color-2);
+  }
+  .vgt-global-search__input{
+    .input__icon{
+      .magnifying-glass{
+        border: 2px solid darken($border-color, 2%);
+        &:before{
+          background: darken($border-color, 2%);
+        }
+      }
+    }
+    .vgt-input, .vgt-select{
+      color: $text-color;
+      background-color: darken($thead-bg-color-2, 5%);
+      border: 1px solid $input-border-color;
+      &::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+        color: $text-color;
+        opacity: 0.3; /* Firefox */
+      }
+    }
+  }
+}
