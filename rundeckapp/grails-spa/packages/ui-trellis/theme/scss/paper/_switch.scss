@@ -222,37 +222,37 @@
   z-index: 1;
   float: left;
   width: 50% !important;
-  background-color: $default-color;
+  background-color: var(--default-color);
 }
 .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-primary,
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-primary {
   color: #fff;
-  background: $primary-color;
+  background: var(--primary-color);
 }
 .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-info,
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-info {
   color: #fff;
-  background: $color-blue;
+  background: var(--color-blue);
 }
 .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-success,
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-success {
   color: #fff;
-  background: $color-green;
+  background: var(--color-green);
 }
 .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-warning,
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-warning {
-  background: $color-orange;
+  background: var(--color-orange);
   color: #fff;
 }
 .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-danger,
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-danger {
   color: #fff;
-  background: $color-red;
+  background: var(--color-red);
 }
 .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-default,
 .bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-default {
   color: #fff;
-  background: $medium-gray;
+  background: var(--medium-gray);
 }
 .bootstrap-switch .bootstrap-switch-label {
   text-align: center;
@@ -380,33 +380,33 @@
 }
 
 .bootstrap-switch.bootstrap-switch-on .bootstrap-switch-handle-off{
-  background-color: $default-color;
+  background-color: var(--default-color);
 }
 
 .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-handle-on{
-  background-color: $medium-gray;
+  background-color: var(--medium-gray);
 }
 
 
 
 .bootstrap-switch.bootstrap-switch-on .bootstrap-switch-danger ~ .bootstrap-switch-default{
-  background-color: $color-red;
+  background-color: var(--color-red);
 }
 
 .bootstrap-switch.bootstrap-switch-on .bootstrap-switch-warning ~ .bootstrap-switch-default{
-  background-color: $color-orange;
+  background-color: var(--color-orange);
 }
 
 .bootstrap-switch.bootstrap-switch-on .bootstrap-switch-success ~ .bootstrap-switch-default{
-  background-color: $color-green;
+  background-color: var(--color-green);
 }
 
 .bootstrap-switch.bootstrap-switch-on .bootstrap-switch-primary ~ .bootstrap-switch-default{
-  background-color: $primary-color;
+  background-color: var(--primary-color);
 }
 
 .bootstrap-switch.bootstrap-switch-on .bootstrap-switch-info ~ .bootstrap-switch-default{
-  background-color: $color-blue;
+  background-color: var(--color-blue);
 }
 
 .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-danger,
@@ -414,5 +414,5 @@
 .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-info,
 .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-warning,
 .bootstrap-switch.bootstrap-switch-off .bootstrap-switch-success{
-  background-color: $medium-gray;
+  background-color: var(--medium-gray);
 }

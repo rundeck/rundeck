@@ -24,7 +24,7 @@
   }
 
   &:after {
-    background: $color-black;
+    background: var(--color-black);
     z-index: 3;
     opacity: 1;
   }
