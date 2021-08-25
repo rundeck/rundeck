@@ -1,6 +1,8 @@
+// Import first so they can be wired into the bootstrap scss
+@import "paper/custom-properties";
+
 @import "bootstrap/stylesheets/bootstrap";
 
-@import "paper/custom-properties";
 @import "paper/variables";
 @import "paper/mixins";
 
