@@ -1,3 +1,5 @@
+package org.rundeck.plugin.azureobjectstore.directorysource
+
 import com.microsoft.azure.storage.StorageUri
 import com.microsoft.azure.storage.blob.CloudBlobContainer
 import com.microsoft.azure.storage.blob.CloudBlobDirectory
