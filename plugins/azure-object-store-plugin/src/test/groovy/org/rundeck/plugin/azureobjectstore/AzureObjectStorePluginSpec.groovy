@@ -1,3 +1,5 @@
+package org.rundeck.plugin.azureobjectstore
+
 import org.rundeck.plugin.azureobjectstore.AzureObjectStorePlugin
 import spock.lang.Specification
 
