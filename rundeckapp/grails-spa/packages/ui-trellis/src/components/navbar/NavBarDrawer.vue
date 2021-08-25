@@ -84,6 +84,6 @@ export default Vue.extend({
     animation-name: fadeInOpacity;
     animation-iteration-count: 1;
     animation-timing-function: ease-in;
-    animation-duration: .2s;
+    animation-duration: calc(100ms * var(--animation-scale));
 }
 </style>
