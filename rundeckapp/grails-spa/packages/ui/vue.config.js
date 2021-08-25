@@ -40,14 +40,7 @@ module.exports = {
     extract: process.env.VUE_APP_CSS_EXTRACT == 'true' ? {
       filename: '/css/[name].css',
       chunkFilename: '/css/[name].css',
-    } : false,
-    loaderOptions: {
-      less: {
-        lessOptions: {
-          javascriptEnabled: true
-        }
-      }
-    }
+    } : false
   },
   chainWebpack: config => {
     /** Do not create index pages for entry points */
@@ -85,11 +78,6 @@ module.exports = {
     },
     externals: {'vue': 'Vue'},
     plugins: [
-      new webpack.NormalModuleReplacementPlugin( /node_modules\/ant-design-vue\/es\/style\/index\.less/, function(resource) {
-        if (resource.resource) {
-          resource.resource = resource.resource.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/antScope.less')
-        }
-      }),
       /** Generate source maps for CSS as it does not support eval-source-map */
       new webpack.SourceMapDevToolPlugin({
         filename: "[file].map",

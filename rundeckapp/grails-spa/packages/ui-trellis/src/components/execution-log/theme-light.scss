@@ -14,6 +14,9 @@
 
 .execution-log--light .execution-log__settings {
   color: grey;
+  .btn:not(:hover) {
+    background-color: white;
+  }
 }
 
 // .execution-log--light .execution-log__scroller > :nth-child(2) {

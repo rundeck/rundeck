@@ -5,7 +5,7 @@
       'execution-log--light': this.settings.theme == 'light',
       }"
   >
-    <a-drawer
+    <rd-drawer
         title="Settings"
         placement="left"
         :mask="false"
@@ -15,7 +15,7 @@
         :wrap-style="{ position: 'absolute' }"
         @close="() => {settingsVisible = false}"
     >
-      <form>
+      <form style="padding: 10px;">
         <div class="form-group">
           <label>Theme</label>
           <select class="form-control select"
@@ -53,7 +53,7 @@
           <label for="logview_stats">Display Stats</label>
         </div>
       </form>
-    </a-drawer>
+    </rd-drawer>
     <div 
       ref="scroller"
       class="execution-log__scroller" v-bind:class="{
@@ -62,15 +62,14 @@
     }">
       <div ref="log">
         <div v-if="showSettings" class="execution-log__settings"  style="margin-left: 5px; margin-right: 5px;">
-          <a-button-group>
-            <a-button size="small" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
-              <a-icon type="setting"/>Settings
-            </a-button>
-
-            <a-button size="small" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
-              <a-icon :type="followIcon"/>Follow
-            </a-button>
-          </a-button-group>
+          <btn-group>
+            <btn size="xs" @click="(e) => {settingsVisible = !settingsVisible; e.target.blur();}">
+              <i class="fas fa-cog"/>Settings
+            </btn>
+            <btn size="xs" @click="(e) => {this.follow = !this.follow; e.target.blur();}">
+              <i :class="[followIcon]"/>Follow
+            </btn>
+          </btn-group>
           <transition name="fade">
             <div class="execution-log__progress-bar" v-if="showProgress">
               <progress-bar v-model="barProgress" :type="progressType" :label-text="progressText" label min-width striped active @click="() => {this.consumeLogs = !this.consumeLogs}"/>
@@ -97,8 +96,6 @@
 </template>
 
 <script lang="ts">
-import {Button, Drawer, Icon} from 'ant-design-vue'
-
 import {CancellationTokenSource, CancellationToken} from 'prex'
 
 import {ExecutionLog, EnrichedExecutionOutput} from '../../utilities/ExecutionLogConsumer'
@@ -112,6 +109,7 @@ import {LogBuilder} from './logBuilder'
 import VueRouter from 'vue-router'
 
 import { RootStore } from '../../stores/RootStore'
+import RdDrawer from '../containers/drawer/Drawer.vue'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 
 const CONFIG_STORAGE_KEY='execution-viewer'
@@ -129,10 +127,7 @@ interface IEventViewerSettings {
 
 @Component({
   components: {
-    'a-button': Button,
-    'a-button-group': Button.Group,
-    'a-drawer': Drawer,
-    'a-icon': Icon
+    'rd-drawer': RdDrawer,
   }
 })
 export default class LogViewer extends Vue {
@@ -281,7 +276,7 @@ export default class LogViewer extends Vue {
     }
 
     get followIcon() {
-      return this.follow ? 'eye' : 'eye-invisible'
+      return this.follow ? 'fas fa-eye' : 'fas fa-eye-slash'
     }
 
     get barProgress() {
@@ -649,6 +644,10 @@ export default class LogViewer extends Vue {
   top: -2px;
   z-index: 1;
   transition: top .3s;
+
+  .btn i {
+    margin-right: 5px;
+  }
 }
 
 .execution-log__settings:hover, .execution-log__settings:focus-within {

@@ -21,7 +21,6 @@
   "dependencies": {
     "@rundeck/client": "0.2.3",
     "ace-builds": "1.4.12",
-    "ant-design-vue": "1.6.2",
     "axios": "^0.18.0",
     "brace": "^0.11.1",
     "core-js": "^3.6.4",
@@ -58,7 +57,6 @@
     "@vue/cli-service": "4.5.8",
     "autoprefixer": "^7.1.2",
     "babel-loader": "8.1.0",
-    "babel-plugin-import": "^1.13.0",
     "chalk": "^2.0.1",
     "file-loader": "^1.1.4",
     "friendly-errors-webpack-plugin": "^1.6.1",
