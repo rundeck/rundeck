@@ -2,7 +2,7 @@
 
 @mixin tag($type, $color){
   .input-new-tag.input-#{$type} .el-input__inner{
-    border-color: $color !important;
+    border-color: var($color) !important;
   }
   .el-tag,
   .el-tag.el-tag--#{$type} {
@@ -11,9 +11,9 @@
     }
     .el-tag__close:hover{
       background-color: white;
-      color: $color;
+      color: var($color);
     }
-    background-color: $color !important;
+    background-color: var($color) !important;
     color: white;
 
   }
@@ -31,8 +31,8 @@
 
 }
 
-@include tag('info', $info-color);
-@include tag('primary', $primary-color);
-@include tag('success', $success-color);
-@include tag('warning', $warning-color);
-@include tag('danger', $danger-color);
+@include tag('info', --info-color);
+@include tag('primary', --primary-color);
+@include tag('success', --success-color);
+@include tag('warning', --warning-color);
+@include tag('danger', --danger-color);

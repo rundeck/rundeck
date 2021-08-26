@@ -1,5 +1,5 @@
 .dropdown-menu {
-  background-color: $white-color;
+  background-color: var(--white-color);
   border: 0 none;
   border-radius: $border-radius-extreme;
   margin-top: 5px;
@@ -47,14 +47,14 @@
     >.active>a,
     >.active>a:hover,
     >.active>a:focus {
-      background-color: $smoke-bg;
-      color: $font-color;
+      background-color: var(--smoke-bg);
+      color: var(--font-color);
     }
 
     >li>a:hover,
     >li>a:focus {
-      background-color: $default-color;
-      color: $fill-font-color;
+      background-color: var(--default-color);
+      color: var(--fill-font-color);
       opacity: 1;
       text-decoration: none;
     }
@@ -67,7 +67,7 @@
   // of the UI and that's not as easy as it sounds
   //
   // &:before{
-  //   border-bottom: 11px solid $medium-pale-bg;
+  //   border-bottom: 11px solid var(--medium-pale-bg);
   //   border-left: 11px solid rgba(0, 0, 0, 0);
   //   border-right: 11px solid rgba(0, 0, 0, 0);
   //   content: "";
@@ -78,7 +78,7 @@
   // }
   //
   // &:after{
-  //   border-bottom: 11px solid $white-color;
+  //   border-bottom: 11px solid var(--white-color);
   //   border-left: 11px solid rgba(0, 0, 0, 0);
   //   border-right: 11px solid rgba(0, 0, 0, 0);
   //   content: "";
@@ -92,7 +92,7 @@
   .dropup &,
   &.bootstrap-datetimepicker-widget.top {
     &:before {
-      border-top: 11px solid $medium-pale-bg;
+      border-top: 11px solid var(--medium-pale-bg);
       border-left: 11px solid rgba(0, 0, 0, 0);
       border-right: 11px solid rgba(0, 0, 0, 0);
       border-bottom: none;
@@ -106,7 +106,7 @@
     }
 
     &:after {
-      border-top: 11px solid $white-color;
+      border-top: 11px solid var(--white-color);
       border-left: 11px solid rgba(0, 0, 0, 0);
       border-right: 11px solid rgba(0, 0, 0, 0);
       border-bottom: none;
@@ -133,18 +133,18 @@
   }
 
   .divider {
-    background-color: $medium-pale-bg;
+    background-color: var(--medium-pale-bg);
     margin: 0px;
   }
 
   .dropdown-header {
-    color: $dark-gray;
+    color: var(--dark-gray);
     font-size: $font-size-small;
     padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
   }
 
   >li>a {
-    color: $font-color;
+    color: var(--font-color);
     font-size: $font-size-base;
     padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
     @include transition-none();
@@ -174,8 +174,8 @@
 
   >li>a:hover,
   >li>a:focus {
-    background-color: $default-color;
-    color: $fill-font-color;
+    background-color: var(--default-color);
+    color: var(--fill-font-color);
     opacity: 1;
     text-decoration: none;
   }
@@ -184,7 +184,7 @@
 
     >a:hover,
     >a:focus {
-      background-color: $primary-color;
+      background-color: var(--primary-color);
     }
   }
 
@@ -192,7 +192,7 @@
 
     >a:hover,
     >a:focus {
-      background-color: $info-color;
+      background-color: var(--info-color);
     }
   }
 
@@ -200,7 +200,7 @@
 
     >a:hover,
     >a:focus {
-      background-color: $success-color;
+      background-color: var(--success-color);
     }
   }
 
@@ -208,7 +208,7 @@
 
     >a:hover,
     >a:focus {
-      background-color: $warning-color;
+      background-color: var(--warning-color);
     }
   }
 
@@ -216,7 +216,7 @@
 
     >a:hover,
     >a:focus {
-      background-color: $danger-color;
+      background-color: var(--danger-color);
     }
   }
 
@@ -254,22 +254,22 @@
   .no-style:hover,
   .no-style:active,
   .no-style:focus {
-    background-color: $white-color;
-    color: $font-color;
+    background-color: var(--white-color);
+    color: var(--font-color);
 
     .caret {
-      border-top-color: $font-color;
+      border-top-color: var(--font-color);
     }
   }
 }
 
 .open {
   .no-style {
-    background-color: $white-color !important;
-    color: $font-color !important;
+    background-color: var(--white-color) !important;
+    color: var(--font-color) !important;
 
     .caret {
-      border-top-color: $font-color !important;
+      border-top-color: var(--font-color) !important;
     }
   }
 }
@@ -293,11 +293,11 @@
 .dropdown-notification {
 
   .dropdown-header {
-    border-bottom: 1px solid $medium-pale-bg;
+    border-bottom: 1px solid var(--medium-pale-bg);
   }
 
   .no-notification {
-    color: $dark-gray;
+    color: var(--dark-gray);
     font-size: 1.2em;
     padding: 30px 30px;
     text-align: center;
@@ -308,15 +308,15 @@
 .dropdown-notification-list {
 
   >li {
-    border-bottom: 1px solid $medium-pale-bg;
-    color: $font-color;
+    border-bottom: 1px solid var(--medium-pale-bg);
+    color: var(--font-color);
     font-size: $font-size-base;
     //        padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
     padding: 10px 5px;
   }
 
   >li>a {
-    color: $font-color;
+    color: var(--font-color);
     white-space: normal;
 
     .notification-text {
@@ -338,7 +338,7 @@
     }
 
     .time {
-      color: $dark-gray;
+      color: var(--dark-gray);
       font-size: 0.7em;
     }
 
@@ -355,7 +355,7 @@
   >li:hover,
   >li:focus {
     background-color: $background-lighter-grey;
-    color: $font-color;
+    color: var(--font-color);
     opacity: 1;
     text-decoration: none;
 
@@ -376,7 +376,7 @@
 .dropdown-sharing {
 
   li {
-    color: $font-color;
+    color: var(--font-color);
     font-size: $font-size-base;
 
     .social-line {
@@ -395,8 +395,8 @@
     .social-line,
     a,
     .action-line {
-      background-color: $smoke-bg;
-      color: $font-color;
+      background-color: var(--smoke-bg);
+      color: var(--font-color);
       opacity: 1;
       text-decoration: none;
     }
@@ -420,12 +420,12 @@
     }
 
     .link-danger {
-      color: $danger-color;
+      color: var(--danger-color);
 
       &:hover,
       &:active,
       &:focus {
-        color: $danger-color;
+        color: var(--danger-color);
       }
     }
   }
@@ -434,7 +434,7 @@
   li:focus {
     a {
       background-color: $background-lighter-grey;
-      color: $font-color;
+      color: var(--font-color);
       opacity: 1;
       text-decoration: none;
     }

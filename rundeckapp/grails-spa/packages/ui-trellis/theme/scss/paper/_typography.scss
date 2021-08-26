@@ -48,7 +48,7 @@ p {
 }
 
 h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small, .h3 small, .h4 small, .h5 small, .h6 small, h1 .small, h2 .small, h3 .small, h4 .small, h5 .small, h6 .small, .h1 .small, .h2 .small, .h3 .small, .h4 .small, .h5 .small, .h6 .small {
-  color: $dark-gray;
+  color: var(--dark-gray);
   font-weight: $font-weight-light;
   line-height: $line-height-general;
 }
@@ -75,55 +75,60 @@ code {
 }
 
 .text-muted {
-  color: $medium-gray;
+  color: var(--medium-gray);
 }
 
 .text-primary, .text-primary:hover, .text-primary:focus, a.text-primary {
-  color: $primary-states-color;
+  color: var(--text-primary-color);
+  font-weight: 600;
 }
 
 a.text-primary:hover, a.text-primary:focus {
-  color: lighten($primary-states-color, 25%);
+  // color: lighten($primary-states-color, 10%);
 }
 
 .text-secondary, .text-secondary:hover, .text-secondary:focus, a.text-secondary {
-  color: lighten($primary-states-color, 40%);
+  color: var(--text-secondary-color);
 }
 
 a.text-secondary:hover, a.text-secondary:focus {
-  color: lighten($primary-states-color, 55%);
+  // color: lighten($primary-states-color, 20%);
 }
 
 .text-info, .text-info:hover, .text-info:focus, a.text-info {
-  color: $info-states-color;
+  color: var(--info-states-color);
+  font-weight: 600;
 }
 
 a.text-info:hover, .text-info:focus {
-  color: lighten($info-states-color, 25%);
+  filter: brightness(1.25);
 }
 
 .text-success, .text-success:hover, .text-success:focus, a.text-success {
-  color: $success-states-color;
+  color: var(--success-states-color);
+  font-weight: 600;
 }
 
 a.text-success:hover, .text-success:focus {
-  color: lighten($success-states-color, 25%);
+  // color: lighten($success-states-color, 25%);
 }
 
 .text-warning, .text-warning:hover, .text-warning:focus, a.text-warning {
-  color: $warning-states-color;
+  color: var(--warning-states-color);
+  font-weight: 600;
 }
 
 a.text-warning:hover, .text-warning:focus {
-  color: lighten($warning-states-color, 25%);
+  // color: lighten(var(--warning-states-color), 25%);
 }
 
 .text-danger, .text-danger:hover, .text-danger:focus, a.text-danger {
-  color: $danger-states-color;
+  color: var(--danger-states-color);
+  font-weight: 600;
 }
 
 a.text-danger:hover, .text-danger:focus {
-  color: lighten($danger-states-color, 25%);
+  // color: lighten(var(--danger-states-color), 25%);
 }
 
 .glyphicon {
@@ -131,44 +136,44 @@ a.text-danger:hover, .text-danger:focus {
 }
 
 strong {
-  color: $default-states-color;
+  color: var(--default-states-color);
 }
 
 .icon-primary {
-  color: $primary-color;
+  color: var(--primary-color);
 }
 
 .icon-info {
-  color: $info-color;
+  color: var(--info-color);
 }
 
 .icon-success {
-  color: $success-color;
+  color: var(--success-color);
 }
 
 .icon-warning {
-  color: $warning-color;
+  color: var(--warning-color);
 }
 
 .icon-danger {
-  color: $danger-color;
+  color: var(--danger-color);
 }
 
 .chart-legend {
   .text-primary, .text-primary:hover {
-    color: $primary-color;
+    color: var(--primary-color);
   }
   .text-info, .text-info:hover {
-    color: $info-color;
+    color: var(--info-color);
   }
   .text-success, .text-success:hover {
-    color: $success-color;
+    color: var(--success-color);
   }
   .text-warning, .text-warning:hover {
-    color: $warning-color;
+    color: var(--warning-color);
   }
   .text-danger, .text-danger:hover {
-    color: $danger-color;
+    color: var(--danger-color);
   }
 }
 

@@ -1,7 +1,7 @@
 @mixin sidebar-background-color($background-color, $font-color) {
   &:after,
   &:before {
-    background-color: $background-color;
+    background-color: var($background-color);
   }
 
   #style-3 {
@@ -10,45 +10,45 @@
   }
   #style-3::-webkit-scrollbar-track
   {
-    -webkit-box-shadow: inset 0 0 6px $background-color;
-    background-color: $background-color;
+    -webkit-box-shadow: inset 0 0 6px var(--background-color);
+    background-color: var($background-color);
   }
 
   #style-3::-webkit-scrollbar
   {
     width: 6px;
-    background-color: $font-color;
+    background-color: var($font-color);
   }
 
   #style-3::-webkit-scrollbar-thumb
   {
-    background-color: $background-color;
+    background-color: var($background-color);
   }
 
 
   .logo {
     // &:before {
-    //   background-color: rgba($font-color, .3);
+    //   background-color: rgba(var($font-color), .3);
     // }
 
 
     p {
-      color: $font-color;
+      color: var($font-color);
     }
 
     .simple-text {
-      color: $font-color;
+      color: var($font-color);
     }
   }
 
   .nav {
     li:not(.active) {
       > a {
-        color: $font-color;
+        color: var($font-color);
       }
     }
     .divider {
-      background-color: rgba($font-color, .2);
+      background-color: rgba(var($font-color), .2);
       min-height:1px;
     }
 
@@ -60,7 +60,7 @@
   .nav {
     li {
       &.active > a {
-        color: $font-color;
+        color: var($font-color);
         opacity: 1;
       }
     }

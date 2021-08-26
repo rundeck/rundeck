@@ -41,7 +41,7 @@
             padding: 0;
             text-align: right;
             font-size: 11px;
-            color: $dark-gray;
+            color: var(--dark-gray);
         }
 
         h6{
@@ -83,7 +83,7 @@
     }
 
     ::-webkit-input-placeholder{
-        color:$dark-gray;
+        color:var(--dark-gray);
     }
 
     .other {
@@ -169,7 +169,7 @@
 
         p {
             margin: 0 0 0.2rem 0;
-            //color: $dark-gray;
+            //color: var(--dark-gray);
             font-size: 15px;
             line-height: 1.2em;
         }

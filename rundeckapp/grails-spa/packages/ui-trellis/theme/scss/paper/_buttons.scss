@@ -3,9 +3,9 @@
   // border-radius: $border-radius-btn-base;
   box-sizing: border-box;
   border-width: $border-thin;
-  background-color: $transparent-bg;
+  background-color: var(--transparent-bg);
   font-size: $font-size-base;
-  font-weight: $font-weight-normal;
+  font-weight: 600;
 
   padding: $padding-base-vertical $padding-base-horizontal;
 
@@ -53,7 +53,7 @@
 }
 
 // Apply the mixin to the buttons
-//.btn-default { @include btn-styles($default-color, $default-states-color); }
+//.btn-default { @include btn-styles(--default-color, --default-states-color); }
 .navbar .navbar-nav>li>a.btn.btn-primary,
 .btn-primary {
   @include btn-styles(--primary-color, --primary-states-color);
@@ -61,7 +61,7 @@
 
 .navbar .navbar-nav>li>a.btn.btn-success,
 .btn-cta {
-  @include btn-styles(--success-color, --success-states-color);
+  @include btn-styles(--cta-color, --cta-states-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-success,
@@ -82,14 +82,6 @@
 .navbar .navbar-nav>li>a.btn.btn-danger,
 .btn-danger {
   @include btn-styles(--danger-color, --danger-states-color);
-}
-
-.btn.btn-primary {
-  font-weight: $font-weight-bold;
-  // the box shadow allows for us to have a 2 pixel border without adding 2 additonal pixels outside
-  -webkit-box-shadow: inset 0px 0px 0px 1px #616161;
-  -moz-box-shadow: inset 0px 0px 0px 1px #616161;
-  box-shadow: inset 0px 0px 0px 1px #616161;
 }
 
 .btn-neutral {
@@ -157,7 +149,7 @@
 }
 
 .btn-simple {
-  border: $none;
+  border: var(--none);
   padding: $padding-base-vertical $padding-base-horizontal;
 
 }

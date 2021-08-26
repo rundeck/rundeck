@@ -17,15 +17,15 @@
   .ps-container.ps-in-scrolling {
     pointer-events: none; }
     .ps-container.ps-in-scrolling.ps-x > .ps-scrollbar-x-rail {
-      background-color: $light-gray;
+      background-color: var(--light-gray);
       opacity: 0.9; }
       .ps-container.ps-in-scrolling.ps-x > .ps-scrollbar-x-rail > .ps-scrollbar-x {
-        background-color: $dark-gray; }
+        background-color: var(--dark-gray); }
     .ps-container.ps-in-scrolling.ps-y > .ps-scrollbar-y-rail {
-      background-color: $light-gray;
+      background-color: var(--light-gray);
       opacity: 0.9; }
       .ps-container.ps-in-scrolling.ps-y > .ps-scrollbar-y-rail > .ps-scrollbar-y {
-        background-color: $dark-gray; }
+        background-color: var(--dark-gray); }
   .ps-container > .ps-scrollbar-x-rail {
     display: none;
     position: absolute;
@@ -88,25 +88,25 @@
   .ps-container:hover.ps-in-scrolling {
     pointer-events: none; }
     .ps-container:hover.ps-in-scrolling.ps-x > .ps-scrollbar-x-rail {
-      background-color: $light-gray;
+      background-color: var(--light-gray);
       opacity: 0.9; }
       .ps-container:hover.ps-in-scrolling.ps-x > .ps-scrollbar-x-rail > .ps-scrollbar-x {
-        background-color: $dark-gray; }
+        background-color: var(--dark-gray); }
     .ps-container:hover.ps-in-scrolling.ps-y > .ps-scrollbar-y-rail {
-      background-color: $light-gray;
+      background-color: var(--light-gray);
       opacity: 0.9; }
       .ps-container:hover.ps-in-scrolling.ps-y > .ps-scrollbar-y-rail > .ps-scrollbar-y {
-        background-color: $dark-gray; }
+        background-color: var(--dark-gray); }
   .ps-container:hover > .ps-scrollbar-x-rail,
   .ps-container:hover > .ps-scrollbar-y-rail {
     opacity: 0.6; }
   .ps-container:hover > .ps-scrollbar-x-rail:hover {
-    background-color: $light-gray;
+    background-color: var(--light-gray);
     opacity: 0.9; }
     .ps-container:hover > .ps-scrollbar-x-rail:hover > .ps-scrollbar-x {
-      background-color: $dark-gray; }
+      background-color: var(--dark-gray); }
   .ps-container:hover > .ps-scrollbar-y-rail:hover {
-    background-color: $light-gray;
+    background-color: var(--light-gray);
     opacity: 0.9; }
     .ps-container:hover > .ps-scrollbar-y-rail:hover > .ps-scrollbar-y {
-      background-color: $dark-gray; }
+      background-color: var(--dark-gray); }

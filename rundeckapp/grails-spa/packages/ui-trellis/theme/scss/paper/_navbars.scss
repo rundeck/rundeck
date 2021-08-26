@@ -7,7 +7,7 @@
   }
 }
 .navbar{
-  border: $none;
+  border: var(--none);
   border-radius: 0;
   font-size: $font-size-navbar;
   //z-index: 3;
@@ -97,13 +97,13 @@
     }
   }
   .navbar-brand:not([class*="text"]){
-    color: $white-color;
+    color: var(--white-color);
   }
 
   .navbar-nav{
     > li > a:not(.btn){
-      color: $white-color;
-      border-color: $white-color;
+      color: var(--white-color);
+      border-color: var(--white-color);
       @include opacity(0.8);
     }
     > .active > a:not(.btn),
@@ -113,7 +113,7 @@
     > li > a:focus:not(.btn){
       background-color: transparent;
       border-radius: 3px;
-      color: $white-color;
+      color: var(--white-color);
       @include opacity(1);
     }
     .nav > li > a.btn:hover{
@@ -123,26 +123,26 @@
     > .dropdown > a .caret,
     > .dropdown > a:hover .caret,
     > .dropdown > a:focus .caret{
-      border-bottom-color: $white-color;
-      border-top-color: $white-color;
+      border-bottom-color: var(--white-color);
+      border-top-color: var(--white-color);
     }
 
     > .open > a,
     > .open > a:hover,
     > .open > a:focus {
       background-color: transparent;
-      color: $white-color;
+      color: var(--white-color);
       @include opacity(1);
     }
   }
 
   .btn-default{
-    color: $white-color;
-    border-color: $white-color;
+    color: var(--white-color);
+    border-color: var(--white-color);
   }
   .btn-default.btn-fill{
-    color: $dark-gray;
-    background-color: $white-color;
+    color: var(--dark-gray);
+    background-color: var(--white-color);
     @include opacity(.9);
   }
   .btn-default.btn-fill:hover,
@@ -150,14 +150,14 @@
   .btn-default.btn-fill:active,
   .btn-default.btn-fill.active,
   .open .dropdown-toggle.btn-fill.btn-default{
-    border-color: $white-color;
+    border-color: var(--white-color);
     @include opacity(1);
   }
 
 }
 .navbar-transparent{
   .dropdown-menu .divider{
-    background-color: rgba($white-color,.2);
+    background-color: rgba(var(--white-color),.2);
   }
 }
 
@@ -166,11 +166,11 @@
   border-bottom: 1px solid darken($bg-mainheader, 10%);
 
   .brand{
-    color: $font-color !important;
+    color: var(--font-color) !important;
   }
   .navbar-nav{
     > li > a:not(.btn){
-      color: $dark-gray;
+      color: var(--dark-gray);
     }
 
     > .active > a,
@@ -180,14 +180,14 @@
     > li > a:not(.btn):focus {
       background-color: transparent;
       border-radius: 3px;
-      color: $info-color;
+      color: var(--info-color);
       @include opacity(1);
     }
 
     > .dropdown > a:hover .caret,
     > .dropdown > a:focus .caret {
-      border-bottom-color: $info-color;
-      border-top-color: $info-color;
+      border-bottom-color: var(--info-color);
+      border-top-color: var(--info-color);
 
     }
 
@@ -195,7 +195,7 @@
     > .open > a:hover,
     > .open > a:focus{
       background-color: transparent;
-      color: $info-color;
+      color: var(--info-color);
     }
 
     .navbar-toggle:hover,.navbar-toggle:focus {
@@ -207,7 +207,7 @@
   &:not(.navbar-transparent) .btn-neutral,
   &:not(.navbar-transparent) .btn-neutral:hover,
   &:not(.navbar-transparent) .btn-neutral:active{
-    color: $dark-gray;
+    color: var(--dark-gray);
   }
 }
 
@@ -249,7 +249,7 @@
   border-bottom: 1px solid transparent;
 
   .navbar-brand{
-    color: $white-color;
+    color: var(--white-color);
     @include opacity(.9);
 
     &:focus,
@@ -261,8 +261,8 @@
 
   .navbar-nav{
     > li > a:not(.btn){
-      color: $white-color;
-      border-color: $white-color;
+      color: var(--white-color);
+      border-color: var(--white-color);
       @include opacity(0.8);
     }
     > .active > a:not(.btn),
@@ -272,7 +272,7 @@
     > li > a:focus:not(.btn){
       background-color: transparent;
       border-radius: 3px;
-      color: $white-color;
+      color: var(--white-color);
       @include opacity(1);
     }
     .nav > li > a.btn:hover{
@@ -284,10 +284,10 @@
 .navbar-toggle{
   margin-top: 19px;
   margin-bottom: 19px;
-  border: $none;
+  border: var(--none);
 
   .icon-bar {
-    background-color: $white-color;
+    background-color: var(--white-color);
   }
   .navbar-collapse,
   .navbar-form {

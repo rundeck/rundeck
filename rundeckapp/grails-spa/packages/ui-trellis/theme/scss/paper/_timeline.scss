@@ -10,14 +10,14 @@
             position: absolute;
             content: " ";
             width: 3px;
-            background-color: $light-gray;
+            background-color: var(--light-gray);
             left: 50%;
             margin-left: -1.5px;
-            background-color: $gray-input-outline;
+            background-color: var(--gray-input-outline);
         }
 
         h6{
-            color: $dark-gray;
+            color: var(--dark-gray);
             font-weight: 400;
             margin: 10px 0px 0px;
         }
@@ -26,7 +26,7 @@
 
             &:before{
                 left: 5%;
-                background-color: $gray-input-outline;
+                background-color: var(--gray-input-outline);
             }
 
             > li > .timeline-panel{
@@ -60,7 +60,7 @@
             padding: 20px;
             border-radius: $border-radius-extreme;
             box-shadow: 0 2px 2px rgba(204, 197, 185, 0.5);
-            background-color: $white-color;
+            background-color: var(--white-color);
             color: $card-black-color;
             margin-bottom: 20px;
             position: relative;
@@ -71,8 +71,8 @@
                 right: -15px;
                 display: inline-block;
                 border-top: 15px solid transparent;
-                border-left: 15px solid $gray-input-outline;
-                border-right: 0 solid $gray-input-outline;
+                border-left: 15px solid var(--gray-input-outline);
+                border-right: 0 solid var(--gray-input-outline);
                 border-bottom: 15px solid transparent;
                 content: " ";
             }
@@ -83,8 +83,8 @@
                 right: -14px;
                 display: inline-block;
                 border-top: 14px solid transparent;
-                border-left: 14px solid $white-color;
-                border-right: 0 solid $white-color;
+                border-left: 14px solid var(--white-color);
+                border-right: 0 solid var(--white-color);
                 border-bottom: 14px solid transparent;
                 content: " ";
             }
@@ -93,7 +93,7 @@
 
 
         > li > .timeline-badge {
-            color: $white-color;
+            color: var(--white-color);
             width: 50px;
             height: 50px;
             line-height: 51px;
@@ -103,7 +103,7 @@
             top: 16px;
             left: 50%;
             margin-left: -25px;
-            background-color: $dark-gray;
+            background-color: var(--dark-gray);
             z-index: 100;
             border-top-right-radius: 50%;
             border-top-left-radius: 50%;
@@ -120,7 +120,7 @@
 
         > li.timeline-inverted > .timeline-panel {
             float: right;
-            background-color: $white-background-color;
+            background-color: var(--white-background-color);
 
             &:before {
                 border-left-width: 0;

@@ -32,20 +32,20 @@ body .fc { /* extra precedence to overcome jqui */
 }
 
 .fc-unthemed .fc-popover {
-	background-color: $white-color;
+	background-color: var(--white-color);
 }
 
 .fc-unthemed .fc-divider,
 .fc-unthemed .fc-popover .fc-header {
-	background: $light-gray;
+	background: var(--light-gray);
 }
 
 .fc-unthemed .fc-popover .fc-header .fc-close {
-	color: $link-disabled-color;
+	color: var(--link-disabled-color);
 }
 
 .fc-unthemed .fc-today {
-	background: $smoke-bg;
+	background: var(--smoke-bg);
 }
 
 .fc-highlight { /* when user is selecting cells */
@@ -163,13 +163,13 @@ NOTE: use percentage font sizes or else old IE chokes
 	border-radius: $border-radius-btn-base;
     box-sizing: border-box;
     border-width: $border-thick;
-    background-color: $transparent-bg;
+    background-color: var(--transparent-bg);
     font-size: $font-size-xs;
     font-weight: $font-weight-semi;
 
     padding: $padding-base-vertical $padding-base-horizontal;
 
-    @include btn-styles($default-color, $default-states-color);
+    @include btn-styles(--default-color, --default-states-color);
     @include transition($fast-transition-time, linear);
 
     &:hover,
@@ -228,22 +228,22 @@ NOTE: use percentage font sizes or else old IE chokes
 .fc-state-hover,
 .fc-state-active,
 .fc-state-disabled {
-	color: $black-color;
+	color: var(--black-color);
 	background-color: #e6e6e6;
 }
 
 .fc button[disabled],
 .fc button[disabled]:focus,
 .fc button[disabled]:hover{
-    background-color: $light-gray;
-    border-color: $light-gray;
+    background-color: var(--light-gray);
+    border-color: var(--light-gray);
     cursor: default;
 	@include opacity(.65);
-	color: $font-color;
+	color: var(--font-color);
 }
 
 .fc-state-hover {
-	background-color: $smoke-bg;
+	background-color: var(--smoke-bg);
 }
 
 .fc .fc-state-active,
@@ -252,8 +252,8 @@ NOTE: use percentage font sizes or else old IE chokes
 .fc .fc-state-active:active:focus,
 .fc .fc-state-active:active:hover,
 .fc .fc-state-active:active {
-	background-color: $default-color;
-    color: $white-color;
+	background-color: var(--default-color);
+    color: var(--white-color);
 }
 
 
@@ -384,7 +384,7 @@ hr.fc-divider {
     border-bottom-width: 1px;
     font-size: $font-size-h6;
     text-transform: uppercase;
-    color: $dark-gray;
+    color: var(--dark-gray);
     font-weight: $font-weight-normal;
     padding-bottom: 3px;
 }
@@ -545,7 +545,7 @@ temporary rendered events).
 .fc-event,
 .fc-event:hover,
 .ui-widget .fc-event {
-	color: $black-color; /* default TEXT color */
+	color: var(--black-color); /* default TEXT color */
 	text-decoration: none; /* if <a> has an href */
 }
 
@@ -561,7 +561,7 @@ temporary rendered events).
 
 .fc-event .fc-bg { /* the generic .fc-bg already does position */
 	z-index: 1;
-	background: $white-color;
+	background: var(--white-color);
 	opacity: .25;
 	filter: alpha(opacity=25); /* for IE */
 }

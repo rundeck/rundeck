@@ -230,17 +230,17 @@
 }
 
 .ct-blue{
-  stroke: $primary-color !important;
+  stroke: var(--primary-color) !important;
 }
 .ct-azure{
-  stroke: $info-color !important;
+  stroke: var(--info-color) !important;
 }
 .ct-green{
-  stroke: $success-color !important;
+  stroke: var(--success-color) !important;
 }
 .ct-orange{
-  stroke: $warning-color !important;
+  stroke: var(--warning-color) !important;
 }
 .ct-red{
-  stroke: $danger-color !important;
+  stroke: var(--danger-color) !important;
 }

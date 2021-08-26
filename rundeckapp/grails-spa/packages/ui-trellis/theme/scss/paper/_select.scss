@@ -17,7 +17,7 @@
       }
       input,
       .el-input__icon{
-        background-color: $color;
+        background-color: var($color);
       }
 
     }
@@ -28,20 +28,20 @@
 
     input{
       background-color: white;
-      border-color: $color !important;
+      border-color: var($color) !important;
       border-width: 2px;
       border-radius: 20px;
-      color: $color;
+      color: var($color);
     }
     .el-input__icon{
-      color:$color;
+      color:var($color);
     }
   }
   .select-#{$type}{
 
     .el-tag, .el-tag.el-tag--info {
       line-height: 24px;
-      background-color: $color !important;
+      background-color: var($color) !important;
       border: none !important;
       .el-tag__close{
         width: 20px;
@@ -56,7 +56,7 @@
     }
     &.el-select-dropdown__item.selected,
     &.el-select-dropdown__item.selected.hover {
-      background-color: $color;
+      background-color: var($color);
       color: white;
     }
   }
@@ -64,7 +64,7 @@
   #{if(&, "&", "*")}.el-select-dropdown.is-multiple,
   .el-select-dropdown__item.selected{
     &.select-#{$type}{
-      color: $color;
+      color: var($color);
     }
   }
 }
@@ -84,9 +84,9 @@
   border-radius:10px;
 }
 
-@include select('default', $default-color);
-@include select('info', $info-color);
-@include select('primary', $primary-color);
-@include select('success', $success-color);
-@include select('warning', $warning-color);
-@include select('danger', $danger-color);
+@include select('default', --default-color);
+@include select('info', --info-color);
+@include select('primary', --primary-color);
+@include select('success', --success-color);
+@include select('warning', --warning-color);
+@include select('danger', --danger-color);

@@ -4,7 +4,7 @@
   .slider-#{$name}{
     .el-slider__bar {
       height: $height;
-      background-color: $color;
+      background-color: var($color);
     }
     .el-tooltip{
       border: none;
@@ -13,17 +13,17 @@
       &.hover,
       &:hover,
       &.dragging {
-        background-color: darken($color, 10%)
+        filter: brightness(0.8);
       }
-      background-color: $color;
+      background-color: var($color);
       height: $height * 3;
       width: $height * 3;
     }
   }
 }
 
-@include slider('info', $info-color);
-@include slider('primary', $primary-color);
-@include slider('success', $success-color);
-@include slider('warning', $warning-color);
-@include slider('danger', $danger-color);
+@include slider('info', --info-color);
+@include slider('primary', --primary-color);
+@include slider('success', --success-color);
+@include slider('warning', --warning-color);
+@include slider('danger', --danger-color);

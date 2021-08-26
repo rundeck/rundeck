@@ -94,7 +94,7 @@
     position: relative;
     height: calc(100% - 60px);
     z-index: 4;
-    box-shadow: inset -1px 0px 0px 0px $medium-gray;
+    box-shadow: inset -1px 0px 0px 0px var(--medium-gray);
     width: 260px;
 
     .dropdown.open .dropdown-backdrop {
@@ -127,7 +127,7 @@
         }
 
         &.active>a {
-          color: $primary-color;
+          color: var(--primary-color);
           opacity: 1;
         }
 
@@ -273,12 +273,12 @@
     top: 0;
     left: 0;
     z-index: 2;
-    background: $white-background-color;
+    background: var(--white-background-color);
   }
 
   &,
   &[data-background-color="white"] {
-    @include sidebar-background-color($white-background-color, $default-color);
+    @include sidebar-background-color(--white-background-color, --default-color);
 
     .user {
       margin-top: 20px;
@@ -290,60 +290,60 @@
   }
 
   &[data-background-color="brown"] {
-    @include sidebar-background-color($brown-background-color, $white-color);
+    @include sidebar-background-color(--brown-background-color, --white-color);
   }
 
   &[data-background-color="black"] {
-    @include sidebar-background-color($black-background-color, $white-color);
+    @include sidebar-background-color(--black-background-color, --white-color);
   }
 
   &[data-background-color="darkblue"] {
-    @include sidebar-background-color($darkblue-background-color, $white-color);
+    @include sidebar-background-color(--darkblue-background-color, --white-color);
   }
 
   &[data-background-color="brown"],
   &[data-background-color="darkblue"],
   &[data-background-color="black"] {
     &[data-active-color="danger"] {
-      @include sidebar-active-color(lighten($danger-color, 10%));
+      @include sidebar-active-color(--danger-color);
     }
 
     .info {
       a {
-        color: $white-color;
+        color: var(--white-color);
       }
     }
 
     .user {
       .photo {
-        border-color: rgba($white-color, 0.3);
+        border-color: rgba(var(--white-color), 0.3);
       }
     }
 
   }
 
   &[data-active-color="primary"] {
-    @include sidebar-active-color($primary-color);
+    @include sidebar-active-color(--primary-color);
   }
 
   &[data-active-color="info"] {
-    @include sidebar-active-color($info-color);
+    @include sidebar-active-color(--info-color);
   }
 
   &[data-active-color="success"] {
-    @include sidebar-active-color($success-color);
+    @include sidebar-active-color(--success-color);
   }
 
   &[data-active-color="warning"] {
-    @include sidebar-active-color($warning-color);
+    @include sidebar-active-color(--warning-color);
   }
 
   &[data-active-color="danger"] {
-    @include sidebar-active-color($danger-color);
+    @include sidebar-active-color(--danger-color);
   }
 
   &[data-active-color="white"] {
-    @include sidebar-active-color($white-color);
+    @include sidebar-active-color(--white-color);
   }
 
 }
