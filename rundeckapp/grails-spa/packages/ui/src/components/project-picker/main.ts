@@ -22,7 +22,7 @@ function init() {
         template: `<ProjectPicker projectLabel="${el.dataset.projectLabel}" @project:selected="handleSelect" @project:select-all="handleSelectAll"/>`,
         methods: {
             handleSelect(project: Project) {
-                window.location.assign(url(`project/${project.name}/home`).href)
+                window.location.assign(url(`?project=${project.name}`).href)
             },
             handleSelectAll() {
                 window.location.assign(url('').href)
