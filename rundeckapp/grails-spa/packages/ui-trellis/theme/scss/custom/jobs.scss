@@ -24,14 +24,14 @@
     vertical-align: top;
 
     text-transform: uppercase;
-    color: $dark-gray;
+    color: var(--dark-gray);
     width: 200px;
   }
 }
 
 .wfstep-description {
   text-decoration: underline;
-  color: $primary-states-color;
+  color: var(--primary-states-color);
 }
 
 .jobstats {
@@ -63,7 +63,7 @@
 .crontab .checklist {
   .crondeselected {
     text-decoration: line-through;
-    color: $dark-gray;
+    color: var(--dark-gray);
   }
 
   .cronselected {

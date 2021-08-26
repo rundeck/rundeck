@@ -27,7 +27,7 @@
     display: block;
 
     &:before {
-      border-bottom: 11px solid $medium-pale-bg;
+      border-bottom: 11px solid var(--medium-pale-bg);
       border-left: 11px solid rgba(0, 0, 0, 0);
       border-right: 11px solid rgba(0, 0, 0, 0);
       content: "";
@@ -38,7 +38,7 @@
     }
 
     &:after {
-      border-bottom: 11px solid $white-color;
+      border-bottom: 11px solid var(--white-color);
       border-left: 11px solid rgba(0, 0, 0, 0);
       border-right: 11px solid rgba(0, 0, 0, 0);
       content: "";
@@ -108,7 +108,7 @@
       li.active {
         >a:not([data-toggle="collapse"]) {
           &:before {
-            border-right: 17px solid $medium-gray;
+            border-right: 17px solid var(--medium-gray);
             border-top: 17px solid transparent;
             border-bottom: 17px solid transparent;
             content: "";
@@ -235,7 +235,7 @@
     left: auto;
     z-index: 9999;
     visibility: visible;
-    background-color: $dark-gray;
+    background-color: var(--dark-gray);
     overflow-y: visible;
     border-top: none;
     text-align: left;
@@ -247,13 +247,13 @@
 
     .sidebar-wrapper {
       width: 230px;
-      box-shadow: inset 1px 0px 0px 0px $medium-gray;
+      box-shadow: inset 1px 0px 0px 0px var(--medium-gray);
 
 
       li.active {
         >a:not([data-toggle="collapse"]) {
           &:before {
-            border-left: 12px solid $medium-gray;
+            border-left: 12px solid var(--medium-gray);
             border-top: 12px solid transparent;
             border-bottom: 12px solid transparent;
             content: "";
@@ -298,7 +298,7 @@
 
           &:hover,
           &.active {
-            color: $default-states-color;
+            color: var(--default-states-color);
           }
         }
       }
@@ -417,7 +417,7 @@
   .navbar-toggle .icon-bar {
     display: block;
     position: relative;
-    background: $white-color;
+    background: var(--white-color);
     width: 24px;
     height: 2px;
     border-radius: 1px;
@@ -427,7 +427,7 @@
   .navbar-toggle-black {
 
     .icon-bar {
-      background: $dark-gray;
+      background: var(--dark-gray);
     }
 
   }
@@ -655,7 +655,7 @@
   .table-responsive {
     width: 100%;
     margin-bottom: 15px;
-    border: 1px solid $medium-gray;
+    border: 1px solid var(--medium-gray);
     overflow-x: scroll;
     overflow-y: hidden;
     -ms-overflow-style: -ms-autohiding-scrollbar;

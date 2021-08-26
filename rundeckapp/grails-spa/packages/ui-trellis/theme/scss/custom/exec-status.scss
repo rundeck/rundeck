@@ -10,7 +10,7 @@
 
   &.other,
   &[data-execstate=OTHER] {
-    color: $warning-color;
+    color: var(--warning-color);
     &.icon{
       &:before {
         content: "\f069";
@@ -29,7 +29,7 @@
 
   &.fail,
   &[data-execstate=FAILED] {
-    color: $danger-color;
+    color: var(--danger-color);
     &.icon{
       &:before {
         content: "\f068";
@@ -39,7 +39,7 @@
 
   &.running,
   &[data-execstate=RUNNING] {
-    color: $info-color;
+    color: var(--info-color);
     &.icon{
       &:before {
         content: "\f144";
@@ -49,7 +49,7 @@
 
   &.succeed,
   &[data-execstate=SUCCEEDED] {
-    color: $success-color;
+    color: var(--success-color);
     &.icon{
       &:before {
         content: "\f058";
@@ -59,7 +59,7 @@
 
   &.aborted,
   &[data-execstate=ABORTED] {
-    color: $dark-gray;
+    color: var(--dark-gray);
     &.icon{
       &:before {
         content: "\f056";
@@ -69,7 +69,7 @@
 
   &.timedout,
   &[data-execstate=TIMEDOUT] {
-    color: $warning-color;
+    color: var(--warning-color);
     &.icon{
       &:before {
         content: "\f017";
@@ -79,7 +79,7 @@
 
   &.failedretry,
   &[data-execstate=FAILED-WITH-RETRY] {
-    color: $warning-color;
+    color: var(--warning-color);
     &.icon{
       &:before {
         content: "\f01e";
@@ -89,7 +89,7 @@
 
   &.scheduled,
   &[data-execstate=SCHEDULED] {
-    color: $info-color;
+    color: var(--info-color);
     &.icon{
       &:before {
         content: "\f017";
@@ -99,7 +99,7 @@
 
   &.queued,
   &[data-execstate=QUEUED] {
-    color: $primary-color;
+    color: var(--primary-color);
     &.icon{
       &:before {
         content: "\f5fd";
@@ -109,7 +109,7 @@
 
   &.missed,
   &[data-execstate=MISSED] {
-    color: $danger-color;
+    color: var(--danger-color);
     &.icon{
       &:before {
         content: "\f017";

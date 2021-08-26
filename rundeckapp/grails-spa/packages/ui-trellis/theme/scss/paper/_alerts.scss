@@ -1,7 +1,7 @@
 .alert {
   border: 0;
   border-radius: $border-radius-extreme;
-  color: #FFFFFF;
+  color: var(--black);
   padding: 10px 15px;
   font-size: 14px;
   z-index: 1000;
@@ -49,7 +49,7 @@
 
 .alert {
   background-color: $bg-default-inverse;
-  color: $default-states-color;
+  color: var(--black);
 }
 
 .alert-primary {

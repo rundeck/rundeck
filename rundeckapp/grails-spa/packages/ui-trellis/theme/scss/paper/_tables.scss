@@ -8,7 +8,7 @@
   tfoot{
     tr > th,
     tr > td{
-      border-top: 1px solid $table-line-color;
+      border-top: 1px solid var(--table-line-color);
     }
     tr.success{
       th,td{
@@ -114,7 +114,7 @@
 
 .table-striped{
   tbody > tr:nth-of-type(2n+1) {
-    background-color: $gray-input-bg;
+    background-color: var(--gray-input-bg);
   }
   > thead > tr > th,
   > tbody > tr > th,
@@ -127,7 +127,7 @@
 }
 .table-shopping{
   > thead > tr > th{
-    color: $muted_color;
+    color: var(--muted-color);
     font-size: 1.1em;
     font-weight: $font-weight-light;
   }
@@ -155,14 +155,14 @@
     min-width: 170px;
     padding-left: 30px;
     strong{
-      color: $default-states-color;
+      color: var(--default-states-color);
       font-size: 1.2em;
       font-weight: $font-weight-bold;
     }
   }
   .td-number,
   .td-total{
-    color: $default-states-color;
+    color: var(--default-states-color);
     font-weight: $font-weight-bold;
   }
   .td-quantity{
@@ -206,12 +206,12 @@
 .el-table {
   .el-checkbox__inner:hover,
   .el-checkbox__input.is-checked .el-checkbox__inner{
-    background-color: $default-color;
-    border-color: $default-color;
+    background-color: var(--default-color);
+    border-color: var(--default-color);
   }
 
   .el-checkbox__input.is-focus .el-checkbox__inner{
-    border-color: $default-color;
+    border-color: var(--default-color);
   }
 }
 

@@ -3,7 +3,7 @@
 
 .execstate {
   &[data-execstate=RETRY] {
-    color: $info-color;
+    color: var(--info-color);
   }
 
   &[data-execstate=FAILED-WITH-RETRY],
@@ -15,30 +15,30 @@
 
 
   &[data-execstate=ABORTED] {
-    color: $dark-gray;
+    color: var(--dark-gray);
   }
 
   &[data-execstate=SUCCEEDED] {
-    color: $success-color;
+    color: var(--success-color);
   }
 
   &[data-execstate=NODE_PARTIAL_SUCCEEDED] {
-    color: $dark-gray;
+    color: var(--dark-gray);
   }
 
   &[data-execstate=RUNNING],
   &[data-execstate=RUNNING_HANDLER] {
-    color: $info-color;
+    color: var(--info-color);
     // color: darken($info-color, 10%);
   }
 
   &[data-execstate=SCHEDULED] {
-    color: $info-color;
+    color: var(--info-color);
     // color: darken($info-color, 20%);
   }
 
   &[data-execstate=QUEUED] {
-    color: $primary-color;
+    color: var(--primary-color);
     // color: darken($info-color, 20%);
   }
 
@@ -52,11 +52,11 @@
 
   &[data-execstate=NOT_STARTED],
   &[data-execstate=WAITING] {
-    color: $dark-gray;
+    color: var(--dark-gray);
   }
 
   &[data-execstate=PASS] {
-    color: $medium-gray;
+    color: var(--medium-gray);
   }
 
   &.isnode[data-execstate] {
@@ -64,7 +64,7 @@
 
     &[data-execstate=RUNNING],
     &[data-execstate=RUNNING_HANDLER] {
-      color: $info-color;
+      color: var(--info-color);
     }
   }
 
@@ -154,7 +154,7 @@
   &.overall {
     &[data-execstate=SUCCEEDED]:after {
       content: 'Succeeded';
-      color: $success-color;
+      color: var(--success-color);
     }
   }
 

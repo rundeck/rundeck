@@ -149,74 +149,6 @@ $black:                      $grey-900;
 /**
 Theme colors
 **/
-$white-background-color: $white !default;
-$black-background-color: $black !default;
-$darkblue-background-color: #35495E !default; // this is the dark blue color from Vue.js branding
-$default-background-color: $grey-200;
-
-$font-color:                 $grey-700 !default;
-$fill-font-color:            rgba($white, 0.85);
-
-$none:                       0   !default;
-$border-thin:                0.1em !default;
-$border-thick:               2px !default;
-
-$white-color:                $white !default;
-$white-bg:                   $white !default;
-
-$smoke-bg:                   $grey-100 !default;
-$pale-bg:                    $grey-200 !default;
-$medium-pale-bg:             $grey-300 !default;
-
-$table-line-color:           $grey-300 !default;
-$muted-color:                $grey-500 !default;
-
-$black-bg:                   rgba($black,.97) !default;
-
-$popover-color:              $grey-100 !default;
-
-
-
-$black-color:                $black !default;
-$black-hr:                   $grey-700 !default;
-
-$brown-background-color:        $font-color !default;
-
-$very-light-gray:            $grey-100 !default;
-$light-gray:                 $grey-300 !default;
-$medium-gray:                $grey-500 !default;
-$dark-gray:                  $grey-800 !default;
-
-$gray-input-bg:              $grey-200 !default;
-$gray-input-outline:         $grey-300 !default;
-$light-input-bg:             $grey-100 !default;
-$danger-input-bg:            $red-100 !default;
-$success-input-bg:           $green-100 !default;
-
-$other-medium-gray:          $grey-500 !default;
-$transparent-bg:             transparent !default;
-
-$default-color:              $grey-700 !default;
-$default-states-color:       $grey-600 !default;
-
-$primary-color:              $grey-800 !default;
-$primary-states-color:       darken($primary-color,11%) !default;
-$primary-highlight-color:    lighten($primary-color, 11%) !default;
-
-$success-color:              $green-500 !default;
-$success-states-color:       $green-500 !default;
-
-$info-color:                 $blue-500 !default;
-$info-states-color:          $blue-500 !default;
-
-$warning-color:              $yellow-500 !default;
-$warning-states-color:       $yellow-700 !default;
-
-$danger-color:               $red-500 !default;
-$danger-states-color:         $red-500 !default;
-
-$link-disabled-color:        $grey-600 !default;
-
 :root {
     --white-background-color: var(--white);
     --black-background-color: var(--black);
@@ -226,57 +158,61 @@ $link-disabled-color:        $grey-600 !default;
     --font-color:                 var(--grey-700);
     --fill-font-color:            #{rgba($white, 0.85)};
 
+    // TODO: Is this necessary?
     --none:                       0;
-    --border-thin:                #{$border-thin};
-    --border-thick:               #{$border-thick};
 
     --white-color:                var(--white);
     --white-bg:                   var(--white);
 
+    // TODO: These need names that do not just describe the color
     --smoke-bg:                   var(--grey-100);
     --pale-bg:                    var(--grey-200);
     --medium-pale-bg:             var(--grey-300);
 
     --table-line-color:           var(--grey-300);
+    // TODO: Muted color for what? This is only used in one place..
     --muted-color:                var(--grey-500);
-
-    --black-bg:                   #{rgba($black,.97)};
 
     --popover-color:              var(--grey-100);
 
-
-
     --black-color:                var(--black);
+    // TODO: This is too color specific and used in just one place
     --black-hr:                   var(--grey-700);
 
-    --brown-background-color:     #{$font-color};
+    --brown-background-color:     var(--font-color);
 
+    // TODO: The usage of these should prob be replaced with semantic variables
     --very-light-gray:            var(--grey-100);
     --light-gray:                 var(--grey-300);
     --medium-gray:                var(--grey-500);
     --dark-gray:                  var(--grey-800);
 
+    // TODO: These are not very semantic
     --gray-input-bg:              var(--grey-200);
     --gray-input-outline:         var(--grey-300);
     --light-input-bg:             var(--grey-100);
+
     --danger-input-bg:            var(--red-100);
     --success-input-bg:           var(--green-100);
 
-    --other-medium-gray:          var(--grey-500);
+    // TODO: What is the purpose of this?
     --transparent-bg:             transparent;
 
     --default-color:              var(--grey-700);
     --default-states-color:       var(--grey-600);
 
-    --primary-color:              var(--grey-800);
-    --primary-states-color:       #{darken($primary-color,11%)};
-    --primary-highlight-color:    #{lighten($primary-color, 11%)};
+    --primary-color:              var(--blue-500);
+    --primary-states-color:       var(--blue-700);
+    --primary-highlight-color:    var(--blue-300);
 
     --success-color:              var(--green-500);
     --success-states-color:       var(--green-500);
 
-    --info-color:                 var(--blue-500);
-    --info-states-color:          var(--blue-500);
+    --cta-color:                  var(--green-500);
+    --cta-states-color:            var(--green-300);
+
+    --info-color:                 var(--cyan-500);
+    --info-states-color:          var(--cyan-500);
 
     --warning-color:              var(--orange-500);
     --warning-states-color:       var(--orange-700);
@@ -284,7 +220,12 @@ $link-disabled-color:        $grey-600 !default;
     --danger-color:               var(--red-500);
     --danger-states-color:        var(--red-500);
 
-    --link-disabled-color:        var(--grey-600);
+    --link-primary-color: var(--primary-color);
+    --link-secondary-color: var(--grey-700);
+    --link-disabled-color:        var(--grey-500);
+
+    --text-primary-color: var(--primary-color);
+    --text-secondary-color: var(--grey-500);
 }
 
 // General Colors
@@ -309,24 +250,15 @@ $color-black:                $grey-800;
 
 
 /*      light colors - used for select dropdown         */
+// TODO: Maybe these should just be lightened in the calendar file if they are only used there
+$light-blue:                 rgba(var(--primary-color), .2);
+$light-azure:                rgba(var(--info-color), .2);
+$light-green:                rgba(var(--success-color), .2);
+$light-orange:               rgba(var(--warning-color), .2);
+$light-red:                  rgba(var(--danger-color), .2);
 
-$light-blue:                 rgba($primary-color, .2);
-$light-azure:                rgba($info-color, .2);
-$light-green:                rgba($success-color, .2);
-$light-orange:               rgba($warning-color, .2);
-$light-red:                  rgba($danger-color, .2);
+$placeholder-gray:           var(--grey-400) !default;
 
-$placeholder-gray:           $grey-400 !default;
-
-:root {
-    --light-blue:                 #{rgba($primary-color, .2)};
-    --light-azure:                #{rgba($info-color, .2)};
-    --light-green:                #{rgba($success-color, .2)};
-    --light-orange:               #{rgba($warning-color, .2)};
-    --light-red:                  #{rgba($danger-color, .2)};
-
-    --placeholder-gray:           #{$grey-400};
-}
 
 
 /*           Social buttons            */
@@ -424,6 +356,8 @@ $line-height-general:          1.4em !default;
 $line-height:                 36px !default;
 $line-height-lg:              54px !default;
 
+$border-thin:                1.5px !default;
+$border-thick:               2px !default;
 
 $border-radius-top:        10px 10px 0 0 !default;
 $border-radius-bottom:     0 0 10px 10px !default;
@@ -461,17 +395,6 @@ $height-icon:					 64px !default;
 $width-icon:					 64px !default;
 $padding-icon:					 12px !default;
 $border-radius-icon:		     15px !default;
-
-// TODO: Remove these unused vars
-$white-navbar:              rgba($white, .96);
-$blue-navbar:               rgba($cyan-500, .98);
-
-// TODO: Remove these unused vars
-$azure-navbar:              rgba($cyan-300, .98);
-$green-navbar:              rgba($green-300, .98);
-$orange-navbar:             rgba($orange-300, .98);
-$red-navbar:                rgba($red-300, .98);
-
 
 /**
 Background colors
@@ -538,9 +461,6 @@ $fast-transition-time:           150ms !default;
 $ultra-fast-transition-time:     100ms  !default;
 
 $select-coordinates:         50% -40px !default;
-
-// TODO: Remove
-$padding-zero:                   0px !default;
 
 // TODO: Consider wiring these into new sidebar or remove
 $sidebar-width:               calc(100% - 260px) !default;
@@ -673,11 +593,11 @@ $screen-lg-min:              $screen-lg !default;
 //** Deprecated `$screen-lg-desktop` as of v3.0.1
 $screen-lg-desktop:          $screen-lg-min !default;
 
-$filter-blue:         darken($primary-color, 10%);
-$filter-azure:        darken($info-color, 10%);
-$filter-green:        darken($success-color, 10%);
-$filter-orange:       darken($warning-color, 10%);
-$filter-red:          darken($danger-color, 10%);
+$filter-blue:         darken($blue-500, 10%);
+$filter-azure:        darken($cyan-500, 10%);
+$filter-green:        darken($green-500, 10%);
+$filter-orange:       darken($orange-500, 10%);
+$filter-red:          darken($red-500, 10%);
 
 // variable used in footers
 $black-footer-bg:            $black !default;

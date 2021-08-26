@@ -2,8 +2,8 @@
 //workflow editor, option editor, autohilite:
 btn.autohilite:hover,
 span.autohilite:hover {
-  background: $info-color;
-  background: $light-gray;
+  background: var(--info-color);
+  background: var(--light-gray);
 }
 
 span.autoedit {
@@ -13,7 +13,7 @@ span.autoedit {
 
 span.autoedit:hover {
   padding: 2px;
-  border: 1px dotted $info-color;
+  border: 1px dotted var(--info-color);
 }
 /**
    * single step or option edit box
@@ -31,15 +31,15 @@ span.autoedit:hover {
 }
 //option values in code sections
 .optvalue {
-  color: $primary-color;
+  color: var(--primary-color);
 
   &.optextra {
-    border-bottom: 1px dashed $primary-color;
+    border-bottom: 1px dashed var(--primary-color);
   }
 }
 
 .optkey {
-  color: $primary-color;
+  color: var(--primary-color);
 
   &:after {
     content: ':';

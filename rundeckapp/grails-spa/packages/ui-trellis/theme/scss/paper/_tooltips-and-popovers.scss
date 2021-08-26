@@ -7,7 +7,7 @@
         padding: 0;
     }
     &.top .tooltip-inner:after {
-        border-top: 11px solid $popover-color;
+        border-top: 11px solid var(--popover-color);
         border-left: 11px solid rgba(0, 0, 0, 0);
         border-right: 11px solid rgba(0, 0, 0, 0);
         bottom: -10px;
@@ -23,7 +23,7 @@
         padding: 0;
     }
     &.bottom .tooltip-inner:after {
-        border-bottom: 11px solid $popover-color;
+        border-bottom: 11px solid var(--popover-color);
         border-left: 11px solid rgba(0, 0, 0, 0);
         border-right: 11px solid rgba(0, 0, 0, 0);
         top: -10px;
@@ -39,7 +39,7 @@
         padding: 0;
     }
     &.left .tooltip-inner:after {
-        border-left: 11px solid $popover-color;
+        border-left: 11px solid var(--popover-color);
         border-top: 11px solid rgba(0, 0, 0, 0);
         border-bottom: 11px solid rgba(0, 0, 0, 0);
         right: -10px;
@@ -59,7 +59,7 @@
         padding: 0;
     }
     &.right .tooltip-inner:after {
-        border-right: 11px solid $popover-color;
+        border-right: 11px solid var(--popover-color);
         border-top: 11px solid rgba(0, 0, 0, 0);
         border-bottom: 11px solid rgba(0, 0, 0, 0);
         left: -10px;
@@ -81,7 +81,7 @@
     opacity: 0;
 }
 .tooltip-inner {
-    background-color: $popover-color;
+    background-color: var(--popover-color);
     border-radius: 4px;
     box-shadow: 0 1px 13px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(115, 71, 38, 0.23);
     color: #737373;
@@ -118,7 +118,7 @@
     line-height: 22px;
     padding: 8px 15px;
     margin: 0;
-    color: $white-color;
+    color: var(--white-color);
     text-align: center;
     border-radius: $border-radius-extreme $border-radius-extreme 0 0;
 }

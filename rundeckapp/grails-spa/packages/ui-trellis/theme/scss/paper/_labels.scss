@@ -10,20 +10,20 @@
     }
 }
 .label-default{
-    background-color: $font-color;
+    background-color: var(--font-color);
 }
 .label-primary{
-    background-color: $primary-color;
+    background-color: var(--primary-color);
 }
 .label-info{
-    background-color: $info-color;
+    background-color: var(--info-color);
 }
 .label-success{
-    background-color: $success-color;
+    background-color: var(--success-color);
 }
 .label-warning{
-    background-color: $warning-color;
+    background-color: var(--warning-color);
 }
 .label-danger{
-    background-color: $danger-color;
+    background-color: var(--danger-color);
 }

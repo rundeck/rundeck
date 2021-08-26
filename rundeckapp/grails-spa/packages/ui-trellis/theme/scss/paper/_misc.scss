@@ -1,6 +1,6 @@
 /*     General overwrite     */
 body {
-  color: $font-color;
+  color: var(--font-color);
   font-size: $font-size-base;
   font-family: 'Muli', Arial, sans-serif;
   .wrapper {
@@ -10,10 +10,11 @@ body {
 }
 
 a {
-  color: $primary-color;
+  color: var(--link-primary-color);
+  font-weight: 600;
 
   &:hover, &:focus {
-    color: $primary-highlight-color;
+    color: var(--primary-highlight-color);
   }
 }
 
@@ -74,7 +75,7 @@ button:focus {
 }
 
 hr {
-  border-color: $medium-pale-bg;
+  border-color: var(--medium-pale-bg);
 }
 
 .wrapper {

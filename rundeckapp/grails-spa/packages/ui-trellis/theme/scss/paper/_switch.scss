@@ -53,9 +53,9 @@
 //   left: 0;
 // }
 // .has-switch > div label {
-//   background-color: $white-color;
+//   background-color: var(--white-color);
 //
-//   box-shadow: 0 1px 1px $white-color inset, 0 1px 1px rgba(0, 0, 0, 0.25);
+//   box-shadow: 0 1px 1px var(--white-color) inset, 0 1px 1px rgba(0, 0, 0, 0.25);
 //   cursor: pointer;
 // }
 // .has-switch input[type=checkbox] {
@@ -80,22 +80,22 @@
 //   transition: 0.25s ease-out;
 // }
 // .has-switch span.switch-left {
-//     background-color: $font-color;
+//     background-color: var(--font-color);
 //     border-left: 1px solid rgba(0, 0, 0, 0);
 //     border-radius: 30px 0 0 30px;
-//     color: $white-color;
+//     color: var(--white-color);
 // }
 // .has-switch .switch-off span.switch-left{
-//     background-color: $medium-gray;
+//     background-color: var(--medium-gray);
 // }
 // .has-switch span.switch-right {
-//   background-color: $font-color;
+//   background-color: var(--font-color);
 //   border-radius: 0 30px 30px 0;
-//   color: $white-color;
+//   color: var(--white-color);
 //   text-indent: 1px;
 // }
 // .has-switch .switch-off span.switch-right{
-//     background-color: $medium-gray;
+//     background-color: var(--medium-gray);
 // }
 //
 // .has-switch label {
@@ -125,23 +125,23 @@
 // }
 // input.ct-primary + span.switch-left,
 // input.ct-primary + span + label + span.switch-right{
-//     background-color:  $primary-color;
+//     background-color:  var(--primary-color);
 // }
 // input.ct-info + span.switch-left,
 // input.ct-info + span + label + span.switch-right{
-//     background-color:  $info-color;
+//     background-color:  var(--info-color);
 // }
 // input.ct-success + span.switch-left,
 // input.ct-success + span + label + span.switch-right{
-//     background-color:  $success-color;
+//     background-color:  var(--success-color);
 // }
 // input.ct-warning + span.switch-left,
 // input.ct-warning + span + label + span.switch-right{
-//     background-color:  $warning-color;
+//     background-color:  var(--warning-color);
 // }
 // input.ct-danger + span.switch-left,
 // input.ct-danger + span + label + span.switch-right{
-//     background-color:  $danger-color;
+//     background-color:  var(--danger-color);
 // }
 
 

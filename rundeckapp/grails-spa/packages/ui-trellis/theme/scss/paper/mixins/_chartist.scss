@@ -67,38 +67,38 @@ $ct-include-alternative-responsive-containers: $ct-include-classes !default;
 // Series names and colors. This can be extended or customized as desired. Just add more series and colors.
 $ct-series-names: (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o) !default;
 $ct-series-colors: (
-  $info-color,
-  $warning-color,
-  $danger-color,
-  $success-color,
-  $primary-color,
-  rgba($info-color,.8),
-  rgba($success-color,.8),
-  rgba($warning-color,.8),
-  rgba($danger-color,.8),
-  rgba($primary-color,.8),
-  rgba($info-color,.6),
-  rgba($success-color,.6),
-  rgba($warning-color,.6),
-  rgba($danger-color,.6),
-  rgba($primary-color,.6)
+  var(--info-color),
+  var(--warning-color),
+  var(--danger-color),
+  var(--success-color),
+  var(--primary-color),
+  rgba(var(--info-color),.8),
+  rgba(var(--success-color),.8),
+  rgba(var(--warning-color),.8),
+  rgba(var(--danger-color),.8),
+  rgba(var(--primary-color),.8),
+  rgba(var(--info-color),.6),
+  rgba(var(--success-color),.6),
+  rgba(var(--warning-color),.6),
+  rgba(var(--danger-color),.6),
+  rgba(var(--primary-color),.6)
   
 ) !default;
 
 // Paper Kit Colors
 
 .ct-blue{
-    stroke: $primary-color !important;
+    stroke: var(--primary-color) !important;
 }
 .ct-azure{
-    stroke: $info-color !important;
+    stroke: var(--info-color) !important;
 }
 .ct-green{
-    stroke: $success-color !important;
+    stroke: var(--success-color) !important;
 }
 .ct-orange{
-    stroke: $warning-color !important;
+    stroke: var(--warning-color) !important;
 }
 .ct-red{
-    stroke: $danger-color !important;
+    stroke: var(--danger-color) !important;
 }

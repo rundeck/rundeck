@@ -49,7 +49,7 @@
         top: 12px;
         height: 1px;
         width: 115px;
-        background-color: $light-gray;
+        background-color: var(--light-gray);
     }
     .divider:before{
         position: absolute;
@@ -58,7 +58,7 @@
         top: 12px;
         height: 1px;
         width: 115px;
-        background-color: $light-gray;
+        background-color: var(--light-gray);
     }
     .modal-footer{
         text-align: center;
