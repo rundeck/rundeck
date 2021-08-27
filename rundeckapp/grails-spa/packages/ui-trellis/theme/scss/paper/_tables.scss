@@ -246,3 +246,186 @@
     }
   }
 }
+
+
+// VGT TABLE
+
+@import 'vue-good-table/src/styles/style.scss';
+
+
+
+
+.vgt-responsive {
+    width: 100%;
+    overflow-x: inherit;
+    position: relative;
+}
+.vgt-table.rd-table{
+  border: 0 solid;
+  background-color: var(--white);
+
+  & tr.clickable {
+    &:hover{
+      background-color: var(--grey-100);
+    }
+  }
+
+  // td
+  & td {
+    border-left: 0 solid;
+    border-right: 0 solid;
+    border-bottom:  1px solid var(--grey-400);
+    color: var(--black);
+  }
+
+  //th
+  & th.line-numbers, & th.vgt-checkbox-col {
+    color: var(--black);
+    border-right: 0 solid;
+    background: var(--white);
+  }
+  thead{
+    border: 1px solid var(--grey-400);
+    .vgt-checkbox-col{
+      background: var(--grey-200);
+      border-right: 0 solid;
+    }
+  }
+  tbody{
+    border-right: 1px solid var(--grey-400);
+  }
+  thead th{
+    color: var(--black);
+    border-bottom:  1px solid var(--grey-400);
+    background: var(--grey-200);
+    border: 0 solid;
+    &.sortable {
+      // color: lighten(var(--black), 15%);
+      &:before{
+        border-top-color: var(--grey-700);
+      }
+      &:after{
+        border-bottom-color: var(--grey-700);
+      }
+      &.sorting-asc{
+        color: var(--indigo-500);
+        &:after{
+          border-bottom-color: var(--blue-500);
+        }
+      }
+      &.sorting-desc {
+        color: var(--indigo-500);
+        &:before{
+          border-top-color: var(--blue-500);
+        }
+      }
+    }
+  }
+
+  //bordered
+  &.bordered td, &.bordered th {
+    border-top: 1px solid var(--grey-400);
+    border-bottom: 1px solid var(--grey-400);
+  }
+
+  //input
+  .vgt-input, .vgt-select{
+    color: var(--black);
+    background-color: --grey-400;
+    border: 1px solid var(--grey-400);
+    &::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+      color: var(--black);
+      opacity: 0.3; /* Firefox */
+    }
+  }
+}
+.vgt-inner-wrap{
+  box-shadow: none;
+}
+
+
+.vgt-wrap.nocturnal{
+  .vgt-wrap__footer{
+    color: var(--black);
+    border: 1px solid var(--grey-400);
+    background: linear-gradient(var(--white), var(--grey-200));
+    .footer__row-count{
+      position: relative;
+      &__label{
+        color: var(--grey-700);
+      }
+      &__select{
+        color:  var(--black);
+        background: var(--grey-400);
+        border: none;
+        -webkit-appearance: none; 
+        -moz-appearance: none;
+        appearance: none;
+        padding-right: 15px;
+        padding-left: 10px;
+        border-radius: 3px;
+        text-align: center;
+        &:focus{
+          border-color: var(--blue-500);
+        }
+      }
+      &::after{
+        content: '';
+        display: block;
+        position: absolute;
+        height: 0px;
+        width: 0px;
+        right: 6px;
+        top: 50%;
+        margin-top: -1px;
+        border-top:  6px solid var(--black);
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-bottom: none;
+        pointer-events: none
+      }
+    }
+    .footer__navigation{
+      &__page-btn{
+        color: var(--black);
+        &.disabled,
+        &.disabled:hover {
+          .chevron.left:after{
+            border-right-color: var(--black);
+          }
+          .chevron.right:after{
+            border-left-color: var(--black);
+          }
+        }
+      }
+      &__info, &__page-info{
+        color: var(--grey-700);
+      }
+    }
+  }
+
+  // control bar
+  .vgt-global-search{
+    border:  1px solid var(--grey-400);
+    background: linear-gradient(var(--white), var(--grey-200));
+  }
+  .vgt-global-search__input{
+    .input__icon{
+      .magnifying-glass{
+        border: 2px solid var(--grey-400);
+        &:before{
+          background: var(--grey-400);
+        }
+      }
+    }
+    .vgt-input, .vgt-select{
+      color: var(--black);
+      background-color: var(--grey-200);
+      border: 1px solid var(--grey-400);
+      &::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+        color: var(--black);
+        opacity: 0.3; /* Firefox */
+      }
+    }
+  }
+}
