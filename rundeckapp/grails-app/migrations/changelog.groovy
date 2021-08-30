@@ -105,5 +105,7 @@ databaseChangeLog = {
         include file: 'core/ConstraintsIndexesKeys.groovy'
         include file: 'core/WorkflowStep.groovy'
         include file: 'core/Tag-3.4.0.groovy'
+        include file: 'core/WorkflowStepVARCHARtoNVARCHAR.groovy'
+        include file: 'core/Tag-3.4.4.groovy'
 
 }
