@@ -54,6 +54,7 @@
 
 <input type="hidden" name="dayOfMonth" value="${enc(attr:scheduledExecution?.dayOfMonth)}"/>
 <g:hiddenField name="useCrontabString" value="${useCrontabString}" id="useCrontabString"/>
+<div class="vue-tabs"><div class="nav-tabs-navigation">
 <ul class="nav nav-tabs crontab-edit">
     <li class="${!useCrontabString ? 'active' : ''}">
         <a data-toggle="tab" data-crontabstring="false" href="#cronsimple">Simple</a>
@@ -63,6 +64,7 @@
         <a data-toggle="tab" data-crontabstring="true" href="#cronstrtab">Crontab</a>
     </li>
 </ul>
+</div></div>
 <g:javascript>
 jQuery(window).load(function(){
     jQuery('.crontab-edit a[data-toggle="tab"]').on('show.bs.tab', function (e) {
@@ -73,7 +75,7 @@ jQuery(window).load(function(){
 
 <div class="tab-content">
 <div class="tab-pane ${!useCrontabString?'active':''}" id="cronsimple">
-<div class="panel panel-default panel-tab-content form-inline crontab tabtarget" >
+<div class="form-inline crontab tabtarget" >
     <div class="panel-body">
     <div class="col-sm-4" id="hourTab">
         <div>
@@ -146,7 +148,7 @@ jQuery(window).load(function(){
 </div>
 
 <div class="tab-pane ${useCrontabString ? 'active' : ''}" id="cronstrtab">
-<div class="panel panel-default panel-tab-content crontab tabtarget"  >
+<div class="crontab tabtarget"  >
 
     <div class="panel-body">
     <div class="container">
