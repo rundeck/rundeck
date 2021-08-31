@@ -121,7 +121,7 @@
                                 <g:link action="show"
                                         controller="scheduledExecution"
                                         id="${scheduledExecution.extid}"
-                                        class="hover_show_job_info text-primary"
+                                        class="hover_show_job_info link-quiet"
                                         params="[project: scheduledExecution.project]"
                                         data-job-id="${scheduledExecution.extid}">
                                     <g:if test="${showIcon}">

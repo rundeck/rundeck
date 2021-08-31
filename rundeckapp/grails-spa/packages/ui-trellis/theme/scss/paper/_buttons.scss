@@ -56,7 +56,13 @@
 //.btn-default { @include btn-styles(--default-color, --default-states-color); }
 .navbar .navbar-nav>li>a.btn.btn-primary,
 .btn-primary {
-  @include btn-styles(--primary-color, --primary-states-color);
+  // @include btn-styles(--btn-default-color, --primary-states-color);
+  box-shadow: 
+    inset 1px 1px 0px var(--default-color),
+    inset 1px -1px 0px var(--default-color),
+    inset -1px 1px 0px var(--default-color),
+    inset -1px -1px var(--default-color);
+  font-weight: 700;
 }
 
 .navbar .navbar-nav>li>a.btn.btn-success,
