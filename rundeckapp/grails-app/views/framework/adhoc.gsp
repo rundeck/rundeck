@@ -175,7 +175,7 @@ search
                                   code="count.nodes.matched"/></span>
 
                           <span data-bind="if: total()>maxShown()">
-                            <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary"><g:message
+                            <span data-bind="messageTemplate: [maxShown(), total()]" class="text-strong"><g:message
                                     code="count.nodes.shown"/></span>
                           </span>
 

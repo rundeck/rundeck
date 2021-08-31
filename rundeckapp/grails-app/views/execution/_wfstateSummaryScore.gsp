@@ -21,7 +21,7 @@
             <span
                     data-bind="text: percentageFixed(completedNodes().length,activeNodes().length) + '%'"></span>
 
-            <span class="text-primary"
+            <span class="text-info"
                   data-bind="text: completedNodes().length+'/'+activeNodes().length"></span>
 
         </span>

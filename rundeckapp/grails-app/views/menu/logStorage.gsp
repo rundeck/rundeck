@@ -71,16 +71,16 @@
 
 
                       <tr>
-                          <th style="width: 20%" class="text-primary text-center h5 text-header">
+                          <th style="width: 20%" class="text-strong text-center h5 text-header">
                               <g:message code="menu.logStorage.stats.successRatio.title"/>
                           </th>
-                          <th style="width: 20%" class="text-primary text-center h5 text-header">
+                          <th style="width: 20%" class="text-strong text-center h5 text-header">
                               <g:message code="menu.logStorage.stats.queueCount.title"/>
                           </th>
-                          <th style="width: 20%" class="text-primary text-center h5 text-header">
+                          <th style="width: 20%" class="text-strong text-center h5 text-header">
                               <g:message code="menu.logStorage.stats.storageResults.title"/>
                           </th>
-                          <th style="width: 20%" class="text-primary text-center h5 text-header">
+                          <th style="width: 20%" class="text-strong text-center h5 text-header">
                               <g:message code="menu.logStorage.stats.incomplete.title"/>
                           </th>
                       </tr>
@@ -110,24 +110,24 @@
                           </td>
                           <g:each in="['queuedCount']" var="propname">
                               <td class="h3 text-center"
-                                  data-bind="text: ${propname}, css: { 'text-info': ${propname}()>0 , 'text-primary': ${propname}()<1 } "></td>
+                                  data-bind="text: ${propname}, css: { 'text-info': ${propname}()>0 , 'text-strong': ${propname}()<1 } "></td>
                           </g:each>
                           <td class="text-center h3">
                               <span class="text-success" data-bind="text: succeededCount"></span>
                               <span class="text-muted">:</span>
-                              <span data-bind="text: failedCount, css: {'text-warning': failedCount()>0, 'text-primary': failedCount()<1 }"></span>
+                              <span data-bind="text: failedCount, css: {'text-warning': failedCount()>0, 'text-strong': failedCount()<1 }"></span>
 
                           </td>
                           <g:each in="['incompleteCount']" var="propname">
                               <td class="h3 text-center"
-                                  data-bind="text: ${propname}, css: { 'text-warning': ${propname}()>0 , 'text-primary': ${propname}()<1 } "></td>
+                                  data-bind="text: ${propname}, css: { 'text-warning': ${propname}()>0 , 'text-strong': ${propname}()<1 } "></td>
                           </g:each>
                       </tr>
                       <tr>
                       %{--descriptions--}%
                           <g:each in="['progress', 'queueCount', 'storageResults', 'incomplete']" var="name">
 
-                              <td class="text-primary text-small">
+                              <td class="text-strong text-small">
                                   <g:message code="menu.logStorage.stats.${name}.description"/>
                                   <g:if test="${name == 'queueCount'}">
                                       <span data-bind="messageTemplate: retryDelay">
@@ -139,12 +139,12 @@
                       </tr>
                       <tr>
                           <td class=" text-center">
-                              <g:message code="menu.logStorage.stats.running.label.prompt" /><span data-bind="text: running, css: { 'text-info': running()>0 , 'text-primary': running()<1 } "></span>
+                              <g:message code="menu.logStorage.stats.running.label.prompt" /><span data-bind="text: running, css: { 'text-info': running()>0 , 'text-strong': running()<1 } "></span>
                           </td>
                           <td class="text-center">
-                              <g:message code="menu.logStorage.stats.queuedRequestCount.label.prompt" /> <span data-bind="text: queuedRequestCount, css: { 'text-info': queuedRequestCount()>0 , 'text-primary': queuedRequestCount()<1 } "></span>
-                              <g:message code="menu.logStorage.stats.queuedRetriesCount.label.prompt" /> <span data-bind="text: queuedRetriesCount, css: { 'text-info': queuedRetriesCount()>0 , 'text-primary': queuedRetriesCount()<1 } "></span>
-                              <g:message code="menu.logStorage.stats.queuedIncompleteCount.label.prompt" /> <span data-bind="text: queuedIncompleteCount, css: { 'text-info': queuedIncompleteCount()>0 , 'text-primary': queuedIncompleteCount()<1 } "></span>
+                              <g:message code="menu.logStorage.stats.queuedRequestCount.label.prompt" /> <span data-bind="text: queuedRequestCount, css: { 'text-info': queuedRequestCount()>0 , 'text-strong': queuedRequestCount()<1 } "></span>
+                              <g:message code="menu.logStorage.stats.queuedRetriesCount.label.prompt" /> <span data-bind="text: queuedRetriesCount, css: { 'text-info': queuedRetriesCount()>0 , 'text-strong': queuedRetriesCount()<1 } "></span>
+                              <g:message code="menu.logStorage.stats.queuedIncompleteCount.label.prompt" /> <span data-bind="text: queuedIncompleteCount, css: { 'text-info': queuedIncompleteCount()>0 , 'text-strong': queuedIncompleteCount()<1 } "></span>
 
                               <div data-bind="if: queuedCount()>0">
 
@@ -160,7 +160,7 @@
                               </div>
                           </td>
                           <td class="text-center">
-                              <g:message code="menu.logStorage.stats.retriesCount.label.prompt" /> <span data-bind="text: retriesCount, css: { 'text-info': retriesCount()>0 , 'text-primary': retriesCount()<1 } "></span>
+                              <g:message code="menu.logStorage.stats.retriesCount.label.prompt" /> <span data-bind="text: retriesCount, css: { 'text-info': retriesCount()>0 , 'text-strong': retriesCount()<1 } "></span>
                           </td>
                           <td class="text-center">
                               <div data-bind="if: incompleteCount()>0">
@@ -197,12 +197,12 @@
                   <div data-bind="if: incompleteRequests().total()>0">
                       <table class="table table-bordered table-condensed">
                           <tr>
-                              <th colspan="4" class="text-primary table-footer text-small">
+                              <th colspan="4" class="text-strong table-footer text-small">
                                   <g:message code="menu.logStorage.table.title.incomplete.log.data" />
                               </th>
                           </tr>
                           <tr>
-                              <th colspan="4" class="text-primary table-footer text-small">
+                              <th colspan="4" class="text-strong table-footer text-small">
 
                                   <div class="btn-group">
                                       <button class="btn btn-default btn-xs"
@@ -214,7 +214,7 @@
                                           <g:message code="next.page" />
                                       </button>
                                   </div>
-                                  <span class="text-primary">
+                                  <span class="text-strong">
                                       <span data-bind="messageTemplate: [incompleteRequests().offsetInt()+1, incompleteRequests().offsetInt()+incompleteRequests().maxInt(),incompleteRequests().total] ">
                                           <g:message code="menu.logStorage.table.paging.info" />
                                       </span>
@@ -222,13 +222,13 @@
                               </th>
                           </tr>
                           <tr>
-                              <th class="text-primary text-small" colspan="2">
+                              <th class="text-strong text-small" colspan="2">
                                   <g:message code="menu.logStorage.table.incomplete.header.execution.id" />
                               </th>
-                              <th class="text-primary text-small">
+                              <th class="text-strong text-small">
                                   <g:message code="menu.logStorage.table.incomplete.header.date.created" />
                               </th>
-                              <th class="text-primary text-small">
+                              <th class="text-strong text-small">
                                   <g:message code="menu.logStorage.table.incomplete.header.Action" />
                               </th>
                           </tr>
@@ -242,7 +242,7 @@
                                   <span data-bind="if: failed" title="${message(code:"menu.logStorage.incomplete.status.failed.title")}" class="text-warning">
                                       <g:icon name="exclamation-sign"/>
                                   </span>
-                                  <span data-bind="if: !failed() && !queued()" title="${message(code:"menu.logStorage.incomplete.status.unqueued.title")}" class="text-primary">
+                                  <span data-bind="if: !failed() && !queued()" title="${message(code:"menu.logStorage.incomplete.status.unqueued.title")}" class="text-strong">
                                       <g:icon name="hourglass"/>
                                   </span>
                               </td>

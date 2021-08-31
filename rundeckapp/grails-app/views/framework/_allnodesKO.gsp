@@ -42,7 +42,7 @@
                 <tr class=" node_entry  hover-action-holder ansicolor-on" data-bind="css: {server: islocal}">
                     <td class="nodeident" data-bind="attr: {title: attributes.description}" >
 
-                        <a href="#" data-toggle="collapse" data-bind="attr: {href: '#detail_'+$index() }">
+                        <a class="link-quiet" href="#" data-toggle="collapse" data-bind="attr: {href: '#detail_'+$index() }">
                             <i class="auto-caret text-muted"></i>
                             <span class="node_ident" data-bind="css: {server: islocal}, css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">
                                     <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
@@ -66,7 +66,7 @@
                                         "></node-filter-link>
 
                           <span class="nodedesc"></span>
-                          <span class="text-primary ">
+                          <span class="text-strong ">
                               <!-- ko if: attributes['ui:badges'] -->
                               <!-- ko foreach:   $root.nodeSet().glyphiconBadges(attributes)-->
                               <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
@@ -93,7 +93,7 @@
                         <span class="value" data-bind="if: $parent.attributes[$data]">
                             <span data-bind="if: $data=='tags'">
                                 <span class="nodetags">
-                                    <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().length > 0}"></i> -->
+                                    <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-strong': $parent.tags().length > 0}"></i> -->
                                     <span data-bind="foreach: $parent.tags">
 
                                         <node-filter-link params="
@@ -123,7 +123,7 @@
                     <td  title="Tags" class="nodetags" >
                         <span data-bind="if: tags">
                             <span class="nodetags">
-                                <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().length > 0}"></i> -->
+                                <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-strong': tags().length > 0}"></i> -->
                                 <span data-bind="foreach: tags">
                                     <node-filter-link params="
                                                     filterkey: 'tags',

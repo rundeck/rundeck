@@ -41,7 +41,7 @@
                     <th class="table-header">
                         <g:message code="security.groups.label"/>
 
-                        <g:helpTooltip code="security.groups.description" css="text-primary"/>
+                        <g:helpTooltip code="security.groups.description" css="text-strong"/>
                     </th>
                 </g:if>
 
@@ -50,20 +50,20 @@
                 <td>
                     ${user.email}
                     <g:if test="${!user.email}">
-                        <span class="text-primary small text-uppercase"><g:message code="not.set" /></span>
+                        <span class="text-strong small text-uppercase"><g:message code="not.set" /></span>
                     </g:if>
                 </td>
                 <td>
                     <g:enc>${user.firstName}</g:enc>
                     <g:if test="${!user.firstName}">
-                        <span class="text-primary small text-uppercase"><g:message code="not.set" /></span>
+                        <span class="text-strong small text-uppercase"><g:message code="not.set" /></span>
                     </g:if>
                 </td>
                 <td>
                     <g:enc>${user.lastName}</g:enc>
 
                     <g:if test="${!user.lastName}">
-                        <span class="text-primary small text-uppercase"><g:message code="not.set" /></span>
+                        <span class="text-strong small text-uppercase"><g:message code="not.set" /></span>
                     </g:if>
                 </td>
                 <g:if test="${selfprofile}">

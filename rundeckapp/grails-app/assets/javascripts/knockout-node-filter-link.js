@@ -57,7 +57,7 @@ function NodeFilterLinkParams(params){
 // console.log('NodeFilterLinkParams', NodeFilterLinkParams);
 ko.components.register('node-filter-link', {
     viewModel:NodeFilterLinkParams,
-    template: '<a  class="nodefilterlink"  href="#"  data-bind="attr: attributes($root),  css: classnames"  > \
+    template: '<a  class="nodefilterlink link-quiet"  href="#"  data-bind="attr: attributes($root),  css: classnames"  > \
     <span data-bind="if: linkicon"><i data-bind="css: linkicon"></i></span>\
     <span data-bind="if: !linkicon"><span data-bind="text: viewtext(), css: textcss"></span></span>\
     <span data-bind="if: count">(<span data-bind="text: count"></span>)</span>\
@@ -66,7 +66,7 @@ ko.components.register('node-filter-link', {
 
 ko.components.register('node-exclude-filter-link', {
     viewModel:NodeFilterLinkParams,
-    template: '<a  class="nodeexcludefilterlink"  href="#"  data-bind="attr: attributes($root),  css: classnames"  > \
+    template: '<a  class="nodeexcludefilterlink link-quiet"  href="#"  data-bind="attr: attributes($root),  css: classnames"  > \
     <span data-bind="if: linkicon"><i data-bind="css: linkicon"></i></span>\
     <span data-bind="if: !linkicon"><span data-bind="text: viewtext(), css: textcss"></span></span> \
     <span data-bind="if: count">(<span data-bind="text: count"></span>)</span> \

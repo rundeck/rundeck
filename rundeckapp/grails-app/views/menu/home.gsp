@@ -88,7 +88,7 @@
             </div>
             <div class="card-content">
               <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
-              <p class="h6 text-primary" style="margin-top:1em;">
+              <p class="h6 text-strong" style="margin-top:1em;">
                 <g:message code="you.can.see.this.message.again.by.clicking.the" />
                 <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
                 <g:message code="in.the.page.footer" />
@@ -142,14 +142,14 @@
             <div data-bind="if: projectCount() > 0 && loaded()">
               %{--app summary info--}%
                 <span class="h4">
-                  <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-primary': execCount()<1 }">
+                  <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-strong': execCount()<1 }">
                     <span data-bind="text: execCount"></span>
                   </span>
                   <span data-bind="messageTemplate: execCount, messageTemplatePluralize:true">
                     <g:message code="Execution" />|<g:message code="Execution.plural" />
                   </span>
                   <g:message code="page.home.duration.in.the.last.day" />
-                    <span class="summary-count" data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-primary': totalFailedCount()<1 }">
+                    <span class="summary-count" data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-strong': totalFailedCount()<1 }">
                       <span data-bind="messageTemplate: totalFailedCount">
                         <g:message code="page.home.project.executions.0.failed.parenthetical" />
                       </span>

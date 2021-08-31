@@ -188,7 +188,7 @@
 
             </div>
             <div class="row">
-                <div class="text-primary col-sm-12">
+                <div class="text-strong col-sm-12">
                     <div>
                         Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".
                     </div>

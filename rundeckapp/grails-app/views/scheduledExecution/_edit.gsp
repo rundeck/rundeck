@@ -461,7 +461,7 @@
                           </span>
 
                           <span data-bind="if: total()>maxShown()">
-                              <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary">
+                              <span data-bind="messageTemplate: [maxShown(), total()]" class="text-strong">
                                   <g:message code="count.nodes.shown"/>
                               </span>
                           </span>
@@ -1107,13 +1107,13 @@
 
       %{--uuid--}%
       <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
-          <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-primary">
+          <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-strong">
               <g:message code="uuid" />
           </label>
 
           <div class="${fieldColSize}">
               <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
-                  <p class="form-control-static text-primary" title="${g.message(code:'uuid.for.this.job')}">
+                  <p class="form-control-static text-strong" title="${g.message(code:'uuid.for.this.job')}">
                       <g:enc>${scheduledExecution?.uuid}</g:enc>
                   </p>
               </g:if>

@@ -33,13 +33,13 @@
         </div>
 
         <div data-bind="if: !errorMessage() && !statusMessage()">
-            <div class="well well-lg text-primary">
+            <div class="well well-lg text-strong">
                 <g:message code="waiting.for.state.info"/>
             </div>
         </div>
 
         <div data-bind="if: statusMessage()">
-            <div class="well well-lg text-primary" data-bind="text: statusMessage()"></div>
+            <div class="well well-lg text-strong" data-bind="text: statusMessage()"></div>
         </div>
     </div>
 
@@ -53,7 +53,7 @@
             <div class="col-xs-12 col-sm-4 job-stats-item">
 
                 <span class="job-stats-value">
-                    <span class="text-primary" data-bind="text: waitingNodes().length"></span>
+                    <span class="text-strong" data-bind="text: waitingNodes().length"></span>
                 </span>
 
                 <span class="text-table-header has_tooltip"
@@ -70,7 +70,7 @@
 
                 <span class="job-stats-value">
                     <span
-                            data-bind="css: {'text-info': runningNodes().length > 0 , 'text-primary': runningNodes().length < 1 } ">
+                            data-bind="css: {'text-info': runningNodes().length > 0 , 'text-strong': runningNodes().length < 1 } ">
                         <span class=" " data-bind="text: runningNodes().length"></span>
                     </span>
                 </span>
@@ -88,7 +88,7 @@
 
                 <span class="job-stats-value">
                     <span
-                            data-bind="css: {'text-info': completedNodes().length > 0 , 'text-primary': completedNodes().length < 1 } ">
+                            data-bind="css: {'text-info': completedNodes().length > 0 , 'text-strong': completedNodes().length < 1 } ">
                         <span data-bind="text: completedNodes().length"></span>
                     </span>
                 </span>

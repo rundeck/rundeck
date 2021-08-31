@@ -73,7 +73,7 @@
                     <g:if test="${scmFilePaths && scmFilePaths[job.extid] && integration=='export'}">
                         <g:if test="${scmExportRenamedPath}">
                             <div>
-                                <span class="has_tooltip text-primary" title="Original repo path" data-viewport="#section-content">
+                                <span class="has_tooltip text-strong" title="Original repo path" data-viewport="#section-content">
                                     <g:icon name="file"/>
                                     ${scmExportRenamedPath}
                                 </span>
@@ -100,7 +100,7 @@
                                 <g:icon name="arrow-right"/>
                             </g:if>
                             <div>
-                                <span class="has_tooltip text-primary" title="Repo file path" data-viewport="#section-content">
+                                <span class="has_tooltip text-strong" title="Repo file path" data-viewport="#section-content">
                                     <g:icon name="file"/>
                                     ${scmImportRenamedPath}
                                 </span>
@@ -144,7 +144,7 @@
             <g:elseif test="${diffResult && !diffResult.modified}">
 
                 <div class="list-group-item">
-                    <div class="list-group-item-text text-primary">
+                    <div class="list-group-item-text text-strong">
                         <g:message code="no.changes"/>
                     </div>
                 </div>

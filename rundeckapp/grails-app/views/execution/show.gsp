@@ -499,7 +499,7 @@ search
 
                                 <g:if test="${execution.argString}">
                                     <section class=" section-space exec-args-section argstring-scrollable">
-                                        <span class="text-secondary"><g:message code="options.prompt"/></span>
+                                        <span class="text-secondary"><g:message code="options.prompt"/></span class="text-secondary">
                                         <g:render template="/execution/execArgString"
                                                   model="[argString: execution.argString, inputFilesMap: inputFilesMap]"/>
                                     </section>
@@ -1016,7 +1016,7 @@ search
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-primary"/>
+        <g:icon name="menu-right" css="text-strong"/>
 
     </span>
     <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
@@ -1027,7 +1027,7 @@ search
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-primary"/>
+        <g:icon name="menu-right" css="text-strong"/>
 
     </span>
     <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
@@ -1039,7 +1039,7 @@ search
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-primary"/>
+        <g:icon name="menu-right" css="text-strong"/>
     </span>
   </script>
   <script type="text/html" id="step-info-parent-path-links">
@@ -1049,7 +1049,7 @@ search
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-primary"/>
+        <g:icon name="menu-right" css="text-strong"/>
     </span>
   </script>
 

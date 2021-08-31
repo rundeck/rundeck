@@ -89,7 +89,7 @@
                 <g:enc>${displaygroup}</g:enc>
 
                 <g:if test="${!jobsjscallback}">
-                    <a class="groupname text-primary visibility-hidden "
+                    <a class="groupname text-strong visibility-hidden "
                     title="Browse job group: ${enc(attr:prefix ? prefix + '/' + group.key : group.key)}"
                         href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key,jobListType:params.jobListType])}"><i class="glyphicon glyphicon-folder-open"></i></a>
                 </g:if>

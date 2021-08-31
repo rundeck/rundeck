@@ -81,7 +81,7 @@ implied. - See the License for the specific language governing permissions and -
     <table class="table table-hover table-condensed" data-bind="if: !invalid() && !loading()">
       <tbody data-bind="if: !notFound()">
         <tr>
-          <td colspan="2" class="text-primary">
+          <td colspan="2" class="text-strong">
             <span data-bind="if: filteredFiles().length < 1">
               <g:message code="storage.no.keys"/>
             </span>
@@ -109,7 +109,7 @@ implied. - See the License for the specific language governing permissions and -
 
             <span data-bind="text: name"></span>
           </td>
-          <td class="text-primary">
+          <td class="text-strong">
             <span class="pull-right">
               <span data-bind="if: $data.isPrivateKey()" title="${g.enc(code: 'storage.private.key.description')}">
                 <g:message code="storage.private.key"/>
@@ -128,7 +128,7 @@ implied. - See the License for the specific language governing permissions and -
       <tbody data-bind="if: notFound()">
         <tr>
           <td colspan="2">
-            <span class="text-primary"><g:message code="storage.nothing.found.at.this.path"/>
+            <span class="text-strong"><g:message code="storage.nothing.found.at.this.path"/>
               <span data-bind="if: allowUpload()"><g:message code="storage.nothing.found.prompt"/></span>
             </span>
           </td>
@@ -162,12 +162,12 @@ implied. - See the License for the specific language governing permissions and -
       <div data-bind="if: selectedResource() && selectedResource().createdTime()">
         <div>
           <g:message code="created.prompt"/>
-          <span class="timeabs text-primary" data-bind="text: selectedResource().createdTime(), attr: { title:  selectedResource().meta()['Rundeck-content-creation-time'] }"></span>
+          <span class="timeabs text-strong" data-bind="text: selectedResource().createdTime(), attr: { title:  selectedResource().meta()['Rundeck-content-creation-time'] }"></span>
 
           <span data-bind="if: selectedResource().createdUsername()">
             <g:message code="by.prompt"/>
 
-            <span class="text-primary" data-bind="text: selectedResource().createdUsername()"></span>
+            <span class="text-strong" data-bind="text: selectedResource().createdUsername()"></span>
           </span>
 
         </div>
@@ -175,12 +175,12 @@ implied. - See the License for the specific language governing permissions and -
       <div data-bind="if: selectedResource() && selectedResource().wasModified()">
         <div>
           <g:message code="modified.prompt"/>
-          <span class="timeago text-primary" data-bind="text: selectedResource().modifiedTimeAgo('ago'), attr: { title:  selectedResource().meta()['Rundeck-content-modify-time'] }"></span>
+          <span class="timeago text-strong" data-bind="text: selectedResource().modifiedTimeAgo('ago'), attr: { title:  selectedResource().meta()['Rundeck-content-modify-time'] }"></span>
 
           <span data-bind="if: selectedResource().modifiedUsername()">
             <g:message code="by.prompt"/>
 
-            <span class="text-primary" data-bind="text: selectedResource().modifiedUsername()"></span>
+            <span class="text-strong" data-bind="text: selectedResource().modifiedUsername()"></span>
           </span>
         </div>
       </div>

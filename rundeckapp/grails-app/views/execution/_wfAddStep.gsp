@@ -58,18 +58,20 @@
 
         </div>
     </div>
-    <ul class="nav nav-tabs" >
-        <li class="active node_step_section">
-            <a href="#addnodestep" data-toggle="tab">
-                <g:message code="node.steps" />
-            </a>
-        </li>
-        <li class="step_section">
-            <a href="#addwfstep" data-toggle="tab">
-                <g:message code="framework.service.WorkflowStep.label.plural" />
-            </a>
-        </li>
-    </ul>
+    <div class="vue-tabs"><div class="nav-tabs-navigation">
+        <ul class="nav nav-tabs" >
+            <li class="active node_step_section">
+                <a href="#addnodestep" data-toggle="tab">
+                    <g:message code="node.steps" />
+                </a>
+            </li>
+            <li class="step_section">
+                <a href="#addwfstep" data-toggle="tab">
+                    <g:message code="framework.service.WorkflowStep.label.plural" />
+                </a>
+            </li>
+        </ul>
+    </div></div>
     <div class="tab-content">
             <div class="node_step_section tab-pane active " id="addnodestep">
                 <div class="list-group">
@@ -81,29 +83,29 @@
                     <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.exec.title')}','${message(code:'step.type.exec.description')}')"
                        class="list-group-item  add_node_step_type" data-node-step-type="command" href="#">
                         <i class="rdicon icon-small shell"></i>
-                        <g:message code="step.type.exec.title"/>
-                        <span class="text-info">- <g:message code="step.type.exec.description"/></span>
+                        <span class="text-strong"><g:message code="step.type.exec.title"/></span>
+                        <span>- <g:message code="step.type.exec.description"/></span>
                     </a>
                     <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.script.title')}','${message(code:'step.type.script.description')}')"
                        class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="script">
                         <i class="rdicon icon-small script"></i>
-                        <g:message code="step.type.script.title"/>
-                        <span class="text-info">- <g:message code="step.type.script.description"/></span>
+                        <span class="text-strong"><g:message code="step.type.script.title"/></span>
+                        <span>- <g:message code="step.type.script.description"/></span>
                     </a>
                     <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.scriptfile.title')}','${message(code:'step.type.scriptfile.description')}')"
                        class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="scriptfile">
                         <i class="rdicon icon-small scriptfile"></i>
-                        <g:message code="step.type.scriptfile.title"/>
-                        <span class="text-info">- <g:message code="step.type.scriptfile.description"/></span>
+                        <span class="text-strong"><g:message code="step.type.scriptfile.title"/></span>
+                        <span>- <g:message code="step.type.scriptfile.description"/></span>
                     </a>
                     <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}','${message(code:'step.type.jobreference.nodestep.description')}')"
                        class="list-group-item textbtn add_node_step_type" data-node-step-type="job" href="#">
                         <i class="glyphicon glyphicon-book"></i>
-                        <g:message code="step.type.jobreference.title"/>
-                        <span class="text-info">- <g:message code="step.type.jobreference.nodestep.description"/></span>
+                        <span class="text-strong"><g:message code="step.type.jobreference.title"/></span>
+                        <span>- <g:message code="step.type.jobreference.nodestep.description"/></span>
                     </a>
                 <g:if test="${nodeStepDescriptions}">
-                    <div class="list-group-item text-primary ">
+                    <div class="list-group-item text-info text-strong">
                         <g:plural for="${nodeStepDescriptions}" code="node.step.plugin" />
                     </div>
                     <g:each in="${nodeStepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
@@ -117,12 +119,14 @@
                                                    height="16px">
                                 <i class="rdicon icon-small plugin"></i>
                             </stepplugin:pluginIcon>
+                            <span class="text-strong">
                             <stepplugin:message
                                     service="WorkflowNodeStep"
                                     name="${typedesc.name}"
                                     code="plugin.title"
                                     default="${typedesc.title}"/>
-                            <span class="text-info">-
+                            </span>
+                            <span>-
                             <g:render template="/scheduledExecution/description"
                                       model="[description: stepplugin.messageText(
                                               service: 'WorkflowNodeStep',
@@ -151,7 +155,7 @@
                     <g:message code="step.type.jobreference.title" /> <span class="text-info">- <g:message code="step.type.jobreference.description" /></span>
                 </a>
                 <g:if test="${stepDescriptions}">
-                    <div class="list-group-item text-primary ">
+                    <div class="list-group-item text-info text-strong">
                         <g:plural for="${stepDescriptions}" code="workflow.step.plugin" />
                     </div>
                     <g:each in="${stepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
@@ -164,12 +168,14 @@
                                                    height="16px">
                                 <i class="rdicon icon-small plugin"></i>
                             </stepplugin:pluginIcon>
+                            <span class="text-strong">
                             <stepplugin:message
                                     service="WorkflowStep"
                                     name="${typedesc.name}"
                                     code="plugin.title"
                                     default="${typedesc.title}"/>
-                            <span class="text-info">-
+                            </span>
+                            <span>-
                                 <g:render template="/scheduledExecution/description"
                                           model="[description:
                                                           stepplugin.messageText(

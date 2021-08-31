@@ -250,8 +250,8 @@
         </div>
     </div>
     <div data-bind="visible: selected() && results().length < 1 " style="display: none;">
-        <span class="text-primary" data-bind="if: !showReports()">No running executions found</span>
-        <span class="text-primary" data-bind="if: showReports()">No matching activity found</span>
+        <span class="text-strong" data-bind="if: !showReports()">No running executions found</span>
+        <span class="text-strong" data-bind="if: showReports()">No matching activity found</span>
     </div>
     <table class=" table table-hover table-condensed events-table events-table-embed"
            style="width:100%; display: none"
@@ -277,7 +277,7 @@
                     <span data-bind="if: !jobDeleted()">
                         <span data-bind="text: isJob()?jobName():executionString()"></span>
                     </span>
-                    <span data-bind="if: jobDeleted()" class="text-primary">
+                    <span data-bind="if: jobDeleted()" class="text-strong">
                         (<g:message code="domain.ScheduledExecution.title"/>
                         <span data-bind="text: jobName()"></span>
                         has been deleted)
@@ -306,7 +306,7 @@
 
                     </span>
                     <span title="">
-                        <span class="text-primary"><g:message code="in.of" default="in"/></span>
+                        <span class="text-strong"><g:message code="in.of" default="in"/></span>
                         <span class="duration" data-bind="text: durationHumanize()"></span>
                     </span>
                 </span>

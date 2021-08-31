@@ -71,11 +71,11 @@
         <!-- ko if: meta() && meta().policies -->
         <ul data-bind="foreach:  { data: meta().policies, as: 'policy' }">
             <li>
-                <span class="text-primary" data-bind="text: policy.description()">
+                <span class="text-strong" data-bind="text: policy.description()">
                 </span>
                 <ul>
                     <li>
-                        <span class="text-primary" data-bind="text: policy.by()">
+                        <span class="text-strong" data-bind="text: policy.by()">
                         </span>
                     </li>
                 </ul>

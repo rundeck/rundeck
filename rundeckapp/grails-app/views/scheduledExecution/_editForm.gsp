@@ -33,7 +33,7 @@
         <div class="row">
             <h4 class="col-sm-10 card-title">
                 <span class="text-secondary colon-after"><g:message code="ScheduledExecution.page.edit.title" /></span>
-                <a href="#" data-bind="text: jobName, attr: {href: href, title: groupPath}, bootstrapTooltip: groupPath">
+                <a class="link-quiet text-strong" href="#" data-bind="text: jobName, attr: {href: href, title: groupPath}, bootstrapTooltip: groupPath">
 
                 </a>
                 <span class=" text-muted" data-bind="text: uuid"></span>
