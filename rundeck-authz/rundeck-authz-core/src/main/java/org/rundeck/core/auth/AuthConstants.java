@@ -80,6 +80,7 @@ public class AuthConstants {
     public static final Map<String, String> RESOURCE_TYPE_JOB = resType(TYPE_JOB);
     public static final Map<String, String> RESOURCE_TYPE_EVENT = resType(TYPE_EVENT);
     public static final Map<String, String> RESOURCE_TYPE_WEBHOOK = resType(TYPE_WEBHOOK);
+    public static final Map<String, String> RESOURCE_TYPE_PLUGIN = resType(TYPE_PLUGIN);
     public static final Map<String, String> RESOURCE_ADHOC = Collections.unmodifiableMap(AuthorizationUtil
             .resource(TYPE_ADHOC));
 }

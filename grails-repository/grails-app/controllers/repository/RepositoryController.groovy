@@ -13,6 +13,7 @@ import com.rundeck.repository.definition.RepositoryDefinition
 import com.rundeck.repository.manifest.search.ManifestSearch
 import grails.converters.JSON
 import groovy.transform.PackageScope
+import org.rundeck.core.auth.AuthConstants
 
 class RepositoryController {
 
@@ -36,7 +37,7 @@ class RepositoryController {
         }
 
         def listArtifacts() {
-            if (!authorized(PLUGIN_RESOURCE,"read")) {
+            if (!authorized(AuthConstants.RESOURCE_TYPE_PLUGIN,AuthConstants.ACTION_READ)) {
                 specifyUnauthorizedError()
                 return
             }
@@ -59,7 +60,7 @@ class RepositoryController {
         }
 
         def searchArtifacts() {
-            if (!authorized(PLUGIN_RESOURCE,"read")) {
+            if (!authorized(AuthConstants.RESOURCE_TYPE_PLUGIN,AuthConstants.ACTION_READ)) {
                 specifyUnauthorizedError()
                 return
             }
@@ -91,7 +92,7 @@ class RepositoryController {
         }
 
         def listInstalledArtifacts() {
-            if (!authorized(PLUGIN_RESOURCE,"read")) {
+            if (!authorized(AuthConstants.RESOURCE_TYPE_PLUGIN,AuthConstants.ACTION_READ)) {
                 specifyUnauthorizedError()
                 return
             }
@@ -123,7 +124,7 @@ class RepositoryController {
                 return
             }
 
-            if (!authorized(PLUGIN_RESOURCE,"install")) {
+            if (!authorized(AuthConstants.RESOURCE_TYPE_PLUGIN,AuthConstants.ACTION_INSTALL)) {
                 specifyUnauthorizedError()
                 return
             }
@@ -152,7 +153,7 @@ class RepositoryController {
 
 
         def installArtifact() {
-            if (!authorized(PLUGIN_RESOURCE,"install")) {
+            if (!authorized(AuthConstants.RESOURCE_TYPE_PLUGIN,AuthConstants.ACTION_INSTALL)) {
                 specifyUnauthorizedError()
                 return
             }
@@ -180,7 +181,7 @@ class RepositoryController {
         }
 
         def uninstallArtifact() {
-            if (!authorized(PLUGIN_RESOURCE,"uninstall")) {
+            if (!authorized(AuthConstants.RESOURCE_TYPE_PLUGIN,AuthConstants.ACTION_UNINSTALL)) {
                 specifyUnauthorizedError()
                 return
             }
@@ -256,7 +257,7 @@ class RepositoryController {
         }
 
         def syncInstalledArtifactsToRundeck() {
-            if (!authorized(PLUGIN_RESOURCE,"install")) {
+            if (!authorized(AuthConstants.RESOURCE_TYPE_PLUGIN,AuthConstants.ACTION_INSTALL)) {
                 specifyUnauthorizedError()
                 return
             }
@@ -309,14 +310,11 @@ class RepositoryController {
         }
 
         @PackageScope
-        boolean authorized(Map resourceType = ADMIN_RESOURCE,String action = "admin") {
-            List authorizedActions = ["admin"]
-            if(action != "admin") authorizedActions.add(action)
+        boolean authorized(Map resourceType = AuthConstants.RESOURCE_TYPE_SYSTEM, String action = AuthConstants.ACTION_ADMIN) {
+            List authorizedActions = [AuthConstants.ACTION_ADMIN]
+            if(action != AuthConstants.ACTION_ADMIN) authorizedActions.add(action)
             AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
             rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,resourceType,authorizedActions)
 
         }
-
-        private static Map PLUGIN_RESOURCE = Collections.unmodifiableMap(AuthorizationUtil.resourceType("plugin"))
-        private static Map ADMIN_RESOURCE = Collections.unmodifiableMap(AuthorizationUtil.resourceType("admin"))
 }
