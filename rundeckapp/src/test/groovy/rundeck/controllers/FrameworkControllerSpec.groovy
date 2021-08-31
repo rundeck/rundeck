@@ -1770,7 +1770,7 @@ project.label=A Label
         when:
             controller.projectPluginsAjax(project, serviceName, configPrefix)
         then:
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework) {
@@ -1862,7 +1862,7 @@ project.label=A Label
 
         then:
             response.status == 200
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
@@ -1926,7 +1926,7 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
@@ -1991,7 +1991,7 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
@@ -2056,7 +2056,7 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 
@@ -2123,7 +2123,7 @@ project.label=A Label
 
         then:
             response.status == 422
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authResourceForProject(project)
 

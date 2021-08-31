@@ -1504,7 +1504,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1555,7 +1555,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return renderErrorView("configPrefix parameter is required")
         }
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1628,7 +1628,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1747,7 +1747,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def project = params.project
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         rundeckAuthContextProcessor.getAuthContextForSubject(session.subject),
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -2666,7 +2666,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -2866,7 +2866,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -2965,7 +2965,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 rundeckAuthContextProcessor.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
