@@ -1,44 +1,43 @@
+@import '../custom/text';
+
 h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6, p, .navbar, .brand, a, .td-name, td {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   font-family: 'Muli', "Helvetica", Arial, sans-serif;
+  color: var(--grey-700);
 }
 
 h1, .h1, h2, .h2, h3, .h3, h4, .h4 {
-  font-weight: $font-weight-normal;
+  font-weight: 600;
   margin: $margin-large-vertical 0 $margin-base-vertical;
 }
 
 h1, .h1 {
-  font-size: $font-size-h1;
+  @extend %text-h1;
 }
 
 h2, .h2 {
-  font-size: $font-size-h2;
+  @extend %text-h2;
 }
 
 h3, .h3 {
-  font-size: $font-size-h3;
+  @extend %text-h3;
   line-height: 1.4;
   margin: 20px 0 10px;
 }
 
 h4, .h4 {
-  font-size: $font-size-h4;
-  font-weight: $font-weight-bold;
+  @extend %text-h4;
   line-height: 1.2em;
 }
 
 h5, .h5 {
-  font-size: $font-size-h5;
-  font-weight: $font-weight-normal;
-  line-height: 1.4em;
+  @extend %text-h5;
   margin-bottom: 15px;
 }
 
 h6, .h6 {
-  font-size: $font-size-h6;
-  font-weight: $font-weight-bold;
+  @extend %text-h6;
   text-transform: uppercase;
 }
 
@@ -85,6 +84,10 @@ code {
 
 a.text-primary:hover, a.text-primary:focus {
   // color: lighten($primary-states-color, 10%);
+}
+
+a.link-quiet {
+  color: var(--font-color);
 }
 
 .text-secondary, .text-secondary:hover, .text-secondary:focus, a.text-secondary {

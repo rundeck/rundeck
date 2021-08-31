@@ -13,6 +13,13 @@ export const typography = () => (Vue.extend({
                 <div class="h3">H3 Heading</div>
                 <div class="h4">H4 Heading</div>
                 <div class="h5">H5 Heading</div>
+                <div class="h6">H6 Heading</div>
+                <div class="text-h1">H1 Text</div>
+                <div class="text-h2">H2 Text</div>
+                <div class="text-h3">H3 Text</div>
+                <div class="text-h4">H4 Text</div>
+                <div class="text-h5">H5 Text</div>
+                <div class="text-h6">H6 Text</div>
             </div>
         )
     }
@@ -21,7 +28,7 @@ export const typography = () => (Vue.extend({
 export const buttons = () => (Vue.extend({
     render(h) {
         return (
-            <div style="max-width: 500px; margin-top: 10px;">
+            <div style="max-width: 600px; margin-top: 10px;">
                 <div style="display:flex;justify-content: space-evenly;">
                     <a class="btn btn-default" role="button">Link</a>
                     <button class="btn btn-default">Button</button>

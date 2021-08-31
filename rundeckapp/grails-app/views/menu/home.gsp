@@ -99,8 +99,8 @@
       </g:if>
       <div class="col-sm-12 col-md-5">
         <div class="card">
-          <div class="card-content" style="padding-bottom: 20px;">
-            <span class="h3 text-primary" data-bind="if: loadedProjectNames()">
+          <div class="card-content" style="padding-bottom: 15px;">
+            <span class="text-h3" data-bind="if: loadedProjectNames()">
               <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
                 <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
               </span>
@@ -249,7 +249,7 @@
                     <div class="row row-hover row-border-top">
                       <div class="col-sm-6 col-md-8">
                         <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: project"
-                          class="text-h4 link-hover  text-inverse project_list_item_link">
+                          class="text-h4 link-hover  text-inverse project_list_item_link link-quiet">
 
                           <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
                             <div data-bind="text: $root.projectForName(project).label"></div>
@@ -333,7 +333,7 @@
                 <div class="col-sm-12 col-md-2 col-last" data-bind="if: $root.projectForName(project)">
                   <div class="pull-right">
                     <div class="btn-group dropdown-toggle-hover" >
-                      <a href="#" class="btn-action as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
+                      <a href="#" class="btn-action as-block link-hover link-quiet link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
                         <g:message code="button.Action"/>
                         <span class="caret"></span>
                       </a>

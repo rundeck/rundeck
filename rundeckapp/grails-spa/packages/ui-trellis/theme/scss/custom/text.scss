@@ -29,37 +29,48 @@
   display: inline-block;
 }
 
+.text-h1, .text-h2, .text-h3, .text-h4, .text-h5 {
+  color: var(--grey-700);
+}
 
-.text-h1 {
+%text-h1 {
   font-size: $font-size-h1;
+  font-weight: 700;
 }
+.text-h1 { @extend %text-h1; }
 
-.text-h2 {
+%text-h2 {
   font-size: $font-size-h2;
+  font-weight: 700;
 }
+.text-h2 { @extend %text-h2; }
 
-.text-h3 {
+%text-h3 {
   font-size: $font-size-h3;
-  //line-height: 1.4;
+  font-weight: 700;
 }
+.text-h3 { @extend %text-h3 }
 
-.text-h4 {
+
+%text-h4 {
   font-size: $font-size-h4;
-  font-weight: $font-weight-bold;
-  //line-height: 1.2em;
+  font-weight: 700;
 }
+.text-h4 { @extend %text-h4 }
 
-.text-h5 {
+%text-h5 {
   font-size: $font-size-h5;
-  font-weight: $font-weight-normal;
+  font-weight: 700;
   line-height: 1.4em;
 }
+.text-h5 { @extend %text-h5; }
 
-.text-h6 {
+%text-h6 {
   font-size: $font-size-h6;
-  font-weight: $font-weight-bold;
+  font-weight: 700;
   text-transform: uppercase;
 }
+.text-h6 { @extend %text-h6; }
 
 .text-base {
   font-size: $font-size-base;
