@@ -2483,10 +2483,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             summary[project.name].description= description
             def projectAuth = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project.name)
             def eventAuth = rundeckAuthContextProcessor.
-                authorizeProjectResourceAll(
+                authorizeProjectResource(
                     projectAuth,
                     AuthConstants.RESOURCE_TYPE_EVENT,
-                    [AuthConstants.ACTION_READ],
+                    AuthConstants.ACTION_READ,
                     project.name
                 )
             if(!eventAuth){

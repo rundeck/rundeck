@@ -1754,8 +1754,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         //authorize
-        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext,
-                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE], params.project),
+        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(authContext,
+                AuthConstants.RESOURCE_TYPE_JOB, AuthConstants.ACTION_CREATE, params.project),
                 AuthConstants.ACTION_CREATE,
                 'New Job'
         )){
@@ -1811,12 +1811,11 @@ class ScheduledExecutionController  extends ControllerBase{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,execution.project)
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeProjectResourceAll(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_JOB,
-                        [AuthConstants.ACTION_CREATE],
-                        params.project
-                ),
+            rundeckAuthContextProcessor.authorizeProjectResource(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_JOB,
+                AuthConstants.ACTION_CREATE,
+                params.project),
                 AuthConstants.ACTION_CREATE,
                 'New Job'
         )) {
@@ -1862,9 +1861,11 @@ class ScheduledExecutionController  extends ControllerBase{
 
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
         //authorize
-        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext,
-                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
-                params.project),
+        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_JOB,
+            AuthConstants.ACTION_CREATE,
+            params.project),
                 AuthConstants.ACTION_CREATE, 'New Job')) {
             return
         }
@@ -3939,11 +3940,11 @@ class ScheduledExecutionController  extends ControllerBase{
                     ]
             )
         }
-        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_EVENT,
-                [AuthConstants.ACTION_READ],
-                scheduledExecution.project
+        if (!rundeckAuthContextProcessor.authorizeProjectResource(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_EVENT,
+            AuthConstants.ACTION_READ,
+            scheduledExecution.project
         )
         ) {
 

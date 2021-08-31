@@ -342,8 +342,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         AuthContext authContext=rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,query.project)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                        [AuthConstants.ACTION_READ], query.project),
+                rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                        AuthConstants.ACTION_READ, query.project),
                 AuthConstants.ACTION_READ, 'Project', 'nodes')) {
             return
         }
@@ -483,8 +483,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodeSummaryAjax(String project){
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,project)
-        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                                                          [AuthConstants.ACTION_READ],
+        if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                          AuthConstants.ACTION_READ,
                                                           project
         )) {
 
@@ -531,8 +531,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                                                             [AuthConstants.ACTION_READ],
+                rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                             AuthConstants.ACTION_READ,
                                                              query.project
                 ),
                 AuthConstants.ACTION_READ, 'Project', 'nodes', true
@@ -621,8 +621,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                                                             [AuthConstants.ACTION_READ],
+        if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                             AuthConstants.ACTION_READ,
                                                              query.project
                 )) {
 
@@ -2521,8 +2521,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(notFoundResponse(frameworkService.existsFrameworkProject(project),'Project',project,true)){
             return
         }
-        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAll(authContext,
-                rundeckAuthContextProcessor.authResourceForProject(project), [AuthConstants.ACTION_READ]),
+        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResource(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project), AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ,'Project',project,true)){
             return
         }
@@ -2556,8 +2556,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project, true)) {
             return
         }
-        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAll(authContext,
-                rundeckAuthContextProcessor.authResourceForProject(project), [AuthConstants.ACTION_READ]),
+        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResource(authContext,
+                rundeckAuthContextProcessor.authResourceForProject(project), AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ, 'Project', project, true)) {
             return
         }
@@ -3028,8 +3028,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     code: 'api.error.item.doesnotexist', args: ['project',params.project]])
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                [AuthConstants.ACTION_READ], params.project)) {
+        if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                AuthConstants.ACTION_READ, params.project)) {
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
         }
@@ -3075,8 +3075,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                [AuthConstants.ACTION_READ], params.project)) {
+        if (!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                AuthConstants.ACTION_READ, params.project)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                                                            code: 'api.error.item.unauthorized', args: ['Read Nodes', 'Project', params.project]])
 

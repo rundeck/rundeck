@@ -1301,7 +1301,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'proj') >> projectAuth
             1 * controller.
                 rundeckAuthContextProcessor.
-                authorizeProjectResourceAll(projectAuth, AuthorizationUtil.resourceType('event'), ['read'], 'proj')>>authEventRead
+                authorizeProjectResource(projectAuth, AuthorizationUtil.resourceType('event'), 'read', 'proj')>>authEventRead
             1 * controller.
                 rundeckAuthContextProcessor.authorizeProjectResource(
                 projectAuth,
@@ -2015,7 +2015,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.nowrunningAjax()
         then:
         response.status == 403
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
     }
     @Unroll
@@ -2037,7 +2037,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.apiExecutionsRunningv14()
         then:
         response.status == 403
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
 
     }
@@ -2062,7 +2062,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.apiExecutionsRunningv14()
         then:
         response.status == 404
-        0 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> false
 
     }
@@ -2142,7 +2142,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
 
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', 'aProject') >> true
 
                 1 * getAuthContextForSubject(_) >> test
             }
@@ -2192,7 +2192,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', 'aProject') >> true
 
                 1 * getAuthContextForSubject(_) >> test
             }
@@ -2244,7 +2244,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'), ['read'], 'aProject') >>
+                1 * authorizeProjectResource(_, AuthorizationUtil.resourceType('event'), 'read', 'aProject') >>
                 true
 
                 1 * getAuthContextForSubjectAndProject(_, 'aProject')
@@ -2297,7 +2297,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> false
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', 'aProject') >> false
 
                 1 * getAuthContextForSubject(_) >> test
             }
@@ -2353,7 +2353,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', 'aProject') >> true
 
                 1 * getAuthContextForSubject(_) >> test
             }
@@ -2410,7 +2410,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], _) >> {
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', _) >> {
                     it[3] == 'aProject' ||  it[3] == 'bProject'||  it[3] == 'cProject'
                 }
 

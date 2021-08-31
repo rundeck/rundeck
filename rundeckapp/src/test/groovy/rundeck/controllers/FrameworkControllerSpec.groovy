@@ -906,7 +906,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
-                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+                1 * authorizeProjectResource(authCtx, [type: 'resource', kind: 'node'], 'read', projectName) >> true
 
 
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
@@ -952,7 +952,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
-                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+                1 * authorizeProjectResource(authCtx, [type: 'resource', kind: 'node'], 'read', projectName) >> true
 
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
@@ -1002,7 +1002,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
 
-                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+                1 * authorizeProjectResource(authCtx, [type: 'resource', kind: 'node'], 'read', projectName) >> true
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
@@ -1049,7 +1049,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
-                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+                1 * authorizeProjectResource(authCtx, [type: 'resource', kind: 'node'], 'read', projectName) >> true
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
         controller.apiService = Mock(ApiService) {
@@ -1095,7 +1095,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
-                1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+                1 * authorizeProjectResource(authCtx, [type: 'resource', kind: 'node'], 'read', projectName) >> true
 
                 1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
             }
@@ -1664,7 +1664,7 @@ project.label=A Label
         when:
         controller.nodeSummaryAjax(project)
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(*_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(*_) >> true
         1 * controller.userService.findOrCreateUser(_) >> testUser
         1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
             getNodeSet() >> new NodeSetImpl()

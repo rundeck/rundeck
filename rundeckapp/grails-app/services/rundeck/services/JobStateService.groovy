@@ -227,7 +227,7 @@ class JobStateService implements AuthorizingJobService {
                 se.project
             )
         }else if(!se){
-            isAuth=rundeckAuthContextEvaluator.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, [AuthConstants.ACTION_READ],
+            isAuth=rundeckAuthContextEvaluator.authorizeProjectResource(auth, AuthConstants.RESOURCE_ADHOC, AuthConstants.ACTION_READ,
                     exec.project)
         }
         if(!isAuth){
