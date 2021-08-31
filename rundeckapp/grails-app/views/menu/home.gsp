@@ -109,7 +109,7 @@
                 <b class="fas fa-spinner fa-spin loading-spinner"></b>
                 <g:message code="page.home.loading.projects" />
             </span>
-            <auth:resourceAllowed action="create" kind="project" context="application">
+            <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
               <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
                 <g:message code="page.home.new.project.button.label" />
                 <b class="glyphicon glyphicon-plus"></b>
@@ -120,7 +120,7 @@
             <div class="card-footer">
               <hr>
               <div class="row">
-                <auth:resourceAllowed action="create" kind="project" context="application">
+                <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
                     <div class="col-sm-4">
                         <g:link controller="framework" action="createProject" class="btn  btn-cta pull-right">
                             <g:message code="page.home.new.project.button.label" />
@@ -178,13 +178,13 @@
         </div>
       </div>
       <div class="container-fluid" data-bind="if: projectCount() == 0">
-        <auth:resourceAllowed action="create" kind="project" context="application" has="true">
+        <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}" has="true">
           <div id="firstRun"></div>
         </auth:resourceAllowed>
       </div>
       <div class="container-fluid" data-bind="if: projectCount()<1 && loadedProjectNames()">
         <div class="row">
-          <auth:resourceAllowed action="create" kind="project" context="application" has="false">
+          <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}" has="false">
           <div class="col-sm-12">
             <div class="card">
               <div class="card-content">
@@ -242,7 +242,7 @@
                     </div>
                   </div>
                 </div>
-  
+
                 <div data-bind="foreach: { data: pagedProjects(), as: 'project' } ">
                   %{--Template for project details--}%
                   <div class="project_list_item" data-bind="attr: { 'data-project': project }, ">
@@ -329,7 +329,7 @@
                           </span>
                         </div>
                       </div>
-            
+
                 <div class="col-sm-12 col-md-2 col-last" data-bind="if: $root.projectForName(project)">
                   <div class="pull-right">
                     <div class="dropdown-toggle-hover" >
@@ -371,7 +371,7 @@
                       </ul>
                     </div>
                   </div>
-                </div>  
+                </div>
               </div>
             </div>
             <!-- ko if: $root.projectForName(project).extra() -->
@@ -396,7 +396,7 @@
             <!-- /ko -->
             <!-- /ko -->
           </div>
-  
+
         </div>
       </div>
     </div>

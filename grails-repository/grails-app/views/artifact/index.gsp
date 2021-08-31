@@ -1,3 +1,4 @@
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 %{--
   - Copyright 2018 Rundeck, Inc. (http://rundeck.com)
   -
@@ -27,11 +28,11 @@
 <div class="content">
 <div id="layoutBody">
 <g:set var="pluginInstall" value="${auth.resourceAllowedTest(
-        type: 'resource',
-        kind: 'plugin',
-        action: ["install","admin"],
+        type: AuthConstants.TYPE_RESOURCE,
+        kind: AuthConstants.TYPE_PLUGIN,
+        action: [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN],
         any: true,
-        context: 'application'
+        context: AuthConstants.CTX_APPLICATION
 )}"/>
 <script type="text/javascript">
     window.repocaninstall = ${pluginInstall ?: false};

@@ -17,26 +17,26 @@
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
 <g:set var="authRead" value="${auth.resourceAllowedTest(
-        type: 'resource',
-        kind: 'system',
+        type: AuthConstants.TYPE_RESOURCE,
+        kind: AuthConstants.TYPE_SYSTEM,
         action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
         any: true,
-        context: 'application'
+        context: AuthConstants.CTX_APPLICATION
 )}"/>
 
 <g:set var="pluginRead" value="${auth.resourceAllowedTest(
-        type: 'resource',
-        kind: 'plugin',
+        type: AuthConstants.TYPE_RESOURCE,
+        kind: AuthConstants.TYPE_PLUGIN,
         action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
         any: true,
-        context: 'application'
+        context: AuthConstants.CTX_APPLICATION
 )}"/>
 <g:set var="pluginInstall" value="${auth.resourceAllowedTest(
-        type: 'resource',
-        kind: 'plugin',
-        action: ["install","admin"],
+        type: AuthConstants.TYPE_RESOURCE,
+        kind: AuthConstants.TYPE_PLUGIN,
+        action: [AuthConstants.ACTION_INSTALL, AuthConstants.ACTION_ADMIN],
         any: true,
-        context: 'application'
+        context: AuthConstants.CTX_APPLICATION
 )}"/>
 <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled in [true,'true']}"/>
 

@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants" contentType="text/html;charset=UTF-8" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants; com.dtolabs.rundeck.plugins.ServiceNameConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}"/>
@@ -99,7 +99,7 @@
 
 <body>
 <g:set var="adminauth"
-       value="${auth.resourceAllowedTest(type: 'resource', kind: 'project', action: ['create'], context: 'application')}"/>
+       value="${auth.resourceAllowedTest(type: AuthConstants.TYPE_RESOURCE, kind: AuthConstants.TYPE_PROJECT, action: [AuthConstants.ACTION_CREATE], context: AuthConstants.CTX_APPLICATION)}"/>
 <g:if test="${adminauth}">
 <div class="content">
 <div id="layoutBody">

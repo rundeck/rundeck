@@ -19,37 +19,37 @@
         action: AuthConstants.ACTION_ADMIN,
         type: AuthConstants.TYPE_PROJECT,
         name: (params.project ?: request.project),
-        context: "application"
+        context: AuthConstants.CTX_APPLICATION
 )}"/>
 <g:set var="authDelete"
        value="${authAdmin || auth.resourceAllowedTest(
                action: AuthConstants.ACTION_DELETE,
                type: AuthConstants.TYPE_PROJECT,
-               name: (params.project ?: request.project), context: "application"
+               name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 <g:set var="authExport"
        value="${authAdmin || auth.resourceAllowedTest(
                action: AuthConstants.ACTION_EXPORT,
                type: AuthConstants.TYPE_PROJECT,
-               name: (params.project ?: request.project), context: "application"
+               name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 <g:set var="authImport"
        value="${authAdmin || auth.resourceAllowedTest(
                action: AuthConstants.ACTION_IMPORT,
                type: AuthConstants.TYPE_PROJECT,
-               name: (params.project ?: request.project), context: "application"
+               name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 <g:set var="authConfigure"
        value="${authAdmin || auth.resourceAllowedTest(
                action: AuthConstants.ACTION_CONFIGURE,
                type: AuthConstants.TYPE_PROJECT,
-               name: (params.project ?: request.project), context: "application"
+               name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 <g:set var="authReadAcl"
        value="${auth.resourceAllowedTest(action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
                any: true,
                type: AuthConstants.TYPE_PROJECT_ACL,
-               name: (params.project ?: request.project), context: "application"
+               name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 <g:set var="projectKeyStorageEnabled"
        value="${!(grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false'])}"/>

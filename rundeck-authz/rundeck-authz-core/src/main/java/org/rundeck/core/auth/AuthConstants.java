@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public class AuthConstants {
-
+    public static final String CTX_APPLICATION = "application";
     public static final String ACTION_CREATE = "create";
     public static final String ACTION_READ = "read";
     public static final String ACTION_VIEW = "view";
@@ -68,6 +68,7 @@ public class AuthConstants {
     public static final String TYPE_USER = "user";
     public static final String TYPE_STORAGE = "storage";
     public static final String TYPE_WEBHOOK = "webhook";
+    public static final String TYPE_RESOURCE = "resource";
 
     private static Map<String, String> resType(String type) {
         return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));

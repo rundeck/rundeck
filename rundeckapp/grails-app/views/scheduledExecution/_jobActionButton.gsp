@@ -191,7 +191,7 @@
         </div>
     </div>
 </auth:jobAllowed>
-<auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE}"
+<auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_DELETE}"
                       project="${scheduledExecution.project ?: params.project ?: request.project}">
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}">
 <g:javascript>
@@ -225,9 +225,9 @@ jQuery(function(){
                                 </div>
                             </div>
 
-                            <auth:resourceAllowed type="project"
+                            <auth:resourceAllowed type="${AuthConstants.TYPE_PROJECT}"
                                                   name="${scheduledExecution.project}"
-                                                  context="application"
+                                                  context="${AuthConstants.CTX_APPLICATION}"
                                                   action="${[AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]}"
                                                   any="true">
                                 <div class="form-group">

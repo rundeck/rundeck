@@ -20,8 +20,8 @@
         AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
 <auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN]}"
                       any="true"
-                      context="application"
-                      kind="system">
+                      context="${AuthConstants.CTX_APPLICATION}"
+                      kind="${AuthConstants.TYPE_SYSTEM}">
     <bs:menuitem/>
     <bs:menuitem
             action="executionMode"

@@ -46,8 +46,8 @@
 <g:set var="rkey" value="${rkey?:g.rkey()}"/>
 
 <g:set var="authProjectSCMAdmin" value="${auth.resourceAllowedTest(
-        context: 'application',
-        type: 'project',
+        context: AuthConstants.CTX_APPLICATION,
+        type: AuthConstants.TYPE_PROJECT,
         action: [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN],
         any: true,
         name: params.project
@@ -220,7 +220,7 @@
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu pull-right" role="menu" id="job_action_menu" data-ko-bind="bulkeditor">
-                  <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
+                  <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                     <li>
                       <g:link controller="scheduledExecution" action="create" params="[project: params.project ?: request.project]" class="">
                         <i class="glyphicon glyphicon-plus"></i>
@@ -390,7 +390,7 @@
                                         </span>
 
 
-                                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }"
+                                        <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_DELETE  }"
                                                               project="${params.project ?: request.project}">
                                         <span data-bind="if: isDelete">
                                             <g:actionSubmit action="deleteBulk"
@@ -431,7 +431,7 @@
                                         <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu " role="menu">
-                                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }"
+                                        <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_DELETE  }"
                                                               project="${params.project ?: request.project}">
 
 
@@ -505,7 +505,7 @@
                 <g:if test="${!jobgroups}">
                     <div class="presentation">
 
-                        <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
+                        <auth:resourceAllowed kind="${AuthConstants.TYPE_JOB}" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                           <g:link controller="scheduledExecution" action="create"
                                                             params="[project: params.project ?: request.project]"
                                class="btn btn-cta">
