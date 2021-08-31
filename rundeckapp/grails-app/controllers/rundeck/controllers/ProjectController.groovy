@@ -1821,7 +1821,7 @@ class ProjectController extends ControllerBase{
         if (archiveParams.importScm && request.api_version >= ApiVersions.V28) {
             //verify scm access requirement
             if (archiveParams.importScm &&
-                    !rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                    !rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             appContext,
                             rundeckAuthContextProcessor.authResourceForProject(project.name),
                             [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]

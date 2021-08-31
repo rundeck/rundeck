@@ -1513,7 +1513,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1548,7 +1548,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1582,7 +1582,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export')
         1 * controller.scmService.loadScmConfig(project, 'import')
 

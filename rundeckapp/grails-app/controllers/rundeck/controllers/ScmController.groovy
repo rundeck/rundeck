@@ -174,7 +174,7 @@ class ScmController extends ControllerBase {
     def index(String project) {
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -210,7 +210,7 @@ class ScmController extends ControllerBase {
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -244,7 +244,7 @@ class ScmController extends ControllerBase {
                 project
         )
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -462,7 +462,7 @@ class ScmController extends ControllerBase {
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -498,7 +498,7 @@ class ScmController extends ControllerBase {
     def clean(String integration, String project, String type) {
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -540,7 +540,7 @@ class ScmController extends ControllerBase {
                 project
         )
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1759,7 +1759,7 @@ class ScmController extends ControllerBase {
     def deletePluginConfig(String project, String integration, String type){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]

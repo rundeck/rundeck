@@ -1506,7 +1506,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             (count) * listener.inc('export', 1)
             1 * listener.done()
             _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
-            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAll(auth, [test: 'resource'], ['configure','admin'])>>scmAuth
+            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test: 'resource'], ['configure','admin'])>>scmAuth
             (count)*service.scmService.loadScmConfig('aProject','export')>>Mock(ScmPluginConfigData)
             (count)*service.scmService.loadScmConfig('aProject','import')>>Mock(ScmPluginConfigData)
 

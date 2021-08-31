@@ -2324,7 +2324,7 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
                 _ * getAuthContextForSubjectAndProject(_,_)
                 _ * authResourceForProject('test1')
                 authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN]) >> true
-                authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+                authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
                 0*_(*_)
             }
         request.api_version = 28

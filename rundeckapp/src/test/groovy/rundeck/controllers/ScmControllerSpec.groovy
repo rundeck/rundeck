@@ -609,7 +609,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         controller.scmService = Mock(ScmService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            1 * authorizeApplicationResourceAll(*_) >> true
+            1 * authorizeApplicationResourceAny(*_) >> true
         }
 
         when:
@@ -632,7 +632,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         controller.scmService = Mock(ScmService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            1 * authorizeApplicationResourceAll(*_) >> true
+            1 * authorizeApplicationResourceAny(*_) >> true
         }
         setupFormTokens(session)
         when:
@@ -654,7 +654,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         controller.scmService = Mock(ScmService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            1 * authorizeApplicationResourceAll(*_) >> true
+            1 * authorizeApplicationResourceAny(*_) >> true
         }
         setupFormTokens(session)
         when:
@@ -676,7 +676,7 @@ class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmC
         controller.scmService = Mock(ScmService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
-            1 * authorizeApplicationResourceAll(*_) >> true
+            1 * authorizeApplicationResourceAny(*_) >> true
         }
         setupFormTokens(session)
         when:

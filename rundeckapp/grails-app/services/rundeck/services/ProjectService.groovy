@@ -1763,7 +1763,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     boolean hasScmConfigure(AuthContext authContext, String project) {
-        rundeckAuthContextEvaluator.authorizeApplicationResourceAll(
+        rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
             authContext,
             rundeckAuthContextEvaluator.authResourceForProject(project),
             [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
