@@ -75,7 +75,7 @@ class PluginTagLib {
                     action: 'pluginIcon',
                     params: [service: service, name: name]
             )
-            out << '<img '
+            out << '<img style="border-radius: 2px;" '
             attrs.each { k, v ->
                 if (v) {
                     out << " ${k}=\"${enc(attr: v)}\""

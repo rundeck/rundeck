@@ -132,7 +132,7 @@
                         <th class="table-header">
                           {{ $t("message.pageUsersTokensLabel")}}
                           <span
-                            class="has_tooltip text-primary"
+                            class="has_tooltip text-strong"
                             data-placement="bottom"
                             :data-original-title="$t('message.pageUsersTokensHelp')"
                           >

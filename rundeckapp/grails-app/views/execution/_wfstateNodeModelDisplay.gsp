@@ -34,14 +34,14 @@
                 </div>
 
                 <div data-bind="if: !errorMessage() && !statusMessage()">
-                    <div class=" text-primary">
+                    <div class=" text-strong">
                         Loading…
                     </div>
                 </div>
 
 
                 <div data-bind="if: statusMessage()">
-                    <div class=" text-primary" data-bind="text: statusMessage()">
+                    <div class=" text-strong" data-bind="text: statusMessage()">
                     </div>
                 </div>
 
@@ -56,15 +56,15 @@
         <tmpl:wfstateSummaryScore/>
       </div>
     </div>
-    <div class="row text-primary row-space">
+    <div class="row row-space">
       <div class="col-sm-3">
-        <g:message code="execution.show.mode.column.node" />
+          <strong><g:message code="execution.show.mode.column.node" /></strong>
       </div>
       <div class="col-sm-2 col-sm-offset-5">
-        <g:message code="start.time" />
+          <strong><g:message code="start.time" /></strong>
       </div>
       <div class="col-sm-2">
-        <g:message code="duration" />
+          <strong><g:message code="duration" /></strong>
       </div>
     </div>
   </div>
@@ -100,7 +100,7 @@
                           <span data-bind="template: {name: 'step-info-simple-link', data:stepinfo(), as: 'stepinfo'}"></span>
                       </feature:enabled>
                   </span>
-                  <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-primary">
+                  <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-strong">
                       (Next up)
                   </span>
               </div>

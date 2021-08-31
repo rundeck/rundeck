@@ -44,7 +44,7 @@ export default Vue.extend({
         },
         'titleCss':{
             type:String,
-            default:'text-info',
+            default:'text-strong',
             required:false
         },
         'showDescription': {
@@ -54,7 +54,7 @@ export default Vue.extend({
         },
         'descriptionCss':{
             type:String,
-            default:'text-muted',
+            default:'',
             required:false
         },
         'showExtended': {
@@ -122,6 +122,7 @@ export default Vue.extend({
 .plugin-icon {
     width: 16px;
     height: 16px;
+    border-radius: 2px;
 }
 
 </style>

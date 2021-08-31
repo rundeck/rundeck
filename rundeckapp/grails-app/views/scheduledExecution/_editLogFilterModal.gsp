@@ -74,7 +74,7 @@
                     <a class="list-group-item textbtn" href="#"
                        data-bind="click: $root.addSelectedFilterPopup, attr: {'data-plugin-type':type}">
                         <!-- ko if: iconSrc -->
-                        <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
+                        <img width="16px" height="16px" style="border-radius: 2px;" data-bind="attr: {src: iconSrc}"/>
                         <!-- /ko -->
                         <!-- ko if: glyphicon -->
                         <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
@@ -88,8 +88,8 @@
                         <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                         <i class="rdicon icon-small plugin"></i>
                         <!-- /ko -->
-                        <span data-bind="text: title"></span>
-                        <span class="text-info">
+                        <span class="text-strong" data-bind="text: title"></span>
+                        <span>
                             -
                             <span data-bind="text: descriptionFirstLine"></span>
                         </span>

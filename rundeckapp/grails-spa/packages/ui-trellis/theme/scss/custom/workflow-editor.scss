@@ -31,16 +31,12 @@ span.autoedit:hover {
 }
 //option values in code sections
 .optvalue {
-  color: var(--primary-color);
-
   &.optextra {
-    border-bottom: 1px dashed var(--primary-color);
+    border-bottom: 1px dashed var(--black);
   }
 }
 
 .optkey {
-  color: var(--primary-color);
-
   &:after {
     content: ':';
   }

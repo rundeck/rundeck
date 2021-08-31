@@ -8,18 +8,37 @@ export const typography = () => (Vue.extend({
     render(h) {
         return (
             <div>
+                <h1 class="text-info">Headings</h1>
                 <div class="h1">H1 Heading</div>
                 <div class="h2">H2 Heading</div>
                 <div class="h3">H3 Heading</div>
                 <div class="h4">H4 Heading</div>
                 <div class="h5">H5 Heading</div>
                 <div class="h6">H6 Heading</div>
+                <h4 class="text-info">Text Heading Styles</h4>
                 <div class="text-h1">H1 Text</div>
                 <div class="text-h2">H2 Text</div>
                 <div class="text-h3">H3 Text</div>
                 <div class="text-h4">H4 Text</div>
                 <div class="text-h5">H5 Text</div>
                 <div class="text-h6">H6 Text</div>
+
+                <h1 class="text-info">Links</h1>
+                <div style="margin-top: 20px;"><a>Default links are accessible blue.</a></div>
+                <div><a class="link-quiet">Quiet links have no color.</a></div>
+                <h1 class="text-info">Text</h1>
+                <div><strong domPropsInnerHTML="&lt;strong&gt;Text is bold.&lt;/strong&gt;"></strong></div>
+                <div class="text-strong">.text-strong Text is bold.</div>
+                <h4 class="text-info">Color Text</h4>
+                <div class="text-success">Success text.</div>
+                <div class="text-info">Info text.</div>
+                <div class="text-warning">Warning text.</div>
+                <div class="text-danger">Danger text.</div>
+                <h4 class="text-info">Backgrounds</h4>
+                <div class="bg-success">Success background.</div>
+                <div class="bg-info">Info background.</div>
+                <div class="bg-warning">Warning background.</div>
+                <div class="bg-danger">Danger background.</div>
             </div>
         )
     }
@@ -43,7 +62,23 @@ export const buttons = () => (Vue.extend({
                     <button class="btn btn-danger">Danger</button>
                     <button class="btn btn-transparent">Transparent</button>
                 </div>
+                <h3>Disabled</h3>
+                <div style="display:flex;justify-content: space-evenly;">
+                    <a class="btn btn-disabled btn-default" role="button">Link</a>
+                    <button class="btn btn-disabled btn-default">Button</button>
+                    <input class="btn btn-disabled btn-default" value="Input"/>
+                </div>
+                <div style="display: flex;justify-content: space-evenly; margin-top: 10px;">
+                    <button class="btn btn-disabled btn-default">Default</button>
+                    <button class="btn btn-disabled btn-primary">Primary</button>
+                    <button class="btn btn-disabled btn-info">Info</button>
+                    <button class="btn btn-disabled btn-success">Success</button>
+                    <button class="btn btn-disabled btn-warning">Warning</button>
+                    <button class="btn btn-disabled btn-danger">Danger</button>
+                    <button class="btn btn-disabled btn-transparent">Transparent</button>
+                </div>
             </div>
+            
         )
     }
 }))

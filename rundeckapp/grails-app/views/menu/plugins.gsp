@@ -119,7 +119,7 @@ To change this template use File | Settings | File Templates.
               <div class="panel-heading">
                 <h4 class="panel-title">
                   <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion" href="#${ukey}" title="${serviceName}">
-                    <i class="auto-caret text-primary"></i>
+                    <i class="auto-caret text-strong"></i>
                     <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/></a>
 
                     <g:if test="${pluginDescList.size()>0}">
@@ -130,7 +130,7 @@ To change this template use File | Settings | File Templates.
                     <g:enc>(${pluginDescList.size()})</g:enc>
                   </small>
                 </g:else>
-                <span class="text-primary"><g:message code="framework.service.${serviceName}.description" default=""/></span>
+                <span class="text-strong"><g:message code="framework.service.${serviceName}.description" default=""/></span>
                 </h4>
               </div>
 
@@ -155,7 +155,7 @@ To change this template use File | Settings | File Templates.
 
                             <a class="accordion-toggle link-bare collapsed" data-toggle="collapse"
                             data-parent="#accordion${enc(attr: ukey)}" href="#${enc(attr: ukeyx)}" title="${pluginName}">
-                              <i class="auto-caret text-primary"></i>
+                              <i class="auto-caret text-strong"></i>
                               <g:set var="pluginFileMetadata" value="${uiPluginProfiles?.get(serviceName + ":" + pluginName)?.metadata}"/>
                               <stepplugin:pluginIcon service="${serviceName}"
                                 name="${pluginName}"
@@ -176,7 +176,7 @@ To change this template use File | Settings | File Templates.
                                 name: pluginName,
                                 code: 'plugin.description',
                                 default: pluginDesc
-                                ), textCss: 'text-primary',
+                                ), textCss: 'text-strong',
                                 mode: 'hidden', rkey: g.rkey()]"/>
                             </g:if>
                           </div>
@@ -212,10 +212,10 @@ To change this template use File | Settings | File Templates.
                               </a> &nbsp;
                             </g:if>
                             <g:elseif test="${pluginFileMetadata?.pluginAuthor}">
-                              <span class="text-primary small has_tooltip" title="${message(code:"author",encodeAs:'HTMLAttribute')}">${pluginFileMetadata?.pluginAuthor}</span>
+                              <span class="text-strong small has_tooltip" title="${message(code:"author",encodeAs:'HTMLAttribute')}">${pluginFileMetadata?.pluginAuthor}</span>
                             </g:elseif>
 
-                            <span class=" ${source == 'file' ? 'label label-info' : 'text-primary small'} has_tooltip " data-container="body" title="${enc(attr: metaInfo)}">${pluginFileMetadata?.pluginFileVersion ?: ''}
+                            <span class=" ${source == 'file' ? 'label label-info' : 'text-strong small'} has_tooltip " data-container="body" title="${enc(attr: metaInfo)}">${pluginFileMetadata?.pluginFileVersion ?: ''}
                               <g:if test="${source == 'embed'}">
                                 <g:icon name="file"/>
                               </g:if>
@@ -239,7 +239,7 @@ To change this template use File | Settings | File Templates.
                             name: pluginName,
                             code: 'plugin.description',
                             default: pluginDesc
-                            ), textCss: 'text-primary',
+                            ), textCss: 'text-strong',
                             mode: 'shown', rkey: g.rkey()]"/>
                           <g:if test="${specialConfiguration[serviceName]}">
                             <div class="text-info">
@@ -273,7 +273,7 @@ To change this template use File | Settings | File Templates.
                           </g:each>
                           <g:unless test="${pluginDescription?.properties?.any{!(it.scope==null||it.scope==PropertyScope.Unspecified? (serviceDefaultScope == PropertyScope.InstanceOnly): (it.scope == PropertyScope.InstanceOnly))}}">
                             %{--no config properties--}%
-                            <p class="text-primary">
+                            <p class="text-strong">
                               <g:message code="no.configuration" />
                             </p>
                           </g:unless>
@@ -283,7 +283,7 @@ To change this template use File | Settings | File Templates.
                   </g:each>
                 </div>
                 <g:unless test="${pluginDescList}">
-                  <p class="text-primary">
+                  <p class="text-strong">
                     <g:message code="none" />
                   </p>
                 </g:unless>

@@ -112,7 +112,7 @@
               <btn type="simple" class=" btn-hover  btn-secondary dropdown-toggle">
                 <span class="caret"></span>
                 &nbsp;
-                <span v-if="editNotificationTrigger" class="text-primary">
+                <span v-if="editNotificationTrigger" class="text-strong">
                   <i class="fas" :class="triggerIcons[editNotificationTrigger]"></i>
                   {{ $t('notification.event.' + editNotificationTrigger) }}
                 </span>

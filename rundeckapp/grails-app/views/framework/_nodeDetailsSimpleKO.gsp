@@ -17,12 +17,12 @@
   <table class="table table-condensed table-embed node-details-simple">
       <tbody>
       <tr data-bind="if: attributes.description">
-          <td class="value text-primary" colspan="4" data-bind="text: attributes.description">
+          <td class="value text-strong" colspan="4" data-bind="text: attributes.description">
 
           </td>
       </tr>
       <tr data-bind="if: !authrun">
-          <td class="value text-primary" colspan="4">
+          <td class="value text-strong" colspan="4">
               <i class="glyphicon glyphicon-ban-circle"></i>
             <g:message code="node.access.not-runnable.message" />
           </td>

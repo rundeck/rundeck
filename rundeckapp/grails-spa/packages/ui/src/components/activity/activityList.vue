@@ -17,8 +17,8 @@
                 of
                 </span>
 
-                <a :href="activityHref">
-                  <span class="summary-count" :class="{ 'text-primary': pagination.total < 1, 'text-info': pagination.total > 0 }" v-if="pagination.total>=0">
+                <a :href="activityHref" class="link-quiet">
+                  <span class="summary-count" :class="{ 'text-strong': pagination.total < 1, 'text-info': pagination.total > 0 }" v-if="pagination.total>=0">
                     {{pagination.total}}
                   </span>
                   <span v-else-if="!loadError" class="text-muted">
@@ -234,7 +234,7 @@
                 </td>
 
                 <td class="text-right">
-                    <a title="View execution output" :href=exec.permalink>#{{exec.id}}</a>
+                    <a class="link-quiet" title="View execution output" :href=exec.permalink>#{{exec.id}}</a>
                 </td>
             </tr>
         </tbody>
@@ -303,7 +303,7 @@
                   </span>
 
 
-                <span v-if="rpt.jobDeleted" class="text-primary">
+                <span v-if="rpt.jobDeleted" class="text-strong">
                       {{$t('job.has.been.deleted.0',[rpt.jobName])}}
                 </span>
 
@@ -326,7 +326,7 @@
             </td>
 
             <td class="text-right">
-                <a  :href="rpt.executionHref" @click.middle.stop>
+                <a class="link-quiet" :href="rpt.executionHref" @click.middle.stop>
                 #{{rpt.executionId}}
                 </a>
             </td>

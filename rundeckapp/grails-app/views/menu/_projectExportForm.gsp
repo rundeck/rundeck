@@ -91,7 +91,7 @@
                   </div>
                 </auth:resourceAllowed>
                 <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project_acl" has="false" name="${params.project}">
-                  <div class="checkbox disabled text-primary">
+                  <div class="checkbox disabled text-strong">
                     <i class="glyphicon glyphicon-ban-circle"></i> ACL Policies (Unauthorized)
                   </div>
                 </auth:resourceAllowed>
@@ -102,7 +102,7 @@
                 </div>
                 </auth:resourceAllowed>
                 <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" has="false" name="${params.project}">
-                  <div class="checkbox disabled text-primary">
+                  <div class="checkbox disabled text-strong">
                     <i class="glyphicon glyphicon-ban-circle"></i> SCM Configuration (Unauthorized)
                   </div>
                 </auth:resourceAllowed>
@@ -131,7 +131,7 @@
                           ${raw(projectComponentCheckboxTemplate)}
                         </auth:resourceAllowed>
                         <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context='application' type="project" name="${params.project}" has="false">
-                          <div class="checkbox disabled text-primary">
+                          <div class="checkbox disabled text-strong">
                             <i class="glyphicon glyphicon-ban-circle"></i> ${projectComponentTitle} (Unauthorized)
                           </div>
                         </auth:resourceAllowed>

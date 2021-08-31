@@ -11,7 +11,7 @@
   <g:if test="${showNodeIcon}">
       <i class="rdicon icon-small node"></i>
   </g:if>
-  <span class=" text-info ${titleCss?:''}">
+  <span class=" text-strong ${titleCss?:''}">
     <g:if test="${!hideTitle}">
       <stepplugin:message service="${serviceName}"
                           name="${description.name}"
@@ -30,12 +30,12 @@
                 ),
                         service    : serviceName,
                         name       : description.name,
-                        markdownCss: 'text-primary',
-                        textCss    : 'text-primary',
+                        markdownCss: '',
+                        textCss    : '',
                         mode       : 'collapsed', rkey: g.rkey()]"/>
     </g:if>
     <g:else>
-      <span class="text-primary">
+      <span>
         <stepplugin:message service="${serviceName}"
                             name="${description.name}"
                             code="plugin.description"

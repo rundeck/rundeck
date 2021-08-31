@@ -164,7 +164,7 @@
                 <td><g:message code="Node.plural" /></td>
                 <td >
                     <span id="matchednodes_${rkey}" class="matchednodes embed">
-                        <span class="text-primary"><g:message code="include.nodes.matching" /></span>
+                        <span class="text-strong"><g:message code="include.nodes.matching" /></span>
                         <g:set var="filterstring" value="${execdata.asFilter()}"/>
                         <g:set var="jsdata" value="${[filter:filterstring]}"/>
                     <g:set var="varStr" value=""/>
@@ -217,7 +217,7 @@
                     </span>
 
                     <div>
-                        <span class="text-primary text-em">
+                        <span class="text-strong text-em">
                             <g:message code="execute.up.to"/>
                             <strong>
                                 <g:enc>${execdata?.nodeThreadcount}</g:enc>
@@ -228,7 +228,7 @@
                     </div>
 
                     <div>
-                        <span class="text-primary text-em">
+                        <span class="text-strong text-em">
                             <g:message code="if.a.node.fails" />:
                             <strong>
                             <g:message
@@ -237,7 +237,7 @@
                         </span>
                     </div>
                     <div>
-                    <span class="text-primary text-em">
+                    <span class="text-strong text-em">
                         <g:set value="${null == execdata?.nodeRankOrderAscending || execdata?.nodeRankOrderAscending}"
                                var="isAscending"/>
 
@@ -253,7 +253,7 @@
                     </div>
                     <g:if test="${execdata instanceof ScheduledExecution}">
                     <div>
-                        <span class="text-primary text-em">
+                        <span class="text-strong text-em">
                             <g:message code="scheduledExecution.property.nodesSelectedByDefault.label" />:
                             <strong>
                                 <g:message
@@ -274,7 +274,7 @@
         <tr>
             <td><g:message code="job.detail.node.prompt" /></td>
             <td class="matchednodes embed" id="matchednodes_${rkey}">
-                <span class="text-primary"><g:message code="execute.on.the.server.node" /></span>
+                <span class="text-strong"><g:message code="execute.on.the.server.node" /></span>
 
                 <g:if test="${knockout}">
                     <span class="ko-wrap">

@@ -47,7 +47,7 @@
           </b>
       </g:if>
         <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
-            class="text-primary"
+            class="text-strong"
             params="[project: scheduledExecution.project]"
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
@@ -141,7 +141,7 @@
         <g:render template="/scheduledExecution/description"
                   model="[
                           description : scheduledExecution.description,
-                          textCss     : 'h5 text-primary',
+                          textCss     : 'h5 text-strong',
                           mode        : jobDescriptionMode ?: 'expanded',
                           cutoffMarker: ScheduledExecution.RUNBOOK_MARKER,
                           jobLinkId   : scheduledExecution.extid,

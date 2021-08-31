@@ -66,7 +66,7 @@
                     <table class="table table-hover table-condensed">
                         <tbody>
                         <tr>
-                            <td colspan="2" class="text-primary">
+                            <td colspan="2" class="text-strong">
                                 <span v-if="files.length<1">
                                   No keys
                                 </span>
@@ -97,7 +97,7 @@
 
                                 <span>{{key.name}}</span>
                             </td>
-                            <td class="text-primary">
+                            <td class="text-strong">
                                 <span class="pull-right">
                                   <span v-if="isPrivateKey(key)"
                                         title="This path contains a private key that can be used for remote node execution.">
@@ -118,7 +118,7 @@
                         <tbody v-if="notFound()===true">
                         <tr>
                             <td colspan="2">
-                                <span class="text-primary">Nothing found at this path.
+                                <span class="text-strong">Nothing found at this path.
                                 </span>
                             </td>
                         </tr>
@@ -148,13 +148,13 @@
                         <div v-if="createdTime()!==''">
                             <div>
                                 Created:
-                                <span class="timeabs text-primary">
+                                <span class="timeabs text-strong">
                                     {{createdTime() | moment("dddd, MMMM Do YYYY, h:mm:ss a") }}
                                 </span>
 
                                 <span v-if="createdUsername()!==''">
                                     by:
-                                    <span class="text-primary">{{createdUsername()}}</span>
+                                    <span class="text-strong">{{createdUsername()}}</span>
                                 </span>
 
                             </div>
@@ -162,13 +162,13 @@
                         <div v-if="wasModified()!==''">
                             <div>
                                 Modified:
-                                <span class="timeago text-primary">
+                                <span class="timeago text-strong">
                                     {{modifiedTimeAgoText()| duration('humanize') }} ago
                                 </span>
 
                                 <span v-if="modifiedUsername()!==''">
                                 by:
-                                <span class="text-primary">{{modifiedUsername()}}</span>
+                                <span class="text-strong">{{modifiedUsername()}}</span>
                               </span>
                             </div>
                         </div>

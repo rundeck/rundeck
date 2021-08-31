@@ -34,7 +34,7 @@
         </td>
         <td width="22%">
             <g:if test="${token.expiration}">
-                <span class="text-primary"><g:formatDate date="${token.expiration}"/></span>
+                <span class="text-strong"><g:formatDate date="${token.expiration}"/></span>
             </g:if>
         </td>
         <td width="10%" title="Creator: ${token.creator}">

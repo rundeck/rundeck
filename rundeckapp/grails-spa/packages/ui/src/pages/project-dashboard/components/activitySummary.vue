@@ -4,7 +4,7 @@
       <div class="card">
         <div class="card-content">
           <a class="h4" :href="`${rdBase}project/${project.name}/activity`">
-            <span class="summary-count" :class="{ 'text-primary': count < 1, 'text-info': count > 0 }">
+            <span class="summary-count" :class="{ 'text-strong': count < 1, 'text-info': count > 0 }">
               {{count}}
             </span>
             {{$tc('execution',count)}}

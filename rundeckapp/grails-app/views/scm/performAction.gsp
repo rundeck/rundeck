@@ -130,7 +130,7 @@
                                                                     text: job.jobName,
                                                                     commit: jobstatus?.commit]"/>
 
-                                                    <span class="text-primary">
+                                                    <span class="text-strong">
                                                         - ${job.groupPath}
                                                     </span>
 
@@ -143,7 +143,7 @@
                                             <div class="" style="margin-left: 20px;">
                                                 <g:if test="${renamedJobPaths?.get(job.extid)}">
                                                     <div class="">
-                                                        <span class="text-primary">
+                                                        <span class="text-strong">
                                                             <g:icon name="file"/>
                                                             ${renamedJobPaths[job.extid]}
 
@@ -155,7 +155,7 @@
                                                 </g:if>
                                                 <g:if test="${filesMap?.get(job.extid)}">
                                                     <div class="">
-                                                        <span class="text-primary">
+                                                        <span class="text-strong">
                                                             <g:if test="${renamedJobPaths?.get(job.extid)}">
                                                                 <g:icon name="arrow-right"/>
                                                             </g:if>
@@ -212,7 +212,7 @@
                                             </div>
 
                                             <div class="flex justify-center items-center" style="margin-left: 20px;">
-                                                <span class="text-primary">
+                                                <span class="text-strong">
                                                     <span class="glyphicon glyphicon-file"></span>
                                                     ${path}
                                                 </span>
@@ -277,7 +277,7 @@
                                                                       text: job.jobName,
                                                                       commit: jobstatus?.commit]"/>
 
-                                                    <span class="text-primary">
+                                                    <span class="text-strong">
                                                         - ${job.groupPath}
                                                     </span>
                                                 </g:if>
@@ -302,7 +302,7 @@
                                         </div>
                                         <g:if test="${job}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-primary">
+                                                <span class="text-strong">
                                                     <span class="">
                                                         <g:if test="${trackedItem.iconName}">
                                                             <g:icon name="${trackedItem.iconName}"/>
@@ -367,7 +367,7 @@
                                                                       text: job.jobName,
                                                                       commit: jobstatus?.commit]"/>
 
-                                                    <span class="text-primary">
+                                                    <span class="text-strong">
                                                         - ${job.groupPath}
                                                     </span>
                                                 </g:if>
@@ -392,7 +392,7 @@
                                         </div>
                                         <g:if test="${job}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-primary">
+                                                <span class="text-strong">
                                                     <span class="">
                                                         <g:if test="${toDeleteItem.iconName}">
                                                             <g:icon name="${toDeleteItem.iconName}"/>

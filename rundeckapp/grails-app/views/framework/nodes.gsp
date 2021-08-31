@@ -83,7 +83,7 @@
                             <span data-bind="text: allcount" class="text-info">${total}</span>
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
                         </span>
-                        <span data-bind="visible: allcount()<0" class="text-primary">&hellip;</span>
+                        <span data-bind="visible: allcount()<0" class="text-strong">&hellip;</span>
 
                     </a>
                     <a href="#" data-bind="visible: !filterIsSet() ">
@@ -169,7 +169,7 @@
                 <div class="row">
 
                     <div class="col-xs-6">
-                        <h5 class="column-title text-uppercase text-primary">
+                        <h5 class="column-title text-uppercase text-strong">
                           <g:message code="resource.metadata.entity.tags" />
                         </h5>
                         <ul data-bind="foreach: nodeSummary().tags" class="list-unstyled">
@@ -191,7 +191,7 @@
 
                     <div class="col-xs-6">
 
-                        <h5 class="column-title text-uppercase text-primary">
+                        <h5 class="column-title text-uppercase text-strong">
                           <g:message code="filters" />
                         </h5>
 

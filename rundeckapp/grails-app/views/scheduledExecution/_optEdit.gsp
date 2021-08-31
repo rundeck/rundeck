@@ -88,7 +88,7 @@
                             name="${fileUploadPluginDescription.name}"
                             code="plugin.title"
                             default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
-                    <span class="text-primary"><g:render template="/scheduledExecution/description"
+                    <span class="text-strong"><g:render template="/scheduledExecution/description"
                                                        model="[description:
                                                                        stepplugin.messageText(
                                                                                service: 'FileUpload',
@@ -267,7 +267,7 @@
                         <label for="inputdate_${rkey}">
                           <g:message code="form.option.date.label"/>
                         </label>
-                        <span class="text-primary">
+                        <span class="text-strong">
                             <g:message code="form.option.date.description"/>
                         </span>
                     </div>
@@ -282,7 +282,7 @@
 
                             />
                         </label>
-                        <span class="text-primary">
+                        <span class="text-strong">
                         <g:markdown><g:message code="form.option.dateFormat.description.md" /></g:markdown>
                         </span>
                     </div>
@@ -298,7 +298,7 @@
                         <label for="sectrue_${rkey}">
                             <g:message code="form.option.secureExposed.true.label"/> <span class="text-danger small">&dagger;</span>
                         </label>
-                        <span class="text-primary">
+                        <span class="text-strong">
                             <g:message code="form.option.secureExposed.true.description"/>
                         </span>
 
@@ -313,7 +313,7 @@
                             <g:message code="form.option.secureExposed.false.label"/>
                             <span class="text-danger small">&dagger;</span>
                         </label>
-                        <span class="text-primary">
+                        <span class="text-strong">
                             <g:message code="form.option.secureExposed.false.description"/>
                         </span>
                     </div>
@@ -518,7 +518,7 @@
                     <label for="enforcedType_none">
                         <g:message code="none" />
                     </label>
-                    <span class="text-primary"><g:message code="form.option.enforcedType.none.label" /></span>
+                    <span class="text-strong"><g:message code="form.option.enforcedType.none.label" /></span>
                 </div>
                 <div class="radio">
                     <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}"
@@ -675,7 +675,7 @@
         <div  class="row">
             <label class="col-sm-2 control-label"><g:message code="usage" /></label>
             <div class="col-sm-10 opt_sec_nexp_disabled" style="${wdgt.styleVisible(unless: option?.secureInput && !option?.secureExposed)}">
-                <span class="text-primary"><g:message code="the.option.values.will.be.available.to.scripts.in.these.forms" /></span>
+                <span class="text-strong"><g:message code="the.option.values.will.be.available.to.scripts.in.these.forms" /></span>
                 <div>
                     <g:message code="bash.prompt" /> <code>$<span data-bind="text: bashVarPreview"></span></code>
                 </div>

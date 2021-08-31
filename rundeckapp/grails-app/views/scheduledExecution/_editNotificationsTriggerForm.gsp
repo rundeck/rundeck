@@ -131,7 +131,7 @@ implied. - See the License for the specific language governing permissions and -
                   <textarea name="${enc(attr:triggerUrlFieldName)}" style="vertical-align:top;" placeholder="http://" rows="6" cols="40"
                             class="form-control context_var_autocomplete"><g:enc>${notifurlcontent}</g:enc></textarea>
 
-                  <span class=" text-primary">
+                  <span class=" text-strong">
                     <g:message code="notification.webhook.field.description"/>
                   </span>
                 </g:if>
@@ -190,7 +190,7 @@ implied. - See the License for the specific language governing permissions and -
                 <stepplugin:message service="Notification" name="${pluginName}" code="plugin.title" default="${pluginDescription.title?:pluginName}"/>
               </label>
               <g:if test="${pluginDescription['description']}">
-                <span class="text-primary"><g:render
+                <span class="text-strong"><g:render
                   template="/scheduledExecution/description"
                   model="[description:
                          stepplugin.messageText(
@@ -229,7 +229,7 @@ implied. - See the License for the specific language governing permissions and -
                     </g:if>
 
                     <g:if test="${!pluginDescription?.properties}">
-                      <span class="text-primary">
+                      <span class="text-strong">
                         <g:message code="notification.plugin.configuration.noproperties.message" args="${[pluginDescription['title'] ?:
                                                        pluginDescription['name'] ?: pluginName]}"/>
                       </span>

@@ -433,7 +433,7 @@ search
                     <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:paginateParams.groupPath,project:params.project]"/>
 
                 </g:if>
-                <a href="#">
+                <a class="link-quiet" href="#">
 
                     <g:if test="${wasfiltered}">
                         <g:if test="${filterName}">

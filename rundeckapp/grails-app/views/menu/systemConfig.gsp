@@ -52,21 +52,21 @@
           </div>
           <div class="card-content">
             <g:set var="fwkPropFile" value="${FilesystemFramework.getPropertyFile(rundeckFramework.getConfigDir())}"/>
-            <div class="text-primary"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
+            <div class="text-strong"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
             <g:render template="displayConfigProps" model="[obscurePattern:~/password/,map: fwkProps, keys: fwkProps.keySet().findAll{it=~/^framework.server/}]"/>
-            <div class="text-primary" style="margin-top:1em;"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+            <div class="text-strong" style="margin-top:1em;"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
             <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['grails.serverURL']]"/>
 
             <hr>
 
             <h4>SSH Defaults</h4>
-            <div class="text-primary"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
+            <div class="text-strong"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
             <g:render template="displayConfigProps" model="[map: fwkProps,keys: fwkProps.keySet().findAll{it=~/^framework\.ssh\./}]"/>
 
             <hr>
 
             <h4>Datasource</h4>
-            <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+            <div class="text-strong"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
             <g:if test="${flatConfig.dataSource.jndiName}">
                 <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['dataSource.jndiName']]"/>
             </g:if>
@@ -76,19 +76,19 @@
             <hr>
 
             <h4>Plugins</h4>
-            <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+            <div class="text-strong"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
             <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(~/^rundeck\.execution\.logs\..*$/)]"/>
 
             <hr>
 
             <h4><g:message code="login.module" /></h4>
-            <div class="text-primary">
+            <div class="text-strong">
               <g:message code="authentication.is.performed.using.jaas.the.configuration.file.is.defined.using.a.system.property" />
             </div>
             <div>
               <g:render template="displayConfigProps" model="[map:System.properties,keys:['java.security.auth.login.config']]"/>
             </div>
-            <div class="text-primary" style="margin-top:1em;">
+            <div class="text-strong" style="margin-top:1em;">
               <g:message code="the.currently.used.login.module" />
             </div>
             <div>
@@ -101,13 +101,13 @@
             <h4>Repositories</h4>
             <div>
               <p>Repositories contain plugins which can be searched and installed from inside the application.</p>
-              <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+              <div class="text-strong"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
               <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['rundeck.feature.repository.enabled']]"/>
             </div>
 
             <div style="margin-top:1em;">
               <p>Limit plugin searches to just installed plugins (true) or include searching the public repository (false | default).</p>
-               <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+               <div class="text-strong"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
                  <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['rundeck.feature.repository.localSearchOnly']]"/>
                </div>
           </div>

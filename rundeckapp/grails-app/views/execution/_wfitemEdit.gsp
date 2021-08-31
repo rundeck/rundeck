@@ -50,7 +50,7 @@
                             <label for="useNameTrue">
                                 <g:message code="Workflow.Step.jobreference.name.label" />
                             </label>
-                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.name.description"/></span>
+                            <span><g:message code="Workflow.Step.jobreference.name.description"/></span>
                         </div>
                         <div class="radio">
                             <g:radio id="useNameFalse"  name="useName" value="false"
@@ -59,7 +59,7 @@
                             <label for="useNameFalse">
                                 <g:message code="Workflow.Step.jobreference.uuid.label" />
                             </label>
-                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.uuid.description"/></span>
+                            <span><g:message code="Workflow.Step.jobreference.uuid.description"/></span>
                         </div>
                     </div>
                 </div>
@@ -148,7 +148,7 @@
                             <label for="importOptionsCheck">
                                 <g:message code="Workflow.Step.jobreference.import.options.label" />
                             </label>
-                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.import.options.help" /></span>
+                            <span><g:message code="Workflow.Step.jobreference.import.options.help" /></span>
                         </div>
                     </div>
 
@@ -164,7 +164,7 @@
                             <label for="ignoreNotificationsCheck">
                                 <g:message code="Workflow.Step.jobreference.ignore.notifications.label" />
                             </label>
-                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.ignore.notifications.help" /></span>
+                            <span><g:message code="Workflow.Step.jobreference.ignore.notifications.help" /></span>
                         </div>
                     </div>
 
@@ -180,7 +180,7 @@
                             <label for="failOnDisableCheck">
                                 <g:message code="Workflow.Step.jobreference.fail.on.disabled.label" />
                             </label>
-                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.fail.on.disabled.help" /></span>
+                            <span><g:message code="Workflow.Step.jobreference.fail.on.disabled.help" /></span>
                         </div>
                     </div>
 
@@ -196,7 +196,7 @@
                             <label for="childNodesCheck">
                                 <g:message code="Workflow.Step.jobreference.child.nodes.label" />
                             </label>
-                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.child.nodes.help" /></span>
+                            <span><g:message code="Workflow.Step.jobreference.child.nodes.help" /></span>
                         </div>
                     </div>
 
@@ -291,10 +291,10 @@
                                 <g:message code="refresh"/>
                                 <i class="glyphicon glyphicon-refresh"></i>
                             </button>
-                            <span class="text-primary" data-bind="visible: total()>0">
+                            <span data-bind="visible: total()>0">
                                 <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
                             </span>
-                            <span class="text-primary" data-bind="visible: !filter()">
+                            <span data-bind="visible: !filter()">
                                 <span data-bind="text: emptyMessage"></span>
                             </span>
 
@@ -425,14 +425,14 @@
                             <label for="jobNodeStepFieldTrue">
                                 <g:message code="JobExec.nodeStep.true.label" />
                             </label>
-                            <span class="text-primary"><g:message code="JobExec.nodeStep.true.description"/></span>
+                            <span><g:message code="JobExec.nodeStep.true.description"/></span>
                         </div>
                         <div class="radio">
                             <g:radio id="jobNodeStepFieldFalse"  name="nodeStep" value="false" checked="${!isNodeStep}"/>
                             <label for="jobNodeStepFieldFalse">
                                 <g:message code="JobExec.nodeStep.false.label" />
                             </label>
-                            <span class="text-primary"><g:message code="JobExec.nodeStep.false.description"/></span>
+                            <span><g:message code="JobExec.nodeStep.false.description"/></span>
                         </div>
                     </div>
                 </div>
@@ -737,7 +737,7 @@
                 <label for="keepgoingOnSuccess">
                     <g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.label" />
                 </label>
-                <span class="text-primary"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
+                <span><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
             </div>
         </g:if>
         <g:else>
