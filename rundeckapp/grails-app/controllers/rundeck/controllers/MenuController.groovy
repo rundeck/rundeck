@@ -24,7 +24,6 @@ import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
@@ -106,29 +105,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     ]
 
     @CompileStatic
-    protected boolean authorizedForEvent(String project, List<String> actions){
+    protected boolean authorizedForEventRead(String project){
         AuthContext authContext =  rundeckAuthContextProcessor.getAuthContextForSubjectAndProject((Subject)session.getProperty('subject'), project)
-        return rundeckAuthContextProcessor.authorizeProjectResourceAll(
+        return rundeckAuthContextProcessor.authorizeProjectResource(
             authContext,
-            AuthorizationUtil.resourceType('event'),
-            actions,
+            AuthConstants.RESOURCE_TYPE_EVENT,
+            AuthConstants.ACTION_READ,
             project
         )
     }
 
-    @CompileStatic
-    protected boolean webAuthorizedForEvent(String project, List<String> actions){
-        return !unauthorizedResponse(
-            authorizedForEvent(project,actions),
-            actions[0],
-            'Events in project',
-            project
-        )
-    }
 
     @CompileStatic
-    protected boolean apiAuthorizedForEvent(String project, List<String> actions){
-        if (authorizedForEvent(project, actions)) {
+    protected boolean apiAuthorizedForEventRead(String project){
+        if (authorizedForEventRead(project)) {
             return true
         }
         apiService.renderErrorFormat(
@@ -136,7 +126,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             [
                 status: HttpServletResponse.SC_FORBIDDEN,
                 code  : 'api.error.item.unauthorized',
-                args  : [actions[0], 'Events in project', project],
+                args  : [AuthConstants.ACTION_READ, 'Events in project', project],
                 format: 'json'
             ]
         )
@@ -200,7 +190,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             if(!apiService.requireExists(response, frameworkService.existsFrameworkProject(project), ['project', project])) {
                 return
             }
-            if(!apiAuthorizedForEvent(project, [AuthConstants.ACTION_READ])){
+            if(!apiAuthorizedForEventRead(project)){
                 return
             }
         }
@@ -3212,7 +3202,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(params.project), ['project', params.project])) {
                 return
             }
-            if (!apiAuthorizedForEvent(params.project, [AuthConstants.ACTION_READ])) {
+            if (!apiAuthorizedForEventRead(params.project)) {
                 return
             }
         }
@@ -3293,7 +3283,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     @CompileStatic
     protected List<String> listProjectsEventReadAuthorized(AuthContext authContext){
         return frameworkService.projectNames(authContext).findAll{String name->
-            apiAuthorizedForEvent(name, [AuthConstants.ACTION_READ])
+            apiAuthorizedForEventRead(name)
         }
     }
 
