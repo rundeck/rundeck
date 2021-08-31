@@ -3366,7 +3366,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def projectToggleSCM(){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAll(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(params.project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
