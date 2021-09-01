@@ -3,7 +3,7 @@ Rundeck
 
 | Travis | Deb | RPM | War |
 |--------|-----|-----|-----|
-|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[![Download]](https://www.rundeck.com/downloads)|[![Download]](https://www.rundeck.com/downloads)||[![Download]](https://www.rundeck.com/downloads)
+|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[Download](https://www.rundeck.com/downloads)|[Download](https://www.rundeck.com/downloads)||[Download](https://www.rundeck.com/downloads)
 
 Rundeck is an open source automation service with a web console,
 command line tools and a WebAPI.
@@ -40,7 +40,7 @@ RPM and DEB package builds
 
 To build .rpm and .deb packages, you must first clone [the rundeck packaging repo](https://github.com/rundeck/packaging) into the rundeck repo.
 A sample list of simple build steps is below, where $RELEASE_VERSION is the version you want
-to build, i.e. 3.2.7
+to build, i.e. 3.4.3
 
     git clone https://github.com/rundeck/rundeck
     cd rundeck
@@ -49,9 +49,9 @@ to build, i.e. 3.2.7
     ./gradlew build -Penvironment=release
     cd packaging
 
-For 3.2.x builds, check out the `maint-3.2.x` branch of `packaging`
+For 3.2.x builds, check out the `maint-3.4.x` branch of `packaging`
 
-    git checkout maint-3.2.x
+    git checkout maint-3.4.x
     mkdir -p artifacts
     cp ../rundeckapp/build/libs/rundeck*.war artifacts/
     ./gradlew -PpackageRelease=$RELEASE_VERSION clean packageArtifacts
