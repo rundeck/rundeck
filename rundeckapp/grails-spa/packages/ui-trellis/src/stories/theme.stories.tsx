@@ -39,6 +39,11 @@ export const typography = () => (Vue.extend({
                 <div class="bg-info">Info background.</div>
                 <div class="bg-warning">Warning background.</div>
                 <div class="bg-danger">Danger background.</div>
+                <h4 class="text-info">Alerts</h4>
+                <div class="alert-info">Info alert</div>
+                <div class="alert-success">Success alert</div>
+                <div class="alert-warning">Warning alert</div>
+                <div class="alert-danger">Danger alert</div>
             </div>
         )
     }
