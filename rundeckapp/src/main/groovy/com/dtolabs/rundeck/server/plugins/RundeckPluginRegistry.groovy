@@ -399,8 +399,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             return beanPlugin
         }
         if(blackListFileName){
-            Map<String,Set<String>> blacklistMap = getBlackListMap(blackListFileName)
-            if(blacklistMap.get(service.getName()) && blacklistMap.get(service.getName().contains(name))){
+            Map<String,String> blacklistMap = getBlackListMap(blackListFileName)
+            if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName().contains(name))){
                 return null
             }
         }
@@ -431,11 +431,24 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         null
     }
 
-    private Map<String,Set<String>> getBlackListMap(String path){
+    private static Map<String,String> getBlackListMap(String path){
+        File file = new File(path)
+        def line
+        Map<String,List<String>> blackListMap = [:]
+        file.eachLine {
+            String[] values = it.split(',')
+            String service = values[0]
+            String name = values[1]
+                if (!blackListMap.containsKey(service)) {
+                    blackListMap.put(service, new ArrayList<String>())
+                }
+                blackListMap.get(service).add(name)
 
+        }
+        return blackListMap
     }
 
-    private Description loadPluginDescription(PluggableProviderService service, String name){
+        private Description loadPluginDescription(PluggableProviderService service, String name){
         return DescribableServiceUtil.loadDescriptionForType(service, name, true)
     }
 
