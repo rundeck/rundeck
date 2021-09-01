@@ -100,7 +100,6 @@ public class RundeckConfigBase {
 
         @Data
         public static class LogOutput {
-            String warningSize;
             String limit;
             String limitAction;
         }
