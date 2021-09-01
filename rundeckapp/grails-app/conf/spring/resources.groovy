@@ -563,6 +563,7 @@ beans={
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
+        blackListFileName=application.config.rundeck?.plugins?.providerBlackListFile?:null
     }
     hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
 

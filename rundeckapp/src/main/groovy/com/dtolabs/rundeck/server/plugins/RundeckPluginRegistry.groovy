@@ -76,6 +76,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     def File pluginDirectory
     def File pluginCacheDirectory
     def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
+    String blackListFileName
+    Map<String, Set<String>> blacklistPlugins
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -396,6 +398,12 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         if (null != beanPlugin) {
             return beanPlugin
         }
+        if(blackListFileName){
+            Map<String,Set<String>> blacklistMap = getBlackListMap(blackListFileName)
+            if(blacklistMap.get(service.getName()) && blacklistMap.get(service.getName().contains(name))){
+                return null
+            }
+        }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
             //attempt to load directly
@@ -421,6 +429,10 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             }
         }
         null
+    }
+
+    private Map<String,Set<String>> getBlackListMap(String path){
+
     }
 
     private Description loadPluginDescription(PluggableProviderService service, String name){
