@@ -30,15 +30,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Used to log that a threshold was reached, and optionally truncate further output
  */
 class ThresholdLogWriter extends FilterStreamingLogWriter {
-    static final Logger LOG = LoggerFactory.getLogger(ThresholdLogWriter.class)
-
-    static final String MSG_WARN_SIZE = "The log file size achieved more than {} bytes - current size: {} bytes"
 
     LoggingThreshold threshold
     final boolean truncate
-    String jobName
     AtomicBoolean limitReached = new AtomicBoolean(false)
-    AtomicBoolean warningReached = new AtomicBoolean(false)
 
     ThresholdLogWriter(final StreamingLogWriter writer, final LoggingThreshold threshold) {
         super(writer)
@@ -46,29 +41,16 @@ class ThresholdLogWriter extends FilterStreamingLogWriter {
         this.truncate = threshold.isTruncateOnLimitReached()
     }
 
-    ThresholdLogWriter(final StreamingLogWriter writer, final LoggingThreshold threshold, final String jobName) {
-        this(writer, threshold)
-        this.jobName = jobName
-    }
-
     @Override
     void addEvent(final LogEvent event) {
         def limit = limitReached.get()
-        boolean warning = warningReached.get()
         if (truncate && limit) {
             return
         }
         getWriter().addEvent(event)
 
-        if (!warning && threshold.isWarningSizeReached() && warningReached.compareAndSet(false, true)) {
-            LOG.warn(MSG_WARN_SIZE  , threshold.warningSize, threshold.getValue())
-        }
-
         if (!limit && threshold.isThresholdExceeded() && limitReached.compareAndSet(false, true)) {
-            String job = jobName ?: "Unknown"
-            String msgError = "Log output limit exceeded: ${threshold.description}, job execution: ${job}"
-            LOG.error(msgError)
-            getWriter().addEvent(LogUtil.logError(msgError))
+            getWriter().addEvent(LogUtil.logError("Log output limit exceeded: " + threshold.description))
         }
     }
 }

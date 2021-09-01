@@ -181,7 +181,7 @@ class LoggingService implements ExecutionFileProducer {
         }
         def loglevelWriter = new LoglevelThresholdLogWriter(multiWriter, level)
         if (threshold) {
-            loglevelWriter = new ThresholdLogWriter(loglevelWriter, threshold, execution?.scheduledExecution?.jobName)
+            loglevelWriter = new ThresholdLogWriter(loglevelWriter, threshold)
         }
         def writer = new ExecutionLogWriter(loglevelWriter)
         if (outfilepath) {

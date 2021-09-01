@@ -30,10 +30,6 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
     public static final String ACTION_HALT     = "halt"
     public static final String ACTION_TRUNCATE = "truncate"
     /**
-     * Warning log file size value
-     */
-    public static final String WARN_SIZE_DEFAULT = "300MB"
-    /**
      * Log maximum lines
      */
     public static final String MAX_LINES = "maxLines"
@@ -49,13 +45,8 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
      * Log limit action applied over all projects
      */
     static final String EXECUTION_LOGS_LIMIT_ACTION = "execution.logs.output.limitAction"
-    /**
-     * Log size warning
-     */
-    static final String EXECUTION_LOGS_SIZE_WARNING = "execution.logs.output.warningSize"
 
     Long maxValue
-    Long warningSize
     ValueHolder<Long> valueHolder
     String action
     String description
@@ -160,6 +151,40 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         return limitAction
     }
 
+     LoggingThreshold createMinimum(LoggingThreshold global) {
+        if (type == global.type) {
+            maxValue = Math.min(this.maxValue, global.maxValue)
+        }
+        else {
+            evalPriority([this, global])
+        }
+        return this
+     }
+
+    private void evalPriority(List<LoggingThreshold> thresholds) {
+        def priorities = []
+        thresholds.each {it ->
+            if (it.type == TOTAL_FILE_SIZE) {
+                priorities[0] = it
+            }
+            else if (it.type == TOTAL_LINES) {
+                priorities[1] = it
+            }
+            else if (it.type == LINES_PER_NODE) {
+                priorities[2] = it
+            }
+        }
+        overrideValues(priorities.find())
+    }
+
+    private void overrideValues(LoggingThreshold threshold) {
+        if (this != threshold) {
+            type =  threshold.type
+            maxValue = threshold.maxValue
+            description = threshold.description
+        }
+    }
+
     /**
      * @param type statistic name
      * @return watcher to receive a holder, or null
@@ -191,12 +216,5 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
      */
     boolean isTruncateOnLimitReached() {
         action == ACTION_TRUNCATE
-    }
-
-    /**
-     * @return true if log file size is over a warning size alert
-     */
-    boolean isWarningSizeReached() {
-        return getValue() > warningSize
     }
 }
