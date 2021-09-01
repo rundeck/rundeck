@@ -3,7 +3,7 @@ Rundeck
 
 | Travis | Deb | RPM | War |
 |--------|-----|-----|-----|
-|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[Download](https://www.rundeck.com/downloads)|[Download](https://www.rundeck.com/downloads)||[Download](https://www.rundeck.com/downloads)
+|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[Download](https://www.rundeck.com/downloads)|[Download](https://www.rundeck.com/downloads)|[Download](https://www.rundeck.com/downloads)|
 
 Rundeck is an open source automation service with a web console,
 command line tools and a WebAPI.
