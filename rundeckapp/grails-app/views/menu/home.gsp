@@ -332,8 +332,8 @@
             
                 <div class="col-sm-12 col-md-2 col-last" data-bind="if: $root.projectForName(project)">
                   <div class="pull-right">
-                    <div class="btn-group dropdown-toggle-hover" >
-                      <a href="#" class="btn-action as-block link-hover link-quiet link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
+                    <div class="dropdown-toggle-hover" >
+                      <a href="#" class="as-block link-hover link-quiet link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">
                         <g:message code="button.Action"/>
                         <span class="caret"></span>
                       </a>
