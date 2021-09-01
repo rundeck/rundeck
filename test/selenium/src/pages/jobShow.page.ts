@@ -4,7 +4,7 @@ import {Page} from '@rundeck/testdeck/page'
 import { Context } from '@rundeck/testdeck/context'
 
 export const Elems= {
-  jobTitleLink: By.css('#jobInfo_ > span > a.text-primary'),
+  jobTitleLink: By.css('#jobInfo_ > span > a.text-strong'),
   jobUuidText: By.css('#subtitlebar.job-page > div > div > section > small.uuid'),
   jobDescription: By.css('#subtitlebar.job-page > div > div > div.jobInfoSection > section > span.h5'),
   optionInput: By.css('#8f95c8d5_seleniumOption1'),

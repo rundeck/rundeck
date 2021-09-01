@@ -4,7 +4,7 @@ import {Page} from '@rundeck/testdeck/page'
 import { Context } from '@rundeck/testdeck/context';
 export enum Elems {
     drpProjectSelect = '//*[@id="projectSelect"]',
-    projectsCountCss= '#layoutBody span.h3.text-primary > span'
+    projectsCountCss= '#layoutBody span.text-h3 > span'
 }
 
 export class ProjectListPage extends Page {
