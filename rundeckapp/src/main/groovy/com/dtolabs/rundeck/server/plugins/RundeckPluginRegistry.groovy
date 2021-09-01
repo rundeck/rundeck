@@ -399,7 +399,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             return beanPlugin
         }
         if(blackListFileName){
-            Map<String,String> blacklistMap = getBlackListMap(blackListFileName)
+            Map<String,List<String>> blacklistMap = getBlackListMap(blackListFileName)
             if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName().contains(name))){
                 return null
             }
@@ -431,7 +431,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         null
     }
 
-    private static Map<String,String> getBlackListMap(String path){
+    private static Map<String,List<String>> getBlackListMap(String path){
         File file = new File(path)
         def line
         Map<String,List<String>> blackListMap = [:]
