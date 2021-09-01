@@ -77,7 +77,6 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     def File pluginCacheDirectory
     def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
     String blackListFileName
-    Map<String, Set<String>> blacklistPlugins
 
     @Override
     void afterPropertiesSet() throws Exception {
