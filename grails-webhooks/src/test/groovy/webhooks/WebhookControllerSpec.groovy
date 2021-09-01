@@ -44,7 +44,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _) >> { new SubjectAuthContext(null, null) }
         1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
         1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { webhookResponder }
         response.text == expectedMsg
@@ -106,7 +106,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
         then:
         invocations * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:true)}
-        invocations * controller.rundeckAuthContextProvider.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
+        invocations * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,_) >> { new SubjectAuthContext(null, null) }
         invocations * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
         invocations * controller.webhookService.processWebhook(_,_,_,_,_) >> { new DefaultWebhookResponder() }
         response.status == statusCode
