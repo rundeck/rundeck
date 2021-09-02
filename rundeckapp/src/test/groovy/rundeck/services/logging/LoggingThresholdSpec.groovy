@@ -10,20 +10,6 @@ class LoggingThresholdSpec extends Specification {
         Long value
     }
 
-    void "test job vs global"() {
-        given:
-        def jobLimitMap       = ScheduledExecution.parseLogOutputThreshold("100KB")
-        def jobLimitAction    = LoggingThreshold.ACTION_HALT
-        def globalLimitMap    = ScheduledExecution.parseLogOutputThreshold("100")
-        def globalLimitAction = LoggingThreshold.ACTION_TRUNCATE
-        when:
-        def jobThreshold    = LoggingThreshold.fromMap(jobLimitMap, jobLimitAction)
-        def globalThreshold = LoggingThreshold.fromMap(globalLimitMap, globalLimitAction)
-        def threshold       = jobThreshold.createMinimum(globalThreshold)
-        then:
-        threshold.type == LoggingThreshold.TOTAL_FILE_SIZE
-    }
-
     void "test null global output limit"() {
         given:
         def jobLimitMap    = ScheduledExecution.parseLogOutputThreshold("100KB")
