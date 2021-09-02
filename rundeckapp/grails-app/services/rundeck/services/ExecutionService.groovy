@@ -1041,22 +1041,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //        }
 //
 
-        // Output limit
-        def globalThresholdMap = getGlobalThresholdLimit()
-        def jobThresholdMap    = getJobThresholdLimit(scheduledExecution)
-        def thresholdMap       = LoggingThreshold.getOutputLimit(globalThresholdMap, jobThresholdMap)
-
-        // Output limit action
-        String limitAction = LoggingThreshold.getLimitAction(
-                globalThresholdMap,
-                getGlobalLimitAction(),
-                jobThresholdMap,
-                getJobLimitAction(scheduledExecution))
-        LoggingThreshold threshold = LoggingThreshold.fromMap(thresholdMap, limitAction)
-
-        String warnSize = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_SIZE_WARNING, LoggingThreshold.WARN_SIZE_DEFAULT)
-        Map<String, Long> warnSizeMap = ScheduledExecution.parseLogOutputThreshold(warnSize)
-        threshold?.warningSize = warnSizeMap[LoggingThreshold.MAX_SIZE_BYTES] ?: warnSizeMap[LoggingThreshold.MAX_LINES]
+        // Threshold
+        LoggingThreshold globalThreshold = LoggingThreshold.fromMap(getGlobalThresholdLimit(), getGlobalLimitAction())
+        LoggingThreshold jobThreshold    = LoggingThreshold.fromMap(getJobThresholdLimit(scheduledExecution), getJobLimitAction(scheduledExecution))
+        LoggingThreshold threshold       = LoggingThreshold.createMinimum(jobThreshold, globalThreshold)
 
         def ExecutionLogWriter loghandler = loggingService.openLogWriter(
                 execution,

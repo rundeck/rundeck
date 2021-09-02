@@ -89,36 +89,34 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         return t
     }
 
-    /**
-     * Gets a map with the log output limit data
-     * @param globalLimitMap
-     * @param jobLimitMap
-     * @return a output limit map
-     */
-    static Map getOutputLimit(Map globalLimitMap, Map jobLimitMap) {
-        Map thresholdMap = null
+    static LoggingThreshold createMinimum(LoggingThreshold job, LoggingThreshold global) {
+        def t = new LoggingThreshold()
+        if (job?.type == global?.type) {
+            t.maxValue = Math.min(job.maxValue, global.maxValue)
+        } else {
+            evalPriority(t, [job, global])
+        }
+        evalLimitAction(t, job, global)
+        return t
+    }
 
-        if (!globalLimitMap) {
-            thresholdMap = jobLimitMap
-        }
-        else if (globalLimitMap && !jobLimitMap) {
-            thresholdMap = globalLimitMap
-        }
-        else if (globalLimitMap.size() != jobLimitMap.size()) {
-            thresholdMap = globalLimitMap
-        }
-        else if (globalLimitMap && jobLimitMap) {
-            String globalLimit = globalLimitMap.maxSizeBytes ?: globalLimitMap.maxLines
-            String jobLimit    = jobLimitMap.maxSizeBytes ?: jobLimitMap.maxLines
-            Long min = Math.min(Long.valueOf(globalLimit), Long.valueOf(jobLimit))
-            if (min == globalLimitMap.maxSizeBytes || min == globalLimitMap.maxLines) {
-                thresholdMap = globalLimitMap
-            } else {
-                thresholdMap = jobLimitMap
+    static void evalPriority(LoggingThreshold t, List<LoggingThreshold> thresholds) {
+        def priorities = []
+        thresholds.each {it ->
+            if (it?.type == TOTAL_FILE_SIZE) {
+                priorities[0] = it
+            }
+            else if (it?.type == TOTAL_LINES) {
+                priorities[1] = it
+            }
+            else if (it?.type == LINES_PER_NODE) {
+                priorities[2] = it
             }
         }
-
-        return thresholdMap
+        LoggingThreshold tPriority = priorities.find()
+        t.type =  tPriority.type
+        t.maxValue = tPriority.maxValue
+        t.description = tPriority.description
     }
 
     /**
@@ -129,59 +127,22 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
      * @param jobLimitAction
      * @return log limit action
      */
-    static String getLimitAction(Map globalLimitMap, String globalLimitAction, Map jobLimitMap, String jobLimitAction) {
-        String limitAction = ACTION_HALT
-
-        if (jobLimitMap && !globalLimitMap) {
-            limitAction = jobLimitAction
+    static void evalLimitAction(LoggingThreshold t, LoggingThreshold job, LoggingThreshold global) {
+        t.action = ACTION_HALT
+        if (!job?.action && global?.action) {
+            t.action = global.action
         }
-        else if (jobLimitMap && globalLimitMap && globalLimitAction == ACTION_HALT) {
-            limitAction = globalLimitAction
+        else if (job?.action && !global?.action) {
+            t.action = job.action
         }
-        else if (jobLimitMap && globalLimitMap && globalLimitAction == ACTION_TRUNCATE) {
-            limitAction = jobLimitAction
+        else if (!job?.action && global?.action) {
+            t.action = global.action
         }
-        else if (jobLimitMap && globalLimitMap && !globalLimitAction) {
-            limitAction = jobLimitAction
+        else if (job?.action && global?.action && global?.action == ACTION_HALT) {
+            t.action = global.action
         }
-        else if (!jobLimitMap && globalLimitMap) {
-            limitAction = globalLimitAction ?: ACTION_TRUNCATE
-        }
-
-        return limitAction
-    }
-
-     LoggingThreshold createMinimum(LoggingThreshold global) {
-        if (type == global.type) {
-            maxValue = Math.min(this.maxValue, global.maxValue)
-        }
-        else {
-            evalPriority([this, global])
-        }
-        return this
-     }
-
-    private void evalPriority(List<LoggingThreshold> thresholds) {
-        def priorities = []
-        thresholds.each {it ->
-            if (it.type == TOTAL_FILE_SIZE) {
-                priorities[0] = it
-            }
-            else if (it.type == TOTAL_LINES) {
-                priorities[1] = it
-            }
-            else if (it.type == LINES_PER_NODE) {
-                priorities[2] = it
-            }
-        }
-        overrideValues(priorities.find())
-    }
-
-    private void overrideValues(LoggingThreshold threshold) {
-        if (this != threshold) {
-            type =  threshold.type
-            maxValue = threshold.maxValue
-            description = threshold.description
+        else if (job?.action && global?.action && global?.action == ACTION_TRUNCATE) {
+            t.action = job.action
         }
     }
 
