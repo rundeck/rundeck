@@ -550,7 +550,14 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
-                    list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
+                    if(blackListFileName){
+                        Map<String, List<String>> blacklistMap = getBlackListMap(blackListFileName)
+                        if(blacklistMap.containsKey(service.name)){
+                            if(!blacklistMap.get(service.name).contains(pluginName)){
+                                list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
+                            }
+                        }
+                    }
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")
@@ -573,14 +580,28 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 }
 
                 if (!list[ident.providerName]) {
-                    list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
+                    if(blackListFileName){
+                        Map<String, List<String>> blacklistMap = getBlackListMap(blackListFileName)
+                        if(blacklistMap.containsKey(service.name)){
+                            if(!blacklistMap.get(service.name).contains(ident.providerName)){
+                                list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
+                            }
+                        }
+                    }
                 }
             }
             service.listDescriptions()?.each { Description d ->
                 if (!list[d.name]) {
-                    list[d.name] = new DescribedPlugin<T>( null, null, d.name)
+                    if(blackListFileName){
+                        Map<String, List<String>> blacklistMap = getBlackListMap(blackListFileName)
+                        if(blacklistMap.containsKey(service.name)){
+                            if(!blacklistMap.get(service.name).contains(d.name)){
+                                list[d.name] = new DescribedPlugin<T>( null, null, d.name)
+                            }
+                        }
+                    }
                 }
-                list[d.name].description = d
+                list[d.name]?.description = d
             }
         }
 

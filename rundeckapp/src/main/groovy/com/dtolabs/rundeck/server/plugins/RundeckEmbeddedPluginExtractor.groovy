@@ -42,6 +42,7 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
     RundeckPluginRegistry rundeckPluginRegistry
     @Autowired
     Collection<PluginFileSource> pluginFileSources = []
+    String blackListFileName
 
     RundeckEmbeddedPluginExtractor() {
     }
