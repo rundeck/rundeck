@@ -13,11 +13,13 @@ export default Vue.extend({
 
         return h('div', {
             attrs: {
-                style: `height: ${height}; width: ${width};`
+                style: `height: ${height}; width: ${width};`,
+                id: this.identifier,
             }
         })
     },
     props: {
+        identifier: String,
         value: String,
         height: String,
         width: String,

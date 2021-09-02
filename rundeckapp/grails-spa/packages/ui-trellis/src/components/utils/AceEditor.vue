@@ -27,6 +27,7 @@
     </div>
     <ace v-model="valueInternal"
          @init="aceEditorInit"
+         :identifier="identifier"
          :lang="modeInternal"
          :theme="theme"
          :height="height"
@@ -66,6 +67,7 @@ export default Vue.extend({
   name: 'ace-editor',
   components: {Ace},
   props: {
+    identifier: String,
     value: String,
     height: String,
     width: String,
