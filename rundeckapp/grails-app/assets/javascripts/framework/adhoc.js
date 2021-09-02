@@ -280,7 +280,7 @@ function init() {
         jQuery.extend(filterParams, {
             nodeSummary:nodeSummary,
             view: 'embed',
-            maxShown: 50,
+            maxShown: filterParams.matchedNodesMaxCount,
             emptyMode: 'blank',
             project: pageParams.project,
             nodesTitleSingular: message('Node'),

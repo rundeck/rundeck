@@ -46,6 +46,7 @@
         frameworkAdhoc: "${createLink(controller:"framework",action:"adhoc",params:projParams)}",
         frameworkReloadNodes: "${createLink(controller:"framework",action:"reloadNodes",params:projParams)}",
         frameworkNodeSummaryAjax: "${createLink(controller:"framework",action:"nodeSummaryAjax",params:projParams)}",
+        frameworkStoreFilterAjax: "${createLink(controller:"framework",action:"storeNodeFilter",params:projParams)}",
         frameworkDeleteNodeFilterAjax: "${createLink(controller:"framework",action:"deleteNodeFilterAjax",params:projParams)}",
         frameworkCreateProject: "${createLink(controller:"framework",action:"createProject")}",
         authProjectsToCreateAjax: "${g.createLink(controller: 'menu', action: 'authProjectsToCreateAjax',params:projParams)}",

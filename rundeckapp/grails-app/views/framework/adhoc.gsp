@@ -42,7 +42,7 @@
     <asset:javascript src="framework/adhoc.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
-    <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
+    <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, matchedNodesMaxCount: matchedNodesMaxCount?:50, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <g:embedJSON id="pageParams" data="${[
             disableMarkdown: params.boolean('disableMarkdown') ? '&disableMarkdown=true' :'',
             smallIconUrl:resource(dir: 'images', file: 'icon-small'),

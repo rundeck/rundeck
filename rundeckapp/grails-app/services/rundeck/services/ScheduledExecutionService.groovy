@@ -239,6 +239,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         grailsApplication.config.rundeck.gui.paginatejobs.enabled in ["true",true]
     }
 
+    def getMatchedNodesMaxCount() {
+        !grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.isEmpty() ? grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.toInteger() : null
+    }
+
     def getConfiguredMaxPerPage(int defaultMax) {
         if(paginationEnabled) {
             return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
@@ -4445,6 +4449,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                      orchestratorPlugins         : orchestratorPlugins,
                      strategyPlugins             : strategyPlugins,
                      params                      : params,
+                     matchedNodesMaxCount        : getMatchedNodesMaxCount(),
                      nodeStepDescriptions        : nodeStepTypes,
                      stepDescriptions            : stepTypes,
                      timeZones                   : timeZones,

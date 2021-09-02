@@ -128,7 +128,7 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
-
+<g:jsonToken id="ajaxSaveFilterTokens" />
 <div class="modal fade" id="saveFilterModal" role="dialog" aria-labelledby="saveFilterModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -163,7 +163,37 @@
                 <g:elseif test="${storeActionSubmitRemote}">
                     <g:submitToRemote value="Save Filter" url="${storeActionSubmitRemote}" update="${update}" class="btn btn-primary"/>
                 </g:elseif>
+                <g:elseif test="${storeActionSubmitAjax}">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="_saveFiltersAjax()">Save Filter</button>
+                </g:elseif>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<script type="text/javascript">
+    //<!CDATA[
+    function _saveFiltersAjax(){
+        var tokendataid = 'ajaxSaveFilterTokens';
+        var filterName = jQuery('input[name=newFilterName]').val()
+        var filter = nodeFilter.filter()
+
+        jQuery.ajax({
+            url:_genUrl(appLinks.frameworkStoreFilterAjax, {newFilterName:filterName, filter: filter}),
+            type:'POST',
+            beforeSend: _createAjaxSendTokensHandler(tokendataid),
+            error: function (jqxhr, status, err) {
+                if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+                    self.error(jqxhr.responseJSON.message)
+                } else if (jqxhr.status === 403) {
+                    self.error('Not authorized')
+                }
+            },
+            success: function(data){
+                nodeFilter.nodeSummary().reload()
+            }
+        }).success(_createAjaxReceiveTokensHandler('ajaxSaveFilterTokens'));
+
+    }
+    //]>
+</script>

@@ -142,6 +142,8 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         def properties = new Properties()
         properties.setProperty("fwkprop","fwkvalue")
 
+        service.grailsApplication = grailsApplication
+
         def frameworkService  = Mock(FrameworkService){
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&

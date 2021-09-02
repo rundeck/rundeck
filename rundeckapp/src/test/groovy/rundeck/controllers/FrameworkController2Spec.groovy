@@ -195,6 +195,10 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
 
+        def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
+        scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
+        controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
+
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
             1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
@@ -227,6 +231,9 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
         controller.frameworkService = fwkControl.proxyInstance()
+        def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
+        scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
+        controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
 
                         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
@@ -262,6 +269,9 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
                 1 * authorizeProjectResource(_,  [type:'adhoc'], 'run', _)>>true
                 1 * authorizeProjectExecutionAny(_,exec,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])>>true
             }
+        def scheduledExecutionServiceMock = new MockFor(ScheduledExecutionService, true)
+        scheduledExecutionServiceMock.demand.getMatchedNodesMaxCount {-> return null}
+        controller.scheduledExecutionService = scheduledExecutionServiceMock.proxyInstance()
         def result=controller.adhoc(new ExtNodeFilters())
 
         then:
