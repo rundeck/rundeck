@@ -156,7 +156,7 @@ Theme colors
     --default-background-color: var(--grey-200);
 
     --font-color:                 var(--grey-700);
-    --fill-font-color:            #{rgba($white, 0.85)};
+    --fill-font-color:            var(--white);
 
     // TODO: Is this necessary?
     --none:                       0;
