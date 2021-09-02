@@ -240,4 +240,9 @@ class TimedAuthContextEvaluator implements AppAuthContextEvaluator {
         return rundeckAuthContextEvaluator.
             filterAuthorizedResourcesAll(authContext, project, actions, resources, convert, key)
     }
+
+    @Override
+    boolean authorizeProjectConfigure(final AuthContext authContext, final String project) {
+        return rundeckAuthContextEvaluator.authorizeProjectConfigure(authContext, project)
+    }
 }

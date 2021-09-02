@@ -330,9 +330,9 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.resourcesPasswordFieldsService = passwordFieldsService
         params.project = "edit_test_project"
 
-                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceAny(*_)>>true
-            }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectConfigure(*_)>>true
+        }
         when:
         def model = controller.editProject()
 
@@ -413,58 +413,50 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
     }
 
     public void testSaveProjectNominal() {
+        given:
+
+        controller.frameworkService = Mock(FrameworkService){
+
+            1*getRundeckFramework()
+            1*listDescriptions()>>[null,null,null]
+
+            1*getNodeExecutorService()
+            1*validateServiceConfig(_,_,_,_)>> [valid:true]
+            2*addProjectNodeExecutorPropertiesForType(_,_,_,_)>> {
+                it[1].setProperty("foobar", "barbaz")
+            }
+            1*validateProjectConfigurableInput (_,_,_) >> [:]
+
+            1*updateFrameworkProjectConfig(_,_,_) >>{
+                ["success":it[1].size() != 0]
+            }
+            1*scheduleCleanerExecutions(_,_)
+            1*refreshSessionProjects(_,_)>>['TestSaveProject']
+            1*loadSessionProjectLabel(_,_,_)
+
+        }
+        controller.featureService = Mock(FeatureService){
+            3 * featurePresent(_,_) >> true
+        }
+
+
+        controller.execPasswordFieldsService = Mock(PasswordFieldsService){
+            2 * untrack(_,_)
+            1 * reset(*_)
+        }
+        controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService){
+            1 * reset(*_)
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            _ * isProjectExecutionEnabled(_) >> true
+            _ * isProjectScheduledEnabled(_) >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubjectAndProject(_,'TestSaveProject')
+            1 * authorizeProjectConfigure(*_)>>true
+        }
         when:
-        def fwk = new MockFor(FrameworkService, true)
-        def featureServiceMock = new MockFor(FeatureService, true)
-
-        fwk.demand.getRundeckFramework { -> null }
-        fwk.demand.listDescriptions { -> [null, null, null] }
-
-        fwk.demand.getNodeExecutorService { -> null }
-        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
-        fwk.demand.addProjectNodeExecutorPropertiesForType(1..2) {type, props, config, remove ->
-            props.setProperty("foobar", "barbaz")
-        }
-// REVIEW: Disabled at grails3 merge
-//        fwk.demand.validateProjectConfigurableInput {data,prefix -> [:] }
-        fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
-
-        fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
-            ["success":props.size() != 0]
-        }
-        fwk.demand.scheduleCleanerExecutions{project, config->null}
-        fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
-        fwk.demand.loadSessionProjectLabel(1){a,b,c->}
-
-        featureServiceMock.demand.featurePresent(1..3){a,b->true}
-
-
-        controller.frameworkService = fwk.proxyInstance()
-        controller.featureService = featureServiceMock.proxyInstance()
-
-        def execPFmck = new MockFor(PasswordFieldsService)
-        def fcopyPFmck = new MockFor(PasswordFieldsService)
-
-
-        controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
-            untrack{a, b -> return null}
-            untrack{a, b -> return null}
-            reset{ -> }
-        }
-        controller.fcopyPasswordFieldsService = mockWith(PasswordFieldsService){
-            reset{ -> }
-        }
-
-        controller.userService = mockWith(UserService){
-            storeFilterPref { -> true }
-        }
-
-        def seServiceControl = new MockFor(ScheduledExecutionService)
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
-        seServiceControl.demand.isProjectScheduledEnabled{ project -> true}
-        controller.scheduledExecutionService = seServiceControl.proxyInstance()
-
         request.method = "POST"
 
         params.project = "TestSaveProject"
@@ -480,9 +472,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
                 ]
         ]
 
-                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceAny(*_)>>true
-            }
+
         setupFormTokens(controller)
         controller.saveProject()
 
@@ -685,62 +675,54 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
     }
 
     public void testSaveProjectLabel() {
-        when:
-        def fwk = new MockFor(FrameworkService, true)
-        def featureServiceMock = new MockFor(FeatureService, true)
+        given:
 
+            controller.frameworkService = Mock(FrameworkService){
 
+                1*getRundeckFramework()
+                1*listDescriptions()>>[null,null,null]
 
-                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceAny(*_)>>true
+                1*getNodeExecutorService()
+                1*validateServiceConfig('foobar', 'nodeexec.default.config.',_,_)>> [valid:true]
+                1*validateServiceConfig('barbar', 'fcopy.default.config.',_,_)>> [valid:true]
+                2*addProjectNodeExecutorPropertiesForType(_,_,_,_)>> {
+                    it[1].setProperty("foobar", "barbaz")
+                }
+                1*validateProjectConfigurableInput (_,_,_) >> [:]
+
+                1*updateFrameworkProjectConfig(_,_,_) >>{
+                    assertEquals('Label----',it[1].getProperty('project.label'))
+                    ["success":it[1].size() != 0]
+                }
+                1*scheduleCleanerExecutions(_,_)
+                1*refreshSessionProjects(_,_)>>['TestSaveProject']
+                1*loadSessionProjectLabel(_,_,_)
+
             }
-        fwk.demand.getRundeckFramework { -> null }
-        fwk.demand.listDescriptions { -> [null, null, null] }
+            controller.featureService = Mock(FeatureService){
+                3 * featurePresent(_,_) >> true
+            }
 
-        //fwk.demand.getFrameworkProject { project -> [name:project] }
-        fwk.demand.getFileCopierService(1..2) { -> null }
-        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
-        fwk.demand.addProjectFileCopierPropertiesForType(1..2) {type, props, config, remove ->
-            props.putAll(config)
-        }
-        fwk.demand.getNodeExecutorService { -> null }
-        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
-        //fwk.demand.getNodeExecutorService { -> null }
-        fwk.demand.addProjectNodeExecutorPropertiesForType(1..2) {type, props, config, remove ->
-            props.putAll(config)
-        }
-        fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
+            def execPasswordFieldsService = Mock(PasswordFieldsService){
+                4 * untrack(_,_)
+                1 * reset(*_)
+            }
+            controller.execPasswordFieldsService = execPasswordFieldsService
 
-        fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
-            assertEquals('Label----',props.getProperty('project.label'))
-            ["success":props.size() != 0]
-        }
-        fwk.demand.scheduleCleanerExecutions{project, config->null}
-        fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
-        fwk.demand.loadSessionProjectLabel(1){a,b,c->}
+            def fcopyPasswordFieldsService = Mock(PasswordFieldsService){
+                1 * reset(*_)
+            }
+            controller.fcopyPasswordFieldsService = fcopyPasswordFieldsService
 
-        featureServiceMock.demand.featurePresent(1..3){a,b->true}
-
-        controller.frameworkService = fwk.proxyInstance()
-        controller.featureService = featureServiceMock.proxyInstance()
-
-        controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
-            untrack(1..4){a, b -> return null}
-            reset{ -> }
-        }
-        controller.fcopyPasswordFieldsService = mockWith(PasswordFieldsService){
-            reset{ -> }
-        }
-
-        controller.userService = mockWith(UserService){
-            storeFilterPref { -> true }
-        }
-
-        def seServiceControl = new MockFor(ScheduledExecutionService, true)
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
-        seServiceControl.demand.isProjectScheduledEnabled{ project -> true}
-        controller.scheduledExecutionService = seServiceControl.proxyInstance()
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                _ * isProjectExecutionEnabled(_) >> true
+                _ * isProjectScheduledEnabled(_) >> true
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubjectAndProject(_,'TestSaveProject')
+                1 * authorizeProjectConfigure(*_)>>true
+            }
+        when:
 
         request.method = "POST"
 
@@ -804,63 +786,61 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
 
 
     public void testSaveDefaultServiceProperties() {
-        when:
-        def fwk = new MockFor(FrameworkService, true)
-        def featureServiceMock = new MockFor(FeatureService, true)
+        given:
 
+            controller.frameworkService = Mock(FrameworkService){
 
-                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceAny(*_)>>true
+                1*getRundeckFramework()
+                1*listDescriptions()>>[null,null,null]
+
+                1*getNodeExecutorService()
+                1*validateServiceConfig('foobar', 'nodeexec.default.config.',_,_)>> [valid:true]
+                1*validateServiceConfig('barbar', 'fcopy.default.config.',_,_)>> [valid:true]
+                _*addProjectFileCopierPropertiesForType(_,_,_,_)>> {
+                    it[1].putAll(it[2])
+                }
+                _*addProjectNodeExecutorPropertiesForType(_,_,_,_)>> {
+                    it[1].putAll(it[2])
+                }
+                1*validateProjectConfigurableInput (_,_,_) >> [:]
+
+                1*updateFrameworkProjectConfig(_,_,_) >>{
+                    assertEquals("foobar1",it[1].getProperty('specialvalue1'))
+                    assertEquals("barfoo",it[1].getProperty('specialvalue2'))
+                    assertEquals("fizbaz1",it[1].getProperty('specialvalue3'))
+                    assertEquals("rembar1",it[1].getProperty('specialvalue4'))
+                    ["success":it[1].size() != 0]
+                }
+                1*scheduleCleanerExecutions(_,_)
+                1*refreshSessionProjects(_,_)>>['TestSaveProject']
+                1*loadSessionProjectLabel(_,_,_)
+
             }
-        fwk.demand.getRundeckFramework { -> null }
-        fwk.demand.listDescriptions { -> [null, null, null] }
+            controller.featureService = Mock(FeatureService){
+                3 * featurePresent(_,_) >> true
+            }
 
-        fwk.demand.getFileCopierService(1..2) { -> null }
-        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
-        fwk.demand.addProjectFileCopierPropertiesForType(1..2) {type, props, config, remove ->
-            props.putAll(config)
-        }
-        fwk.demand.getNodeExecutorService { -> null }
-        fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
-        fwk.demand.addProjectNodeExecutorPropertiesForType(1..2) {type, props, config, remove ->
-            props.putAll(config)
-        }
-        fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
+            def execPasswordFieldsService = Mock(PasswordFieldsService){
+                4 * untrack(_,_)
+                1 * reset(*_)
+            }
+            controller.execPasswordFieldsService = execPasswordFieldsService
 
-        fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
-            assertEquals("foobar1",props.getProperty('specialvalue1'))
-            assertEquals("barfoo",props.getProperty('specialvalue2'))
-            assertEquals("fizbaz1",props.getProperty('specialvalue3'))
-            assertEquals("rembar1",props.getProperty('specialvalue4'))
-            ["success":props.size() != 0]
-        }
-        fwk.demand.scheduleCleanerExecutions{project, config->null}
-        fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
-        fwk.demand.loadSessionProjectLabel(1){a,b,c->}
+            def fcopyPasswordFieldsService = Mock(PasswordFieldsService){
+                1 * reset(*_)
+            }
+            controller.fcopyPasswordFieldsService = fcopyPasswordFieldsService
 
-        featureServiceMock.demand.featurePresent(1..3){a,b->true}
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                _ * isProjectExecutionEnabled(_) >> true
+                _ * isProjectScheduledEnabled(_) >> true
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubjectAndProject(_,'TestSaveProject')
+                1 * authorizeProjectConfigure(*_)>>true
+            }
 
-        controller.frameworkService = fwk.proxyInstance()
-        controller.featureService = featureServiceMock.proxyInstance()
-
-        controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
-            untrack(1..4){a, b -> return null}
-            reset{ -> }
-        }
-        controller.fcopyPasswordFieldsService = mockWith(PasswordFieldsService){
-            reset{ -> }
-        }
-
-        controller.userService = mockWith(UserService){
-            storeFilterPref { -> true }
-        }
-
-        def seServiceControl = new MockFor(ScheduledExecutionService, true)
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
-        seServiceControl.demand.isProjectScheduledEnabled{ project -> true}
-        controller.scheduledExecutionService = seServiceControl.proxyInstance()
-
+        when:
         request.method = "POST"
 
         params.project = "TestSaveProject"
@@ -923,43 +903,45 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
     public void testEditProjectLabel() {
         given:
         def label = "Label for project"
-        def fwk = new MockFor(FrameworkService, true)
+        controller.frameworkService = Mock(FrameworkService){
+            _*getFrameworkProject(_)>>Mock(IRundeckProject){
+                _*getProjectProperties()>>["project.label":label]
+            }
+            1*listDescriptions()>>[[withPasswordFieldDescription],null,null]
 
-
-                        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceAny(*_)>>true
+            _*addProjectFileCopierPropertiesForType(_,_,_,_)>> {
+                it[1].putAll(it[2])
+            }
+            _*addProjectNodeExecutorPropertiesForType(_,_,_,_)>> {
+                it[1].putAll(it[2])
             }
 
-        def proj = new MockFor(IRundeckProject)
-        proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
-
-        fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
-        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
-        fwk.demand.getDefaultNodeExecutorService { prj -> null }
-        fwk.demand.getDefaultFileCopyService { prj -> null }
-        fwk.demand.getNodeExecConfigurationForType { nodeExec,prj -> null }
-        fwk.demand.getFileCopyConfigurationForType { fcpy,prj -> null }
-        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
-
-        controller.frameworkService = fwk.proxyInstance()
-
-        def execPFmck = new MockFor(PasswordFieldsService,true)
-        def fcopyPFmck = new MockFor(PasswordFieldsService,true)
-
-        execPFmck.demand.reset{ -> return null}
-        execPFmck.demand.track{a, b -> return null}
-        fcopyPFmck.demand.reset{ -> return null}
-        fcopyPFmck.demand.track{a, b -> return null}
+            _*updateFrameworkProjectConfig(_,_,_) >>{
+                ["success":it[1].size() != 0]
+            }
+            0*scheduleCleanerExecutions(_,_)
+            _*loadProjectConfigurableInput(_,_)>>[:]
+        }
 
 
-        controller.execPasswordFieldsService = execPFmck.proxyInstance()
-        controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
+        controller.execPasswordFieldsService = Mock(PasswordFieldsService){
+            _*reset()
+            _*track(*_)
+        }
+        controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService){
+            _*reset()
+            _*track(*_)
+        }
 
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService){
+            _*reset()
+            _*track(*_)
+        }
 
-        def passwordFieldsService = new PasswordFieldsService()
-        passwordFieldsService.fields.put("dummy", "stuff")
-
-        controller.resourcesPasswordFieldsService = passwordFieldsService
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * getAuthContextForSubjectAndProject(_,'edit_test_project')
+                1 * authorizeProjectConfigure(*_)>>true
+            }
         params.project = "edit_test_project"
 
         when:
@@ -977,7 +959,8 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         def label = "Label for project"
 
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * authorizeApplicationResourceAny(*_)>>true
+            1 * authorizeProjectConfigure(*_)>>true
+            1 * getAuthContextForSubjectAndProject(_,'edit_test_project')
         }
 
         def proj = Mock(IRundeckProject){

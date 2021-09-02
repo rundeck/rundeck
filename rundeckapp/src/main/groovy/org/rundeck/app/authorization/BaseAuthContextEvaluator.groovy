@@ -416,4 +416,12 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         return nodeSupport.filterAuthorizedNodes(project, actions, unfiltered, authContext)
     }
 
+    @Override
+    boolean authorizeProjectConfigure(final AuthContext authContext, final String project) {
+        return authorizeApplicationResourceAny(
+            authContext,
+            authResourceForProject(project),
+            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+        )
+    }
 }
