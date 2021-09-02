@@ -399,7 +399,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         if(blackListFileName){
             Map<String,List<String>> blacklistMap = getBlackListMap(blackListFileName)
-            if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName().contains(name))){
+            if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName()).contains(name)){
                 return null
             }
         }
