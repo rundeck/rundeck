@@ -185,7 +185,7 @@ describe('systemAcls', () => {
 
         //should include file name in acls list.
         let policiesList = await systemAclsPage.getStoredPoliciesCardList()
-        let policiesTitles = await policiesList.findElements(By.css('span.h3 > span[data-bind="text: name"]'))
+        let policiesTitles = await policiesList.findElements(By.css('span.h4 > span[data-bind="text: name"]'))
         expect(policiesTitles.length).toEqual(1)
         let text = await policiesTitles[0].getText()
         expect(text).toEqual("test-valid-policy-name")
@@ -252,7 +252,7 @@ describe('systemAcls', () => {
 
         //should include file name in acls list.
         let policiesList = await systemAclsPage.getStoredPoliciesCardList()
-        let policiesTitles = await policiesList.findElements(By.css('span.h3 > span[data-bind="text: name"]'))
+        let policiesTitles = await policiesList.findElements(By.css('span.h4 > span[data-bind="text: name"]'))
         expect(policiesTitles.length).toEqual(1)
         let text = await policiesTitles[0].getText()
         expect(text).toEqual("test-valid-policy-name")
