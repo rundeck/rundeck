@@ -57,7 +57,7 @@ class ThresholdLogWriterSpec extends Specification  {
 
         then:
         logger.messages.size() == 6
-        logger.messages == ["message1", "message2", "Log output limit exceeded: thresholddesc, job execution: Unknown", "message3", "message4", "message5"]
+        logger.messages == ["message1", "message2", "Log output limit exceeded: thresholddesc", "message3", "message4", "message5"]
     }
 
     void "test Truncate"() {
@@ -82,6 +82,6 @@ class ThresholdLogWriterSpec extends Specification  {
 
         then:
         logger.messages.size() == 3
-        logger.messages == ["message1", "message2", "Log output limit exceeded: thresholddesc, job execution: Unknown"]
+        logger.messages == ["message1", "message2", "Log output limit exceeded: thresholddesc"]
     }
 }
