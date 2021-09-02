@@ -360,6 +360,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         if (null != beanPlugin) {
             return new CloseableDescribedPlugin<T>(beanPlugin)
         }
+
+        if(blackListFileName){
+            Map<String,List<String>> blacklistMap = getBlackListMap(blackListFileName)
+            if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName()).contains(name)){
+                return null
+            }
+        }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
             //attempt to load directly
