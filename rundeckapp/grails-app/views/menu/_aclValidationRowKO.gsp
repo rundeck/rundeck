@@ -17,7 +17,7 @@
 
 <div data-bind="css: {'flash_info':wasSaved}" style="border-top:1px solid #cfcfca; padding-top:1em;">
     <div class=" hover-action-holder">
-        <span class="h3" data-bind="template: { name: 'acl-policy-ident', data:$data }"></span>
+        <span class="h4" data-bind="template: { name: 'acl-policy-ident', data:$data }"></span>
           <span data-bind="if: loader.loading" class="text-muted">...</span>
           <span data-bind="if: loader.error" class="text-warning">
               <span data-bind="text: loader.errorMessage"></span>
