@@ -588,6 +588,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                             }
                         }
                     }
+                    else{
+                        list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
+                    }
                 }
             }
             service.listDescriptions()?.each { Description d ->
@@ -599,6 +602,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                                 list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                             }
                         }
+                    }
+                    else{
+                        list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                     }
                 }
                 list[d.name]?.description = d
