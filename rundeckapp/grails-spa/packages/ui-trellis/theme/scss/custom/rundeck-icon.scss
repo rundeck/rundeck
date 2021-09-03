@@ -47,139 +47,86 @@
   &.icon-small {
     width: 16px;
     height: 16px;
+    background-size: 16px;
 
     &.command,
     &.shell {
-      background-image: url("../images/icon-small-shell.png");
+      background-image: url("../images/icon-small-shell@2x.png");
     }
 
     &.script {
-      background-image: url("../images/icon-small-script.png");
+      background-image: url("../images/icon-small-script@2x.png");
     }
 
     &.scriptfile,
     &.scripturl {
-      background-image: url("../images/icon-small-scriptfile.png");
+      background-image: url("../images/icon-small-scriptfile@2x.png");
     }
 
     &.plugin {
-      background-image: url("../images/icon-small-plugin.png");
+      background-image: url("../images/icon-small-plugin@2x.png");
     }
 
     &.node {
       height: 10px;
-      background-image: url("../images/icon-small-Node.png");
+      background-image: url("../images/icon-small-Node@2x.png");
     }
 
     &.node.node-runnable {
-      background-image: url("../images/icon-small-Node-run.png");
+      background-image: url("../images/icon-small-Node-run@2x.png");
     }
   }
 
   &.icon {
     width: 32px;
     height: 32px;
+    background-size: 32x;
 
     &.command,
     &.shell {
-      background-image: url("../images/icon-shell.png");
+      background-image: url("../images/icon-shell@2x.png");
     }
 
     &.script {
-      background-image: url("../images/icon-script.png");
+      background-image: url("../images/icon-script@2x.png");
     }
 
-    &.scriptfile {
-      background-image: url("../images/icon-scriptfile.png");
+    &.scriptfile,
+    &.scripturl {
+      background-image: url("../images/icon-scriptfile@2x.png");
+    }
+
+    &.plugin {
+      background-image: url("../images/icon-small-plugin@2x.png");
     }
   }
 
   &.icon-med {
     width: 24px;
     height: 24px;
+    background-size: 24px;
 
     &.command,
     &.shell {
-      background-image: url("../images/icon-med-shell.png");
+      background-image: url("../images/icon-med-shell@2x.png");
     }
 
     &.script {
-      background-image: url("../images/icon-med-script.png");
+      background-image: url("../images/icon-med-script@2x.png");
     }
 
-    &.scriptfile {
-      background-image: url("../images/icon-med-scriptfile.png");
+    &.scriptfile,
+    &.scripturl {
+      background-image: url("../images/icon-med-scriptfile@2x.png");
+    }
+
+    &.plugin {
+      background-image: url("../images/icon-small-plugin@2x.png");
     }
   }
 
   &.app-logo.middle {
     vertical-align: middle;
-  }
-  //retina/@2x images
-  @media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
-    &.icon-small {
-      background-size: 16px 16px;
-
-      &.node {
-        background-size: 16px 10px;
-        background-image: url("../images/icon-small-Node@2x.png");
-      }
-
-      &.node.node-runnable {
-        background-image: url("../images/icon-small-Node-run@2x.png");
-      }
-
-      &.command,
-      &.shell {
-        background-image: url("../images/icon-small-shell@2x.png");
-      }
-
-      &.script {
-        background-image: url("../images/icon-small-script@2x.png");
-      }
-
-      &.scriptfile {
-        background-image: url("../images/icon-small-scriptfile@2x.png");
-      }
-
-      &.plugin {
-        background-image: url("../images/icon-small-plugin@2x.png");
-      }
-    }
-
-    &.icon {
-      background-size: 32px 32px;
-
-      &.command,
-      &.shell {
-        background-image: url("../images/icon-shell@2x.png");
-      }
-
-      &.script {
-        background-image: url("../images/icon-script@2x.png");
-      }
-
-      &.scriptfile {
-        background-image: url("../images/icon-scriptfile@2x.png");
-      }
-    }
-
-    &.icon-med {
-      background-size: 24px 24px;
-
-      &.command,
-      &.shell {
-        background-image: url("../images/icon-med-shell@2x.png");
-      }
-
-      &.script {
-        background-image: url("../images/icon-med-script@2x.png");
-      }
-
-      &.scriptfile {
-        background-image: url("../images/icon-med-scriptfile@2x.png");
-      }
-    }
   }
 }
 
@@ -190,19 +137,7 @@
 }
 
 .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
-    background-image: url("../images/logos/rundeck2-icon-16.png");
+    background-size: 16px;
+    background-image: url("../images/logos/rundeck2-icon-32.png");
     background-repeat: no-repeat;
-}
-
-@media
-only screen and (-webkit-min-device-pixel-ratio: 2),
-only screen and (   min--moz-device-pixel-ratio: 2),
-only screen and (     -o-min-device-pixel-ratio: 2/1),
-only screen and (        min-device-pixel-ratio: 2),
-only screen and (                min-resolution: 192dpi),
-only screen and (                min-resolution: 2dppx) {
-    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
-        background-image: url("../images/logos/rundeck2-icon-32.png");
-        background-size: 16px 16px;
-    }
 }
