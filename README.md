@@ -3,17 +3,17 @@ Rundeck
 
 | Travis | Deb | RPM | War |
 |--------|-----|-----|-----|
-|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-deb/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-deb/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-rpm/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-rpm/rundeck/_latestVersion)| [![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck/_latestVersion)
+|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[Download](https://www.rundeck.com/downloads)|[Download](https://www.rundeck.com/downloads)|[Download](https://www.rundeck.com/downloads)|
 
-Rundeck is an open source automation service with a web console, 
+Rundeck is an open source automation service with a web console,
 command line tools and a WebAPI.
 It lets you easily run automation tasks across a set of nodes.
 
-* Site: <http://rundeck.org>
+* Site: <https://www.rundeck.com>
 
-* Latest documentation: <http://rundeck.org/docs/>
+* Latest documentation: <https://docs.rundeck.com/docs/>
 
-* Get Help: <http://rundeck.org/help.html>
+* Get Help: <https://docs.rundeck.com/docs/introduction/getting-help.html>
 
 
 See the [Release Notes](https://docs.rundeck.com/docs/history/) for the latest version information.
@@ -29,7 +29,7 @@ Gradle Build
 
     ./gradlew build
 
-Artifacts: 
+Artifacts:
 
 * `rundeckapp/build/libs/rundeck-X.Y.war`
 
@@ -40,7 +40,7 @@ RPM and DEB package builds
 
 To build .rpm and .deb packages, you must first clone [the rundeck packaging repo](https://github.com/rundeck/packaging) into the rundeck repo.
 A sample list of simple build steps is below, where $RELEASE_VERSION is the version you want
-to build, i.e. 3.2.7
+to build, i.e. 3.4.3
 
     git clone https://github.com/rundeck/rundeck
     cd rundeck
@@ -49,9 +49,9 @@ to build, i.e. 3.2.7
     ./gradlew build -Penvironment=release
     cd packaging
 
-For 3.2.x builds, check out the `maint-3.2.x` branch of `packaging`
+For 3.2.x builds, check out the `maint-3.4.x` branch of `packaging`
 
-    git checkout maint-3.2.x
+    git checkout maint-3.4.x
     mkdir -p artifacts
     cp ../rundeckapp/build/libs/rundeck*.war artifacts/
     ./gradlew -PpackageRelease=$RELEASE_VERSION clean packageArtifacts
@@ -71,7 +71,7 @@ To start from the rundeck-X.Y.war, put it in a directory named ~/rundeck, then e
 
 If you'd like to install via RPM, you can use Yum:
 
-    rpm -Uvh http://repo.rundeck.org/latest.rpm 
+    rpm -Uvh http://repo.rundeck.org/latest.rpm
     yum install rundeck
 
 OR install directly from RPM:
@@ -84,11 +84,11 @@ Once the RPM is installed, execute:
 
 The server should launch on port 4440, with default username/password of `admin/admin`.
 
-For Debian, download the .deb from the [downloads page](http://rundeck.org/downloads.html), then run:
+For Debian, download the .deb from the [downloads page](https://www.rundeck.com/downloads), then run:
 
     dpkg -i rundeck-2.0.0-x.deb
 
-* For more info and configuration information, see the [Rundeck docs](http://docs.rundeck.org).
+* For more info and configuration information, see the [Rundeck docs](https://docs.rundeck.com/docs).
 
 Requirements
 =======
@@ -100,7 +100,7 @@ Node JS 12
 Documentation
 ======
 
-Available online at <http://rundeck.org/docs>
+Available online at <https://docs.rundeck.com/docs>
 
 FAQ: <https://github.com/rundeck/rundeck/wiki/FAQ>
 
