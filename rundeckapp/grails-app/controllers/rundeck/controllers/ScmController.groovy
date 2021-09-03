@@ -38,7 +38,6 @@ class ScmController extends ControllerBase {
     def scmService
     def frameworkService
     AppAuthContextProcessor rundeckAuthContextProcessor
-    def apiService
     def scheduledExecutionService
 
     def static allowedMethods = [

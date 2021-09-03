@@ -147,7 +147,6 @@ class ScheduledExecutionController  extends ControllerBase{
     def ScheduledExecutionService scheduledExecutionService
     def OrchestratorPluginService orchestratorPluginService
 	def NotificationService notificationService
-    def ApiService apiService
     def UserService userService
     def ScmService scmService
     def PluginService pluginService

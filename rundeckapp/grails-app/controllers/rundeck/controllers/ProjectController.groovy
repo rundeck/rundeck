@@ -55,7 +55,6 @@ class ProjectController extends ControllerBase{
     def projectService
     def scheduledExecutionService
     AppAuthContextProcessor rundeckAuthContextProcessor
-    ApiService apiService
     ContextACLManager<AppACLContext> aclFileManagerService
     def static allowedMethods = [
             apiProjectConfigKeyDelete:['DELETE'],

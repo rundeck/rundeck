@@ -41,7 +41,6 @@ class ApiController extends ControllerBase{
     def quartzScheduler
     def frameworkService
     AppAuthContextProcessor rundeckAuthContextProcessor
-    def apiService
     def userService
     def configurationService
     LinkGenerator grailsLinkGenerator

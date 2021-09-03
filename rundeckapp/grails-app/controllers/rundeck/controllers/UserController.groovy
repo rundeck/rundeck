@@ -40,7 +40,6 @@ class UserController extends ControllerBase{
     UserService userService
     AppAuthContextProcessor rundeckAuthContextProcessor
     GrailsApplication grailsApplication
-    def apiService
     def configurationService
 
     static allowedMethods = [

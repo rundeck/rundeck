@@ -81,7 +81,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def configurationService
     ScmService scmService
     def quartzScheduler
-    def ApiService apiService
     ContextACLManager<AppACLContext> aclFileManagerService
     def ApplicationContext applicationContext
     static allowedMethods = [

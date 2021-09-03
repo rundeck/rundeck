@@ -57,7 +57,6 @@ class StorageController extends ControllerBase{
      */
     public static final Set<String> RES_META_MASKED = [StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH]
     StorageService storageService
-    ApiService apiService
     FrameworkService frameworkService
     AuthContextProvider rundeckAuthContextProvider
     static allowedMethods = [

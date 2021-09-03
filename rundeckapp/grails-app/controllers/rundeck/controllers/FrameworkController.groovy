@@ -115,7 +115,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     PasswordFieldsService fcopyPasswordFieldsService
 
     def metricService
-    def ApiService apiService
     def ContextACLManager<AppACLContext> aclFileManagerService
     def ApplicationContext applicationContext
     def MenuService menuService

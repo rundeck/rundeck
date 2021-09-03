@@ -51,7 +51,6 @@ class ReportsController extends ControllerBase{
     def FrameworkService frameworkService
     AppAuthContextProcessor rundeckAuthContextProcessor
     def scheduledExecutionService
-    def ApiService apiService
     def MetricService metricService
     static allowedMethods = [
             deleteFilter    : 'POST',
