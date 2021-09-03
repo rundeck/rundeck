@@ -336,10 +336,9 @@
                                 model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName]"/>
 
 
-                      <g:hiddenField name="project" value="${params.project}"/>
-                      <g:render template="/framework/nodeFiltersHidden"/>
-                      <g:render template="/common/queryFilterManagerModal"
-                                model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>
+                        <g:hiddenField name="project" value="${params.project}"/>
+                        <g:render template="/common/queryFilterManagerModal"
+                                  model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>
                   </span>
 
           <div class=" collapse" id="queryFilterHelp">
