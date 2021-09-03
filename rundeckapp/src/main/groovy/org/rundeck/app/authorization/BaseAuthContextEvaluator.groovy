@@ -335,7 +335,6 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         return authorizeResourceAll(authContext, project, new HashSet<String> (actions), job, this.&authResourceForJob)
     }
 
-    @Override
     def <T> boolean authorizeResourceAll(
         AuthContext authContext,
         final String project,

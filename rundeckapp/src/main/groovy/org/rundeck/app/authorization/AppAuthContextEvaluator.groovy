@@ -105,11 +105,4 @@ interface AppAuthContextEvaluator extends AuthContextEvaluator {
         final Function<T, Map<String, String>> convert,
         final String key
     )
-    def <T> boolean authorizeResourceAll(
-        AuthContext authContext,
-        final String project,
-        final Set<String> actions,
-        final T resource,
-        final Function<T, Map<String, String>> convert
-    )
 }
