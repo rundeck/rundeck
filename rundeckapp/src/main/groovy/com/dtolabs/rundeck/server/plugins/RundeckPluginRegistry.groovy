@@ -558,6 +558,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                             }
                         }
                     }
+                    else{
+                        list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
+                    }
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")
