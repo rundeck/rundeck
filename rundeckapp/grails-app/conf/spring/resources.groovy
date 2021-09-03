@@ -499,7 +499,7 @@ beans={
 
     rundeckEmbeddedPluginExtractor(RundeckEmbeddedPluginExtractor) {
         pluginTargetDir = pluginDir
-        blackListFileName=application.config.rundeck?.plugins?.providerBlackListFile?:null
+        blackListFileName=application.config.rundeck?.plugins?.providerBlackListPluginFileNamesFile?:null
     }
 
     def pluginRegistry=[:]

@@ -77,11 +77,28 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
 
             pluginList.each { PluginFileManifest pluginmf ->
                 try {
-                    if (installPlugin(pluginTargetDir, loader, pluginmf, pluginmf.fileName.endsWith('.groovy'))) {
-                        result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
-                    } else {
-                        result.logs << "Skipped existing plugin: ${pluginmf.fileName}"
+                    List<String> blackListPlugins = []
+                    Boolean blacklisted = false
+                    if(blackListFileName){
+                        blackListPlugins = getBlackListPluginFileName(blackListFileName)
                     }
+                    for (String item: blackListPlugins){
+                        if(pluginmf.fileName.startsWith(item)){
+                            blacklisted = true
+                        }
+                    }
+                    if(blacklisted){
+                        //do nothing
+                    }
+                    else{
+                        if (installPlugin(pluginTargetDir, loader, pluginmf, pluginmf.fileName.endsWith('.groovy'))) {
+                            result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
+                        } else {
+                            result.logs << "Skipped existing plugin: ${pluginmf.fileName}"
+                        }
+                    }
+
+
                 } catch (Exception e) {
                     log.error("Failed extracting bundled plugin ${pluginmf}", e)
                     result.success = false
@@ -96,6 +113,15 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
         }
 
         return result
+    }
+
+    static List<String> getBlackListPluginFileName(String path){
+        File file = new File(path)
+        List<String> blackListFileNamesList = []
+        file.eachLine {
+            blackListFileNamesList.add(it)
+        }
+        return blackListFileNamesList
     }
 
     def loadGroovyScriptPluginBean(File file) {
