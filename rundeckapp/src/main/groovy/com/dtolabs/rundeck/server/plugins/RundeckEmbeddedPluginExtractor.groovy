@@ -81,10 +81,10 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
                     Boolean blacklisted = false
                     if(blackListFileName){
                         blackListPlugins = getBlackListPluginFileName(blackListFileName)
-                    }
-                    for (String item: blackListPlugins){
-                        if(pluginmf.fileName.startsWith(item)){
-                            blacklisted = true
+                        for (String item: blackListPlugins){
+                            if(pluginmf.fileName.startsWith(item)){
+                                blacklisted = true
+                            }
                         }
                     }
                     if(blacklisted){
