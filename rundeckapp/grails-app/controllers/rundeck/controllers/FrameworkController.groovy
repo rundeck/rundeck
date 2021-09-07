@@ -675,6 +675,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return renderErrorView([:])
         }
         withForm{
+        g.refreshFormTokensHeader()
         def User u = userService.findOrCreateUser(session.user)
         def NodeFilter filter
         def boolean saveuser=false
@@ -706,6 +707,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return renderErrorView(u.errors.allErrors.collect { g.message(error: it) }.join("\n"))
             }
         }
+        if(params.isJobEdit){
+            return render(contentType: 'application/json'){
+                success true
+            }
+        }
+
         redirect(controller:'framework',action:'nodes',params:[filterName:filter.name,project:params.project])
         }.invalidToken{
             response.status=HttpServletResponse.SC_BAD_REQUEST

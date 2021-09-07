@@ -175,14 +175,16 @@
     //<!CDATA[
     function _saveFiltersAjax(){
         var tokendataid = 'ajaxSaveFilterTokens';
-        var filterName = jQuery('input[name=newFilterName]').val()
+        var filterNameInput = jQuery('input[name=newFilterName]')
+        var filterName = filterNameInput.val()
         var filter = nodeFilter.filter()
 
         jQuery.ajax({
-            url:_genUrl(appLinks.frameworkStoreFilterAjax, {newFilterName:filterName, filter: filter}),
+            url:_genUrl(appLinks.frameworkStoreFilterAjax, {newFilterName:filterName, filter: filter, isJobEdit: true}),
             type:'POST',
             beforeSend: _createAjaxSendTokensHandler(tokendataid),
             error: function (jqxhr, status, err) {
+                filterNameInput.val("")
                 if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
                     self.error(jqxhr.responseJSON.message)
                 } else if (jqxhr.status === 403) {
@@ -190,6 +192,7 @@
                 }
             },
             success: function(data){
+                filterNameInput.val("")
                 nodeFilter.nodeSummary().reload()
             }
         }).success(_createAjaxReceiveTokensHandler('ajaxSaveFilterTokens'));
