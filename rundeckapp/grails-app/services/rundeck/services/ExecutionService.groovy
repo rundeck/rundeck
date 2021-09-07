@@ -1712,9 +1712,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         if (!e2.abortedby) {
                             e2.abortedby = userIdent
                             e2.save(flush: true)
-                            success = true
                         }
                     }
+                    success = true
                 } catch (org.springframework.dao.ConcurrencyFailureException ex) {
                     log.error("Could not abort ${eid}, the execution was modified")
                 } catch (StaleObjectStateException ex) {
