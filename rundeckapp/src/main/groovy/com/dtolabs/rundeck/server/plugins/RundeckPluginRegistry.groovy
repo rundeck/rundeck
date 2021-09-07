@@ -557,6 +557,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                                 list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
                             }
                         }
+                        else{
+                            list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
+                        }
                     }
                     else{
                         list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
@@ -590,6 +593,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                                 list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
                             }
                         }
+                        else{
+                            list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
+                        }
                     }
                     else{
                         list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
@@ -604,6 +610,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                             if(!blacklistMap.get(service.name).contains(d.name)){
                                 list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                             }
+                        }
+                        else{
+                            list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                         }
                     }
                     else{
