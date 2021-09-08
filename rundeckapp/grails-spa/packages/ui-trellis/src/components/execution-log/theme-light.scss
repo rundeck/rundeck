@@ -14,7 +14,9 @@
 
 .execution-log--light .execution-log__settings {
   color: grey;
+
   .btn:not(:hover) {
+    color: var(--default-color);
     background-color: white;
   }
 }
