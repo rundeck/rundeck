@@ -19,6 +19,8 @@ package com.dtolabs.rundeck.server.plugins
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
+import com.dtolabs.rundeck.util.BlacklistEntry
+import com.dtolabs.rundeck.util.BlacklistYamlClass
 import com.dtolabs.utils.Streams
 import grails.spring.BeanBuilder
 import org.slf4j.Logger
@@ -29,6 +31,8 @@ import org.springframework.beans.factory.annotation.Autowire
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.constructor.Constructor
 
 /**
  * @author greg
@@ -117,10 +121,15 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
 
     static List<String> getBlackListPluginFileName(String path){
         File file = new File(path)
+        InputStream is = new FileInputStream(file)
+        Yaml yaml = new Yaml(new Constructor(BlacklistYamlClass.class))
+        BlacklistYamlClass data = yaml.load(is)
+        List<BlacklistEntry> entries = data.entries
         List<String> blackListFileNamesList = []
-        file.eachLine {
-            blackListFileNamesList.add(it)
+        entries.each {
+            blackListFileNamesList.add(it.fileName)
         }
+
         return blackListFileNamesList
     }
 

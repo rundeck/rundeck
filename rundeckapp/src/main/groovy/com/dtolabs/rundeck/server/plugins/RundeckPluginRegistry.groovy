@@ -45,6 +45,8 @@ import com.dtolabs.rundeck.plugins.CorePluginProviderServices
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
+import com.dtolabs.rundeck.util.BlacklistEntry
+import com.dtolabs.rundeck.util.BlacklistYamlClass
 import groovy.transform.PackageScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -53,6 +55,9 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.constructor.Construct
+import org.yaml.snakeyaml.constructor.Constructor
 
 /**
  * Manages a registry for two kinds of plugins: groovy plugins loaded via spring,
@@ -439,18 +444,20 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
 
     private static Map<String,List<String>> getBlackListMap(String path){
         File file = new File(path)
+        InputStream is = new FileInputStream(file)
+        Yaml yaml = new Yaml(new Constructor(BlacklistYamlClass.class))
+        BlacklistYamlClass data = yaml.load(is)
+        List<BlacklistEntry> entries = data.entries
         def line
         Map<String,List<String>> blackListMap = [:]
-        file.eachLine {
-            String[] values = it.split(',')
-            String service = values[0]
-            String name = values[1]
-                if (!blackListMap.containsKey(service)) {
-                    blackListMap.put(service, new ArrayList<String>())
-                }
-                blackListMap.get(service).add(name)
 
+        entries.each {
+            if (!blackListMap.containsKey(it.serviceType)) {
+                blackListMap.put(it.serviceType, new ArrayList<String>())
+            }
+            blackListMap.get(it.serviceType).add(it.providerName)
         }
+
         return blackListMap
     }
 
