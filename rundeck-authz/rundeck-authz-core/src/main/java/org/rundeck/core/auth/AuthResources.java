@@ -44,6 +44,7 @@ public class AuthResources {
     public static final List<String> appProjectActions =
             Arrays.asList(
                     AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_APP_ADMIN,
                     AuthConstants.ACTION_READ,
                     AuthConstants.ACTION_CONFIGURE,
                     AuthConstants.ACTION_DELETE,
@@ -59,7 +60,8 @@ public class AuthResources {
                     AuthConstants.ACTION_CREATE,
                     AuthConstants.ACTION_UPDATE,
                     AuthConstants.ACTION_DELETE,
-                    AuthConstants.ACTION_ADMIN
+                    AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_APP_ADMIN
             );
     public static final List<String> storageActions =
             Arrays.asList(
@@ -81,7 +83,9 @@ public class AuthResources {
                     AuthConstants.ACTION_READ,
                     AuthConstants.ACTION_ENABLE_EXECUTIONS,
                     AuthConstants.ACTION_DISABLE_EXECUTIONS,
-                    AuthConstants.ACTION_ADMIN
+                    AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_APP_ADMIN,
+                    AuthConstants.ACTION_OPS_ADMIN
             );
     public static final List<String> appSystemAclKindActions =
             Arrays.asList(
@@ -89,19 +93,23 @@ public class AuthResources {
                     AuthConstants.ACTION_CREATE,
                     AuthConstants.ACTION_UPDATE,
                     AuthConstants.ACTION_DELETE,
-                    AuthConstants.ACTION_ADMIN
+                    AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_APP_ADMIN
             );
     public static final List<String> appUserKindActions =
-            Collections.singletonList(
-                    AuthConstants.ACTION_ADMIN
+            Arrays.asList(
+                    AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_APP_ADMIN
             );
     public static final List<String> appJobKindActions =
-            Collections.singletonList(
-                    AuthConstants.ACTION_ADMIN
+            Arrays.asList(
+                    AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_APP_ADMIN
             );
     public static final List<String> appApitokenKindActions =
             Arrays.asList(
                     AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_APP_ADMIN,
                     AuthConstants.ACTION_GENERATE_USER_TOKEN,
                     AuthConstants.ACTION_GENERATE_SERVICE_TOKEN
             );
@@ -112,7 +120,8 @@ public class AuthResources {
             AuthConstants.ACTION_READ,
             AuthConstants.ACTION_INSTALL,
             AuthConstants.ACTION_UNINSTALL,
-            AuthConstants.ACTION_ADMIN
+            AuthConstants.ACTION_ADMIN,
+            AuthConstants.ACTION_APP_ADMIN
     );
     public static final List<String> appWebhookKindActions = Arrays.asList(
             AuthConstants.ACTION_READ,
@@ -120,7 +129,8 @@ public class AuthResources {
             AuthConstants.ACTION_UPDATE,
             AuthConstants.ACTION_DELETE,
             AuthConstants.ACTION_POST,
-            AuthConstants.ACTION_ADMIN
+            AuthConstants.ACTION_ADMIN,
+            AuthConstants.ACTION_APP_ADMIN
     );
 
     static {
@@ -239,6 +249,7 @@ public class AuthResources {
                                                                         AuthConstants.ACTION_UPDATE,
                                                                         AuthConstants.ACTION_DELETE,
                                                                         AuthConstants.ACTION_ADMIN,
+                                                                        AuthConstants.ACTION_APP_ADMIN,
                                                                         AuthConstants.ACTION_POST);
 
     static {

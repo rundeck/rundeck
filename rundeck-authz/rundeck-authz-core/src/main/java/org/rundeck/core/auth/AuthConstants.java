@@ -30,6 +30,8 @@ public class AuthConstants {
     public static final String ACTION_RUN = "run";
     public static final String ACTION_KILL = "kill";
     public static final String ACTION_ADMIN = "admin";
+    public static final String ACTION_OPS_ADMIN = "ops_admin";
+    public static final String ACTION_APP_ADMIN = "app_admin";
     public static final String ACTION_GENERATE_USER_TOKEN = "generate_user_token";
     public static final String ACTION_GENERATE_SERVICE_TOKEN = "generate_service_token";
     public static final String ACTION_REFRESH = "refresh";
