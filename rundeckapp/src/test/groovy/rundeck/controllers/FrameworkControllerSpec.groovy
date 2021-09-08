@@ -650,7 +650,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         response.status==302
         request.errors == null
 
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'TestSaveProject')
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
@@ -693,7 +693,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             ) >> [success: true]
 
 
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'TestSaveProject')
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
@@ -729,7 +729,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         response.status==302
         request.errors == null
 
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'TestSaveProject')
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
@@ -775,7 +775,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
                 it.enabled && it.maxDaysToKeep==1 && it.cronExpression=='crontab1' && it.minimumExecutionToKeep==2 && it.maximumDeletionSize==3
             })
 
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'TestSaveProject')
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.updateFrameworkProjectConfig(
@@ -826,7 +826,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             response.status == 302
             request.errors == null
 
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'TestSaveProject')
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
             1 * fwkService.validateServiceConfig('foobar', "${prefix}.default.config.", _, _) >> [valid: true]
             if (service == 'FileCopier') {
@@ -1128,7 +1128,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectConfigure(_,'test') >> true
-                1 * getAuthContextForSubjectAndProject(_,'test')
+                1 * getAuthContextForSubject(_)
             }
         controller.apiService = Mock(ApiService) {
             1 * requireApi(_, _, 23) >> true
@@ -1187,7 +1187,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectConfigure(_,'test') >> true
-                1 * getAuthContextForSubjectAndProject(_,'test')
+                1 * getAuthContextForSubject(_)
             }
             controller.apiService = Mock(ApiService) {
                 1 * requireApi(_, _, 23) >> true
@@ -1291,7 +1291,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         response.status==302
         request.errors == null
 
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'TestSaveProject')
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
@@ -1355,7 +1355,7 @@ ${ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE}=${disableSchedule}
         response.status==302
         request.errors == null
 
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'TestSaveProject')
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
         1 * controller.frameworkService.listDescriptions() >> [null,null,null]
         2 * controller.frameworkService.validateServiceConfig(*_) >> [valid:true]
@@ -1422,7 +1422,7 @@ project.label=A Label
             response.status == 302
             request.errors == null
 
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,'TestSaveProject')
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.frameworkService.getRundeckFramework()
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
             1 * controller.frameworkService.listDescriptions() >> [null, null, null]
@@ -1714,7 +1714,7 @@ project.label=A Label
         params.project = project
         def result = controller.saveProjectNodeSources()
         then:
-        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(*_)
+        1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.getRundeckFramework()
 //        1 * controller.frameworkService.listResourceModelSourceDescriptions()
         1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,project) >> true
@@ -1768,7 +1768,7 @@ project.label=A Label
             controller.projectPluginsAjax(project, serviceName, configPrefix)
         then:
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,project) >> true
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,project)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework) {
                 getFrameworkProjectMgr() >> Mock(ProjectManager) {
                     loadProjectConfig(project) >> Mock(IRundeckProjectConfig) {
@@ -1859,7 +1859,7 @@ project.label=A Label
         then:
             response.status == 200
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,project)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
@@ -1922,7 +1922,7 @@ project.label=A Label
         then:
             response.status == 422
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,project)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             0 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -1986,7 +1986,7 @@ project.label=A Label
         then:
             response.status == 422
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,project)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >> null
             0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
@@ -2050,7 +2050,7 @@ project.label=A Label
         then:
             response.status == 422
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,project)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -2116,7 +2116,7 @@ project.label=A Label
         then:
             response.status == 422
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,project)
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
             new DescribedPlugin(null, null, '1type')
@@ -2170,7 +2170,7 @@ project.label=A Label
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeProjectConfigure(_, 'test') >> true
-                1 * getAuthContextForSubjectAndProject(_,'test')
+                1 * getAuthContextForSubject(_)
             }
             controller.pluginService=Mock(PluginService){
                 1 * getPluginDescriptor('monkey',_)
