@@ -27,7 +27,7 @@
 <html>
 <g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,
-        action : [AuthConstants.ACTION_ADMIN],
+        action : [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
         context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]

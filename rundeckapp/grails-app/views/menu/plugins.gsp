@@ -34,7 +34,7 @@ To change this template use File | Settings | File Templates.
 <g:set var="authAdmin" value="${auth.resourceAllowedTest(
         type: AuthConstants.TYPE_RESOURCE,
         kind: AuthConstants.TYPE_SYSTEM,
-        action: [AuthConstants.ACTION_ADMIN],
+        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN],
         any: true,
         context: AuthConstants.CTX_APPLICATION
 )}"/>

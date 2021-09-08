@@ -41,6 +41,7 @@
                    name: (projectName),
                    action: [AuthConstants.ACTION_CONFIGURE,
                             AuthConstants.ACTION_ADMIN,
+                            AuthConstants.ACTION_APP_ADMIN,
                             AuthConstants.ACTION_IMPORT,
                             AuthConstants.ACTION_EXPORT,
                             AuthConstants.ACTION_DELETE],
@@ -52,7 +53,8 @@
                    type: AuthConstants.TYPE_PROJECT_ACL,
                    name: (projectName),
                    action: [AuthConstants.ACTION_READ,
-                            AuthConstants.ACTION_ADMIN],
+                            AuthConstants.ACTION_ADMIN,
+                            AuthConstants.ACTION_APP_ADMIN],
                    any: true,
                    context: AuthConstants.CTX_APPLICATION
            )}"/>

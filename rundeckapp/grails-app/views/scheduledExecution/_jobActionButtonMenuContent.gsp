@@ -26,7 +26,7 @@
 <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
         context: AuthConstants.CTX_APPLICATION,
         type: AuthConstants.TYPE_PROJECT,
-        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
+        action: [AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
         any: true,
         name: scheduledExecution.project
 )}"/>

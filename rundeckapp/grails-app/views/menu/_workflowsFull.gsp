@@ -48,7 +48,7 @@
 <g:set var="authProjectSCMAdmin" value="${auth.resourceAllowedTest(
         context: AuthConstants.CTX_APPLICATION,
         type: AuthConstants.TYPE_PROJECT,
-        action: [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN],
+        action: [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
         any: true,
         name: params.project
 )}"/>
