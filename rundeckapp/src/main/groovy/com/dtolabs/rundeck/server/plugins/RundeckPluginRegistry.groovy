@@ -56,6 +56,7 @@ import org.springframework.context.ApplicationContextAware
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Construct
 import org.yaml.snakeyaml.constructor.Constructor
+import org.yaml.snakeyaml.constructor.SafeConstructor
 
 /**
  * Manages a registry for two kinds of plugins: groovy plugins loaded via spring,
@@ -441,9 +442,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     }
 
     private static Map<String,List<String>> getBlackListMap(String path){
-        InputStream inputStream = new FileInputStream(new File(path))
-        Yaml yaml = new Yaml();
-        Map<String, Object> data = yaml.load(inputStream);
+        Yaml yaml = new Yaml(new SafeConstructor());
+        Map data = yaml.load(new FileReader(path));
         List<Map> list = data.get("providerNameEntries")
         Map<String,List<String>> blackListMap = [:]
         list.each {

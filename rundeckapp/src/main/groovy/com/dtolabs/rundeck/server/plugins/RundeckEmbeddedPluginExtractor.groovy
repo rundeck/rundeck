@@ -31,6 +31,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
+import org.yaml.snakeyaml.constructor.SafeConstructor
 
 /**
  * @author greg
@@ -119,8 +120,8 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
 
     static List<String> getBlackListPluginFileName(String path){
         InputStream inputStream = new FileInputStream(new File(path))
-        Yaml yaml = new Yaml();
-        Map<String, Object> data = yaml.load(inputStream);
+        Yaml yaml = new Yaml(new SafeConstructor());
+        Map data = yaml.load(new FileReader(path));
         List<String> list = data.get("fileNameEntries")
         List<String> blackListFileNamesList = []
         list.each {
