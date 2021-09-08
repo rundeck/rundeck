@@ -453,7 +453,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
             _ * isProjectScheduledEnabled(_) >> true
         }
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * getAuthContextForSubjectAndProject(_,'TestSaveProject')
+            1 * getAuthContextForSubject(_)
             1 * authorizeProjectConfigure(*_)>>true
         }
         when:
@@ -719,7 +719,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
                 _ * isProjectScheduledEnabled(_) >> true
             }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubjectAndProject(_,'TestSaveProject')
+                1 * getAuthContextForSubject(_)
                 1 * authorizeProjectConfigure(*_)>>true
             }
         when:
@@ -836,7 +836,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
                 _ * isProjectScheduledEnabled(_) >> true
             }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubjectAndProject(_,'TestSaveProject')
+                1 * getAuthContextForSubject(_)
                 1 * authorizeProjectConfigure(*_)>>true
             }
 
@@ -939,7 +939,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
         }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubjectAndProject(_,'edit_test_project')
+                1 * getAuthContextForSubject(_)
                 1 * authorizeProjectConfigure(*_)>>true
             }
         params.project = "edit_test_project"
@@ -960,7 +960,7 @@ class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTe
 
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectConfigure(*_)>>true
-            1 * getAuthContextForSubjectAndProject(_,'edit_test_project')
+            1 * getAuthContextForSubject(_)
         }
 
         def proj = Mock(IRundeckProject){
