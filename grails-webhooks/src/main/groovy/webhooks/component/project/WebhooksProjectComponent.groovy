@@ -36,12 +36,12 @@ class WebhooksProjectComponent implements ProjectComponent {
 
     @Override
     List<String> getExportAuthRequiredActions() {
-        return [AuthConstants.ACTION_ADMIN]
+        return [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
     }
 
     @Override
     List<String> getImportAuthRequiredActions() {
-        return [AuthConstants.ACTION_ADMIN]
+        return [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
     }
 
     @Override

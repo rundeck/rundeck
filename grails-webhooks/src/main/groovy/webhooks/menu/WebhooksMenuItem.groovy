@@ -21,8 +21,8 @@ import grails.web.mapping.LinkGenerator
 import groovy.transform.CompileStatic
 import org.rundeck.app.gui.AuthMenuItem
 import org.rundeck.app.gui.MenuItem
+import org.rundeck.core.auth.AuthConstants
 import org.springframework.beans.factory.annotation.Autowired
-import webhooks.WebhookConstants
 
 @CompileStatic
 class WebhooksMenuItem implements MenuItem, AuthMenuItem {
@@ -51,8 +51,8 @@ class WebhooksMenuItem implements MenuItem, AuthMenuItem {
         return rundeckAuthContextEvaluator.
             authorizeProjectResourceAny(
                 auth,
-                WebhookConstants.RESOURCE_TYPE_WEBHOOK,
-                [WebhookConstants.ACTION_READ],
+                AuthConstants.RESOURCE_TYPE_WEBHOOK,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
                 project
             )
     }
