@@ -72,17 +72,15 @@ public class AuthConstants {
     public static final String TYPE_WEBHOOK = "webhook";
     public static final String TYPE_RESOURCE = "resource";
 
-    private static Map<String, String> resType(String type) {
-        return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));
-    }
-
-    public static final Map<String, String> RESOURCE_TYPE_SYSTEM = resType(TYPE_SYSTEM);
-    public static final Map<String, String> RESOURCE_TYPE_SYSTEM_ACL = resType(TYPE_SYSTEM_ACL);
-    public static final Map<String, String> RESOURCE_TYPE_NODE = resType(TYPE_NODE);
-    public static final Map<String, String> RESOURCE_TYPE_JOB = resType(TYPE_JOB);
-    public static final Map<String, String> RESOURCE_TYPE_EVENT = resType(TYPE_EVENT);
-    public static final Map<String, String> RESOURCE_TYPE_WEBHOOK = resType(TYPE_WEBHOOK);
-    public static final Map<String, String> RESOURCE_TYPE_PLUGIN = resType(TYPE_PLUGIN);
+    public static final Map<String, String> RESOURCE_TYPE_SYSTEM = AuthorizationUtil.resourceType(TYPE_SYSTEM);
+    public static final Map<String, String> RESOURCE_TYPE_SYSTEM_ACL = AuthorizationUtil.resourceType(TYPE_SYSTEM_ACL);
+    public static final Map<String, String> RESOURCE_TYPE_NODE = AuthorizationUtil.resourceType(TYPE_NODE);
+    public static final Map<String, String> RESOURCE_TYPE_JOB = AuthorizationUtil.resourceType(TYPE_JOB);
+    public static final Map<String, String> RESOURCE_TYPE_EVENT = AuthorizationUtil.resourceType(TYPE_EVENT);
+    public static final Map<String, String> RESOURCE_TYPE_WEBHOOK = AuthorizationUtil.resourceType(TYPE_WEBHOOK);
+    public static final Map<String, String> RESOURCE_TYPE_PLUGIN = AuthorizationUtil.resourceType(TYPE_PLUGIN);
+    public static final Map<String, String> RESOURCE_TYPE_USER = AuthorizationUtil.resourceType(TYPE_USER);
+    public static final Map<String, String> RESOURCE_TYPE_APITOKEN = AuthorizationUtil.resourceType(TYPE_APITOKEN);
     public static final Map<String, String> RESOURCE_ADHOC = Collections.unmodifiableMap(AuthorizationUtil
             .resource(TYPE_ADHOC));
 }
