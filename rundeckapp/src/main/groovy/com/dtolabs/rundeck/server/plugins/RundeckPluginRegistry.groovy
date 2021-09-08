@@ -45,8 +45,6 @@ import com.dtolabs.rundeck.plugins.CorePluginProviderServices
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import com.dtolabs.rundeck.util.BlacklistEntry
-import com.dtolabs.rundeck.util.BlacklistYamlClass
 import groovy.transform.PackageScope
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -443,19 +441,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     }
 
     private static Map<String,List<String>> getBlackListMap(String path){
-        File file = new File(path)
-        InputStream is = new FileInputStream(file)
-        Yaml yaml = new Yaml(new Constructor(BlacklistYamlClass.class))
-        BlacklistYamlClass data = yaml.load(is)
-        List<BlacklistEntry> entries = data.entries
-        def line
+        InputStream inputStream = new FileInputStream(new File(path))
+        Yaml yaml = new Yaml();
+        Map<String, Object> data = yaml.load(inputStream);
+        List<Map> list = data.get("providerNameEntries")
         Map<String,List<String>> blackListMap = [:]
-
-        entries.each {
-            if (!blackListMap.containsKey(it.serviceType)) {
-                blackListMap.put(it.serviceType, new ArrayList<String>())
-            }
-            blackListMap.get(it.serviceType).add(it.providerName)
+        list.each {
+            blackListMap.putAll(it)
         }
 
         return blackListMap
