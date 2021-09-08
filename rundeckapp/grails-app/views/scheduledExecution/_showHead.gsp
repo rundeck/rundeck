@@ -40,14 +40,14 @@
     <g:set var="exportStatus" value="${authProjectExport && scmExportEnabled ? scmExportStatus?.get(scheduledExecution.extid) :null}"/>
     <g:set var="importStatus" value="${authProjectImport && scmImportEnabled ? scmImportStatus?.get(scheduledExecution.extid):null}"/>
 
-      <span class="${linkCss ?: 'card-title h3'}">
+      <span>
       <g:if test="${includeExecStatus}">
           <b class="exec-status icon "
              data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
           </b>
       </g:if>
         <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
-            class="text-strong"
+            class="${linkCss ?: 'card-title h3'}"
             params="[project: scheduledExecution.project]"
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
