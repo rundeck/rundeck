@@ -493,6 +493,71 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     }
 
+    def "retainPluginDescriptorByName, plugin blacklisted"(){
+        given:
+        def description1 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin1 = new TestPluginWithAnnotation()
+        testPlugin1.description = description1
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin2')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin2 = new TestPluginWithAnnotation()
+        testPlugin2.description = description2
+
+        def description3 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin3 = new TestPluginWithAnnotation2()
+        testPlugin3.description = description3
+
+        Map pluginsMap = [:]
+        pluginsMap[testPlugin1.description.name] = testPlugin1
+        pluginsMap[testPlugin2.description.name] = testPlugin2
+        pluginsMap['plugin3'] = testPlugin3
+
+        def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
+        def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
+
+        defineBeans {
+            testBeanBuilder(InstanceFactoryBean, beanBuilder1)
+            testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
+        }
+        List<String> list = ["plugin2"]
+        def map1 = ["NodeExecutor":list]
+        List<Map> mapList = [map1]
+        def map = ["providerNameEntries":mapList]
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = ['plugin1': 'testBeanBuilder', 'otherservice:plugin1': 'testBeanBuilder3']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+        sut.blacklistYaml = Mock(Yaml) {
+            load(_) >> map
+        }
+        def svc = Mock(PluggableProviderService){
+            getName() >> "NodeExecutor"
+        }
+
+        when:
+        def result = sut.retainPluginDescriptorByName("plugin2", svc)
+
+        then:
+        result == null
+
+    }
+
     @Unroll
     def "get plugin metadata"() {
         given:
