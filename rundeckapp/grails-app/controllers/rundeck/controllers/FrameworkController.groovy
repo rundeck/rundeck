@@ -3145,7 +3145,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
                 [
                         authAction,
-                        AuthConstants.ACTION_ADMIN
+                        AuthConstants.ACTION_ADMIN,
+                        AuthConstants.ACTION_APP_ADMIN
                 ]
         )) {
             apiService.renderErrorFormat(response,

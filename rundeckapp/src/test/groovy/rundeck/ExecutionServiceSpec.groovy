@@ -1161,7 +1161,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 auth,
                 _,
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> false
         !result.success
         result.error == 'unauthorized'
@@ -1185,7 +1185,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 auth,
                 _,
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
 
         !result.success
@@ -1245,7 +1245,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 auth,
                 _,
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
 
         result.success
@@ -1308,7 +1308,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 auth,
                 _,
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
 
         result.success
@@ -1348,7 +1348,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 auth,
                 _,
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         ) >> true
         1 * service.fileUploadService.deleteRecordsForExecution(execution)
 

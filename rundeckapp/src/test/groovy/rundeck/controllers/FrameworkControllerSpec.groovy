@@ -42,6 +42,7 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
 import rundeck.Project
@@ -88,7 +89,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[action,ACTION_ADMIN])>>false
+                1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[action, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>> false
             }
         when:
         params.project='monkey'
@@ -128,7 +129,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
+                1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
             }
         when:
         params.path='elf'
@@ -147,7 +148,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -179,7 +180,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -209,7 +210,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -237,7 +238,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
         controller.frameworkService=Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             1 * getAuthContextForSubject(_) >> null
         }
         controller.apiService=Mock(ApiService){
@@ -271,7 +272,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -302,7 +303,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -340,7 +341,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubject(_) >> null
 
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -374,7 +375,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubject(_) >> null
 
-            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -410,7 +411,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.frameworkService=Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -454,7 +455,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.frameworkService=Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -486,7 +487,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.frameworkService=Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -515,7 +516,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.frameworkService=Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -548,7 +549,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.frameworkService=Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true
@@ -591,7 +592,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.frameworkService=Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_) >> null
-                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
         controller.apiService=Mock(ApiService){
             1 * requireApi(_,_,14) >> true

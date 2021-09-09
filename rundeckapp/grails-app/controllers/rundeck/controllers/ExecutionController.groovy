@@ -280,7 +280,7 @@ class ExecutionController extends ControllerBase{
 
         if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(e.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]),
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]),
                 AuthConstants.ACTION_DELETE_EXECUTION,'Project',e.project)) {
             return
         }
@@ -2022,7 +2022,7 @@ setTimeout(function(){
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(e.project),
-                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
                 ),
                 response,
                 [AuthConstants.ACTION_DELETE_EXECUTION, "Project", e.project] as Object[])){

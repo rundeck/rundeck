@@ -35,6 +35,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.ServicesProvider
+import org.rundeck.core.auth.AuthConstants
 import org.springframework.mock.web.MockMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -1913,8 +1914,8 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
                 getAuthContextForSubjectAndProject(_,_)>> testUserAndRolesContext()
 
                 1 * authResourceForProject('project1')
-                1 * authorizeApplicationResourceAny(_,_,['admin', 'export', 'scm_export'])>>false
-                1 * authorizeApplicationResourceAny(_,_,['admin', 'import', 'scm_import'])>>false
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_SCM_EXPORT])>> false
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT])>>false
                 1 * authorizeProjectJobAny(_,se,['read', 'view'],'project1')>>true
                 0 * _(*_)
             }

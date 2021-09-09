@@ -93,7 +93,7 @@ class ProjectController extends ControllerBase{
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                                  rundeckAuthContextProcessor.authResourceForProject(project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
         }
@@ -145,7 +145,7 @@ class ProjectController extends ControllerBase{
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
+                        [AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
         }
@@ -216,7 +216,7 @@ class ProjectController extends ControllerBase{
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_PROMOTE]),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_PROMOTE]),
                 AuthConstants.ACTION_PROMOTE, 'Project',project)) {
             return
         }
@@ -380,7 +380,7 @@ class ProjectController extends ControllerBase{
         if (unauthorizedResponse(
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                         rundeckAuthContextProcessor.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]),
+                        [AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]),
                 AuthConstants.ACTION_IMPORT, 'Project', project)) {
             return
         }
@@ -391,7 +391,7 @@ class ProjectController extends ControllerBase{
                     rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             appContext,
                             rundeckAuthContextProcessor.authResourceForProjectAcl(project),
-                            [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
+                            [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
                     ),
                     AuthConstants.ACTION_CREATE,
                     "ACL for Project",
@@ -484,7 +484,7 @@ class ProjectController extends ControllerBase{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(project),
-                [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_DELETE])) {
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,AuthConstants.ACTION_DELETE])) {
             response.setStatus(403)
             request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_DELETE,
                     "Project", params.project])
@@ -655,7 +655,7 @@ class ProjectController extends ControllerBase{
         }
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(params.project),
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])) {
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                                                            code  : 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
         }
@@ -664,9 +664,7 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
                                                            code  : 'api.error.item.doesnotexist', args: ['project', params.project]])
         }
-        def configAuth = rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextProcessor.authResourceForProject(params.project),
-                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN])
+        def configAuth = rundeckAuthContextProcessor.authorizeProjectConfigure(authContext,params.project)
         def pject = frameworkService.getFrameworkProject(params.project)
         def ctrl=this
         withFormat{
@@ -844,7 +842,7 @@ class ProjectController extends ControllerBase{
 
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(project),
-                [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN])) {
+                [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
@@ -899,7 +897,7 @@ class ProjectController extends ControllerBase{
 
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(project),
-                [action, AuthConstants.ACTION_ADMIN])) {
+                [action, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
             apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
@@ -943,7 +941,7 @@ class ProjectController extends ControllerBase{
 
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProjectAcl(project),
-                [action, AuthConstants.ACTION_ADMIN])) {
+                [action, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
             apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
@@ -1804,7 +1802,7 @@ class ProjectController extends ControllerBase{
                 !rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         appContext,
                         rundeckAuthContextProcessor.authResourceForProjectAcl(project.name),
-                        [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
+                        [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
                 )
         ) {
 
@@ -1820,10 +1818,9 @@ class ProjectController extends ControllerBase{
         if (archiveParams.importScm && request.api_version >= ApiVersions.V28) {
             //verify scm access requirement
             if (archiveParams.importScm &&
-                    !rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                    !rundeckAuthContextProcessor.authorizeProjectConfigure(
                             appContext,
-                            rundeckAuthContextProcessor.authResourceForProject(project.name),
-                            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                            project.name
                     )
             ) {
 

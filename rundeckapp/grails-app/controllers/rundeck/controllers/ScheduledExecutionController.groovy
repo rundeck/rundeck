@@ -296,7 +296,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                                  rundeckAuthContextProcessor.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
                                                                   AuthConstants.ACTION_SCM_EXPORT])) {
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
                     model.scmExportEnabled = true
@@ -306,7 +306,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                                  rundeckAuthContextProcessor.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
                                                                   AuthConstants.ACTION_SCM_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                     model.scmImportEnabled = true
@@ -523,7 +523,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def projectResource = rundeckAuthContextProcessor.authResourceForProject(params.project)
         if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
                                                               AuthConstants.ACTION_SCM_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
@@ -533,7 +533,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
                                                               AuthConstants.ACTION_SCM_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true
@@ -3660,7 +3660,7 @@ class ScheduledExecutionController  extends ControllerBase{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(scheduledExecution.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete Execution', 'Project',
                     scheduledExecution.project]])

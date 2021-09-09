@@ -45,6 +45,7 @@ import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
@@ -97,7 +98,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ContextACLManager<AppACLContext> aclFileManagerService
     def scmService
     def executionUtilService
-    def AuthContextEvaluator rundeckAuthContextEvaluator
+    def AppAuthContextEvaluator rundeckAuthContextEvaluator
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     static transactional = false
@@ -1758,15 +1759,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
             authContext,
             rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
-            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         )
     }
 
     boolean hasScmConfigure(AuthContext authContext, String project) {
-        rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
+        rundeckAuthContextEvaluator.authorizeProjectConfigure(
             authContext,
-            rundeckAuthContextEvaluator.authResourceForProject(project),
-            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+            project
         )
     }
 }

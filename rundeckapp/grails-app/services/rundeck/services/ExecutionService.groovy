@@ -1811,7 +1811,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     Map deleteExecution(Execution e, AuthContext authContext, String username){
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                  rundeckAuthContextProcessor.authResourceForProject(e.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
 

@@ -94,7 +94,7 @@ class ProjectSelectInterceptor {
             if (!rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
                 rundeckAuthContextEvaluator.authResourceForProject(selected),
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
             )) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN)
                 request.errorCode = 'request.error.unauthorized.message'

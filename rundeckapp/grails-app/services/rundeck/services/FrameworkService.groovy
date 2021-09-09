@@ -216,7 +216,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
             if(rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
                 rundeckAuthContextEvaluator.authResourceForProject(proj),
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
             )){
                 authed << proj
             }
@@ -386,7 +386,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 
     /**
      * Create a message to notify other cluster members to reschedule or unschedule project jobs
-     * 
+     *
      * @param project project name
      * @param oldDisableExec disableExecutions old value
      * @param oldDisableSched disableSchedule old value

@@ -35,12 +35,15 @@ import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.services.ExecutionFile
+import org.rundeck.core.auth.AuthConstants
 import rundeck.BaseReport
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -461,7 +464,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.logFileStorageService = Mock(LogFileStorageService) {
             getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
         }
-        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
         }
         ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -524,7 +527,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.logFileStorageService = Mock(LogFileStorageService) {
             getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
         }
-        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
         }
         ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -601,7 +604,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.logFileStorageService = Mock(LogFileStorageService) {
             getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
         }
-        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
         }
         ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -688,7 +691,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         service.logFileStorageService = Mock(LogFileStorageService) {
             getFileForExecutionFiletype(_,_,_,_) >> { File.createTempFile("import","import") }
         }
-        service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+        service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
         }
 
@@ -754,7 +757,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
             }
-            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
             }
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -813,7 +816,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
             }
-            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
             }
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -872,7 +875,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
             }
-            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
             }
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -963,7 +966,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
             }
-            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
             }
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -1020,7 +1023,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
             }
             component.getImportAuthRequiredActions()>>['admin']
-            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
                 1 * authorizeApplicationResourceAny(_, _, ['admin']) >> false
             }
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -1078,7 +1081,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.logFileStorageService = Mock(LogFileStorageService) {
                 getFileForExecutionFiletype(_, _, _, _) >> { File.createTempFile("import", "import") }
             }
-            service.rundeckAuthContextEvaluator=Mock(AuthContextEvaluator){
+            service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator){
 
             }
             ProjectArchiveImportRequest rq = Mock(ProjectArchiveImportRequest) {
@@ -1506,7 +1509,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             (count) * listener.inc('export', 1)
             1 * listener.done()
             _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
-            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test: 'resource'], ['configure','admin'])>>scmAuth
+            1 * service.rundeckAuthContextEvaluator.authorizeProjectConfigure(auth, 'aProject')>>scmAuth
             (count)*service.scmService.loadScmConfig('aProject','export')>>Mock(ScmPluginConfigData)
             (count)*service.scmService.loadScmConfig('aProject','import')>>Mock(ScmPluginConfigData)
 
@@ -1566,7 +1569,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             }
             _ * service.rundeckAuthContextEvaluator.authResourceForProject('aProject') >> [test: 'resource']
             1 * service.rundeckAuthContextEvaluator.authResourceForProjectAcl('aProject') >> [test2: 'resource']
-            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test2: 'resource'], ['read','admin'])>>aclAuth
+            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, [test2: 'resource'], [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>> aclAuth
 
         cleanup:
             temp.delete()

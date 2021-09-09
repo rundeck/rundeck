@@ -420,7 +420,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         return authorizeApplicationResourceAny(
             authContext,
             authResourceForProject(project),
-            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         )
     }
 }
