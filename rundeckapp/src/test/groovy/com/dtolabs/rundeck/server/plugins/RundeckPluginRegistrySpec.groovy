@@ -400,7 +400,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             testBeanBuilder2(InstanceFactoryBean, beanBuilder2)
             testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
         }
-        List<String> list = ["plugin1"]
+        List<String> list = ["plugin2"]
         def map1 = ["NodeExecutor":list]
         List<Map> mapList = [map1]
         def map = ["providerNameEntries":mapList]
@@ -422,8 +422,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
 
         then:
-        result.size() == 2
-        result["plugin2"].description == description2
+        result.size() == 1
         result["plugin3"].description == description3
 
     }
