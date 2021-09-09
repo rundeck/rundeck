@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
 import org.springframework.context.ApplicationContext
+import org.yaml.snakeyaml.Yaml
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -355,6 +356,72 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
         then:
         result
+        result.size() == 2
+        result["plugin2"].description == description2
+        result["plugin3"].description == description3
+
+    }
+
+    def "list plugin, one blacklisted"(){
+        given:
+        def description1 = DescriptionBuilder.builder()
+                .name('plugin1')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin1 = new TestPluginWithAnnotation()
+        testPlugin1.description = description1
+
+        def description2 = DescriptionBuilder.builder()
+                .name('plugin3')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def description3 = DescriptionBuilder.builder()
+                .name('plugin4')
+                .property(PropertyBuilder.builder().string('prop1').build())
+                .property(PropertyBuilder.builder().string('prop2').build())
+                .build()
+
+        def testPlugin2 = new TestPluginWithAnnotation2()
+        testPlugin2.description = description2
+
+        def testPlugin3 = new TestPluginWithAnnotation2()
+        testPlugin3.description = description3
+
+        def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
+        def beanBuilder2 = new TestBuilder3(instance: testPlugin2)
+        def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
+
+        defineBeans {
+            testBeanBuilder(InstanceFactoryBean, beanBuilder1)
+            testBeanBuilder2(InstanceFactoryBean, beanBuilder2)
+            testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
+        }
+        List<String> list = ["plugin1"]
+        def map1 = ["NodeExecutor":list]
+        List<Map> mapList = [map1]
+        def map = ["providerNameEntries":mapList]
+        def sut = new RundeckPluginRegistry()
+        sut.pluginDirectory = File.createTempDir('test', 'dir')
+        sut.blackListFileName = File.createTempFile('test',"")
+        sut.applicationContext = applicationContext
+        sut.pluginRegistryMap = ['aservicename:plugin1': 'testBeanBuilder', 'otherservice:plugin2': 'testBeanBuilder2', 'otherservice:plugin3': 'testBeanBuilder3']
+        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+        FileReader reader = Mock(FileReader)
+        sut.blacklistYaml = Mock(Yaml) {
+            load(_) >> map
+        }
+        def svc = Mock(PluggableProviderService){
+                getName() >> "NodeExecutor"
+            }
+
+        when:
+        def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
+
+        then:
         result.size() == 2
         result["plugin2"].description == description2
         result["plugin3"].description == description3

@@ -81,6 +81,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     def File pluginCacheDirectory
     def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
     String blackListFileName
+    Yaml blacklistYaml
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -441,9 +442,11 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         null
     }
 
-    private static Map<String,List<String>> getBlackListMap(String path){
-        Yaml yaml = new Yaml(new SafeConstructor());
-        Map data = yaml.load(new FileReader(path));
+    public Map<String,List<String>> getBlackListMap(String path){
+        if(!blacklistYaml){
+            blacklistYaml = new Yaml(new SafeConstructor());
+        }
+        Map data = blacklistYaml.load(new FileReader(path));
         List<Map> list = data.get("providerNameEntries")
         Map<String,List<String>> blackListMap = [:]
         list.each {
