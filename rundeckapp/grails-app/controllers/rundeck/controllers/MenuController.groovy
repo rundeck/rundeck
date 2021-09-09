@@ -878,7 +878,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        [authAction, AuthConstants.ACTION_ADMIN]
+                        [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                 ),
                 authAction, 'for', 'Rundeck')) {
             return
@@ -951,7 +951,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN]
+                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                     ),
                     AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
                 return
@@ -978,7 +978,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN]
+                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                     ),
                     response,
                     [AuthConstants.ACTION_ADMIN, 'for', 'Rundeck'].toArray())) {
@@ -1015,8 +1015,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                              AuthConstants.ACTION_READ
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                 ),
                 AuthConstants.ACTION_READ, 'System configuration'
         )) {
@@ -1035,7 +1037,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN]
+                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                     ),
                     AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
                 return
@@ -1058,7 +1060,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN]
+                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                     ),
                     AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
                 return
@@ -1084,7 +1086,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                             authContext,
                             AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN]
+                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                     ),
                     response,
                     [AuthConstants.ACTION_ADMIN, 'for', 'Rundeck'].toArray())) {
@@ -2727,10 +2729,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeApplicationResource(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        AuthConstants.ACTION_ADMIN
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                 ),
                 response,
                 [AuthConstants.ACTION_ADMIN, 'System','Logstorage'].toArray()

@@ -544,7 +544,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             1 * isClusterModeEnabled()>>false
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResource(_,_,_)>>true
+                1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN])>>true
 
                 1 * getAuthContextForSubject(_)>>null
             }
@@ -572,7 +572,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResource(_,_,_)>>true
+                1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN])>>true
 
                 1 * getAuthContextForSubject(_)>>null
             }

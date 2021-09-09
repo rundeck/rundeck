@@ -4001,8 +4001,8 @@ class ScheduledExecutionController  extends ControllerBase{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         //test valid project
 
-        if (!rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                AuthConstants.ACTION_ADMIN)) {
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN])) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized',

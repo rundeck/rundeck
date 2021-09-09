@@ -540,7 +540,7 @@ class ExecutionController extends ControllerBase{
             def authAction=requestActive?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
             if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                                                       AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                                                      [authAction, AuthConstants.ACTION_ADMIN]),
+                                                                                      [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]),
 
                                      authAction,'for','Rundeck')) {
                 return
@@ -2314,7 +2314,7 @@ setTimeout(function(){
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [authAction, AuthConstants.ACTION_ADMIN]
+                [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
             )
         ) {
             return apiService.renderErrorFormat(response,
