@@ -8,7 +8,8 @@ public class AuthResources {
             Arrays.asList(
                     AuthConstants.TYPE_ADHOC,
                     AuthConstants.TYPE_JOB,
-                    AuthConstants.TYPE_NODE
+                    AuthConstants.TYPE_NODE,
+                    AuthConstants.TYPE_STORAGE
             )
     );
     public static final Set<String> projectKinds = new HashSet<>(
