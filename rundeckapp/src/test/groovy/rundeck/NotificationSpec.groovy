@@ -102,11 +102,12 @@ class NotificationSpec extends Specification {
             result.eventTrigger == trigger
             result.type == type
             result.urlConfiguration().urls == expect
+            result.urlConfiguration().httpMethod == expectMethod
             result.format == expectformat
         where:
-            trigger     | config                        | expect | expectformat
-            'onsuccess' | [urls: 'blah', format: 'xml'] | 'blah' | 'xml'
-            'onsuccess' | [urls: 'blah', format: 'json'] | 'blah' | 'json'
+            trigger     | config                                             | expect | expectformat | expectMethod
+            'onsuccess' | [urls: 'blah', format: 'xml', httpMethod: 'post']  | 'blah' | 'xml'        | 'post'
+            'onsuccess' | [urls: 'blah', format: 'json', httpMethod: 'get']  | 'blah' | 'json'       | 'get'
 
     }
     @Unroll

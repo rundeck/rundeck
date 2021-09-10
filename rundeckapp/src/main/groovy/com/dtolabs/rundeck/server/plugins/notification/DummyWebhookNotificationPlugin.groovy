@@ -88,7 +88,7 @@ class DummyWebhookNotificationPlugin implements NotificationPlugin {
     )
     @SelectValues(values = ['get','post'])
     @SelectLabels(values = ['GET','POST'])
-    String method
+    String httpMethod
 
     @Override
     boolean postNotification(final String trigger, final Map executionData, final Map config) {
