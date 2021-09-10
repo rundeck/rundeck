@@ -47,7 +47,7 @@
           </b>
       </g:if>
         <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
-            class="${linkCss ?: 'card-title h3'}"
+            class="${linkCss ?: 'card-title h3'} job-header-link"
             params="[project: scheduledExecution.project]"
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
