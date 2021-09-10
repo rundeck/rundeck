@@ -1,0 +1,39 @@
+fileNameEntries:
+  - rundeck-ansible
+  - rundeckpro-cyberark
+  - openssh-node-execution
+  - rundeck-copyfile-plugin
+  - rundeck-localexec
+  - rundeck-script-plugin
+  providerNameEntries:
+    - NodeExecutor:
+        - local
+    - FileCopier:
+        - ssh-copier
+        - jsch-scp
+        - script-copy
+    - WorkflowNodeStep:
+        - nixy-waitfor-dir-exists
+        - nixy-waitfor-contains
+        - nixy-waitfor-file-exists
+        - nixy-waitfor-file-size
+        - nixy-command-try-until
+        - nixy-file-contains
+        - nixy-file-dos2unix
+        - nixy-file-not-exists
+        - nixy-file-exists
+        - nixy-file-rotate
+        - nixy-file-truncate
+        - nixy-local-node-step
+        - nixy-waitfor-contains
+        - nixy-waitfor-dir-exists
+        - nixy-waitfor-local-ping
+        - nixy-waitfor-local-port-open
+        - filetransfer
+    - ResourceModelSource:
+        - file
+        - directory
+        - script
+        - local
+    -WorkflowStep
+    -github-script-step
