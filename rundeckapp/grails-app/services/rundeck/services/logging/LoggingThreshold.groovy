@@ -90,6 +90,7 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
     }
 
     static LoggingThreshold createMinimum(LoggingThreshold job, LoggingThreshold global) {
+        if (!job & !global) { return null }
         def t = new LoggingThreshold()
         if (job && global && job.type == global.type) {
             t.maxValue = Math.min(job.maxValue, global.maxValue)
