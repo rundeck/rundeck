@@ -21,8 +21,7 @@ class LoggingThresholdSpec extends Specification {
         def globalThreshold = LoggingThreshold.fromMap(globalLimitMap, globalLimitAction)
         def threshold       = LoggingThreshold.createMinimum(jobThreshold, globalThreshold)
         then:
-        threshold.maxValue == null
-        threshold.action == jobLimitAction
+        threshold == null
     }
 
     void "test null global output limit"() {
