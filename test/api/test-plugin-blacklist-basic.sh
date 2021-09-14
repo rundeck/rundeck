@@ -6,7 +6,7 @@ DIR=$(cd `dirname $0` && pwd)
 source $DIR/include.sh
 
 # now submit req
-runurl="${APIURL}/projects"
+runurl="${APIURL}/plugins/list"
 
 echo "TEST: /api/projects "
 
@@ -17,18 +17,7 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
-$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
-
-#Check projects list
-itemcount=$(xmlsel "//projects/@count" $DIR/curl.out)
-if [ "" == "$itemcount" ] ; then
-    errorMsg "Wrong count"
-    exit 2
-
-fi
-
-echo "OK"
-
+assert_json_value '74' 'length' $DIR/curl.out
 
 
 rm $DIR/curl.out
