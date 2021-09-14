@@ -259,6 +259,12 @@ rundeck.nodeService.nodeCache.firstLoadAsynch=false
 END
 fi
 
+if [ -n "$PLUGIN_BLACKLIST_FILE" ] ; then
+    cat - >>$RDECK_BASE/server/config/rundeck-config.properties <<END
+  rundeck.plugins.providerBlockListFile=$PLUGIN_BLACKLIST_FILE
+END
+fi
+
 ### PRE CONFIG
 # RUN TEST PRESTART SCRIPT
 if [[ ! -z "$CONFIG_SCRIPT_PRESTART" && -f $CONFIG_SCRIPT_PRESTART ]];
