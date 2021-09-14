@@ -251,6 +251,13 @@ assert_json_value(){
     fi
 }
 
+test_plugin_present(){
+  if grep -q $1 "$2";then
+    errorMsg "Plugin list should not contain blacklisted plugin $1!"
+    exit 2
+  fi
+}
+
 
 ##
 # assert_json_null  'jsonquery' $file
