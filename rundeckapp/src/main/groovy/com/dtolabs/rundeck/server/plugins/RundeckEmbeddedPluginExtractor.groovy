@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
 import com.dtolabs.utils.Streams
 import grails.spring.BeanBuilder
+import org.rundeck.security.RundeckPluginBlacklist
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -42,6 +43,8 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
     RundeckPluginRegistry rundeckPluginRegistry
     @Autowired
     Collection<PluginFileSource> pluginFileSources = []
+
+    RundeckPluginBlacklist rundeckPluginBlacklist
 
     RundeckEmbeddedPluginExtractor() {
     }
@@ -76,10 +79,28 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
 
             pluginList.each { PluginFileManifest pluginmf ->
                 try {
-                    if (installPlugin(pluginTargetDir, loader, pluginmf, pluginmf.fileName.endsWith('.groovy'))) {
-                        result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
-                    } else {
-                        result.logs << "Skipped existing plugin: ${pluginmf.fileName}"
+                    List<String> blackListPlugins = []
+                    Boolean blacklisted = false
+                    if(rundeckPluginBlacklist == null){
+                        rundeckPluginBlacklist = new RundeckPluginBlacklist()
+                    }
+                    if(rundeckPluginBlacklist.isBlacklistSet()){
+                        blackListPlugins = rundeckPluginBlacklist.getBlockListPluginFileName()
+                        for (String item: blackListPlugins){
+                            if(pluginmf.fileName.startsWith(item)){
+                                blacklisted = true
+                            }
+                        }
+                    }
+                    if(blacklisted){
+                        //do nothing
+                    }
+                    else{
+                        if (installPlugin(pluginTargetDir, loader, pluginmf, pluginmf.fileName.endsWith('.groovy'))) {
+                            result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
+                        } else {
+                            result.logs << "Skipped existing plugin: ${pluginmf.fileName}"
+                        }
                     }
                 } catch (Exception e) {
                     log.error("Failed extracting bundled plugin ${pluginmf}", e)

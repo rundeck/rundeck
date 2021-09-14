@@ -46,6 +46,7 @@ import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import groovy.transform.PackageScope
+import org.rundeck.security.RundeckPluginBlacklist
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
@@ -76,6 +77,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     def File pluginDirectory
     def File pluginCacheDirectory
     def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
+    RundeckPluginBlacklist rundeckPluginBlacklist
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -359,6 +361,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         if (null != beanPlugin) {
             return new CloseableDescribedPlugin<T>(beanPlugin)
         }
+
+        if(rundeckPluginBlacklist.isBlacklistSet()){
+            Map<String,List<String>> blacklistMap = rundeckPluginBlacklist.getBlockListMap()
+            if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName()).contains(name)){
+                return null
+            }
+        }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
             //attempt to load directly
@@ -395,6 +404,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
          DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name, service.name)
         if (null != beanPlugin) {
             return beanPlugin
+        }
+
+        if(rundeckPluginBlacklist.isBlacklistSet()){
+            Map<String,List<String>> blacklistMap = rundeckPluginBlacklist.getBlockListMap()
+            if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName()).contains(name)){
+                return null
+            }
         }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
@@ -519,7 +535,20 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
-                    list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
+                    if(rundeckPluginBlacklist.isBlacklistSet()){
+                        Map<String, List<String>> blacklistMap = rundeckPluginBlacklist.getBlockListMap()
+                        if(blacklistMap.containsKey(service.name)){
+                            if(!blacklistMap.get(service.name).contains(pluginName)){
+                                list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
+                            }
+                        }
+                        else{
+                            list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
+                        }
+                    }
+                    else{
+                        list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
+                    }
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")
@@ -542,14 +571,40 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 }
 
                 if (!list[ident.providerName]) {
-                    list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
+                    if(rundeckPluginBlacklist.isBlacklistSet()){
+                        Map<String, List<String>> blacklistMap = rundeckPluginBlacklist.getBlockListMap()
+                        if(blacklistMap.containsKey(service.name)){
+                            if(!blacklistMap.get(service.name).contains(ident.providerName)){
+                                list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
+                            }
+                        }
+                        else{
+                            list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
+                        }
+                    }
+                    else{
+                        list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
+                    }
                 }
             }
             service.listDescriptions()?.each { Description d ->
                 if (!list[d.name]) {
-                    list[d.name] = new DescribedPlugin<T>( null, null, d.name)
+                    if(rundeckPluginBlacklist.isBlacklistSet()){
+                        Map<String, List<String>> blacklistMap = rundeckPluginBlacklist.getBlockListMap()
+                        if(blacklistMap.containsKey(service.name)){
+                            if(!blacklistMap.get(service.name).contains(d.name)){
+                                list[d.name] = new DescribedPlugin<T>( null, null, d.name)
+                            }
+                        }
+                        else{
+                            list[d.name] = new DescribedPlugin<T>( null, null, d.name)
+                        }
+                    }
+                    else{
+                        list[d.name] = new DescribedPlugin<T>( null, null, d.name)
+                    }
                 }
-                list[d.name].description = d
+                list[d.name]?.description = d
             }
         }
 
