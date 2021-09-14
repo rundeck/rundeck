@@ -35,7 +35,7 @@ class RundeckPluginBlocklist implements PluginBlocklist {
     }
 
     @Override
-    Boolean isBlacklistSet() {
+    Boolean isBlocklistSet() {
         if(blackListFileName==null){
             return false
         }

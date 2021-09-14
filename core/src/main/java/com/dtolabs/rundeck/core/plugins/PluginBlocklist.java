@@ -9,7 +9,7 @@ public interface PluginBlocklist {
 
     public Map<String,List<String>> getBlockListMap();
 
-    public Boolean isBlacklistSet();
+    public Boolean isBlocklistSet();
 }
 
 
