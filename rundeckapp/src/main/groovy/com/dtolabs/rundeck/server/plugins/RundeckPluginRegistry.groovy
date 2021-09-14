@@ -363,8 +363,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
 
         if(rundeckPluginBlocklist.isBlocklistSet()){
-            Map<String,List<String>> blacklistMap = rundeckPluginBlocklist.getBlockListMap()
-            if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName()).contains(name)){
+            Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)
+            if(blacklisted){
                 return null
             }
         }
@@ -407,8 +407,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
 
         if(rundeckPluginBlocklist.isBlocklistSet()){
-            Map<String,List<String>> blacklistMap = rundeckPluginBlocklist.getBlockListMap()
-            if(blacklistMap.get(service.getName())!=null && blacklistMap.get(service.getName()).contains(name)){
+            Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)
+            if(blacklisted){
                 return null
             }
         }
@@ -536,13 +536,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
                     if(rundeckPluginBlocklist.isBlocklistSet()){
-                        Map<String, List<String>> blacklistMap = rundeckPluginBlocklist.getBlockListMap()
-                        if(blacklistMap.containsKey(service.name)){
-                            if(!blacklistMap.get(service.name).contains(pluginName)){
-                                list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
-                            }
-                        }
-                        else{
+                        Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, pluginName)
+                        if(!blacklisted){
                             list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
                         }
                     }
@@ -572,15 +567,10 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
 
                 if (!list[ident.providerName]) {
                     if(rundeckPluginBlocklist.isBlocklistSet()){
-                        Map<String, List<String>> blacklistMap = rundeckPluginBlocklist.getBlockListMap()
-                        if(blacklistMap.containsKey(service.name)){
-                            if(!blacklistMap.get(service.name).contains(ident.providerName)){
+                        Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, ident.providerName)
+                        if(!blacklisted){
                                 list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
                             }
-                        }
-                        else{
-                            list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
-                        }
                     }
                     else{
                         list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
@@ -590,13 +580,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             service.listDescriptions()?.each { Description d ->
                 if (!list[d.name]) {
                     if(rundeckPluginBlocklist.isBlocklistSet()){
-                        Map<String, List<String>> blacklistMap = rundeckPluginBlocklist.getBlockListMap()
-                        if(blacklistMap.containsKey(service.name)){
-                            if(!blacklistMap.get(service.name).contains(d.name)){
-                                list[d.name] = new DescribedPlugin<T>( null, null, d.name)
-                            }
-                        }
-                        else{
+                        Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, d.name)
+                        if(!blacklisted){
                             list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                         }
                     }

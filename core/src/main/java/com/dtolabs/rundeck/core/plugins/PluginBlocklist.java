@@ -5,9 +5,9 @@ import java.util.Map;
 
 public interface PluginBlocklist {
 
-    public List<String> getBlockListPluginFileName();
+    public Boolean isPluginFilePresent(String fileName);
 
-    public Map<String,List<String>> getBlockListMap();
+    public Boolean isPluginProviderPresent(String service, String providerName);
 
     public Boolean isBlocklistSet();
 }

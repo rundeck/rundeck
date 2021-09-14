@@ -81,16 +81,9 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
                 try {
                     List<String> blackListPlugins = []
                     Boolean blacklisted = false
-                    if(rundeckPluginBlocklist == null){
-                        rundeckPluginBlocklist = new RundeckPluginBlocklist()
-                    }
+
                     if(rundeckPluginBlocklist.isBlocklistSet()){
-                        blackListPlugins = rundeckPluginBlocklist.getBlockListPluginFileName()
-                        for (String item: blackListPlugins){
-                            if(pluginmf.fileName.startsWith(item)){
-                                blacklisted = true
-                            }
-                        }
+                        blacklisted = rundeckPluginBlocklist.isPluginFilePresent(pluginmf.fileName)
                     }
                     if(blacklisted){
                         //do nothing
