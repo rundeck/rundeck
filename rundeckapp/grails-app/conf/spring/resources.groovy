@@ -503,7 +503,7 @@ beans={
 
     rundeckEmbeddedPluginExtractor(RundeckEmbeddedPluginExtractor) {
         pluginTargetDir = pluginDir
-        rundeckPluginBlacklist = ref("rundeckPluginBlacklist")
+        rundeckPluginBlocklist = ref("rundeckPluginBlocklist")
     }
 
     def pluginRegistry=[:]
@@ -559,7 +559,7 @@ beans={
     rundeckPluginRegistryMap(MapFactoryBean) {
         sourceMap = pluginRegistry
     }
-    rundeckPluginBlacklist(RundeckPluginBlacklist){
+    rundeckPluginBlocklist(RundeckPluginBlocklist){
         blackListFileName=application.config.rundeck?.plugins?.providerBlockListFile?:null
     }
     /**
@@ -571,7 +571,7 @@ beans={
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
-        rundeckPluginBlacklist=ref("rundeckPluginBlacklist")
+        rundeckPluginBlocklist=ref("rundeckPluginBlocklist")
     }
     hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
 

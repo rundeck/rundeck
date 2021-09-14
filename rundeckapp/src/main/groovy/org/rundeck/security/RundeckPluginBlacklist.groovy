@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.plugins.PluginBlocklist
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 
-class RundeckPluginBlacklist implements PluginBlocklist {
+class RundeckPluginBlocklist implements PluginBlocklist {
 
     String blackListFileName
     Yaml blacklistYaml

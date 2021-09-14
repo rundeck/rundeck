@@ -21,7 +21,7 @@ import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
 import com.dtolabs.utils.Streams
 import grails.spring.BeanBuilder
-import org.rundeck.security.RundeckPluginBlacklist
+import org.rundeck.security.RundeckPluginBlocklist
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -44,7 +44,7 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
     @Autowired
     Collection<PluginFileSource> pluginFileSources = []
 
-    RundeckPluginBlacklist rundeckPluginBlacklist
+    RundeckPluginBlocklist rundeckPluginBlocklist
 
     RundeckEmbeddedPluginExtractor() {
     }
@@ -81,11 +81,11 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
                 try {
                     List<String> blackListPlugins = []
                     Boolean blacklisted = false
-                    if(rundeckPluginBlacklist == null){
-                        rundeckPluginBlacklist = new RundeckPluginBlacklist()
+                    if(rundeckPluginBlocklist == null){
+                        rundeckPluginBlocklist = new RundeckPluginBlocklist()
                     }
-                    if(rundeckPluginBlacklist.isBlacklistSet()){
-                        blackListPlugins = rundeckPluginBlacklist.getBlockListPluginFileName()
+                    if(rundeckPluginBlocklist.isBlacklistSet()){
+                        blackListPlugins = rundeckPluginBlocklist.getBlockListPluginFileName()
                         for (String item: blackListPlugins){
                             if(pluginmf.fileName.startsWith(item)){
                                 blacklisted = true
