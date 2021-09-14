@@ -359,6 +359,9 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.applicationContext = applicationContext
         sut.pluginRegistryMap = ['plugin1': 'testBeanBuilder', 'otherservice:plugin1': 'testBeanBuilder3']
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+        sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist){
+            isBlocklistSet() >> false
+        }
 
         def svc = Mock(PluggableProviderService) {
             getName() >> servicename
@@ -543,6 +546,9 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.applicationContext = applicationContext
         sut.pluginRegistryMap = ['aservicename:plugin1': 'testBeanBuilder', 'otherservice:plugin2': 'testBeanBuilder2', 'otherservice:plugin3': 'testBeanBuilder3']
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+        sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist){
+            isBlocklistSet() >> false
+        }
 
         def svc = Mock(PluggableProviderService)
 
