@@ -460,7 +460,7 @@ beans={
         loggerName='org.rundeck.storage.events'
     }
     rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
-    if(!grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false']) {
+    if(!(grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false'])) {
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
     }else{
         rundeckKeyStorageContextProvider(KeyStorageContextProvider)
