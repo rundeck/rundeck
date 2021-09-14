@@ -261,7 +261,7 @@ fi
 
 if [ -n "$PLUGIN_BLACKLIST_FILE" ] ; then
    cat - >>$RDECK_BASE/server/config/rundeck-config.properties <<END
- rundeck.plugins.providerBlacklistFile=$PLUGIN_BLACKLIST_FILE
+ rundeck.plugins.providerBlackListFile=$PLUGIN_BLACKLIST_FILE
 END
 fi
 

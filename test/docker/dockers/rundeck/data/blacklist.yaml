@@ -35,5 +35,5 @@ fileNameEntries:
         - directory
         - script
         - local
-    -WorkflowStep
-    -github-script-step
+    -WorkflowStep:
+        -github-script-step
