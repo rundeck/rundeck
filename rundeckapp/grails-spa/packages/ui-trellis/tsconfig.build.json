@@ -5,7 +5,7 @@
         "sourceMap": true,
         "strict": true,
         "moduleResolution": "node",
-        "target": "esnext",
+        "target": "es2018",
         "experimentalDecorators": true,
         "esModuleInterop": true,
         "declaration": true,
