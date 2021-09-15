@@ -41,7 +41,6 @@ services:
       - logs:/home/rundeck/logs:rw
       - resources:/home/rundeck/resources:rw
       - tests:/home/rundeck/tests:rw
-      - ./dockers/rundeck/data/blacklist.yaml:/home/rundeck/blacklist.yaml:rw
     networks:
       localnet:
         ipv4_address: 192.168.234.11
