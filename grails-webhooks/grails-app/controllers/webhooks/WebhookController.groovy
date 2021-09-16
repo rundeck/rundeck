@@ -51,7 +51,13 @@ class WebhookController {
             return
         }
 
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        if(!params.project){
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.parameter.required', args: ['project']])
+
+        }
+
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
         if (!authorized(authContext, webhook.project, RESOURCE_TYPE_WEBHOOK, ACTION_DELETE)) {
             sendJsonError("You are not authorized to perform this action")
             return
