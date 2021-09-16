@@ -138,9 +138,6 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         else if (job?.action && !global?.action) {
             t.action = job.action
         }
-        else if (!job?.action && global?.action) {
-            t.action = global.action
-        }
         else if (job?.action && global?.action && global?.action == ACTION_HALT) {
             t.action = global.action
         }
