@@ -7,18 +7,19 @@ import org.yaml.snakeyaml.constructor.SafeConstructor
 class RundeckPluginBlocklist implements PluginBlocklist {
 
     String blackListFileName
+    List<String> fileNameEntries
+    List<Map<String,List<String>>> providerNameEntries
 
     @Override
     Boolean isPluginFilePresent(String fileName) {
-        Yaml yaml = new Yaml(new SafeConstructor());
-        Map data = yaml.load(new FileReader(blackListFileName));
         Boolean blacklisted = false
-        List<String> list = data.get("fileNameEntries")
-        List<String> blackListFileNamesList = []
-        list.each {
-            blackListFileNamesList.add(it)
+        if(!fileNameEntries){
+            Yaml yaml = new Yaml(new SafeConstructor());
+            Map data = yaml.load(new FileReader(blackListFileName));
+            fileNameEntries = data.get("fileNameEntries")
         }
-        for (String item: blackListFileNamesList){
+
+        for (String item: fileNameEntries){
             if(fileName.startsWith(item)){
                 blacklisted = true
             }
@@ -28,11 +29,14 @@ class RundeckPluginBlocklist implements PluginBlocklist {
 
     @Override
     Boolean isPluginProviderPresent(String service, String providerName) {
-        Yaml yaml = new Yaml(new SafeConstructor());
-        Map data = yaml.load(new FileReader(blackListFileName));
-        List<Map> list = data.get("providerNameEntries")
+        if(!providerNameEntries){
+            Yaml yaml = new Yaml(new SafeConstructor());
+            Map data = yaml.load(new FileReader(blackListFileName));
+            providerNameEntries = data.get("providerNameEntries")
+        }
+
         Map<String,List<String>> blackListMap = [:]
-        list.each {
+        providerNameEntries.each {
             blackListMap.putAll(it)
         }
 
