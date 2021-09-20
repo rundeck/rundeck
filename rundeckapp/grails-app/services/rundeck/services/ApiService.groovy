@@ -1106,6 +1106,7 @@ class ApiService {
                 }
                 execMap.description=(summary)
                 execMap.argstring=(e.argString)
+                execMap.workflow=e.workflow
                 if(e.serverNodeUUID){
                     execMap.serverUUID=(e.serverNodeUUID)
                 }
