@@ -2,8 +2,6 @@ import Vue from 'vue'
 import {addons} from '@storybook/addons'
 import {CHANGE, array ,object, boolean, withKnobs, select} from '@storybook/addon-knobs'
 
-import '../../../stories/setup'
-
 import CopyBox from './CopyBox.vue'
 
 export default {

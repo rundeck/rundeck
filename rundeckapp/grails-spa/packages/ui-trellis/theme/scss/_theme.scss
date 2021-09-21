@@ -147,80 +147,80 @@ $black:                      $grey-900;
     --medium-grey: var(--grey-500);
 }
 
-:root {
-    --grey-900: #{$grey-100};
-    --grey-800: #{$grey-200};
-    --grey-700: #{$grey-300};
-    --grey-600: #{$grey-400};
-    --grey-500: #{$grey-500};
-    --grey-400: #{$grey-600};
-    --grey-300: #{$grey-700};
-    --grey-200: #{$grey-800};
-    --grey-100: #{$grey-900};
+// :root {
+//     --grey-900: #{$grey-100};
+//     --grey-800: #{$grey-200};
+//     --grey-700: #{$grey-300};
+//     --grey-600: #{$grey-400};
+//     --grey-500: #{$grey-500};
+//     --grey-400: #{$grey-600};
+//     --grey-300: #{$grey-700};
+//     --grey-200: #{$grey-800};
+//     --grey-100: #{$grey-900};
 
-    --blue-700: #{$blue-100};
-    --blue-500: #{$blue-200};
-    --blue-300: #{$blue-300};
-    --blue-200: #{$blue-500};
-    --blue-100: #{$blue-700};
+//     --blue-700: #{$blue-100};
+//     --blue-500: #{$blue-200};
+//     --blue-300: #{$blue-300};
+//     --blue-200: #{$blue-500};
+//     --blue-100: #{$blue-700};
 
-    --green-700: #{$green-100};
-    --green-500: #{$green-200};
-    --green-300: #{$green-300};
-    --green-200: #{$green-500};
-    --green-100: #{$green-700};
+//     --green-700: #{$green-100};
+//     --green-500: #{$green-200};
+//     --green-300: #{$green-300};
+//     --green-200: #{$green-500};
+//     --green-100: #{$green-700};
 
-    --red-700: #{$red-100};
-    --red-500: #{$red-200};
-    --red-300: #{$red-300};
-    --red-200: #{$red-500};
-    --red-100: #{$red-700};
+//     --red-700: #{$red-100};
+//     --red-500: #{$red-200};
+//     --red-300: #{$red-300};
+//     --red-200: #{$red-500};
+//     --red-100: #{$red-700};
 
-    --orange-700: #{$orange-100};
-    --orange-500: #{$orange-200};
-    --orange-300: #{$orange-300};
-    --orange-200: #{$orange-500};
-    --orange-100: #{$orange-700};
+//     --orange-700: #{$orange-100};
+//     --orange-500: #{$orange-200};
+//     --orange-300: #{$orange-300};
+//     --orange-200: #{$orange-500};
+//     --orange-100: #{$orange-700};
 
-    --yellow-700: #{$yellow-100};
-    --yellow-500: #{$yellow-200};
-    --yellow-300: #{$yellow-300};
-    --yellow-200: #{$yellow-500};
-    --yellow-100: #{$yellow-700};
+//     --yellow-700: #{$yellow-100};
+//     --yellow-500: #{$yellow-200};
+//     --yellow-300: #{$yellow-300};
+//     --yellow-200: #{$yellow-500};
+//     --yellow-100: #{$yellow-700};
 
-    --teal-700: #{$teal-100};
-    --teal-500: #{$teal-200};
-    --teal-300: #{$teal-300};
-    --teal-200: #{$teal-500};
-    --teal-100: #{$teal-700};
+//     --teal-700: #{$teal-100};
+//     --teal-500: #{$teal-200};
+//     --teal-300: #{$teal-300};
+//     --teal-200: #{$teal-500};
+//     --teal-100: #{$teal-700};
 
-    --cyan-700: #{$cyan-100};
-    --cyan-500: #{$cyan-200};
-    --cyan-300: #{$cyan-300};
-    --cyan-200: #{$cyan-500};
-    --cyan-100: #{$cyan-700};
+//     --cyan-700: #{$cyan-100};
+//     --cyan-500: #{$cyan-200};
+//     --cyan-300: #{$cyan-300};
+//     --cyan-200: #{$cyan-500};
+//     --cyan-100: #{$cyan-700};
 
-    --pink-700: #{$pink-100};
-    --pink-500: #{$pink-200};
-    --pink-300: #{$pink-300};
-    --pink-200: #{$pink-500};
-    --pink-100: #{$pink-700};
+//     --pink-700: #{$pink-100};
+//     --pink-500: #{$pink-200};
+//     --pink-300: #{$pink-300};
+//     --pink-200: #{$pink-500};
+//     --pink-100: #{$pink-700};
 
-    --purple-700: #{$purple-100};
-    --purple-500: #{$purple-200};
-    --purple-300: #{$purple-300};
-    --purple-200: #{$purple-500};
-    --purple-100: #{$purple-700};
+//     --purple-700: #{$purple-100};
+//     --purple-500: #{$purple-200};
+//     --purple-300: #{$purple-300};
+//     --purple-200: #{$purple-500};
+//     --purple-100: #{$purple-700};
 
-    --indigo-700: #{$indigo-100};
-    --indigo-500: #{$indigo-200};
-    --indigo-300: #{$indigo-300};
-    --indigo-200: #{$indigo-500};
-    --indigo-100: #{$indigo-700};
+//     --indigo-700: #{$indigo-100};
+//     --indigo-500: #{$indigo-200};
+//     --indigo-300: #{$indigo-300};
+//     --indigo-200: #{$indigo-500};
+//     --indigo-100: #{$indigo-700};
 
-    --black: #{$white};
-    --white: #{$black};
-}
+//     --black: #{$white};
+//     --white: #{$black};
+// }
 
 :root {
     // Transitions and Animations
@@ -236,6 +236,30 @@ $black:                      $grey-900;
 
     --background-color-lvl2: var(--white);
     --background-color-accent-lvl2: var(--grey-300);
+
+    --border-color: var(--grey-500);
+
+    --default-color:              var(--white);
+    --default-states-color:       var(--grey-700);
+
+    --primary-color:              var(--blue-500);
+    --primary-states-color:       var(--blue-700);
+    --primary-highlight-color:    var(--blue-300);
+
+    --success-color:              var(--green-500);
+    --success-states-color:       var(--green-700);
+
+    --cta-color:                  var(--green-500);
+    --cta-states-color:           var(--green-700);
+
+    --info-color:                 var(--cyan-500);
+    --info-states-color:          var(--cyan-700);
+
+    --warning-color:              var(--orange-500);
+    --warning-states-color:       var(--orange-700);
+
+    --danger-color:               var(--red-500);
+    --danger-states-color:        var(--red-700);
 
     // Typography
     --font-color:                 var(--grey-700);
@@ -277,25 +301,31 @@ $black:                      $grey-900;
 
     --card-accent-background-color: var(--teal-100);
     --card-accent-border-color: var(--teal-200);
+
+    // Buttons
+    --button-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
 }
 
-:root {
-    --font-color: red;
-    --text-muted-color: lightcoral;
+// :root {
+//     --font-color: red;
+//     --text-muted-color: lightcoral;
 
-    --sidebar-background-color: pink;
-    --sidebar-item-color: blue;
-    --sidebar-item-state-color: purple;
-    --sidebar-drawer-bg-color: #E75480;
+//     --border-color: red;
 
-    --background-color: aquamarine;
-    --background-color-accent: aqua;
-    --background-color-lvl2: powderblue;
-    --background-color-accent-lvl2: rgb(117, 146, 211);
+//     --sidebar-background-color: pink;
+//     --sidebar-item-color: blue;
+//     --sidebar-item-state-color: purple;
+//     --sidebar-drawer-bg-color: #E75480;
 
-    --input-bg-color:              orange;
-    --input-focus-color:           darkorange;
-    --input-outline-color:         red;
-    --input-group-addon-bg-color:  var(--grey-100);
-    --card-default-box-shadow: 0px 4px 14px 0 rgba(255, 137, 239, 0.918);
-}
+//     --background-color: aquamarine;
+//     --background-color-accent: aqua;
+//     --background-color-lvl2: powderblue;
+//     --background-color-accent-lvl2: rgb(117, 146, 211);
+
+//     --input-bg-color:              orange;
+//     --input-focus-color:           darkorange;
+//     --input-outline-color:         red;
+//     --input-group-addon-bg-color:  var(--grey-100);
+//     --card-default-box-shadow: 0px 4px 14px 0 rgba(255, 137, 239, 0.918);
+//     --button-box-shadow: 0px 2px 2px rgba(255, 137, 239, 0.918);
+// }

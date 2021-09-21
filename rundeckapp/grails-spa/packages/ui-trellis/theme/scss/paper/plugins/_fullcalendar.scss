@@ -169,7 +169,7 @@ NOTE: use percentage font sizes or else old IE chokes
 
     padding: $padding-base-vertical $padding-base-horizontal;
 
-    @include btn-styles(--default-color, --default-states-color);
+    @include btn-styles(--default-color, --default-states-color, --font-color, --default-color);
     @include transition($fast-transition-time, linear);
 
     &:hover,
