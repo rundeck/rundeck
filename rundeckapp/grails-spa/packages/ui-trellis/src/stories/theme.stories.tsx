@@ -162,28 +162,55 @@ export const inputs = () => (Vue.extend({
     render(h) {
         return (
             <div>
-                <div class="checkbox">
-                    <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" checked="checked" value="true" id="exportExecutions"/>
-                    <label for="exportExecutions">Executions</label>
+                <div class="card" style="padding: 20px;">
+                    <div class="checkbox">
+                        <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" checked="checked" value="true" id="exportExecutions"/>
+                        <label for="exportExecutions">Executions</label>
+                    </div>
+                    <div class="checkbox">
+                        <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" value="false" id="exportExecutions"/>
+                        <label for="exportExecutions">Executions</label>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" name="stripJobRef" checked="checked" value="no" id="dontStrip"/>
+                        <label for="dontStrip">
+                        Do not modify referenced jobs at export.
+                        </label>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" name="stripJobRef" value="name" id="stripName"/>
+                        <label for="stripName">
+                        Strip Names. If possible, use only the UUID on referenced jobs.
+                        </label>
+                    </div>
+                    <label for="optlabel_41bbe448" class="col-sm-2 control-label    ">Option Label</label>
+                    <input type="text" class="form-control" name="label" id="opt_label" value="" size="40" placeholder="Option Label"></input>
                 </div>
-                <div class="checkbox">
-                    <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" value="false" id="exportExecutions"/>
-                    <label for="exportExecutions">Executions</label>
+
+                <div class="card card-accent" style="padding: 20px;">
+                    <div class="checkbox">
+                        <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" checked="checked" value="true" id="exportExecutions"/>
+                        <label for="exportExecutions">Executions</label>
+                    </div>
+                    <div class="checkbox">
+                        <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" value="false" id="exportExecutions"/>
+                        <label for="exportExecutions">Executions</label>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" name="stripJobRef" checked="checked" value="no" id="dontStrip"/>
+                        <label for="dontStrip">
+                        Do not modify referenced jobs at export.
+                        </label>
+                    </div>
+                    <div class="radio">
+                        <input type="radio" name="stripJobRef" value="name" id="stripName"/>
+                        <label for="stripName">
+                        Strip Names. If possible, use only the UUID on referenced jobs.
+                        </label>
+                    </div>
+                    <label for="optlabel_41bbe448" class="col-sm-2 control-label    ">Option Label</label>
+                    <input type="text" class="form-control" name="label" id="opt_label" value="" size="40" placeholder="Option Label"></input>
                 </div>
-                <div class="radio">
-                    <input type="radio" name="stripJobRef" checked="checked" value="no" id="dontStrip"/>
-                    <label for="dontStrip">
-                    Do not modify referenced jobs at export.
-                    </label>
-                </div>
-                <div class="radio">
-                    <input type="radio" name="stripJobRef" value="name" id="stripName"/>
-                    <label for="stripName">
-                    Strip Names. If possible, use only the UUID on referenced jobs.
-                    </label>
-                </div>
-                <label for="optlabel_41bbe448" class="col-sm-2 control-label    ">Option Label</label>
-                <input type="text" class="form-control" name="label" id="opt_label" value="" size="40" placeholder="Option Label"></input>
             </div>
         )
     }

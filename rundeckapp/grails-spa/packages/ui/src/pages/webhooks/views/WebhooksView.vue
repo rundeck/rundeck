@@ -2,7 +2,7 @@
 <div id="wh-view" style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
   <div id="wh-title" class="screen-title" style="display: flex;">
 
-    <h3>{{ $t('message.webhookPageTitle') }}</h3>
+    <span class="text-h3">{{ $t('message.webhookPageTitle') }}</span>
     <div style="margin-left: auto;">
       <a class="btn"
         :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
@@ -48,7 +48,7 @@
             <Tab :index="0" title="General">
               <div class="wh-edit__body">
                 <div  class="form-group">
-                  <div class="card wh-url-card">
+                  <div class="card card-accent">
                   <div class="card-content">
                     <label>{{ $t('message.webhookPostUrlLabel') }}</label>
                     <div class="help-block">
@@ -434,12 +434,6 @@ export default observer(Vue.extend({
     background-color: var(--background-color-lvl2);
     border-color: #d7d7d7;
     border-bottom: 0.1em solid #d7d7d7;
-    h3 {
-      margin: 0;
-      padding: 0;
-      font-weight: 700;
-      color: black;
-    }
   }
 
   #wh-details {
@@ -460,7 +454,7 @@ export default observer(Vue.extend({
   #wh-header {
     display: flex;
     align-items: center;
-    background-color: #f7f7f7;
+    background-color: var(--background-color-accent-lvl2);
     height: 70px;
     padding: 0 2em 0 2em;
 
@@ -472,7 +466,7 @@ export default observer(Vue.extend({
   }
 
   ::v-deep [data-tabkey="webhook-header"] > .rdtabs__tabheader {
-    background-color: #f7f7f7;
+    background-color: var(--background-color-accent-lvl2);
     border: none;
     padding: 0 2em;
   }
