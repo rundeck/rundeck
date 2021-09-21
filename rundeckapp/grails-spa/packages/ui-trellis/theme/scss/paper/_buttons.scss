@@ -3,13 +3,12 @@
   // border-radius: $border-radius-btn-base;
   box-sizing: border-box;
   border-width: $border-thin;
-  background-color: var(--transparent-bg);
   font-size: $font-size-base;
   font-weight: 600;
 
   padding: $padding-base-vertical $padding-base-horizontal;
 
-  @include btn-styles(--default-color, --default-states-color);
+  @include btn-styles(--default-color, --default-states-color, --font-color, --border-color);
   @include transition($fast-transition-time, linear);
 
   &:hover,
@@ -49,7 +48,7 @@
 
 .navbar .navbar-nav>li>a.btn.btn-primary,
 .btn-cta {
-  @include btn-styles(--primary-color, --primary-states-color);
+  @include btn-styles(--primary-color, --primary-states-color, --font-fill-color, --primary-color);
 }
 
 // Apply the mixin to the buttons
@@ -67,31 +66,31 @@
 
 .navbar .navbar-nav>li>a.btn.btn-success,
 .btn-cta {
-  @include btn-styles(--cta-color, --cta-states-color);
+  @include btn-styles(--cta-color, --cta-states-color, --font-fill-color, --cta-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-success,
 .btn-success {
-  @include btn-styles(--success-color, --success-states-color);
+  @include btn-styles(--success-color, --success-states-color, --font-fill-color, --success-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-info,
 .btn-info {
-  @include btn-styles(--info-color, --info-states-color);
+  @include btn-styles(--info-color, --info-states-color, --font-fill-color, --info-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-warning,
 .btn-warning {
-  @include btn-styles(--warning-color, --warning-states-color);
+  @include btn-styles(--warning-color, --warning-states-color, --font-fill-color, --warning-color);
 }
 
 .navbar .navbar-nav>li>a.btn.btn-danger,
 .btn-danger {
-  @include btn-styles(--danger-color, --danger-states-color);
+  @include btn-styles(--danger-color, --danger-states-color, --font-fill-color, --danger-color);
 }
 
 .btn-neutral {
-  @include btn-styles(--white-color, --white-color);
+  @include btn-styles(--white-color, --white-color, --font-fill-color, --danger-color);
 
   &:hover,
   &:focus {
@@ -133,11 +132,6 @@
       opacity: 1;
     }
   }
-
-  &.btn-simple:active,
-  &.btn-simple.active {
-    background-color: transparent;
-  }
 }
 
 .btn {
@@ -155,9 +149,8 @@
 }
 
 .btn-simple {
-  border: var(--none);
-  padding: $padding-base-vertical $padding-base-horizontal;
-
+  // border: var(--none);
+  box-shadow: unset;
 }
 
 .navbar .navbar-nav>li>a.btn.btn-lg,

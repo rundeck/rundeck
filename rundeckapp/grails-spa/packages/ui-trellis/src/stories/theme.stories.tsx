@@ -60,7 +60,7 @@ export const typography = () => (Vue.extend({
 export const buttons = () => (Vue.extend({
     render(h) {
         return (
-            <div style="max-width: 600px; margin-top: 10px;">
+            <div style="max-width: 800px; margin-top: 10px;background-color: pink;">
                 <div style="display:flex;justify-content: space-evenly;">
                     <a class="btn btn-default" role="button">Link</a>
                     <button class="btn btn-default">Button</button>
@@ -68,12 +68,14 @@ export const buttons = () => (Vue.extend({
                 </div>
                 <div style="display: flex;justify-content: space-evenly; margin-top: 10px;">
                     <button class="btn btn-default">Default</button>
+                    <button class="btn btn-default btn-simple">Default Simple</button>
                     <button class="btn btn-primary">Primary</button>
                     <button class="btn btn-info">Info</button>
+                    <button class="btn btn-cta">CTA</button>
                     <button class="btn btn-success">Success</button>
                     <button class="btn btn-warning">Warning</button>
                     <button class="btn btn-danger">Danger</button>
-                    <button class="btn btn-transparent">Transparent</button>
+                    <button class="btn btn-default btn-transparent">Transparent</button>
                 </div>
                 <h3>Disabled</h3>
                 <div style="display:flex;justify-content: space-evenly;">
@@ -85,10 +87,11 @@ export const buttons = () => (Vue.extend({
                     <button class="btn btn-disabled btn-default">Default</button>
                     <button class="btn btn-disabled btn-primary">Primary</button>
                     <button class="btn btn-disabled btn-info">Info</button>
+                    <button class="btn btn-disabled btn-cta">CTA</button>
                     <button class="btn btn-disabled btn-success">Success</button>
                     <button class="btn btn-disabled btn-warning">Warning</button>
                     <button class="btn btn-disabled btn-danger">Danger</button>
-                    <button class="btn btn-disabled btn-transparent">Transparent</button>
+                    <button class="btn btn-disabled btn-default btn-transparent">Transparent</button>
                 </div>
             </div>
             

@@ -1,14 +1,17 @@
 // Mixin for generating new styles
-@mixin btn-styles($btn-color, $btn-states-color) {
-  border-color: var($btn-color);
-  color: var($btn-color);
+@mixin btn-styles($btn-color, $btn-states-color, $btn-font-color, $btn-border-color) {
+  border-color: var($btn-border-color);
+  color: var(--font-fill-color);
+  background-color: var($btn-color);
+  color: var($btn-font-color);
+  box-shadow: var(--button-box-shadow);
 
   &:hover,
   &:focus,
   &:active,
   &.active,
   .open > &.dropdown-toggle {
-    background-color: var($btn-color);
+    background-color: var($btn-states-color);
     color: var(--font-fill-color);
     border-color: var($btn-color);
     .caret {
@@ -39,7 +42,11 @@
     }
   }
   &.btn-transparent {
-    border-color: transparent !important;
+    // border-color: transparent !important;
+    &:not(:hover) {
+      background-color: transparent !important;
+    }
+    box-shadow: unset;
   }
   &.btn-fill {
     color: var(--white-color);
@@ -61,21 +68,20 @@
     }
   }
 
-  &.btn-simple {
-    &:hover,
-    &:focus,
-    &:active,
-    &.active,
-    .open > &.dropdown-toggle {
-      background-color: var(--transparent-bg);
-      color: var($btn-states-color);
+  // &.btn-simple {
+    // &:hover,
+    // &:focus,
+    // &:active,
+    // &.active,
+    // .open > &.dropdown-toggle {
+    //   background-color: var(--transparent-bg);
+    //   color: var($btn-states-color);
 
-      .caret {
-        border-top-color: var($btn-states-color);
-      }
-    }
-
-  }
+    //   .caret {
+    //     border-top-color: var($btn-states-color);
+    //   }
+    // }
+  // }
 
   .caret {
     border-top-color: var($btn-color);

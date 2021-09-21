@@ -4,11 +4,6 @@
 Theme colors
 **/
 :root {
-    --white-background-color: var(--white);
-    --black-background-color: var(--black);
-    --darkblue-background-color: #35495E; // this is the dark blue color from Vue.js branding
-    --default-background-color: var(--grey-200);
-
     // TODO: Is this necessary?
     --none:                       0;
 
@@ -47,27 +42,7 @@ Theme colors
     // TODO: What is the purpose of this?
     --transparent-bg:             transparent;
 
-    --default-color:              var(--grey-700);
-    --default-states-color:       var(--grey-600);
 
-    --primary-color:              var(--blue-500);
-    --primary-states-color:       var(--blue-700);
-    --primary-highlight-color:    var(--blue-300);
-
-    --success-color:              var(--green-500);
-    --success-states-color:       var(--green-500);
-
-    --cta-color:                  var(--green-500);
-    --cta-states-color:            var(--green-700);
-
-    --info-color:                 var(--cyan-500);
-    --info-states-color:          var(--cyan-500);
-
-    --warning-color:              var(--orange-500);
-    --warning-states-color:       var(--orange-700);
-
-    --danger-color:               var(--red-500);
-    --danger-states-color:        var(--red-500);
 
     --link-primary-color: var(--primary-color);
     --link-secondary-color: var(--grey-700);

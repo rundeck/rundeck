@@ -12,6 +12,6 @@ export default {
 
 <style scoped lang="scss">
 .copyright {
-    color: #808080;
+    color: var(--font-color);
 }
 </style>
