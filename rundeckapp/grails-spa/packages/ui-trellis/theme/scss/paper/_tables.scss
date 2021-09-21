@@ -114,7 +114,7 @@
 
 .table-striped{
   tbody > tr:nth-of-type(2n+1) {
-    background-color: var(--gray-input-bg);
+    background-color: var(--table-stripe-color);
   }
   > thead > tr > th,
   > tbody > tr > th,

@@ -9,10 +9,10 @@
   &.active,
   .open > &.dropdown-toggle {
     background-color: var($btn-color);
-    color: var(--fill-font-color);
+    color: var(--font-fill-color);
     border-color: var($btn-color);
     .caret {
-      border-top-color: var(--fill-font-color);
+      border-top-color: var(--font-fill-color);
     }
   }
 

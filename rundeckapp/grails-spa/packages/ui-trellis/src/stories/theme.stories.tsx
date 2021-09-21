@@ -26,19 +26,27 @@ export const typography = () => (Vue.extend({
                 <h1 class="text-info">Links</h1>
                 <div style="margin-top: 20px;"><a>Default links are accessible blue.</a></div>
                 <div><a class="link-quiet">Quiet links have no color.</a></div>
+
                 <h1 class="text-info">Text</h1>
+                <div>Just some text</div>
                 <div><strong domPropsInnerHTML="&lt;strong&gt;Text is bold.&lt;/strong&gt;"></strong></div>
                 <div class="text-strong">.text-strong Text is bold.</div>
+                <div class="text-primary">Text primary</div>
+                <div class="text-muted">.text-muted is ??</div>
+                <div class="text-secondary">.text-secondary is ??</div>
+
                 <h4 class="text-info">Color Text</h4>
                 <div class="text-success">Success text.</div>
                 <div class="text-info">Info text.</div>
                 <div class="text-warning">Warning text.</div>
                 <div class="text-danger">Danger text.</div>
+
                 <h4 class="text-info">Backgrounds</h4>
                 <div class="bg-success">Success background.</div>
                 <div class="bg-info">Info background.</div>
                 <div class="bg-warning">Warning background.</div>
                 <div class="bg-danger">Danger background.</div>
+
                 <h4 class="text-info">Alerts</h4>
                 <div class="alert-info">Info alert</div>
                 <div class="alert-success">Success alert</div>
@@ -107,7 +115,7 @@ export const pagination = () => (Vue.extend({
 export const cards = () => (Vue.extend({
     render(h) {
         return (
-            <div style="padding: 20px; max-width: 500px">
+            <div style="padding: 20px; max-width: 500px" class="content">
                 <div class="card">
                     <div class="card-content" style="padding-bottom: 20px;">
                     <span class="h3 text-primary">
@@ -115,11 +123,15 @@ export const cards = () => (Vue.extend({
                         </span>
                     </span>
                     
-                        <a href="/resources/createProject" class="btn  btn-success pull-right">
-                            New Project
-                            <b class="glyphicon glyphicon-plus"></b>
-                        </a>
-                    
+                    <a href="/resources/createProject" class="btn  btn-success pull-right">
+                        New Project
+                        <b class="glyphicon glyphicon-plus"></b>
+                    </a>
+
+                    <div>
+                        Card content text.
+                    </div>
+
                     </div>
                 </div>
             </div>
@@ -143,4 +155,53 @@ export const tabs = () => (Vue.extend({
             </div>
         )
     }
+}))
+
+
+export const inputs = () => (Vue.extend({
+    render(h) {
+        return (
+            <div>
+                <div class="checkbox">
+                    <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" checked="checked" value="true" id="exportExecutions"/>
+                    <label for="exportExecutions">Executions</label>
+                </div>
+                <div class="checkbox">
+                    <input type="hidden" name="_exportExecutions"/><input type="checkbox" name="exportExecutions" value="false" id="exportExecutions"/>
+                    <label for="exportExecutions">Executions</label>
+                </div>
+                <div class="radio">
+                    <input type="radio" name="stripJobRef" checked="checked" value="no" id="dontStrip"/>
+                    <label for="dontStrip">
+                    Do not modify referenced jobs at export.
+                    </label>
+                </div>
+                <div class="radio">
+                    <input type="radio" name="stripJobRef" value="name" id="stripName"/>
+                    <label for="stripName">
+                    Strip Names. If possible, use only the UUID on referenced jobs.
+                    </label>
+                </div>
+                <label for="optlabel_41bbe448" class="col-sm-2 control-label    ">Option Label</label>
+                <input type="text" class="form-control" name="label" id="opt_label" value="" size="40" placeholder="Option Label"></input>
+            </div>
+        )
+    }
+}))
+
+
+export const panels = () => (Vue.extend({
+    render(h) {
+        return (
+            <div class="content">
+                <div class="panel panel-default" style="width: 500px; height: 200px;">
+                    <div class="panel-heading">Default</div>
+                    <div class="panel-body">
+                        Panel body
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
 }))

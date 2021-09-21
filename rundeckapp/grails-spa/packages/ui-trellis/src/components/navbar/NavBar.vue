@@ -91,7 +91,7 @@ nav {
     overflow-x: hidden;
     position: relative;
     height: 100%;
-    background-color: #212120;
+    background-color: var(--sidebar-background-color);
     padding-top: 20px;
     padding-bottom: 20px;
 

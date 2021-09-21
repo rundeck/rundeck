@@ -63,7 +63,7 @@ export default class UtilBar extends Vue {
 <style scoped lang="scss">
 .utility-bar {
     position: relative;
-    background-color: white;
+    background-color: var(--utility-bar-background-color);
     box-shadow: 0px -1px grey;
     width: 100%;
     height: 100%;

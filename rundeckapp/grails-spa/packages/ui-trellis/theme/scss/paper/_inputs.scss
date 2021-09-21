@@ -12,8 +12,8 @@
 }
 
 .form-control {
-    background-color: var(--gray-input-bg);
-    border: 1px solid var(--gray-input-outline);
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--input-outline-color);
     border-radius: $border-radius-base;
     color: var(--font-color);
     font-size: $font-size-base;
@@ -22,7 +22,7 @@
 
     &:focus{
        border: 1px solid var(--gray-input-outline);
-       background-color: var(--light-input-bg);
+       background-color: var(--input-focus-color);
        @include box-shadow(none);
        outline: 0 !important;
     }
@@ -42,7 +42,7 @@
     }
     .has-success &:focus,
     &.valid:focus, &[aria-invalid="false"]:focus{
-        background-color: var(--light-input-bg);
+        background-color: var(--input-focus-color);
         border-color: var(--success-color);
     }
     .has-error &,
@@ -53,7 +53,7 @@
     }
     .has-error &:focus,
     &.error:focus{
-        background-color: var(--light-input-bg);
+        background-color: var(--input-focus-color);
         border-color: var(--danger-color);
     }
 
@@ -99,8 +99,8 @@
 
 
 .input-group-addon {
-    background-color: var(--gray-input-bg);
-    border: 1px solid var(--gray-input-outline);
+    background-color: var(--input-group-addon-bg-color);
+    border: 1px solid var(--input-outline-color);
     border-radius: $border-radius-base;
 
     .has-success &,
@@ -186,7 +186,7 @@ textarea.form-control{
 }
 
 .input-group-focus .input-group-addon{
-    background-color: var(--light-input-bg);
+    background-color: var(--input-focus-color);
 }
 
 label::after + input[aria-required="true"]{

@@ -350,7 +350,7 @@
 
 .content {
   border-top: 1px solid #dadada;
-  background-color: #F4F5F7;
+  background-color: var(--background-color);
   overflow: auto;
   padding: 15px 15px 0 15px;
   min-height: calc(100% - 135px);
