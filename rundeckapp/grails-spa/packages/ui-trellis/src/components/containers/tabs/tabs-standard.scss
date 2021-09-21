@@ -58,12 +58,12 @@
         height: 100%;
         // border: 1px solid black;
         font-weight: 700;
-        color: #66615b;
+        color: var(--text-muted-color);
         padding: 10px 15px;
     }
 
     .rdtabs__tab--active {
-        color: black;
+        color: var(--font-color);
     }
 
 

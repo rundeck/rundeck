@@ -56,7 +56,7 @@
       transition: 0.3s cubic-bezier(0.55, 0, 0.1, 1);
       > a{
         border: 0 none;
-        color: var(--medium-gray);
+        color: var(--text-muted-color);
       }
       > a:hover{
         color: var(--font-color);
@@ -104,7 +104,7 @@
       > a:hover,
       > a:focus{
         font-weight: $font-weight-bold;
-        color: #000;
+        color: var(--font-color);
         background-color: transparent;
         border: 0 none;
       }
@@ -130,7 +130,7 @@
 
     > li {
       > a{
-        color: var(--medium-gray);
+        color: var(--text-muted-color);
         padding: 7px 25px;
         text-align: right;
       }

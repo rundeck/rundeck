@@ -1,7 +1,7 @@
 .card{
     border-radius: $border-radius-extreme;
     border: 1px solid var(--card-default-border-color);
-    box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
+    box-shadow: var(--card-default-box-shadow);
     background-color: var(--card-default-background-color);
     color: var(--card-default-color);
     margin-bottom: 20px;
@@ -293,6 +293,12 @@
         hr{
             border-color: rgba(255, 255, 255, 0.5);
         }
+    }
+
+    &.card-accent {
+        background-color: var(--card-accent-background-color);
+        border-color: var(--card-accent-border-color);
+        border-width: 0.1em;
     }
 
     &[data-background-color="blue"]{
@@ -626,3 +632,4 @@
 .card-content .ct-chart {
   min-height: 210px;
 }
+
