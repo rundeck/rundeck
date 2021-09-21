@@ -16,7 +16,7 @@
       <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
     </div>
 
-    <div class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
+    <div id="wh-details" class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
       <div>
         <div id="wh-edit" v-if="curHook">
           <div id="wh-header">
@@ -431,6 +431,7 @@ export default observer(Vue.extend({
     flex-basis: 70px;
     flex-grow: 0;
     flex-shrink: 0;
+    background-color: var(--background-color-lvl2);
     border-color: #d7d7d7;
     border-bottom: 0.1em solid #d7d7d7;
     h3 {
@@ -441,8 +442,12 @@ export default observer(Vue.extend({
     }
   }
 
+  #wh-details {
+    background-color: var(--background-color-lvl2);
+  }
+
   #wh-list {
-    background-color: #f4f5f7;
+    background-color: var(--background-color);
     border-right: 0.1em solid #d3dbe5;
     flex-shrink: 0;
   }
