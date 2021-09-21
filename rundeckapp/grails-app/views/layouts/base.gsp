@@ -215,10 +215,6 @@
 
 <g:set var="projectName" value="${params.project ?: request.project}"/>
 
-<section id="section-header" style="grid-area: header; background-color: red;">
-    <g:render template="/common/mainbar"/>
-</section>
-
 <section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
     <g:if test="${projectName}">
         <section id="section-navbar" style="grid-area: nav;">
@@ -265,6 +261,10 @@
         <g:layoutBody/>
     %{--        <g:render template="/common/footer"/>--}%
     </section>
+</section>
+
+<section id="section-header" style="grid-area: header; background-color: red;">
+    <g:render template="/common/mainbar"/>
 </section>
 
 <section id="section-utility" style="grid-area: utility;">
