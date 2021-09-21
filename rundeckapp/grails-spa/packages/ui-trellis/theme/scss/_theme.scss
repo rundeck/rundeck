@@ -1,0 +1,216 @@
+$grey-100:                   #FAFAFA;
+$grey-200:                   #F4F4F5;
+$grey-300:                   #E4E4E7;
+$grey-400:                   #D4D4D8;
+$grey-500:                   #A1A1AA;
+$grey-600:                   #71717A;
+$grey-700:                   #52525B;
+$grey-800:                   #27272A;
+$grey-900:                   #18181B;
+
+$blue-100:                   #BFDBFE;
+$blue-200:                   #93C5FD;
+$blue-300:                   #60A5FA;
+$blue-500:                   #134ECD;
+$blue-700:                   #1E40AF;
+
+$green-100:                  #BBF7D0;
+$green-200:                  #86EFAC;
+$green-300:                  #4ADE80;
+$green-500:                  #16A34A;
+$green-700:                  #0F612D;
+
+$red-100:                    #FECACA;
+$red-200:                    #FCA5A5;
+$red-300:                    #F87171;
+$red-500:                    #DC2626;
+$red-700:                    #991B1B;
+
+$orange-100:                 #FED7AA;
+$orange-200:                 #FDBA74;
+$orange-300:                 #FB923C;
+$orange-500:                 #F97316;
+$orange-700:                 #C2410C;
+
+$yellow-100:                 #FEF9C3;
+$yellow-200:                 #FEF08A;
+$yellow-300:                 #FDE047;
+$yellow-500:                 #FACC15;
+$yellow-700:                 #A16207;
+
+$teal-100:                   #CCFBF1;
+$teal-200:                   #99F6E4;
+$teal-300:                   #5EEAD4;
+$teal-500:                   #17CFB9;
+$teal-700:                   #0F766E;
+
+$cyan-100:                   #CFFAFE;
+$cyan-200:                   #A5F3FC;
+$cyan-300:                   #22D3EE;
+$cyan-500:                   #06B6D4;
+$cyan-700:                   #0E7490;
+
+$pink-100:                   #FCE7F3;
+$pink-200:                   #FBCFE8;
+$pink-300:                   #F9A8D4;
+$pink-500:                   #F472B6;
+$pink-700:                   #BE185D;
+
+$purple-100:                 #E9D5FF;
+$purple-200:                 #D8B4FE;
+$purple-300:                 #C084FC;
+$purple-500:                 #7B17D9;
+$purple-700:                 #6B21A8;
+
+$indigo-100:                 #C7D2FE;
+$indigo-200:                 #A5B4FC;
+$indigo-300:                 #818CF8;
+$indigo-500:                 #433BE3;
+$indigo-700:                 #3730A3;
+
+$white:                      #FFFFFF;
+$black:                      $grey-900;
+
+:root {
+    --grey-100: #{$grey-100};
+    --grey-200: #{$grey-200};
+    --grey-300: #{$grey-300};
+    --grey-400: #{$grey-400};
+    --grey-500: #{$grey-500};
+    --grey-600: #{$grey-600};
+    --grey-700: #{$grey-700};
+    --grey-800: #{$grey-800};
+    --grey-900: #{$grey-900};
+
+    --blue-100: #{$blue-100};
+    --blue-200: #{$blue-200};
+    --blue-300: #{$blue-300};
+    --blue-500: #{$blue-500};
+    --blue-700: #{$blue-700};
+
+    --green-100: #{$green-100};
+    --green-200: #{$green-200};
+    --green-300: #{$green-300};
+    --green-500: #{$green-500};
+    --green-700: #{$green-700};
+
+    --red-100: #{$red-100};
+    --red-200: #{$red-200};
+    --red-300: #{$red-300};
+    --red-500: #{$red-500};
+    --red-700: #{$red-700};
+
+    --orange-100: #{$orange-100};
+    --orange-200: #{$orange-200};
+    --orange-300: #{$orange-300};
+    --orange-500: #{$orange-500};
+    --orange-700: #{$orange-700};
+
+    --yellow-100: #{$yellow-100};
+    --yellow-200: #{$yellow-200};
+    --yellow-300: #{$yellow-300};
+    --yellow-500: #{$yellow-500};
+    --yellow-700: #{$yellow-700};
+
+    --teal-100: #{$teal-100};
+    --teal-200: #{$teal-200};
+    --teal-300: #{$teal-300};
+    --teal-500: #{$teal-500};
+    --teal-700: #{$teal-700};
+
+    --cyan-100: #{$cyan-100};
+    --cyan-200: #{$cyan-200};
+    --cyan-300: #{$cyan-300};
+    --cyan-500: #{$cyan-500};
+    --cyan-700: #{$cyan-700};
+
+    --pink-100: #{$pink-100};
+    --pink-200: #{$pink-200};
+    --pink-300: #{$pink-300};
+    --pink-500: #{$pink-500};
+    --pink-700: #{$pink-700};
+
+    --purple-100: #{$purple-100};
+    --purple-200: #{$purple-200};
+    --purple-300: #{$purple-300};
+    --purple-500: #{$purple-500};
+    --purple-700: #{$purple-700};
+
+    --indigo-100: #{$indigo-100};
+    --indigo-200: #{$indigo-200};
+    --indigo-300: #{$indigo-300};
+    --indigo-500: #{$indigo-500};
+    --indigo-700: #{$indigo-700};
+
+    --white: #{$white};
+    --black: #{$black};
+}
+
+:root {
+    // Transitions and Animations
+    --animation-scale: 1;
+
+
+    // Brand
+    --accent-color: #52C80B;
+
+    --background-color: #F4F5F7;
+    --background-color-lvl2: var(--white);
+
+    // Typography
+    --font-color:                 var(--grey-700);
+    --font-fill-color:            var(--white);
+
+    --text-primary-color: var(--primary-color);
+    --text-muted-color:           var(--medium-grey);
+    --text-secondary-color:       var(--text-muted-color);
+
+    // Panels
+    --panel-background-color: var(--background-color-lvl2);
+
+    // Main Bar
+    --mainbar-bg-color: var(--background-color-lvl2);
+
+    // Side Bar
+    --sidebar-background-color: #212120;
+    --sidebar-item-color:       #BCBCBC;
+    --sidebar-item-state-color: var(--white);
+    --sidebar-drawer-bg-color:  #303030;
+
+    // Utility Bar
+    --utility-bar-background-color: var(--background-color-lvl2);
+
+    // Inputs
+    --input-bg-color:              var(--grey-200);
+    --input-outline-color:         var(--grey-300);
+    --input-group-addon-bg-color:  var(--grey-100);
+    --input-focus-color:           var(--grey-100);
+
+    // Tables
+    --table-stripe-color: pink;
+
+    // Cards
+    --card-default-background-color: var(--background-color-lvl2);
+    --card-default-border-color: #d3dbe5;
+    --card-default-color: var(--font-color);
+}
+
+:root {
+    --font-color: red;
+    --font-muted-color: lightcoral;
+
+
+    // Side Bar
+    --sidebar-background-color: pink;
+    --sidebar-item-color: blue;
+    --sidebar-item-state-color: purple;
+    --sidebar-drawer-bg-color: #E75480;
+
+    --background-color: aquamarine;
+    --background-color-lvl2: powderblue;
+
+    --input-bg-color:              orange;
+    --input-focus-color:           darkorange;
+    --input-outline-color:         red;
+    --input-group-addon-bg-color:  var(--grey-100);
+}

@@ -6,7 +6,7 @@
 // Base class
 .panel {
   margin-bottom: $line-height-computed;
-  background-color: $panel-bg;
+  background-color: var(--panel-background-color);
   border: 1px solid transparent;
   border-radius: $panel-border-radius;
   @include box-shadow(0 1px 1px rgba(0, 0, 0, .05));

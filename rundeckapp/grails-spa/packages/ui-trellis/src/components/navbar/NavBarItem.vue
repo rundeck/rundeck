@@ -44,15 +44,16 @@ export default Vue.extend({
     text-align: center;
 
     * {
-        color: #BCBCBC
+        // color: #BCBCBC;
+        color: var(--sidebar-item-color);
     }
 
     :hover * {
-        color: white;
+        color: var(--sidebar-item-state-color);
     }
 
     &.navbar__item--active * {
-        color: white;
+        color: var(--sidebar-item-state-color);
     }
 }
 
