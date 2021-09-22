@@ -223,9 +223,9 @@
 .pagination > li > a,
 .pagination > li > span{
     background-color: transparent;
-    border: $border-thin solid var(--default-color);
+    border: $border-thin solid var(--default-states-color);
     border-radius: 5px;
-    color: var(--default-color);
+    color: var(--default-states-color);
     height: $line-height;
     font-weight: $font-weight-bold;
     margin: 0 2px;
@@ -243,9 +243,9 @@
 .pagination > li.active > span:hover,
 .pagination > li.active > a:focus,
 .pagination > li.active > span:focus {
-    background-color: var(--default-color);
-    border-color: var(--default-color);
-    color: var(--white-color);
+    background-color: var(--default-states-color);
+    border-color: var(--default-states-color);
+    color: var(--default-color);
     cursor: pointer;
 }
 
