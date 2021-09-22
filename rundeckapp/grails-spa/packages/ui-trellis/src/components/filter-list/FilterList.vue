@@ -168,7 +168,6 @@ export default class FilterList extends Vue {
     right: initial;
     left: 0;
     top: 8px;
-    color:black;
 }
 
 .has-search .form-control {
