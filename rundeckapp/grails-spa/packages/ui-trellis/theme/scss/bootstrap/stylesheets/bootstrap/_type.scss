@@ -121,15 +121,15 @@ mark,
   // automatically.
   color: #fff;
 }
-@include bg-variant('.bg-primary', $brand-primary);
+@include bg-variant('.bg-primary', --primary-color);
 
-@include bg-variant('.bg-success', $state-success-bg);
+@include bg-variant('.bg-success', --success-bg-color);
 
-@include bg-variant('.bg-info', $state-info-bg);
+@include bg-variant('.bg-info', --info-bg-color);
 
-@include bg-variant('.bg-warning', $state-warning-bg);
+@include bg-variant('.bg-warning', --warning-bg-color);
 
-@include bg-variant('.bg-danger', $state-danger-bg);
+@include bg-variant('.bg-danger', --danger-bg-color);
 
 
 // Page header
