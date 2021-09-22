@@ -173,6 +173,7 @@ $black:                      $grey-900;
     --primary-color:              var(--blue-500);
     --primary-states-color:       var(--blue-700);
     --primary-highlight-color:    var(--blue-300);
+    --primary-bg-color:           var(--blue-100);
 
     --success-color:              var(--green-500);
     --success-states-color:       var(--green-700);
@@ -223,7 +224,7 @@ $black:                      $grey-900;
     --input-focus-color:           var(--grey-100);
 
     // Tables
-    --table-stripe-color: pink;
+    --table-stripe-color: var(--grey-100);
 
     // Cards
     --card-default-background-color: var(--background-color-lvl2);

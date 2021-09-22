@@ -144,10 +144,9 @@ th {
 
 .table-hover {
   > tbody > tr:hover {
-    background-color: $table-bg-hover;
+    background-color: var(--background-color-accent-lvl2);
   }
 }
-
 
 // Table backgrounds
 //
