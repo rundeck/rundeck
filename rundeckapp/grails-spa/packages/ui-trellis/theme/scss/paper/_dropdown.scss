@@ -48,13 +48,13 @@
     >.active>a:hover,
     >.active>a:focus {
       background-color: var(--background-color-accent-lvl2);
-      // color: var(--font-color);
+      color: var(--font-color);
     }
 
     >li>a:hover,
     >li>a:focus {
       background-color: var(--background-color-accent-lvl2);
-      // color: var(--font-fill-color);
+      color: var(--font-color);
       opacity: 1;
       text-decoration: none;
     }
@@ -175,7 +175,7 @@
   >li>a:hover,
   >li>a:focus {
     background-color: var(--background-color-accent-lvl2);
-    // color: var(--font-fill-color);
+    color: var(--font-color);
     opacity: 1;
     text-decoration: none;
   }
