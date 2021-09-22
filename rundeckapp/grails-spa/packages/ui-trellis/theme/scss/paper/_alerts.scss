@@ -48,29 +48,29 @@
 }
 
 .alert {
-  background-color: $bg-default-inverse;
+  background-color: var(--background-color-accent-lvl2);
   color: var(--black);
 }
 
 .alert-primary {
-  background-color: $bg-primary;
+  background-color: var(--primary-bg-color);
 }
 
 .alert-info {
-  background-color: $bg-info;
+  background-color: var(--info-bg-color);
 }
 
 .alert-success {
-  background-color: $bg-success;
+  background-color: var(--success-bg-color);
 }
 
 .alert-warning {
-  background-color: $bg-warning;
-  border: 1px solid $border-warning;
+  background-color: var(--warning-bg-color);
+  border: 1px solid var(--warning-border-color);
 }
 
 .alert-danger {
-  background-color: $bg-danger;
-  border: 2px solid $border-danger;
+  background-color: var(--danger-bg-color);
+  border: 2px solid var(--danger-color);
 }
 

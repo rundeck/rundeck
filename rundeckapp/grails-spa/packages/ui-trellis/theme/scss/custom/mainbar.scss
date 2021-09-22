@@ -25,7 +25,7 @@
   // Cog
   .fa-cog,
   .fa-user {
-    color: #65605a;
+    color: var(--font-color);
   }
 
   #projectHomeLink {
@@ -204,14 +204,14 @@
 }
 
 .subtitlebar {
-  background: $bg-subheader;
+  background: var(--background-color-lvl2);
 
   &.navbar {
     border-bottom: 1px solid darken($bg-subheader, 10%);
   }
 
   &.plain {
-    background: none;
+    background: var(--background-color-lvl2);
   }
 }
 

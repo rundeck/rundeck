@@ -246,8 +246,8 @@
             </nav>
         </g:ifPageProperty>
 
-        <div class="vue-project-motd container-fluid">
-            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
+        <div class="vue-project-motd" style="background-color: var(--background-color-lvl2)">
+            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px; margin-left: 15px; margin-right: 15px"></motd>
         </div>
 
         <g:ifPageProperty name="page.searchbarsection">

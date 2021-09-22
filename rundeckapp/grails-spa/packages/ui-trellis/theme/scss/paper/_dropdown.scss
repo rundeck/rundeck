@@ -1,5 +1,5 @@
 .dropdown-menu {
-  background-color: var(--white-color);
+  background-color: var(--background-color-lvl2);
   border: 0 none;
   border-radius: $border-radius-extreme;
   margin-top: 5px;
@@ -47,14 +47,14 @@
     >.active>a,
     >.active>a:hover,
     >.active>a:focus {
-      background-color: var(--smoke-bg);
-      color: var(--font-color);
+      background-color: var(--background-color-accent-lvl2);
+      // color: var(--font-color);
     }
 
     >li>a:hover,
     >li>a:focus {
-      background-color: var(--default-color);
-      color: var(--font-fill-color);
+      background-color: var(--background-color-accent-lvl2);
+      // color: var(--font-fill-color);
       opacity: 1;
       text-decoration: none;
     }
@@ -174,8 +174,8 @@
 
   >li>a:hover,
   >li>a:focus {
-    background-color: var(--default-color);
-    color: var(--font-fill-color);
+    background-color: var(--background-color-accent-lvl2);
+    // color: var(--font-fill-color);
     opacity: 1;
     text-decoration: none;
   }

@@ -56,7 +56,7 @@
 // Generate contextual modifier classes for colorizing the alert.
 
 .alert-success {
-  @include alert-variant($alert-success-bg, $alert-success-border, $alert-success-text);
+  @include alert-variant(--success-color, --success-states-color, --font-color);
 }
 
 .alert-info {

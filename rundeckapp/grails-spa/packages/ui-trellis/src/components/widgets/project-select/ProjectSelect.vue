@@ -154,7 +154,7 @@ export default class ProjectSelect extends Vue {
         position: absolute;
         content: "";
         height: 100%;
-        border-left: 3px solid #F73F39;
+        border-left: 3px solid var(--brand-color);
         margin-left: -10px;
     }
 }
