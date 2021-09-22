@@ -906,7 +906,7 @@ $since-bg: #ccf;
     padding: 2px;
   }
   > tr:hover{
-    background: darken($color: $since-bg, $amount: 20%)
+    background: var(--background-color-accent-lvl2)
   }
 }
 .running-executions + .history-executions,

@@ -225,8 +225,38 @@ export const panels = () => (Vue.extend({
     render(h) {
         return (
             <div class="content">
-                <div class="panel panel-default" style="width: 500px; height: 200px;">
+                <div class="panel panel-default" style="width: 500px; height: 100px;">
                     <div class="panel-heading">Default</div>
+                    <div class="panel-body">
+                        Panel body
+                    </div>
+                </div>
+                <div class="panel panel-primary" style="width: 500px; height: 100px;">
+                    <div class="panel-heading">Primary</div>
+                    <div class="panel-body">
+                        Panel body
+                    </div>
+                </div>
+                <div class="panel panel-info" style="width: 500px; height: 100px;">
+                    <div class="panel-heading">Primary</div>
+                    <div class="panel-body">
+                        Panel body
+                    </div>
+                </div>
+                <div class="panel panel-success" style="width: 500px; height: 100px;">
+                    <div class="panel-heading">Success</div>
+                    <div class="panel-body">
+                        Panel body
+                    </div>
+                </div>
+                <div class="panel panel-warning" style="width: 500px; height: 100px;">
+                    <div class="panel-heading">Success</div>
+                    <div class="panel-body">
+                        Panel body
+                    </div>
+                </div>
+                <div class="panel panel-danger" style="width: 500px; height: 100px;">
+                    <div class="panel-heading">Success</div>
                     <div class="panel-body">
                         Panel body
                     </div>

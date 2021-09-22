@@ -4,8 +4,8 @@
   border-color: $border;
 
   & > .panel-heading {
-    color: $heading-text-color;
-    background-color: $heading-bg-color;
+    color: var($heading-text-color);
+    background-color: var($heading-bg-color);
     border-color: $heading-border;
 
     + .panel-collapse > .panel-body {

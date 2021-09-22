@@ -252,20 +252,20 @@
 
 // Contextual variations
 .panel-default {
-  @include panel-variant($panel-default-border, $panel-default-text, $panel-default-heading-bg, $panel-default-border);
+  @include panel-variant($panel-default-border, $panel-default-text, --background-color-accent-lvl2, $panel-default-border);
 }
 .panel-primary {
-  @include panel-variant($panel-primary-border, $panel-primary-text, $panel-primary-heading-bg, $panel-primary-border);
+  @include panel-variant($panel-primary-border, --font-color, --primary-bg-color, $panel-primary-border);
 }
 .panel-success {
-  @include panel-variant($panel-success-border, $panel-success-text, $panel-success-heading-bg, $panel-success-border);
+  @include panel-variant($panel-success-border, --font-color, --success-bg-color, $panel-success-border);
 }
 .panel-info {
-  @include panel-variant($panel-info-border, $panel-info-text, $panel-info-heading-bg, $panel-info-border);
+  @include panel-variant($panel-info-border, --font-color, --info-bg-color, $panel-info-border);
 }
 .panel-warning {
-  @include panel-variant($panel-warning-border, $panel-warning-text, $panel-warning-heading-bg, $panel-warning-border);
+  @include panel-variant($panel-warning-border, --font-color, --warning-bg-color, $panel-warning-border);
 }
 .panel-danger {
-  @include panel-variant($panel-danger-border, $panel-danger-text, $panel-danger-heading-bg, $panel-danger-border);
+  @include panel-variant($panel-danger-border, --font-color, --danger-bg-color, $panel-danger-border);
 }
