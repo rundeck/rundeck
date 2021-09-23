@@ -57,10 +57,10 @@
 .btn-primary {
   // @include btn-styles(--btn-default-color, --primary-states-color);
   box-shadow: 
-    inset 1px 1px 0px var(--default-color),
-    inset 1px -1px 0px var(--default-color),
-    inset -1px 1px 0px var(--default-color),
-    inset -1px -1px var(--default-color);
+    inset 1px 1px 0px var(--border-color),
+    inset 1px -1px 0px var(--border-color),
+    inset -1px 1px 0px var(--border-color),
+    inset -1px -1px var(--border-color);
   font-weight: 700;
 }
 
