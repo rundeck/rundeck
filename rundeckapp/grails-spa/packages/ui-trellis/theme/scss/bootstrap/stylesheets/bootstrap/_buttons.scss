@@ -9,14 +9,14 @@
 .btn {
   display: inline-block;
   margin-bottom: 0; // For input.btn
-  font-weight: $btn-font-weight;
+  font-weight: 600;
   text-align: center;
   white-space: nowrap;
   vertical-align: middle;
   touch-action: manipulation;
   cursor: pointer;
   background-image: none; // Reset unusual Firefox-on-Android default style; see https://github.com/necolas/normalize.css/issues/214
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   @include button-size($padding-base-vertical, $padding-base-horizontal, $font-size-base, $line-height-base, $btn-border-radius-base);
   @include user-select(none);
 
@@ -66,26 +66,37 @@ a.btn {
 // --------------------------------------------------
 
 .btn-default {
-  @include button-variant($btn-default-color, $btn-default-bg, $btn-default-border);
+  @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --border-color);
 }
 .btn-primary {
-  @include button-variant($btn-primary-color, $btn-primary-bg, $btn-primary-border);
+  @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --border-color);
+  box-shadow: 
+    inset 1px 1px 0px var(--border-color),
+    inset 1px -1px 0px var(--border-color),
+    inset -1px 1px 0px var(--border-color),
+    inset -1px -1px var(--border-color);
+  font-weight: 700;
 }
 // Success appears as green
 .btn-success {
-  @include button-variant($btn-success-color, $btn-success-bg, $btn-success-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --success-color, --success-states-color, $btn-success-border);
 }
 // Info appears as blue-green
 .btn-info {
-  @include button-variant($btn-info-color, $btn-info-bg, $btn-info-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --info-color, --info-states-color, $btn-info-border);
 }
 // Warning appears as orange
 .btn-warning {
-  @include button-variant($btn-warning-color, $btn-warning-bg, $btn-warning-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --warning-color, --warning-states-color, $btn-warning-border);
 }
 // Danger and error appear as red
 .btn-danger {
-  @include button-variant($btn-danger-color, $btn-danger-bg, $btn-danger-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --danger-color, --danger-states-color, $btn-danger-border);
+}
+
+// Danger and error appear as red
+.btn-cta {
+  @include button-variant(--font-fill-color, --font-fill-color, --cta-color, --cta-states-color, $btn-danger-border);
 }
 
 
@@ -165,4 +176,9 @@ input[type="button"] {
   &.btn-block {
     width: 100%;
   }
+}
+
+
+.btn-simple {
+  box-shadow: unset;
 }

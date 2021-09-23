@@ -3,37 +3,33 @@
 // Easily pump out default styles, as well as :hover, :focus, :active,
 // and disabled options for all buttons
 
-@mixin button-variant($color, $background, $border) {
-  color: $color;
-  background-color: $background;
-  border-color: $border;
+@mixin button-variant($color, $states-color, $background, $background-state, $border) {
+  color: var($color);
+  background-color: var($background);
+  border-color: var($border);
+  box-shadow: var(--button-box-shadow);
 
   &:focus,
   &.focus {
-    color: $color;
-    background-color: darken($background, 10%);
-    border-color: darken($border, 25%);
+    color: var($color);
+    // background-color: var($background);
+    box-shadow: var($background-state) 0px 0px 0px 3px
+    ;
+    // border-color: darken($border, 25%);
   }
   &:hover {
-    color: $color;
-    background-color: darken($background, 10%);
-    border-color: darken($border, 12%);
+    color: var($states-color);
+    background-color: var($background-state);
+    // border-color: darken($border, 12%);
   }
   &:active,
   &.active,
   .open > &.dropdown-toggle {
-    color: $color;
-    background-color: darken($background, 10%);
+    color: var($states-color);
+    background-color: var($background-state);
     background-image: none;
-    border-color: darken($border, 12%);
+    // border-color: darken($border, 12%);
 
-    &:hover,
-    &:focus,
-    &.focus {
-      color: $color;
-      background-color: darken($background, 17%);
-      border-color: darken($border, 25%);
-    }
   }
   &.disabled,
   &[disabled],
@@ -41,14 +37,14 @@
     &:hover,
     &:focus,
     &.focus {
-      background-color: $background;
+      background-color: var($background);
       border-color: $border;
     }
   }
 
   .badge {
     color: $background;
-    background-color: $color;
+    background-color: var(--color);
   }
 }
 
