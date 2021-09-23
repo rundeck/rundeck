@@ -106,7 +106,7 @@
                   <div class="card-header">
                     <h3 class="card-title">
                       <div class="logo">
-                          <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'logos/rundeck-logo-black.png'}"/>
+                          <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'static/img/rundeck-combination.svg'}"/>
                           <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
                             <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;" onload="SVGInject(this)"/>
                           </a>
