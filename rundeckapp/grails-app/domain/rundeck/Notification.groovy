@@ -139,7 +139,7 @@ public class Notification {
             n.type='url'
             n.format=data.format
             n.content=data.urls
-            n.configuration=[urls: data.urls, httpMethod: data.method]
+            n.configuration=[urls: data.urls, httpMethod: data.httpMethod]
         }else if(data.type){
             n.type=data.type
             if(data.configuration && data.configuration instanceof Map){
@@ -209,7 +209,7 @@ public class Notification {
         }else if(data.type=='url'){
             n.format=data.config.format
             n.content=data.config.urls
-            n.configuration=[urls: data.config.urls, httpMethod: data.config.method]
+            n.configuration=[urls: data.config.urls, httpMethod: data.config.httpMethod]
         }else if(data.type){
             if(data.config && data.config instanceof Map){
                 n.configuration=data.config

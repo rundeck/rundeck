@@ -17,6 +17,7 @@
 package rundeck
 
 import grails.test.hibernate.HibernateSpec
+import org.eclipse.jetty.util.ajax.JSON
 
 import static org.junit.Assert.*
 
@@ -59,6 +60,25 @@ class ScheduledExecutionSpec extends HibernateSpec
             se.options
             se.options.size() == 2
             se.options.every { it.scheduledExecution == se }
+    }
+
+    def "from map notifications urls should include httpMethod and format"() {
+        given:
+            def map = [
+                    jobName: 'abc',
+                    notification: [
+                            onFailure: [urls:"url1", format: "JSON", httpMethod: "POST"]
+                    ]
+            ]
+        when:
+            def se = ScheduledExecution.fromMap(map)
+
+        then:
+            se.notifications.size() == 1
+            Notification notification = se.notifications.first()
+            notification.type == "url"
+            notification.format == "JSON"
+            notification.content == '{"urls":"url1","httpMethod":"POST"}'
     }
 
     void testGenerateJobScheduledName() {
