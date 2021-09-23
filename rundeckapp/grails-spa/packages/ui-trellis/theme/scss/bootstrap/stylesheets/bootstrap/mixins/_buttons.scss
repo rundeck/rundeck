@@ -7,7 +7,6 @@
   color: var($color);
   background-color: var($background);
   border-color: var($border);
-  box-shadow: var(--button-box-shadow);
 
   &:focus,
   &.focus {

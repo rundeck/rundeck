@@ -15,10 +15,10 @@
   // So reset our font and text properties to avoid inheriting weird values.
   @include reset-text;
   font-size: $font-size-base;
-  background-color: $popover-bg;
+  background-color: var(--background-color-lvl2);
   background-clip: padding-box;
   border: 1px solid $popover-fallback-border-color;
-  border: 1px solid $popover-border-color;
+  border: 1px solid var(--border-color);
   border-radius: $border-radius-large;
   @include box-shadow(0 5px 10px rgba(0, 0, 0, .2));
 
@@ -116,7 +116,7 @@
   padding: 8px 14px;
   margin: 0; // reset heading margin
   font-size: $font-size-base;
-  background-color: $popover-title-bg;
+  background-color: var(--background-color-accent-lvl2);
   border-bottom: 1px solid darken($popover-title-bg, 5%);
   border-radius: ($border-radius-large - 1) ($border-radius-large - 1) 0 0;
 }

@@ -32,7 +32,7 @@
   &:hover,
   &:focus,
   &.focus {
-    color: $btn-default-color;
+    color: var(--font-color);
     text-decoration: none;
   }
 
@@ -45,11 +45,18 @@
 
   &.disabled,
   &[disabled],
+  &.btn-disabled,
   fieldset[disabled] & {
     cursor: $cursor-disabled;
-    @include opacity(.65);
-    @include box-shadow(none);
+    @include opacity(.5);
   }
+
+  // &:disabled,
+  // &[disabled],
+  // &.disabled,
+  // &.btn-disabled {
+  //   @include opacity(.5);
+  // }
 
   // [converter] extracted a& to a.btn
 }
@@ -67,6 +74,8 @@ a.btn {
 
 .btn-default {
   @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --border-color);
+  box-shadow: var(--button-box-shadow);
+  &.btn-simple { box-shadow: unset; }
 }
 .btn-primary {
   @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --border-color);
@@ -74,29 +83,46 @@ a.btn {
     inset 1px 1px 0px var(--border-color),
     inset 1px -1px 0px var(--border-color),
     inset -1px 1px 0px var(--border-color),
-    inset -1px -1px var(--border-color);
+    inset -1px -1px var(--border-color),
+    var(--button-box-shadow);
+  &.btn-simple { 
+    box-shadow:
+      inset 1px 1px 0px var(--border-color),
+      inset 1px -1px 0px var(--border-color),
+      inset -1px 1px 0px var(--border-color),
+      inset -1px -1px var(--border-color);
+  }
   font-weight: 700;
 }
 // Success appears as green
 .btn-success {
   @include button-variant(--font-fill-color, --font-fill-color, --success-color, --success-states-color, $btn-success-border);
+  box-shadow: var(--button-box-shadow);
+  &.btn-simple { box-shadow: unset; }
 }
 // Info appears as blue-green
 .btn-info {
   @include button-variant(--font-fill-color, --font-fill-color, --info-color, --info-states-color, $btn-info-border);
+  box-shadow: var(--button-box-shadow);
+  &.btn-simple { box-shadow: unset; }
 }
 // Warning appears as orange
 .btn-warning {
   @include button-variant(--font-fill-color, --font-fill-color, --warning-color, --warning-states-color, $btn-warning-border);
+  box-shadow: var(--button-box-shadow);
+  &.btn-simple { box-shadow: unset; }
 }
 // Danger and error appear as red
 .btn-danger {
   @include button-variant(--font-fill-color, --font-fill-color, --danger-color, --danger-states-color, $btn-danger-border);
+  box-shadow: var(--button-box-shadow);
+  &.btn-simple { box-shadow: unset; }
 }
 
-// Danger and error appear as red
 .btn-cta {
   @include button-variant(--font-fill-color, --font-fill-color, --cta-color, --cta-states-color, $btn-danger-border);
+  box-shadow: var(--button-box-shadow);
+  &.btn-simple { box-shadow: unset; }
 }
 
 
@@ -176,9 +202,4 @@ input[type="button"] {
   &.btn-block {
     width: 100%;
   }
-}
-
-
-.btn-simple {
-  box-shadow: unset;
 }
