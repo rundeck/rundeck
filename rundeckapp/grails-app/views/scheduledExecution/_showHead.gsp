@@ -105,8 +105,8 @@
                   <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}"
                         data-name-truncated="8"
                         data-uuid-label-none="true"
-                        class="rundeck-server-uuid text-secondary">
-                      <i class="fas fa-dot-circle text-muted cluster-status-icon"></i>
+                        class="rundeck-server-uuid">
+                      <i class="fas fa-dot-circle cluster-status-icon"></i>
                   </span>
               </g:if>
           </span>

@@ -41,7 +41,7 @@
                       ]"/>
 
             <section class="section-space">
-                <small class="uuid text-secondary">${scheduledExecution.extid}</small>
+                <small class="uuid">${scheduledExecution.extid}</small>
             </section>
         </div>
 
