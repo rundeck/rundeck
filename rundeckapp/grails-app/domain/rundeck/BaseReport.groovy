@@ -102,4 +102,10 @@ class BaseReport {
         buildFromMap(report, data.subMap(exportProps))
         report
     }
+
+    static void deleteByCtxProject(String project) {
+        BaseReport.where {
+            ctxProject == project
+        }.deleteAll()
+    }
 }
