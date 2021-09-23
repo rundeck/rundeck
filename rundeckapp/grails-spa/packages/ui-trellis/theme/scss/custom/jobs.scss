@@ -52,7 +52,7 @@
 }
 
 .exec-options-header {
-  background: #e6e6e6;
+  background: var(--background-color-accent-lvl2);
 
   .jobInfoSection {
     padding: 10px 0;
@@ -85,7 +85,7 @@
   border-radius: 3px;
 
   &:hover {
-    background: #e0e0e0;
+    background: var(--background-color-accent-lvl2);
   }
 
   .jobgroupexpand {
@@ -109,8 +109,8 @@
   border-color: transparent;
 
   &:hover {
-    background: #F8f8f8;
-    border-color: #e8e8e8;
+    background: var(--background-color-accent-lvl2);
+    border-color: var(--border-color);
   }
 }
 
