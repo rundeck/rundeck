@@ -32,6 +32,9 @@
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
+    <asset:javascript src="static/js/chunk-vendors.js"/>
+    <asset:javascript src="static/pages/login.js"/>
+
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -105,7 +108,7 @@
                       <div class="logo">
                           <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'logos/rundeck-logo-black.png'}"/>
                           <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
-                            <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;"/>
+                            <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;" onload="SVGInject(this)"/>
                           </a>
 %{--                          <asset:image src="${g.message(code: 'app.login.logo')}"/>--}%
                           <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
