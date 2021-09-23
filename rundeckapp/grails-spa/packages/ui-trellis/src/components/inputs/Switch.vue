@@ -53,7 +53,7 @@ export default Vue.extend({
 <style scoped lang="scss">
 .switch {
     --animation-duration: calc(250ms * var(--animation-scale));
-    background-color: #DBDBDB;
+    background-color: var(--grey-500);
     border: none;
     height: 20px;
     width: 37px;
@@ -64,22 +64,20 @@ export default Vue.extend({
     cursor: pointer;
 
     &--contrast {
-        border: 2px solid white;
+        border: 2px solid var(--default-color);
         height: 24px;
         width: 41px;
     }
 
     &--checked {
         // background-color: paleturquoise;
-        background-color: var(--accent-color);
+        background-color: var(--success-color);
         transition-duration: var(--animation-duration);
         transition-property: all;
         transition-timing-function: ease-out;
     }
 
-    &--disabled {
-        cursor: not-allowed;
-    }
+    
 
     &__slider {
         height: 100%;
@@ -90,7 +88,7 @@ export default Vue.extend({
             border-radius: 1000px;
             height: 16px;
             width: 16px;
-            background-color: white;
+            background-color: var(--default-color);
             content: '';
             position: absolute;
             box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
@@ -105,6 +103,15 @@ export default Vue.extend({
             transition-property: all;
             transition-timing-function: ease-out;
         }
+    }
+}
+
+.switch--disabled {
+    cursor: not-allowed;
+    background-color: var(--grey-300);
+
+    @at-root &.switch--checked {
+        background-color: var(--success-bg-color);
     }
 }
 </style>

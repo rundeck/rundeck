@@ -9,6 +9,7 @@
   display: inline-block;
   vertical-align: middle; // match .btn alignment given font-size hack above
   > .btn {
+    box-shadow: unset;
     position: relative;
     float: left;
     // Bring the "active" button to the front
