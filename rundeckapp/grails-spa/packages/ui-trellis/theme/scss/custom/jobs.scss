@@ -47,7 +47,7 @@
 
 .subtitlebar {
   &.job-page {
-    background: $grey-300;
+    background: var(--background-color-accent);
   }
 }
 
