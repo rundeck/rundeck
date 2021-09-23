@@ -63,7 +63,7 @@
               </span>
 
 
-              <btn size="xs" type="secondary" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
+              <btn size="xs" type="default" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
                   {{$t('bulk.delete')}}
               </btn>
             </span>

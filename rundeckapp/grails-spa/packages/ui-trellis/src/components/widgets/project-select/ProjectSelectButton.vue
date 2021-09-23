@@ -3,7 +3,8 @@
         aria-describedby="projectPicker"
         aria-controls="projectPicker"
         :aria-expanded="open"
-        @click="handleClick">
+        @click="handleClick"
+        @mousedown="e => e.preventDefault()">
         <i 
             class="fas project-select-btn__left-icon"
             :class="{'fa-box-open': projectLabel, 'fa-box': !projectLabel}"/>

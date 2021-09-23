@@ -18,7 +18,7 @@
     <btn
       @click="filterOpen=true"
       size="xs"
-      :class="hasQuery?'btn-queried btn-info':'btn-secondary'"
+      :class="hasQuery?'btn-queried btn-info':'btn-default'"
       v-tooltip="hasQuery?$t('Click to edit Search Query'):''"
       v-if="displayOpts.showFilter"
     >
