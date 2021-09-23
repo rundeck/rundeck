@@ -173,7 +173,7 @@
     padding: $padding-round-vertical $padding-base-horizontal;
 }
 .input-group-btn .btn-default:not(.btn-fill){
-    border-color: var(--grey-400);
+    border-color: var(--border-color);
 }
 
 .input-group-btn:last-child > .btn{

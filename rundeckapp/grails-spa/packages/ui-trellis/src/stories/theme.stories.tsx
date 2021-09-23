@@ -78,6 +78,13 @@ export const buttons = () => (Vue.extend({
                     <button class="btn btn-danger">Danger</button>
                     <button class="btn btn-default btn-transparent">Transparent</button>
                 </div>
+                <div style="display: flex;justify-content: space-evenly; margin-top: 10px;">
+                    <div class="btn-group">
+                        <button class="btn btn-default">Default</button>
+                        <button class="btn btn-success">Success</button>
+                        <button class="btn btn-warning">Warning</button>
+                    </div>
+                </div>
                 <h3>Disabled</h3>
                 <div style="display:flex;justify-content: space-evenly;">
                     <a class="btn btn-disabled btn-default" role="button">Link</a>

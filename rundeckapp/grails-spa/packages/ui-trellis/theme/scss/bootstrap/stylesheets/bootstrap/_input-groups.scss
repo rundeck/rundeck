@@ -142,6 +142,7 @@
   // Negative margin for spacing, position for bringing hovered/focused/actived
   // element above the siblings.
   > .btn {
+    box-shadow: unset;
     position: relative;
     + .btn {
       margin-left: -1px;
