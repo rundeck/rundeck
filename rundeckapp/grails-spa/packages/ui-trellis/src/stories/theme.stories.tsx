@@ -63,7 +63,7 @@ export const buttons = () => (Vue.extend({
         return (
             <div style="max-width: 800px; margin-top: 10px;background-color: pink;">
                 <div style="display:flex;justify-content: space-evenly;">
-                    <a class="btn btn-default" role="button">Link</a>
+                    <a class="btn btn-default btn-link" role="button">Link</a>
                     <button class="btn btn-default">Button</button>
                     <input class="btn btn-default" value="Input"/>
                 </div>
@@ -85,9 +85,46 @@ export const buttons = () => (Vue.extend({
                         <button class="btn btn-warning">Warning</button>
                     </div>
                 </div>
+                <div style="display: flex;justify-content: space-evenly; margin-top: 10px;">
+                    <div class="btn-group">
+                        <div class="btn btn-default">Default</div>
+                        <div class="btn btn-default">Default</div>
+                        <div class="btn btn-default">Default</div>
+                    </div>
+                </div>
+                <div style="display: flex;justify-content: space-evenly; margin-top: 10px;">
+                    <div class="btn-group pull-right" id="execOptFormRunButtons">
+                    <button type="submit" name="_action_runJobNow" id="execFormRunButton" class=" btn btn-cta  ">
+                        <b class="fas fa-bug" data-bind="visible: debug()" style="display: none;"></b>
+                        <b class="fas fa-eye" data-bind="visible: follow()"></b>
+                        Run Job Now
+                        <b class="glyphicon glyphicon-play"></b>
+                    </button>
+                    <button type="button" class="btn  btn-secondary btn-cta dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="fas fa-chevron-down"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <ul class="dropdown-menu ">
+                        <li>
+                            <a href="#" data-bind="click: function(){debug(!debug())}">
+                                <b class="fas fa-bug"></b>
+                                Run with Debug Output
+                                <b class="fas fa-check" data-bind="visible: debug()" style="display: none;"></b>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-bind="click: function(){follow(!follow())}">
+                                <b class="fas fa-eye"></b>
+                                Follow output
+                                <b class="fas fa-check" data-bind="visible: follow()"></b>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                </div>
                 <h3>Disabled</h3>
                 <div style="display:flex;justify-content: space-evenly;">
-                    <a class="btn btn-disabled btn-default" role="button">Link</a>
+                    <a class="btn btn-disabled btn-default btn-link" role="button">Link</a>
                     <button class="btn btn-disabled btn-default">Button</button>
                     <input class="btn btn-disabled btn-default" value="Input"/>
                 </div>
