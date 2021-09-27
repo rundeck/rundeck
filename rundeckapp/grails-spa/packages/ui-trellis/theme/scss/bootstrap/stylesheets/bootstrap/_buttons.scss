@@ -51,6 +51,11 @@
     @include opacity(.5);
   }
 
+  &#{&}-transparent {
+    background-color: transparent;
+    // border-color: transparent;
+  }
+
   // &:disabled,
   // &[disabled],
   // &.disabled,
@@ -73,12 +78,12 @@ a.btn {
 // --------------------------------------------------
 
 .btn-default {
-  @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --border-color);
+  @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --border-color, --border-color);
   box-shadow: var(--button-box-shadow);
-  &.btn-simple { box-shadow: unset; }
+  &.btn-simple:not(:focus) { box-shadow: unset; }
 }
 .btn-primary {
-  @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --border-color);
+  @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --border-color, --border-color);
   box-shadow: 
     inset 1px 1px 0px var(--border-color),
     inset 1px -1px 0px var(--border-color),
@@ -96,31 +101,31 @@ a.btn {
 }
 // Success appears as green
 .btn-success {
-  @include button-variant(--font-fill-color, --font-fill-color, --success-color, --success-states-color, $btn-success-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --success-color, --success-states-color, $btn-success-border, --success-light-color);
   box-shadow: var(--button-box-shadow);
   &.btn-simple { box-shadow: unset; }
 }
 // Info appears as blue-green
 .btn-info {
-  @include button-variant(--font-fill-color, --font-fill-color, --info-color, --info-states-color, $btn-info-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --info-color, --info-states-color, $btn-info-border, --info-light-color);
   box-shadow: var(--button-box-shadow);
   &.btn-simple { box-shadow: unset; }
 }
 // Warning appears as orange
 .btn-warning {
-  @include button-variant(--font-fill-color, --font-fill-color, --warning-color, --warning-states-color, $btn-warning-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --warning-color, --warning-states-color, $btn-warning-border, --warning-light-color);
   box-shadow: var(--button-box-shadow);
   &.btn-simple { box-shadow: unset; }
 }
 // Danger and error appear as red
 .btn-danger {
-  @include button-variant(--font-fill-color, --font-fill-color, --danger-color, --danger-states-color, $btn-danger-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --danger-color, --danger-states-color, $btn-danger-border, --danger-light-color);
   box-shadow: var(--button-box-shadow);
   &.btn-simple { box-shadow: unset; }
 }
 
 .btn-cta {
-  @include button-variant(--font-fill-color, --font-fill-color, --cta-color, --cta-states-color, $btn-danger-border);
+  @include button-variant(--font-fill-color, --font-fill-color, --cta-color, --cta-states-color, $btn-danger-border, --cta-light-color);
   box-shadow: var(--button-box-shadow);
   &.btn-simple { box-shadow: unset; }
 }
@@ -132,7 +137,7 @@ a.btn {
 // Make a button look and behave like a link
 .btn-link {
   font-weight: 400;
-  color: $link-color;
+  color: var(--link-primary-color);
   border-radius: 0;
 
   &,
@@ -152,14 +157,14 @@ a.btn {
   &:hover,
   &:focus {
     color: $link-hover-color;
-    text-decoration: $link-hover-decoration;
+    text-decoration: underline;
     background-color: transparent;
   }
   &[disabled],
   fieldset[disabled] & {
     &:hover,
     &:focus {
-      color: $btn-link-disabled-color;
+      color: var(--link-disabled-color);
       text-decoration: none;
     }
   }

@@ -177,21 +177,26 @@ $black:                      $grey-900;
 
     --success-color:              var(--green-500);
     --success-states-color:       var(--green-700);
+    --success-light-color:        var(--green-300);
     --success-bg-color:           var(--green-100);
 
     --cta-color:                  var(--green-500);
     --cta-states-color:           var(--green-700);
+    --cta-light-color:            var(--green-300);
 
     --info-color:                 var(--cyan-500);
     --info-states-color:          var(--cyan-700);
+    --info-light-color:           var(--cyan-300);
     --info-bg-color:              var(--cyan-100);
 
     --warning-color:              var(--orange-500);
     --warning-states-color:       var(--orange-700);
+    --warning-light-color:        var(--orange-300);
     --warning-bg-color:           var(--orange-100);
 
     --danger-color:               var(--red-500);
     --danger-states-color:        var(--red-700);
+    --danger-light-color:         var(--red-300);
     --danger-bg-color:            var(--red-100);
 
     // Typography
@@ -278,7 +283,7 @@ $black:                      $grey-900;
     --sidebar-drawer-bg-color:  #343745;
 
 
-    // --card-default-box-shadow: 0px 4px 14px 0 rgba(37, 70, 255, 0.918);
+    // --card-default-box-shadow: 0px 4px 14px 0 rgba(37, 186, 255, 0.918);
 }
 
 :root {

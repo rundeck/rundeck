@@ -1,23 +1,30 @@
 <template>
-  <div class="row" v-if="message && showMessage">
-    <div class="col-xs-12">
-      <div :class="'alert '+alertStyle" :style="styleCss">
-        <button type="button" class="close" @click="dismissMessage" data-dismiss="alert">×</button>
-        <h4 v-if="noTitle">Message of The Day</h4>
-        <div class="motd-content" v-bind:class="{ full: showFullMOTD}">
-          <span v-html="message"></span>
-        </div>
+  <Drawer
+    placement="right"
+    :closeable="true"
+    :visible="message && showMessage"
+    width="500px"
+    @close="dismissMessage">
+
+    <div :class="'alert ' + alertStyle" :style="styleCss">
+      <!-- <button type="button" class="close" @click="dismissMessage" data-dismiss="alert">×</button> -->
+      <h4 v-if="noTitle">Message of The Day</h4>
+      <div class="motd-content" v-bind:class="{ full: showFullMOTD}">
+        <span v-html="message"></span>
       </div>
     </div>
-  </div>
+  </Drawer>
 </template>
 
 <script>
 import axios from 'axios'
 // import _ from 'lodash'
 
+import Drawer from '@rundeck/ui-trellis/lib/components/containers/drawer/Drawer'
+
 export default {
   name: 'MessageOfTheDay',
+  components: {Drawer},
   props: [
     'eventBus',
     'tabPage'

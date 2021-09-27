@@ -336,7 +336,7 @@
     </div>
 
     <div v-if="reports.length < 1 " class="loading-area">
-        <span class="text-secondary" v-if="!loading && !loadError">
+        <span class="loading-text" v-if="!loading && !loadError">
           {{$t('results.empty.text')}}
         </span>
         <div class="loading-text" v-if="loading && lastDate<0">
@@ -884,12 +884,12 @@ export default Vue.extend({
 
 .loading-area{
   padding: 50px;
-  background: #efefefef;
+  background: var(--background-color-accent-lvl2);
   font-size: 14px;
   text-align: center;
   .loading-text{
     font-style:italic;
-    color: #bbbbbb;
+    color: var(--font-color);
   }
 }
 td.eventtitle.adhoc {
@@ -921,7 +921,8 @@ $since-bg: #ccf;
   margin:0;
 }
 .missed {
-  background-color: #dddddd;
-  color: #999;
+  background-color: var(--warning-bg-color);
+  --text-muted-color: var(--font-color);
+  --text-secondary-color: var(--font-color);
 }
 </style>
