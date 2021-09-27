@@ -33,6 +33,7 @@
   &:focus,
   &.focus {
     color: var(--font-color);
+    outline: 0;
     text-decoration: none;
   }
 

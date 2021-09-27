@@ -52,13 +52,9 @@ button:focus {
 .sidebar .user .info .collapse .nav a > span,
 .sidebar .logo a.logo-mini,
 .sidebar .logo a.logo-normal,
-.table > tbody > tr .td-actions .btn,
+.table > tbody > tr .td-actions,
 .caret{
   @include transition($fast-transition-time, $transition-ease-in);
-}
-
-.btn {
-  @include transition($ultra-fast-transition-time, $transition-ease-in);
 }
 
 .fa {

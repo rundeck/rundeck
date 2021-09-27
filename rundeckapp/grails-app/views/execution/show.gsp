@@ -206,7 +206,7 @@ search
                                 <g:if test="${deleteExecAuth || authChecks[AuthConstants.ACTION_READ]}">
                                     <div class="btn-group" data-bind="visible: completed()">
                                         <button type="button"
-                                                class="btn btn-muted btn-sm dropdown-toggle"
+                                                class="btn btn-default btn-sm dropdown-toggle"
                                                 data-toggle="dropdown"
                                                 aria-expanded="false">
                                             <i class="glyphicon glyphicon-list"></i>
