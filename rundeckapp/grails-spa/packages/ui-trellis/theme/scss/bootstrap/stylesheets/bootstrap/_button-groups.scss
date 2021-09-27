@@ -28,7 +28,8 @@
   .btn + .btn-group,
   .btn-group + .btn,
   .btn-group + .btn-group {
-    margin-left: -1px;
+    margin-left: -1.5px;
+    border-left-color: var(--border-color);
   }
 }
 
