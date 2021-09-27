@@ -32,7 +32,8 @@ export const drawer = () => {
         props: {
             title: {default: 'Settings'},
             visible: {default: boolean('Open', true)},
-            placement: {default: select('Placement', {left: 'left', right: 'right'}, 'left')}
+            width: {default: '300px'},
+            placement: {default: select('Placement', {left: 'left', right: 'right', top: 'top'}, 'left')}
         },
         mounted() {
             setupStory(this)

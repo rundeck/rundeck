@@ -1,8 +1,8 @@
 <template>
     <div ref="drawer" class="rd-drawer" :class="[`rd-drawer--${placement}`, display ? 'rd-drawer--active' : '']">
-        <div v-if="displayHeader" class="rd-drawer__header">
+        <div v-if="displayHeader()" class="rd-drawer__header">
             <div v-if="title" class="rd-drawer__title">{{title}}</div>
-            <div class="btn btn-transparent" style="margin-left: auto;" @click="() => {$emit('close')}">Close</div>
+            <div v-if="closeable" class="btn btn-default btn-link" style="margin-left: auto;" @click="() => {$emit('close')}">Close</div>
         </div>
         <slot/>
     </div>
@@ -17,13 +17,15 @@ export default Vue.extend({
         title: {default: ''},
         visible: {type: Boolean},
         closeable: {default: true},
-        placement: {default: 'left'}
+        placement: {default: 'left'},
+        width: {default: '256px'}
     },
     data() { return {
         display: false
     }},
     mounted() {
-        this.display = this.visible
+        this.display = this.visible;
+        (<HTMLElement>this.$el).style.setProperty('--rd-drawer-width', this.width)
     },
     methods: {
         displayHeader(): boolean {
@@ -45,9 +47,9 @@ export default Vue.extend({
     bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    background-color: white;
+    background-color: var(--background-color);
     box-shadow: none;
-    width: 256px;
+    width: var(--rd-drawer-width);
     z-index: 100;
 
     &__header {
@@ -68,7 +70,7 @@ export default Vue.extend({
 }
 
 .rd-drawer--left {
-    left: -256px;
+    left: calc(-1 * var(--rd-drawer-width));
     transition: left .2s ease-in-out;
 
     &.rd-drawer--active {
@@ -77,11 +79,22 @@ export default Vue.extend({
 }
 
 .rd-drawer--right {
-    right: -256px;
+    right: calc(-1 * var(--rd-drawer-width));
     transition: right .2s ease-in-out;
 
     &.rd-drawer--active {
         right: 0px;
+    }
+}
+
+.rd-drawer--top {
+    top: calc(-1 * var(--rd-drawer-width));
+    width: 100%;
+    height: var(--rd-drawer-width);
+    transition: top .2s ease-in-out;
+
+    &.rd-drawer--active {
+        top: 0px;
     }
 }
 
