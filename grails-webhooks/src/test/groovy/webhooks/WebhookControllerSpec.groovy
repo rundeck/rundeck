@@ -27,6 +27,7 @@ import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 
 class WebhookControllerSpec extends Specification implements ControllerUnitTest<WebhookController> {
@@ -77,6 +78,24 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         response.text == '{"err":"You are not authorized to perform this action"}'
     }
 
+    def "remove webhook should fail when project params is not present"() {
+        given:
+        controller.webhookService = Mock(MockWebhookService) {
+            getWebhook(_) >> new Webhook()
+        }
+
+        controller.apiService = Mock(MockApiService)
+
+        when:
+        params.id = "1234"
+        controller.remove()
+
+        then:
+        1 * controller.apiService.renderErrorFormat(_,[status: HttpServletResponse.SC_BAD_REQUEST,
+                                                       code: 'api.error.parameter.required', args: ['project']])
+        0 * controller.webhookService.delete(_)
+    }
+
     def "503 if webhook is not enabled"() {
         given:
         controller.webhookService = Mock(MockWebhookService)
@@ -121,6 +140,11 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
     interface MockWebhookService {
         Webhook getWebhookByToken(String token)
+        Webhook getWebhook(Long id)
         WebhookResponder processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context, HttpServletRequest request)
+    }
+
+    interface MockApiService {
+        def renderErrorFormat(HttpServletResponse response, Map data)
     }
 }
