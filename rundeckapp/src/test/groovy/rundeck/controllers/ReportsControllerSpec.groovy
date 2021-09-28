@@ -61,7 +61,7 @@ class ReportsControllerSpec extends HibernateSpec implements ControllerUnitTest<
 
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 _ * getAuthContextForSubjectAndProject(*_) >> null
-                _ * authorizeProjectResourceAll(*_) >> true
+                _ * authorizeProjectResource(*_) >> true
             }
         controller.userService = Mock(UserService) {
             findOrCreateUser(*_) >> new User()
@@ -110,7 +110,7 @@ class ReportsControllerSpec extends HibernateSpec implements ControllerUnitTest<
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubjectAndProject(_, _)
-            _ * authorizeProjectResourceAll(*_) >> true
+            _ * authorizeProjectResource(*_) >> true
         }
         controller.userService = Mock(UserService) {
             findOrCreateUser(*_) >> new User()

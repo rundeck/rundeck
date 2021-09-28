@@ -45,7 +45,7 @@
                             AuthConstants.ACTION_EXPORT,
                             AuthConstants.ACTION_DELETE],
                    any: true,
-                   context: 'application'
+                   context: AuthConstants.CTX_APPLICATION
            )}"/>
     <g:set var="projACLAuth"
            value="${auth.resourceAllowedTest(
@@ -54,7 +54,7 @@
                    action: [AuthConstants.ACTION_READ,
                             AuthConstants.ACTION_ADMIN],
                    any: true,
-                   context: 'application'
+                   context: AuthConstants.CTX_APPLICATION
            )}"/>
 </g:if>
 
@@ -104,7 +104,7 @@
                 </g:if>
 
 
-                <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="event">
+                <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="${AuthConstants.TYPE_EVENT}">
                 {
                     type: 'link',
                     id: 'nav-activity-link',

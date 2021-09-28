@@ -335,7 +335,6 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         return authorizeResourceAll(authContext, project, new HashSet<String> (actions), job, this.&authResourceForJob)
     }
 
-    @Override
     def <T> boolean authorizeResourceAll(
         AuthContext authContext,
         final String project,
@@ -416,4 +415,12 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         return nodeSupport.filterAuthorizedNodes(project, actions, unfiltered, authContext)
     }
 
+    @Override
+    boolean authorizeProjectConfigure(final AuthContext authContext, final String project) {
+        return authorizeApplicationResourceAny(
+            authContext,
+            authResourceForProject(project),
+            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+        )
+    }
 }

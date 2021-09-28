@@ -40,7 +40,6 @@ class UserController extends ControllerBase{
     UserService userService
     AppAuthContextProcessor rundeckAuthContextProcessor
     GrailsApplication grailsApplication
-    def apiService
     def configurationService
 
     static allowedMethods = [
@@ -222,8 +221,7 @@ class UserController extends ControllerBase{
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(user.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceType
-                (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN, 'Users',
+        if (unauthorizedResponse(user.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN, 'Users',
                 user.login)) {
             return
         }
@@ -600,8 +598,7 @@ class UserController extends ControllerBase{
         //check auth to view profile
         //default to current user profile
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(params.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceType
-                (authContext, AuthConstants.TYPE_USER,
+        if(unauthorizedResponse(params.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'User',params.login)){
             return
         }

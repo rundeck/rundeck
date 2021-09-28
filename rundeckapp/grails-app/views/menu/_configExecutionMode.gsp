@@ -36,7 +36,7 @@
 <g:if test="${selected != 'changeexecmode'}">
 
     <g:set var="authAction" value="${g.executionMode(active:true)?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
-    <auth:resourceAllowed action="${[authAction,AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
+    <auth:resourceAllowed action="${[authAction,AuthConstants.ACTION_ADMIN]}" any="true" context="${AuthConstants.CTX_APPLICATION}" kind="${AuthConstants.TYPE_SYSTEM}">
         <g:ifExecutionMode active="true">
             <g:link action="executionMode" controller="menu" class="btn btn-default btn-sm">
                 <g:message code="change.execution.mode" />

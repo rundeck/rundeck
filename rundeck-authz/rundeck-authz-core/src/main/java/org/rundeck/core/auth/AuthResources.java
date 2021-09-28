@@ -8,14 +8,16 @@ public class AuthResources {
             Arrays.asList(
                     AuthConstants.TYPE_ADHOC,
                     AuthConstants.TYPE_JOB,
-                    AuthConstants.TYPE_NODE
+                    AuthConstants.TYPE_NODE,
+                    AuthConstants.TYPE_STORAGE
             )
     );
     public static final Set<String> projectKinds = new HashSet<>(
             Arrays.asList(
                     AuthConstants.TYPE_JOB,
                     AuthConstants.TYPE_NODE,
-                    AuthConstants.TYPE_EVENT
+                    AuthConstants.TYPE_EVENT,
+                    AuthConstants.TYPE_WEBHOOK
             )
     );
     public static final Set<String> appTypes = new HashSet<>(
@@ -34,7 +36,8 @@ public class AuthResources {
                     AuthConstants.TYPE_USER,
                     AuthConstants.TYPE_JOB,
                     AuthConstants.TYPE_APITOKEN,
-                    AuthConstants.TYPE_PLUGIN
+                    AuthConstants.TYPE_PLUGIN,
+                    AuthConstants.TYPE_WEBHOOK
             )
     );
 
@@ -58,7 +61,7 @@ public class AuthResources {
                     AuthConstants.ACTION_DELETE,
                     AuthConstants.ACTION_ADMIN
             );
-    public static final List<String> appStorageActions =
+    public static final List<String> storageActions =
             Arrays.asList(
                     AuthConstants.ACTION_CREATE,
                     AuthConstants.ACTION_READ,
@@ -111,12 +114,20 @@ public class AuthResources {
             AuthConstants.ACTION_UNINSTALL,
             AuthConstants.ACTION_ADMIN
     );
+    public static final List<String> appWebhookKindActions = Arrays.asList(
+            AuthConstants.ACTION_READ,
+            AuthConstants.ACTION_CREATE,
+            AuthConstants.ACTION_UPDATE,
+            AuthConstants.ACTION_DELETE,
+            AuthConstants.ACTION_POST,
+            AuthConstants.ACTION_ADMIN
+    );
 
     static {
         appResActionsByType = new HashMap<>();
         appResActionsByType.put(AuthConstants.TYPE_PROJECT, appProjectActions);
         appResActionsByType.put(AuthConstants.TYPE_PROJECT_ACL, appProjectAclActions);
-        appResActionsByType.put(AuthConstants.TYPE_STORAGE, appStorageActions);
+        appResActionsByType.put(AuthConstants.TYPE_STORAGE, storageActions);
         appResActionsByType.put(AuthConstants.TYPE_APITOKEN, appApitokenActions);
     }
 
@@ -141,6 +152,7 @@ public class AuthResources {
         appKindActionsByType.put(AuthConstants.TYPE_JOB, appJobKindActions);
         appKindActionsByType.put(AuthConstants.TYPE_APITOKEN, appApitokenKindActions);
         appKindActionsByType.put(AuthConstants.TYPE_PLUGIN, appPluginActions);
+        appKindActionsByType.put(AuthConstants.TYPE_WEBHOOK, appWebhookKindActions);
     }
 
 
@@ -206,6 +218,7 @@ public class AuthResources {
                 "(etc. any node attribute)"
         );
         projResAttrsByType.put(AuthConstants.TYPE_NODE, nodeAttributeNames);
+        projResAttrsByType.put(AuthConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
     }
 
     public static final List<String> projectNodeKindActions =
@@ -221,6 +234,12 @@ public class AuthResources {
                     AuthConstants.ACTION_CREATE
             );
     public static final Map<String, List<String>> projKindActionsByType;
+    static final List<String> projectWebhookKindActions = Arrays.asList(AuthConstants.ACTION_READ,
+                                                                        AuthConstants.ACTION_CREATE,
+                                                                        AuthConstants.ACTION_UPDATE,
+                                                                        AuthConstants.ACTION_DELETE,
+                                                                        AuthConstants.ACTION_ADMIN,
+                                                                        AuthConstants.ACTION_POST);
 
     static {
 
@@ -228,5 +247,7 @@ public class AuthResources {
         projKindActionsByType.put(AuthConstants.TYPE_JOB, projectJobKindActions);
         projKindActionsByType.put(AuthConstants.TYPE_NODE, projectNodeKindActions);
         projKindActionsByType.put(AuthConstants.TYPE_EVENT, projectEventKindActions);
+        projKindActionsByType.put(AuthConstants.TYPE_WEBHOOK, projectWebhookKindActions);
+        projKindActionsByType.put(AuthConstants.TYPE_STORAGE, storageActions);
     }
 }

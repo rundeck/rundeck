@@ -50,9 +50,9 @@
             </div>
         </div>
 
-        <auth:resourceAllowed type="project"
+        <auth:resourceAllowed type="${AuthConstants.TYPE_PROJECT}"
                               name="${scheduledExecution.project}"
-                              context="application"
+                              context="${AuthConstants.CTX_APPLICATION}"
                               action="${[AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]}"
                               any="true">
             <div class="form-group">

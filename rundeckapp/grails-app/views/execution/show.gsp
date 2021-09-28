@@ -46,8 +46,8 @@
       </g:else>
       </g:each>
       <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN,project:execution.project)}"/>
-      <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
-      <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+      <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
+      <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
@@ -893,7 +893,7 @@ search
               <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(
                       project: scheduledExecution.project,
                       action: AuthConstants.ACTION_READ,
-                      kind: 'event'
+                      kind: AuthConstants.TYPE_EVENT
               )}"/>
               <div class="col-sm-12">
 

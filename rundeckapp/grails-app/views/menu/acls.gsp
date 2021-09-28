@@ -28,28 +28,28 @@
 <g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_ADMIN],
-        context: 'application',
+        context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
 <g:set var="hasEditAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_UPDATE],
-        context: 'application',
+        context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
 <g:set var="hasCreateAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_CREATE],
-        context: 'application',
+        context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
 <g:set var="hasDeleteAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_DELETE],
-        context: 'application',
+        context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>

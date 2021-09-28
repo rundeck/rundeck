@@ -71,8 +71,8 @@ saved.filters
 search
 "/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
-            context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
-    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+            context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name:
             projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
     <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {

@@ -24,15 +24,15 @@
     </g:if>
   <section class="${scheduledExecution.groupPath?'section-space':''}" id="jobInfo_">
     <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
-            context: 'application',
-            type: 'project',
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
             action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
             any: true,
             name: scheduledExecution.project
     )}"/>
     <g:set var="authProjectImport" value="${auth.resourceAllowedTest(
-            context: 'application',
-            type: 'project',
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
             action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT],
             any: true,
             name: scheduledExecution.project

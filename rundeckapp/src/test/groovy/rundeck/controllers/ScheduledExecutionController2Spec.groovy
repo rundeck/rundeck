@@ -904,7 +904,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
 
             1 * authorizeProjectJobAny(_,se,['read','view'],se.project)>>true
-            1 * authorizeProjectResourceAll(_,[type: 'resource', kind: 'event'],['read'],se.project)>>true
+            1 * authorizeProjectResource(_,[type: 'resource', kind: 'event'],'read',se.project)>>true
         }
 
         sec.executionService = mockWith(ExecutionService) {

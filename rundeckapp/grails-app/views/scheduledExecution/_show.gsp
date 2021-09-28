@@ -142,7 +142,7 @@
     </g:if>
     <div class="row" id="_job_main_placeholder">
         <div class="col-xs-12">
-            <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(project:scheduledExecution.project, action:AuthConstants.ACTION_READ, kind: 'event')}"/>
+            <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(project:scheduledExecution.project, action:AuthConstants.ACTION_READ, kind: AuthConstants.TYPE_EVENT)}"/>
 
             <div class="card" id="activity_section">
                 <div class="card-content">

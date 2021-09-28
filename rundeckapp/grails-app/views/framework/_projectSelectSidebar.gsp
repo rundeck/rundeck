@@ -1,3 +1,4 @@
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 %{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
@@ -19,7 +20,7 @@
 
 <div class="subnav" style="display:none">
   <ul class="nav" style="" data-old-padding-top="" data-old-padding-bottom="" data-old-overflow="">
-    <auth:resourceAllowed action="create" kind="project" context="application">
+    <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
       <g:if test="${!params.nocreate}">
         <li>
           <g:link controller="framework" action="createProject">

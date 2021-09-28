@@ -137,8 +137,8 @@ search
     </script>
     <g:set var="projectName" value="${scheduledExecution.project}"/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
-            context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
-    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+            context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name:
             projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
     <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
     <g:set var="readAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_READ)}"/>

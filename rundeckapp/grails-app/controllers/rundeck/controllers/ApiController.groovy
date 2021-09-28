@@ -41,7 +41,6 @@ class ApiController extends ControllerBase{
     def quartzScheduler
     def frameworkService
     AppAuthContextProcessor rundeckAuthContextProcessor
-    def apiService
     def userService
     def configurationService
     LinkGenerator grailsLinkGenerator
@@ -53,8 +52,7 @@ class ApiController extends ControllerBase{
             apiTokenRemoveExpired: ['POST']
     ]
     def info () {
-        respond((Object)
-            [
+        respond((Object) [
                 apiversion: ApiVersions.API_CURRENT_VERSION,
                 href: grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}", absolute: true)
             ], formats: ['json']

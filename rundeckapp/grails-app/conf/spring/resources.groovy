@@ -76,6 +76,7 @@ import org.rundeck.app.authorization.BaseAuthContextProvider
 import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
+import org.rundeck.app.authorization.WebAuthContextProcessor
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
@@ -267,6 +268,9 @@ beans={
     rundeckAuthContextProcessor(BaseAuthContextProcessor){
         rundeckAuthContextProvider=ref('rundeckAuthContextProvider')
         rundeckAuthContextEvaluator=ref('rundeckAuthContextEvaluator')
+    }
+    rundeckWebAuthContextProcessor(WebAuthContextProcessor){
+        authContextProcessor = ref('rundeckAuthContextProcessor')
     }
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){

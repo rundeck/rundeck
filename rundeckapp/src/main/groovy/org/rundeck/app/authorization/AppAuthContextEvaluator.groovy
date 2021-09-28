@@ -16,6 +16,13 @@ interface AppAuthContextEvaluator extends AuthContextEvaluator {
      */
     def Map authResourceForJob(ScheduledExecution se)
 
+    /**
+     * Return true if the user is authorized to configure the project
+     * @param authContext
+     * @param project project name
+     * @return true/false
+     */
+    boolean authorizeProjectConfigure(AuthContext authContext, String project)
 
     /**
      * Return true if the user is authorized for all actions for the execution
@@ -97,12 +104,5 @@ interface AppAuthContextEvaluator extends AuthContextEvaluator {
         final Set<T> resources,
         final Function<T, Map<String, String>> convert,
         final String key
-    )
-    def <T> boolean authorizeResourceAll(
-        AuthContext authContext,
-        final String project,
-        final Set<String> actions,
-        final T resource,
-        final Function<T, Map<String, String>> convert
     )
 }

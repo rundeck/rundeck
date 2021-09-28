@@ -218,17 +218,6 @@ class TimedAuthContextEvaluator implements AppAuthContextEvaluator {
     }
 
     @Override
-    def <T> boolean authorizeResourceAll(
-        final AuthContext authContext,
-        final String project,
-        final Set<String> actions,
-        final T resource,
-        final Function<T, Map<String, String>> convert
-    ) {
-        return rundeckAuthContextEvaluator.authorizeResourceAll(authContext, project, actions, resource, convert)
-    }
-
-    @Override
     def <T> Set<T> filterAuthorizedResourcesAll(
         final AuthContext authContext,
         final String project,
@@ -239,5 +228,10 @@ class TimedAuthContextEvaluator implements AppAuthContextEvaluator {
     ) {
         return rundeckAuthContextEvaluator.
             filterAuthorizedResourcesAll(authContext, project, actions, resources, convert, key)
+    }
+
+    @Override
+    boolean authorizeProjectConfigure(final AuthContext authContext, final String project) {
+        return rundeckAuthContextEvaluator.authorizeProjectConfigure(authContext, project)
     }
 }

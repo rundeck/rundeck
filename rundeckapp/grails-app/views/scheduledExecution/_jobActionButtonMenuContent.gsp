@@ -20,12 +20,12 @@
 <g:set var="authDelete" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_DELETE])}"/>
 <g:set var="authEnableDisableSchedule" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_SCHEDULE])}"/>
 <g:set var="authEnableDisableExecution" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_EXECUTION])}"/>
-<g:set var="authJobCreate" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}"/>
-<g:set var="authOtherProject" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project, others: true)}"/>
-<g:set var="authJobDelete" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}"/>
+<g:set var="authJobCreate" value="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}"/>
+<g:set var="authOtherProject" value="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project, others: true)}"/>
+<g:set var="authJobDelete" value="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}"/>
 <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
-        context: 'application',
-        type: 'project',
+        context: AuthConstants.CTX_APPLICATION,
+        type: AuthConstants.TYPE_PROJECT,
         action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
         any: true,
         name: scheduledExecution.project

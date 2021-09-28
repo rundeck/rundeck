@@ -65,7 +65,6 @@ class ExecutionController extends ControllerBase{
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
     OrchestratorPluginService orchestratorPluginService
-    ApiService apiService
     WorkflowService workflowService
     FileUploadService fileUploadService
     PluginService pluginService

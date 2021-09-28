@@ -1607,7 +1607,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getProjectGlobals(_) >> [:]
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, _, _, _) >> true
+                authorizeProjectResource(_, _, _, _) >> true
                 authorizeProjectExecutionAny(_, exec, _) >> true
 
                 _ * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext) {
@@ -3472,7 +3472,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             getAuthContextForSubjectAndProject(*_) >> auth
             authorizeProjectJobAll(_, _, ['create','view'], _) >> true
-            authorizeProjectResourceAll(_, _ , ['create'] , _ ) >> true
+            authorizeProjectResource(_, _ , 'create' , _ ) >> true
             authorizeProjectJobAll(_, _ , ['read'] , _ ) >> true
         }
 
