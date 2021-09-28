@@ -1,22 +1,24 @@
 <template>
   <span class="col-xs-6">
-  <popover :class="{server:node.islocal}" trigger="click">
+  <popover trigger="outside-click"
+           :show-delay="0"
+           :hide-delay="200"
+           placement="auto"
+           append-to="body"
+           viewport="#section-content"
+           :custom-class="`node-embed-popover ${node.islocal?'server':''}`"
+  >
 
   <a
       data-role="trigger"
       class="node_ident embedded_node tight"
       tabindex="0"
       role="button"
-      data-viewport="#section-content"
-      data-placement="auto"
-      data-container="body"
-      data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
-      data-popover-template-class="popover-wide"
       :style="styleForNode(node.attributes)"
       :data-node="node.nodename"
       :title="node.nodename"
   >
-    <node-icon :node="node" :default-icon-css="resourceTypeDefinition.defaultIconCss"/>
+    <node-icon :node="node"/>
 
     <span style="margin: 0 0.5em" :class="{'node_unselected':node.unselected}">{{ node.nodename }}</span>
 
@@ -24,7 +26,8 @@
     <node-status :node="node"/>
   </a>
     <template slot="popover">
-      <div class="_mousedown_popup_allowed detailpopup node_entry tooltipcontent">
+      <div class=" detailpopup node_entry tooltipcontent" :class="{server:node.islocal}">
+        <div class="node-header">
 
           <node-icon :node="node"/>
 
@@ -34,7 +37,8 @@
             <i class="glyphicon glyphicon-circle-arrow-right"/>
           </node-filter-link>
 
-        <span class="nodedesc"></span>
+          <span class="nodedesc"></span>
+        </div>
 
         <div class="nodedetail" style="overflow-x: scroll;">
 
@@ -85,3 +89,21 @@ export default class NodeShowEmbed extends Vue {
   }
 }
 </script>
+<style lang="scss">
+.popover.node-embed-popover {
+  max-width: 500px;
+}
+
+.node-header {
+  display: flex;
+  justify-content: flex-start;
+
+  span,a{
+    flex: initial;
+    margin-right: 0.5em;
+    &.nodedesc{
+      flex:auto;
+    }
+  }
+}
+</style>
