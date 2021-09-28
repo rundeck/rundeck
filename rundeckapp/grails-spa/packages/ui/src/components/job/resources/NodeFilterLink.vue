@@ -1,6 +1,8 @@
 <template>
   <a :href="href()" class="xnodefilterlink" @click.prevent="handleClick">
+    <slot name="prefix"></slot>
     <slot>{{ getText() }}</slot>
+    <slot name="suffix"></slot>
   </a>
 </template>
 <script lang="ts">
@@ -33,7 +35,7 @@ export default class NodeFilterLink extends Vue {
   text!: string
 
   handleClick() {
-    this.$emit('nodefilterclick', {[this.filterParam]: this.getFilter()})
+    this.$emit('nodefilterclick', this.filterParamValues)
   }
 
   getText() {
@@ -59,8 +61,16 @@ export default class NodeFilterLink extends Vue {
     return this.exclude ? 'filterExclude' : 'filter'
   }
 
+  get filterParamValues() {
+    let params = {[this.filterParam]: this.getFilter()}
+    if (this.nodeFilterName) {
+      params.filterName = this.nodeFilterName
+    }
+    return params
+  }
+
   href() {
-    return url(_genUrl('/project/' + project + '/nodes', Object.assign({}, {[this.filterParam]: this.getFilter()})))
+    return url(_genUrl('/project/' + project + '/nodes', Object.assign({}, this.filterParamValues)))
   }
 }
 </script>

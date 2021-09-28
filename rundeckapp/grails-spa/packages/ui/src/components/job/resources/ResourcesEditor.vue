@@ -40,24 +40,17 @@
           </label>
 
           <div class="col-sm-10">
-            <!--          <g:hiddenField name="formInput" value="true"/>-->
 
             <inline-validation-errors :errors="modelData.filterErrors"/>
 
-
-            <!--                      <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">-->
-            <!--                          <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>-->
-            <!--                      </g:if>-->
-            <!--                      <g:render template="/framework/nodeFilterInputGroup"-->
-            <!--                                model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName]"/>-->
             <node-filter-input v-model="modelData.filter"
-                               class="input-group nodefilters multiple-control-input-group"
+                               :filter-name="modelData.filterName"
+                               :node-summary="nodeSummary"
+                               :allow-filter-default="false"
+                               @filters-updated="loadNodeSummary"
                                @filter="handleFilterClick"/>
 
             <input type="hidden" name="project" :value="modelData.project"/>
-            (modal manager for filters)
-            <!--                        <g:render template="/common/queryFilterManagerModal"-->
-            <!--                                  model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>-->
 
 
           </div>
@@ -78,11 +71,14 @@
             <inline-validation-errors :errors="modelData.filterExcludeErrors"/>
 
             <node-filter-input v-model="modelData.filterExclude"
+                               :filter-name="modelData.filterNameExclude"
+                               :node-summary="nodeSummary"
+                               :allow-filter-default="false"
                                filter-field-name="filterExclude"
                                filter-field-id="schedJobNodeFilterExclude"
                                :help-button="false"
                                search-btn-type="warning"
-                               class="input-group nodefilters multiple-control-input-group"
+                               @filters-updated="loadNodeSummary"
                                @filter="handleFilterExcludeClick"/>
 
           </div>
@@ -324,19 +320,27 @@
           </div>
         </div>
       </div>
-      <orchestrator-editor :label-col-class="labelColClass" :field-col-size="fieldColSize" v-model="modelData.orchestrator"/>
+      <orchestrator-editor :label-col-class="labelColClass" :field-col-size="fieldColSize"
+                           v-model="modelData.orchestrator"/>
 
     </template>
   </div>
 </template>
 <script lang="ts">
 import OrchestratorEditor from '@/components/job/resources/OrchestratorEditor.vue'
+import {_genUrl} from '@/utilities/genUrl'
+import axios from 'axios'
 import InlineValidationErrors from '../../form/InlineValidationErrors.vue'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {Prop, Watch} from 'vue-property-decorator'
 import NodeFilterInput from './NodeFilterInput.vue'
 import NodeFilterResults from './NodeFilterResults.vue'
+
+import {
+  getRundeckContext,
+  getAppLinks
+} from '@rundeck/ui-trellis'
 
 @Component({components: {OrchestratorEditor, InlineValidationErrors, NodeFilterInput, NodeFilterResults}})
 export default class ResourcesEditor extends Vue {
@@ -351,27 +355,38 @@ export default class ResourcesEditor extends Vue {
 
   modelData: any = {doNodedispatch: false, orchestrator: {type: null, config: {}}}
 
-  mounted() {
+  nodeSummary: any = {}
+
+  async mounted() {
     this.modelData = Object.assign({}, this.value)
+    await this.loadNodeSummary()
+  }
+
+  async loadNodeSummary() {
+    let result = await axios.get(_genUrl(getAppLinks().frameworkNodeSummaryAjax, {}))
+    if (result.status >= 200 && result.status < 300) {
+      this.nodeSummary = result.data
+    }
   }
 
   handleFilterExcludeClick(val: any) {
-    if (val.filter) {
-      this.handleFilterClick({filterExclude: val.filter})
-    } else {
-      this.handleFilterClick(val)
-    }
+    this.handleFilterClick({filterExclude: val.filter, filterNameExclude: val.filterName})
   }
 
   handleFilterClick(val: any) {
     if (val.filter) {
       Vue.set(this.modelData, 'filter', val.filter)
     }
+    if (val.filterName) {
+      Vue.set(this.modelData, 'filterName', val.filterName)
+    }
     if (val.filterExclude) {
       Vue.set(this.modelData, 'filterExclude', val.filterExclude)
     }
+    if (val.filterNameExclude) {
+      Vue.set(this.modelData, 'filterNameExclude', val.filterNameExclude)
+    }
   }
-
 
   @Watch('modelData', {deep: true})
   wasChanged() {

@@ -44,7 +44,7 @@
     regex.syntax.checking,
     show.all.nodes,
     save.filter.ellipsis,
-    delete.this.filter.ellipsis,
+    delete.this.filter,
     set.as.default.filter,
     remove.default.filter,
     scheduledExecution.property.excludeFilterUncheck.label,
@@ -81,6 +81,13 @@
     node.metadata.tags,
     scheduledExecution.property.orchestrator.label,
     scheduledExecution.property.orchestrator.description,
+    saved.filters,
+    filter,
+    name.prompt,
+    button.action.Cancel,
+    delete.this.filter.confirm,
+    delete.saved.node.filter,
+    save.node.filter,
 "/>
 <g:jsMessages codes="${[
         'onsuccess',
