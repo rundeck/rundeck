@@ -20,7 +20,7 @@ export default class NodeIcon extends Vue {
 
   @Prop({required: true})
   node!: {}
-  @Prop({required: false, default: 'far fa-circle'})
+  @Prop({required: false, default: 'fas fa-hdd'})
   defaultIconCss!: string
 
   cssForIcon(attrs: any) {
