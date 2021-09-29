@@ -34,7 +34,7 @@ run_tests(){
     local DIR=${FARGS[0]}
 
     cd $DIR
-    bash $DIR/test-api-plugin-blacklist.sh
+    bash $DIR/test-api-plugin-blocklist.sh
 }
 
 run_docker_test(){

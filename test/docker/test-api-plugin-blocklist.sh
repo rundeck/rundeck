@@ -10,7 +10,7 @@
 
   # Sets the compose file to use for test run
   # Different compose files used for different environments
- export DOCKER_COMPOSE_SPEC=${DOCKER_COMPOSE_SPEC:-docker-compose-plugin-blacklist.yaml}
+ export DOCKER_COMPOSE_SPEC=${DOCKER_COMPOSE_SPEC:-docker-compose-plugin-blocklist.yaml}
  export SETUP_TEST_PROJECT=test
 
  if [ -f rundeck-launcher.war ] ; then
@@ -40,7 +40,7 @@
  set +e
 
  docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 \
- 	bash scripts/run-plugin-blacklist-api-tests.sh api_test blacklist-*.sh
+ 	bash scripts/run-plugin-blocklist-api-tests.sh api_test blocklist-*.sh
 
  EC=$?
  echo "run_tests.sh finished with: $EC"

@@ -118,7 +118,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
     }
 
     @Unroll
-    def "load plugin by name, plugin blacklisted"() {
+    def "load plugin by name, plugin blocklisted"() {
         given:
         def description1 = DescriptionBuilder.builder()
                 .name('plugin1')
@@ -183,7 +183,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     }
 
-    def "list plugin, one blacklisted"(){
+    def "list plugin, one blocklisted"(){
         given:
         def description1 = DescriptionBuilder.builder()
                 .name('plugin1')
@@ -250,7 +250,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     }
 
-    def "retainPluginDescriptorByName, plugin blacklisted"(){
+    def "retainPluginDescriptorByName, plugin blocklisted"(){
         given:
         def description1 = DescriptionBuilder.builder()
                 .name('plugin1')

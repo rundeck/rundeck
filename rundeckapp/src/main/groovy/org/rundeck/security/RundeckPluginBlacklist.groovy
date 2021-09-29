@@ -6,7 +6,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor
 
 class RundeckPluginBlocklist implements PluginBlocklist {
 
-    String blackListFileName
+    String blockListFileName
     List<String> fileNameEntries
     List<Map<String,List<String>>> providerNameEntries
 

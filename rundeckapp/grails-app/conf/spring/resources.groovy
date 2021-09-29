@@ -560,7 +560,7 @@ beans={
         sourceMap = pluginRegistry
     }
     rundeckPluginBlocklist(RundeckPluginBlocklist){
-        blackListFileName=application.config.rundeck?.plugins?.providerBlockListFile?:null
+        blockListFileName= application.config.rundeck?.plugins?.providerBlockListFile?: null
     }
     /**
      * Registry bean contains both kinds of plugin

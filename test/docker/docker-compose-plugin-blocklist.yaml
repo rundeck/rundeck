@@ -36,7 +36,7 @@ services:
       - DATABASE_URL=jdbc:mysql://mysql:3306/rundeck?autoReconnect=true&useUnicode=yes&useSSL=false
       - DATABASE_USER=rundeck
       - DATABASE_PASS=rundeck
-      - PLUGIN_BLACKLIST_FILE=/home/rundeck/blacklist.yaml
+      - PLUGIN_BLOCKLIST_FILE=/home/rundeck/blocklist.yaml
     volumes:
       - logs:/home/rundeck/logs:rw
       - resources:/home/rundeck/resources:rw

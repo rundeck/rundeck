@@ -259,9 +259,9 @@ rundeck.nodeService.nodeCache.firstLoadAsynch=false
 END
 fi
 
-if [ -n "$PLUGIN_BLACKLIST_FILE" ] ; then
+if [ -n "$PLUGIN_BLOCKLIST_FILE" ] ; then
     cat - >>$RDECK_BASE/server/config/rundeck-config.properties <<END
-  rundeck.plugins.providerBlockListFile=$PLUGIN_BLACKLIST_FILE
+  rundeck.plugins.providerBlockListFile=$PLUGIN_BLOCKLIST_FILE
 END
 fi
 
