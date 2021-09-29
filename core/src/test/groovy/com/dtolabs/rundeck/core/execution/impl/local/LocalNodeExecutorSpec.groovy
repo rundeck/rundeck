@@ -16,7 +16,11 @@
 
 package com.dtolabs.rundeck.core.execution.impl.local
 
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.script.ExecTaskParameterGeneratorImpl
 import org.apache.tools.ant.Project
 import org.apache.tools.ant.taskdefs.ExecTask
@@ -59,5 +63,28 @@ class LocalNodeExecutorSpec extends Specification {
         null         | _
         'UTF-8'      | _
         'ISO-8859-2' | _
+    }
+
+    def "disable local executor"() {
+        given:
+        def node = Mock(INodeEntry)
+        def context = Mock(ExecutionContext){
+            getExecutionListener()>> Mock(ExecutionListener)
+        }
+        def command = ['a', 'command'] as String[]
+        def framework = Mock(Framework)
+
+        def plugin = new LocalNodeExecutor(framework)
+        plugin.setDisableLocalExecutor(true)
+
+        when:
+        def result = plugin.executeCommand(context, command, node)
+
+        then:
+        result != null
+        !result.success
+        result.failureReason != null
+        result.failureMessage == "Local Executor is disabled"
+
     }
 }
