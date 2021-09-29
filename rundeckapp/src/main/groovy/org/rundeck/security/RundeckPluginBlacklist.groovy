@@ -15,7 +15,7 @@ class RundeckPluginBlocklist implements PluginBlocklist {
     private boolean loaded
 
     @Override
-    Boolean isPluginFilePresent(String fileName) {
+    boolean isPluginFilePresent(String fileName) {
         if (!isBlocklistSet()) {
             return false
         }
@@ -41,7 +41,7 @@ class RundeckPluginBlocklist implements PluginBlocklist {
     }
 
     @Override
-    Boolean isPluginProviderPresent(String service, String providerName) {
+    boolean isPluginProviderPresent(String service, String providerName) {
         if (!isBlocklistSet()) {
             return false
         }
