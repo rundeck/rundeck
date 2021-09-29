@@ -77,23 +77,14 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
                 continue
             }
 
-            pluginList.each { PluginFileManifest pluginmf ->
+            pluginList.findAll {
+                !rundeckPluginBlocklist.isPluginFilePresent(it.fileName)
+            }.each { PluginFileManifest pluginmf ->
                 try {
-                    List<String> blackListPlugins = []
-                    Boolean blacklisted = false
-
-                    if(rundeckPluginBlocklist.isBlocklistSet()){
-                        blacklisted = rundeckPluginBlocklist.isPluginFilePresent(pluginmf.fileName)
-                    }
-                    if(blacklisted){
-                        //do nothing
-                    }
-                    else{
-                        if (installPlugin(pluginTargetDir, loader, pluginmf, pluginmf.fileName.endsWith('.groovy'))) {
-                            result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
-                        } else {
-                            result.logs << "Skipped existing plugin: ${pluginmf.fileName}"
-                        }
+                    if (installPlugin(pluginTargetDir, loader, pluginmf, pluginmf.fileName.endsWith('.groovy'))) {
+                        result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
+                    } else {
+                        result.logs << "Skipped existing plugin: ${pluginmf.fileName}"
                     }
                 } catch (Exception e) {
                     log.error("Failed extracting bundled plugin ${pluginmf}", e)

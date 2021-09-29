@@ -17,8 +17,6 @@ public interface PluginBlocklist {
      * @return true if provider name and service are present in the list
      */
     public Boolean isPluginProviderPresent(String service, String providerName);
-
-    public Boolean isBlocklistSet();
 }
 
 

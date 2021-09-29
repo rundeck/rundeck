@@ -1,55 +1,55 @@
 package org.rundeck.security
 
 import com.dtolabs.rundeck.core.plugins.PluginBlocklist
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor
 
+@CompileStatic
 class RundeckPluginBlocklist implements PluginBlocklist {
 
     String blockListFileName
-    List<String> fileNameEntries
-    List<Map<String,List<String>>> providerNameEntries
+    private List<String> fileNameEntries = []
+    private Map<String, List<String>> providerNameEntries = [:]
+    private boolean loaded
 
     @Override
     Boolean isPluginFilePresent(String fileName) {
-        Boolean blacklisted = false
-        if(!fileNameEntries){
-            Yaml yaml = new Yaml(new SafeConstructor());
-            Map data = yaml.load(new FileReader(blackListFileName));
-            fileNameEntries = data.get("fileNameEntries")
+        if (!isBlocklistSet()) {
+            return false
         }
+        load()
 
-        for (String item: fileNameEntries){
-            if(fileName.startsWith(item)){
-                blacklisted = true
+        for (String item : fileNameEntries) {
+            if (fileName.startsWith(item)) {
+                return true
             }
         }
-        return blacklisted
+        return false
+    }
+
+    @CompileDynamic
+    private load() {
+        if (!loaded) {
+            Yaml yaml = new Yaml(new SafeConstructor());
+            Map data = yaml.load(new FileReader(blockListFileName));
+            fileNameEntries = data.get("fileNameEntries")
+            providerNameEntries = data.get("providerNameEntries")
+            loaded = true
+        }
     }
 
     @Override
     Boolean isPluginProviderPresent(String service, String providerName) {
-        if(!providerNameEntries){
-            Yaml yaml = new Yaml(new SafeConstructor());
-            Map data = yaml.load(new FileReader(blackListFileName));
-            providerNameEntries = data.get("providerNameEntries")
-        }
-
-        Map<String,List<String>> blackListMap = [:]
-        providerNameEntries.each {
-            blackListMap.putAll(it)
-        }
-
-        if(blackListMap.containsKey(service)){
-            return blackListMap.get(service).contains(providerName)
-        }
-        else{
+        if (!isBlocklistSet()) {
             return false
         }
+        load()
+        providerNameEntries.get(service)?.contains(providerName) ?: false
     }
 
-    @Override
-    Boolean isBlocklistSet() {
-        return blackListFileName != null
+    private Boolean isBlocklistSet() {
+        return blockListFileName != null
     }
 }

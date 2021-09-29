@@ -362,11 +362,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             return new CloseableDescribedPlugin<T>(beanPlugin)
         }
 
-        if(rundeckPluginBlocklist.isBlocklistSet()){
-            Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)
-            if(blacklisted){
-                return null
-            }
+        if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)){
+            return null
         }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
@@ -406,11 +403,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             return beanPlugin
         }
 
-        if(rundeckPluginBlocklist.isBlocklistSet()){
-            Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)
-            if(blacklisted){
-                return null
-            }
+        if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)){
+            return null
         }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
@@ -522,6 +516,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         pluginRegistryMap.each { String k, String v ->
             try {
                 String pluginName = extractPluginName(k)
+                if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, pluginName)){
+                    return
+                }
                 def bean = findBean(v)
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
@@ -535,15 +532,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                     } else if (PluginAdapterUtility.canBuildDescription(bean)) {
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
-                    if(rundeckPluginBlocklist.isBlocklistSet()){
-                        Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, pluginName)
-                        if(!blacklisted){
-                            list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
-                        }
-                    }
-                    else{
-                        list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
-                    }
+                    list[pluginName] = new DescribedPlugin(bean, desc, pluginName, file)
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")
@@ -553,6 +542,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         if (rundeckServerServiceProviderLoader && service) {
             service.listProviders().each { ProviderIdent ident ->
+                if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, ident.providerName)){
+                    return
+                }
                 def instance
                 try {
                     instance= service.providerOfType(ident.providerName)
@@ -566,28 +558,15 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 }
 
                 if (!list[ident.providerName]) {
-                    if(rundeckPluginBlocklist.isBlocklistSet()){
-                        Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, ident.providerName)
-                        if(!blacklisted){
-                                list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
-                            }
-                    }
-                    else{
-                        list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
-                    }
+                    list[ident.providerName] = new DescribedPlugin<T>(instance, null, ident.providerName)
                 }
             }
             service.listDescriptions()?.each { Description d ->
+                if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, d.name)){
+                    return
+                }
                 if (!list[d.name]) {
-                    if(rundeckPluginBlocklist.isBlocklistSet()){
-                        Boolean blacklisted = rundeckPluginBlocklist.isPluginProviderPresent(service.name, d.name)
-                        if(!blacklisted){
-                            list[d.name] = new DescribedPlugin<T>( null, null, d.name)
-                        }
-                    }
-                    else{
-                        list[d.name] = new DescribedPlugin<T>( null, null, d.name)
-                    }
+                    list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                 }
                 list[d.name]?.description = d
             }
