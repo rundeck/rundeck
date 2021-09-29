@@ -32,24 +32,12 @@
     </div>
     <div id='matchednodes' class="clearfix row">
       <div class="col-sm-12 container-fluid">
-        <!--              <g:render template="/framework/nodesEmbedKO"-->
-        <!--                        model="[showLoading: false, showTruncated: false, showExcludeFilterLinks: true]"/>-->
 
         <node-list-embed :nodes="nodeSet.nodes"
                          :tagsummary="nodeSet.tagsummary"
                          :show-exclude-filter-links="true"
                          @filter="handleFilter">
 
-          <!--          <div class="text-info" v-if="loading">-->
-          <!--            <i class="glyphicon glyphicon-time"></i>-->
-          <!--            {{$t('loading.matched.nodes')}}-->
-          <!--          </div>-->
-
-          <!--            <div  v-if="truncated && total> max()">-->
-          <!--              <span xdata-bind="messageTemplate: [maxShown(), total()]" class="text-info">-->
-          <!--                {{$t('results.truncated.count.results.shown')}}-->
-          <!--              </span>-->
-          <!--            </div>-->
         </node-list-embed>
       </div>
     </div>
