@@ -2,18 +2,17 @@
   <div class="well well-sm matchednodes">
     <div class="row">
       <div class="col-sm-6">
-              <span class="text-info" v-if="loaded && !loading">
-                  <span
-                      xdata-bind="messageTemplate: [total,nodesTitle]">{{ $t('count.nodes.matched') }}</span>
-              </span>
+        <span class="text-info node_filter_results__matched_nodes_count" v-if="loaded && !loading">
+          {{$t('count.nodes.matched',[total,$tc('Node.count.vue',total)])}}
+        </span>
         <span v-if="loading" class="text-muted">
             <i class="glyphicon glyphicon-time"></i>
             {{ $t('loading.matched.nodes') }}
         </span>
 
         <span v-if="total>maxShown">
-            <span xdata-bind="messageTemplate: [maxShown(), total()]" class="text-strong">
-                {{ $t('count.nodes.shown') }}
+            <span class="text-strong">
+                  {{$t('count.nodes.shown',[total,$tc('Node.count.vue',total)])}}
             </span>
         </span>
       </div>
