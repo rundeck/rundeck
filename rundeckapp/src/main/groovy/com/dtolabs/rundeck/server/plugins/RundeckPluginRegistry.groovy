@@ -568,7 +568,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 if (!list[d.name]) {
                     list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                 }
-                list[d.name]?.description = d
+                list[d.name].description = d
             }
         }
 
