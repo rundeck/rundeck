@@ -43,7 +43,9 @@
 
             <inline-validation-errors :errors="modelData.filterErrors"/>
 
-            <node-filter-input v-model="modelData.filter"
+            <node-filter-input
+                id="job_edit__node_filter_include"
+                v-model="modelData.filter"
                                :filter-name="modelData.filterName"
                                :node-summary="nodeSummary"
                                :allow-filter-default="false"
@@ -70,7 +72,9 @@
 
             <inline-validation-errors :errors="modelData.filterExcludeErrors"/>
 
-            <node-filter-input v-model="modelData.filterExclude"
+            <node-filter-input
+                id="job_edit__node_filter_exclude"
+                v-model="modelData.filterExclude"
                                :filter-name="modelData.filterNameExclude"
                                :node-summary="nodeSummary"
                                :allow-filter-default="false"

@@ -3,7 +3,7 @@
     <div class="input-group nodefilters multiple-control-input-group">
       <span class="input-group-addon input-group-addon-title" v-if="showTitle">{{ $t('nodes') }}</span>
       <div class="input-group-btn">
-        <button type="button" class="btn btn-default dropdown-toggle"
+        <button type="button" class="btn btn-default dropdown-toggle job_edit__node_filter__filter_select_dropdown"
                 :class="{'btn-success':selectedFilterName,'btn-default':!selectedFilterName}" data-toggle="dropdown">
           <span>{{ filterNameDisplay }}</span> <span class="caret"></span>
         </button>
@@ -12,7 +12,7 @@
             <node-filter-link
                 node-filter-name=".*"
                 node-filter=".*"
-                :class="{active: '.*'=== selectedFilterName }"
+                :class="{active: '.*'=== selectedFilterName, 'job_edit__node_filter__filter_select_all':true }"
                 @nodefilterclick="handleNodefilter">
               <i class="fas fa-asterisk"></i>
               {{ $t('show.all.nodes') }}
@@ -84,7 +84,7 @@
         <btn id="filterSearchHelpBtn" tabindex="0" v-if="helpButton">
           <i class="glyphicon glyphicon-question-sign"></i>
         </btn>
-        <btn :type="`${searchBtnType} btn-fill`" @click="doSearch" :disabled="!outputValue">
+        <btn :type="`${searchBtnType} btn-fill`" @click="doSearch" :disabled="!outputValue" class="node_filter__dosearch">
           {{ $t('search') }}
         </btn>
       </div>

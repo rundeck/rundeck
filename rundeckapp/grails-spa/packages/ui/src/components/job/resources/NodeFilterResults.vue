@@ -1,5 +1,5 @@
 <template>
-  <div class="well well-sm matchednodes">
+  <div class="well well-sm matchednodes node_filter_results__matched_nodes">
     <div class="row">
       <div class="col-sm-6">
         <span class="text-info node_filter_results__matched_nodes_count" v-if="loaded && !loading">

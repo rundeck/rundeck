@@ -88,6 +88,9 @@
     delete.this.filter.confirm,
     delete.saved.node.filter,
     save.node.filter,
+    Node,
+    Node.plural,
+    Node.count.vue
 "/>
 <g:jsMessages codes="${[
         'onsuccess',
