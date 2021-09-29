@@ -1040,12 +1040,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //            println "already have dateStarted"
 //        }
 //
+        // Threshold
+        LoggingThreshold globalThreshold = LoggingThreshold.fromMap(getGlobalThresholdLimit(), getGlobalLimitAction())
+        LoggingThreshold jobThreshold    = LoggingThreshold.fromMap(getJobThresholdLimit(scheduledExecution), getJobLimitAction(scheduledExecution))
+        LoggingThreshold threshold       = LoggingThreshold.createMinimum(jobThreshold, globalThreshold)
 
-        //set up log output threshold
-        def thresholdMap = ScheduledExecution.parseLogOutputThreshold(scheduledExecution?.logOutputThreshold)
-        def threshold = LoggingThreshold.fromMap(thresholdMap,scheduledExecution?.logOutputThresholdAction)
-
-        def ExecutionLogWriter loghandler= loggingService.openLogWriter(
+        def ExecutionLogWriter loghandler = loggingService.openLogWriter(
                 execution,
                 logLevelForString(execution.loglevel),
                 [user:execution.user, node: framework.getFrameworkNodeName()],
@@ -1246,6 +1246,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             loghandler.close()
             return null
         }
+    }
+
+    private Map getGlobalThresholdLimit() {
+        String globalLimit = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_OUTPUT_LIMIT)
+        return ScheduledExecution.parseLogOutputThreshold(globalLimit)
+    }
+
+    private Map getJobThresholdLimit(ScheduledExecution scheduledExecution) {
+        String jobLimit = scheduledExecution?.logOutputThreshold
+        return ScheduledExecution.parseLogOutputThreshold(jobLimit)
+    }
+
+    private String getGlobalLimitAction() {
+        return configurationService.getString(LoggingThreshold.EXECUTION_LOGS_LIMIT_ACTION)
+    }
+
+    private String getJobLimitAction(ScheduledExecution scheduledExecution) {
+        return scheduledExecution?.logOutputThresholdAction
     }
 
     /**

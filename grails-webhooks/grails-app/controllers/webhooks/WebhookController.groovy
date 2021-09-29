@@ -50,13 +50,18 @@ class WebhookController {
     }
 
     def remove() {
+        if(!params.project){
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.parameter.required', args: ['project']])
+
+        }
         Webhook webhook = webhookService.getWebhook(params.id.toLong())
         if(!webhook) {
             sendJsonError("Webhook not found")
             return
         }
 
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
         if (!authorized(authContext, webhook.project, ACTION_DELETE)) {
             sendJsonError("You are not authorized to perform this action")
             return

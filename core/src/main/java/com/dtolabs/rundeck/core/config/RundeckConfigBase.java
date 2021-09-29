@@ -95,6 +95,13 @@ public class RundeckConfigBase {
         public static class ExecutionLogs {
             String fileStoragePlugin;
             LogFileStorage fileStorage;
+            LogOutput output;
+        }
+
+        @Data
+        public static class LogOutput {
+            String limit;
+            String limitAction;
         }
 
         @Data

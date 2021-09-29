@@ -566,7 +566,13 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                         //support for built-in notification types
                     ['urls','email'].each{ subkey->
                         if(data.notification[name][subkey]){
-                            nots << Notification.fromMap(name, [(subkey):data.notification[name][subkey]])
+                            Map notificationData = [
+                                    format    : data.notification[name]["format"],
+                                    httpMethod: data.notification[name]["httpMethod"],
+                                    (subkey)  : data.notification[name][subkey]
+                            ]
+
+                            nots << Notification.fromMap(name, notificationData)
                         }
                     }
                     if(data.notification[name]['plugin']){

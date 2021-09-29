@@ -50,8 +50,12 @@
                   </div>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal"><g:message code="no" /></button>
-                  <button type="submit" class="btn btn-danger"><g:message code="delete.project.now.button" /></button>
+                  <button type="button" class="btn btn-default" id="btn-cancel" data-dismiss="modal"><g:message code="no" /></button>
+                  <button type="submit" class="btn btn-danger" id="btn-delete" onclick="return onDeleteProject()"><g:message code="delete.project.now.button" /></button>
+                  <span id="delete-project-spinner" style="display: none;">
+                    <i class="fas fa-spinner fa-pulse"></i>
+                    <g:message code="action.take.amount.time" />
+                   </span>
                 </div>
               </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
@@ -61,3 +65,14 @@
     </div>
   </div>
 </div>
+<script type="text/javascript">
+  function onDeleteProject() {
+    let btnDelete = jQuery("#btn-delete")
+    let btnCancel = jQuery("#btn-cancel")
+    let spinner = jQuery("#delete-project-spinner")
+    btnDelete.hide()
+    btnCancel.hide()
+    spinner.show()
+    return true
+  }
+</script>

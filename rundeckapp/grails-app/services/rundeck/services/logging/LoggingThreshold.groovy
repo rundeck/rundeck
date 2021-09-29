@@ -29,6 +29,15 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
     public static final String TOTAL_FILE_SIZE = "size"
     public static final String ACTION_HALT = "halt"
     public static final String ACTION_TRUNCATE = "truncate"
+    /**
+     * Log output limit applied over all projects
+     */
+    static final String EXECUTION_LOGS_OUTPUT_LIMIT = "execution.logs.output.limit"
+    /**
+     * Log limit action applied over all projects
+     */
+    static final String EXECUTION_LOGS_LIMIT_ACTION = "execution.logs.output.limitAction"
+
     Long maxValue
     ValueHolder<Long> valueHolder
     String action
@@ -78,6 +87,63 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
      */
     public ValueWatcher<Long> watcherForType(String type) {
         return this.type == type ? this : null
+    }
+
+    static LoggingThreshold createMinimum(LoggingThreshold job, LoggingThreshold global) {
+        if (!job && !global) { return null }
+        def t = new LoggingThreshold()
+        if (job && global && job.type == global.type) {
+            t.maxValue = Math.min(job.maxValue, global.maxValue)
+        } else {
+            evalPriority(t, [job, global])
+        }
+        evalLimitAction(t, job, global)
+        return t
+    }
+
+    static void evalPriority(LoggingThreshold t, List<LoggingThreshold> thresholds) {
+        def priorities = []
+        thresholds.each {it ->
+            if (it?.type == TOTAL_FILE_SIZE) {
+                priorities[0] = it
+            }
+            else if (it?.type == TOTAL_LINES) {
+                priorities[1] = it
+            }
+            else if (it?.type == LINES_PER_NODE) {
+                priorities[2] = it
+            }
+        }
+        LoggingThreshold tPriority = priorities.find()
+        if (tPriority) {
+            t.type = tPriority.type
+            t.maxValue = tPriority.maxValue
+            t.description = tPriority.description
+        }
+    }
+
+    /**
+     * Gets the log output limit action
+     * @param globalLimitMap
+     * @param globalLimitAction
+     * @param jobLimitMap
+     * @param jobLimitAction
+     * @return log limit action
+     */
+    static void evalLimitAction(LoggingThreshold t, LoggingThreshold job, LoggingThreshold global) {
+        t.action = ACTION_HALT
+        if (!job?.action && global?.action) {
+            t.action = global.action
+        }
+        else if (job?.action && !global?.action) {
+            t.action = job.action
+        }
+        else if (job?.action && global?.action && global?.action == ACTION_HALT) {
+            t.action = global.action
+        }
+        else if (job?.action && global?.action && global?.action == ACTION_TRUNCATE) {
+            t.action = job.action
+        }
     }
 
     @Override
