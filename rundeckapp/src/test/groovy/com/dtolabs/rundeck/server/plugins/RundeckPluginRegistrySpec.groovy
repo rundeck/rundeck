@@ -169,7 +169,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.pluginRegistryMap = ['plugin1': 'testBeanBuilder', 'otherservice:plugin1': 'testBeanBuilder3']
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist){
-            isPluginProviderPresent(_,_) >> true
+            1 * isPluginProviderPresent('NodeExecutor','plugin2') >> true
         }
         def svc = Mock(PluggableProviderService){
             getName() >> "NodeExecutor"
@@ -232,10 +232,9 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         FileReader reader = Mock(FileReader)
         sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist){
-            isPluginProviderPresent(_,"plugin2") >> false
-            isPluginProviderPresent(_,"plugin1") >> true
-            isPluginProviderPresent(_,"plugin3") >> false
-            isBlocklistSet() >> true
+            1 * isPluginProviderPresent(_,"plugin2") >> false
+            1 * isPluginProviderPresent(_,"plugin1") >> true
+            1 * isPluginProviderPresent(_,"plugin3") >> false
         }
         def svc = Mock(PluggableProviderService){
             getName() >> "NodeExecutor"
@@ -297,7 +296,7 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.pluginRegistryMap = ['plugin1': 'testBeanBuilder', 'otherservice:plugin1': 'testBeanBuilder3']
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist){
-            isPluginProviderPresent(_,_) >> true
+            1 * isPluginProviderPresent('NodeExecutor','plugin2') >> true
         }
         def svc = Mock(PluggableProviderService){
             getName() >> "NodeExecutor"
