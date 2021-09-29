@@ -179,6 +179,7 @@ export default class NodeFilterResults extends Vue {
           this.error = 'Error: ' + result.status
         }
       } else {
+        this.loaded = true
         let data = result.data
         this.nodeSet = {
           nodes: data.allnodes,
