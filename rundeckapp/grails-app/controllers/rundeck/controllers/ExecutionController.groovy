@@ -280,7 +280,7 @@ class ExecutionController extends ControllerBase{
 
         if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(e.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]),
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]),
                 AuthConstants.ACTION_DELETE_EXECUTION,'Project',e.project)) {
             return
         }
@@ -540,7 +540,7 @@ class ExecutionController extends ControllerBase{
             def authAction=requestActive?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
             if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                                                       AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                                                      [authAction, AuthConstants.ACTION_ADMIN]),
+                                                                                      [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]),
 
                                      authAction,'for','Rundeck')) {
                 return
@@ -2022,7 +2022,7 @@ setTimeout(function(){
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(e.project),
-                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
                 ),
                 response,
                 [AuthConstants.ACTION_DELETE_EXECUTION, "Project", e.project] as Object[])){
@@ -2314,7 +2314,7 @@ setTimeout(function(){
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [authAction, AuthConstants.ACTION_ADMIN]
+                [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
             )
         ) {
             return apiService.renderErrorFormat(response,

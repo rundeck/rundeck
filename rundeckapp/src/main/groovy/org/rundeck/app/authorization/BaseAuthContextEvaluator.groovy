@@ -111,7 +111,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
             List<String> actions
     ) {
         return actions.any {
-            authorizeApplicationResourceAll(authContext, resource, [it])
+            authContextEvaluatorCacheManager.evaluate(authContext, resource, it, null).authorized
         }
     }
 
@@ -420,7 +420,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         return authorizeApplicationResourceAny(
             authContext,
             authResourceForProject(project),
-            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         )
     }
 }

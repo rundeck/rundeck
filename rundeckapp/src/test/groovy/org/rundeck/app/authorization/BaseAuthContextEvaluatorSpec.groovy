@@ -128,37 +128,31 @@ class BaseAuthContextEvaluatorSpec extends Specification {
             def sut = new BaseAuthContextEvaluator()
             sut.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
             def ctx = Mock(AuthContext)
-            Set<Decision> decisionResults1 = new HashSet<>(
-                    [
-                            [
-                                    isAuthorized: { -> decisions[0] }
-                            ] as Decision
-                    ]
-            )
-            Set<Decision> decisionResults2 = new HashSet<>(
-                    [
-                            [
-                                    isAuthorized: { -> decisions[1] }
-                            ] as Decision
-                    ]
-            )
+
+            def mock1 = Mock(Decision) {
+                1 * isAuthorized() >> (decisions[0])
+            }
+
+            def mock2 = Mock(Decision) {
+                _ * isAuthorized() >> (decisions[1])
+            }
             def resource = [type: 'job', name: 'name1', group: 'blah/blee']
 
         when:
             def result = sut.authorizeApplicationResourceAny(ctx, resource, ['test', 'test2'])
         then:
             ctx.evaluate(
-                    [resource].toSet(), ['test'].toSet(), {
+                    resource, 'test', {
                 Attribute attr = it.iterator().next()
                 "rundeck:auth:env:application" == attr.property.toString() && "rundeck" == attr.value
             }
-            ) >> decisionResults1
+            ) >> mock1
             ctx.evaluate(
-                    [resource].toSet(), ['test2'].toSet(), {
+                    resource, 'test2', {
                 Attribute attr = it.iterator().next()
                 "rundeck:auth:env:application" == attr.property.toString() && "rundeck" == attr.value
             }
-            ) >> decisionResults2
+            ) >> mock2
             result == expect
 
         where:

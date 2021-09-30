@@ -502,7 +502,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
         def authCtx = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceType(_,_,_) >> true
+                _ * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
 
                 1 * getAuthContextForSubject(_) >> authCtx
             }
@@ -526,7 +526,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         given:
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceType(_,_,_) >> true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
 
                 1 * getAuthContextForSubject(_) >> auth
             }
@@ -580,7 +580,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         given:
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceType(_,_,_) >> true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
 
                 1 * getAuthContextForSubject(_) >> auth
             }
@@ -637,7 +637,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         given:
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceType(_,_,_) >> true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
 
                 1 * getAuthContextForSubject(_) >> auth
             }
@@ -718,7 +718,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         given:
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceType(_,_,_) >> true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
 
                 1 * getAuthContextForSubject(_) >> auth
             }
@@ -741,7 +741,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         given:
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceType(_,_,_) >> true
+                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
 
                 1 * getAuthContextForSubject(_) >> auth
             }
@@ -765,7 +765,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
                 1 * authorizeApplicationResourceAny(
                     _,
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_ADMIN]
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
                 ) >> false
 
                 1 * getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {

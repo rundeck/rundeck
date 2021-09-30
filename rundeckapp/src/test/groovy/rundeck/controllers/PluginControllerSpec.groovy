@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
 import rundeck.UtilityTagLib
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
@@ -340,7 +341,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.featureService.featurePresent(_) >> false
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> true
         response.text == '{"err":"A plugin file must be specified"}'
     }
 
@@ -377,7 +378,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> true
         response.text == '{"err":"The plugin URL is required"}'
     }
 
@@ -406,7 +407,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.featureService.featurePresent(_) >> false
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> true
         response.text == '{"msg":"done"}'
         uploaded.exists()
 
@@ -499,7 +500,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> true
         response.text == '{"msg":"done"}'
         installed.exists()
 
@@ -598,7 +599,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.featureService.featurePresent(_) >> false
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceType(_,_,_) >> false
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]) >> false
         response.text == '{"err":"Unauthorized"}'
     }
 
