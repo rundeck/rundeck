@@ -16,5 +16,5 @@
 package com.dtolabs.rundeck.core.authentication.tokens;
 
 public enum AuthTokenType {
-    USER, WEBHOOK
+    USER, WEBHOOK, RUNNER
 }

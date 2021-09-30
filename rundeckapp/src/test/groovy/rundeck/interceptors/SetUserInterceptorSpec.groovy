@@ -18,6 +18,7 @@ import rundeck.codecs.URIComponentCodec
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.servlet.ServletContext
 
@@ -112,6 +113,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
     }
 
+    @Unroll
     def "lookupToken"() {
 
         setup:
@@ -121,6 +123,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         AuthToken userTk2 = new AuthToken(token: "456", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.LEGACY)
         AuthToken userTk3 = new AuthToken(token: "ABC", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
         AuthToken userTk4 = new AuthToken(token: "DEF", user:u1, authRoles:"admin", type: AuthTokenType.USER, tokenMode: null)
+        AuthToken runnerTk1 = new AuthToken(token: "RN1", user:u1, authRoles:"admin", type: AuthTokenType.RUNNER, tokenMode: AuthTokenMode.SECURED)
         AuthToken whkTk = new AuthToken(token: "789", user:u2, authRoles:"admin", type:AuthTokenType.WEBHOOK, tokenMode: AuthTokenMode.LEGACY)
         u1.save()
         u2.save()
@@ -128,8 +131,10 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         userTk2.save()
         userTk3.save()
         userTk4.save()
+        runnerTk1.save()
         whkTk.save()
         def svCtx = Mock(ServletContext)
+        request.setAttribute(SetUserInterceptor.RUNNER_RQ_ATTRIB, runnerRq)
 
         when:
         AuthenticationToken foundToken = interceptor.lookupToken(tk,svCtx,webhookToken)
@@ -139,17 +144,20 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         result == expected
 
         where:
-        tk    | webhookToken | expected
-        "123" | true         | null
-        "123" | false        | "admin"
-        "456" | true         | null
-        "456" | false        | "admin"
-        "ABC" | true         | null
-        "ABC" | false        | "admin"
-        "DEF" | true         | null
-        "DEF" | false        | "admin"
-        "789" | true         | "whk"
-        "789" | false        | null
+        tk    | webhookToken | runnerRq | expected
+        "123" | true         | false    | null
+        "123" | false        | false    | "admin"
+        "456" | true         | false    | null
+        "456" | false        | false    | "admin"
+        "ABC" | true         | false    | null
+        "ABC" | false        | false    | "admin"
+        "DEF" | true         | false    | null
+        "DEF" | false        | false    | "admin"
+        "789" | true         | false    | "whk"
+        "789" | false        | false    | null
+        "RN1" | false        | false    | null
+        "RN1" | false        | null     | null
+        "RN1" | false        | true     | "admin"
     }
 
 }
