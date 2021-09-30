@@ -72,7 +72,7 @@
     </section>
 
     <!-- Bulk edit modals -->
-    <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')">
+    <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')" append-to-body>
 
       <i18n tag="p" path="clearselected.confirm.text">
         <strong>{{bulkSelectedIds.length}}</strong>
@@ -94,7 +94,7 @@
       </div>
     </modal>
 
-    <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')">
+    <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')" append-to-body>
       <i18n tag="p" path="delete.confirm.text">
         <strong>{{bulkSelectedIds.length}}</strong>
         <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
@@ -112,7 +112,7 @@
       </div>
     </modal>
 
-    <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" >
+    <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" append-to-body>
                 <div  v-if="bulkEditProgress">
                     <em>
                         <b class="glyphicon glyphicon-time text-info"></b>

@@ -135,6 +135,7 @@
             ref="modal"
             size="lg"
             id="add-new-modal"
+            append-to-body
           >
             <div class="list-group">
               <a
