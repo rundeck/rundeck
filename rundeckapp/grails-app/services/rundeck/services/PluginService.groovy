@@ -159,7 +159,7 @@ class PluginService implements ResourceFormats {
         if (bean != null) {
             return bean
         }
-        log.error("${service.name} not found: ${name}")
+        log.warn("${service.name} not found: ${name}")
         return null
     }
     /**

@@ -46,6 +46,7 @@ import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import groovy.transform.PackageScope
+import org.rundeck.security.RundeckPluginBlocklist
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
@@ -76,6 +77,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     def File pluginDirectory
     def File pluginCacheDirectory
     def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
+    RundeckPluginBlocklist rundeckPluginBlocklist
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -359,6 +361,10 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         if (null != beanPlugin) {
             return new CloseableDescribedPlugin<T>(beanPlugin)
         }
+
+        if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)){
+            return null
+        }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
             //attempt to load directly
@@ -395,6 +401,10 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
          DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name, service.name)
         if (null != beanPlugin) {
             return beanPlugin
+        }
+
+        if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)){
+            return null
         }
         //try loading via ServiceProviderLoader
         if (rundeckServerServiceProviderLoader && service) {
@@ -506,6 +516,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         pluginRegistryMap.each { String k, String v ->
             try {
                 String pluginName = extractPluginName(k)
+                if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, pluginName)){
+                    return
+                }
                 def bean = findBean(v)
                 if (bean instanceof PluginBuilder) {
                     bean = ((PluginBuilder) bean).buildPlugin()
@@ -529,6 +542,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         if (rundeckServerServiceProviderLoader && service) {
             service.listProviders().each { ProviderIdent ident ->
+                if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, ident.providerName)){
+                    return
+                }
                 def instance
                 try {
                     instance= service.providerOfType(ident.providerName)
@@ -546,6 +562,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 }
             }
             service.listDescriptions()?.each { Description d ->
+                if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, d.name)){
+                    return
+                }
                 if (!list[d.name]) {
                     list[d.name] = new DescribedPlugin<T>( null, null, d.name)
                 }

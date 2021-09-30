@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
 import com.dtolabs.utils.Streams
 import grails.spring.BeanBuilder
+import org.rundeck.security.RundeckPluginBlocklist
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -42,6 +43,8 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
     RundeckPluginRegistry rundeckPluginRegistry
     @Autowired
     Collection<PluginFileSource> pluginFileSources = []
+
+    RundeckPluginBlocklist rundeckPluginBlocklist
 
     RundeckEmbeddedPluginExtractor() {
     }
@@ -74,7 +77,9 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
                 continue
             }
 
-            pluginList.each { PluginFileManifest pluginmf ->
+            pluginList.findAll {
+                !rundeckPluginBlocklist.isPluginFilePresent(it.fileName)
+            }.each { PluginFileManifest pluginmf ->
                 try {
                     if (installPlugin(pluginTargetDir, loader, pluginmf, pluginmf.fileName.endsWith('.groovy'))) {
                         result.logs << "Extracted bundled plugin ${pluginmf.fileName}"
