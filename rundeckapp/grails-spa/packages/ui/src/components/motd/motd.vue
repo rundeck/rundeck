@@ -3,12 +3,13 @@
     placement="right"
     :closeable="true"
     :visible="message && showMessage"
-    width="500px"
+    width="50%"
+    height="auto"
     @close="dismissMessage">
 
-    <div :class="'alert ' + alertStyle" :style="styleCss">
+    <div :class="alertStyle" :style="styleCss" style="padding: 20px;">
       <!-- <button type="button" class="close" @click="dismissMessage" data-dismiss="alert">×</button> -->
-      <h4 v-if="noTitle">Message of The Day</h4>
+      <div class="text-h4" v-if="noTitle">Message of The Day</div>
       <div class="motd-content" v-bind:class="{ full: showFullMOTD}">
         <span v-html="message"></span>
       </div>
@@ -123,7 +124,7 @@ export default {
      * @returns {string}
      */
     alertStyle () {
-      return `alert-${this.motdStyle}`
+      return `bg-${this.motdStyle}`
     },
     styleCss () {
       let style = {}
