@@ -275,6 +275,7 @@
     <script type="text/javascript" defer>
         //call after gsp page has loaded javascript
         jQuery(function(){window.rundeckPage.onPageLoad();});
+        jQuery('.modal').appendTo('body');
     </script>
 </g:if>
 
