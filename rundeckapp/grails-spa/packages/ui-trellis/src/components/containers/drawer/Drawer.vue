@@ -1,10 +1,13 @@
 <template>
-    <div ref="drawer" class="rd-drawer" :class="[`rd-drawer--${placement}`, display ? 'rd-drawer--active' : '']">
-        <div v-if="displayHeader()" class="rd-drawer__header">
-            <div v-if="title" class="rd-drawer__title">{{title}}</div>
-            <div v-if="closeable" class="btn btn-default btn-link" style="margin-left: auto;" @click="() => {$emit('close')}">Close</div>
+    <div class="rd-drawer__wrapper">
+        <div ref="drawer" class="rd-drawer" :class="[`rd-drawer--${placement}`, display ? 'rd-drawer--active' : '']">
+            <div v-if="displayHeader()" class="rd-drawer__header">
+                <div v-if="title" class="rd-drawer__title">{{title}}</div>
+                <div v-if="closeable" class="btn btn-default btn-link" style="margin-left: auto;" @click="() => {$emit('close')}">Close</div>
+            </div>
+            <slot/>
         </div>
-        <slot/>
+        <div v-if="mask" class="rd-drawer__mask" :class="{'rd-drawer__mask--active': display}"/>
     </div>
 </template>
 
@@ -18,18 +21,35 @@ export default Vue.extend({
         visible: {type: Boolean},
         closeable: {default: true},
         placement: {default: 'left'},
-        width: {default: '256px'}
+        width: {default: ''},
+        height: {default: ''},
+        mask: {default: true}
     },
     data() { return {
         display: false
     }},
     mounted() {
         this.display = this.visible;
-        (<HTMLElement>this.$el).style.setProperty('--rd-drawer-width', this.width)
+        (<HTMLElement>this.$el).style.setProperty('--rd-drawer-width', this.drawerWidth);
+        (<HTMLElement>this.$el).style.setProperty('--rd-drawer-height', this.drawerHeight);
     },
     methods: {
         displayHeader(): boolean {
             return (this.title?.length > 0 || this.closeable)
+        }
+    },
+    computed: {
+        drawerHeight(): string {
+            if (['left', 'right'].includes(this.placement))
+                return this.height || '100%'
+            else
+                return this.height || '256px'
+        },
+        drawerWidth(): string {
+            if (['left', 'right'].includes(this.placement))
+                return this.width || '256px'
+            else
+                return this.width || '100%'
         }
     },
     watch: {
@@ -41,16 +61,19 @@ export default Vue.extend({
 </script>
 
 <style scoped lang="scss">
+.rd-drawer__wrapper {
+    --rd-drawer-transition-time: calc(var(--animation-scale) * 200ms);
+}
+
+
 .rd-drawer {
     position: absolute;
-    top: 0;
-    bottom: 0;
     overflow-x: hidden;
     overflow-y: auto;
     background-color: var(--background-color);
     box-shadow: none;
     width: var(--rd-drawer-width);
-    z-index: 100;
+    z-index: 5000;
 
     &__header {
         padding: 10px;
@@ -63,38 +86,61 @@ export default Vue.extend({
         font-weight: 800;
         font-size: 1.5em;
     }
+}
 
-    &--active {
+.rd-drawer--left {
+    top: 0px;
+    max-height: 100%;
+    height: var(--rd-drawer-height);
+    right: 100%;
+    transition: right var(--rd-drawer-transition-time) ease-in-out;
+
+    &.rd-drawer--active {
+        right: calc(100% - var(--rd-drawer-width));
         box-shadow: rgba(0, 0, 0, 0.15) 2px 0px 8px 0px;
     }
 }
 
-.rd-drawer--left {
-    left: calc(-1 * var(--rd-drawer-width));
-    transition: left .2s ease-in-out;
-
-    &.rd-drawer--active {
-        left: 0px;
-    }
-}
-
 .rd-drawer--right {
-    right: calc(-1 * var(--rd-drawer-width));
-    transition: right .2s ease-in-out;
+    top: 0px;
+    max-height: 100%;
+    height: var(--rd-drawer-height);
+    left: 100%;
+    transition: left var(--rd-drawer-transition-time) ease-in-out;
 
     &.rd-drawer--active {
-        right: 0px;
+        left: calc(100% - var(--rd-drawer-width));
+        box-shadow: rgba(0, 0, 0, 0.2) -2px 2px 8px 0px;
     }
 }
 
 .rd-drawer--top {
-    top: calc(-1 * var(--rd-drawer-width));
+    left: 0px;
+    bottom: 100%;
     width: 100%;
     height: var(--rd-drawer-width);
-    transition: top .2s ease-in-out;
+    transition: bottom var(--rd-drawer-transition-time) ease-in-out;
 
     &.rd-drawer--active {
-        top: 0px;
+        bottom: calc(100% - var(--rd-drawer-width));
+        box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px 0px;
+    }
+}
+
+.rd-drawer__mask {
+    position: absolute;
+    background-color: transparent;
+    top: 0px;
+    left: 0px;
+    z-index: 4999;
+    height: 0px;
+    width: 100%;
+    background-color: transparent;
+
+    &--active {
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        transition: background-color var(--rd-drawer-transition-time) ease-in-out;
     }
 }
 
