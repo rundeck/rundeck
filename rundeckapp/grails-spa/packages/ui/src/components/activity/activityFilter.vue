@@ -47,6 +47,7 @@
       :title="$t('Search Activity')"
       size="lg"
       @hide="closing"
+      append-to-body
     >
       <div>
         <div class="base-filters">

@@ -256,6 +256,7 @@
       ref="modal"
       id="provider-modal"
       size="lg"
+      append-to-body
     >
       <p>
         Provider Name:

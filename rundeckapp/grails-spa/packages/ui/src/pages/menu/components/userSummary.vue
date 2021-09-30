@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- -->
-    <modal v-model="openModal" ref="modal">
+    <modal v-model="openModal" ref="modal" append-to-body>
         <span slot="title">Search</span>
         <div class="row">
           <div class="col-xs-12">
