@@ -261,8 +261,8 @@ $black:                      $grey-900;
     --background-color-lvl2: var(--white);
     --background-color-accent-lvl2: var(--grey-300);
 
-    --background-color-lvl3: var(--grey-600);
-    --background-color-accent-lvl3: var(--grey-400);
+    --background-color-lvl3: var(--grey-400);
+    --background-color-accent-lvl3: var(--grey-600);
 
     --box-shadow-top-lv1:  0px -1px var(--grey-400);
     --box-shadow-bottom-lv1:  0px 1px var(--grey-400);
@@ -322,12 +322,18 @@ $black:                      $grey-900;
     --sidebar-item-state-color: var(--white);
     --sidebar-drawer-bg-color:  var(--grey-800);
 
+    // Subtitle Bar
+    --subtitle-bar-border-bottom: 1px solid var(--grey-200);
+
     // Utility Bar
     --utility-bar-background-color: var(--background-color-lvl2);
     --utility-bar-box-shadow:  var(--box-shadow-top-lv1);
 
     // MOTD Drawer
     --motd-drawer-background-color: var(--background-color-lvl2);
+
+    // Popover
+    --popover-background-color: var(--background-color-lvl2);
 
     // Inputs
     --input-bg-color:              var(--grey-200);
