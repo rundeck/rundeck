@@ -32,7 +32,8 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['project']])
 
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider
+            .getAuthContextForSubjectAndProject(session.subject, project)
         if (!rundeckAuthContextEvaluator.authorizeProjectResourceAny(authContext,RESOURCE_TYPE_WEBHOOK, [ACTION_CREATE,ACTION_UPDATE],project)) {
             sendJsonError("You are not authorized to perform this action")
             return
@@ -79,7 +80,8 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['id']])
 
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider
+            .getAuthContextForSubjectAndProject(session.subject, params.project)
         if (!authorized(authContext, params.project, RESOURCE_TYPE_WEBHOOK, ACTION_READ)) {
             sendJsonError("You do not have access to this resource")
             return
@@ -97,7 +99,8 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['project']])
 
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider
+            .getAuthContextForSubjectAndProject(session.subject, params.project)
         if (!authorized(authContext, params.project, RESOURCE_TYPE_WEBHOOK, ACTION_READ)) {
             sendJsonError("You do not have access to this resource")
             return
@@ -111,7 +114,7 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['project']])
 
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (!authorized(authContext, params.project, RESOURCE_TYPE_WEBHOOK, ACTION_READ)) {
             sendJsonError("You do not have access to this resource")
             return
@@ -136,7 +139,8 @@ class WebhookController {
             return
         }
 
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = rundeckAuthContextProvider
+            .getAuthContextForSubjectAndProject(session.subject, hook.project)
         if (!authorized(authContext, hook.project, RESOURCE_TYPE_WEBHOOK, ACTION_POST)) {
             sendJsonError("You are not authorized to perform this action")
             return
