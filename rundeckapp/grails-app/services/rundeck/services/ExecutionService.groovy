@@ -67,8 +67,9 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.UnauthorizedAccess
-import org.rundeck.app.authorization.domain.AuthorizedExecution
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.app.authorization.domain.execution.AuthorizedExecution
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
@@ -1610,7 +1611,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     @ToString(includeNames = true)
-    class AbortResult {
+    static class AbortResult {
         String abortstate
         String jobstate
         String status
@@ -1656,6 +1657,34 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
         }
         abortExecutionDirect(se, e, user, killAsUser, forceIncomplete)
+    }
+    /**
+     * Abort execution if authorized
+     * @param se job
+     * @param e execution
+     * @param user username
+     * @param authContext auth context
+     * @param killAsUser as username
+     * @return AbortResult
+     */
+    @CompileStatic
+    def abortExecution(
+            AuthorizedExecution execution,
+            String killAsUser = null,
+            boolean forceIncomplete = false
+    ) throws UnauthorizedAccess, NotFound
+    {
+        if(!execution.kill.allowed || killAsUser && !execution.killAs.allowed) {
+            Execution e = execution.read.access
+            return new AbortResult(
+                    abortstate: ABORT_FAILED,
+                    jobstate: getExecutionState(e),
+                    status: getExecutionState(e),
+                    reason: "unauthorized"
+            )
+        }
+        Execution e = execution.kill.access
+        abortExecutionDirect(e.scheduledExecution, e, execution.authContext.username, killAsUser, forceIncomplete)
     }
 
     /**
@@ -1829,7 +1858,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     Map deleteExecution(AuthorizedExecution authorizedExecution, String username) {
         try {
-            return deleteExecutionAuthorized(authorizedExecution.requireDelete(), username)
+            return deleteExecutionAuthorized(authorizedExecution.delete.getAccess(), username)
         } catch (UnauthorizedAccess ignored) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }

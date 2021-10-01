@@ -537,32 +537,24 @@ class ExecutionController extends ControllerBase{
 
         ExecutionService.AbortResult abortresult
         try {
-
-            def Execution e = Execution.get(params.id)
-            if (!e) {
-                log.error("Execution not found for id: " + params.id)
-                return withFormat {
-                    json {
-                        render(contentType: "application/json") {
-                            delegate.cancelled false
-                            delegate.error "Execution not found for id: " + params.id
-                        }
-                    }
-                    xml {
-                        xmlerror()
-                    }
-                }
-            }
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, e.project)
-            def ScheduledExecution se = e.scheduledExecution
             abortresult = executionService.abortExecution(
-                se,
-                e,
-                session.user,
-                authContext,
+                executionAccess,
                 null,
                 params.forceIncomplete == 'true'
             )
+        }catch (NotFound ignored){
+            log.error("Execution not found for id: " + params.id)
+            return withFormat {
+                json {
+                    render(contentType: "application/json") {
+                        delegate.cancelled false
+                        delegate.error "Execution not found for id: " + params.id
+                    }
+                }
+                xml {
+                    xmlerror()
+                }
+            }
         }catch (DataAccessResourceFailureException ex){
             log.error("Database acces failure, forced job interruption",ex)
             //force interrupt on database problem
@@ -638,8 +630,13 @@ class ExecutionController extends ControllerBase{
         }
 
         ExecutionService.AbortResult abortresult
-        def Execution e = Execution.get(params.id)
-        if (!e) {
+        try {
+            abortresult = executionService.abortExecution(
+                executionAccess,
+                null,
+                true
+            )
+        } catch (NotFound ignored) {
             log.error("Execution not found for id: " + params.id)
             return withFormat {
                 json {
@@ -653,16 +650,6 @@ class ExecutionController extends ControllerBase{
                 }
             }
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, e.project)
-        def ScheduledExecution se = e.scheduledExecution
-        abortresult = executionService.abortExecution(
-            se,
-            e,
-            session.user,
-            authContext,
-            null,
-            true
-        )
         def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
         withFormat{
             json{
