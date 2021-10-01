@@ -432,8 +432,8 @@ export default observer(Vue.extend({
     flex-grow: 0;
     flex-shrink: 0;
     background-color: var(--background-color-lvl2);
-    border-color: #d7d7d7;
-    border-bottom: 0.1em solid #d7d7d7;
+    border-color: var(--background-color);
+    border-bottom: 0.1em solid var(--background-color);
   }
 
   #wh-details {
@@ -459,7 +459,7 @@ export default observer(Vue.extend({
     padding: 0 2em 0 2em;
 
     h3 {
-      color: black;
+      color: var(--font-color);
       font-weight: 700;
       margin: 0;
     }
@@ -507,9 +507,10 @@ export default observer(Vue.extend({
   }
 
   .readonly {
-    color: #555;
-    background-color: #eee;
+    color: var(--input-disabled-color);
+    background-color: var(--input-disabled-bg-color);
     padding: 8px 12px 6px;
+    cursor: not-allowed;
   }
 
   .form-margin {
@@ -527,12 +528,12 @@ export default observer(Vue.extend({
     position: absolute;
     top: -45px;
     left: -200px;
-    background-color: #fefefe;
+    background-color: var(--input-bg-color);
     display: none;
-    border: 1px solid #999;
+    border: 1px solid var(--input-bg-color);
     padding: 10px;
     border-radius: 3px;
-    color: #636363;
+    color: var(--input-color);
     z-index: 999;
     font-family: 'Muli', Arial, sans-serif;
   }

@@ -35,7 +35,7 @@ export default Vue.extend({
     align-content: center;
 
     h3 {
-      color: black;
+      color: var(--font-color);
       font-weight: 700;
       margin: 0;
     }
