@@ -138,8 +138,9 @@
   }
 
   .dropdown-header {
-    color: var( --primary-bg-color);
+    color: var( --font-color);
     font-size: $font-size-small;
+    font-weight: 800;
     padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
   }
 
