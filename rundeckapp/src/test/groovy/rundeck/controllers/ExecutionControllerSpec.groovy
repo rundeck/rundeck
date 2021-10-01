@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import asset.pipeline.grails.AssetMethodTagLib
 import asset.pipeline.grails.AssetProcessorService
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
@@ -36,8 +37,10 @@ import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.AppConstants
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.system.AuthorizedSystem
 import org.rundeck.core.auth.access.Accessor
 import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.Singleton
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizedExecution
 import org.rundeck.app.authorization.domain.DomainAccess
@@ -1080,5 +1083,60 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             response.status == 403
         where:
             endpoint << ["mail", "downloadOutput", "renderOutput"]
+    }
+
+    @Unroll
+    def "api #endpoint authorized"() {
+        given:
+
+            session.subject = new Subject()
+            controller.rundeckDomainAccess = Mock(DomainAccess) {
+                1 * system(_) >> Mock(AuthorizedSystem) {
+                    1 * "$access"() >> Mock(Accessor) {
+                        getAccess() >> Singleton.ONLY
+                    }
+                }
+            }
+            controller.apiService = Mock(ApiService)
+            controller.executionService = Mock(ExecutionService)
+            request.method = 'POST'
+        when:
+            controller."$endpoint"()
+        then:
+            1 * controller.apiService.requireApi(_, _, ApiVersions.V14) >> true
+            1 * controller.executionService.setExecutionsAreActive(active)
+        where:
+            active | endpoint                  | access
+            true   | 'apiExecutionModeActive'  | 'getOpsEnableExecution'
+            false  | 'apiExecutionModePassive' | 'getOpsDisableExecution'
+    }
+
+    @Unroll
+    def "api #endpoint unauthorized"() {
+        given:
+
+            session.subject = new Subject()
+            controller.rundeckDomainAccess = Mock(DomainAccess) {
+                1 * system(_) >> Mock(AuthorizedSystem) {
+                    1 * "$access"() >> Mock(Accessor) {
+                        getAccess() >> {
+                            throw new UnauthorizedAccess('x', 'System', '')
+                        }
+                    }
+                }
+            }
+            controller.apiService = Mock(ApiService)
+            controller.executionService = Mock(ExecutionService)
+            request.method = 'POST'
+        when:
+            controller."$endpoint"()
+        then:
+            1 * controller.apiService.requireApi(_, _, ApiVersions.V14) >> true
+            0 * controller.executionService.setExecutionsAreActive(_)
+            response.status == 403
+        where:
+            active | endpoint                  | access
+            true   | 'apiExecutionModeActive'  | 'getOpsEnableExecution'
+            false  | 'apiExecutionModePassive' | 'getOpsDisableExecution'
     }
 }
