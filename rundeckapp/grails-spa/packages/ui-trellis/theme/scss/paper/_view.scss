@@ -36,7 +36,7 @@ html,body{
 #section-content {
     display: flex;
     flex-direction: column;
-    overflow: scroll;
+    overflow: hidden;
     .subtitlebar{
         border-bottom: --subtitle-bar-border-bottom;
         padding-bottom: 12px;
