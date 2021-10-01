@@ -1,7 +1,7 @@
-package org.rundeck.app.authorization.domain
+package org.rundeck.app.authorization.domain.project
 
 import groovy.transform.CompileStatic
-import org.rundeck.app.authorization.ProjectIdentifier
+import org.rundeck.core.auth.access.ProjectIdentifier
 
 @CompileStatic
 class AppProjectIdentifier implements ProjectIdentifier {

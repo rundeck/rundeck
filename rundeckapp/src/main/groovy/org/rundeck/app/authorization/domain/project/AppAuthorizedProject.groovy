@@ -1,21 +1,23 @@
-package org.rundeck.app.authorization.domain
+package org.rundeck.app.authorization.domain.project
 
+import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import grails.compiler.GrailsCompileStatic
-import groovy.transform.CompileStatic
-import org.rundeck.app.authorization.AccessActions
-import org.rundeck.app.authorization.AccessLevels
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.BaseAuthorizedResource
-import org.rundeck.app.authorization.NotFound
-import org.rundeck.app.authorization.ProjectIdentifier
-import org.rundeck.app.authorization.UnauthorizedAccess
+import org.rundeck.core.auth.access.AccessActions
+import org.rundeck.core.auth.access.AccessLevels
+import org.rundeck.core.auth.access.Accessor
+import org.rundeck.core.auth.access.BaseAuthorizedIdResource
+import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Project
 
 import javax.security.auth.Subject
 
+/**
+ * Authorized access for a project
+ */
 @GrailsCompileStatic
-class AppAuthorizedProject extends BaseAuthorizedResource<Project, ProjectIdentifier> implements AuthorizedProject {
+class AppAuthorizedProject extends BaseAuthorizedIdResource<Project, ProjectIdentifier>
+    implements AuthorizedProject {
     public static final AccessActions APP_DELETE_EXECUTION =
         AccessLevels.any(
             [AuthConstants.ACTION_DELETE_EXECUTION],
@@ -25,7 +27,7 @@ class AppAuthorizedProject extends BaseAuthorizedResource<Project, ProjectIdenti
 
 
     AppAuthorizedProject(
-        final AppAuthContextProcessor rundeckAuthContextProcessor,
+        final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject,
         final ProjectIdentifier identifier
     ) {
@@ -43,13 +45,13 @@ class AppAuthorizedProject extends BaseAuthorizedResource<Project, ProjectIdenti
     }
 
     @Override
-    protected Project retrieve(final ProjectIdentifier identifier) {
+    protected Project retrieve() {
         //TODO
         return Project.findByName(identifier.project)
     }
 
     @Override
-    String getPrimary(final ProjectIdentifier identifier) {
+    String getPrimaryIdComponent() {
         return identifier.project
     }
 
@@ -58,13 +60,8 @@ class AppAuthorizedProject extends BaseAuthorizedResource<Project, ProjectIdenti
         resource.name
     }
 
-    @Override
-    Project requireDeleteExecution() throws UnauthorizedAccess, NotFound {
-        requireActions(APP_DELETE_EXECUTION)
+    public Accessor<Project> getDeleteExecution() {
+        return access(APP_DELETE_EXECUTION);
     }
 
-    @Override
-    boolean hasDeleteExecution() throws NotFound {
-        return canPerform(APP_DELETE_EXECUTION)
-    }
 }

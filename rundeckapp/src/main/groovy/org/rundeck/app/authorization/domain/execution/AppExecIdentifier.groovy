@@ -1,4 +1,4 @@
-package org.rundeck.app.authorization.domain
+package org.rundeck.app.authorization.domain.execution
 
 import groovy.transform.CompileStatic
 
