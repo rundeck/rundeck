@@ -1,13 +1,11 @@
 package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.UnauthorizedAccess
 import rundeck.Execution
 import rundeck.ScheduledExecution
-
-import java.util.function.Function
 
 /**
  * Throws exceptions when authorization is not allowed.
