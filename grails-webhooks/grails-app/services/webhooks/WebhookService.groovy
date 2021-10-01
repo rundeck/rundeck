@@ -287,6 +287,13 @@ class WebhookService {
         Webhook hook = Webhook.get(id.toLong())
         getWebhookWithAuthAsMap(hook)
     }
+    def getWebhookForProjectWithAuth(String id, String project) {
+        Webhook hook = getWebhookWithProject(id.toLong(), project)
+        if(!hook){
+            return null
+        }
+        getWebhookWithAuthAsMap(hook)
+    }
 
     private Map getWebhookWithAuthAsMap(Webhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
@@ -295,6 +302,9 @@ class WebhookService {
 
     Webhook getWebhook(Long id) {
         return Webhook.get(id)
+    }
+    Webhook getWebhookWithProject(Long id, String project) {
+        return Webhook.findByIdAndProject(id,project)
     }
 
     Webhook getWebhookByUuid(String uuid) {

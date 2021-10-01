@@ -84,7 +84,11 @@ class WebhookController {
             sendJsonError("You do not have access to this resource")
             return
         }
-        render webhookService.getWebhookWithAuth(params.id) as JSON
+        def webhook = webhookService.getWebhookForProjectWithAuth(params.id, params.project)
+        if(!webhook){
+            return sendJsonError("Webhook not found", HttpServletResponse.SC_NOT_FOUND)
+        }
+        render webhook as JSON
     }
 
     def list() {
