@@ -7,7 +7,7 @@
             </div>
             <slot/>
         </div>
-        <div v-if="mask" class="rd-drawer__mask" :class="{'rd-drawer__mask--active': display}"/>
+        <div v-if="mask" class="rd-drawer__mask" :class="{'rd-drawer__mask--active': display}" @click="() => {$emit('close')}"/>
     </div>
 </template>
 
