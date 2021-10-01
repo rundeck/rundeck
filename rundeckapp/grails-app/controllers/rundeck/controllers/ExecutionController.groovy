@@ -2157,7 +2157,6 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
 
         if(active){
             systemAccess.opsEnableExecution.getAccess()
