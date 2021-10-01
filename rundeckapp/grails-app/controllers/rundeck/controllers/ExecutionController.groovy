@@ -469,18 +469,15 @@ class ExecutionController extends ControllerBase{
         }
     }
     def executionMode(){
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
         withForm {
             def requestActive=params.mode == 'active'
-            def authAction=requestActive?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
-            if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                                      AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                                                      [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]),
 
-                                     authAction,'for','Rundeck')) {
-                return
+            if(requestActive){
+                systemAccess.opsEnableExecution.getAccess()
+            }else{
+                systemAccess.opsDisableExecution.getAccess()
             }
+
             if(requestActive == executionService.executionsAreActive){
                 flash.message=g.message(code:'action.executionMode.notchanged.'+(requestActive?'active':'passive')+'.text')
                 return redirect(controller: 'menu',action:'executionMode')
@@ -2126,19 +2123,7 @@ setTimeout(function(){
             return
         }
 
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-            authContext,
-            AuthConstants.RESOURCE_TYPE_SYSTEM,
-            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-        )) {
-            return apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code  : "api.error.item.unauthorized",
-                            args  : ["Read execution status", "Rundeck", '']
-                    ])
-        }
+        systemAccess.read.getAccess()
 
         def executionStatus = configurationService.executionModeActive
         int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE
@@ -2185,24 +2170,14 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
 
-        def authAction = active?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            )
-        ) {
-            return apiService.renderErrorFormat(response,
-                                                [
-                                                        status: HttpServletResponse.SC_FORBIDDEN,
-                                                        code: "api.error.item.unauthorized",
-                                                        args: [authAction, "Rundeck", ''],
-                                                        format: respFormat
-                                                ])
+        if(active){
+            systemAccess.opsEnableExecution.getAccess()
+        }else{
+            systemAccess.opsDisableExecution.getAccess()
         }
+
         executionService.setExecutionsAreActive(active)
         withFormat{
             json {
