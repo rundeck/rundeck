@@ -43,10 +43,9 @@ import groovy.transform.PackageScope
 import org.quartz.JobExecutionContext
 import org.rundeck.app.AppConstants
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.NotFound
-import org.rundeck.app.authorization.UnauthorizedAccess
-import org.rundeck.app.authorization.domain.AuthorizedExecution
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
@@ -202,7 +201,7 @@ class ExecutionController extends ControllerBase{
             render(view: '/common/error')
             return
         }
-        def Execution e = executionAccess.requireReadOrView()
+        def Execution e = executionAccess.readOrView.getAccess()
         def filesize=-1
         if(null!=e.outputfilepath){
             def file = new File(e.outputfilepath)
@@ -239,7 +238,7 @@ class ExecutionController extends ControllerBase{
         }
 
         eprev = result ? result[0] : null
-        def readAuth = executionAccess.canRead()
+        def readAuth = executionAccess.read.isAllowed()
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
@@ -262,8 +261,8 @@ class ExecutionController extends ControllerBase{
 
     def delete() {
         withForm{
-        def proj=projectAccess.requireDeleteExecution()
-        Execution e = executionAccess.requireDelete()
+        projectAccess.deleteExecution.getAccess()
+        Execution e = executionAccess.delete.getAccess()
         def jobid=e.scheduledExecution?.extid
         def result = executionService.deleteExecution(executionAccess, session.user)
         if(!result.success){
@@ -295,6 +294,7 @@ class ExecutionController extends ControllerBase{
             flash.error="Some IDS are required for bulk delete"
             return redirect(action: 'index',controller: 'reports',params: [project:params.project])
         }
+        projectAccess.deleteExecution.access
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
         def result=executionService.deleteBulkExecutionIds(ids,authContext,session.user)
         if(!result.success){
@@ -312,7 +312,7 @@ class ExecutionController extends ControllerBase{
         Execution e
         //NB: send custom response for unauthorized/not found
         try {
-            e = executionAccess.requireReadOrView()
+            e = executionAccess.readOrView.getAccess()
         } catch (UnauthorizedAccess ignored) {
             response.status=HttpServletResponse.SC_FORBIDDEN
             return render(contentType: 'application/json',text:[error: "Unauthorized: View Execution ${params.id}"] as JSON)
@@ -422,7 +422,7 @@ class ExecutionController extends ControllerBase{
         if (requireAjax(action: 'show', controller: 'execution', params: params)) {
             return
         }
-        def Execution e = executionAccess.requireReadOrView()
+        def Execution e = executionAccess.readOrView.getAccess()
 
         def data=[:]
         def selectedNode=params.node
@@ -454,7 +454,7 @@ class ExecutionController extends ControllerBase{
     }
 
     def mail() {
-        Execution e = executionAccess.requireReadOrView()
+        Execution e = executionAccess.readOrView.getAccess()
         def file = loggingService.getLogFileForExecution(e)
         def filesize=-1
         if (file.exists()) {
@@ -686,7 +686,7 @@ class ExecutionController extends ControllerBase{
 
     }
     def downloadOutput() {
-        Execution e = executionAccess.requireReadOrView()
+        Execution e = executionAccess.readOrView.getAccess()
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
@@ -752,7 +752,7 @@ class ExecutionController extends ControllerBase{
     }
 
     def renderOutput() {
-        Execution e = executionAccess.requireReadOrView()
+        Execution e = executionAccess.readOrView.getAccess()
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
@@ -1158,7 +1158,7 @@ setTimeout(function(){
 
         //NB: handle authorization/not found response uniquely for this endpoint
         try {
-            e = executionAccess.requireReadOrView()
+            e = executionAccess.readOrView.getAccess()
         } catch (UnauthorizedAccess ignored) {
             return apiError(
                 'api.error.item.unauthorized',
@@ -1697,7 +1697,7 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def Execution e = executionAccess.requireReadOrView()
+        def Execution e = executionAccess.readOrView.getAccess()
 
         if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
@@ -1722,7 +1722,7 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        Execution e = executionAccess.requireReadOrView()
+        Execution e = executionAccess.readOrView.getAccess()
 
         def loader = workflowService.requestState(e)
         def state= loader.workflowState
@@ -1830,7 +1830,7 @@ setTimeout(function(){
         }
 
         def access = executionAccess
-        Execution e = access.requireKill()
+        Execution e = access.kill.getAccess()
         ExecutionService.AbortResult abortresult
         try {
 
@@ -1914,11 +1914,11 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
-        projectAccess.requireDeleteExecution()
-        def Execution e = executionAccess.requireDelete()
+        projectAccess.deleteExecution.getAccess()
+        executionAccess.delete.getAccess()
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
 
-        def result = executionService.deleteExecution(executionAccess,session.user)
+        def result = executionService.deleteExecution(executionAccess, session.user)
         if(!result.success){
             log.error("Failed to delete execution: ${result.message}")
             return apiService.renderErrorFormat(response,
@@ -1991,7 +1991,6 @@ setTimeout(function(){
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        //XXX:TODO use project specific auth context
         def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
@@ -2233,22 +2232,8 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
-        if (!apiService.requireParameters(params, response, ['id'])) {
-            return
-        }
 
-        def Execution e = Execution.get(params.id)
-        if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, e.project)
-        if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
-                response,
-                [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[]
-        )) {
-            return
-        }
+        Execution e = executionAccess.readOrView.access
 
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
 
