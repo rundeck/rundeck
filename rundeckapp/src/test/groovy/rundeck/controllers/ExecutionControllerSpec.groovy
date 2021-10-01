@@ -22,9 +22,6 @@ import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -38,11 +35,11 @@ import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.AppConstants
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.NotFound
-import org.rundeck.app.authorization.UnauthorizedAccess
-import org.rundeck.app.authorization.domain.AuthorizedExecution
+import org.rundeck.core.auth.access.Accessor
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.app.authorization.domain.execution.AuthorizedExecution
 import org.rundeck.app.authorization.domain.DomainAccess
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
@@ -118,8 +115,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAccess=Mock(DomainAccess){
             1 * execution(_,_)>>Mock(AuthorizedExecution){
-                1 * requireReadOrView()>>{
-                    throw new NotFound('Execution','-999')
+                1 * getReadOrView() >> Mock(Accessor) {
+                    getAccess() >> { throw new NotFound('Execution', '-999') }
                 }
             }
         }
@@ -336,7 +333,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAccess=Mock(DomainAccess){
                 1 * execution(_,_)>>Mock(AuthorizedExecution){
-                    1 * requireReadOrView() >> e1
+                    1 * getReadOrView() >>  Mock(Accessor) {
+                        getAccess() >> e1
+                    }
                 }
             }
         when:
@@ -409,7 +408,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAccess=Mock(DomainAccess){
                 1 * execution(_,_)>>Mock(AuthorizedExecution){
-                    1 * requireReadOrView() >> e1
+                    1 * getReadOrView() >>  Mock(Accessor) {
+                        getAccess() >> e1
+                    }
                 }
             }
 
@@ -482,7 +483,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAccess=Mock(DomainAccess){
                 1 * execution(_,_)>>Mock(AuthorizedExecution){
-                    1 * requireReadOrView() >> e1
+                    1 * getReadOrView() >>  Mock(Accessor) {
+                        getAccess() >> e1
+                    }
                 }
             }
         when:
@@ -531,7 +534,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAccess=Mock(DomainAccess){
                 1 * execution(_,_)>>Mock(AuthorizedExecution){
-                    1 * requireReadOrView() >> e1
+                    1 * getReadOrView() >>  Mock(Accessor) {
+                        getAccess() >> e1
+                    }
                 }
             }
         when:
@@ -582,7 +587,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAccess=Mock(DomainAccess){
             1 * execution(_,_)>>Mock(AuthorizedExecution){
-                1 * requireReadOrView() >> e1
+                1 * getReadOrView() >>  Mock(Accessor) {
+                    getAccess() >> e1
+                }
             }
         }
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
@@ -708,7 +715,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAccess=Mock(DomainAccess){
             1 * execution(_,_)>>Mock(AuthorizedExecution){
-                1 * requireReadOrView() >> e1
+                1 * getReadOrView() >>  Mock(Accessor) {
+                    getAccess() >> e1
+                }
             }
         }
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
@@ -842,7 +851,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAccess=Mock(DomainAccess){
             1 * execution(_,_)>>Mock(AuthorizedExecution){
-                1 * requireReadOrView() >> e1
+                1 * getReadOrView() >>  Mock(Accessor) {
+                    getAccess() >> e1
+                }
             }
         }
         when:
@@ -891,7 +902,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAccess=Mock(DomainAccess){
             1 * execution(_,_)>>Mock(AuthorizedExecution){
-                1 * requireReadOrView() >> e1
+                1 * getReadOrView() >>  Mock(Accessor) {
+                    getAccess() >> e1
+                }
             }
         }
         when:
@@ -931,7 +944,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAccess=Mock(DomainAccess){
             1 * execution(_,_)>>Mock(AuthorizedExecution){
-                1 * requireReadOrView() >> e1
+                1 * getReadOrView() >>  Mock(Accessor) {
+                    getAccess() >> e1
+                }
             }
         }
 
@@ -1018,7 +1033,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAccess=Mock(DomainAccess){
             1 * execution(_,_)>>Mock(AuthorizedExecution){
-                1 * requireReadOrView() >> e1
+                1 * getReadOrView() >>  Mock(Accessor) {
+                    getAccess() >> e1
+                }
             }
         }
         when:
@@ -1049,9 +1066,12 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAccess=Mock(DomainAccess){
                 1 * execution(_,_)>>Mock(AuthorizedExecution){
-                    1 * requireReadOrView() >> {
-                        throw new UnauthorizedAccess('read', 'Execution', e1.id.toString())
+                    1 * getReadOrView() >>  Mock(Accessor) {
+                        getAccess() >> {
+                            throw new UnauthorizedAccess('read', 'Execution', e1.id.toString())
+                        }
                     }
+
                 }
             }
         when:
