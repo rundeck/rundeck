@@ -12,15 +12,6 @@
   background-color: whitesmoke;
 }
 
-.execution-log--light .execution-log__settings {
-  color: grey;
-
-  .btn:not(:hover) {
-    color: var(--default-color);
-    background-color: white;
-  }
-}
-
 // .execution-log--light .execution-log__scroller > :nth-child(2) {
 //   border-style: solid none none none;
 //   border-width: 1px;
