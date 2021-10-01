@@ -51,6 +51,10 @@ class ControllerBase {
     AppAuthContextProcessor rundeckWebAuthContextProcessor
     DomainAccess rundeckDomainAccess
 
+    /**
+     *
+     * @return authorized access to project, requires request parameter 'project'
+     */
     protected AuthorizedProject getProjectAccess() {
         requireParams('project')
         rundeckDomainAccess.project(subject, DomainAccess.projectId(params.project.toString()))
