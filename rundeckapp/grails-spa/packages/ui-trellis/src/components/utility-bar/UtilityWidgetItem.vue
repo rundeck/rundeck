@@ -4,7 +4,7 @@
         <span>{{item.label}}</span>
         <span v-if="item.count" class="utility-bar__item-counter">{{item.count}}</span>
         <Popper v-if="open" @close="close">
-            <div class="card utility-bar__widget">
+            <div class="card card--popover utility-bar__widget">
                 <component :is="item.widget"/>
             </div>
         </Popper>

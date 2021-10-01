@@ -244,120 +244,264 @@ $black:                      $grey-900;
     --button-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
 }
 
-// :root {
-//     --font-color: red;
-//     --text-muted-color: lightcoral;
+:root {
+        --grey-900: #{$grey-900};
+        --grey-800: #{$grey-800};
+        --grey-700: #{$grey-700};
+        --grey-600: #{$grey-600};
+        --grey-500: #{$grey-500};
+        --grey-400: #{$grey-400};
+        --grey-300: #{$grey-300};
+        --grey-200: #{$grey-200};
+        --grey-100: #{$grey-100};
 
-//     --border-color: red;
+        --brand-color: var(--red-500);
+        --background-color: --grey-100;
+        --background-color-lvl2: --grey-200;
+        --border-color: var(--grey-500);
 
-//     --sidebar-background-color: pink;
-//     --sidebar-item-color: blue;
-//     --sidebar-item-state-color: purple;
-//     --sidebar-drawer-bg-color: #E75480;
 
-//     --background-color: aquamarine;
-//     --background-color-accent: aqua;
-//     --background-color-lvl2: powderblue;
-//     --background-color-accent-lvl2: rgb(117, 146, 211);
+        // Side Bar
+        --sidebar-background-color: var(--grey-900);
+        --sidebar-item-color:       var(--grey-600);
+        --sidebar-item-state-color: var(--black);
+        --sidebar-drawer-bg-color:  #343745;
 
-//     --input-bg-color:              orange;
-//     --input-focus-color:           darkorange;
-//     --input-outline-color:         red;
-//     --input-group-addon-bg-color:  var(--grey-100);
-//     --card-default-box-shadow: 0px 4px 14px 0 rgba(255, 137, 239, 0.918);
-//     --button-box-shadow: 0px 2px 2px rgba(255, 137, 239, 0.918);
-// }
+        // Inputs
+        --input-bg-color:              var(--grey-200);
+        --input-outline-color:         var(--grey-300);
+        --input-group-addon-bg-color:  var(--grey-100);
+        --input-focus-color:           var(--grey-400);
+
+          // Transitions and Animations
+    --animation-scale: 1;
+
+
+    // Brand
+    --brand-color: var(--red-500);
+    --accent-color: #52C80B;
+
+    // --background-color: #F4F5F7;
+    --background-color: var(--grey-200);
+    --background-color-accent: var(--grey-400);
+
+    --background-color-lvl2: var(--white);
+    --background-color-accent-lvl2: var(--grey-300);
+
+    --background-color-lvl3: var(--white);
+    --background-color-accent-lvl3: var(--grey-400);
+
+    --box-shadow-top-lv1:  0px -1px var(--grey-900);
+    --box-shadow-bottom-lv1:  0px 1px var(--grey-900);
+
+
+    --border-color: var(--grey-500);
+
+    --default-color:              var(--white);
+    --default-states-color:       var(--grey-700);
+
+    --primary-color:              var(--blue-500);
+    --primary-states-color:       var(--blue-700);
+    --primary-highlight-color:    var(--blue-300);
+    --primary-bg-color:           var(--blue-100);
+
+    --success-color:              var(--green-500);
+    --success-states-color:       var(--green-700);
+    --success-light-color:        var(--green-300);
+    --success-bg-color:           var(--green-100);
+
+    --cta-color:                  var(--green-500);
+    --cta-states-color:           var(--green-700);
+    --cta-light-color:            var(--green-300);
+
+    --info-color:                 var(--cyan-500);
+    --info-states-color:          var(--cyan-700);
+    --info-light-color:           var(--cyan-300);
+    --info-bg-color:              var(--cyan-100);
+
+    --warning-color:              var(--orange-500);
+    --warning-states-color:       var(--orange-700);
+    --warning-light-color:        var(--orange-300);
+    --warning-bg-color:           var(--orange-100);
+
+    --danger-color:               var(--red-500);
+    --danger-states-color:        var(--red-700);
+    --danger-light-color:         var(--red-300);
+    --danger-bg-color:            var(--red-100);
+
+    // Typography
+    --font-color:                 var(--grey-900);
+    --font-fill-color:            var(--white);
+
+    --text-primary-color: var(--primary-color);
+    --text-muted-color:           var(--grey-700);
+    --text-secondary-color:       var(--text-muted-color);
+
+    --text-code-color:       var(--green-500);
+
+    // Panels
+    --panel-background-color: var(--background-color-lvl2);
+
+    // Main Bar
+    --mainbar-bg-color: var(--background-color-lvl2);
+    --mainbar-box-shadow:  var(--box-shadow-bottom-lv1);
+
+    // Side Bar
+    --sidebar-background-color: var(--grey-900);
+    --sidebar-item-color:       var(--grey-500);
+    --sidebar-item-state-color: var(--white);
+    --sidebar-drawer-bg-color:  var(--grey-800);
+
+    // Subtitle Bar
+    --subtitle-bar-border-bottom: 1px solid var(--grey-200);
+
+    // Utility Bar
+    --utility-bar-background-color: var(--background-color-lvl2);
+    --utility-bar-box-shadow:  var(--box-shadow-top-lv1);
+
+   
+
+    // Tables
+    --table-stripe-color: var(--grey-100);
+
+    // Cards
+    --card-default-background-color: var(--background-color-lvl3);
+    --card-default-border-color: var(--background-color-lvl3);
+    --card-default-color: var(--font-color);
+    --card-default-box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
+
+    --card-accent-background-color: var(--teal-100);
+    --card-accent-border-color: var(--teal-200);
+
+    // Buttons
+    --button-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
+}
 
 @media (prefers-color-scheme: dark) {
 :root {
-    --brand-color: #DC2626;
-    --background-color: #282A35;
-    --background-color-lvl2: #23242F;
-    --border-color: slategrey;
+        --grey-900: #23242F;
+        --grey-800: #333645;
+        --grey-700: #3E4153;
+        --grey-600: #494E62;
+        --grey-500: #53596F;
+        --grey-400: #6C7287;
+        --grey-300: #878DA0;
+        --grey-200: #A7ACBD;
+        --grey-100: #C7CBDA;
 
 
-    // Side Bar
-    --sidebar-background-color: #343745;
-    --sidebar-item-color:       #B6BDD2;
-    --sidebar-item-state-color: var(--black);
-    --sidebar-drawer-bg-color:  #343745;
+
+        // Inputs
+        --input-bg-color:              var(--grey-800);
+        --input-outline-color:         var(--grey-900);
+        --input-group-addon-bg-color:  var(--grey-100);
+        --input-focus-color:           var(--grey-900);
+
+          // Transitions and Animations
+        --animation-scale: 1;
 
 
-    // --card-default-box-shadow: 0px 4px 14px 0 rgba(37, 186, 255, 0.918);
-}
+        // Brand
+        --brand-color: var(--red-500);
+        --accent-color: #52C80B;
 
-:root {
-    --grey-900: #{$grey-100};
-    --grey-800: #{$grey-200};
-    --grey-700: #{$grey-300};
-    --grey-600: #{$grey-400};
-    --grey-500: #{$grey-500};
-    --grey-400: #{$grey-600};
-    --grey-300: #{$grey-700};
-    --grey-200: #{$grey-800};
-    --grey-100: #{$grey-900};
+        // --background-color: #F4F5F7;
+        --background-color: var(--grey-800);
+        --background-color-accent: var(--grey-400);
 
-    --blue-700: #{$blue-100};
-    --blue-500: #{$blue-200};
-    --blue-300: #{$blue-300};
-    --blue-200: #{$blue-500};
-    --blue-100: #{$blue-700};
+        --background-color-lvl2: var(--grey-700);
+        --background-color-accent-lvl2: var(--grey-500);
 
-    --green-700: #{$green-100};
-    --green-500: #{$green-200};
-    --green-300: #{$green-300};
-    --green-200: #{$green-500};
-    --green-100: #{$green-700};
+        --background-color-lvl3: var(--grey-600);
+        --background-color-accent-lvl3: var(--grey-400);
 
-    --red-700: #{$red-100};
-    --red-500: #{$red-200};
-    --red-300: #{$red-300};
-    --red-200: #{$red-500};
-    --red-100: #{$red-700};
 
-    --orange-700: #{$orange-100};
-    --orange-500: #{$orange-200};
-    --orange-300: #{$orange-300};
-    --orange-200: #{$orange-500};
-    --orange-100: #{$orange-700};
+        --box-shadow-top-lv1:  0px -1px var(--grey-800);
+        --box-shadow-bottom-lv1:  0px 1px var(--grey-800);
 
-    --yellow-700: #{$yellow-100};
-    --yellow-500: #{$yellow-200};
-    --yellow-300: #{$yellow-300};
-    --yellow-200: #{$yellow-500};
-    --yellow-100: #{$yellow-700};
 
-    --teal-700: #{$teal-100};
-    --teal-500: #{$teal-200};
-    --teal-300: #{$teal-300};
-    --teal-200: #{$teal-500};
-    --teal-100: #{$teal-700};
+        --border-color: var(--grey-500);
 
-    --cyan-700: #{$cyan-100};
-    --cyan-500: #{$cyan-200};
-    --cyan-300: #{$cyan-300};
-    --cyan-200: #{$cyan-500};
-    --cyan-100: #{$cyan-700};
+        --default-color:              var(--grey-900);
+        --default-states-color:       var(--grey-300);
 
-    --pink-700: #{$pink-100};
-    --pink-500: #{$pink-200};
-    --pink-300: #{$pink-300};
-    --pink-200: #{$pink-500};
-    --pink-100: #{$pink-700};
+        --primary-color:              var(--blue-300);
+        --primary-states-color:       var(--blue-500);
+        --primary-highlight-color:    var(--blue-300);
+        --primary-bg-color:           var(--blue-100);
 
-    --purple-700: #{$purple-100};
-    --purple-500: #{$purple-200};
-    --purple-300: #{$purple-300};
-    --purple-200: #{$purple-500};
-    --purple-100: #{$purple-700};
+        --success-color:              var(--green-500);
+        --success-states-color:       var(--green-300);
+        --success-bg-color:           var(--green-100);
 
-    --indigo-700: #{$indigo-100};
-    --indigo-500: #{$indigo-200};
-    --indigo-300: #{$indigo-300};
-    --indigo-200: #{$indigo-500};
-    --indigo-100: #{$indigo-700};
+        --cta-color:                  var(--green-500);
+        --cta-states-color:           var(--green-700);
 
-    --black: #{$white};
-    --white: #{$black};
-}
+        --info-color:                 var(--cyan-200);
+        --info-states-color:          var(--cyan-500);
+        --info-bg-color:              var(--cyan-900);
+
+        --warning-color:              var(--orange-500);
+        --warning-states-color:       var(--orange-700);
+        --warning-bg-color:           var(--orange-100);
+
+        --danger-color:               var(--red-500);
+        --danger-states-color:        var(--red-700);
+        --danger-bg-color:            var(--red-100);
+
+        // Typography
+        --font-color:                 var(--white);
+        --font-fill-color:            var(--white);
+
+        --text-primary-color: var(--primary-color);
+        --text-muted-color:           var(--grey-100);
+        --text-secondary-color:       var(--text-muted-color);
+
+        --text-code-color:       var(--green-500);
+
+        // Panels
+        --panel-background-color: var(--background-color-lvl2);
+
+        // Main Bar
+        --mainbar-bg-color: var(--grey-900);
+        --mainbar-box-shadow:  var(--box-shadow-bottom-lv1);
+
+        // Side Bar
+        --sidebar-background-color: var(--grey-700);
+        --sidebar-item-color:       var(--grey-200);
+        --sidebar-item-state-color: var(--white);
+        --sidebar-drawer-bg-color:  var(--grey-800);
+
+        // Subtitle Bar
+        --subtitle-bar-border-bottom: 1px solid var(--grey-200);
+
+        // Utility Bar
+        --utility-bar-background-color: var(--grey-900);
+        --utility-bar-box-shadow:  var(--box-shadow-top-lv1);
+
+        // MOTD Drawer
+        --motd-drawer-background-color: var(--grey-700);
+
+        // Popover
+        --popover-background-color: var(--grey-900);
+    
+
+        // Tables
+        --table-stripe-color: var(--grey-700);
+
+        // Cards
+        --card-default-background-color: var(--background-color-lvl3);
+        --card-default-border-color: var(--background-color-lvl3);
+        --card-default-color: var(--font-color);
+        --card-default-box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
+
+        --card-accent-background-color: var(--teal-100);
+        --card-accent-border-color: var(--teal-200);
+
+        // Buttons
+        --button-box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
+
+    
+        // --card-default-box-shadow: 0px 4px 14px 0 rgba(37, 70, 255, 0.918);
+    }
 }
