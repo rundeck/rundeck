@@ -22,13 +22,18 @@ import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.servlet.mvc.TokenResponseHandler
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.NotFound
 import org.rundeck.app.authorization.UnauthorizedAccess
-import org.rundeck.util.Toposort
+import org.rundeck.app.authorization.domain.AuthorizedExecution
+import org.rundeck.app.authorization.domain.AuthorizedProject
+import org.rundeck.app.authorization.domain.DomainAccess
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
+import org.rundeck.web.util.MissingParameter
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.ApiService
 import rundeck.services.UiPluginService
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.zip.GZIPOutputStream
@@ -42,6 +47,23 @@ class ControllerBase {
     UiPluginService uiPluginService
     ApiService apiService
     AppAuthContextProcessor rundeckWebAuthContextProcessor
+    DomainAccess rundeckDomainAccess
+
+    protected AuthorizedProject getProjectAccess() {
+        requireParams('project')
+        rundeckDomainAccess.project(subject, DomainAccess.projectId(params.project.toString()))
+    }
+    protected AuthorizedExecution getExecutionAccess() {
+        requireParams('id')
+        rundeckDomainAccess.execution(subject, DomainAccess.executionId(params.id.toString(), params.project?.toString()))
+    }
+
+    protected Subject getSubject(){
+        if(session.subject instanceof Subject){
+            return session.subject
+        }
+        throw new IllegalStateException("no subject found in session")
+    }
 
     protected def withHmacToken(Closure valid){
         GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
@@ -166,6 +188,36 @@ class ControllerBase {
             renderUnauthorized(access.action, access.type, access.name)
         }
     }
+    /**
+     * Handle unauthorized exception
+     * @param notFound exception
+     */
+    def handleNotFound(NotFound notFound){
+        if(request.api_version){
+            apiService.renderErrorFormat(response, [
+                status: HttpServletResponse.SC_NOT_FOUND,
+                code: 'api.error.item.doesnotexist',
+                args: [notFound.type, notFound.name]
+            ])
+        }else{
+            renderNotfound(notFound.type, notFound.name)
+        }
+    }
+    /**
+     * Handle unauthorized exception
+     * @param notFound exception
+     */
+    def handleMissingParameter(MissingParameter notFound){
+        if(request.api_version){
+            apiService.renderErrorFormat(response, [
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code: 'api.error.invalid.request',
+                args: [notFound.message]
+            ])
+        }else{
+            renderErrorView("parameters required: $notFound.message")
+        }
+    }
 
     /**
      * Send an Unauthoried error response
@@ -271,10 +323,17 @@ class ControllerBase {
      */
     protected boolean requireParam(String name) {
         if (!params[name]) {
-            renderErrorView("parameter $name is required")
-            return true
+            throw new MissingParameter([name])
         }
         return false
+    }
+    /**
+     * Require the params to contain an entry
+     * @param name name of parameter
+     * @return true if response was sent
+     */
+    protected boolean requireParams(String... names) {
+        requireParams(names.toList())
     }
     /**
      * Require the params to contain an entry
@@ -284,8 +343,7 @@ class ControllerBase {
     protected boolean requireParams(List<String> names) {
         def missing=names.findAll{!params[it]}
         if (missing) {
-            renderErrorView("parameters required: $missing")
-            return true
+            throw new MissingParameter(missing)
         }
         return false
     }
