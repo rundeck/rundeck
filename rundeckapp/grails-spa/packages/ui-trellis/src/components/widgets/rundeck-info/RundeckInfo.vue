@@ -13,11 +13,13 @@
                 <VersionDisplay :text="`${version.name} ${version.color} ${version.icon}`" :icon="version.icon" :color="version.color" />
             </div>
             <div>
-                <ServerDisplay
-                    :name="server.name"
-                    :glyphicon="server.icon"
-                    :uuid="server.uuid"
-                />
+                <span class="server-display">
+                    <ServerDisplay
+                        :name="server.name"
+                        :glyphicon="server.icon"
+                        :uuid="server.uuid"
+                    />
+                </span>
             </div>
         </div>
         <div v-if="latest" class="rundeck-info-widget__group" style="border-top: solid 1px grey;">
@@ -115,6 +117,11 @@ export default class RundeckInfoWidget extends Vue {
 
 .rundeck-info-widget__heading {
     font-weight: bold;
+}
+.server-display{
+    background-color: var(--grey-400);
+    padding: 1px 8px;
+    border-radius: 1em;
 }
 
 </style>

@@ -8,7 +8,7 @@
   padding-right: 20px;
   background: var(--mainbar-bg-color);
 
-  box-shadow: 0px 1px 1px #D3D7DF;
+  box-shadow: var(--box-shadow-bottom-lv1);
 
   &.navbar {
     border-bottom: 1px solid darken($bg-mainheader, 10%);
@@ -211,7 +211,7 @@
   }
 
   &.plain {
-    background: var(--background-color-lvl2);
+    background: var(--background-color-lvl3);
   }
 }
 

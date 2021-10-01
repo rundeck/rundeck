@@ -180,7 +180,7 @@ a {
     flex-wrap: wrap;
     margin: 0;
     padding: 10px;
-    align-items: start;
+    align-items: flex-start;
     align-content: baseline;
 
     i {

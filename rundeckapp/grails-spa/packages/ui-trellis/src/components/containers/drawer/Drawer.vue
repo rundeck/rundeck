@@ -70,7 +70,7 @@ export default Vue.extend({
     position: absolute;
     overflow-x: hidden;
     overflow-y: auto;
-    background-color: var(--background-color);
+    background-color: var(--motd-drawer-background-color);
     box-shadow: none;
     width: var(--rd-drawer-width);
     z-index: 5000;
