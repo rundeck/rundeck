@@ -1,14 +1,14 @@
 <template>
   <Drawer
     placement="right"
-    :closeable="true"
+    :closeable="false"
     :visible="message && showMessage"
     width="50%"
     height="auto"
     @close="dismissMessage">
 
     <div :class="alertStyle" :style="styleCss" style="padding: 20px;">
-      <!-- <button type="button" class="close" @click="dismissMessage" data-dismiss="alert">×</button> -->
+      <button type="button" class="btn btn-default btn-link btn-close" @click="dismissMessage">Close</button>
       <div class="text-h4" v-if="noTitle">Message of The Day</div>
       <div class="motd-content" v-bind:class="{ full: showFullMOTD}">
         <span v-html="message"></span>
@@ -181,5 +181,11 @@ export default {
     height: 100%;
     overflow: auto;
   }
+}
+
+.btn-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 </style>
