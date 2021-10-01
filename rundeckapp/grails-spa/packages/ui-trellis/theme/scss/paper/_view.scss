@@ -72,3 +72,12 @@ html,body{
 th.table-header, td.table-header, .text-table-header {
     color: var(--card-default-color) !important;
 }
+
+.list-group-item {
+  background-color: var(--list-item-background-color);
+  border: 1px solid var(--list-item-border-color);
+}
+
+.table thead tr.success th, .table thead tr.success td, .table tbody tr.success th, .table tbody tr.success td, .table tfoot tr.success th, .table tfoot tr.success td {
+    background-color: var(--success-bg-color) !important;
+}
