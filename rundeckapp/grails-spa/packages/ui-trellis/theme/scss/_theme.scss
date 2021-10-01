@@ -261,6 +261,12 @@ $black:                      $grey-900;
     --background-color-lvl2: var(--white);
     --background-color-accent-lvl2: var(--grey-300);
 
+    --background-color-lvl3: var(--grey-600);
+    --background-color-accent-lvl3: var(--grey-400);
+
+    --box-shadow-top-lv1:  0px -1px var(--grey-300);
+    --box-shadow-bottom-lv1:  0px 1px var(--grey-300);
+
     --border-color: var(--grey-500);
 
     --default-color:              var(--white);
@@ -308,6 +314,7 @@ $black:                      $grey-900;
 
     // Main Bar
     --mainbar-bg-color: var(--background-color-lvl2);
+    --mainbar-box-shadow:  var(--box-shadow-bottom-lv1);
 
     // Side Bar
     --sidebar-background-color: var(--grey-900);
@@ -317,6 +324,7 @@ $black:                      $grey-900;
 
     // Utility Bar
     --utility-bar-background-color: var(--background-color-lvl2);
+    --utility-bar-box-shadow:  var(--box-shadow-top-lv1);
 
     // MOTD Drawer
     --motd-drawer-background-color: var(--background-color-lvl2);
