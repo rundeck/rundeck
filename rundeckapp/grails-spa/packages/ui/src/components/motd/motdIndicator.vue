@@ -60,4 +60,7 @@ export default {
 .label{
   cursor: pointer
 }
+.fas{
+  color: var(--default-color);
+}
 </style>
