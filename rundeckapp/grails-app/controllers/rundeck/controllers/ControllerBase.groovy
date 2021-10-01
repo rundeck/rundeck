@@ -22,10 +22,12 @@ import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.servlet.mvc.TokenResponseHandler
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.NotFound
-import org.rundeck.app.authorization.UnauthorizedAccess
-import org.rundeck.app.authorization.domain.AuthorizedExecution
-import org.rundeck.app.authorization.domain.AuthorizedProject
+import org.rundeck.app.authorization.domain.project.AuthorizedProjectAdhoc
+import org.rundeck.app.authorization.domain.system.AuthorizedSystem
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.app.authorization.domain.execution.AuthorizedExecution
+import org.rundeck.app.authorization.domain.project.AuthorizedProject
 import org.rundeck.app.authorization.domain.DomainAccess
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.util.MissingParameter
