@@ -105,14 +105,7 @@ class ExecutionController extends ControllerBase{
      * @return
      */
     def adhocHistoryAjax(String project, int max, String query){
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,project)
-
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
-                                                          AuthConstants.ACTION_READ, params.project),
-                AuthConstants.ACTION_READ, 'adhoc', 'commands')) {
-            return
-        }
+        adhocAccess.read.getAccess()
 
         def execs = []
         def uniques=new HashSet<String>()
