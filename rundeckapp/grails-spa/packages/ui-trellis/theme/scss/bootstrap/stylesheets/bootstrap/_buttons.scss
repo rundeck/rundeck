@@ -105,7 +105,7 @@ a.btn {
   @include button-variant(--success-color, --font-fill-color, --success-color, --success-states-color, --success-color, --success-light-color);
   background-color: transparent;
   box-shadow: var(--button-box-shadow);
-  &.btn-simple { box-shadow: unset; }
+  &.btn-simple { box-shadow: unset; border-color: transparent; }
 }
 // Info appears as blue-green
 .btn-info {
