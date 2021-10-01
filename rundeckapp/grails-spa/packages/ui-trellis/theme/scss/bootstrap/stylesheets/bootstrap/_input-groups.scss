@@ -82,7 +82,7 @@
   color: $input-color;
   text-align: center;
   background-color: $input-group-addon-bg;
-  border: 1px solid $input-group-addon-border-color;
+  border: 1px solid var(--input-outline-color);
   border-radius: $input-border-radius;
 
   // Sizing
@@ -142,6 +142,7 @@
   // Negative margin for spacing, position for bringing hovered/focused/actived
   // element above the siblings.
   > .btn {
+    border-color: var(--input-outline-color);
     box-shadow: unset;
     position: relative;
     + .btn {

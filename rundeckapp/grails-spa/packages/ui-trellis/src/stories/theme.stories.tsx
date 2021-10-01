@@ -233,6 +233,14 @@ export const inputs = () => (Vue.extend({
                     </div>
                     <label for="optlabel_41bbe448" class="col-sm-2 control-label    ">Option Label</label>
                     <input type="text" class="form-control" name="label" id="opt_label" value="" size="40" placeholder="Option Label"></input>
+                    <label style="margin-top: 10px;">Input Group</label>
+                    <div class="input-group">
+                        <span class="input-group-btn">
+                            <a class="btn btn-default">Foo</a>
+                            <a class="btn btn-default">Foo</a>
+                        </span>
+                        <input type="text" class="form-control"/>
+                    </div>
                 </div>
 
                 <div class="card card-accent" style="padding: 20px;">
