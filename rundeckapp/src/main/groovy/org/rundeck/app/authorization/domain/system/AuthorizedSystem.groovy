@@ -2,13 +2,14 @@ package org.rundeck.app.authorization.domain.system
 
 import org.rundeck.core.auth.access.Accessor
 import org.rundeck.core.auth.access.AuthorizedResource
+import org.rundeck.core.auth.access.Singleton
 
-interface AuthorizedSystem extends AuthorizedResource<Void> {
+interface AuthorizedSystem extends AuthorizedResource<Singleton> {
 
-    Accessor<Void> getConfigure()
+    Accessor<Singleton> getConfigure()
 
-    Accessor<Void> getOpsEnableExecution()
+    Accessor<Singleton> getOpsEnableExecution()
 
-    Accessor<Void> getOpsDisableExecution()
+    Accessor<Singleton> getOpsDisableExecution()
 
 }
