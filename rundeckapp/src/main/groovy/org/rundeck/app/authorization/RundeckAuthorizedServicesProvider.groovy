@@ -44,8 +44,11 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
     @Autowired StorageService storageService
     @Autowired DirectNodeExecutionService directNodeExecutionService
     ServicesProvider baseServices
-    private static List<Class> SERVICE_TYPES = [(Class) JobService, (Class) KeyStorageTree, (Class)
-            NodeExecutionService, (Class) ExecutionFileLoaderService, (Class) AsyncExecutionFileLoaderService]
+    private static List<Class> SERVICE_TYPES = [(Class) JobService,
+                                                (Class) KeyStorageTree,
+                                                (Class) NodeExecutionService,
+                                                (Class) ExecutionFileLoaderService,
+                                                (Class) AsyncExecutionFileLoaderService]
 
     @Override
     Services getServicesWith(final UserAndRolesAuthContext authContext) {
