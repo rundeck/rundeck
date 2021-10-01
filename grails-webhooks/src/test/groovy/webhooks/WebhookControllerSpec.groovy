@@ -118,7 +118,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
             1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(
                 _,
                 AuthConstants.RESOURCE_TYPE_WEBHOOK,
-                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ],
+                [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_READ],
                 'otherproject'
             ) >> true
     }
