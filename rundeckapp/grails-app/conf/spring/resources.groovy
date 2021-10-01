@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.authorization.providers.BaseValidatorImpl
-import com.dtolabs.rundeck.core.authorization.providers.ValidatorFactory
 import com.dtolabs.rundeck.core.authorization.providers.YamlValidator
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
@@ -77,9 +76,11 @@ import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.authorization.WebAuthContextProcessor
-import org.rundeck.app.authorization.domain.AppExecutionAuthorizedAccess
-import org.rundeck.app.authorization.domain.AppProjectAuthorizedAccess
+import org.rundeck.app.authorization.domain.execution.AppExecutionAuthorizedAccess
+import org.rundeck.app.authorization.domain.project.AppProjectAdhocAuthorizedAccess
+import org.rundeck.app.authorization.domain.project.AppProjectAuthorizedAccess
 import org.rundeck.app.authorization.domain.DomainAccess
+import org.rundeck.app.authorization.domain.system.AppSystemAuthorizedAccess
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
@@ -278,6 +279,8 @@ beans={
 
     rundeckExecutionAuthorizedAccess(AppExecutionAuthorizedAccess)
     rundeckProjectAuthorizedAccess(AppProjectAuthorizedAccess)
+    rundeckProjectAdhocAuthorizedAccess(AppProjectAdhocAuthorizedAccess)
+    rundeckSystemAuthorizedAccess(AppSystemAuthorizedAccess)
     rundeckDomainAccess(DomainAccess)
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){

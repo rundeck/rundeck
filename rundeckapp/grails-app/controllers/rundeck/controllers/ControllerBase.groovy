@@ -53,9 +53,28 @@ class ControllerBase {
         requireParams('project')
         rundeckDomainAccess.project(subject, DomainAccess.projectId(params.project.toString()))
     }
+    /**
+     *
+     * @return authorized access to project adhoc resource, requires request parameter 'project'
+     */
+    protected AuthorizedProjectAdhoc getAdhocAccess() {
+        requireParams('project')
+        rundeckDomainAccess.adhoc(subject, DomainAccess.projectId(params.project.toString()))
+    }
+    /**
+     *
+     * @return authorized access to execution, requires request parameter 'id'
+     */
     protected AuthorizedExecution getExecutionAccess() {
         requireParams('id')
         rundeckDomainAccess.execution(subject, DomainAccess.executionId(params.id.toString(), params.project?.toString()))
+    }
+    /**
+     *
+     * @return authorized access to system
+     */
+    protected AuthorizedSystem getSystemAccess() {
+        rundeckDomainAccess.system(subject)
     }
 
     protected Subject getSubject(){
