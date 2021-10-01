@@ -40,6 +40,10 @@ import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.AppConstants
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.NotFound
+import org.rundeck.app.authorization.UnauthorizedAccess
+import org.rundeck.app.authorization.domain.AuthorizedExecution
+import org.rundeck.app.authorization.domain.DomainAccess
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
 import rundeck.UtilityTagLib
@@ -50,6 +54,7 @@ import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 /**
@@ -105,17 +110,22 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.frameworkService = Mock(FrameworkService) {
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectExecutionAny(*_) >> true
-                1 * getAuthContextForSubjectAndProject(*_)
-            }
+
         controller.apiService = Mock(ApiService) {
             requireApi(*_) >> true
-            requireExists(*_) >> true
             0 * _(*_)
+        }
+        session.subject = new Subject()
+        controller.rundeckDomainAccess=Mock(DomainAccess){
+            1 * execution(_,_)>>Mock(AuthorizedExecution){
+                1 * requireReadOrView()>>{
+                    throw new NotFound('Execution','-999')
+                }
+            }
         }
         when:
         params.id = "-999"
+        params.project = "asdf"
         request.api_version = 21
         response.format = 'json'
         controller.apiExecutionOutput()
@@ -322,9 +332,12 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             controller.frameworkService = Mock(FrameworkService){
             }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
-                1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+
+            session.subject = new Subject()
+            controller.rundeckDomainAccess=Mock(DomainAccess){
+                1 * execution(_,_)>>Mock(AuthorizedExecution){
+                    1 * requireReadOrView() >> e1
+                }
             }
         when:
         params.id = e1.id.toString()
@@ -393,9 +406,11 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                     }
                 }
             }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
-                1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+            session.subject = new Subject()
+            controller.rundeckDomainAccess=Mock(DomainAccess){
+                1 * execution(_,_)>>Mock(AuthorizedExecution){
+                    1 * requireReadOrView() >> e1
+                }
             }
 
         when:
@@ -464,6 +479,12 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                         ),
                     ]
             )
+            session.subject = new Subject()
+            controller.rundeckDomainAccess=Mock(DomainAccess){
+                1 * execution(_,_)>>Mock(AuthorizedExecution){
+                    1 * requireReadOrView() >> e1
+                }
+            }
         when:
             params.id = e1.id.toString()
             params.maxlines = maxlines
@@ -472,9 +493,6 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         then:
             rescount == response.text.readLines().size()
 
-            1 * controller.apiService.requireExists(_, e1, _) >> true
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
-            1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(*_) >> true
             1 * controller.loggingService.getLogReader(e1) >> reader
 
         where:
@@ -510,6 +528,12 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
             def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
             reader.reader = new TestReader(logs: [])
+            session.subject = new Subject()
+            controller.rundeckDomainAccess=Mock(DomainAccess){
+                1 * execution(_,_)>>Mock(AuthorizedExecution){
+                    1 * requireReadOrView() >> e1
+                }
+            }
         when:
             params.id = e1.id.toString()
             params.maxlines = '500'
@@ -519,9 +543,6 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             def result = response.json
             result.percentLoaded==0.0
 
-            1 * controller.apiService.requireExists(_, e1, _) >> true
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
-            1 * controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(*_) >> true
             1 * controller.loggingService.getLogReader(e1) >> reader
 
     }
@@ -553,14 +574,16 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             _ * getServerUUID()
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectExecutionAny(*_) >> true
-                1 * getAuthContextForSubjectAndProject(*_)
-            }
+
         controller.apiService = Mock(ApiService) {
             requireApi(*_) >> true
-            requireExists(*_) >> true
             0 * _(*_)
+        }
+        session.subject = new Subject()
+        controller.rundeckDomainAccess=Mock(DomainAccess){
+            1 * execution(_,_)>>Mock(AuthorizedExecution){
+                1 * requireReadOrView() >> e1
+            }
         }
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         def date1 = new Date(90000000)
@@ -660,13 +683,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             _ * getServerUUID()
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectExecutionAny(*_) >> true
-                1 * getAuthContextForSubjectAndProject(*_)
-            }
+
         controller.apiService = Mock(ApiService) {
             requireApi(*_) >> true
-            requireExists(*_) >> true
             renderSuccessXml(_, _, _) >> { args ->
                 def writer = new StringWriter()
                 def xml = new MarkupBuilder(writer)
@@ -685,6 +704,12 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                 out.flush()
             }
             0 * _(*_)
+        }
+        session.subject = new Subject()
+        controller.rundeckDomainAccess=Mock(DomainAccess){
+            1 * execution(_,_)>>Mock(AuthorizedExecution){
+                1 * requireReadOrView() >> e1
+            }
         }
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         def date1 = new Date(90000000)
@@ -809,14 +834,16 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             _ * getServerUUID()
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectExecutionAny(*_) >> true
-                1 * getAuthContextForSubjectAndProject(*_)
-            }
+
         controller.apiService = Mock(ApiService) {
             requireApi(*_) >> true
-            requireExists(*_) >> true
             0 * _(*_)
+        }
+        session.subject = new Subject()
+        controller.rundeckDomainAccess=Mock(DomainAccess){
+            1 * execution(_,_)>>Mock(AuthorizedExecution){
+                1 * requireReadOrView() >> e1
+            }
         }
         when:
         params.id = e1.id.toString()
@@ -856,14 +883,16 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             _ * getServerUUID()
             0 * _(*_)
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectExecutionAny(*_) >> true
-                1 * getAuthContextForSubjectAndProject(*_)
-            }
+
         controller.apiService = Mock(ApiService) {
             requireApi(*_) >> true
-            requireExists(*_) >> true
             0 * _(*_)
+        }
+        session.subject = new Subject()
+        controller.rundeckDomainAccess=Mock(DomainAccess){
+            1 * execution(_,_)>>Mock(AuthorizedExecution){
+                1 * requireReadOrView() >> e1
+            }
         }
         when:
         params.id = e1.id.toString()
@@ -899,6 +928,12 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.workflowService = Mock(WorkflowService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
+        session.subject = new Subject()
+        controller.rundeckDomainAccess=Mock(DomainAccess){
+            1 * execution(_,_)>>Mock(AuthorizedExecution){
+                1 * requireReadOrView() >> e1
+            }
+        }
 
         when:
         if (acceptHeader) {
@@ -911,7 +946,6 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         then:
         response.header('Content-Encoding') == resultHeader
-        controller.rundeckAuthContextProcessor.authorizeProjectExecutionAny(_, _, _) >> true
         controller.workflowService.requestStateSummary(_, _, _) >> new WorkflowStateFileLoader(
                 state: ExecutionFileState.AVAILABLE,
                 workflowState: [nodeSummaries: [anode: 'summaries'], nodeSteps: [anode: 'steps']]
@@ -980,10 +1014,13 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.frameworkService = Mock(FrameworkService) {
             getFrameworkPropertyResolver(_,_) >> null
         }
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> true
-                1 * getAuthContextForSubjectAndProject(_, 'test1') >> Mock(UserAndRolesAuthContext)
+
+        session.subject = new Subject()
+        controller.rundeckDomainAccess=Mock(DomainAccess){
+            1 * execution(_,_)>>Mock(AuthorizedExecution){
+                1 * requireReadOrView() >> e1
             }
+        }
         when:
         params.id = e1.id.toString()
         params.formatted = 'true'
@@ -1008,14 +1045,18 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
             params.id = e1.id.toString()
+
+            session.subject = new Subject()
+            controller.rundeckDomainAccess=Mock(DomainAccess){
+                1 * execution(_,_)>>Mock(AuthorizedExecution){
+                    1 * requireReadOrView() >> {
+                        throw new UnauthorizedAccess('read', 'Execution', e1.id.toString())
+                    }
+                }
+            }
         when:
             controller."$endpoint"()
         then:
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'test1') >>
-            Mock(UserAndRolesAuthContext)
-            1 * controller.
-                rundeckAuthContextProcessor.
-                authorizeProjectExecutionAny(_, !null, [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]) >> false
             response.status == 403
         where:
             endpoint << ["mail", "downloadOutput", "renderOutput"]

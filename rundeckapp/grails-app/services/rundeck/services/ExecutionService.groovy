@@ -67,6 +67,8 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.UnauthorizedAccess
+import org.rundeck.app.authorization.domain.AuthorizedExecution
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
@@ -1825,13 +1827,40 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext
      * @return
      */
-    Map deleteExecution(Execution e, AuthContext authContext, String username){
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                 rundeckAuthContextProcessor.authResourceForProject(e.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
+    Map deleteExecution(AuthorizedExecution authorizedExecution, String username) {
+        try {
+            return deleteExecutionAuthorized(authorizedExecution.requireDelete(), username)
+        } catch (UnauthorizedAccess ignored) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
+    }
 
+    /**
+     * Delete an execution and associated log files
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return
+     */
+    Map deleteExecution(Execution e, AuthContext authContext, String username) {
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            rundeckAuthContextProcessor.authResourceForProject(e.project),
+            [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        )) {
+            return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
+        }
+        return deleteExecutionAuthorized(e, username)
+    }
+
+    /**
+     * Delete an execution and associated log files
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return
+     */
+    private Map deleteExecutionAuthorized(Execution e, String username) {
         Map result
         try {
             if (e.dateCompleted == null && e.dateStarted != null) {
