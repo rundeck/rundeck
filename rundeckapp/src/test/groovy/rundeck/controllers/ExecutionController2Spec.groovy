@@ -32,9 +32,11 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.DomainAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizedExecution
+import org.rundeck.app.authorization.domain.system.AuthorizedSystem
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.Accessor
 import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.Singleton
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
@@ -968,16 +970,14 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         }
         controller.frameworkService=Mock(FrameworkService) {
         }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
-                1 * getAuthContextForSubject(_)
-
-                1 * authorizeApplicationResourceAny(
-                    _,
-                    AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants
-                        .ACTION_OPS_ADMIN]
-                ) >> true
+        session.subject=new Subject()
+        controller.rundeckDomainAccess=Mock(DomainAccess){
+            1 * system(_)>>Mock(AuthorizedSystem){
+                1 * getRead() >>  Mock(Accessor) {
+                    getAccess() >> Singleton.ONLY
+                }
             }
+        }
         when:
             // Call controller
         controller.apiExecutionModeStatus()
@@ -1015,15 +1015,13 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.frameworkService=Mock(FrameworkService) {
             }
 
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
-                1 * getAuthContextForSubject(_)
-
-                1 * authorizeApplicationResourceAny(
-                    _,
-                    AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants
-                        .ACTION_OPS_ADMIN]
-                ) >> true
+            session.subject=new Subject()
+            controller.rundeckDomainAccess=Mock(DomainAccess){
+                1 * system(_)>>Mock(AuthorizedSystem){
+                    1 * getRead() >>  Mock(Accessor) {
+                        getAccess() >> Singleton.ONLY
+                    }
+                }
             }
             // Call controller
         controller.apiExecutionModeStatus()
