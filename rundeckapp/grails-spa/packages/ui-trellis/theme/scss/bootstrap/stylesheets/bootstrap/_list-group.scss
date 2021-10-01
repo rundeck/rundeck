@@ -82,7 +82,7 @@
 
 a.list-group-item,
 button.list-group-item {
-  color: $list-group-link-color;
+  color: var(--font-color);
 
   .list-group-item-heading {
     color: $list-group-link-heading-color;
