@@ -119,11 +119,11 @@
 
                     <g:if test="${params.project ?: request.project}">
                         <g:ifMenuItems type="PROJECT" project="${projectName}">
-                            <g:forMenuItems type="PROJECT" var="item" project="${projectName}" groupvar="group">
+                            <g:forMenuItems type="PROJECT" var="item" project="${projectName}">
                 {
                     type: 'link',
                     id: 'nav-${item.title.toLowerCase().replace(' ', '-')}-link',
-                    group: '${enc(attr:group?.id?:'main')}',
+                    group: 'main',
                     priority: '${enc(attr: item.priority)}',
                     class: '${enc(attr: item.iconCSS ?: 'fas fa-plug')}',
                     link: '${enc(attr: item.getProjectHref(projectName))}',
