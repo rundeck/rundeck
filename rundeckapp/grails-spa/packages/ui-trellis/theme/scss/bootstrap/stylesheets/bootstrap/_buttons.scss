@@ -102,7 +102,8 @@ a.btn {
 }
 // Success appears as green
 .btn-success {
-  @include button-variant(--font-fill-color, --font-fill-color, --success-color, --success-states-color, $btn-success-border, --success-light-color);
+  @include button-variant(--success-color, --font-fill-color, --success-color, --success-states-color, --success-color, --success-light-color);
+  background-color: transparent;
   box-shadow: var(--button-box-shadow);
   &.btn-simple { box-shadow: unset; }
 }
