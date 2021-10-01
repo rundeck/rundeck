@@ -89,83 +89,75 @@ abstract class BaseAuthorizedResource<T, ID> implements AuthorizedResource<T> {
 
     @Override
     T requireActions(final AccessActions actions) throws UnauthorizedAccess, NotFound {
-        UserAndRolesAuthContext authContext = getAuthContext()
         T res = retrieve(identifier)
         if (!res) {
             throw new NotFound(getResourceTypeName(), getPrimary(identifier))
         }
+        UserAndRolesAuthContext authContext = getAuthContext(res)
         String projectLevel = getProject(res)
+        boolean authorized = false
+        List<String> actionSet = ['none']
         if (actions.requiredActions) {
+            actionSet = actions.requiredActions
             if (projectLevel) {
-                if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(
+                authorized = rundeckAuthContextProcessor.authorizeProjectResourceAll(
                     authContext,
                     authresMapForResource(res),
-                    actions.requiredActions,
+                    actionSet,
                     projectLevel
-                )) {
-                    throw new UnauthorizedAccess(
-                        actions.requiredActions.first(),
-                        resourceTypeName,
-                        getPrimary(identifier)
-                    )
-                }
+                )
             } else {
-                if (!rundeckAuthContextProcessor
+                authorized = rundeckAuthContextProcessor
                     .authorizeApplicationResourceAll(
                         authContext,
                         authresMapForResource(res),
-                        actions.requiredActions
-                    )) {
-                    throw new UnauthorizedAccess(
-                        actions.requiredActions.first(),
-                        resourceTypeName,
-                        getPrimary(identifier)
+                        actionSet
                     )
-                }
             }
-
         } else if (actions.anyActions) {
+            actionSet = actions.anyActions
             if (projectLevel) {
-                if (!rundeckAuthContextProcessor.authorizeProjectResourceAny(
+                authorized = rundeckAuthContextProcessor.authorizeProjectResourceAny(
                     authContext,
                     authresMapForResource(res),
-                    actions.requiredActions,
+                    actionSet,
                     projectLevel
-                )) {
-                    throw new UnauthorizedAccess(
-                        actions.requiredActions.first(),
-                        resourceTypeName,
-                        getPrimary(identifier)
-                    )
-                }
+                )
             } else {
-                if (!rundeckAuthContextProcessor
+                authorized = rundeckAuthContextProcessor
                     .authorizeApplicationResourceAny(
                         authContext,
                         authresMapForResource(res),
-                        actions.requiredActions
-                    )) {
-                    throw new UnauthorizedAccess(
-                        actions.requiredActions.first(),
-                        resourceTypeName,
-                        getPrimary(identifier)
+                        actionSet
                     )
-                }
             }
-        } else {
-            throw new UnauthorizedAccess('none', resourceTypeName, getPrimary(identifier))
+        }
+        if (!authorized) {
+            throw new UnauthorizedAccess(
+                actionSet.first(),
+                resourceTypeName,
+                getPrimary(identifier)
+            )
         }
         return res
     }
 
-    public UserAndRolesAuthContext getAuthContext() {
-        AuthContext authContext
+    @Override
+    UserAndRolesAuthContext getAuthContext() {
+        getAuthContext(retrieve(identifier))
+    }
+
+    UserAndRolesAuthContext getAuthContext(T resource) {
+        String project = null
         if (identifier instanceof ProjectIdentifier) {
-            authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(subject, identifier.project)
+            project = identifier.project
         } else {
-            authContext = rundeckAuthContextProcessor.getAuthContextForSubject(subject)
+            project = getProject(resource)
         }
-        authContext
+        if (project) {
+            return rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(subject, project)
+        }
+        return rundeckAuthContextProcessor.getAuthContextForSubject(subject)
     }
 
     @Override
@@ -176,12 +168,5 @@ abstract class BaseAuthorizedResource<T, ID> implements AuthorizedResource<T> {
             return false
         }
         return true
-    }
-
-    String getProjectFromId() {
-        if (identifier instanceof ProjectIdentifier) {
-            return identifier.project
-        }
-        return null
     }
 }
