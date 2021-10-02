@@ -789,5 +789,6 @@
             </span>
         </div>
         <div class="clear"></div>
+        <script type="text/javascript">jQuery('.wfitemEditForm .modal').appendTo('body')</script>
     </div>
 </div>
