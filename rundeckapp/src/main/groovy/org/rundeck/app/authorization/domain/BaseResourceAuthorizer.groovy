@@ -2,15 +2,15 @@ package org.rundeck.app.authorization.domain
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import groovy.transform.CompileStatic
-import org.rundeck.core.auth.access.AuthorizedIdAccess
-import org.rundeck.core.auth.access.AuthorizedIdResource
+import org.rundeck.core.auth.access.ResourceAuthorizer
+import org.rundeck.core.auth.access.AuthorizingResource
 import org.springframework.beans.factory.annotation.Autowired
 
 @CompileStatic
-abstract class BaseAuthorizedIdAccess<D, A extends AuthorizedIdResource<D, ID>, ID>
-    implements AuthorizedIdAccess<D, A, ID> {
+abstract class BaseResourceAuthorizer<D, A extends AuthorizingResource<D>>
+    implements ResourceAuthorizer<D, A> {
+
 
     @Autowired
     AuthContextProcessor rundeckAuthContextProcessor
-
 }

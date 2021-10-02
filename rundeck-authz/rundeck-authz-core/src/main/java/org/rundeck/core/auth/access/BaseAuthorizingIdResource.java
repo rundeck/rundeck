@@ -13,13 +13,13 @@ import java.util.*;
  * @param <T>  resource type
  * @param <ID> ID type
  */
-public abstract class BaseAuthorizedIdResource<T, ID>
-        extends BaseAuthorizedResource<T>
-        implements AuthorizedIdResource<T, ID>
+public abstract class BaseAuthorizingIdResource<T, ID>
+        extends BaseAuthorizingResource<T>
+        implements AuthorizingIdResource<T, ID>
 {
     @Getter private final ID identifier;
 
-    public BaseAuthorizedIdResource(
+    public BaseAuthorizingIdResource(
             final AuthContextProcessor rundeckAuthContextProcessor,
             final Subject subject,
             final ID identifier
@@ -29,10 +29,6 @@ public abstract class BaseAuthorizedIdResource<T, ID>
         this.identifier = identifier;
     }
 
-    /**
-     * @return primary ID value
-     */
-    protected abstract String getPrimaryIdComponent();
 
     /**
      * @return project name for resource, or from ID, or null
@@ -45,23 +41,24 @@ public abstract class BaseAuthorizedIdResource<T, ID>
         return getAuthContext(getProject(retrieve()));
     }
 
+    private UserAndRolesAuthContext projectAuthContext = null;
+
     public UserAndRolesAuthContext getAuthContext(String project) {
-
-        if (project != null) {
-            return getRundeckAuthContextProcessor().getAuthContextForSubjectAndProject(getSubject(), project);
+        if (null == projectAuthContext) {
+            projectAuthContext =
+                    getRundeckAuthContextProcessor().getAuthContextForSubjectAndProject(getSubject(), project);
         }
-
-        return getRundeckAuthContextProcessor().getAuthContextForSubject(getSubject());
+        return projectAuthContext;
     }
 
     @Override
-    public T requireActions(final AccessActions actions) throws UnauthorizedAccess, NotFound {
+    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
         /*
          *
          */
         T res = retrieve();
         if (res == null) {
-            throw new NotFound(getResourceTypeName(), getPrimaryIdComponent());
+            throw new NotFound(getResourceTypeName(), getResourceIdent());
         }
 
         String projectLevel = getProject(res);
@@ -99,7 +96,7 @@ public abstract class BaseAuthorizedIdResource<T, ID>
         }
 
         if (!authorized) {
-            throw new UnauthorizedAccess(actionSet.get(0), getResourceTypeName(), getPrimaryIdComponent());
+            throw new UnauthorizedAccess(actionSet.get(0), getResourceTypeName(), getResourceIdent());
         }
 
         return res;

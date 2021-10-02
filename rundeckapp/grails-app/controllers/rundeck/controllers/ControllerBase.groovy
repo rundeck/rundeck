@@ -16,19 +16,20 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
 import org.grails.plugins.web.servlet.mvc.InvalidResponseHandler
 import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.servlet.mvc.TokenResponseHandler
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.project.AuthorizedProjectAdhoc
-import org.rundeck.app.authorization.domain.system.AuthorizedSystem
+import org.rundeck.app.authorization.domain.project.AuthorizingProjectAdhoc
+import org.rundeck.app.authorization.domain.system.AuthorizingSystem
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
-import org.rundeck.app.authorization.domain.execution.AuthorizedExecution
-import org.rundeck.app.authorization.domain.project.AuthorizedProject
-import org.rundeck.app.authorization.domain.DomainAccess
+import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.authorization.domain.project.AuthorizingProject
+import org.rundeck.app.authorization.domain.RdDomainAuthorizer
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.util.MissingParameter
 import org.springframework.web.context.request.RequestContextHolder
@@ -49,38 +50,46 @@ class ControllerBase {
     UiPluginService uiPluginService
     ApiService apiService
     AppAuthContextProcessor rundeckWebAuthContextProcessor
-    DomainAccess rundeckDomainAccess
+    RdDomainAuthorizer rundeckDomainAuthorizer
 
+    protected UserAndRolesAuthContext getSystemAuthContext(){
+        rundeckWebAuthContextProcessor.getAuthContextForSubject(getSubject())
+    }
+
+    protected UserAndRolesAuthContext getProjectAuthContext(){
+        requireParams('project')
+        rundeckWebAuthContextProcessor.getAuthContextForSubjectAndProject(getSubject(),params.project.toString())
+    }
     /**
      *
      * @return authorized access to project, requires request parameter 'project'
      */
-    protected AuthorizedProject getProjectAccess() {
+    protected AuthorizingProject getAuthorizingProject() {
         requireParams('project')
-        rundeckDomainAccess.project(subject, DomainAccess.projectId(params.project.toString()))
+        rundeckDomainAuthorizer.project(subject, RdDomainAuthorizer.projectId(params.project.toString()))
     }
     /**
      *
      * @return authorized access to project adhoc resource, requires request parameter 'project'
      */
-    protected AuthorizedProjectAdhoc getAdhocAccess() {
+    protected AuthorizingProjectAdhoc getAuthorizingProjectAdhoc() {
         requireParams('project')
-        rundeckDomainAccess.adhoc(subject, DomainAccess.projectId(params.project.toString()))
+        rundeckDomainAuthorizer.adhoc(subject, RdDomainAuthorizer.projectId(params.project.toString()))
     }
     /**
      *
      * @return authorized access to execution, requires request parameter 'id'
      */
-    protected AuthorizedExecution getExecutionAccess() {
+    protected AuthorizingExecution getAuthorizingExecution() {
         requireParams('id')
-        rundeckDomainAccess.execution(subject, DomainAccess.executionId(params.id.toString(), params.project?.toString()))
+        rundeckDomainAuthorizer.execution(subject, RdDomainAuthorizer.executionId(params.id.toString(), params.project?.toString()))
     }
     /**
      *
      * @return authorized access to system
      */
-    protected AuthorizedSystem getSystemAccess() {
-        rundeckDomainAccess.system(subject)
+    protected AuthorizingSystem getAuthorizingSystem() {
+        rundeckDomainAuthorizer.system(subject)
     }
 
     protected Subject getSubject(){

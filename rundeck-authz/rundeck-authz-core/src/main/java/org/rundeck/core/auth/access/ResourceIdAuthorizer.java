@@ -9,7 +9,6 @@ import javax.security.auth.Subject;
  * @param <A> authorized resource type
  * @param <I> ID type
  */
-public interface AuthorizedIdAccess<T, A extends AuthorizedIdResource<T, I>, I> {
-    A accessResource(Subject subject, I identifier);
-
+public interface ResourceIdAuthorizer<T, A extends AuthorizingIdResource<T, I>, I> {
+    A getAuthorizingResource(Subject subject, I identifier);
 }

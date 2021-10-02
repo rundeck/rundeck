@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class AccessLevels {
-    public static AccessActions any(AccessActions a, AccessActions b) {
+    public static AuthActions any(AuthActions a, AuthActions b) {
         if (nonEmpty(a.getAnyActions()) && nonEmpty(b.getAnyActions())) {
             return any(append(a.getAnyActions(), b.getAnyActions()));
         } else {
@@ -27,11 +27,11 @@ public class AccessLevels {
         return newList;
     }
 
-    public static AccessActions any(String a, AccessActions actions) {
+    public static AuthActions any(String a, AuthActions actions) {
         return any(Collections.singletonList(a), actions);
     }
 
-    public static AccessActions any(List<String> a, AccessActions actions) {
+    public static AuthActions any(List<String> a, AuthActions actions) {
         if (nonEmpty(actions.getAnyActions())) {
             return any(append(a, actions.getAnyActions()));
         } else {
@@ -46,7 +46,7 @@ public class AccessLevels {
         return list != null && list.size() > 0;
     }
 
-    public static AccessActions any(AccessActions a, List<String> actions) {
+    public static AuthActions any(AuthActions a, List<String> actions) {
         if (nonEmpty(a.getAnyActions())) {
             return any(append(a.getAnyActions(), actions));
         } else {
@@ -58,40 +58,41 @@ public class AccessLevels {
 
     }
 
-    public static AccessActions any(String... args) {
+    public static AuthActions any(String... args) {
         return any(Arrays.asList(args));
     }
 
-    public static AccessActions any(List<String> args) {
-        return new AnyAccess(args);
+    public static AuthActions any(List<String> args) {
+        return new AnyAuth(args);
     }
 
-    public static AccessActions all(String... args) {
-        return new AllAccess(Arrays.asList(args));
+    public static AuthActions all(String... args) {
+        return new AllAuth(Arrays.asList(args));
     }
 
 
-    public static final AccessActions ALL_ADMIN = any(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
-    public static final AccessActions APP_ADMIN = any(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN);
-    public static final AccessActions OPS_ADMIN = any(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
-    public static final AccessActions APP_CREATE = any(AuthConstants.ACTION_CREATE, APP_ADMIN);
-    public static final AccessActions APP_READ = any(AuthConstants.ACTION_READ, APP_ADMIN);
-    public static final AccessActions APP_UPDATE = any(AuthConstants.ACTION_UPDATE, APP_ADMIN);
-    public static final AccessActions APP_DELETE = any(AuthConstants.ACTION_DELETE, APP_ADMIN);
-    public static final AccessActions APP_READ_OR_VIEW = any(
+    public static final AuthActions
+            ALL_ADMIN = any(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
+    public static final AuthActions APP_ADMIN = any(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN);
+    public static final AuthActions OPS_ADMIN = any(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
+    public static final AuthActions APP_CREATE = any(AuthConstants.ACTION_CREATE, APP_ADMIN);
+    public static final AuthActions APP_READ = any(AuthConstants.ACTION_READ, APP_ADMIN);
+    public static final AuthActions APP_UPDATE = any(AuthConstants.ACTION_UPDATE, APP_ADMIN);
+    public static final AuthActions APP_DELETE = any(AuthConstants.ACTION_DELETE, APP_ADMIN);
+    public static final AuthActions APP_READ_OR_VIEW = any(
             Arrays.asList(AuthConstants.ACTION_VIEW, AuthConstants.ACTION_READ),
             APP_ADMIN
     );
 
     @Getter
-    public static class AnyAccess
-            implements AccessActions
+    public static class AnyAuth
+            implements AuthActions
     {
 
         private final List<String> requiredActions = null;
         private final List<String> anyActions;
 
-        public AnyAccess(final List<String> anyActions) {
+        public AnyAuth(final List<String> anyActions) {
             this.anyActions = anyActions;
         }
 
@@ -104,14 +105,14 @@ public class AccessLevels {
     }
 
     @Getter
-    public static class AllAccess
-            implements AccessActions
+    public static class AllAuth
+            implements AuthActions
     {
 
         private final List<String> requiredActions;
         private final List<String> anyActions = null;
 
-        public AllAccess(final List<String> requiredActions) {
+        public AllAuth(final List<String> requiredActions) {
             this.requiredActions = requiredActions;
         }
 

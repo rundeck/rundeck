@@ -76,11 +76,11 @@ import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.authorization.WebAuthContextProcessor
-import org.rundeck.app.authorization.domain.execution.AppExecutionAuthorizedAccess
-import org.rundeck.app.authorization.domain.project.AppProjectAdhocAuthorizedAccess
-import org.rundeck.app.authorization.domain.project.AppProjectAuthorizedAccess
-import org.rundeck.app.authorization.domain.DomainAccess
-import org.rundeck.app.authorization.domain.system.AppSystemAuthorizedAccess
+import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizer
+import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
+import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
+import org.rundeck.app.authorization.domain.RdDomainAuthorizer
+import org.rundeck.app.authorization.domain.system.AppSystemResourceAuthorizer
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
@@ -277,11 +277,11 @@ beans={
         authContextProcessor = ref('rundeckAuthContextProcessor')
     }
 
-    rundeckExecutionAuthorizedAccess(AppExecutionAuthorizedAccess)
-    rundeckProjectAuthorizedAccess(AppProjectAuthorizedAccess)
-    rundeckProjectAdhocAuthorizedAccess(AppProjectAdhocAuthorizedAccess)
-    rundeckSystemAuthorizedAccess(AppSystemAuthorizedAccess)
-    rundeckDomainAccess(DomainAccess)
+    rundeckExecutionAuthorizer(AppExecutionResourceAuthorizer)
+    rundeckProjectAuthorizer(AppProjectResourceAuthorizer)
+    rundeckProjectAdhocAuthorizer(AppProjectAdhocResourceAuthorizer)
+    rundeckSystemAuthorizer(AppSystemResourceAuthorizer)
+    rundeckDomainAuthorizer(RdDomainAuthorizer)
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE

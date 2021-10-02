@@ -6,7 +6,7 @@ import java.util.List;
  * Represents access request actions, either a list of all required actions (AND), or a list of any required actions
  * (OR).
  */
-public interface AccessActions {
+public interface AuthActions {
     /**
      * @return list of actions all must be allowed
      */

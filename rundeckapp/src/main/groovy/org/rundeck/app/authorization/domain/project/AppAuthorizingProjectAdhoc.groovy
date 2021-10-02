@@ -3,21 +3,19 @@ package org.rundeck.app.authorization.domain.project
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import groovy.transform.CompileStatic
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.core.auth.access.Accessor
-import org.rundeck.core.auth.access.BaseAuthorizedIdResource
+import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.access.Singleton
-import rundeck.Project
 
 import javax.security.auth.Subject
 
 @CompileStatic
-class AppAuthorizedProjectAdhoc extends BaseAuthorizedIdResource<Singleton, ProjectIdentifier>
-    implements AuthorizedProjectAdhoc {
+class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, ProjectIdentifier>
+    implements AuthorizingProjectAdhoc {
 
     final String resourceTypeName = 'Adhoc Command'
 
-    AppAuthorizedProjectAdhoc(
+    AppAuthorizingProjectAdhoc(
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject,
         final ProjectIdentifier identifier
@@ -41,7 +39,7 @@ class AppAuthorizedProjectAdhoc extends BaseAuthorizedIdResource<Singleton, Proj
     }
 
     @Override
-    String getPrimaryIdComponent() {
+    String getResourceIdent() {
         return identifier.project
     }
 

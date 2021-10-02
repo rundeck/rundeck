@@ -69,7 +69,7 @@ import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
-import org.rundeck.app.authorization.domain.execution.AuthorizedExecution
+import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
@@ -1669,13 +1669,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @CompileStatic
     def abortExecution(
-            AuthorizedExecution execution,
-            String killAsUser = null,
-            boolean forceIncomplete = false
+        AuthorizingExecution execution,
+        String killAsUser = null,
+        boolean forceIncomplete = false
     ) throws UnauthorizedAccess, NotFound
     {
         if(!execution.kill.allowed || killAsUser && !execution.killAs.allowed) {
-            Execution e = execution.read.access
+            Execution e = execution.read.resource
             return new AbortResult(
                     abortstate: ABORT_FAILED,
                     jobstate: getExecutionState(e),
@@ -1683,7 +1683,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     reason: "unauthorized"
             )
         }
-        Execution e = execution.kill.access
+        Execution e = execution.kill.resource
         abortExecutionDirect(e.scheduledExecution, e, execution.authContext.username, killAsUser, forceIncomplete)
     }
 
@@ -1848,20 +1848,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         return [success:!failed, failures:failures, successTotal:count]
-    }
-    /**
-     * Delete an execution and associated log files
-     * @param e execution
-     * @param user
-     * @param authContext
-     * @return
-     */
-    Map deleteExecution(AuthorizedExecution authorizedExecution, String username) {
-        try {
-            return deleteExecutionAuthorized(authorizedExecution.delete.getAccess(), username)
-        } catch (UnauthorizedAccess ignored) {
-            return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
-        }
     }
 
     /**

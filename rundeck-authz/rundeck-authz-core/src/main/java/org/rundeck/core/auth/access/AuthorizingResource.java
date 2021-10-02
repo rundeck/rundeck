@@ -7,13 +7,18 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
  *
  * @param <T>
  */
-public interface AuthorizedResource<T> {
+public interface AuthorizingResource<T> {
     /**
      * @return auth context
      */
     UserAndRolesAuthContext getAuthContext();
 
-    Accessor<T> access(AccessActions actions);
+    Accessor<T> access(AuthActions actions);
+
+    /**
+     * @return locator
+     */
+    Locator<T> getLocator();
 
     /**
      * READ access

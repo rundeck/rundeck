@@ -8,10 +8,10 @@ import java.util.Map;
 /**
  * Base implementation for a singleton application resources
  */
-public abstract class BaseSingletonAuthorizedResource
-        extends BaseAuthorizedResource<Singleton>
+public abstract class BaseSingletonAuthorizingResource
+        extends BaseAuthorizingResource<Singleton>
 {
-    public BaseSingletonAuthorizedResource(
+    public BaseSingletonAuthorizingResource(
             final AuthContextProcessor rundeckAuthContextProcessor,
             final Subject subject
     )
@@ -32,5 +32,10 @@ public abstract class BaseSingletonAuthorizedResource
     @Override
     protected Singleton retrieve() {
         return Singleton.ONLY;
+    }
+
+    @Override
+    protected boolean exists() {
+        return true;
     }
 }

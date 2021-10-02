@@ -7,11 +7,19 @@ package org.rundeck.core.auth.access;
  */
 public interface Accessor<T> {
     /**
-     * @return resource
+     * @return resource if authorized and it exists
      * @throws UnauthorizedAccess if unauthorized
      * @throws NotFound           if not found
      */
-    T getAccess() throws UnauthorizedAccess, NotFound;
+    T getResource() throws UnauthorizedAccess, NotFound;
+
+    /**
+     * check authorization and existence only
+     *
+     * @throws UnauthorizedAccess if unauthorized
+     * @throws NotFound           if not found
+     */
+    void authorize() throws UnauthorizedAccess, NotFound;
 
     /**
      * @return true if the resource exists

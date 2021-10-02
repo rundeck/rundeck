@@ -2,25 +2,25 @@ package org.rundeck.app.authorization.domain.execution
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import grails.compiler.GrailsCompileStatic
-import org.rundeck.core.auth.access.AccessActions
+import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.Accessor
-import org.rundeck.core.auth.access.BaseAuthorizedIdResource
+import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
 
 import javax.security.auth.Subject
 
 @GrailsCompileStatic
-class AppAuthorizedExecution extends BaseAuthorizedIdResource<Execution, ExecIdentifier>
-    implements AuthorizedExecution {
+class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecIdentifier>
+    implements AuthorizingExecution {
     final String resourceTypeName = 'Execution'
 
-    final static AccessActions APP_KILL = AccessLevels.any([AuthConstants.ACTION_KILL], AccessLevels.APP_ADMIN)
-    final static AccessActions APP_KILLAS = AccessLevels.any([AuthConstants.ACTION_KILLAS], AccessLevels.APP_ADMIN)
+    final static AuthActions APP_KILL = AccessLevels.any([AuthConstants.ACTION_KILL], AccessLevels.APP_ADMIN)
+    final static AuthActions APP_KILLAS = AccessLevels.any([AuthConstants.ACTION_KILLAS], AccessLevels.APP_ADMIN)
 
 
-    AppAuthorizedExecution(
+    AppAuthorizingExecution(
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject,
         final ExecIdentifier identifier
@@ -51,7 +51,7 @@ class AppAuthorizedExecution extends BaseAuthorizedIdResource<Execution, ExecIde
 
 
     @Override
-    String getPrimaryIdComponent() {
+    String getResourceIdent() {
         return identifier.id
     }
 

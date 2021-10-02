@@ -11,28 +11,29 @@ import javax.security.auth.Subject
  * Authorized access to System singleton resource
  */
 @CompileStatic
-class AppAuthorizedSystem extends BaseSingletonAuthorizedResource implements AuthorizedSystem {
+class AppAuthorizingSystem extends BaseSingletonAuthorizingResource implements AuthorizingSystem {
     final String resourceTypeName = 'System'
+    final String resourceIdent = 'resource'
     final Map<String, String> authresMapForSingleton = AuthConstants.RESOURCE_TYPE_SYSTEM
 
-    public static final AccessActions APP_CONFIGURE =
+    public static final AuthActions APP_CONFIGURE =
         AccessLevels.any(
             [AuthConstants.ACTION_CONFIGURE],
             AccessLevels.ALL_ADMIN
         )
 
-    public static final AccessActions OPS_ENABLE_EXECUTION =
+    public static final AuthActions OPS_ENABLE_EXECUTION =
         AccessLevels.any(
             [AuthConstants.ACTION_ENABLE_EXECUTIONS],
             AccessLevels.OPS_ADMIN
         )
-    public static final AccessActions OPS_DISABLE_EXECUTION =
+    public static final AuthActions OPS_DISABLE_EXECUTION =
         AccessLevels.any(
             [AuthConstants.ACTION_DISABLE_EXECUTIONS],
             AccessLevels.OPS_ADMIN
         )
 
-    AppAuthorizedSystem(
+    AppAuthorizingSystem(
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject
     ) {

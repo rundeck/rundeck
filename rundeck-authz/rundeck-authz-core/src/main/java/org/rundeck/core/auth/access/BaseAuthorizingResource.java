@@ -13,14 +13,14 @@ import java.util.Map;
  *
  * @param <T> resource type
  */
-public abstract class BaseAuthorizedResource<T>
-        implements AuthorizedResource<T>
+public abstract class BaseAuthorizingResource<T>
+        implements AuthorizingResource<T>
 {
 
     @Getter private final AuthContextProcessor rundeckAuthContextProcessor;
     @Getter private final Subject subject;
 
-    public BaseAuthorizedResource(final AuthContextProcessor rundeckAuthContextProcessor, final Subject subject) {
+    public BaseAuthorizingResource(final AuthContextProcessor rundeckAuthContextProcessor, final Subject subject) {
         this.rundeckAuthContextProcessor = rundeckAuthContextProcessor;
         this.subject = subject;
     }
@@ -36,23 +36,38 @@ public abstract class BaseAuthorizedResource<T>
     protected abstract String getResourceTypeName();
 
     /**
+     * @return primary ID value
+     */
+    protected abstract String getResourceIdent();
+
+    /**
      * @return resource or null if it does not exist
      */
     protected abstract T retrieve();
 
+    /**
+     * @return resource or null if it does not exist
+     */
+    protected abstract boolean exists();
+
+    private UserAndRolesAuthContext authContext = null;
+
     public UserAndRolesAuthContext getAuthContext() {
-        return getRundeckAuthContextProcessor().getAuthContextForSubject(getSubject());
+        if (null == authContext) {
+            authContext = getRundeckAuthContextProcessor().getAuthContextForSubject(getSubject());
+        }
+        return authContext;
     }
 
     @Override
-    public Accessor<T> access(final AccessActions actions) {
+    public Accessor<T> access(final AuthActions actions) {
         return new AccessorImpl<T>(actions, this::requireActions, this::canPerform, this::retrieve);
     }
 
-    public T requireActions(final AccessActions actions) throws UnauthorizedAccess, NotFound {
+    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
         T res = retrieve();
         if (res == null) {
-            throw new NotFound(getResourceTypeName(), "resource");
+            throw new NotFound(getResourceTypeName(), getResourceIdent());
         }
 
         UserAndRolesAuthContext authContext = getAuthContext();
@@ -81,13 +96,13 @@ public abstract class BaseAuthorizedResource<T>
         }
 
         if (!authorized) {
-            throw new UnauthorizedAccess(actionSet.get(0), getResourceTypeName(), "resource");
+            throw new UnauthorizedAccess(actionSet.get(0), getResourceTypeName(), getResourceIdent());
         }
 
         return res;
     }
 
-    public boolean canPerform(final AccessActions actions) throws NotFound {
+    public boolean canPerform(final AuthActions actions) throws NotFound {
         try {
             requireActions(actions);
         } catch (UnauthorizedAccess ignored) {
@@ -98,13 +113,34 @@ public abstract class BaseAuthorizedResource<T>
     }
 
     @Override
+    public Locator<T> getLocator() {
+        return new Locator<T>() {
+            @Override
+            public T getResource() throws NotFound {
+                T retrieve = retrieve();
+                if (retrieve == null) {
+                    throw new NotFound(getResourceTypeName(), getResourceIdent());
+                }
+                return retrieve;
+            }
+
+            @Override
+            public boolean isExists() {
+                return exists();
+            }
+        };
+    }
+
+    @Override
     public Accessor<T> getRead() {
         return access(AccessLevels.APP_READ);
     }
+
     @Override
     public Accessor<T> getAppAdmin() {
         return access(AccessLevels.APP_ADMIN);
     }
+
     @Override
     public Accessor<T> getOpsAdmin() {
         return access(AccessLevels.OPS_ADMIN);

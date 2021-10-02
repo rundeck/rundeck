@@ -2,10 +2,10 @@ package org.rundeck.app.authorization.domain.project
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import grails.compiler.GrailsCompileStatic
-import org.rundeck.core.auth.access.AccessActions
+import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.Accessor
-import org.rundeck.core.auth.access.BaseAuthorizedIdResource
+import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Project
@@ -16,9 +16,9 @@ import javax.security.auth.Subject
  * Authorized access for a project
  */
 @GrailsCompileStatic
-class AppAuthorizedProject extends BaseAuthorizedIdResource<Project, ProjectIdentifier>
-    implements AuthorizedProject {
-    public static final AccessActions APP_DELETE_EXECUTION =
+class AppAuthorizingProject extends BaseAuthorizingIdResource<Project, ProjectIdentifier>
+    implements AuthorizingProject {
+    public static final AuthActions APP_DELETE_EXECUTION =
         AccessLevels.any(
             [AuthConstants.ACTION_DELETE_EXECUTION],
             AccessLevels.APP_ADMIN
@@ -26,7 +26,7 @@ class AppAuthorizedProject extends BaseAuthorizedIdResource<Project, ProjectIden
     final String resourceTypeName = 'Project'
 
 
-    AppAuthorizedProject(
+    AppAuthorizingProject(
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject,
         final ProjectIdentifier identifier
@@ -51,7 +51,7 @@ class AppAuthorizedProject extends BaseAuthorizedIdResource<Project, ProjectIden
     }
 
     @Override
-    String getPrimaryIdComponent() {
+    String getResourceIdent() {
         return identifier.project
     }
 
