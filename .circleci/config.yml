@@ -377,12 +377,13 @@ workflows:
            name: Publish Snapshots
            requires: *stage-test
            filters: {branches: {only: main}}
-      - docker-publish:
-          name: Publish docker
-          requires: *stage-test
-          filters:
-            branches: {ignore: /.*/}
-            tags: {only: /^v.*$/}
+      #- docker-publish:
+       #   name: Publish docker
+        #  requires: *stage-test
+         # filters:
+          
+          #  branches: {ignore: /.*/}
+           # tags: {only: /^v.*$/}
       - trigger-packaging:
           name: Trigger packaging-core
           requires: *stage-test
