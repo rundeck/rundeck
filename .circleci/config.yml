@@ -234,28 +234,28 @@ jobs:
     <<: *defaults
     executor: gradle-docker
     steps:
-      run:
-        name: Docker Publish
-        command: |
-          source .circleci/travis-shim.sh
-          bash scripts/travis-helpers.sh fetch_common_artifacts
-          bash scripts/travis-helpers.sh fetch_common_resources
-          DRY_RUN=false bash scripts/travis-build.sh publish_docker
+      - run:
+          name: Docker Publish
+          command: |
+            source .circleci/travis-shim.sh
+            bash scripts/travis-helpers.sh fetch_common_artifacts
+            bash scripts/travis-helpers.sh fetch_common_resources
+            DRY_RUN=false bash scripts/travis-build.sh publish_docker
 
   snapshot-publish:
     <<: *defaults
     executor: gradle-docker
     steps:
-      run:
-        name: Snapshot Publish
-        command: |
-          source .circleci/travis-shim.sh
-          bash scripts/travis-helpers.sh fetch_common_artifacts
-          bash scripts/travis-helpers.sh fetch_common_resources
-          bash scripts/travis-helpers.sh sync_commit_to_s3
-          export VCS_URL=https://github.com/rundeck/rundeck.git
-          bash scripts/travis-helpers.sh seal_artifacts
-          ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+      - run:
+          name: Snapshot Publish
+          command: |
+            source .circleci/travis-shim.sh
+            bash scripts/travis-helpers.sh fetch_common_artifacts
+            bash scripts/travis-helpers.sh fetch_common_resources
+            bash scripts/travis-helpers.sh sync_commit_to_s3
+            export VCS_URL=https://github.com/rundeck/rundeck.git
+            bash scripts/travis-helpers.sh seal_artifacts
+            ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
 
   trigger-packaging:
     docker:
