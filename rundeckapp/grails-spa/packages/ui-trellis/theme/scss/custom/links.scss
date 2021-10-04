@@ -18,7 +18,7 @@
   background-color: $bg-default;
 
   &.text-inverse {
-    background-color: $bg-default-inverse;
+    background-color: var(--background-color-lvl1);
   }
 
   &.text-primary {
