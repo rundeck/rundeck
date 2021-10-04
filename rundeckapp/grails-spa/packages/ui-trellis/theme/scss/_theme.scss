@@ -409,13 +409,13 @@ $black:                      $grey-900;
         --default-color:              var(--grey-900);
         --default-states-color:       var(--grey-300);
 
-        --primary-color:              var(--blue-500);
-        --primary-states-color:       var(--blue-600);
-        --primary-highlight-color:    var(--blue-300);
-        --primary-bg-color:           var(--blue-100);
+        --primary-color:              var(--blue-300);
+        --primary-states-color:       var(--blue-500);
+        --primary-highlight-color:    var(--blue-100);
+        --primary-bg-color:           var(--blue-600);
 
-        --success-color:              var(--green-500);
-        --success-states-color:       var(--green-300);
+        --success-color:              var(--green-600);
+        --success-states-color:       var(--green-400);
         --success-bg-color:           var(--green-800);
 
         --cta-color:                  var(--green-500);
@@ -478,8 +478,8 @@ $black:                      $grey-900;
         --list-item-border-color: var(--grey-400);
 
         // Cards
-        --card-default-background-color: var(--background-color-lvl3);
-        --card-default-border-color: var(--background-color-lvl3);
+        --card-default-background-color: var(--background-color-lvl2);
+        --card-default-border-color: var(--background-color-accent-lvl2);
         --card-default-color: var(--font-color);
         --card-default-box-shadow: 0px 4px 14px 0 rgba(0, 0, 0, 0.11);
 
