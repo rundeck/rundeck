@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import grails.converters.JSON
 import groovy.transform.CompileStatic
+import org.rundeck.security.RundeckPluginBlocklist
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.servlet.support.RequestContextUtils
@@ -41,6 +42,7 @@ class PluginController extends ControllerBase {
     AppAuthContextProcessor rundeckAuthContextProcessor
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def messageSource
+    RundeckPluginBlocklist pluginBlocklist
 
     def pluginIcon(PluginResourceReq resourceReq) {
         if (resourceReq.hasErrors()) {
@@ -218,6 +220,11 @@ class PluginController extends ControllerBase {
             instance = pDescriptor?.instance
             desc = pDescriptor?.description
         }
+        if (!pluginBlocklist.isPluginProviderPresent(params.service, params.name)) {
+            response.status = 404
+            renderErrorView('Plugin is blocklisted for Rundeck On Demand')
+            return
+        }
 
         if(!desc) {
             def psvc = frameworkService.rundeckFramework.getService(service)
@@ -330,6 +337,17 @@ class PluginController extends ControllerBase {
 
         }
         def validation = pluginService.validatePluginConfig(service, name, config, ignoredScope)
+
+        if (!pluginBlocklist.isPluginProviderPresent(service, name)) {
+            response.status=404
+
+            return render(contentType: 'application/json') {
+                valid false
+                delegate.error ('Blocklist for Rundeck OnDemand contains: '+service+': '+name)
+            }
+        }
+        }
+
         if(!validation){
             response.status=404
 
