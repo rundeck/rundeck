@@ -158,7 +158,7 @@ a.btn {
   }
   &:hover,
   &:focus {
-    color: $link-hover-color;
+    color: var(--primary-highlight-color);
     text-decoration: underline;
     background-color: transparent;
   }
