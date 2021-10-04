@@ -234,7 +234,9 @@ jobs:
     <<: *defaults
     executor: gradle-docker
     steps:
-      -command: |
+      run:
+        name: Docker Publish
+        command:  |
         source .circleci/travis-shim.sh
         bash scripts/travis-helpers.sh fetch_common_artifacts
         bash scripts/travis-helpers.sh fetch_common_resources
@@ -244,7 +246,9 @@ jobs:
     <<: *defaults
     executor: gradle-docker
     steps:
-      -command: |
+      run:
+        name: Snapshot Publish
+        command:  |
         source .circleci/travis-shim.sh
         bash scripts/travis-helpers.sh fetch_common_artifacts
         bash scripts/travis-helpers.sh fetch_common_resources
