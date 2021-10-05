@@ -1,4 +1,4 @@
+import { ThemeStore } from '@rundeck/ui-trellis/lib/stores/Theme'
 // @ts-ignore
 window.SVGInject = require('@iconfu/svg-inject')
-
-console.log('Foo')
+new ThemeStore()
