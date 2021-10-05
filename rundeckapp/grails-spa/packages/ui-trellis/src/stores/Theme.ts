@@ -47,7 +47,6 @@ export class ThemeStore {
     }
 
     handleSystemChange = (e: MediaQueryListEvent | MediaQueryList) => {
-        console.log(e)
         if (this.userPreferences.theme == Theme.system)
             if (e.matches)
                 this.setTheme(Theme.dark)
