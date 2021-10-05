@@ -139,6 +139,7 @@ function TokenTableHandler(ctx) {
         var table = tokenTable.getTableBody();
         table.prepend(rowContent);
         var row = $('token-' + tokenid);
+        jQuery(row).find('.modal-container').appendTo('body')
         row.style.opacity = 0;
         jQuery($(row)).fadeTo(1000, 1);
 
@@ -227,8 +228,8 @@ function removeTokenRow(elem, data) {
     tokenTable.removeRow(elem);
 }
 
-function clearToken(elem) {
-    var dom = jQuery(elem);
+function clearToken(form, row) {
+    var dom = jQuery(form);
     var login = dom.find('input[name="login"]').val();
     var params = {login: login};
     if (dom.find('input[name="tokenid"]').length > 0) {
@@ -246,13 +247,13 @@ function clearToken(elem) {
                 tokenAjaxError(data.error);
             } else if (data.result) {
                 //remove row element
-                removeTokenRow(elem, data);
+                removeTokenRow(jQuery(`#token-${row}`)[0], data);
             }
         },
         error: function (jqxhr, status, error) {
             tokenAjaxError(jqxhr.responseJSON && jqxhr.responseJSON.error ? jqxhr.responseJSON.error : error);
         }, complete: function () {
-            jQuery('#' + elem.identify() + ' .modal').modal('hide');
+            jQuery(form).find('.modal').modal('hide');
         }
     }).success(_createAjaxReceiveTokensHandler('api_req_tokens'));
 }
@@ -317,7 +318,7 @@ jQuery(function () {
     });
     jQuery(document).on('click', '.clearconfirm input.yes', function (e) {
         e.preventDefault();
-        clearToken(jQuery(e.target).closest('.apitokenform')[0]);
+        clearToken(jQuery(e.target).closest('form')[0], e.target.dataset.tokenId);
         return false;
     });
 
@@ -325,7 +326,7 @@ jQuery(function () {
     tokenDispModal.on("hide.bs.modal", function (e) {
         jQuery("#createdTokenViewer").text("--")
     })
-    var dom = jQuery('#gentokensection');
+    var dom = jQuery('#gentokenmodal');
     if (dom.length == 1) {
         var roleset = new RoleSet(data.roles);
         window.tokencreator = new TokenCreator({
