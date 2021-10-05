@@ -377,6 +377,8 @@ $black:                      $grey-900;
         --input-outline-color:         var(--grey-900);
         --input-group-addon-bg-color:  var(--grey-100);
         --input-focus-color:           var(--grey-900);
+
+        --input-checkbox: var(--grey-900);
         
         --input-disabled-bg-color:           var(--grey-400);
         --input-disabled-color:           var(--grey-100);
@@ -452,9 +454,9 @@ $black:                      $grey-900;
 
         // Side Bar
         --sidebar-background-color: var(--grey-700);
-        --sidebar-item-color:       var(--grey-200);
+        --sidebar-item-color:       var(--grey-100);
         --sidebar-item-state-color: var(--white);
-        --sidebar-drawer-bg-color:  var(--grey-800);
+        --sidebar-drawer-bg-color:  var(--grey-900);
 
         // Subtitle Bar
         --subtitle-bar-border-bottom: 1px solid var(--grey-200);
