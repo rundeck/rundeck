@@ -369,25 +369,23 @@ workflows:
           name: PAM Test
           requires: [build]
           command: bash test/run-docker-pam-tests.sh
-
       - test-selenium:
-            name: Selenium Test
-            requires: [build]
+          name: Selenium Test
+          requires: [build]
       - test-deps:
-            name: OWASP Dependency Checks
-            requires: [build]
-            continue: 'true'
+          name: OWASP Dependency Checks
+          requires: [build]
+          continue: 'true'
       - snapshot-publish:
-           name: Publish Snapshots
-           requires: *stage-test
-           filters: {branches: {only: main}}
-      #- docker-publish:
-       #   name: Publish docker
-        #  requires: *stage-test
-         # filters:
-          
-          #  branches: {ignore: /.*/}
-           # tags: {only: /^v.*$/}
+          name: Publish Snapshots
+          requires: *stage-test
+          filters: {branches: {only: main}}
+      - docker-publish:
+          name: Publish docker
+          requires: *stage-test
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
       - trigger-packaging:
           name: Trigger packaging-core
           requires: *stage-test
