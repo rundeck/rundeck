@@ -88,7 +88,7 @@ export default class FirstRun extends Vue {
 
 <style lang="scss" scoped>
 .bg-white{
-  background-color: #fff;
+  background-color: var(--white);
 }
 .rounded{
   border-radius: 1rem;
@@ -107,7 +107,7 @@ export default class FirstRun extends Vue {
 }
 .splash-screen{
     padding:25px; 
-    background-color: #F9F9F9;
+    background-color: var(--background-color-lvl2);
     &--title{
         font-weight: 700;
         font-weight: 700;
@@ -120,7 +120,7 @@ export default class FirstRun extends Vue {
         width: 100%;
         margin: 20px 0;
         .item{
-            border: 1px solid #B4B4B4;
+            border: 1px solid var(--border-color);
             box-shadow: 0px 0px 38px rgba(0, 0, 0, 0.11);
             border-radius: 4px;
             padding: 35px;
