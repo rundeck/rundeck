@@ -1,5 +1,6 @@
 <template>
   <Drawer
+    v-if="message"
     placement="right"
     :closeable="false"
     :visible="message && showMessage"
