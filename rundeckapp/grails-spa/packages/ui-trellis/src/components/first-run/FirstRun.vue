@@ -88,7 +88,7 @@ export default class FirstRun extends Vue {
 
 <style lang="scss" scoped>
 .bg-white{
-  background-color: var(--white);
+  background-color: var(--background-color-lvl2);
 }
 .rounded{
   border-radius: 1rem;
