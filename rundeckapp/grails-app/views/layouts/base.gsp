@@ -279,8 +279,10 @@
 </g:if>
 
 <script type="text/javascript">
-    jQuery('.modal-container').appendTo('body');
-    jQuery('body > :not(.modal-container) .modal').appendTo('body');
+    jQuery(() => {
+        jQuery('.modal-container').appendTo('body');
+        jQuery('body > :not(.modal-container) .modal').appendTo('body');
+    })
 </script>
 
 <!-- VUE JS MODULES -->
