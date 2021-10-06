@@ -386,6 +386,7 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
+            #trigger the packaging core circleCI workflow
       - trigger-packaging:
           name: Trigger packaging-core
           requires: *stage-test
