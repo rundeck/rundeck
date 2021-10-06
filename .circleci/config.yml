@@ -230,18 +230,44 @@ jobs:
           path: build/owasp-reports
           prefix: owasp-reports
 
+  docker-publish:
+    <<: *defaults
+    executor: gradle-docker
+    steps:
+      - run:
+          name: Docker Publish
+          command: |
+            source .circleci/travis-shim.sh
+            bash scripts/travis-helpers.sh fetch_common_artifacts
+            bash scripts/travis-helpers.sh fetch_common_resources
+            DRY_RUN=false bash scripts/travis-build.sh publish_docker
+
   snapshot-publish:
     <<: *defaults
     executor: gradle-docker
-
     steps:
-      - checkout
       - run:
-          name: Publish
+          name: Snapshot Publish
           command: |
             source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh publish_oss
+            bash scripts/travis-helpers.sh fetch_common_artifacts
+            bash scripts/travis-helpers.sh fetch_common_resources
+            bash scripts/travis-helpers.sh sync_commit_to_s3
+            export VCS_URL=https://github.com/rundeck/rundeck.git
+            bash scripts/travis-helpers.sh seal_artifacts
+            ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
 
+  trigger-packaging:
+    docker:
+      - image: circleci/node:12
+    resource_class: small
+    steps:
+      - trigger/trigger:
+          debug: true
+          branch: ${CIRCLE_BRANCH}
+          token: '${CIRCLECI_API_TOKEN}'
+          project-slug: 'gh/rundeck/packaging-core'
+          pipeline-number: '<<pipeline.number>>'
   maven-publish:
     <<: *defaults
     executor: gradle-docker
@@ -343,19 +369,29 @@ workflows:
           name: PAM Test
           requires: [build]
           command: bash test/run-docker-pam-tests.sh
-
       - test-selenium:
-            name: Selenium Test
-            requires: [build]
+          name: Selenium Test
+          requires: [build]
       - test-deps:
-            name: OWASP Dependency Checks
-            requires: [build]
-            continue: 'true'
-
-      # - snapshot-publish:
-      #     name: Publish Snapshots
-      #     requires: *stage-test
-      #     filters: {branches: {only: main}}
+          name: OWASP Dependency Checks
+          requires: [build]
+          continue: 'true'
+      - snapshot-publish:
+          name: Publish Snapshots
+          requires: *stage-test
+          filters: {branches: {only: main}}
+      - docker-publish:
+          name: Publish docker
+          requires: *stage-test
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
+      - trigger-packaging:
+          name: Trigger packaging-core
+          requires: *stage-test
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
       - maven-publish:
           name: Maven Publish
           requires: *stage-test
