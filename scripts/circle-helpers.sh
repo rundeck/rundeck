@@ -205,7 +205,6 @@ pull_rundeck() {
 export_tag_info
 export_repo_info
 
-export -f script_block
 export -f sync_to_s3
 export -f sync_commit_to_s3
 export -f sync_from_s3
