@@ -214,4 +214,3 @@ export -f docker_login
 export -f build_rdtest
 export -f pull_rdtest
 export -f pull_rundeck
-export -f trigger_downstream_snapshots
