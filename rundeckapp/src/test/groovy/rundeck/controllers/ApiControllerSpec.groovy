@@ -27,6 +27,7 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.mapping.LinkGenerator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.ApiService
@@ -462,12 +463,29 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         'ping'        | [metrics: true]  | true
         'threads'     | [metrics: true]  | true
     }
+    def "api system info unauthorized"(){
+        given:
+            setAuthProcessor(false)
+            controller.apiService=Mock(ApiService)
+        when:
+            controller.apiSystemInfo()
+        then:
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(_,_)>>{
+                it[0].status=it[1].status
+            }
+            response.status==403
+    }
 
     public void setAuthProcessor(boolean allow=true) {
         controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
             1 * getAuthContextForSubject(_)
 
-            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> allow
+            1 * authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ) >> allow
         }
     }
 }
