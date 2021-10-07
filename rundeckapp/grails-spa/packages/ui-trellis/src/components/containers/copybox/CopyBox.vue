@@ -56,6 +56,7 @@ export default Vue.extend({
     border-color: #AFC4DC;
     display: flex;
     cursor: pointer;
+    color: var(--grey-900);
 }
 
 .rd-copybox__content {
@@ -72,8 +73,8 @@ export default Vue.extend({
     transition-property: color, background-color;
 
     &--active {
-        background-color: slategray;
-        color: forestgreen;
+        background-color: var(--grey-900);
+        color: var(--grey-600);
     }
 }
 
