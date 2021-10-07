@@ -82,7 +82,7 @@ commands:
       - run:
           name: Fetch Artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             fetch_common_artifacts
             pull_rdtest
 
@@ -92,7 +92,7 @@ commands:
       - run:
           name: Fetch CI Resources
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             fetch_common_resources
 
 jobs:
@@ -113,19 +113,19 @@ jobs:
       - run:
           name: Build
           command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh build
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh build
       - setup_remote_docker
       - run:
           name: Build Docker Images
           command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh buildDocker
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh buildDocker
             build_rdtest
       - run:
           name: Upload artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             copy_artifacts
             sync_to_s3
             seal_artifacts
@@ -158,7 +158,7 @@ jobs:
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             << parameters.command >>
 
   trigger-enterprise:
@@ -186,7 +186,7 @@ jobs:
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             << parameters.command >>
 
   test-selenium:
@@ -199,12 +199,12 @@ jobs:
       - run:
           name: Fetch Artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             pull_rundeck
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             bash test/ci-test-docker-selenium.sh
       - store_artifacts:
           path: test/selenium/test_out/images
@@ -237,10 +237,10 @@ jobs:
       - run:
           name: Docker Publish
           command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-helpers.sh fetch_common_artifacts
-            bash scripts/travis-helpers.sh fetch_common_resources
-            DRY_RUN=false bash scripts/travis-build.sh publish_docker
+            source .circleci/circle-shim.sh
+            bash scripts/circle-helpers.sh fetch_common_artifacts
+            bash scripts/circle-helpers.sh fetch_common_resources
+            DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
   snapshot-publish:
     <<: *defaults
@@ -249,12 +249,12 @@ jobs:
       - run:
           name: Snapshot Publish
           command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-helpers.sh fetch_common_artifacts
-            bash scripts/travis-helpers.sh fetch_common_resources
-            bash scripts/travis-helpers.sh sync_commit_to_s3
+            source .circleci/circle-shim.sh
+            bash scripts/circle-helpers.sh fetch_common_artifacts
+            bash scripts/circle-helpers.sh fetch_common_resources
+            bash scripts/circle-helpers.sh sync_commit_to_s3
             export VCS_URL=https://github.com/rundeck/rundeck.git
-            bash scripts/travis-helpers.sh seal_artifacts
+            bash scripts/circle-helpers.sh seal_artifacts
             ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
 
   trigger-packaging:
@@ -280,8 +280,8 @@ jobs:
       - run:
           name: Publish
           command: |
-            source .circleci/travis-shim.sh
-            DRY_RUN=false bash scripts/travis-build.sh publish
+            source .circleci/circle-shim.sh
+            DRY_RUN=false bash scripts/circle-build.sh publish
 
 stages:
   test: &stage-test
@@ -379,7 +379,9 @@ workflows:
       - snapshot-publish:
           name: Publish Snapshots
           requires: *stage-test
-          filters: {branches: {only: main}}
+          filters: 
+            branches: {only: main}
+            tags: {ignore: /.*/}
       - docker-publish:
           name: Publish docker
           requires: *stage-test
