@@ -6,6 +6,7 @@ import VueI18n from 'vue-i18n'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 import VueMoment from 'vue-moment'
 import {getRundeckContext, getSynchronizerToken, RundeckBrowser} from '@rundeck/ui-trellis'
+import {DisableButtonClickFocus} from '@rundeck/ui-trellis/lib/utilities/Observers'
 import {EventBus} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
 import { RootStore } from '@rundeck/ui-trellis/lib/stores/RootStore'
 
@@ -27,10 +28,11 @@ Vue.use(VueCookies)
 Vue.use(VueI18n)
 Vue.use(VueMoment, {moment})
 
-
 const context = getRundeckContext()
 const token = getSynchronizerToken()
 
 context.rundeckClient = new RundeckBrowser(token.TOKEN, token.URI, context.rdBase)
 context.eventBus = EventBus
 context.rootStore = new RootStore(context.rundeckClient)
+
+DisableButtonClickFocus()
