@@ -26,9 +26,14 @@ export class ThemeStore {
         this.setTheme(this.userPreferences.theme || Theme.system)
 
         this.themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+        console.log(this.themeMediaQuery)
         this.handleSystemChange(this.themeMediaQuery)
 
-        this.themeMediaQuery.addEventListener('change', this.handleSystemChange)
+        // Safari <14
+        if (typeof this.themeMediaQuery.addListener != 'undefined')
+            this.themeMediaQuery.addListener(this.handleSystemChange)
+        else
+            this.themeMediaQuery.addEventListener('change', this.handleSystemChange)
     }
 
     setUserTheme(theme: Theme) {
