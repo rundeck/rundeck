@@ -1118,10 +1118,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                              AuthConstants.ACTION_READ
-                ),
-                AuthConstants.ACTION_READ, 'System configuration'
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ),
+                AuthConstants.ACTION_READ, 'Log Storage'
         )) {
             return
         }
@@ -1179,10 +1181,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                              AuthConstants.ACTION_READ
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                 ),
-                AuthConstants.ACTION_READ, 'System configuration'
+                AuthConstants.ACTION_READ, 'Log Storage'
         )) {
             return
         }
@@ -1222,10 +1226,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                              AuthConstants.ACTION_READ
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_OPS_ADMIN]
                 ),
-                AuthConstants.ACTION_READ, 'System configuration'
+                AuthConstants.ACTION_READ, 'Log Storage'
         )) {
             return
         }
@@ -1233,12 +1239,16 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         data.retryDelay=logFileStorageService.getConfiguredStorageRetryDelay()
         return render(contentType: 'application/json', text: data + [enabled: data.pluginName ? true : false] as JSON)
     }
+
     def systemConfig(){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        AuthConstants.ACTION_READ),
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+                ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
@@ -1993,9 +2003,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        AuthConstants.ACTION_READ),
-                AuthConstants.ACTION_READ, 'System configuration')) {
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+                ),
+                AuthConstants.ACTION_READ, 'System information')) {
             return
         }
         if(!grailsApplication.config.dataSource.jndiName &&
@@ -2569,10 +2582,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeApplicationResource(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        AuthConstants.ACTION_READ
+                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                 ),
                 response,
                 [AuthConstants.ACTION_READ, 'System','Logstorage Info'].toArray()
@@ -2635,10 +2648,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
         if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeApplicationResource(
+                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        AuthConstants.ACTION_READ
+                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                 ),
                 response,
                 [AuthConstants.ACTION_READ, 'System','Logstorage Info'].toArray()
