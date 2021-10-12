@@ -153,8 +153,8 @@ jobs:
       - save-gradle-cache
       - setup-environment
       - when:
-          condition:
-            equal: [ main, << pipeline.git.branch >> ]
+           condition:
+             matches: { pattern: "^main$", value: <<pipeline.git.branch>> }
           steps:
             - run:
                 name: Gather artifacts
