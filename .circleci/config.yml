@@ -152,19 +152,23 @@ jobs:
             seal_artifacts
       - save-gradle-cache
       - setup-environment
-      - run:
-          name: Gather artifacts
-          command: |
-            source .circleci/circle-shim.sh
-            source scripts/circle-helpers.sh
-            fetch_common_artifacts
-            fetch_common_resources
-            sync_commit_to_s3
-            export VCS_URL=https://github.com/rundeck/rundeck.git
-            seal_artifacts
-      - run:
-          name: Publish snapshot
-          command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+      - when:
+          condition:
+            - equal: [ main, << pipeline.git.branch >> ]
+          steps:
+            - run:
+                name: Gather artifacts
+                command: |
+                  source .circleci/circle-shim.sh
+                  source scripts/circle-helpers.sh
+                  fetch_common_artifacts
+                  fetch_common_resources
+                  sync_commit_to_s3
+                  export VCS_URL=https://github.com/rundeck/rundeck.git
+                  seal_artifacts
+            - run:
+              name: Publish snapshot
+              command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
 
 
   test-gradle:
