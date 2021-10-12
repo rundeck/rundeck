@@ -182,7 +182,6 @@ jobs:
                   bash scripts/circle-helpers.sh fetch_common_resources
                   DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
-
   test-gradle:
     <<: *defaults
     machine: true
