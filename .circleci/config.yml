@@ -256,7 +256,8 @@ jobs:
 
   docker-publish:
     <<: *defaults
-    executor: gradle-docker
+    docker:
+      - image: circleci/python:3.7-node
     steps:
       - setup-environment
       - run:
@@ -269,7 +270,8 @@ jobs:
 
   snapshot-publish:
     <<: *defaults
-    executor: gradle-docker
+    docker:
+      - image: circleci/python:3.7-node
     steps:
       - setup-environment
       - run:
