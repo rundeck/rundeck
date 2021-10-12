@@ -56,8 +56,8 @@ commands:
       - run:
           name: NVM install
           command: |
-          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-          nvm install
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+            nvm install
       - run:
           name: Apt- get and shell change
           command: |
