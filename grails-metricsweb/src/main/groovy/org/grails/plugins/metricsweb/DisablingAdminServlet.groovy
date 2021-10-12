@@ -114,12 +114,17 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         def info = req.getPathInfo()
-        if (info != null && info != '/') {
-            Boolean isenabled = enabledMap.get(info)
-            if (null == isenabled && !isenabled) {
-                respondError(resp, HttpServletResponse.SC_NOT_FOUND, 'Not Found')
-                return
-            }
+
+        if (info == null || info == '/') {
+            //disable AdminServlet's builtin html response
+            respondError(resp, HttpServletResponse.SC_NOT_FOUND, 'Not Found')
+            return
+        }
+
+        Boolean isenabled = enabledMap.get(info)
+        if (null == isenabled && !isenabled) {
+            respondError(resp, HttpServletResponse.SC_NOT_FOUND, 'Not Found')
+            return
         }
 
         if (!authorize(req)) {
