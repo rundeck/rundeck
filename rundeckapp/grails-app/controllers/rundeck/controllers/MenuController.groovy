@@ -1186,7 +1186,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
                     [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                 ),
-                AuthConstants.ACTION_READ, 'System configuration'
+                AuthConstants.ACTION_READ, 'Log Storage'
         )) {
             return
         }
@@ -1231,7 +1231,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
                     [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_OPS_ADMIN]
                 ),
-                AuthConstants.ACTION_READ, 'System configuration'
+                AuthConstants.ACTION_READ, 'Log Storage'
         )) {
             return
         }
@@ -2008,7 +2008,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
                     [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
                 ),
-                AuthConstants.ACTION_READ, 'System configuration')) {
+                AuthConstants.ACTION_READ, 'System information')) {
             return
         }
         if(!grailsApplication.config.dataSource.jndiName &&
