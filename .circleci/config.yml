@@ -154,7 +154,7 @@ jobs:
       - setup-environment
       - when:
           condition:
-            - equal: [ main, << pipeline.git.branch >> ]
+            equal: [ main, << pipeline.git.branch >> ]
           steps:
             - run:
                 name: Gather artifacts
