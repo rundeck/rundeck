@@ -65,7 +65,7 @@ commands:
       #       nvm install
       #       nvm use v12.16.3
       - run:
-          name: Install 
+          name: Install packages
           command: |
             sudo apt-get update -qq
             sudo apt-get install -y jq xmlstarlet
@@ -276,11 +276,12 @@ jobs:
           name: Gather artifacts
           command: |
             source .circleci/circle-shim.sh
-            bash scripts/circle-helpers.sh fetch_common_artifacts
-            bash scripts/circle-helpers.sh fetch_common_resources
-            bash scripts/circle-helpers.sh sync_commit_to_s3
+            source scripts/circle-helpers.sh
+            fetch_common_artifacts
+            fetch_common_resources
+            sync_commit_to_s3
             export VCS_URL=https://github.com/rundeck/rundeck.git
-            bash scripts/circle-helpers.sh seal_artifacts
+            seal_artifacts
       - run:
           name: Publish snapshot
           command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
