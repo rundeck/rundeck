@@ -53,17 +53,6 @@ commands:
           path: ~/test-results/junit
   setup-environment:
     steps:
-      # - run:
-      #     name: NVM install
-      #     command: |
-      #       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-      #       echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
-      #       echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
-      # - run:
-      #     name: NVM setup
-      #     command: |
-      #       nvm install
-      #       nvm use v12.16.3
       - run:
           name: Install packages
           command: |
@@ -178,9 +167,10 @@ jobs:
                 name: Docker publish
                 command: |
                   source .circleci/circle-shim.sh
-                  bash scripts/circle-helpers.sh fetch_common_artifacts
-                  bash scripts/circle-helpers.sh fetch_common_resources
-                  DRY_RUN=false bash scripts/circle-build.sh publish_docker
+                  source scripts/circle-helpers.sh
+                  fetch_common_artifacts
+                  fetch_common_resources
+                  publish_docker
 
   test-gradle:
     <<: *defaults
@@ -281,22 +271,6 @@ jobs:
           path: build/owasp-reports
           prefix: owasp-reports
 
-  docker-publish:
-    <<: *defaults
-    docker:
-      - image: circleci/python:3.7-node
-    steps:
-      - checkout
-      - setup-environment
-      - run:
-          name: Docker Publish
-          command: |
-            source .circleci/circle-shim.sh
-            bash scripts/circle-helpers.sh fetch_common_artifacts
-            bash scripts/circle-helpers.sh fetch_common_resources
-            DRY_RUN=false bash scripts/circle-build.sh publish_docker
-
-
   trigger-packaging:
     <<: *defaults
     machine: true
@@ -350,96 +324,84 @@ workflows:
     jobs:
       - build:
           <<: *filter-default
-      # - test-gradle:
-      #     <<: *filter-default
-      #     name: Gradle Test
-      #     requires: [build]
-      # ## Optimistically build snapshot
-      # - trigger-enterprise:
-      #     name: Enterprise Snapshot
-      #     requires: [build]
-      #     filters:
-      #       branches: {only: main}
-      # - test-docker:
-      #     <<: *filter-default
-      #     name: Docker Test
-      #     requires: [build]
-      #     command: bash test/run-docker-tests.sh
-      # - test-docker:
-      #     <<: *filter-default
-      #     name: Tomcat 8 API Test
-      #     requires: [build]
-      #     command: bash test/run-docker-tomcat-tests.sh
-      # - test-docker:
-      #     <<: *filter-default
-      #     name: Tomcat 9 API Test
-      #     requires: [build]
-      #     command: bash test/run-docker-tomcat-tests.sh 9
-      # - test-docker-machine:
-      #     <<: *filter-default
-      #     name: API Test
-      #     requires: [build]
-      #     command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
-      # - test-docker:
-      #     <<: *filter-default
-      #     name: SSL Test
-      #     requires: [build]
-      #     command: bash test/run-docker-ssl-tests.sh
-      # - test-docker:
-      #     <<: *filter-default
-      #     name: Ansible Test
-      #     requires: [build]
-      #     command: bash test/run-docker-ansible-tests.sh
-      # - test-docker:
-      #     <<: *filter-default
-      #     name: Blocklist Test
-      #     requires: [ build ]
-      #     command: bash test/run-docker-plugin-blocklist-test.sh
-      # - test-docker-machine:
-      #     <<: *filter-default
-      #     name: LDAP Test
-      #     requires: [build]
-      #     command: bash test/run-docker-ldap-tests.sh
-      # - test-docker-machine:
-      #     <<: *filter-default
-      #     name: LDAP Bind Test
-      #     requires: [build]
-      #     command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
-      # - test-docker:
-      #     name: PAM Test
-      #     requires: [build]
-      #     command: bash test/run-docker-pam-tests.sh
-      # - test-selenium:
-      #     name: Selenium Test
-      #     requires: [build]
-      # - test-deps:
-      #     name: OWASP Dependency Checks
-      #     requires: [build]
-      #     continue: 'true'
-      # - snapshot-publish:
-      #     name: Publish Snapshots
-      #     #requires: [build]
-      #     filters: 
-      #       branches: {only: travis-migration}
-      #       #tags: {ignore: /.*/}
-      # - docker-publish:
-      #     name: Publish docker
-      #     #requires: [build]
-      #     filters:
-      #       branches: {ignore: /.*/}
-      #       tags: {only: /^v.*$/}
-      # - trigger-packaging:
-      #     name: Trigger packaging-core
-      #     requires: *stage-test
-      #     filters:
-      #       branches: {ignore: /.*/}
-      #       tags: {only: /^v.*$/}
-      # - maven-publish:
-      #     name: Maven Publish
-      #     requires: *stage-test
-      #     filters:
-      #       branches: {ignore: /.*/}
-      #       tags: {only: /^v.*$/}
+      - test-gradle:
+          <<: *filter-default
+          name: Gradle Test
+          requires: [build]
+      ## Optimistically build snapshot
+      - trigger-enterprise:
+          name: Enterprise Snapshot
+          requires: [build]
+          filters:
+            branches: {only: main}
+      - test-docker:
+          <<: *filter-default
+          name: Docker Test
+          requires: [build]
+          command: bash test/run-docker-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Tomcat 8 API Test
+          requires: [build]
+          command: bash test/run-docker-tomcat-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Tomcat 9 API Test
+          requires: [build]
+          command: bash test/run-docker-tomcat-tests.sh 9
+      - test-docker-machine:
+          <<: *filter-default
+          name: API Test
+          requires: [build]
+          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: SSL Test
+          requires: [build]
+          command: bash test/run-docker-ssl-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Ansible Test
+          requires: [build]
+          command: bash test/run-docker-ansible-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Blocklist Test
+          requires: [ build ]
+          command: bash test/run-docker-plugin-blocklist-test.sh
+      - test-docker-machine:
+          <<: *filter-default
+          name: LDAP Test
+          requires: [build]
+          command: bash test/run-docker-ldap-tests.sh
+      - test-docker-machine:
+          <<: *filter-default
+          name: LDAP Bind Test
+          requires: [build]
+          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+      - test-docker:
+          name: PAM Test
+          requires: [build]
+          command: bash test/run-docker-pam-tests.sh
+      - test-selenium:
+          name: Selenium Test
+          requires: [build]
+      - test-deps:
+          name: OWASP Dependency Checks
+          requires: [build]
+          continue: 'true'
+      - trigger-packaging:
+          name: Trigger packaging-core
+          requires: *stage-test
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
+      - maven-publish:
+          name: Maven Publish
+          requires: *stage-test
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
 
   nightly:
     triggers:
