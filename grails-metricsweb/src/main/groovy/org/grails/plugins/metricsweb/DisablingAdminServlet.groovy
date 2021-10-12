@@ -45,6 +45,7 @@ import javax.servlet.http.HttpServletResponse
  *             <li><code>ping</code></li>
  *             <li><code>threads</code></li>
  *             <li><code>healthcheck</code></li>
+ *             <li><code>cpuProfile</code></li>
  *
  *             </ul>
  *             <p>
@@ -79,10 +80,11 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
         }
         def map = new HashMap<String, Boolean>()
 
-        def metricsUri = notNullParam(config.getInitParameter("metrics-uri"), DEFAULT_METRICS_URI);
-        def pingUri = notNullParam(config.getInitParameter("ping-uri"), DEFAULT_PING_URI);
-        def threadsUri = notNullParam(config.getInitParameter("threads-uri"), DEFAULT_THREADS_URI);
-        def healthcheckUri = notNullParam(config.getInitParameter("healthcheck-uri"), DEFAULT_HEALTHCHECK_URI);
+        def metricsUri = notNullParam(config.getInitParameter(METRICS_URI_PARAM_KEY), DEFAULT_METRICS_URI);
+        def pingUri = notNullParam(config.getInitParameter(PING_URI_PARAM_KEY), DEFAULT_PING_URI);
+        def threadsUri = notNullParam(config.getInitParameter(THREADS_URI_PARAM_KEY), DEFAULT_THREADS_URI);
+        def healthcheckUri = notNullParam(config.getInitParameter(HEALTHCHECK_URI_PARAM_KEY), DEFAULT_HEALTHCHECK_URI);
+        def cpuProfileUri = notNullParam(config.getInitParameter(CPU_PROFILE_URI_PARAM_KEY), DEFAULT_CPU_PROFILE_URI);
 
         def apiEnabled = (gapp.config.rundeck?.metrics?.enabled in [true, 'true']) &&
                          (gapp.config.rundeck?.metrics?.api?.enabled in [true, 'true'])
@@ -90,6 +92,7 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
         map[pingUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.ping?.enabled in [true, 'true']
         map[threadsUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.threads?.enabled in [true, 'true']
         map[healthcheckUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.healthcheck?.enabled in [true, 'true']
+        map[cpuProfileUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.cpuProfile?.enabled in [true, 'true']
         this.enabledMap = Collections.unmodifiableMap(map)
     }
 
@@ -123,7 +126,7 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Boolean isenabled = enabledMap.get(req.getPathInfo())
-        if (null != isenabled && !isenabled) {
+        if (null == isenabled && !isenabled) {
             respondError(resp, HttpServletResponse.SC_NOT_FOUND, 'Not Found')
             return
         }
