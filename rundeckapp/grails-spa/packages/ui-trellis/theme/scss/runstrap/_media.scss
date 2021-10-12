@@ -1,0 +1,143 @@
+.media {
+  border-bottom: 1px solid var(--medium-gray);
+  padding-bottom: 30px;
+  margin-top: 30px;
+
+  .avatar{
+      margin: 0 auto;
+      width: 64px;
+      height: 64px;
+      overflow: hidden;
+      border-radius: 50%;
+      margin-right: 15px;
+      border: 3px solid transparent;
+      
+      img{
+          width: 100%;
+      }
+  }
+  .media-heading{
+      margin-bottom: 10px;
+      margin-top: 5px;
+      display: inline-block;
+  }
+  .btn-simple{
+      padding: 0px 5px;
+  }
+  .media{
+      margin-top: 30px;
+  }
+  .media:last-child{
+      border: 0;
+  }
+
+  &:first-child {
+    margin-top: 0;
+  }
+}
+
+.media,
+.media-body {
+  overflow: hidden;
+  zoom: 1;
+}
+
+.media-body {
+  width: 10000px;
+}
+
+.media-object {
+  display: block;
+
+  // Fix collapse in webkit from max-width: 100% and display: table-cell.
+  &.img-thumbnail {
+    max-width: none;
+  }
+}
+
+.media-right,
+.media > .pull-right {
+  padding-left: 10px;
+}
+
+.media-left,
+.media > .pull-left {
+  padding-right: 10px;
+}
+
+.media-left,
+.media-right,
+.media-body {
+  display: table-cell;
+  vertical-align: top;
+}
+
+.media-middle {
+  vertical-align: middle;
+}
+
+.media-bottom {
+  vertical-align: bottom;
+}
+
+// Reset margins on headings for tighter default spacing
+.media-heading {
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
+// Media list variation
+//
+// Undo default ul/ol styles
+.media-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+
+.media-post{
+    color: #555;
+    border: 0;
+    .media-heading{
+        display: block;
+        text-align: center;   
+    }
+    .author{
+        width: 15%;
+    }
+    .media-body{
+        width: 85%;
+        float: left;
+        display: inline-block;
+    }
+    textarea{
+        margin: $margin-bottom;
+        font-size: $font-paragraph;
+    }
+    .avatar{
+        border-color: white;
+    }
+}
+
+
+.media-area{
+    .media:last-child{
+        border: 0;
+    }
+    .pagination-area{
+        padding: 10px 0;
+        text-align: center;
+    }
+}
+.media-area-small{
+    p{
+        font-size: 14px;
+    }
+    .btn-simple{
+        font-size: 14px;
+    }
+    .avatar{
+        width: 58px;
+        height: 58px;
+    }
+}

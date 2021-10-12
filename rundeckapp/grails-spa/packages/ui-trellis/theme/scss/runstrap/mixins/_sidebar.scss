@@ -1,0 +1,68 @@
+@mixin sidebar-background-color($background-color, $font-color) {
+  &:after,
+  &:before {
+    background-color: var($background-color);
+  }
+
+  #style-3 {
+    overflow-y: auto !important;
+    overflow-x: hidden;
+  }
+  #style-3::-webkit-scrollbar-track
+  {
+    -webkit-box-shadow: inset 0 0 6px var(--background-color);
+    background-color: var($background-color);
+  }
+
+  #style-3::-webkit-scrollbar
+  {
+    width: 6px;
+    background-color: var($font-color);
+  }
+
+  #style-3::-webkit-scrollbar-thumb
+  {
+    background-color: var($background-color);
+  }
+
+
+  .logo {
+    // &:before {
+    //   background-color: rgba(var($font-color), .3);
+    // }
+
+
+    p {
+      color: var($font-color);
+    }
+
+    .simple-text {
+      color: var($font-color);
+    }
+  }
+
+  .nav {
+    li:not(.active) {
+      > a {
+        color: var($font-color);
+      }
+    }
+    .divider {
+      background-color: rgba(var($font-color), .2);
+      min-height:1px;
+    }
+
+  }
+
+}
+
+@mixin sidebar-active-color($font-color) {
+  .nav {
+    li {
+      &.active > a {
+        color: var($font-color);
+        opacity: 1;
+      }
+    }
+  }
+}
