@@ -408,7 +408,7 @@ workflows:
       #     continue: 'true'
       - snapshot-publish:
           name: Publish Snapshots
-          requires: [build]
+          #requires: [build]
           filters: 
             branches: {only: travis-migration}
             #tags: {ignore: /.*/}
