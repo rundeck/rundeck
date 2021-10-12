@@ -151,6 +151,21 @@ jobs:
             sync_to_s3
             seal_artifacts
       - save-gradle-cache
+      - setup-environment
+      - run:
+          name: Gather artifacts
+          command: |
+            source .circleci/circle-shim.sh
+            source scripts/circle-helpers.sh
+            fetch_common_artifacts
+            fetch_common_resources
+            sync_commit_to_s3
+            export VCS_URL=https://github.com/rundeck/rundeck.git
+            seal_artifacts
+      - run:
+          name: Publish snapshot
+          command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+
 
   test-gradle:
     <<: *defaults
@@ -338,8 +353,8 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      # - build:
-      #     <<: *filter-default
+      - build:
+          <<: *filter-default
       # - test-gradle:
       #     <<: *filter-default
       #     name: Gradle Test
@@ -406,18 +421,18 @@ workflows:
       #     name: OWASP Dependency Checks
       #     requires: [build]
       #     continue: 'true'
-      - snapshot-publish:
-          name: Publish Snapshots
-          #requires: [build]
-          filters: 
-            branches: {only: travis-migration}
-            #tags: {ignore: /.*/}
-      - docker-publish:
-          name: Publish docker
-          #requires: [build]
-          filters:
-            branches: {ignore: /.*/}
-            tags: {only: /^v.*$/}
+      # - snapshot-publish:
+      #     name: Publish Snapshots
+      #     #requires: [build]
+      #     filters: 
+      #       branches: {only: travis-migration}
+      #       #tags: {ignore: /.*/}
+      # - docker-publish:
+      #     name: Publish docker
+      #     #requires: [build]
+      #     filters:
+      #       branches: {ignore: /.*/}
+      #       tags: {only: /^v.*$/}
       # - trigger-packaging:
       #     name: Trigger packaging-core
       #     requires: *stage-test
