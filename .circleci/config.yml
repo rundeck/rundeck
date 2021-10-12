@@ -170,7 +170,7 @@ jobs:
                   source scripts/circle-helpers.sh
                   fetch_common_artifacts
                   fetch_common_resources
-                  publish_docker
+                  DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
   test-gradle:
     <<: *defaults
