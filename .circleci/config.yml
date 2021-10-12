@@ -53,17 +53,17 @@ commands:
           path: ~/test-results/junit
   setup-environment:
     steps:
-      - run:
-          name: NVM install
-          command: |
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-            echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
-            echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
-      - run:
-          name: NVM setup
-          command: |
-            nvm install
-            nvm use v12.16.3
+      # - run:
+      #     name: NVM install
+      #     command: |
+      #       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+      #       echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
+      #       echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
+      # - run:
+      #     name: NVM setup
+      #     command: |
+      #       nvm install
+      #       nvm use v12.16.3
       - run:
           name: Apt- get and shell change
           command: |
@@ -272,8 +272,7 @@ jobs:
 
   snapshot-publish:
     <<: *defaults
-    docker:
-      - image: circleci/python:3.7-node
+    machine: true
     steps:
       - setup-environment
       - run:
@@ -288,8 +287,8 @@ jobs:
             ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
 
   trigger-packaging:
-    docker:
-      - image: circleci/node:12
+    <<: *defaults
+    machine: true
     resource_class: small
     steps:
       - trigger/trigger:
