@@ -338,8 +338,8 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - build:
-          <<: *filter-default
+      # - build:
+      #     <<: *filter-default
       # - test-gradle:
       #     <<: *filter-default
       #     name: Gradle Test
