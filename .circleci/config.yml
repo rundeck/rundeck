@@ -414,7 +414,7 @@ workflows:
             #tags: {ignore: /.*/}
       - docker-publish:
           name: Publish docker
-          requires: [build]
+          #requires: [build]
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
