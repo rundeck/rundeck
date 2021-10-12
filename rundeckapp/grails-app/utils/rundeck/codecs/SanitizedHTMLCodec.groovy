@@ -66,7 +66,7 @@ class SanitizedHTMLCodec {
             'text')
             .allowAttributes('text-anchor', 'x', 'y','style')
             .onElements('text')
-            .allowAttributes('transform','style')
+            .allowAttributes('transform','style', 'class')
             .onElements('g')
             .allowAttributes('cx','cy','r','class')
             .onElements('circle')
