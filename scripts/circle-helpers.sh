@@ -171,7 +171,7 @@ build_rdtest() {
     docker_login
 
     # Pusheen
-    if [[ "${CI_PULL_REQUEST}" != 'false' && "${CI_BRANCH}" == 'main' ]]; then
+    if [[ "${CI_PULL_REQUEST}" != '' && "${CI_BRANCH}" == 'main' ]]; then
         docker tag rdtest:latest $ECR_REGISTRY/rundeck/rdtest:latest
         docker push $ECR_REGISTRY/rundeck/rdtest:latest
     fi
