@@ -100,18 +100,6 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
         return s == null ? s1 : s
     }
 
-    @Override
-    protected void doGet(final HttpServletRequest req, final HttpServletResponse resp)
-        throws ServletException, IOException {
-
-        if (!authorize(req)) {
-            respondError(resp, HttpServletResponse.SC_UNAUTHORIZED, 'Unauthorized')
-
-            return
-        }
-        super.doGet(req, resp)
-    }
-
     private void respondError(HttpServletResponse resp, int status, String message) {
         resp.setStatus(status)
         resp.setContentType(APPLICATION_JSON)
@@ -125,10 +113,13 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Boolean isenabled = enabledMap.get(req.getPathInfo())
-        if (null == isenabled && !isenabled) {
-            respondError(resp, HttpServletResponse.SC_NOT_FOUND, 'Not Found')
-            return
+        def info = req.getPathInfo()
+        if (info != null && info != '/') {
+            Boolean isenabled = enabledMap.get(info)
+            if (null == isenabled && !isenabled) {
+                respondError(resp, HttpServletResponse.SC_NOT_FOUND, 'Not Found')
+                return
+            }
         }
 
         if (!authorize(req)) {
