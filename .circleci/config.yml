@@ -256,6 +256,7 @@ jobs:
     docker:
       - image: circleci/python:3.7-node
     steps:
+      - checkout
       - setup-environment
       - run:
           name: Docker Publish
@@ -269,6 +270,7 @@ jobs:
     <<: *defaults
     machine: true
     steps:
+      - checkout
       - setup-environment
       - run:
           name: Snapshot Publish
