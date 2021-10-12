@@ -72,11 +72,6 @@ commands:
       - run:
           name: Install aws cli
           command: pip install awscli --upgrade --user
-      - run:
-          name: Publish
-          command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh publish_oss
 
   restore-gradle-cache:
     description: Restore Gradle cache
