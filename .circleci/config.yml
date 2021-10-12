@@ -153,8 +153,8 @@ jobs:
       - save-gradle-cache
       - setup-environment
       - when:
-           condition:
-             matches: { pattern: "^main$", value: <<pipeline.git.branch>> }
+          condition:
+            matches: { pattern: "^main$", value: <<pipeline.git.branch>> }
           steps:
             - run:
                 name: Gather artifacts
@@ -167,8 +167,8 @@ jobs:
                   export VCS_URL=https://github.com/rundeck/rundeck.git
                   seal_artifacts
             - run:
-              name: Publish snapshot
-              command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+                name: Publish snapshot
+                command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
 
 
   test-gradle:
