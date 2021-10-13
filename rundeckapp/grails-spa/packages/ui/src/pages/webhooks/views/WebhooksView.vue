@@ -86,7 +86,7 @@
                 <div class="card" style="padding: 1em;">
                   <div class="form-group">
                     <div class="btn-group">
-                      <button class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
+                      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
                         aria-expanded="false" >
 
                         <plugin-info

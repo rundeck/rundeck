@@ -41,6 +41,7 @@ export const firstRun = () => {
             server
         }),
         mounted() {
+            document.documentElement.dataset.colorTheme = 'dark'
             const el = this.$el as any
             el.parentNode.style.height = '100vh'
             el.parentNode.style.overflow = 'hidden'

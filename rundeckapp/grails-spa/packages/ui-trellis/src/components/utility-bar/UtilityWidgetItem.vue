@@ -1,7 +1,7 @@
 <template>
     <li :id="item.id" class="utility-bar__item" @click="handleClick">
         <i class="utility-bar__item-icon" :class="item.class"/>
-        <span>{{item.label}}</span>
+        <span v-if="item.label">{{item.label}}</span>
         <span v-if="item.count" class="utility-bar__item-counter">{{item.count}}</span>
         <Popper v-if="open" @close="close">
             <div class="card card--popover utility-bar__widget">

@@ -2246,14 +2246,16 @@ setTimeout(function(){
      * @return
      */
     def apiExecutionModeStatus() {
-
         if (!apiService.requireApi(request, response, ApiVersions.V32)) {
             return
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                AuthConstants.ACTION_READ)) {
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_SYSTEM,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+        )) {
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,

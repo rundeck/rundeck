@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
@@ -2433,6 +2434,113 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             assert it[0].projFilter == 'aProject,bProject,cProject'
 
         }
+    }
+
+    @Unroll
+    def "log storage ajax endpoint #endpoint unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            request.addHeader('x-rundeck-ajax','true')
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller."$endpoint"()
+        then:
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
+        where:
+            endpoint << [
+                'logStorageIncompleteAjax',
+                'logStorageMissingAjax',
+                'logStorageAjax',
+            ]
+    }
+    @Unroll
+    def "log storage api endpoint #endpoint unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller."$endpoint"()
+        then:
+            1 * controller.apiService.requireApi(_,_,17)>>true
+            1 * controller.apiService.requireAuthorized(false,_,_)>> {
+                it[1].status=403
+                false
+            }
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
+        where:
+            endpoint << [
+                'apiLogstorageInfo'
+            ]
+    }
+    @Unroll
+    def "log storage api apiLogstorageListIncompleteExecutions unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller.apiLogstorageListIncompleteExecutions(new BaseQuery())
+        then:
+            1 * controller.apiService.requireApi(_,_,17)>>true
+
+            1 * controller.apiService.requireAuthorized(false,_,_)>> {
+                it[1].status=403
+                false
+            }
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
+    }
+    def "systemConfig unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller.systemConfig()
+        then:
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ,
+                 AuthConstants.ACTION_ADMIN,
+                 AuthConstants.ACTION_APP_ADMIN,
+                 AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
+    }
+
+    def "systemInfo unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller.systemInfo()
+        then:
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ,
+                 AuthConstants.ACTION_ADMIN,
+                 AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
     }
 
 }

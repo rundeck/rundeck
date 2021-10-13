@@ -225,7 +225,7 @@
         <div class=" form-group spacing-lg">
             <div class="col-sm-12">
                 <div class="btn-group btn-group-lg">
-                    <button type="button" class="btn btn-simple btn-hover  btn-secondary dropdown-toggle" data-toggle="dropdown"
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false">
 
                         <span class="caret"></span>

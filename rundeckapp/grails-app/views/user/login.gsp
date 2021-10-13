@@ -32,6 +32,7 @@
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
+    <asset:javascript src="static/js/chunk-common.js"/>
     <asset:javascript src="static/js/chunk-vendors.js"/>
     <asset:javascript src="static/pages/login.js"/>
 

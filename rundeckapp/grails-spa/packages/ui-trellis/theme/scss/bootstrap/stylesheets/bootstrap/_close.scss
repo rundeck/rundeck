@@ -8,16 +8,16 @@
   font-size: ($font-size-base * 1.5);
   font-weight: $close-font-weight;
   line-height: 1;
-  color: $close-color;
+  color: (--font-color);
   text-shadow: $close-text-shadow;
-  @include opacity(.2);
+  // @include opacity(.2);
 
   &:hover,
   &:focus {
-    color: $close-color;
+    color: (--font-color);
     text-decoration: none;
     cursor: pointer;
-    @include opacity(.5);
+    @include opacity(.2);
   }
 
   // [converter] extracted button& to button.close

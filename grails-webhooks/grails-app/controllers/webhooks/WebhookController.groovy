@@ -62,7 +62,7 @@ class WebhookController {
         }
 
         UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (!authorized(authContext, webhook.project, ACTION_DELETE)) {
+        if (!authorized(authContext, webhook.project, AuthConstants.ACTION_DELETE)) {
             sendJsonError("You are not authorized to perform this action")
             return
         }
