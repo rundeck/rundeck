@@ -16,7 +16,7 @@ class HealthInterceptorSpec extends Specification implements InterceptorUnitTest
     void "health endpoint toggle"() {
         setup:
         interceptor.configurationService = Mock(ConfigurationService) {
-            getBoolean("feature.healthEndpoint", true) >> toggle
+            getBoolean("feature.healthEndpoint.enabled", true) >> toggle
         }
         when:
         boolean result = interceptor.before()

@@ -6,8 +6,8 @@ class HealthInterceptor {
     def configurationService
 
     boolean before() {
-        if(!configurationService.getBoolean("feature.healthEndpoint",true)) {
-            response.status = 403
+        if(!configurationService.getBoolean("feature.healthEndpoint.enabled",true)) {
+            response.status = 404
             return false
         }
         true
