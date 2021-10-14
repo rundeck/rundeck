@@ -213,6 +213,7 @@ public class AuthResources {
         projResActionsByType.put(AuthConstants.TYPE_JOB, projectJobActions);
         projResActionsByType.put(AuthConstants.TYPE_ADHOC, projectAdhocActions);
         projResActionsByType.put(AuthConstants.TYPE_NODE, projectNodeActions);
+        projResActionsByType.put(AuthConstants.TYPE_STORAGE, storageActions);
     }
 
 
