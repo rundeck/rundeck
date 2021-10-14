@@ -50,6 +50,46 @@ $font-family-base:        $font-family-sans-serif !default;
 
 //== Components
 //
+// - Runstrap Spacing
+
+
+:root {
+  $spacing:(
+    "spacing-0":     0px,
+    "spacing-px":    1px,
+    "spacing-1":     0.25rem,
+    "spacing-2":     0.5rem,
+    "spacing-3":     0.75rem,
+    "spacing-4":     1rem,
+    "spacing-5":     1.25rem,
+    "spacing-6":     1.5rem,
+    "spacing-8":     2rem,
+    "spacing-10":    2.5rem,
+    "spacing-12":    3rem,
+    "spacing-14":    3.5rem,
+    "spacing-16":    4rem,
+    "spacing-20":    5rem,
+    "spacing-24":    6rem,
+    "spacing-28":    7rem,
+    "spacing-32":    8rem,
+    "spacing-36":    9rem,
+    "spacing-40":    10rem,
+    "spacing-48":    12rem,
+    "spacing-52":    13rem,
+    "spacing-56":    14rem,
+    "spacing-60":    15rem,
+    "spacing-64":    16rem,
+    "spacing-72":    18rem,
+    "spacing-80":    20rem,
+    "spacing-96":    24rem,
+  );
+  @each $key_name, $value in $spacing {
+    --#{$key_name}: #{$value};
+  }
+}
+
+//== Components
+// - Bootstrap Native Padding
 
 $padding-default-vertical:     10px !default;
 $padding-default-horizontal:   20px !default;
@@ -163,32 +203,44 @@ $border-radius-icon:		     15px !default;
 //
 //## Define the breakpoints at which your layout will change, adapting to different screen sizes.
 
-// Extra small screen / phone
-//** Deprecated `$screen-xs` as of v3.0.1
-$screen-xs:                  480px !default;
-//** Deprecated `$screen-xs-min` as of v3.2.0
-$screen-xs-min:              $screen-xs !default;
+$screen-none:         100%;
 
-// Small screen / tablet
-//** Deprecated `$screen-sm` as of v3.0.1
-$screen-sm:                      768px !default;
-$screen-sm-min:                  $screen-sm !default;
-//** Deprecated `$screen-tablet` as of v3.0.1
-$screen-tablet:                  $screen-sm-min !default;
+$screen-xs:           640px;
+$screen-xs-min:       $screen-xs;
 
-// Medium screen / desktop
-//** Deprecated `$screen-md` as of v3.0.1
-$screen-md:                  992px !default;
-$screen-md-min:              $screen-md !default;
-//** Deprecated `$screen-desktop` as of v3.0.1
-$screen-desktop:             $screen-md-min !default;
+$screen-sm:           768px;
+$screen-sm-min:       $screen-sm;
+$screen-tablet:       $screen-sm-min;
 
-// Large screen / wide desktop
-//** Deprecated `$screen-lg` as of v3.0.1
-$screen-lg:                  1200px !default;
-$screen-lg-min:              $screen-lg !default;
-//** Deprecated `$screen-lg-desktop` as of v3.0.1
-$screen-lg-desktop:          $screen-lg-min !default;
+$screen-md:           1024px;
+$screen-md-min:       $screen-md;
+$screen-desktop:      $screen-md-min;
+
+$screen-lg:           1280px;
+$screen-lg-min:       $screen-lg;
+$screen-lg-desktop:   $screen-lg-min;
+
+$screen-xl:           1536px;
+$screen-xl-min:       $screen-xl;
+
+$screen-2xl:          1920px;
+$screen-2xl-min:      $screen-2xl;
+
+:root {
+  $screen:(
+    "screen-none":         $screen-none,
+    "screen-xs":           $screen-xs,
+    "screen-sm":           $screen-sm,
+    "screen-md":           $screen-md,
+    "screen-lg":           $screen-lg,
+    "screen-xl":           $screen-xl,
+    "screen-2xl":          $screen-2xl
+  );
+  @each $key_name, $value in $screen {
+    --#{$key_name}: #{$value};
+  }
+}
+
 
 
 
