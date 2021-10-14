@@ -1,0 +1,28 @@
+// *************************************
+//
+//   Page Layouts
+//   -> Pages should exclusivly use one of the templates assigned here
+//   - 1. Title Bar & Body
+//
+// -------------------------------------
+
+// -------------------------------------
+//   Template (Title Bar & Body)
+// -------------------------------------
+
+.layout-base{
+    &--header{
+        background-color: var(--background-color-lvl2);
+        border-bottom:1px solid var(--background-color-lvl3);
+    }
+    &--body{
+        background-color: var(--background-color);
+    }
+    &--content{
+        @extend .rs-container;
+        padding: var(--spacing-12);
+        .card{
+            padding: var(--spacing-12);
+        }
+    }
+}
