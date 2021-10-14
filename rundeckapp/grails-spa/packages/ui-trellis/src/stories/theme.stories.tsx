@@ -318,3 +318,26 @@ export const panels = () => (Vue.extend({
     }
 
 }))
+
+export const layouts = () => (Vue.extend({
+    render(h) {
+        return (
+            <section class="layout-base">
+                <div class="layout-base--header">
+                    <div class="layout-base--content">
+                        <h1>Runners</h1>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam faucibus auctor nunc, vel rhoncus nulla consectetur et. Aliquam ac laoreet turpis, eu pharetra mauris. Suspendisse imperdiet feugiat elementum.</p>
+                    </div>
+                </div>
+                <div class="layout-base--body">
+                    <div class="layout-base--content">
+                        <div class="card">
+                            Sample
+                        </div>
+                    </div>
+                </div>
+            </section>
+        )
+    }
+
+}))

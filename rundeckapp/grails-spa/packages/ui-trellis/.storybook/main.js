@@ -1,5 +1,6 @@
 const Util = require('util')
 const webpack = require('webpack')
+const path = require('path');
 
 module.exports = {
     addons: [
@@ -14,7 +15,17 @@ module.exports = {
                 }
             }
         },
-        '@storybook/addon-knobs'
+        {
+            name: '@storybook/addon-docs',
+            options: {
+                vueDocgenOptions: {
+                    alias: {
+                        '@': path.resolve(__dirname, '../'),
+                    },
+                },
+            },
+        },
+        '@storybook/addon-knobs',
     ],
     stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
 
