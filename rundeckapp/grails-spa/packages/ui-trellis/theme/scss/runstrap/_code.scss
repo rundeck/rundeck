@@ -67,3 +67,7 @@ pre {
   max-height: $pre-scrollable-max-height;
   overflow-y: scroll;
 }
+
+.markdown-body img{
+  background-color: transparent !important;
+}
