@@ -225,7 +225,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         incset.removeAll(['name'])
         def excset = filter.exclude.keySet()
         excset.removeAll(['name'])
-        return new ArrayList(incset + excset)
+        return new ArrayList()
     }
 
     def adhoc(ExtNodeFilters query) {
