@@ -21,6 +21,31 @@
   }
 }
 
+.rs-container {
+  margin: 0 auto;
+  width: var(--screen-none);
+  @media (min-width: $screen-xs) {
+    max-width: var(--screen-xs);
+  }
+  @media (min-width: $screen-sm) {
+    max-width: var(--screen-sm);
+  }
+
+  @media (min-width: $screen-md) {
+    max-width: var(--screen-md);
+  }
+
+  @media (min-width: $screen-lg) {
+    max-width: var(--screen-lg);
+  }
+
+  @media (min-width: $screen-xl) {
+    max-width: var(--screen-xl);
+  }
+  @media (min-width: $screen-2xl) {
+    max-width: var(--screen-2xl);
+  }
+}
 
 // Fluid container
 //
