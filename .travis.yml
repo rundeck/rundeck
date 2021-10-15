@@ -43,6 +43,7 @@ before_script:
 - export -f travis_fold
 - export -f travis_time_start
 - export -f travis_time_finish
+- docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 
 jobs:
   include:
