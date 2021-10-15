@@ -26,6 +26,8 @@ module.exports = {
             },
         },
         '@storybook/addon-knobs',
+        'storybook-dark-mode',
+        '@storybook/addon-backgrounds'
     ],
     stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
 
