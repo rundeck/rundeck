@@ -137,6 +137,37 @@ $border-radius-large-bottom:   0 0 $border-radius-large $border-radius-large !de
 
 $btn-round-radius:             30px !default;
 
+:root {
+  $text-size:(
+    "text-xs":           0.75rem,  //H6
+    "text-sm":           0.875rem, //H5
+    "text-md":           1rem,     // Base, p
+    "text-lg":           1.125rem, //H4
+    "text-xl":           1.25rem,  //H3
+    "text-2xl":          1.5rem,   //H2
+    "text-3xl":          1.875rem, //H1
+    "text-4xl":          2.25rem,
+  );
+  @each $key_name, $value in $text-size {
+    --#{$key_name}: #{$value};
+  }
+}
+
+:root {
+  $line-height:(
+    "text-xs":           1rem,      //H6
+    "text-sm":           1.25rem,   //H5
+    "text-md":           1.5rem,    //Base, p
+    "text-lg":           1.75rem,   //H4
+    "text-xl":           1.75rem,   //H3
+    "text-2xl":          2rem,      //H2
+    "text-3xl":          2.25rem,   // H1
+    "text-4xl":          2.5rem,
+  );
+  @each $key_name, $value in $line-height {
+    --#{$key_name}: #{$value};
+  }
+}
 
 $font-size-h1:                 3.2em   !default;
 $font-size-h2:                 2.6em     !default;
@@ -277,7 +308,11 @@ $line-height-base:        1.428571429 !default; // 20/14
 $line-height-computed:    floor(($font-size-base * $line-height-base)) !default; // ~20px
 
 //** By default, this inherits from the `<body>`.
-$headings-font-family:    inherit !default;
+$headings-font-family:    'Jost','Muli', "Helvetica", Arial, sans-serif;
+:root{
+    --headings-font-family: $headings-font-family;
+}
+
 $headings-font-weight:    500 !default;
 $headings-line-height:    1.1 !default;
 $headings-color:          inherit !default;
