@@ -1,5 +1,50 @@
+// *************************************
 //
-// Utility classes
+//   Utilities
+//   -> Re-usable CSS classes
+//   - 1. Flex
+//   * (-Legacy Bootstrap 3)
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Flex
+// -------------------------------------
+
+.flex{
+    display: flex;
+}
+.flex--justify-start {
+    justify-content: flex-start;
+}
+.flex--justify-center {
+    justify-content: center;
+}
+.flex--justify-between {
+    justify-content: space-between;
+}
+.flex--items-center{
+    align-items: center;
+}
+
+.flex--grow{
+  flex-grow: 1;
+}
+.flex--none{
+  flex: none;
+}
+.container--flex{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  @media (min-width: $screen-md) {
+    flex-direction: row;
+  }
+}
+
+
+//
+// Utility classes (-Legacy Bootstrap 3)
 // --------------------------------------------------
 
 
@@ -63,6 +108,9 @@
 }
 .justify-center {
     justify-content: center;
+}
+.justify-between {
+    justify-content: space-between;
 }
 .items-center{
     align-items: center;
