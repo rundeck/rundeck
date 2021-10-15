@@ -21,7 +21,7 @@
 
 <g:if test="${pluginConfig && pluginConfig.type && enabled && configuredPlugin && enabled}">
 %{--Disable plugin modal--}%
-    <g:form useToken="true">
+    <g:form class="modal-container" useToken="true">
         <div class="modal fade" id="disablePlugin${integration}" role="dialog" aria-labelledby="disablePlugin${integration}ModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
@@ -74,7 +74,7 @@
 </g:if>
 <g:if test="${pluginConfig && pluginConfig.type && !enabled && configuredPlugin}">
 %{--Enable plugin modal--}%
-    <g:form useToken="true">
+    <g:form class="modal-container" useToken="true">
         <div class="modal fade" id="enablePlugin${integration}" role="dialog" aria-labelledby="enablePlugin${integration}ModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
@@ -125,7 +125,7 @@
         </div><!-- /.modal -->
     </g:form>
 
-<g:form useToken="true">
+<g:form class="modal-container" useToken="true">
     <div class="modal fade" id="cleanPlugin${integration}" role="dialog" aria-labelledby="cleanPlugin${integration}ModalLabel"
          aria-hidden="true">
         <div class="modal-dialog">
@@ -161,7 +161,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <span class="text-danger"><g:message code="plugin.disable.confirm.text"/></span>
+                    <span class="text-danger"><g:message code="plugin.clean.confirm.text"/></span>
                 </div>
 
                 <div class="modal-footer">
@@ -175,7 +175,7 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 </g:form>
-    <g:form useToken="true">
+    <g:form class="modal-container" useToken="true">
         <div class="modal fade" id="deletePlugin${integration}" role="dialog" aria-labelledby="deletePlugin${integration}ModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
