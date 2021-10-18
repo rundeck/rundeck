@@ -21,6 +21,7 @@
         justify-content: flex-start;
         .breadcrumb-bar--nav_item{
             font-family: var(--headings-font-family);
+            font-size: var(--text-sm);
             &:first-child{
                 font-weight: 800;
             }

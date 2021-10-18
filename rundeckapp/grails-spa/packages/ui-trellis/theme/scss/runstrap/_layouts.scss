@@ -2,12 +2,13 @@
 //
 //   Page Layouts
 //   -> Pages should exclusivly use one of the templates assigned here
-//   - 1. Title Bar & Body
+//   - 1. Base Layout
+//   - 2. Sidebar Layout
 //
 // -------------------------------------
 
 // -------------------------------------
-//   Template (Title Bar & Body)
+//   1. Base
 // -------------------------------------
 
 .layout-base{
@@ -37,3 +38,55 @@
     }
 }
 
+// -------------------------------------
+//   2. Sidebar
+// -------------------------------------
+
+.layout-sidebar{
+    display: flex;
+    position: relative;
+    justify-content: flex-end;
+    aside{
+        position: fixed;
+        height: 100vh;
+        width: 300px;
+        top:0;
+        left:0;
+        background-color: var(--background-color-lvl2);
+        border-right:1.5px solid var(--background-color-lvl3);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        .layout-sidebar--sidebar-header, .layout-sidebar--sidebar-footer{
+            padding: var(--spacing-6);
+            background-color: var(--background-color);
+            flex: none;
+            h1{
+                font-size: var(--text-3xl);
+                margin: 0;
+            }
+        }
+        .layout-sidebar--sidebar-header{
+            border-bottom: 1.5px solid var(--background-color-lvl3);
+        }
+        .layout-sidebar--sidebar-footer{
+            border-top: 1.5px solid var(--background-color-lvl3);
+        }
+        .layout-sidebar--sidebar-body{
+            padding: var(--spacing-6);
+            flex-grow: 1;
+            overflow-y: scroll;
+            background-color: var(--background-color-lvl2);
+        }
+    }
+    main{
+        padding: var(--spacing-12);
+        width: calc(100% - 300px);
+    }
+}
+
+
+
+    
+
+    
