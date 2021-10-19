@@ -1,5 +1,29 @@
 @import '../custom/text';
 
+// *************************************
+//
+//   Typography
+//   -> Text Styles
+//   - 1. Code
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Code
+// -------------------------------------
+
+.code-inline--danger {
+  font-family: Courier, monospace;
+  background-color: var(--blue-100);
+  color: var(--red-500);
+  border-radius: 4px;
+  padding: 0 var(--spacing-2);
+}
+
+//
+// Typography (-Legacy Bootstrap 3)
+// --------------------------------------------------
+
 h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6, p, .navbar, .brand, a, .td-name, td {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;

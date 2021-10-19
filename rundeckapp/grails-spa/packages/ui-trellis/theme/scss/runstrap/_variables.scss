@@ -139,14 +139,14 @@ $btn-round-radius:             30px !default;
 
 :root {
   $text-size:(
-    "text-xs":           0.75rem,  //H6
-    "text-sm":           0.875rem, //H5
-    "text-md":           1rem,     // Base, p
-    "text-lg":           1.125rem, //H4
-    "text-xl":           1.25rem,  //H3
-    "text-2xl":          1.5rem,   //H2
-    "text-3xl":          1.875rem, //H1
-    "text-4xl":          2.25rem,
+    "text-xs":           0.75em,  //H6
+    "text-sm":           0.875em, //H5
+    "text-md":           1em,     // Base, p
+    "text-lg":           1.25em, //H4
+    "text-xl":           1.5em,  //H3
+    "text-2xl":          1.875em,   //H2
+    "text-3xl":          2.25em, //H1
+    "text-4xl":          3em,
   );
   @each $key_name, $value in $text-size {
     --#{$key_name}: #{$value};
@@ -155,14 +155,14 @@ $btn-round-radius:             30px !default;
 
 :root {
   $line-height:(
-    "text-xs":           1rem,      //H6
-    "text-sm":           1.25rem,   //H5
-    "text-md":           1.5rem,    //Base, p
-    "text-lg":           1.75rem,   //H4
-    "text-xl":           1.75rem,   //H3
-    "text-2xl":          2rem,      //H2
-    "text-3xl":          2.25rem,   // H1
-    "text-4xl":          2.5rem,
+    "line-height-xs":           1em,      //H6
+    "line-height-sm":           1.25em,   //H5
+    "line-height-md":           1.5em,    //Base, p
+    "line-height-lg":           1.75em,   //H4
+    "line-height-xl":           1.75em,   //H3
+    "line-height-2xl":          2em,      //H2
+    "line-height-3xl":          2.25em,   // H1
+    "line-height-4xl":          2.5em,
   );
   @each $key_name, $value in $line-height {
     --#{$key_name}: #{$value};
@@ -271,9 +271,6 @@ $screen-2xl-min:      $screen-2xl;
     --#{$key_name}: #{$value};
   }
 }
-
-
-
 
 // So media queries don't overlap when required, provide a maximum
 $screen-xs-max:              ($screen-sm-min - 1) !default;

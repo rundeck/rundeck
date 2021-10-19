@@ -4,6 +4,7 @@
 //   -> Pages should exclusivly use one of the templates assigned here
 //   - 1. Base Layout
 //   - 2. Sidebar Layout
+//   - 3. Wizard Layout
 //
 // -------------------------------------
 
@@ -46,6 +47,7 @@
     display: flex;
     position: relative;
     justify-content: flex-end;
+    position: relative;
     aside{
         position: fixed;
         height: 100vh;
@@ -62,7 +64,7 @@
             background-color: var(--background-color);
             flex: none;
             h1{
-                font-size: var(--text-3xl);
+                font-size: var(--text-2xl);
                 margin: 0;
             }
         }
@@ -90,5 +92,40 @@
 }
 
     
+// -------------------------------------
+//   3. Wizard
+// -------------------------------------
 
-    
+.layout-wizard{
+    @extend .card;
+    margin: 0 auto;
+    max-width: var(--screen-sm);
+    background-color: var(--background-color);
+    margin-top: var(--spacing-12);
+    .layout-wizard--progress-steps{
+        padding: var(--spacing-6) var(--spacing-12);
+        border-bottom:1px solid var(--background-color-lvl3);
+    }
+    .layout-wizard--header, .layout-wizard--footer{
+        padding: var(--spacing-12);
+        h1{
+            font-size: var(--text-3xl);
+            line-height: var(--line-height-2xl);
+        }
+        h1, h2, h3, h4{
+            margin: 0;
+        }
+    }
+    .layout-wizard--body{
+        padding: var(--spacing-12);
+        border-top:1px solid var(--background-color-lvl3);
+        border-bottom:1px solid var(--background-color-lvl3);
+    }
+    .layout-wizard--footer{
+        display: flex;
+        justify-content: flex-end;
+        .btn:not(:last-child){
+            margin-right: var(--spacing-4);
+        }
+    }
+}

@@ -1,5 +1,32 @@
+
+// *************************************
 //
-// Badges
+//   Badges
+//   -> Pages should exclusivly use one of the templates assigned here
+//   - 1. Base Layout
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Badge Required
+// -------------------------------------
+.badge--required{
+  &:after{
+    content: 'Required';
+    display: inline;
+    font-size: var(--text-xs);
+    background-color: var(--danger-color);
+    padding: var(--spacing-px) var(--spacing-3);
+    color: var(--white);
+    vertical-align: bottom;
+    border-radius: 1em;
+    font-style: normal;
+    font-weight: 600;
+  }
+}
+
+//
+// Badges (-Legacy Bootstrap 3)
 // --------------------------------------------------
 
 
