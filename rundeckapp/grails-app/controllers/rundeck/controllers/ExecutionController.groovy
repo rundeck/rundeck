@@ -1910,6 +1910,47 @@ setTimeout(function(){
     }
 
     /**
+     * API: /api/execution/{id}/workflow , version 40
+     */
+    def apiExecutionWorkflow(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        Execution e = Execution.get(params.id)
+        def wf = e.workflow
+
+        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
+            return
+        }
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
+        if(!apiService.requireAuthorized(
+                rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext,e,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
+                response,
+                [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[])){
+            return
+        }
+
+        def maxDepth=3
+
+        def readAuth = rundeckAuthContextProcessor.authorizeProjectExecutionAny(
+                authContext,
+                e,
+                [AuthConstants.ACTION_READ],
+        )
+
+        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(e.project,wf,readAuth,maxDepth)
+
+        render([
+            "id": wf.id,
+            "commands": wfdata,
+            "strategy": wf.strategy,
+            "keepGoing": wf.keepgoing,
+            "threadCount": wf.threadcount,
+            "pluginConfig": wf.pluginConfigMap
+        ] as JSON)
+    }
+
+    /**
      * API: /api/execution/{id}/abort, version 1
      */
     def apiExecutionAbort(){
