@@ -22,6 +22,11 @@ repositories {
     maven { url "https://repo.grails.org/grails/core" }
 }
 
+java{
+     sourceCompatibility = JavaVersion.VERSION_1_8
+     targetCompatibility = JavaVersion.VERSION_1_8
+ }
+
 configurations {
     developmentOnly
     runtimeClasspath {
