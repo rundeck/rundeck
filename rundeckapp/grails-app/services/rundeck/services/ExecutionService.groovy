@@ -621,12 +621,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     def public finishQueueQuery(query,params,model){
-
-       if(!params.max){
-           params.max=20
+       if(!query.max){
+           query.max = configurationService.getInteger('pagination.default.max', 20)
        }
-       if(!params.offset){
-           params.offset=0
+       if(!query.offset){
+           query.offset=0
        }
 
        def paginateParams=[:]

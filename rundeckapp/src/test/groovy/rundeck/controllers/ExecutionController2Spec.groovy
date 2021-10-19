@@ -327,6 +327,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             return true
         }
         controller.apiService = svcMock
+        controller.configurationService=Mock(ConfigurationService){
+            _ * getInteger(_, _) >> { it[1] }
+        }
         when:
         controller.apiExecutionsQueryv14(new ExecutionQuery())
 
@@ -452,6 +455,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             return true
         }
         controller.apiService = svcMock
+        controller.configurationService=Mock(ConfigurationService){
+            _ * getInteger(_, _) >> { it[1] }
+        }
         when:
         controller.apiExecutionsQueryv14(new ExecutionQuery())
 
