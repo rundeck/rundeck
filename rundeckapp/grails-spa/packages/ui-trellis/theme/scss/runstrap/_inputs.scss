@@ -1,3 +1,51 @@
+// *************************************
+//
+//   Inputs
+//   -> Form Inputs and Control
+//   - 1. Text Inputs
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Text Inputs
+// -------------------------------------
+//  Must be used in a card or higher contrast background color
+// -------------------------------------
+
+.input-text--horizontal{
+    padding: var(--spacing-4);
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
+    &:not(:last-child){
+        border-bottom:1px solid var(--background-color-lvl3);
+    }
+    label{
+        padding: 0;
+        font-size: var(--text-lg);
+        text-transform: capitalize;
+    }
+    @media (min-width: $screen-sm) {
+        grid-template-columns: repeat(5,minmax(0,1fr));
+    }
+    
+    // potential move to utilities
+    .col-span-3{
+        grid-column: span 3 / span 3;
+    }
+    .col-span-2{
+        grid-column: span 2 / span 2;
+    }
+    .flex-v-center{
+        display: flex;
+        align-items: center;
+    }
+}
+
+//
+// Breadcrumbs (-Legacy Bootstrap 3)
+// --------------------------------------------------
+
 .form-control::-moz-placeholder{
    @include input-placeholder(var(--medium-gray),1);
 }
