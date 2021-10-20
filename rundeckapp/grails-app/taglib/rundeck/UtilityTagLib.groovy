@@ -23,6 +23,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.gui.AuthMenuItem
 import org.grails.web.gsp.io.GrailsConventionGroovyPageLocator
+import org.rundeck.app.gui.GroupedMenuItem
 import org.rundeck.app.gui.MenuItem
 import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -1912,6 +1913,7 @@ ansi-bg-default'''))
     def forMenuItems = { attrs, body ->
         String type = attrs.type
         String var = attrs.var
+        String groupvar = attrs.groupvar
         String project = attrs.project
         def menuType = MenuItem.MenuType.valueOf(type.toUpperCase())
         if (menuType.projectType && !project) {
@@ -1927,14 +1929,37 @@ ansi-bg-default'''))
         ) : null
 
         def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
+        Set<String> groups=new HashSet<>()
         applicationContext.getBeansOfType(MenuItem).
                 findAll { it.value.type == menuType }.
                 findAll { checkEnabled.apply(it.value) }.
                 sort {a, b->
-                    a.value.priority <=> b.value.priority
+                    String ga = GroupedMenuItem.groupId(a.value)
+                    String gb = GroupedMenuItem.groupId(b.value)
+                    if(ga == gb){
+                        return a.value.priority <=> b.value.priority
+                    } else if (ga && !gb) {
+                        return 1
+                    } else if (!ga && gb) {
+                        return -1
+                    }else{
+                        return ga <=> gb
+                    }
                 }.
                 each { name, MenuItem item ->
-                    out << body((var): item)
+                    Map data=[(var): item]
+                    String group = GroupedMenuItem.groupId(item)
+                    if (groupvar && group && !groups.contains(group)) {
+                        groups << group
+                        data << [
+                            (groupvar): [
+                                id   : group,
+                                title: GroupedMenuItem.groupTitle(item),
+                                titleCode : GroupedMenuItem.groupTitleCode(item)
+                            ]
+                        ]
+                    }
+                    out << body(data)
                 }
     }
 
