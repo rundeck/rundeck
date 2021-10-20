@@ -27,7 +27,6 @@
   "dependencies": {
     "@popperjs/core": "^2.8.4",
     "@storybook/addon-backgrounds": "^6.2.9",
-    "@storybook/addon-docs": "^6.2.9",
     "@storybook/addon-knobs": "^6.2.9",
     "@storybook/preset-typescript": "^3.0.0",
     "@storybook/vue": "^6.2.9",
