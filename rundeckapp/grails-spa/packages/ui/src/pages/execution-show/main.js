@@ -3,15 +3,15 @@
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 
+import { getRundeckContext } from '@rundeck/ui-trellis/lib'
 import LogViewer from '@rundeck/ui-trellis/lib/components/execution-log/logViewer.vue'
-import {RootStore} from '@rundeck/ui-trellis/lib/stores/RootStore'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 
 import './nodeView'
 
 const VIEWER_CLASS = 'execution-log-viewer'
 
-const rootStore = new RootStore(window._rundeck.rundeckClient)
+const rootStore = getRundeckContext().rootStore
 
 let MOUNTED = false
 

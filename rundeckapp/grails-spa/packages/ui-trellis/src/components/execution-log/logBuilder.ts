@@ -3,7 +3,7 @@ import Vue from 'vue'
 import EntryFlex from './logEntryFlex.vue'
 import {IRenderedEntry} from '../../utilities/ExecutionLogConsumer'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
-import { observe, IObservableArray, autorun } from 'mobx'
+import { IObservableArray, autorun } from 'mobx'
 
 interface IBuilderOpts {
   node?: string,
@@ -78,7 +78,7 @@ export class LogBuilder {
   }
 
   observeOutput(entries: IObservableArray<ExecutionOutputEntry>) {
-    observe(entries, change => {
+    entries.observe(change => {
       if (change.type == 'splice' && change.addedCount > 0) {
         this.addLines(change.added)
       }
