@@ -15,16 +15,16 @@ module.exports = {
                 }
             }
         },
-        {
-            name: '@storybook/addon-docs',
-            options: {
-                vueDocgenOptions: {
-                    alias: {
-                        '@': path.resolve(__dirname, '../'),
-                    },
-                },
-            },
-        },
+        // {
+        //     name: '@storybook/addon-docs',
+        //     options: {
+        //         vueDocgenOptions: {
+        //             alias: {
+        //                 '@': path.resolve(__dirname, '../'),
+        //             },
+        //         },
+        //     },
+        // },
         '@storybook/addon-knobs',
         'storybook-dark-mode',
         '@storybook/addon-backgrounds'
