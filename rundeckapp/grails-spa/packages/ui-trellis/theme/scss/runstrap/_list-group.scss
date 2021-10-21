@@ -1,5 +1,28 @@
+// *************************************
 //
-// List groups
+//   List Groups
+//   -> List Item Groupings
+//   - 1. Horizontal
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Horizontal
+// -------------------------------------
+.list-horizontal{
+  .list-horizontal--item{
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-4);
+  }
+  .list-horizontal--item:not(:last-child){
+    border-bottom:1px solid var(--background-color-lvl3);
+  }
+}
+
+
+//
+// List Groups (-Legacy Bootstrap 3)
 // --------------------------------------------------
 
 

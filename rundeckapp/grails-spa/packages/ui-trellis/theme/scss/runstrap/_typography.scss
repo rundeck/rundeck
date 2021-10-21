@@ -227,3 +227,13 @@ a.text-danger:hover, .text-danger:focus {
   font-weight: 200 900;
   font-style: italic;
 }
+
+.download-text {
+  color: var(--primary-color);
+  font-size: 2rem;
+  text-decoration: underline;
+}
+
+.clickable{
+  cursor: pointer;
+}
