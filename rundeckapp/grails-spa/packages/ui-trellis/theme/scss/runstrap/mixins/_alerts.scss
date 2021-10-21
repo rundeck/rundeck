@@ -1,0 +1,12 @@
+// Alerts
+
+@mixin alert-variant($background, $border, $text-color) {
+  color: var($text-color);
+  background-color: var($background);
+  border-color: var($border);
+}
+
+@mixin alert-style($background-color, $color){
+    background-color: var($background-color);
+    color: var($color);
+}

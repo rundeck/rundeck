@@ -170,7 +170,7 @@
                         </g:if>
                     </div>
                 </div>
-                <div class="col-sm-4">
+                <div class="col-sm-4 form-group">
                     <g:set var="propSelectValues" value="${cronModelValues.collect {k, v ->
                         [key: k, value: (cronModelValues[k] ?: it)]
                     }}"/>
@@ -178,7 +178,7 @@
                               optionKey="key" optionValue="value"
                               noSelection="['':'-choose an example-']"
                               onchange="if(this.value){\$('cronTextField').value=this.value;}"
-                              class="${formControlType}"
+                              class="${formControlType} form-control"
                     />
                 </div>
                 <div class="col-sm-4">
