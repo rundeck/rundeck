@@ -3,10 +3,15 @@ import { autorun, observable } from "mobx";
 import {RundeckClient} from '@rundeck/client'
 import {RootStore} from './RootStore'
 
-enum Theme {
+export enum Theme {
     system = "system",
     dark = "dark",
     light = "light"
+}
+
+export enum PrefersColorScheme {
+    dark = 'dark',
+    light = 'light'
 }
 
 interface UserPreferences {
@@ -18,15 +23,15 @@ const THEME_USER_PREFERENCES_KEY = 'theme-user-preferences'
 export class ThemeStore {
     @observable userPreferences: UserPreferences = {theme: Theme.system}
     @observable theme!: Theme
+    @observable prefersColorScheme!: PrefersColorScheme 
 
     themeMediaQuery: MediaQueryList
 
     constructor() {
         this.loadConfig()
-        this.setTheme(this.userPreferences.theme || Theme.system)
+        this.setTheme()
 
         this.themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-        console.log(this.themeMediaQuery)
         this.handleSystemChange(this.themeMediaQuery)
 
         // Safari <14
@@ -34,29 +39,31 @@ export class ThemeStore {
             this.themeMediaQuery.addListener(this.handleSystemChange)
         else
             this.themeMediaQuery.addEventListener('change', this.handleSystemChange)
+
     }
 
     setUserTheme(theme: Theme) {
         this.userPreferences.theme = theme
-        if (theme == Theme.system)
-            this.handleSystemChange(this.themeMediaQuery)
-        else
-            this.setTheme(theme)
-
+        this.setTheme()
         this.saveConfig()
     }
 
-    setTheme(theme: Theme) {
-        this.theme = theme
-        document.documentElement.dataset.colorTheme = theme
+    setTheme() {
+        if (this.userPreferences.theme == Theme.system)
+            this.theme = Theme[this.prefersColorScheme]
+        else
+            this.theme = this.userPreferences.theme!
+
+        document.documentElement.dataset.colorTheme = this.theme
     }
 
     handleSystemChange = (e: MediaQueryListEvent | MediaQueryList) => {
-        if (this.userPreferences.theme == Theme.system)
-            if (e.matches)
-                this.setTheme(Theme.dark)
-            else
-                this.setTheme(Theme.light)
+        if (e.matches)
+            this.prefersColorScheme = PrefersColorScheme.dark
+        else
+            this.prefersColorScheme = PrefersColorScheme.light
+
+        this.setTheme()
     }
 
     loadConfig() {
