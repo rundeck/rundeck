@@ -921,15 +921,15 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             }
             controller.frameworkService=Mock(FrameworkService) {
             }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
-                1 * getAuthContextForSubject(_)
-
-                1 * authorizeApplicationResourceAny(
-                    _,
-                    AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants
-                        .ACTION_OPS_ADMIN]
-                ) >> false
+            session.subject=new Subject()
+            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+                1 * system(_)>>Mock(AuthorizingSystem){
+                    1 * getReadOrAdmin() >>  Mock(Accessor) {
+                        getResource() >> {
+                            throw new UnauthorizedAccess('read','system','resource')
+                        }
+                    }
+                }
             }
         when:
             // Call controller
@@ -937,9 +937,6 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
 
 
         then:
-            1 * controller.apiService.renderErrorFormat(_,_)>>{
-                it[0].status=it[1].status
-            }
             // Check respose.
             403 == response.status
     }
@@ -969,7 +966,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject=new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * system(_)>>Mock(AuthorizingSystem){
-                1 * getRead() >>  Mock(Accessor) {
+                1 * getReadOrAdmin() >>  Mock(Accessor) {
                     getResource() >> Singleton.ONLY
                 }
             }
@@ -1014,7 +1011,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             session.subject=new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
                 1 * system(_)>>Mock(AuthorizingSystem){
-                    1 * getRead() >>  Mock(Accessor) {
+                    1 * getReadOrAdmin() >>  Mock(Accessor) {
                         getResource() >> Singleton.ONLY
                     }
                 }

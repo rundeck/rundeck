@@ -2110,7 +2110,7 @@ setTimeout(function(){
             return
         }
 
-        authorizingSystem.read.resource
+        authorizingSystem.readOrAdmin.resource
 
         def executionStatus = configurationService.executionModeActive
         int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE

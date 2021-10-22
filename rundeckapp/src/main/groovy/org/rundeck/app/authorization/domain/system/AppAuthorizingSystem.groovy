@@ -32,12 +32,21 @@ class AppAuthorizingSystem extends BaseSingletonAuthorizingResource implements A
             [AuthConstants.ACTION_DISABLE_EXECUTIONS],
             AccessLevels.OPS_ADMIN
         )
+    public static final AuthActions READ_OR_ADMIN =
+        AccessLevels.any(
+            [AuthConstants.ACTION_READ],
+            AccessLevels.ALL_ADMIN
+        )
 
     AppAuthorizingSystem(
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject
     ) {
         super(rundeckAuthContextProcessor, subject)
+    }
+
+    Accessor<Singleton> getReadOrAdmin() {
+        return access(READ_OR_ADMIN)
     }
 
     Accessor<Singleton> getConfigure() {

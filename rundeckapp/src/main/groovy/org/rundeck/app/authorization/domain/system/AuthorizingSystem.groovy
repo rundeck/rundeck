@@ -7,6 +7,12 @@ import org.rundeck.core.auth.access.Singleton
 @CompileStatic
 interface AuthorizingSystem extends AuthorizingResource<Singleton> {
 
+    /**
+     *
+     * @return access via READ or ADMIN, OPS_ADMIN or APP_ADMIN
+     */
+    Accessor<Singleton> getReadOrAdmin()
+
     Accessor<Singleton> getConfigure()
 
     Accessor<Singleton> getOpsEnableExecution()
