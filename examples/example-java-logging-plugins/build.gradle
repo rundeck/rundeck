@@ -34,8 +34,8 @@ task wrapper(type: Wrapper) {
 
 
 
-apply plugin: 'maven'
-task createPom << {
+// apply plugin: 'maven'
+/* task createPom << {
     pom {
         project {
             artifactId 'rundeck-example-streaming-log-plugin'
@@ -78,4 +78,4 @@ task createPom << {
             }
         }
     }.writeTo("pom.xml")
-}
+} */

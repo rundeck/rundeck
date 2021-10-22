@@ -54,8 +54,8 @@ jar {
 //set jar task to depend on copyToLib
 jar.dependsOn(copyToLib)
 
-apply plugin: 'maven'
-task('createPom').doLast {
+// apply plugin: 'maven'
+/* task('createPom').doLast {
     pom {
         project {
             artifactId 'rundeck-object-store-plugin'
@@ -101,3 +101,4 @@ task('createPom').doLast {
         }
     }.writeTo("pom.xml")
 }
+ */
