@@ -26,21 +26,17 @@ import java.util.concurrent.TimeUnit
 class ConfigurationService implements InitializingBean {
     static transactional = false
     def grailsApplication
-    private org.grails.config.NavigableMap appCfg = new org.grails.config.NavigableMap()
+    private def appCfg
 
     boolean isExecutionModeActive() {
-        getAppConfig()?.executionMode == 'active'
+        grailsApplication.config.getProperty("executionMode", String.class) == 'active'
     }
 
-    public org.grails.config.NavigableMap getAppConfig() {
-        return appCfg
+    public def getAppConfig() {
+        return grailsApplication.config.rundeck
     }
 
-    public void setAppConfig(org.grails.config.NavigableMap configMap) {
-        this.appCfg = configMap
-    }
-
-    public org.grails.config.NavigableMap getConfig(String path){
+    public def getConfig(String path){
         return getValue(path);
     }
 
@@ -125,8 +121,8 @@ class ConfigurationService implements InitializingBean {
      * @return
      */
     Object getValue(String property, Object defval = null) {
-        def val = getValueFromRoot(property,appCfg)
-        if((val == null || isEmptyNavigableMap(val)) && RundeckConfigBase.DEPRECATED_PROPS.containsKey(property)) {
+        def val = getValueFromRoot(property)
+        if((val == null || val==null && RundeckConfigBase.DEPRECATED_PROPS.containsKey(property))) {
             //try to get the value from the deprecated property
             val = getDeprecatedPropertyValue(property)
             if(val) {
@@ -138,17 +134,9 @@ class ConfigurationService implements InitializingBean {
         return val == null ? defval : val
     }
 
-    protected boolean isEmptyNavigableMap(def val) {
-        return val instanceof NavigableMap.NullSafeNavigator && val.isEmpty()
-    }
-
-    protected def getValueFromRoot(String property, def root) {
+    protected def getValueFromRoot(String property) {
         try {
-            def strings = property.split('\\.')
-            def val = root
-            strings.each {
-                val = val?."${it}"
-            }
+            def val = grailsApplication.config.rundeck.getProperty(property, String.class)
             return val
         } catch(Exception ex) {
             log.warn("Could not get value for property: ${property}")
@@ -157,7 +145,7 @@ class ConfigurationService implements InitializingBean {
     }
 
     protected def getDeprecatedPropertyValue(property) {
-        return getValueFromRoot(RundeckConfigBase.DEPRECATED_PROPS[property], grailsApplication.config.rundeck)
+        return getValueFromRoot(RundeckConfigBase.DEPRECATED_PROPS[property])
     }
     /**
      * Lookup a string property and interpret it as a time duration in the form "1d2h3m15s"
