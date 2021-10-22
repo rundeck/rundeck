@@ -3,7 +3,7 @@ import org.gradle.plugins.signing.Sign
  * Common build settings for java projects
  */
 apply plugin: 'java';
-apply plugin: 'maven';
+// apply plugin: 'maven';
 apply plugin: 'eclipse';
 apply plugin: 'idea';
 

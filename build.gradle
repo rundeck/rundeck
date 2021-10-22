@@ -46,7 +46,6 @@ buildscript {
 }
 
 plugins {
-    id 'com.gradle.build-scan' version '3.2.1'
     id "org.dvaske.gradle.git-build-info" version "0.8"
     id "com.dorongold.task-tree" version "1.5"
     id "org.ajoberstar.grgit" version "2.2.1"
