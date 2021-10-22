@@ -1,14 +1,13 @@
 @import "../runstrap/variables";
 
 .label{
-  // &.label-default{
-    // a{
-    //   color: var(--white-color);
-    // }
-  // }
+  &.label-default {
+    color: var(--default-color);
+    background-color: var(--font-color);
+  }
   &.label-white{
-    background-color: white;
-    color: black;
+    background-color: var(--white-color);
+    color: var(--black-color);
   }
 
   &.label-muted {
