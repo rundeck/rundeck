@@ -67,6 +67,7 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
     public Accessor<Execution> getKill() {
         return access(APP_KILL);
     }
+
     public Accessor<Execution> getKillAs() {
         return access(APP_KILLAS);
     }
