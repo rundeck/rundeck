@@ -9,7 +9,7 @@ import javax.security.auth.Subject
 @CompileStatic
 class AppProjectResourceAuthorizer extends BaseResourceIdAuthorizer implements ProjectResourceAuthorizer {
     @Override
-    AuthorizingProject accessResource(final Subject subject, final ProjectIdentifier identifier) {
+    AuthorizingProject getAuthorizingResource(final Subject subject, final ProjectIdentifier identifier) {
         return new AppAuthorizingProject(rundeckAuthContextProcessor, subject, identifier)
     }
 }

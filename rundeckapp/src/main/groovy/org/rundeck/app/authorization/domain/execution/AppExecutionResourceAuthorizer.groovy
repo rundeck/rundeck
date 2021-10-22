@@ -8,7 +8,7 @@ import javax.security.auth.Subject
 @CompileStatic
 class AppExecutionResourceAuthorizer extends BaseResourceIdAuthorizer implements ExecutionResourceAuthorizer {
     @Override
-    AuthorizingExecution accessResource(final Subject subject, final ExecIdentifier identifier) {
+    AuthorizingExecution getAuthorizingResource(final Subject subject, final ExecIdentifier identifier) {
         return new AppAuthorizingExecution(rundeckAuthContextProcessor, subject, identifier)
     }
 }
