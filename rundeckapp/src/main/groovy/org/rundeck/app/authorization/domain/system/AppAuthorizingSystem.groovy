@@ -17,26 +17,23 @@ class AppAuthorizingSystem extends BaseSingletonAuthorizingResource implements A
     final Map<String, String> authresMapForSingleton = AuthConstants.RESOURCE_TYPE_SYSTEM
 
     public static final AuthActions APP_CONFIGURE =
-        AccessLevels.any(
-            [AuthConstants.ACTION_CONFIGURE],
-            AccessLevels.ALL_ADMIN
-        )
+        action(AuthConstants.ACTION_CONFIGURE)
+            .or(AccessLevels.ALL_ADMIN)
 
     public static final AuthActions OPS_ENABLE_EXECUTION =
-        AccessLevels.any(
-            [AuthConstants.ACTION_ENABLE_EXECUTIONS],
-            AccessLevels.OPS_ADMIN
-        )
+        action(AuthConstants.ACTION_ENABLE_EXECUTIONS)
+            .or(AccessLevels.OPS_ADMIN)
+
     public static final AuthActions OPS_DISABLE_EXECUTION =
-        AccessLevels.any(
-            [AuthConstants.ACTION_DISABLE_EXECUTIONS],
-            AccessLevels.OPS_ADMIN
-        )
-    public static final AuthActions READ_OR_ADMIN =
-        AccessLevels.any(
-            [AuthConstants.ACTION_READ],
-            AccessLevels.ALL_ADMIN
-        )
+        action(AuthConstants.ACTION_DISABLE_EXECUTIONS)
+            .or(AccessLevels.OPS_ADMIN)
+
+    public static final AuthActions READ_OR_ANY_ADMIN =
+        action(AuthConstants.ACTION_READ)
+            .or(AccessLevels.ALL_ADMIN)
+    public static final AuthActions READ_OR_OPS_ADMIN =
+        action(AuthConstants.ACTION_READ)
+            .or(AccessLevels.OPS_ADMIN)
 
     AppAuthorizingSystem(
         final AuthContextProcessor rundeckAuthContextProcessor,
@@ -45,8 +42,12 @@ class AppAuthorizingSystem extends BaseSingletonAuthorizingResource implements A
         super(rundeckAuthContextProcessor, subject)
     }
 
-    Accessor<Singleton> getReadOrAdmin() {
-        return access(READ_OR_ADMIN)
+    Accessor<Singleton> getReadOrAnyAdmin() {
+        return access(READ_OR_ANY_ADMIN)
+    }
+
+    Accessor<Singleton> getReadOrOpsAdmin() {
+        return access(READ_OR_OPS_ADMIN)
     }
 
     Accessor<Singleton> getConfigure() {

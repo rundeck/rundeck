@@ -16,8 +16,8 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
     implements AuthorizingExecution {
     final String resourceTypeName = 'Execution'
 
-    final static AuthActions APP_KILL = AccessLevels.any([AuthConstants.ACTION_KILL], AccessLevels.APP_ADMIN)
-    final static AuthActions APP_KILLAS = AccessLevels.any([AuthConstants.ACTION_KILLAS], AccessLevels.APP_ADMIN)
+    final static AuthActions APP_KILL = AccessLevels.or([AuthConstants.ACTION_KILL], AccessLevels.APP_ADMIN)
+    final static AuthActions APP_KILLAS = AccessLevels.or([AuthConstants.ACTION_KILLAS], AccessLevels.APP_ADMIN)
 
 
     AppAuthorizingExecution(

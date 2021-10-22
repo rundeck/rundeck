@@ -19,7 +19,7 @@ import javax.security.auth.Subject
 class AppAuthorizingProject extends BaseAuthorizingIdResource<Project, ProjectIdentifier>
     implements AuthorizingProject {
     public static final AuthActions APP_DELETE_EXECUTION =
-        AccessLevels.any(
+        AccessLevels.or(
             [AuthConstants.ACTION_DELETE_EXECUTION],
             AccessLevels.APP_ADMIN
         )

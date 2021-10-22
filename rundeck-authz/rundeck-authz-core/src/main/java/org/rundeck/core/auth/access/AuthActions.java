@@ -1,19 +1,29 @@
 package org.rundeck.core.auth.access;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * Represents access request actions, either a list of all required actions (AND), or a list of any required actions
- * (OR).
+ * Represents access request allowed by any actions (OR).
  */
 public interface AuthActions {
-    /**
-     * @return list of actions all must be allowed
-     */
-    List<String> getRequiredActions();
 
     /**
      * @return list of actions any are allowed
      */
     List<String> getAnyActions();
+
+    /**
+     * @param actions
+     */
+    default AuthActions or(AuthActions actions) {
+        return AccessLevels.or(this, actions);
+    }
+
+    /**
+     * @param actions
+     */
+    default AuthActions or(String... actions) {
+        return AccessLevels.or(this, Arrays.asList(actions));
+    }
 }
