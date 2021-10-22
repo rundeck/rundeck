@@ -73,16 +73,7 @@ public abstract class BaseAuthorizingResource<T>
         UserAndRolesAuthContext authContext = getAuthContext();
         boolean authorized = false;
         List<String> actionSet;
-        if (actions.getRequiredActions() != null && actions.getRequiredActions().size() > 0) {
-            actionSet = actions.getRequiredActions();
-            authorized =
-                    getRundeckAuthContextProcessor().authorizeApplicationResourceAll(
-                            authContext,
-                            authresMapForResource(res),
-                            actionSet
-                    );
-
-        } else if (actions.getAnyActions() != null && actions.getAnyActions().size() > 0) {
+        if (actions.getAnyActions() != null && actions.getAnyActions().size() > 0) {
             actionSet = actions.getAnyActions();
             authorized =
                     getRundeckAuthContextProcessor().authorizeApplicationResourceAny(
