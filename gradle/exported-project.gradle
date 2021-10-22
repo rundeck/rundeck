@@ -15,7 +15,7 @@ else if (archiveName.startsWith('rundeckapp'))
     archiveName = project.name.replace('rundeckapp', 'rundeck')
 
 /* Modify auto-gen POM which gets picked up by Bintray */
-install {
+/* install {
     repositories.mavenInstaller {
         pom.project {
             artifactId archiveName
@@ -53,9 +53,9 @@ install {
         }
     }
 }
-
+ */
 //build a pom we reuse for both maven builds and release to sonatype
-ext.publishPom = pom {
+/* ext.publishPom = pom {
     project {
         artifactId archiveName
         groupId project.group
@@ -90,9 +90,9 @@ ext.publishPom = pom {
             version('7')
         }
     }
-}
+} */
 
-uploadArchives {
+/* uploadArchives {
     repositories.mavenDeployer {
         configuration = configurations.archives
         repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
@@ -103,7 +103,7 @@ uploadArchives {
         }
         pom = project.publishPom
     }
-}
+} */
 
 tasks.register('removeExisting') {
     it.doLast {
@@ -153,16 +153,16 @@ existingFiles.builtBy(registerExisting)
 configurations.existing.dependencies.add(project.dependencies.create(existingFiles))
 
 /** Sign existing artifacts **/
-signing {
+/* signing {
     required { isReleaseBuild && project.hasProperty("signing.keyId") }
     sign configurations.existing
 }
 tasks.withType(Sign) { t ->
     t.dependsOn configurations.existing
-}
+} */
 
 
-tasks.register('uploadExisting', Upload) {
+/* tasks.register('uploadExisting', Upload) {
     it.dependsOn tasks.named('signExisting'), configurations.existing
 
     it.outputs.dir "${rootProject.buildDir}/deploy-serialize"
@@ -177,12 +177,13 @@ tasks.register('uploadExisting', Upload) {
             authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
         }
     }
-}
+} */
 
 //utility to create a pom for building
-if(!(project.name in ['core','launcher'])){
+/* if(!(project.name in ['core','launcher'])){
     //:core buildfile will generate its own pom for specialized purpose
     task('createPom').doLast {
         publishPom.writeTo("pom.xml")
     }
 }
+ */

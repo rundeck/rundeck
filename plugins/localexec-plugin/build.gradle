@@ -28,7 +28,7 @@ jar {
 }
 
 apply plugin: 'idea'
-apply plugin: 'maven'
+// apply plugin: 'maven'
 apply plugin: 'groovy'
 
 dependencies {
@@ -39,7 +39,7 @@ dependencies {
     testCompile "cglib:cglib-nodep:2.2.2"
 }
 
-task('createPom').doLast {
+/* task('createPom').doLast {
     pom {
         project {
             artifactId 'rundeck-localexec-plugin'
@@ -83,3 +83,4 @@ task('createPom').doLast {
         }
     }.writeTo("pom.xml")
 }
+ */

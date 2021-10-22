@@ -47,10 +47,10 @@ subprojects{
         }
     }
 }
-apply plugin: 'maven';
+// apply plugin: 'maven';
 
 
-task('createPom').doLast {
+/* task('createPom').doLast {
     pom {
         project {
             artifactId 'rundeck-bundled-plugins'
@@ -112,3 +112,4 @@ task('createPom').doLast {
     }.writeTo("pom.xml")
 }
 
+ */
