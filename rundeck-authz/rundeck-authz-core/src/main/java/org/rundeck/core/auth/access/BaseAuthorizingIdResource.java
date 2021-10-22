@@ -52,7 +52,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
     }
 
     @Override
-    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
+    public T requireActions(final AuthActions actions, String description) throws UnauthorizedAccess, NotFound {
         /*
          *
          */
@@ -64,25 +64,14 @@ public abstract class BaseAuthorizingIdResource<T, ID>
         String projectLevel = getProject(res);
 
         if (projectLevel == null) {
-            return super.requireActions(actions);
+            return super.requireActions(actions, description);
         }
 
         UserAndRolesAuthContext authContext = getAuthContext(projectLevel);
 
         boolean authorized = false;
         List<String> actionSet;
-        if (actions.getRequiredActions() != null && actions.getRequiredActions().size() > 0) {
-            actionSet = actions.getRequiredActions();
-            authorized =
-                    getRundeckAuthContextProcessor().authorizeProjectResourceAll(
-                            authContext,
-                            authresMapForResource(res),
-                            actionSet,
-                            projectLevel
-                    );
-
-
-        } else if (actions.getAnyActions() != null && actions.getAnyActions().size() > 0) {
+        if (actions.getAnyActions() != null && actions.getAnyActions().size() > 0) {
             actionSet = actions.getAnyActions();
             authorized =
                     getRundeckAuthContextProcessor().authorizeProjectResourceAny(
@@ -96,7 +85,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
         }
 
         if (!authorized) {
-            throw new UnauthorizedAccess(actionSet.get(0), getResourceTypeName(), getResourceIdent());
+            throw new UnauthorizedAccess(description!=null?description:actionSet.get(0), getResourceTypeName(), getResourceIdent());
         }
 
         return res;

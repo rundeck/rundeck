@@ -61,10 +61,15 @@ public abstract class BaseAuthorizingResource<T>
 
     @Override
     public Accessor<T> access(final AuthActions actions) {
-        return new AccessorImpl<T>(actions, this::requireActions, this::canPerform, this::retrieve);
+        return new AccessorImpl<T>(actions, this::requireActions, this::canPerform, this::retrieve, null);
     }
 
-    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
+    @Override
+    public Accessor<T> access(final AuthActions actions, String description) {
+        return new AccessorImpl<T>(actions, this::requireActions, this::canPerform, this::retrieve, description);
+    }
+
+    public T requireActions(final AuthActions actions, String description) throws UnauthorizedAccess, NotFound {
         T res = retrieve();
         if (res == null) {
             throw new NotFound(getResourceTypeName(), getResourceIdent());
@@ -87,7 +92,11 @@ public abstract class BaseAuthorizingResource<T>
         }
 
         if (!authorized) {
-            throw new UnauthorizedAccess(actionSet.get(0), getResourceTypeName(), getResourceIdent());
+            throw new UnauthorizedAccess(
+                    description != null ? description : actionSet.get(0),
+                    getResourceTypeName(),
+                    getResourceIdent()
+            );
         }
 
         return res;
@@ -95,7 +104,7 @@ public abstract class BaseAuthorizingResource<T>
 
     public boolean canPerform(final AuthActions actions) throws NotFound {
         try {
-            requireActions(actions);
+            requireActions(actions, null);
         } catch (UnauthorizedAccess ignored) {
             return false;
         }

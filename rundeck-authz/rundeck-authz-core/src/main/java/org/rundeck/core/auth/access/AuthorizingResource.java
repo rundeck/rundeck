@@ -16,6 +16,14 @@ public interface AuthorizingResource<T> {
     Accessor<T> access(AuthActions actions);
 
     /**
+     *
+     * @param actions actions
+     * @param description description for access
+     * @return accessor
+     */
+    Accessor<T> access(AuthActions actions, String description);
+
+    /**
      * @return locator
      */
     Locator<T> getLocator();
