@@ -7,6 +7,8 @@ import org.rundeck.core.auth.access.*
 
 import javax.security.auth.Subject
 
+import static org.rundeck.core.auth.access.AccessLevels.action
+
 /**
  * Authorized access to System singleton resource
  */
