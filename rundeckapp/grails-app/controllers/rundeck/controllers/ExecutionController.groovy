@@ -43,7 +43,9 @@ import groovy.transform.PackageScope
 import org.quartz.JobExecutionContext
 import org.rundeck.app.AppConstants
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.project.AuthorizingProject
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.springframework.dao.DataAccessResourceFailureException
@@ -105,7 +107,7 @@ class ExecutionController extends ControllerBase{
      * @return
      */
     def adhocHistoryAjax(String project, int max, String query){
-        authorizingProjectAdhoc.read.authorize()
+        authorizingProjectAdhoc.authorize(AccessLevels.APP_READ)
 
         def execs = []
         def uniques=new HashSet<String>()
@@ -194,7 +196,7 @@ class ExecutionController extends ControllerBase{
             render(view: '/common/error')
             return
         }
-        def Execution e = authorizingExecution.readOrView.resource
+        def Execution e = authorizingExecution.readOrView
         def filesize=-1
         if(null!=e.outputfilepath){
             def file = new File(e.outputfilepath)
@@ -231,7 +233,7 @@ class ExecutionController extends ControllerBase{
         }
 
         eprev = result ? result[0] : null
-        def readAuth = authorizingExecution.read.allowed
+        def readAuth = authorizingExecution.isAuthorized(AccessLevels.APP_READ)
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
@@ -255,7 +257,7 @@ class ExecutionController extends ControllerBase{
     def delete() {
         withForm{
         def project = authorizingProject
-        project.deleteExecution.resource
+        project.authorize(AuthorizingProject.APP_DELETE_EXECUTION)
         def Execution e = authorizingExecution.locator.resource
         def jobid=e.scheduledExecution?.extid
         def result = executionService.deleteExecution(e, project.authContext, project.authContext.username)
@@ -288,7 +290,7 @@ class ExecutionController extends ControllerBase{
             flash.error="Some IDS are required for bulk delete"
             return redirect(action: 'index',controller: 'reports',params: [project:params.project])
         }
-        authorizingProject.deleteExecution.authorize()
+        authorizingProject.authorize(AuthorizingProject.APP_DELETE_EXECUTION)
         def result = executionService.deleteBulkExecutionIds(ids, projectAuthContext, session.user)
         if(!result.success){
             flash.error=result.failures*.message.join(", ")
@@ -305,7 +307,7 @@ class ExecutionController extends ControllerBase{
         Execution e
         //NB: send custom response for unauthorized/not found
         try {
-            e = authorizingExecution.readOrView.resource
+            e = authorizingExecution.readOrView
         } catch (UnauthorizedAccess ignored) {
             response.status=HttpServletResponse.SC_FORBIDDEN
             return render(contentType: 'application/json',text:[error: "Unauthorized: View Execution ${params.id}"] as JSON)
@@ -415,7 +417,7 @@ class ExecutionController extends ControllerBase{
         if (requireAjax(action: 'show', controller: 'execution', params: params)) {
             return
         }
-        def Execution e = authorizingExecution.readOrView.resource
+        def Execution e = authorizingExecution.readOrView
 
         def data=[:]
         def selectedNode=params.node
@@ -447,7 +449,7 @@ class ExecutionController extends ControllerBase{
     }
 
     def mail() {
-        Execution e = authorizingExecution.readOrView.resource
+        Execution e = authorizingExecution.readOrView
         def file = loggingService.getLogFileForExecution(e)
         def filesize=-1
         if (file.exists()) {
@@ -663,7 +665,7 @@ class ExecutionController extends ControllerBase{
 
     }
     def downloadOutput() {
-        Execution e = authorizingExecution.readOrView.resource
+        Execution e = authorizingExecution.readOrView
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
@@ -729,7 +731,7 @@ class ExecutionController extends ControllerBase{
     }
 
     def renderOutput() {
-        Execution e = authorizingExecution.readOrView.resource
+        Execution e = authorizingExecution.readOrView
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
@@ -1135,7 +1137,7 @@ setTimeout(function(){
 
         //NB: handle authorization/not found response uniquely for this endpoint
         try {
-            e = authorizingExecution.readOrView.resource
+            e = authorizingExecution.readOrView
         } catch (UnauthorizedAccess ignored) {
             return apiError(
                 'api.error.item.unauthorized',
@@ -1674,7 +1676,7 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def Execution e = authorizingExecution.readOrView.resource
+        def Execution e = authorizingExecution.readOrView
 
         if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
@@ -1699,7 +1701,7 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        Execution e = authorizingExecution.readOrView.resource
+        Execution e = authorizingExecution.readOrView
 
         def loader = workflowService.requestState(e)
         def state= loader.workflowState
@@ -1807,7 +1809,7 @@ setTimeout(function(){
         }
 
         def auth = authorizingExecution
-        Execution e = auth.kill.resource
+        Execution e = auth.kill
         ExecutionService.AbortResult abortresult
         try {
 
@@ -1892,7 +1894,7 @@ setTimeout(function(){
             return
         }
         def project = authorizingProject
-        project.deleteExecution.authorize()
+        project.authorize(AuthorizingProject.APP_DELETE_EXECUTION)
         def Execution e = authorizingExecution.locator.resource
         def result = executionService.deleteExecution(e, project.authContext, project.authContext.username)
         if(!result.success){
@@ -2110,7 +2112,7 @@ setTimeout(function(){
             return
         }
 
-        authorizingSystem.readOrAnyAdmin.authorize()
+        authorizingSystem.readOrAnyAdmin
 
         def executionStatus = configurationService.executionModeActive
         int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE
@@ -2159,9 +2161,9 @@ setTimeout(function(){
         }
 
         if(active){
-            authorizingSystem.opsEnableExecution.resource
+            authorizingSystem.opsEnableExecution
         }else{
-            authorizingSystem.opsDisableExecution.resource
+            authorizingSystem.opsDisableExecution
         }
 
         executionService.setExecutionsAreActive(active)
@@ -2187,7 +2189,7 @@ setTimeout(function(){
             return
         }
 
-        Execution e = authorizingExecution.readOrView.resource
+        Execution e = authorizingExecution.readOrView
 
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
 

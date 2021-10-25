@@ -88,9 +88,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  Mock(Accessor) {
-                    getResource() >> e1
-                }
+                1 * getReadOrView() >>  e1
             }
         }
         when:
@@ -136,9 +134,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  Mock(Accessor) {
-                    getResource() >> e1
-                }
+                1 * getReadOrView() >>  e1
             }
         }
         when:
@@ -153,10 +149,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  Mock(Accessor) {
-                    getResource() >> {
-                        throw new NotFound('Execution', '123')
-                    }
+                1 * getReadOrView() >>{
+                    throw new NotFound('Execution', '123')
                 }
             }
         }
@@ -180,16 +174,14 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.frameworkService=Mock(FrameworkService){
         }
 
-            session.subject = new Subject()
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
-                1 * execution(_,_)>>Mock(AuthorizingExecution){
-                    1 * getReadOrView() >>  Mock(Accessor) {
-                        getResource() >> {
-                            throw new UnauthorizedAccess('read', 'Execution', e1.id.toString())
-                        }
-                    }
+        session.subject = new Subject()
+        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+            1 * execution(_,_)>>Mock(AuthorizingExecution){
+                1 * getReadOrView() >> {
+                    throw new UnauthorizedAccess('read', 'Execution', e1.id.toString())
                 }
             }
+        }
         when:
         controller.ajaxExecState()
         then:
@@ -231,9 +223,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  Mock(Accessor) {
-                    getResource() >> e1
-                }
+                1 * getReadOrView() >> e1
+
             }
         }
         ec.params.id = e1.id.toString()
@@ -280,9 +271,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  Mock(Accessor) {
-                    getResource() >> e1
-                }
+                1 * getReadOrView() >> e1
             }
         }
 
@@ -535,9 +524,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getKill() >>  Mock(Accessor) {
-                    getResource() >> execs[2]
-                }
+                1 * getKill() >>  execs[2]
             }
         }
         when:
@@ -577,10 +564,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getKill() >>  Mock(Accessor) {
-                    getResource() >> {
-                        throw new UnauthorizedAccess('kill', 'Execution', execs[2].id.toString())
-                    }
+                1 * getKill() >>  {
+                    throw new UnauthorizedAccess('kill', 'Execution', execs[2].id.toString())
                 }
             }
         }
@@ -623,10 +608,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getKill() >>  Mock(Accessor) {
-                    getResource() >> {
-                        throw new UnauthorizedAccess('kill', 'Execution', execs[2].id.toString())
-                    }
+                1 * getKill() >>  {
+                    throw new UnauthorizedAccess('kill', 'Execution', execs[2].id.toString())
                 }
             }
         }
@@ -643,48 +626,36 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionAbortAsUserAuthorized() {
         given:
-        def controller = controller
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
-        def execControl = Mock(ExecutionService)
-        execControl.abortExecution(*_)>>{ se, e, user, framework, killas,force ->
-            assert killas == 'testuser'
-            [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
-        }
+
 
         controller.frameworkService = fwkControl
-        controller.executionService = execControl
+        controller.executionService = Mock(ExecutionService)
         controller.request.api_version = 11
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = Mock(ApiService)
-        svcMock.requireApi(*_)>>{ req, resp -> true }
-        svcMock.requireExists(*_)>>{ resp,e,args -> true }
-        svcMock.requireAuthorized(*_)>>{ test,resp,args -> true }
-        svcMock.requireApi(*_)>>{ request,response,int min ->
-            assertEquals(11,min)
-            return true
+            controller.apiService = Mock(ApiService) {
+            1 * requireApi(_,_) >> true
+            1 * renderSuccessXml(*_) >> { request, response, Closure clos ->
+                return true
+            }
+            0 * _(*_)
         }
-        svcMock.renderSuccessXml(*_)>>{ request, response, Closure clos ->
-            return true
-        }
-        controller.apiService = svcMock
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getKill() >>  Mock(Accessor) {
-                    getResource() >> {
-                        throw new UnauthorizedAccess('kill', 'Execution', execs[2].id.toString())
-                    }
-                }
+                1 * getKill() >> execs[2]
             }
         }
         when:
         controller.apiExecutionAbort()
 
         then:
+        1 * controller.executionService.abortExecution(_,execs[2],_,_,'testuser',_)>>[abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
+
         assert 200 == controller.response.status
         assert null == controller.request.apiErrorCode
     }
@@ -716,9 +687,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getKill() >>  Mock(Accessor) {
-                    getResource() >> execs[2]
-                }
+                1 * getKill() >>  execs[2]
             }
         }
         when:
@@ -738,7 +707,6 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      */
     public void testApiExecutionUnauthorized() {
         given:
-        def controller = controller
         def execs = createTestExecs()
         def fwkControl = Mock(FrameworkService)
         def execControl = Mock(ExecutionService)
@@ -750,28 +718,27 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = Mock(ApiService){
+        controller.apiService = Mock(ApiService){
             1 * requireApi(*_)>>true
             1 * renderErrorFormat(_,_)>>{
                 it[0].status=it[1].status
             }
+            0*_(*_)
         }
-        controller.apiService = svcMock
         session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
-            1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  Mock(Accessor) {
-                    getResource() >> {
-                        throw new UnauthorizedAccess('kill', 'Execution', execs[2].id.toString())
-                    }
+        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+            1 * execution(_, _) >> Mock(AuthorizingExecution) {
+                1 * getReadOrView() >> {
+                    throw new UnauthorizedAccess('read', 'Execution', execs[2].id.toString())
                 }
             }
+            0 * _(*_)
         }
         when:
         controller.apiExecution()
 
         then:
-        assert 403 == controller.response.status
+        assert 403 == response.status
         assert null == controller.flash.errorCode
     }
 
@@ -800,9 +767,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  Mock(Accessor) {
-                    getResource() >> e1
-                }
+                1 * getReadOrView() >> e1
             }
         }
         when:
@@ -924,10 +889,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             session.subject=new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
                 1 * system(_)>>Mock(AuthorizingSystem){
-                    1 * getReadOrAnyAdmin() >> Mock(Accessor) {
-                        getResource() >> {
-                            throw new UnauthorizedAccess('read','system','resource')
-                        }
+                    1 * getReadOrAnyAdmin() >> {
+                        throw new UnauthorizedAccess('read','system','resource')
                     }
                 }
             }
@@ -966,9 +929,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject=new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * system(_)>>Mock(AuthorizingSystem){
-                1 * getReadOrAnyAdmin() >> Mock(Accessor) {
-                    getResource() >> Singleton.ONLY
-                }
+                1 * getReadOrAnyAdmin() >> Singleton.ONLY
             }
         }
         when:
@@ -1011,9 +972,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             session.subject=new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
                 1 * system(_)>>Mock(AuthorizingSystem){
-                    1 * getReadOrAnyAdmin() >> Mock(Accessor) {
-                        getResource() >> Singleton.ONLY
-                    }
+                    1 * getReadOrAnyAdmin() >>Singleton.ONLY
                 }
             }
             // Call controller
