@@ -505,7 +505,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     def exportProjectToInstanceAsync(
             IRundeckProject project,
-            Framework framework,
+            IFramework framework,
             String ident,
             ProjectArchiveExportRequest options,
             String iProject,
@@ -625,11 +625,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToFile(
+    @CompileStatic
+    File exportProjectToFile(
         IRundeckProject project, IFramework framework, ProgressListener listener,
         ProjectArchiveExportRequest options, AuthContext authContext
     ) throws ProjectServiceException {
-        def outfile
+        File outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
         } catch (IOException exc) {
@@ -641,7 +642,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         outfile.deleteOnExit()
         outfile
     }
-    def exportProjectToInstance(IRundeckProject project, Framework framework, ProgressListener listener,
+    def exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
                                 ProjectArchiveExportRequest options,String iProject,
                                 String apiToken, String instanceUrl,boolean preserveUUID,
                                 AuthContext authContext
@@ -1692,7 +1693,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param framework frameowkr
      * @return map [success:true/false, error: (String errorMessage)]
      */
-    def deleteProject(IRundeckProject project, Framework framework, AuthContext authContext, String username){
+    def deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username){
         def result = [success: false]
         notify('projectWillBeDeleted', project.name)
 
