@@ -32,7 +32,11 @@ import groovy.mock.interceptor.StubFor
 import org.grails.plugins.codecs.JSONCodec
 import org.grails.plugins.testing.GrailsMockHttpServletResponse
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.RdDomainAuthorizer
+import org.rundeck.app.authorization.domain.project.AuthorizingProject
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.springframework.context.MessageSource
 import rundeck.Project
 import rundeck.services.ApiService
@@ -230,17 +234,12 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
 
     void apiProjectGet_missingProjectParam(){
         when:
-        controller.frameworkService = mockWith(FrameworkService){
+        controller.frameworkService = Mock(FrameworkService){
         }
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
-        controller.apiService = mockWith(ApiService) {
-            requireApi(1..1) { req, resp -> true }
-            renderErrorFormat(1..1) { resp, map ->
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST,map.status)
-                assertEquals('api.error.parameter.required',map.code)
-                resp.status=map.status
-            }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_,_)>>true
         }
 
         response.format='xml'
@@ -250,57 +249,69 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
 
     void apiProjectGet_unauthorized(){
+        given:
+            controller.frameworkService = Mock(FrameworkService){
+            }
+            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+                1 * project(_,_)>>Mock(AuthorizingProject){
+                    1 * getRead()>>{
+                        throw new UnauthorizedAccess('read','project','test1')
+                    }
+                }
+            }
+
+            controller.apiService = Mock(ApiService) {
+                1 * requireApi(_, _) >> true
+                1 * renderErrorFormat(_, {
+                    it.status==HttpServletResponse.SC_FORBIDDEN
+                    it.code=='api.error.item.unauthorized'
+                }) >>{
+                    it[0].status=it[1].status
+                }
+                0*_(*_)
+            }
+
+            response.format='xml'
+            params.project='test1'
+            request.api_version=11
+            session.subject=new Subject()
         when:
-        controller.frameworkService = mockWith(FrameworkService){
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>false
-            }
-
-        controller.apiService = mockWith(ApiService) {
-            requireApi(1..1) { req, resp -> true }
-            renderErrorFormat(1..1) { resp, map ->
-                assertEquals(HttpServletResponse.SC_FORBIDDEN,map.status)
-                assertEquals('api.error.item.unauthorized',map.code)
-                resp.status=map.status
-            }
-        }
-
-        response.format='xml'
-        params.project='test1'
-        controller.apiProjectGet()
+            controller.apiProjectGet()
         then:
-        assert response.status==HttpServletResponse.SC_FORBIDDEN
+            response.status==HttpServletResponse.SC_FORBIDDEN
     }
 
     void apiProjectGet_notfound(){
+        given:
+            controller.frameworkService = Mock(FrameworkService){
+            }
+            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+                1 * project(_,_)>>Mock(AuthorizingProject){
+                    1 * getRead()>>{
+                        throw new NotFound('project', 'test1')
+                    }
+                }
+            }
+
+            controller.apiService = Mock(ApiService) {
+                1 * requireApi(_, _) >> true
+                1 * renderErrorFormat(_, {
+                    it.status==HttpServletResponse.SC_NOT_FOUND
+                    it.code=='api.error.item.doesnotexist'
+                }) >>{
+                    it[0].status=it[1].status
+                }
+                0*_(*_)
+            }
+
+            response.format='xml'
+            params.project='test1'
+            request.api_version=11
+            session.subject=new Subject()
         when:
-        controller.frameworkService = mockWith(FrameworkService){
-            existsFrameworkProject(1..1) { proj ->
-                assertEquals('test1',proj)
-                false
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-            }
-
-        controller.apiService = mockWith(ApiService) {
-            requireApi(1..1) { req, resp -> true }
-            renderErrorFormat(1..1) { resp, map ->
-                assertEquals(HttpServletResponse.SC_NOT_FOUND,map.status)
-                assertEquals('api.error.item.doesnotexist',map.code)
-                resp.status=map.status
-            }
-        }
-
-        response.format='xml'
-        params.project='test1'
-        controller.apiProjectGet()
+            controller.apiProjectGet()
         then:
-        assert response.status==HttpServletResponse.SC_NOT_FOUND
+         response.status==HttpServletResponse.SC_NOT_FOUND
     }
 
     private Object createFrameworkService(boolean configAuth, String projectName, LinkedHashMap<String,
@@ -330,24 +341,33 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
 
     void apiProjectGet_xml_noconfig_v11(){
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(false, 'test1')
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-                1 * authorizeProjectConfigure(_,'test1')>>false
+        given:
+            defineBeans {
+                apiService(ApiService)
+            }
+            controller.frameworkService = Mock(FrameworkService){
+                1 * getFrameworkProject('test1')>>Mock(IRundeckProject){
+                    _*getName()>>'test1'
+                }
+            }
+            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+                1 * project(_,_)>>Mock(AuthorizingProject){
+                    1 * getRead()>>{
+                        new Project(name:'test1')
+                    }
+                    1 * isAuthorized(AuthorizingProject.APP_CONFIGURE) >> false
+                }
             }
 
-        response.format='xml'
-        params.project='test1'
-        request.setAttribute('api_version', 11) //do not include <result> wrapper
-        controller.apiProjectGet()
+
+            response.format='xml'
+            params.project='test1'
+            request.api_version=11
+            session.subject=new Subject()
+        when:
+            controller.apiProjectGet()
         then:
-        assert response.status==HttpServletResponse.SC_OK
+        response.status==HttpServletResponse.SC_OK
 
         //XML result has no wrapper
         assertEquals 'project', response.xml.name()
@@ -371,22 +391,33 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
      */
     void apiProjectGet_xml_withconfig_v11(){
 
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(true, 'test1', ["test.property": "value1", "test.property2": "value2"])
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-                1 * authorizeProjectConfigure(_,'test1')>>true
+        given:
+            defineBeans {
+                apiService(ApiService)
             }
-        response.format='xml'
-        params.project='test1'
-        request.setAttribute('api_version', 11) //do not include <result> wrapper
-        controller.apiProjectGet()
+            controller.frameworkService = Mock(FrameworkService){
+                1 * getFrameworkProject('test1')>>Mock(IRundeckProject){
+                    _*getName()>>'test1'
+                }
+                1 * loadProjectProperties(_)>>["test.property": "value1", "test.property2": "value2"]
+            }
+            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+                1 * project(_,_)>>Mock(AuthorizingProject){
+                    1 * getRead()>>{
+                        new Project(name:'test1')
+                    }
+                    1 * isAuthorized(AuthorizingProject.APP_CONFIGURE) >> true
+                }
+            }
 
+
+            response.format='xml'
+            params.project='test1'
+            request.api_version=11
+            session.subject=new Subject()
+
+        when:
+            controller.apiProjectGet()
         then:
         assert response.status==HttpServletResponse.SC_OK
 
@@ -412,22 +443,32 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
 
     void apiProjectGet_json_noconfig() {
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(false, 'test1')
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-                1 * authorizeProjectConfigure(_,'test1')>>false
+        given:
+            defineBeans {
+                apiService(ApiService)
             }
-        response.format = 'json'
-        params.project = 'test1'
-        request.setAttribute('api_version', 11) // trigger xml <result> wrapper
-        controller.apiProjectGet()
+            controller.frameworkService = Mock(FrameworkService){
+                1 * getFrameworkProject('test1')>>Mock(IRundeckProject){
+                    _*getName()>>'test1'
+                }
+            }
+            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+                1 * project(_,_)>>Mock(AuthorizingProject){
+                    1 * getRead()>>{
+                        new Project(name:'test1')
+                    }
+                    1 * isAuthorized(AuthorizingProject.APP_CONFIGURE) >> false
+                }
+            }
 
+
+            response.format='json'
+            params.project='test1'
+            request.api_version=11
+            session.subject=new Subject()
+
+        when:
+            controller.apiProjectGet()
         then:
         assert response.status == HttpServletResponse.SC_OK
 
@@ -442,21 +483,31 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
 
     void apiProjectGet_json_withconfig() {
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(true, 'test1',['test.property':'value1',
-                'test.property2':'value2'])
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-                1 * authorizeProjectConfigure(_,'test1')>>true
+        given:
+            defineBeans {
+                apiService(ApiService)
             }
-        response.format = 'json'
-        params.project = 'test1'
-        request.setAttribute('api_version', 11) // trigger xml <result> wrapper
+            controller.frameworkService = Mock(FrameworkService){
+                1 * getFrameworkProject('test1')>>Mock(IRundeckProject){
+                    _*getName()>>'test1'
+                }
+                1 * loadProjectProperties(_)>>["test.property": "value1", "test.property2": "value2"]
+            }
+            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+                1 * project(_,_)>>Mock(AuthorizingProject){
+                    1 * getRead()>>{
+                        new Project(name:'test1')
+                    }
+                    1 * isAuthorized(AuthorizingProject.APP_CONFIGURE) >> true
+                }
+            }
+
+
+            response.format='json'
+            params.project='test1'
+            request.api_version=11
+            session.subject=new Subject()
+        when:
         controller.apiProjectGet()
         then:
         assert response.status == HttpServletResponse.SC_OK

@@ -27,17 +27,21 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.authorization.providers.Validator
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.app.api.ApiVersions
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.project.AuthorizingProject
 import org.rundeck.core.auth.AuthConstants
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
 import rundeck.services.FrameworkService
+import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
 import rundeck.services.ScheduledExecutionService
 import webhooks.component.project.WebhooksProjectComponent
@@ -51,8 +55,8 @@ import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
 
 class ProjectController extends ControllerBase{
-    def frameworkService
-    def projectService
+    FrameworkService frameworkService
+    ProjectService projectService
     def scheduledExecutionService
     AppAuthContextProcessor rundeckAuthContextProcessor
     ContextACLManager<AppACLContext> aclFileManagerService
@@ -74,36 +78,24 @@ class ProjectController extends ControllerBase{
         return redirect(controller: 'menu', action: 'jobs')
     }
 
+    @GrailsCompileStatic
     public def export(ProjectArchiveParams archiveParams){
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
-        def project=params.project
-        if (!project){
-            return renderErrorView("Project parameter is required")
-        }
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
-            return
-        }
+        def authorizing = authorizingProject
+        def projectObj = authorizing.export
+        String project = projectObj.name
 
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                 rundeckAuthContextProcessor.authResourceForProject(project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT]),
-                AuthConstants.ACTION_EXPORT, 'Project',project)) {
-            return
-        }
         def project1 = frameworkService.getFrameworkProject(project)
 
         ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         //temp file
-        def outfile
+        File outfile
         try {
-            outfile = projectService.exportProjectToFile(project1, framework, null, options, authContext)
+            outfile = projectService.exportProjectToFile(project1, frameworkService.getRundeckFramework(), null, options, authorizing.authContext)
         } catch (ProjectServiceException exc) {
             return renderErrorView(exc.message)
         }
@@ -123,33 +115,18 @@ class ProjectController extends ControllerBase{
      * @param archiveParams
      * @return
      */
+    @GrailsCompileStatic
     public def exportPrepare(ProjectArchiveParams archiveParams){
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
-        def project=params.project
-        if (!project){
-            return renderErrorView("Project parameter is required")
-        }
         if (params.cancel) {
             return redirect(controller: 'menu', action: 'index', params: [project: params.project])
         }
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
-
-        if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
-            return
-        }
-
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                        rundeckAuthContextProcessor.authResourceForProject(project),
-                        [AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]),
-                AuthConstants.ACTION_EXPORT, 'Project',project)) {
-            return
-        }
-        def project1 = frameworkService.getFrameworkProject(project)
+        def authorizing = authorizingProject
+        def projectObj = authorizing.export
+        def project1 = frameworkService.getFrameworkProject(projectObj.name)
 
         //request token
 
@@ -164,11 +141,17 @@ class ProjectController extends ControllerBase{
         }
 
         ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
-        def token = projectService.
-            exportProjectToFileAsync(project1, framework, session.user, options, authContext)
+        def token = projectService.exportProjectToFileAsync(
+                project1,
+                frameworkService.getRundeckFramework(),
+                authorizing.authContext.username,
+                options,
+                authorizing.authContext
+            )
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
     }
 
+    @GrailsCompileStatic
     public def exportInstancePrepare(ProjectArchiveParams archiveParams){
         def error = 0
         def msg = 'In order to export'
@@ -199,27 +182,15 @@ class ProjectController extends ControllerBase{
             flash.errors = archiveParams.errors
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
-        def project=params.project
-        if (!project){
-            return renderErrorView("Project parameter is required")
-        }
         if (params.cancel) {
             return redirect(controller: 'menu', action: 'index', params: [project: params.project])
         }
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+        IFramework framework = frameworkService.getRundeckFramework()
 
-        if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
-            return
-        }
+        def authorizing = authorizingProject
+        def projectObj = authorizing.promote
+        String project = projectObj.name
 
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                        rundeckAuthContextProcessor.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_PROMOTE]),
-                AuthConstants.ACTION_PROMOTE, 'Project',project)) {
-            return
-        }
         def project1 = frameworkService.getFrameworkProject(project)
 
         archiveParams.cleanComponentOpts()
@@ -233,9 +204,24 @@ class ProjectController extends ControllerBase{
         }
 
         ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
-        def token = projectService.exportProjectToInstanceAsync(project1, framework, session.user, options
-                ,params.targetproject,params.apitoken,params.url,params.preserveuuid?true:false, authContext)
-        return redirect(action:'exportWait',params: [token:token,project:archiveParams.project,instance:params.instance, iproject:params.targetproject])
+        def token = projectService.exportProjectToInstanceAsync(
+            project1,
+            framework,
+            authorizing.authContext.username,
+            options,
+            archiveParams.targetproject,
+            archiveParams.apitoken,
+            archiveParams.url,
+            archiveParams.preserveuuid,
+            authorizing.authContext
+        )
+        return redirect(action: 'exportWait',
+                        params: [
+                            token: token,
+                            project: archiveParams.project,
+                            instance: params.instance,
+                            iproject: archiveParams.targetproject]
+        )
     }
 
 
@@ -356,108 +342,95 @@ class ProjectController extends ControllerBase{
         }
     }
 
+//    @GrailsCompileStatic //TODO: change use of flash context vars
     public def importArchive(ProjectArchiveParams archiveParams){
         withForm{
-        if(archiveParams.hasErrors()){
-            flash.errors=archiveParams.errors
-            return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
-        }
-        def project = params.project?:params.name
-        if (!project) {
-            return renderErrorView("Project parameter is required")
-        }
+            if(archiveParams.hasErrors()){
+                flash.errors=archiveParams.errors
+                return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
+            }
             if (params.cancel) {
 
                 return redirect(controller: 'menu', action: 'index', params: [project: params.project])
             }
 
-        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
+            def authorizing = authorizingProject
+            def projectObj = authorizing.import
+            String project = projectObj.name
 
-        if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
-            return
-        }
-
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                        rundeckAuthContextProcessor.authResourceForProject(project),
-                        [AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]),
-                AuthConstants.ACTION_IMPORT, 'Project', project)) {
-            return
-        }
-        AuthContext appContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        //verify acl create access requirement
-        if (archiveParams.importACL &&
-                unauthorizedResponse(
-                    rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                            appContext,
-                            rundeckAuthContextProcessor.authResourceForProjectAcl(project),
-                            [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-                    ),
-                    AuthConstants.ACTION_CREATE,
-                    "ACL for Project",
-                    project
-                )
-        ) {
-            return null
-        }
-        //validate component input options
-        archiveParams.cleanComponentOpts()
-        def validations = projectService.validateAllProjectComponentImportOptions(archiveParams.importOpts)
-        if (validations.values().any { !it.valid }) {
-            flash.validations = validations
-            flash.componentValues=archiveParams.importOpts
-            flash.error='Some input was invalid'
-            return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
-        }
-
-        def project1 = frameworkService.getFrameworkProject(project)
-
-        //uploaded file
-        if (request instanceof MultipartHttpServletRequest) {
-            def file = request.getFile("zipFile")
-            if (!file || file.empty) {
-                flash.error = message(code:"no.file.was.uploaded")
-                return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
+            AuthContext appContext = authorizing.authContext
+            //TODO: replace with authorizingResource access
+            //verify acl create access requirement
+            if (archiveParams.importACL &&
+                    unauthorizedResponse(
+                        rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                                appContext,
+                                rundeckAuthContextProcessor.authResourceForProjectAcl(project),
+                                [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+                        ),
+                        AuthConstants.ACTION_CREATE,
+                        "ACL for Project",
+                        project
+                    )
+            ) {
+                return null
             }
-            Framework framework = frameworkService.getRundeckFramework()
-            def result = projectService.importToProject(
+            //validate component input options
+            archiveParams.cleanComponentOpts()
+            def validations = projectService.validateAllProjectComponentImportOptions(archiveParams.importOpts)
+            if (validations.values().any { !it.valid }) {
+                flash.validations = validations
+                flash.componentValues=archiveParams.importOpts
+                flash.error='Some input was invalid'
+                return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
+            }
+
+            def project1 = frameworkService.getFrameworkProject(project)
+
+            //uploaded file
+            if (request instanceof MultipartHttpServletRequest) {
+                def file = request.getFile("zipFile")
+                if (!file || file.empty) {
+                    flash.error = message(code:"no.file.was.uploaded")
+                    return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
+                }
+                def result = projectService.importToProject(
                     project1,
-                    framework,
-                    authContext,
+                    frameworkService.getRundeckFramework(),
+                    authorizing.authContext,
                     file.getInputStream(),
                     archiveParams
+                )
 
-            )
 
-
-            if(result.success){
-                if(result.execerrors){
-                    flash.message=message(code:"archive.jobs.imported.some.executions.could.not.be.imported")
+                if(result.success){
+                    if(result.execerrors){
+                        flash.message=message(code:"archive.jobs.imported.some.executions.could.not.be.imported")
+                    }else{
+                        flash.message=message(code:"archive.successfully.imported")
+                    }
                 }else{
-                    flash.message=message(code:"archive.successfully.imported")
+                    flash.error=message(code:"failed.to.import.some.jobs")
+                    flash.joberrors=result.joberrors
                 }
-            }else{
-                flash.error=message(code:"failed.to.import.some.jobs")
-                flash.joberrors=result.joberrors
-            }
-            def warning = []
-            if(result.execerrors){
-                warning.add(result.execerrors)
-            }
-            if(result.aclerrors){
-                warning.add(result.aclerrors)
-            }
-            if(result.scmerrors){
-                warning.add(result.scmerrors)
-            }
-            if(result.importerErrors) {
-                result.importerErrors.each { k, v ->
-                    warning.addAll(v)
+                def warning = []
+                if(result.execerrors){
+                    warning.add(result.execerrors)
                 }
+                if(result.aclerrors){
+                    warning.add(result.aclerrors)
+                }
+                if(result.scmerrors){
+                    warning.add(result.scmerrors)
+                }
+                if(result.importerErrors) {
+                    result.importerErrors.each { k, v ->
+                        warning.addAll(v)
+                    }
+                }
+                flash.warn=warning.join(",")
+                return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
             }
-            flash.warn=warning.join(",")
-            return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
-        }
         }.invalidToken {
             flash.error = g.message(code:'request.error.invalidtoken.message')
             return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
@@ -466,40 +439,29 @@ class ProjectController extends ControllerBase{
 
     def delete (ProjectArchiveParams archiveParams){
         withForm{
-        if (archiveParams.hasErrors()) {
-            flash.errors = archiveParams.errors
-            return redirect(controller: 'menu', action: 'projectDelete', params: [project: params.project])
-        }
-        def project = params.project
-        if (!project) {
-            request.error = "Project parameter is required"
-            return render(view: "/common/error")
-        }
-        Framework framework = frameworkService.getRundeckFramework()
-        if (!frameworkService.existsFrameworkProject(project)) {
-            response.setStatus(404)
-            request.error = g.message(code: 'scheduledExecution.project.invalid.message', args: [project])
-            return render(view: "/common/error")
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextProcessor.authResourceForProject(project),
-                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,AuthConstants.ACTION_DELETE])) {
-            response.setStatus(403)
-            request.error = g.message(code: 'api.error.item.unauthorized', args: [AuthConstants.ACTION_DELETE,
-                    "Project", params.project])
-            return render(view: "/common/error")
-        }
-        def project1 = frameworkService.getFrameworkProject(project)
+            if (archiveParams.hasErrors()) {
+                flash.errors = archiveParams.errors
+                return redirect(controller: 'menu', action: 'projectDelete', params: [project: params.project])
+            }
 
-        def result = projectService.deleteProject(project1, framework,authContext,session.user)
-        if (!result.success) {
-            log.error("Failed to delete project: ${result.error}")
-            flash.error = result.error
-            return redirect(controller: 'menu', action: 'projectDelete', params: [project: project])
-        }
-        flash.message = 'Deleted project: ' + project
-        return redirect(controller: 'menu', action: 'home')
+            def authorizing = authorizingProject
+            def projectObj = authorizing.delete
+            String project = projectObj.name
+            def project1 = frameworkService.getFrameworkProject(project)
+
+            def result = projectService.deleteProject(
+                project1,
+                frameworkService.getRundeckFramework(),
+                authorizing.authContext,
+                authorizing.authContext.username
+            )
+            if (!result.success) {
+                log.error("Failed to delete project: ${result.error}")
+                flash.error = result.error
+                return redirect(controller: 'menu', action: 'projectDelete', params: [project: project])
+            }
+            flash.message = 'Deleted project: ' + project
+            return redirect(controller: 'menu', action: 'home')
         }.invalidToken {
             flash.error= g.message(code: 'request.error.invalidtoken.message')
             return redirect(controller: 'menu', action: 'projectDelete', params: [project: params.project])
@@ -648,25 +610,11 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!params.project) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                           code  : 'api.error.parameter.required', args: ['project']])
-        }
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextProcessor.authResourceForProject(params.project),
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                                                           code  : 'api.error.item.unauthorized', args: ['Read', 'Project', params.project]])
-        }
-        def exists = frameworkService.existsFrameworkProject(params.project)
-        if (!exists) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                                                           code  : 'api.error.item.doesnotexist', args: ['project', params.project]])
-        }
-        def configAuth = rundeckAuthContextProcessor.authorizeProjectConfigure(authContext,params.project)
-        def pject = frameworkService.getFrameworkProject(params.project)
-        def ctrl=this
+        def authorizing = authorizingProject
+        def projectObj = authorizing.read
+        String project = projectObj.name
+        def configAuth = authorizing.isAuthorized(AuthorizingProject.APP_CONFIGURE)
+        def pject = frameworkService.getFrameworkProject(project)
         withFormat{
             xml{
 
