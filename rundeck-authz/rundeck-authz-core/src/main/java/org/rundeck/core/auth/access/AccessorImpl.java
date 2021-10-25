@@ -12,7 +12,6 @@ class AccessorImpl<T>
     private final Required<T> requireActions;
     private final Allowed allowedTest;
     private final Supplier<T> getter;
-    private final String description;
 
     interface Allowed {
         boolean isAllowed(AuthActions actions) throws NotFound;
@@ -28,18 +27,8 @@ class AccessorImpl<T>
     }
 
     @Override
-    public void authorize(final String accessDescription) throws UnauthorizedAccess, NotFound {
-        getResource(accessDescription);
-    }
-
-    @Override
     public T getResource() throws UnauthorizedAccess, NotFound {
-        return getResource(description);
-    }
-
-    @Override
-    public T getResource(String accessDescription) throws UnauthorizedAccess, NotFound {
-        return requireActions.getAccess(actions, accessDescription);
+        return requireActions.getAccess(actions, actions.getDescription());
     }
 
 

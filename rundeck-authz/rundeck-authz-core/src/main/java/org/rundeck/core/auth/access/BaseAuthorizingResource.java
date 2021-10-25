@@ -60,13 +60,23 @@ public abstract class BaseAuthorizingResource<T>
     }
 
     @Override
-    public Accessor<T> access(final AuthActions actions) {
-        return new AccessorImpl<T>(actions, this::requireActions, this::canPerform, this::retrieve, null);
+    public Accessor<T> accessor(final AuthActions actions) {
+        return new AccessorImpl<T>(actions, this::requireActions, this::canPerform, this::retrieve);
     }
 
     @Override
-    public Accessor<T> access(final AuthActions actions, String description) {
-        return new AccessorImpl<T>(actions, this::requireActions, this::canPerform, this::retrieve, description);
+    public T access(final AuthActions actions) throws UnauthorizedAccess, NotFound {
+        return accessor(actions).getResource();
+    }
+
+    @Override
+    public void authorize(final AuthActions actions) throws UnauthorizedAccess, NotFound {
+        accessor(actions).authorize();
+    }
+
+    @Override
+    public boolean isAuthorized(final AuthActions actions) throws NotFound {
+        return accessor(actions).isAllowed();
     }
 
     public T requireActions(final AuthActions actions, String description) throws UnauthorizedAccess, NotFound {

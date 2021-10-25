@@ -14,6 +14,12 @@ public interface AuthActions {
     List<String> getAnyActions();
 
     /**
+     * @return Description of access
+     */
+    String getDescription();
+
+
+    /**
      * @param actions
      */
     default AuthActions or(AuthActions actions) {
@@ -25,5 +31,9 @@ public interface AuthActions {
      */
     default AuthActions or(String... actions) {
         return AccessLevels.or(this, Arrays.asList(actions));
+    }
+
+    default AuthActions withDescription(String description) {
+        return AccessLevels.withDescription(this, description);
     }
 }

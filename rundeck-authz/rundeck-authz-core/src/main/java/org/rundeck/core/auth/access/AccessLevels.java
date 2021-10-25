@@ -65,6 +65,10 @@ public class AccessLevels {
         return new AnyAuth(args);
     }
 
+    public static AuthActions withDescription(AuthActions actions, String description) {
+        return new AnyAuth(actions.getAnyActions(), description);
+    }
+
     public static final AuthActions
             ALL_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
     public static final AuthActions APP_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN);
@@ -85,15 +89,20 @@ public class AccessLevels {
     {
 
         private final List<String> anyActions;
+        private String description;
 
         public AnyAuth(final List<String> anyActions) {
             this.anyActions = anyActions;
         }
 
-        @Override
-        public String toString() {
-            return "AnyAccess{" + getAnyActions() + "}";
+        public AnyAuth(final List<String> anyActions, String description) {
+            this.anyActions = anyActions;
+            this.description = description;
         }
 
+        @Override
+        public String toString() {
+            return "AnyAccess{" + getAnyActions() + (description != null ? ": " + description : "") + "}";
+        }
     }
 }
