@@ -6,8 +6,10 @@ import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.Accessor
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
+import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.UnauthorizedAccess
 import rundeck.Project
 
 import javax.security.auth.Subject
@@ -18,11 +20,7 @@ import javax.security.auth.Subject
 @GrailsCompileStatic
 class AppAuthorizingProject extends BaseAuthorizingIdResource<Project, ProjectIdentifier>
     implements AuthorizingProject {
-    public static final AuthActions APP_DELETE_EXECUTION =
-        AccessLevels.or(
-            [AuthConstants.ACTION_DELETE_EXECUTION],
-            AccessLevels.APP_ADMIN
-        )
+
     final String resourceTypeName = 'Project'
 
 
@@ -60,8 +58,12 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<Project, ProjectId
         resource.name
     }
 
-    public Accessor<Project> getDeleteExecution() {
+    public Project getDeleteExecution() throws UnauthorizedAccess, NotFound {
         return access(APP_DELETE_EXECUTION);
+    }
+
+    public Project getExport() throws UnauthorizedAccess, NotFound {
+        return access(APP_EXPORT);
     }
 
 }

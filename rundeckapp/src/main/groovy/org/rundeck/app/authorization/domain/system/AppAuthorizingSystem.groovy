@@ -18,24 +18,6 @@ class AppAuthorizingSystem extends BaseSingletonAuthorizingResource implements A
     final String resourceIdent = 'resource'
     final Map<String, String> authresMapForSingleton = AuthConstants.RESOURCE_TYPE_SYSTEM
 
-    public static final AuthActions APP_CONFIGURE =
-        action(AuthConstants.ACTION_CONFIGURE)
-            .or(AccessLevels.ALL_ADMIN)
-
-    public static final AuthActions OPS_ENABLE_EXECUTION =
-        action(AuthConstants.ACTION_ENABLE_EXECUTIONS)
-            .or(AccessLevels.OPS_ADMIN)
-
-    public static final AuthActions OPS_DISABLE_EXECUTION =
-        action(AuthConstants.ACTION_DISABLE_EXECUTIONS)
-            .or(AccessLevels.OPS_ADMIN)
-
-    public static final AuthActions READ_OR_ANY_ADMIN =
-        action(AuthConstants.ACTION_READ)
-            .or(AccessLevels.ALL_ADMIN)
-    public static final AuthActions READ_OR_OPS_ADMIN =
-        action(AuthConstants.ACTION_READ)
-            .or(AccessLevels.OPS_ADMIN)
 
     AppAuthorizingSystem(
         final AuthContextProcessor rundeckAuthContextProcessor,
@@ -44,23 +26,23 @@ class AppAuthorizingSystem extends BaseSingletonAuthorizingResource implements A
         super(rundeckAuthContextProcessor, subject)
     }
 
-    Accessor<Singleton> getReadOrAnyAdmin() {
+    Singleton getReadOrAnyAdmin() throws UnauthorizedAccess, NotFound {
         return access(READ_OR_ANY_ADMIN)
     }
 
-    Accessor<Singleton> getReadOrOpsAdmin() {
+    Singleton getReadOrOpsAdmin() throws UnauthorizedAccess, NotFound {
         return access(READ_OR_OPS_ADMIN)
     }
 
-    Accessor<Singleton> getConfigure() {
+    Singleton getConfigure() throws UnauthorizedAccess, NotFound {
         return access(APP_CONFIGURE)
     }
 
-    Accessor<Singleton> getOpsEnableExecution() {
+    Singleton getOpsEnableExecution() throws UnauthorizedAccess, NotFound {
         return access(OPS_ENABLE_EXECUTION)
     }
 
-    Accessor<Singleton> getOpsDisableExecution() {
+    Singleton getOpsDisableExecution() throws UnauthorizedAccess, NotFound {
         return access(OPS_DISABLE_EXECUTION)
     }
 

@@ -7,6 +7,8 @@ import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.Accessor
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
 import rundeck.Execution
 
 import javax.security.auth.Subject
@@ -16,8 +18,6 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
     implements AuthorizingExecution {
     final String resourceTypeName = 'Execution'
 
-    final static AuthActions APP_KILL = AccessLevels.or([AuthConstants.ACTION_KILL], AccessLevels.APP_ADMIN)
-    final static AuthActions APP_KILLAS = AccessLevels.or([AuthConstants.ACTION_KILLAS], AccessLevels.APP_ADMIN)
 
 
     AppAuthorizingExecution(
@@ -60,16 +60,16 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
         resource.project
     }
 
-    public Accessor<Execution> getReadOrView() {
-        return access(AccessLevels.APP_READ_OR_VIEW);
+    public Execution getReadOrView() throws UnauthorizedAccess, NotFound{
+        return access(AccessLevels.APP_READ_OR_VIEW)
     }
 
-    public Accessor<Execution> getKill() {
-        return access(APP_KILL);
+    public Execution getKill() throws UnauthorizedAccess, NotFound{
+        return access(APP_KILL)
     }
 
-    public Accessor<Execution> getKillAs() {
-        return access(APP_KILLAS);
+    public Execution getKillAs() throws UnauthorizedAccess, NotFound{
+        return access(APP_KILLAS)
     }
 
 }
