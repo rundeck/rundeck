@@ -67,6 +67,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -1674,8 +1675,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         boolean forceIncomplete = false
     ) throws UnauthorizedAccess, NotFound
     {
-        if(!execution.kill.allowed || killAsUser && !execution.killAs.allowed) {
-            Execution e = execution.read.resource
+        if (!execution.isAuthorized(AuthorizingExecution.APP_KILL) ||
+            killAsUser && !execution.isAuthorized(AuthorizingExecution.APP_KILLAS)) {
+            Execution e = execution.read
             return new AbortResult(
                     abortstate: ABORT_FAILED,
                     jobstate: getExecutionState(e),
@@ -1683,7 +1685,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     reason: "unauthorized"
             )
         }
-        Execution e = execution.kill.resource
+        Execution e = execution.kill
         abortExecutionDirect(e.scheduledExecution, e, execution.authContext.username, killAsUser, forceIncomplete)
     }
 
