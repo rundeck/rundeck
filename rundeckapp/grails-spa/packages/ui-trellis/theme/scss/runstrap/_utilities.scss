@@ -88,9 +88,25 @@
   font-weight: 900;
 }	
 
+.font-size-lg{
+  font-size: var(--text-lg);
+}
+.font-size-xl{
+  font-size: var(--text-xl);
+}
+.font-size-2xl{
+  font-size: var(--text-2xl);
+}
+.font-size-3xl{
+  font-size: var(--text-3xl);
+}
+
 // -------------------------------------
 //   1. Spacing
 // -------------------------------------
+.mx-auto{
+  margin: 0 auto;
+}
 
 //
 // Utility classes (-Legacy Bootstrap 3)
