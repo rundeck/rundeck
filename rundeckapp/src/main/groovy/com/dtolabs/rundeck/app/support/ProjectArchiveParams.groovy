@@ -48,6 +48,11 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Map<String, Boolean> exportComponents
     Map<String, Map<String, String>> exportOpts
     String stripJobRef
+    /*  used by "promote" action */
+    String targetproject
+    String apitoken
+    String url
+    Boolean preserveuuid
 
     static constraints={
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -69,6 +74,10 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         exportOpts(nullable: true)
         exportComponents(nullable: true)
         importComponents(nullable: true)
+        targetproject(nullable: true)
+        apitoken(nullable: true)
+        url(nullable: true)
+        preserveuuid(nullable: true)
     }
 
     void cleanComponentOpts(){
