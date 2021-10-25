@@ -15,5 +15,5 @@ public interface AuthorizingIdResource<T, ID>
 
     ID getIdentifier();
 
-    Accessor<T> getDelete();
+    T getDelete() throws UnauthorizedAccess, NotFound;
 }

@@ -56,19 +56,19 @@ public interface AuthorizingResource<T> {
      *
      * @return resource
      */
-    Accessor<T> getRead();
+    T getRead() throws UnauthorizedAccess, NotFound;
 
     /**
      * APP_ADMIN access
      *
      * @return resource
      */
-    Accessor<T> getAppAdmin();
+    T getAppAdmin() throws UnauthorizedAccess, NotFound;
 
     /**
      * OPS_ADMIN access
      *
      * @return resource
      */
-    Accessor<T> getOpsAdmin();
+    T getOpsAdmin() throws UnauthorizedAccess, NotFound;
 }

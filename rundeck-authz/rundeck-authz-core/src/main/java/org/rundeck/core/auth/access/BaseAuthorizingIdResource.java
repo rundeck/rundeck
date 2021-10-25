@@ -92,7 +92,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
     }
 
 
-    public Accessor<T> getDelete() {
+    public T getDelete() throws UnauthorizedAccess, NotFound {
         return access(AccessLevels.APP_DELETE);
     }
 

@@ -142,17 +142,17 @@ public abstract class BaseAuthorizingResource<T>
     }
 
     @Override
-    public Accessor<T> getRead() {
+    public T getRead() throws UnauthorizedAccess, NotFound {
         return access(AccessLevels.APP_READ);
     }
 
     @Override
-    public Accessor<T> getAppAdmin() {
+    public T getAppAdmin() throws UnauthorizedAccess, NotFound {
         return access(AccessLevels.APP_ADMIN);
     }
 
     @Override
-    public Accessor<T> getOpsAdmin() {
+    public T getOpsAdmin() throws UnauthorizedAccess, NotFound {
         return access(AccessLevels.OPS_ADMIN);
     }
 
