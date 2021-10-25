@@ -245,10 +245,13 @@ class ControllerBase {
         if(request.api_version){
             apiService.renderErrorFormat(response, [
                 status: HttpServletResponse.SC_BAD_REQUEST,
-                code: 'api.error.invalid.request',
-                args: [notFound.message]
+                code: 'api.error.parameter.required',
+                args: [notFound.parameters.join(',')]
             ])
         }else{
+            request.errorCode = 'api.error.parameter.required'
+            request.errorArgs = [notFound.parameters.join(',')]
+            response.status = HttpServletResponse.SC_BAD_REQUEST
             renderErrorView("parameters required: $notFound.message")
         }
     }
