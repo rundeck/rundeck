@@ -58,12 +58,24 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<Project, ProjectId
         resource.name
     }
 
+    public Project getConfigure() throws UnauthorizedAccess, NotFound {
+        return access(APP_CONFIGURE);
+    }
+
     public Project getDeleteExecution() throws UnauthorizedAccess, NotFound {
         return access(APP_DELETE_EXECUTION);
     }
 
     public Project getExport() throws UnauthorizedAccess, NotFound {
         return access(APP_EXPORT);
+    }
+
+    public Project getImport() throws UnauthorizedAccess, NotFound {
+        return access(APP_IMPORT);
+    }
+
+    public Project getPromote() throws UnauthorizedAccess, NotFound {
+        return access(APP_PROMOTE);
     }
 
 }
