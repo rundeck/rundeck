@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.system.AuthorizingSystem
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import grails.web.mapping.LinkGenerator
@@ -96,7 +97,11 @@ class ApiController extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
         }
-        authorizingSystem.readOrOpsAdmin.authorize('Read System Metrics')
+
+        authorizingSystem.authorize(
+            AuthorizingSystem.READ_OR_ANY_ADMIN.withDescription('Read System Metrics')
+        )
+
 
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
         def globalEnabled=configurationService.getBoolean("metrics.enabled", true) &&
@@ -458,7 +463,7 @@ class ApiController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        authorizingSystem.readOrOpsAdmin.authorize('Read System Info')
+        authorizingSystem.authorize(AuthorizingSystem.READ_OR_OPS_ADMIN.withDescription('Read System Info'))
 
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")

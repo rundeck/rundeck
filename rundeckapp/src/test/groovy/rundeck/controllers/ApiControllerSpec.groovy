@@ -30,6 +30,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.RdDomainAuthorizer
 import org.rundeck.app.authorization.domain.system.AuthorizingSystem
 import org.rundeck.core.auth.access.Accessor
+import org.rundeck.core.auth.access.Singleton
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import rundeck.AuthToken
 import rundeck.User
@@ -464,7 +465,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     }
     def "api system info unauthorized"(){
         given:
-            setAuthProcessor(false)
+            setAuthProcessor(false,['read','admin','ops_admin'])
             controller.apiService=Mock(ApiService)
         when:
             controller.apiSystemInfo()
@@ -473,18 +474,19 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             response.status==403
     }
 
-    public void setAuthProcessor(boolean allow=true) {
+    public void setAuthProcessor(boolean allow=true, List<String> expected=['read','admin','app_admin','ops_admin']) {
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * system(_)>>Mock(AuthorizingSystem){
-                1 * getReadOrOpsAdmin() >>  Mock(Accessor) {
-                    1 * authorize(_) >> {
-                        if(!allow){
-                            throw new UnauthorizedAccess('x', 'System','resource')
-                        }
+                1 * authorize({it.anyActions.containsAll(expected)}) >>  {
+                    if(!allow){
+                        throw new UnauthorizedAccess('x', 'System','resource')
                     }
+                    Singleton.ONLY
                 }
+                0*_(*_)
             }
+            0*_(*_)
         }
     }
 }
