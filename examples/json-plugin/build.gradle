@@ -29,7 +29,7 @@ configurations{
     pluginLibs 
     
     //declare compile to extend from pluginLibs so it inherits the dependencies
-    compile{
+    implementation{
         extendsFrom pluginLibs
     }
 }
