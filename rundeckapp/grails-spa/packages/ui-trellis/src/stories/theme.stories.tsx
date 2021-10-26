@@ -59,7 +59,22 @@ export const typography = () => (Vue.extend({
         )
     }
 }))
-
+export const labels = () => (Vue.extend({
+  render(h) {
+    return (
+      <div>
+        <h3>H3 Text <span class="label label-default">default</span></h3>
+        <h3>H3 Text <span class="label label-secondary">secondary</span></h3>
+        <h3>H3 Text <span class="label label-muted">muted</span></h3>
+        <h3>H3 Text <span class="label label-danger">danger</span></h3>
+        <h3>H3 Text <span class="label label-warning">warning</span></h3>
+        <h3>H3 Text <span class="label label-success">success</span></h3>
+        <h3>H3 Text <span class="label label-info">info</span></h3>
+        <h3>H3 Text <span class="label label-white">white</span></h3>
+      </div>
+    )
+  }
+}))
 export const buttons = () => (Vue.extend({
     render(h) {
         return (
