@@ -26,7 +26,7 @@ configurations{
     pluginLibs
 
     //declare compile to extend from pluginLibs so it inherits the dependencies
-    compile {
+    implementation {
         extendsFrom pluginLibs
     }
 }
@@ -39,10 +39,10 @@ repositories {
 }
 
 dependencies {
-    compile project(":core")
-    compile(group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: bouncyCastleVersion)
+    implementation project(":core")
+    implementation(group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: bouncyCastleVersion)
     pluginLibs([group: 'org.jasypt', name: 'jasypt', version: '1.9.3'])
-    testCompile(
+    testImplementation(
         [group: 'junit', name: 'junit', version: '4.8.1',ext:'jar']
     )
 }

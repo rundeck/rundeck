@@ -15,9 +15,9 @@ repositories {
 }
 
 dependencies {
-    compile( [group: 'org.rundeck', name: 'rundeck-core', version: version])
-    compile( [group: 'commons-codec', name: 'commons-codec', version: '1.5',ext:'jar'])
-    testCompile(
+    implementation( [group: 'org.rundeck', name: 'rundeck-core', version: version])
+    implementation( [group: 'commons-codec', name: 'commons-codec', version: '1.5',ext:'jar'])
+    testImplementation(
         //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
     )
 }

@@ -12,8 +12,8 @@ repositories {
 }
 
 dependencies {
-    compile( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
-    testCompile(
+    implementation( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
+    testImplementation(
         //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
     )
 }
