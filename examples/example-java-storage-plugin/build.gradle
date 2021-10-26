@@ -12,10 +12,10 @@ repositories {
 }
 
 dependencies {
-    compile( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
-    compile( [group: 'org.rundeck', name: 'rundeck-storage-api', version: version,ext:'jar'])
-    compile( [group: 'commons-codec', name: 'commons-codec', version: '1.5',ext:'jar'])
-    testCompile(
+    implementation( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
+    implementation( [group: 'org.rundeck', name: 'rundeck-storage-api', version: version,ext:'jar'])
+    implementation( [group: 'commons-codec', name: 'commons-codec', version: '1.5',ext:'jar'])
+    testImplementation(
         //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
     )
 }

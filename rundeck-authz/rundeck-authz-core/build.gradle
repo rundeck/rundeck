@@ -1,7 +1,7 @@
 apply plugin: "groovy"
 
 dependencies {
-    testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
-    compile project(':rundeck-authz:rundeck-authz-api')
+    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.spockframework:spock-core:0.7-groovy-2.0"
+    implementation project(':rundeck-authz:rundeck-authz-api')
 }

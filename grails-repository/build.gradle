@@ -33,28 +33,28 @@ configurations {
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    compile "org.springframework.boot:spring-boot-starter-log4j2"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile("org.grails:grails-core") {
+    implementation "org.springframework.boot:spring-boot-starter-log4j2"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation("org.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
 
-    compile "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    compile "org.grails:grails-web-boot"
-    compile "org.grails:grails-logging"
-    compile "org.grails:grails-plugin-rest"
-    compile "org.grails:grails-plugin-databinding"
-    compile "org.grails:grails-plugin-i18n"
-    compile "org.grails:grails-plugin-services"
-    compile "org.grails:grails-plugin-url-mappings"
-    compile "org.grails:grails-plugin-interceptors"
-    compile "org.grails.plugins:async"
-    compile "org.grails.plugins:scaffolding"
-    compile "org.grails.plugins:gsp"
-    compileOnly "io.micronaut:micronaut-inject-groovy"
+    implementation "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:gsp"
+    implementationOnly "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
-    compile project(":core")
-    compile('com.github.rundeck.repository:repository-client:0.12.0') {
+    implementation project(":core")
+    implementation('com.github.rundeck.repository:repository-client:0.12.0') {
         exclude(group:"org.rundeck", module:"rundeck-core")
         exclude(group:"org.rundeck", module:"rundeck-storage-api")
         exclude(group:"org.rundeck", module:"rundeck-storage-data")
@@ -66,16 +66,16 @@ dependencies {
         exclude(group: 'org.bouncycastle', module: 'bcpg-jdk15on')
     }
 
-    compile "org.yaml:snakeyaml:${snakeyamlVersion}"
+    implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
 
     profile ("org.grails.profiles:web-plugin"){
         exclude(group:"org.grails.profiles",module:"web")
     }
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    testCompile "org.grails:grails-gorm-testing-support"
-    testCompile "org.mockito:mockito-core"
-    testCompile "org.grails:grails-web-testing-support"
-    testCompile "cglib:cglib:2.2"
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation "cglib:cglib:2.2"
 }
 
 bootRun {
