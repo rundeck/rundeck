@@ -11,8 +11,8 @@ repositories {
 }
 
 dependencies {
-    compile files("${rootProject.projectDir}/../../core/build/libs/rundeck-core-${version}.jar")
-    testCompile(
+    implementation files("${rootProject.projectDir}/../../core/build/libs/rundeck-core-${version}.jar")
+    testImplementation(
         //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
     )
 }

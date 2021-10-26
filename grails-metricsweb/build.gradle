@@ -35,38 +35,38 @@ dependencies {
     compile project(":core")
 
     // Note; grails also has dependency on metrics-core
-    compile "io.dropwizard.metrics:metrics-core:4.0.7"
-    compile "io.dropwizard.metrics:metrics-servlets:4.0.7"
-    compile "io.dropwizard.metrics:metrics-servlet:4.0.7"
-    compile "io.dropwizard.metrics:metrics-jmx:4.0.7"
+    implementation "io.dropwizard.metrics:metrics-core:4.0.7"
+    implementation "io.dropwizard.metrics:metrics-servlets:4.0.7"
+    implementation "io.dropwizard.metrics:metrics-servlet:4.0.7"
+    implementation "io.dropwizard.metrics:metrics-jmx:4.0.7"
 
     // Added by create-app
-    compile "org.springframework.boot:spring-boot-starter-log4j2"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
-    compile("org.grails:grails-core") {
+    implementation "org.springframework.boot:spring-boot-starter-log4j2"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation("org.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    compile "org.grails:grails-web-boot"
-    compile "org.grails:grails-logging"
-    compile "org.grails:grails-plugin-rest"
-    compile "org.grails:grails-plugin-databinding"
-    compile "org.grails:grails-plugin-i18n"
-    compile "org.grails:grails-plugin-services"
-    compile "org.grails:grails-plugin-url-mappings"
-    compile "org.grails:grails-plugin-interceptors"
-    compile "org.grails.plugins:async"
-    compile "org.grails.plugins:scaffolding"
-    compile "org.grails.plugins:gsp"
-    compile "org.yaml:snakeyaml:${snakeyamlVersion}"
-    compileOnly "io.micronaut:micronaut-inject-groovy"
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:gsp"
+    implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
+    implementationOnly "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     profile ("org.grails.profiles:web-plugin"){
         exclude(group:"org.grails.profiles",module:"web")
     }
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    testCompile "org.grails:grails-gorm-testing-support"
-    testCompile "org.mockito:mockito-core"
-    testCompile "org.grails:grails-web-testing-support"
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.grails:grails-web-testing-support"
 }
 
 bootRun {

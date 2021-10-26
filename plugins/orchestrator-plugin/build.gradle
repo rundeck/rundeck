@@ -27,8 +27,8 @@ repositories {
 }
 
 dependencies {
-    compile project(":core")
-    testCompile('junit:junit:4.8.1')
+    implementation project(":core")
+    testImplementation('junit:junit:4.8.1')
 }
 
 

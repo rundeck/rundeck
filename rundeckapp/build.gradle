@@ -66,13 +66,13 @@ dependencies {
     spa project(path: ':rundeckapp:grails-spa', configuration: 'spa')
 
     // Rundeck project dependencies.
-    compile project(':core')
-    compile project(':rundeck-storage:rundeck-storage-filesys')
+    implementation project(':core')
+    implementation project(':rundeck-storage:rundeck-storage-filesys')
 
     // From BuildConfig.groovy.
-    compile 'org.quartz-scheduler:quartz:2.3.2'
-    compile 'org.grails.plugins:quartz:2.0.13'
-    compile 'org.grails.plugins:mail:3.0.0'
+    implementation 'org.quartz-scheduler:quartz:2.3.2'
+    implementation 'org.grails.plugins:quartz:2.0.13'
+    implementation 'org.grails.plugins:mail:3.0.0'
 
     //enable greenmail plugin below for testing email behavior
     // https://github.com/gpc/greenmail
@@ -80,7 +80,7 @@ dependencies {
 
     compile 'com.atlassian.commonmark:commonmark:0.11.0'
     compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
-    compile ('com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20211018.2') {
+    compile 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20211018.2'{
         exclude(group:'com.google.guava',module:'guava')
     }
     compile 'org.owasp.encoder:encoder:1.2.1'
@@ -88,7 +88,7 @@ dependencies {
     compile 'commons-fileupload:commons-fileupload:1.3.3'
     compile 'commons-beanutils:commons-beanutils:1.9.4'
 
-    compile "org.yaml:snakeyaml:${snakeyamlVersion}"
+    implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
     // Grails Plugins.
     //compile 'org.grails:grails-plugin-filters:3.0.17'
 
@@ -96,64 +96,64 @@ dependencies {
 //    compile "org.grails:grails-plugin-testing:3.2.11"
 
     // Defined by create-app
-    compile "org.grails.plugins:hibernate5"
-    compile "org.hibernate:hibernate-core:${hibernateVersion}"
+    implementation "org.grails.plugins:hibernate5"
+    implementation "org.hibernate:hibernate-core:${hibernateVersion}"
 
-    compile( "org.hibernate:hibernate-jcache:${hibernateVersion}")
-    compile('org.ehcache:ehcache:3.8.1')
+    implementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
+    implementation('org.ehcache:ehcache:3.8.1')
 
-    compile ('org.hibernate:hibernate-validator:6.0.19.Final'){
+    implementation ('org.hibernate:hibernate-validator:6.0.19.Final'){
         because 'https://snyk.io/vuln/SNYK-JAVA-ORGHIBERNATE-568162'
     }
-    compile ('org.hibernate.validator:hibernate-validator:6.0.19.Final'){
+    implementation ('org.hibernate.validator:hibernate-validator:6.0.19.Final'){
         because 'https://snyk.io/vuln/SNYK-JAVA-ORGHIBERNATE-568162'
     }
 
-    compile "org.springframework.boot:spring-boot-starter-log4j2"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.springframework.boot:spring-boot-starter-log4j2"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
 
-    compile "org.grails:grails-core"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile ("org.springframework.boot:spring-boot-starter-jetty") {
+    implementation "org.grails:grails-core"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation ("org.springframework.boot:spring-boot-starter-jetty") {
         exclude(group:'org.eclipse.jetty.websocket',module:'websocket-server')
         exclude(group:'org.eclipse.jetty.websocket',module:'javax-websocket-server-impl')
     }
-    compile "org.grails:grails-web-boot"
-    compile "org.grails:grails-logging"
-    compile "org.grails:grails-plugin-rest"
-    compile "org.grails:grails-plugin-databinding"
-    compile "org.grails:grails-plugin-i18n"
-    compile "org.grails:grails-plugin-services"
-    compile "org.grails:grails-plugin-url-mappings"
-    compile "org.grails:grails-plugin-interceptors"
-    compile 'org.grails.plugins:grails-executor:0.4'
-    compile "org.grails.plugins:async"
-    compile "org.grails.plugins:scaffolding"
-    compile "org.grails.plugins:events"
-    compile "org.grails.plugins:gsp"
-    compileOnly "io.micronaut:micronaut-inject-groovy"
-    compile "com.google.code.gson:gson:${gsonVersion}"
-    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
-    compile "com.fasterxml.jackson.core:jackson-core"
-    compile "com.fasterxml.jackson.core:jackson-annotations"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.5"
-    compile "org.eclipse.jetty:jetty-jaas"
-    compile "org.eclipse.jetty:jetty-util"
-    compile "org.eclipse.jetty:jetty-security"
-    compile ('org.grails.plugins:spring-security-core:4.0.2'){
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+    implementation 'org.grails.plugins:grails-executor:0.4'
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:events"
+    implementation "org.grails.plugins:gsp"
+    implementationOnly "io.micronaut:micronaut-inject-groovy"
+    implementation "com.google.code.gson:gson:${gsonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-core"
+    implementation "com.fasterxml.jackson.core:jackson-annotations"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.5"
+    implementation "org.eclipse.jetty:jetty-jaas"
+    implementation "org.eclipse.jetty:jetty-util"
+    implementation "org.eclipse.jetty:jetty-security"
+    implementation ('org.grails.plugins:spring-security-core:4.0.2'){
         exclude(group:'net.sf.ehcache',module:'ehcache')
     }
-    compile 'org.kohsuke:libpam4j:1.11'
-    compile "javax.xml.bind:jaxb-api:2.3.1"
-    compile 'org.dom4j:dom4j:2.1.3'
-    compile ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
-    compile ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}")
-    console ("org.grails:grails-console") {
+    implementation 'org.kohsuke:libpam4j:1.11'
+    implementation "javax.xml.bind:jaxb-api:2.3.1"
+    implementation 'org.dom4j:dom4j:2.1.3'
+    implementation ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
+    implementation ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}")
+    implementation ("org.grails:grails-console") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
-    compile "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
-    compile 'org.liquibase:liquibase-core:3.10.1'
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
+    implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
+    implementation 'org.liquibase:liquibase-core:3.10.1'
+    implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
     }
@@ -176,13 +176,13 @@ dependencies {
     assets ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
-    testCompile "org.grails:grails-gorm-testing-support"
-    testCompile "org.mockito:mockito-core"
-    testCompile "org.grails:grails-web-testing-support"
-    testCompile "org.grails.plugins:geb"
-    testCompile "org.grails:grails-test-mixins:3.3.0.RC1"
-    testCompile "com.squareup.okhttp3:mockwebserver:4.7.2"
-    testCompile( "org.hibernate:hibernate-jcache:${hibernateVersion}")
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.grails:grails-web-testing-support"
+    testImplementation "org.grails.plugins:geb"
+    testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.7.2"
+    testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
     testRuntime "org.seleniumhq.selenium:selenium-chrome-driver"
     testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
@@ -192,16 +192,16 @@ dependencies {
 
     // transitive dependencies constraints.
     constraints {
-        compile("com.mchange:c3p0:0.9.5.4") {
+        implementation("com.mchange:c3p0:0.9.5.4") {
             because "version brought by quartz affected by CVE-2019-5427"
         }
-        compile ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}") {
+        implementation ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}") {
             because "earlier versions affected by exploitable bugs"
         }
-        compile ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}") {
+        implementation ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}") {
             because "earlier versions affected by exploitable bugs"
         }
-        compile ("org.yaml:snakeyaml:${snakeyamlVersion}") {
+        implementation ("org.yaml:snakeyaml:${snakeyamlVersion}") {
             because "required by rundeck:repository"
         }
 
@@ -212,18 +212,18 @@ dependencies {
 }
 grails{
     plugins{
-        compile project(':grails-metricsweb')
-        compile project(':grails-persistlocale')
-        compile project(':grails-securityheaders')
-        compile project(':grails-repository')
-        compile project(':grails-webhooks')
+        implementation project(':grails-metricsweb')
+        implementation project(':grails-persistlocale')
+        implementation project(':grails-securityheaders')
+        implementation project(':grails-repository')
+        implementation project(':grails-webhooks')
 
         /** It's important that the configuration addition follow the form 'compile project("")'
          * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
          * can produce broken plugins in development mode. */
         for(proj in project.findProperty('bundledGrailsPlugins')) {
             logger.info("Injecting Grails plugin ${proj}")
-            compile project("$proj")
+            implementation project("$proj")
         }
     }
     pathingJar = true
@@ -419,46 +419,46 @@ clean {
     delete "$projectDir/grails-app/assets/javascripts/vendor"
 }
 
-bintray {
-    user = findProperty("bintrayUser")
-    key = findProperty("bintrayApiKey")
-    publish = true
-    dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
-    override = true
+// bintray {
+//     user = findProperty("bintrayUser")
+//     key = findProperty("bintrayApiKey")
+//     publish = true
+//     dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+//     override = true
 
-    if (findProperty('bintrayUseExisting')) {
-        filesSpec {
-            from "$artifactDir/rundeckapp/build/libs"
-            from "$artifactDir/rundeckapp/build/poms"
-            into "${project.group}.rundeck".replace('.', '/')
-            exclude '*.original'
-            rename { file ->
-                if (file =~ /^pom/)
-                    return "rundeck-${version}.pom"
-                else
-                    return file
-            }
-        }
-    } else {
-        configurations =  ['archives']
-    }
+//     if (findProperty('bintrayUseExisting')) {
+//         filesSpec {
+//             from "$artifactDir/rundeckapp/build/libs"
+//             from "$artifactDir/rundeckapp/build/poms"
+//             into "${project.group}.rundeck".replace('.', '/')
+//             exclude '*.original'
+//             rename { file ->
+//                 if (file =~ /^pom/)
+//                     return "rundeck-${version}.pom"
+//                 else
+//                     return file
+//             }
+//         }
+//     } else {
+//         configurations =  ['archives']
+//     }
 
-    pkg {
-        repo = 'rundeck-maven'
-        name = 'rundeck'
-        userOrg = 'rundeck'
+//     pkg {
+//         repo = 'rundeck-maven'
+//         name = 'rundeck'
+//         userOrg = 'rundeck'
 
-        version {
-            // mavenCentralSync {
-            //     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-            //     user = findProperty('ossUserToken') //OSS user token: mandatory
-            //     password = findProperty('ossUserPassword') //OSS user password: mandatory
-            // }
+//         version {
+//             // mavenCentralSync {
+//             //     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
+//             //     user = findProperty('ossUserToken') //OSS user token: mandatory
+//             //     password = findProperty('ossUserPassword') //OSS user password: mandatory
+//             // }
 
-            gpg {
-                sign = true //Determines whether to GPG sign the files. The default is false
-                passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
-            }
-        }
-    }
-}
+//             gpg {
+//                 sign = true //Determines whether to GPG sign the files. The default is false
+//                 passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
+//             }
+//         }
+//     }
+// }
