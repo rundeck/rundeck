@@ -51,7 +51,7 @@ dependencies {
     implementation "org.grails.plugins:async"
     implementation "org.grails.plugins:scaffolding"
     implementation "org.grails.plugins:gsp"
-    implementationOnly "io.micronaut:micronaut-inject-groovy"
+    implementation "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     implementation project(":core")
     implementation('com.github.rundeck.repository:repository-client:0.12.0') {

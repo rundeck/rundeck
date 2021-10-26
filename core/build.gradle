@@ -44,12 +44,12 @@ tasks.withType(Javadoc) {
     classpath += configurations.provided
 }
 dependencies {
-    compile project(":rundeck-storage:rundeck-storage-api")
-    compile project(":rundeck-storage:rundeck-storage-conf")
-    compile project(":rundeck-authz:rundeck-authz-api")
-    compile project(":rundeck-authz:rundeck-authz-core")
-    compile project(":rundeck-authz:rundeck-authz-yaml")
-    compile ('com.google.guava:guava:26.0-jre') {
+    implementation project(":rundeck-storage:rundeck-storage-api")
+    implementation project(":rundeck-storage:rundeck-storage-conf")
+    implementation project(":rundeck-authz:rundeck-authz-api")
+    implementation project(":rundeck-authz:rundeck-authz-core")
+    implementation project(":rundeck-authz:rundeck-authz-yaml")
+    implementation ('com.google.guava:guava:26.0-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
         exclude group:'com.google.errorprone', module: 'error_prone_annotations'
@@ -82,7 +82,7 @@ dependencies {
 
 
     implementation ("org.apache.httpcomponents:httpclient:${httpClientVersion}")
-    implementationOnly "org.projectlombok:lombok:1.18.10"
+    implementation "org.projectlombok:lombok:1.18.10"
     annotationProcessor "org.projectlombok:lombok:1.18.10"
     testImplementation 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.10.19'
