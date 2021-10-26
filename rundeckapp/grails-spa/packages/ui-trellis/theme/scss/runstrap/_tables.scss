@@ -79,10 +79,6 @@ th {
     border-top: 2px solid $table-border-color;
   }
 
-  // Nesting
-  .table {
-    background-color: $body-bg;
-  }
 }
 
 
@@ -133,7 +129,7 @@ th {
 
 .table-striped {
   > tbody > tr:nth-of-type(odd) {
-    background-color: $table-bg-accent;
+    background-color: var(--table-stripe-color);
   }
 }
 
