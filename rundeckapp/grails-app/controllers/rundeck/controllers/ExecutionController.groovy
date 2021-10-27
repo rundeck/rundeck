@@ -64,7 +64,6 @@ import java.text.SimpleDateFormat
 */
 class ExecutionController extends ControllerBase{
     FrameworkService frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     ExecutionService executionService
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService

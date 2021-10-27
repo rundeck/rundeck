@@ -41,7 +41,6 @@ class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
     def frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     def userService
     def configurationService
     LinkGenerator grailsLinkGenerator

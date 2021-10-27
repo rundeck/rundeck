@@ -38,7 +38,6 @@ class UserController extends ControllerBase{
     private static final int DEFAULT_TOKEN_PAGE_SIZE = 50
 
     UserService userService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     GrailsApplication grailsApplication
     def configurationService
 

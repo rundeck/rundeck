@@ -75,7 +75,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
-    AppAuthContextProcessor rundeckAuthContextProcessor
     FeatureService featureService
 
     def configurationService

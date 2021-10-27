@@ -49,16 +49,16 @@ import java.util.zip.GZIPOutputStream
 class ControllerBase {
     UiPluginService uiPluginService
     ApiService apiService
-    AppAuthContextProcessor rundeckWebAuthContextProcessor
+    AppAuthContextProcessor rundeckAuthContextProcessor
     RdDomainAuthorizer rundeckDomainAuthorizer
 
     protected UserAndRolesAuthContext getSystemAuthContext(){
-        rundeckWebAuthContextProcessor.getAuthContextForSubject(getSubject())
+        rundeckAuthContextProcessor.getAuthContextForSubject(getSubject())
     }
 
     protected UserAndRolesAuthContext getProjectAuthContext(){
         requireParams('project')
-        rundeckWebAuthContextProcessor.getAuthContextForSubjectAndProject(getSubject(),params.project.toString())
+        rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(getSubject(),params.project.toString())
     }
     /**
      *

@@ -143,7 +143,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
     def ExecutionService executionService
     def FrameworkService frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     def ScheduledExecutionService scheduledExecutionService
     def OrchestratorPluginService orchestratorPluginService
 	def NotificationService notificationService
