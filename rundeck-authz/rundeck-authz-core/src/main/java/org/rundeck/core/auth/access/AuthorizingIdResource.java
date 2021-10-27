@@ -15,5 +15,11 @@ public interface AuthorizingIdResource<T, ID>
 
     ID getIdentifier();
 
+    /**
+     * Authorize with {@link AccessLevels#APP_DELETE}
+     * @return object
+     * @throws UnauthorizedAccess if unauthorized
+     * @throws NotFound if not found
+     */
     T getDelete() throws UnauthorizedAccess, NotFound;
 }
