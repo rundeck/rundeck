@@ -158,22 +158,22 @@ dependencies {
         exclude(group:"org.grails.profiles",module:"web")
     }
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
-    runtime "com.h2database:h2:1.4.199"
-    runtime 'org.apache.logging.log4j:log4j-web:2.13.3'
+    runtimeOnly "com.h2database:h2:1.4.199"
+    runtimeOnly 'org.apache.logging.log4j:log4j-web:2.13.3'
 
     // Database drivers
-    runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
-    runtime 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtime 'org.postgresql:postgresql:42.2.13'
-    runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
+    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
+    runtimeOnly 'org.postgresql:postgresql:42.2.13'
+    runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
-    runtime "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    runtime "org.apache.tomcat:tomcat-jdbc:9.0.44"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    assets ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
+    runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
+    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
+    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    implementation ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
-    assets ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
+    implementation ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
     testImplementation "org.grails:grails-gorm-testing-support"
@@ -184,11 +184,11 @@ dependencies {
     testImplementation "com.squareup.okhttp3:mockwebserver:4.7.2"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
-    testRuntime "org.seleniumhq.selenium:selenium-chrome-driver"
-    testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
-    testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
-    testRuntime "org.seleniumhq.selenium:selenium-api"
-    testRuntime 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-api"
+    testRuntimeOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
 
     // transitive dependencies constraints.
     constraints {
@@ -406,7 +406,7 @@ artifacts {
     war war
     bootWar file: war.archivePath, builtBy: bootWar
 }
-install.dependsOn assemble
+//install.dependsOn assemble
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {
     bootWar.dependsOn(war)
