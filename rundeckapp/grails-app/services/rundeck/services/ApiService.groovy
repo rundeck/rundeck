@@ -482,7 +482,7 @@ class ApiService {
      * @return format name
      */
     public String extractResponseFormat(HttpServletRequest request, HttpServletResponse response,
-                                      ArrayList<String> allowed, String defformat = null) {
+                                      List<String> allowed, String defformat = null) {
         def defFormatEval = defformat ?: request.format
         return ((response.format in allowed) ? response.format : (defFormatEval in allowed?defFormatEval:null))
     }
@@ -494,7 +494,7 @@ class ApiService {
      * @param responseFormat response format to send ('xml' or 'json') if request is not valid, or null to use default
      * @return true if valid, false otherwise
      */
-    def requireRequestFormat(HttpServletRequest request, HttpServletResponse response, ArrayList<String> allowed, def
+    def requireRequestFormat(HttpServletRequest request, HttpServletResponse response, List<String> allowed, def
     responseFormat = null) {
         def contentType = request.getHeader("Content-Type")
         def test = request.format in allowed || (contentType && (extractMimeType(contentType) in allowed))
