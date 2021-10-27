@@ -1,7 +1,19 @@
-plugins {
-  id "com.github.node-gradle.node" version "3.1.1"
-  id 'base'
+buildscript {
+    repositories {
+        maven { url "https://repo.grails.org/grails/core" }
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "com.github.node-gradle:gradle-node-plugin:3.1.1"
+    }
 }
+
+// plugins {
+//   id "com.github.node-gradle.node"
+//   id 'base'
+// }
+apply plugin: 'com.github.node-gradle.node'
+apply plugin: 'base'
 
 configurations{
   lib
@@ -19,41 +31,41 @@ node{
     // It will be unpacked in the workDir
     version = "12.16.3"
     
-    // Version of npm to use
-    // If specified, installs it in the npmWorkDir
-    // If empty, the plugin will use the npm command bundled with Node.js
-    npmVersion = ""
+    // // Version of npm to use
+    // // If specified, installs it in the npmWorkDir
+    // // If empty, the plugin will use the npm command bundled with Node.js
+    // npmVersion = ""
     
-    // Version of Yarn to use
-    // Any Yarn task first installs Yarn in the yarnWorkDir
-    // It uses the specified version if defined and the latest version otherwise (by default)
-    yarnVersion = ""
+    // // Version of Yarn to use
+    // // Any Yarn task first installs Yarn in the yarnWorkDir
+    // // It uses the specified version if defined and the latest version otherwise (by default)
+    // yarnVersion = ""
     
-    // Base URL for fetching node distributions
-    // Only used if download is true
-    // Change it if you want to use a mirror
-    // Or set to null if you want to add the repository on your own.
-    distBaseUrl = "https://nodejs.org/dist"
+    // // Base URL for fetching node distributions
+    // // Only used if download is true
+    // // Change it if you want to use a mirror
+    // // Or set to null if you want to add the repository on your own.
+    // distBaseUrl = "https://nodejs.org/dist"
     
-    // The npm command executed by the npmInstall task
-    // By default it is install but it can be changed to ci
-    npmInstallCommand = "install"
-    
-    
-    // The directory where npm is installed (when a specific version is defined)
-    npmWorkDir = file("${project.projectDir}/.gradle/npm")
+    // // The npm command executed by the npmInstall task
+    // // By default it is install but it can be changed to ci
+    // npmInstallCommand = "install"
     
     
-    // The Node.js project directory location
-    // This is where the package.json file and node_modules directory are located
-    // By default it is at the root of the current project
-    nodeProjectDir = file("${project.projectDir}")
+    // // The directory where npm is installed (when a specific version is defined)
+    // npmWorkDir = file("${project.projectDir}/.gradle/npm")
     
-    // Whether the plugin automatically should add the proxy configuration to npm and yarn commands
-    // according the proxy configuration defined for Gradle
-    // Disable this option if you want to configure the proxy for npm or yarn on your own
-    // (in the .npmrc file for instance)
-    nodeProxySettings = ProxySettings.SMART
+    
+    // // The Node.js project directory location
+    // // This is where the package.json file and node_modules directory are located
+    // // By default it is at the root of the current project
+    // nodeProjectDir = file("${project.projectDir}")
+    
+    // // Whether the plugin automatically should add the proxy configuration to npm and yarn commands
+    // // according the proxy configuration defined for Gradle
+    // // Disable this option if you want to configure the proxy for npm or yarn on your own
+    // // (in the .npmrc file for instance)
+    // nodeProxySettings = ProxySettings.SMART
 }
 
 def sourceDirs = [

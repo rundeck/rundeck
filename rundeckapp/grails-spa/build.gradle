@@ -1,5 +1,5 @@
 plugins {
-  id "com.moowork.node"
+  id "com.github.node-gradle.node"
   id 'base'
 }
 
@@ -19,8 +19,15 @@ dependencies {
 }
 
 node{
-    download = project.hasProperty('node.install')
-    version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
+    // Whether to download and install a specific Node.js version or not
+    // If false, it will use the globally installed Node.js
+    // If true, it will download node using above parameters
+    // Note that npm is bundled with Node.js
+    download = false
+    
+    // Version of node to download and install (only used if download is true)
+    // It will be unpacked in the workDir
+    version = "12.16.3"
 }
 
 

@@ -18,7 +18,7 @@ buildscript {
 }
 plugins {
     id "org.dvaske.gradle.git-build-info"
-    id "com.moowork.node" version "1.2.0"
+    id "com.github.node-gradle.node" version "3.1.1"
 }
 
 apply plugin:"com.jfrog.bintray"
