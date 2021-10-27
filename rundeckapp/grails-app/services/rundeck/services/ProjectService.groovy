@@ -37,6 +37,7 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
 import grails.async.Promises
+import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
@@ -89,14 +90,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
-    def scheduledExecutionService
-    def executionService
-    def fileUploadService
+    ScheduledExecutionService scheduledExecutionService
+    ExecutionService executionService
+    FileUploadService fileUploadService
     def loggingService
     def logFileStorageService
     def workflowService
     ContextACLManager<AppACLContext> aclFileManagerService
-    def scmService
+    ScmService scmService
     def executionUtilService
     def AppAuthContextEvaluator rundeckAuthContextEvaluator
 
@@ -1687,14 +1688,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         execidmap
     }
 
+    static class DeleteResponse{
+        boolean success
+        String error
+    }
     /**
      * Delete a project completely
      * @param project framework project
      * @param framework frameowkr
      * @return map [success:true/false, error: (String errorMessage)]
      */
-    def deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username){
-        def result = [success: false]
+    @GrailsCompileStatic
+    DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username){
+        def result = new DeleteResponse(success: false)
         notify('projectWillBeDeleted', project.name)
 
         //disable scm
@@ -1708,14 +1714,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 ExecReport.deleteByCtxProject(project.name)
 
                 //delete all jobs with their executions
-                ScheduledExecution.findAllByProject(project.name).each{ se->
-                    def sedresult=scheduledExecutionService.deleteScheduledExecution(se, true, authContext,username)
+
+                List<ScheduledExecution> jobs = ScheduledExecution.findAllByProject(project.name)
+                for (ScheduledExecution se : jobs) {
+                    ScheduledExecutionService.DeleteJobResult sedresult = scheduledExecutionService.deleteScheduledExecution(se, true, authContext, username)
                     if(!sedresult.success){
                         throw new Exception(sedresult.error)
                     }
                 }
                 //delete all remaining executions
-                def allexecs= Execution.findAllByProject(project.name)
+                List<Execution> allexecs= Execution.findAllByProject(project.name)
                 def other=allexecs.size()
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
                 log.debug("${other} other executions deleted")
@@ -1736,11 +1744,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     throw new Exception("Some components had an error: " + compErrors.join("; "))
                 }
 
-                result = [success: true]
+                result.success= true
             } catch (Exception e) {
                 status.setRollbackOnly()
                 log.error("Failed to delete project ${project.name}", e)
-                result = [error: "Failed to delete project ${project.name}: ${e.message}", success: false]
+                result.error= "Failed to delete project ${project.name}: ${e.message}"
+                result.success=false
             }
         }
         //if success, delete framework dir

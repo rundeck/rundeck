@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
@@ -957,19 +958,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    static class DeleteJobResult{
+        boolean success
+        String error
+    }
     /**
      * Immediately delete a ScheduledExecution
      * @param username @param scheduledExecution
      * @return
      */
-    def deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
+    DeleteJobResult deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
                                  AuthContext authContext=null, String username){
         scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
         def originalRef=jobEventRevRef(scheduledExecution)
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
-        def errmsg=null
-        def success = false
+        String errmsg=null
+        boolean success = false
         Execution.withTransaction {
             //find any currently running executions for this job, and if so, throw exception
             def found = Execution.createCriteria().get {
@@ -983,7 +988,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (found) {
                 errmsg = 'Cannot delete {{Job ' + scheduledExecution.extid + '}} "' + scheduledExecution.jobName  +
                         '" it is currently being executed: {{Execution ' + found.id + '}}'
-                return [success:false,error:errmsg]
+                return new DeleteJobResult(success:false,error:errmsg)
             }
             def stats= ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if(stats){
@@ -1031,7 +1036,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //issue event directly
             notify('jobChanged', event)
         }
-        return [success:success,error:errmsg]
+        return new DeleteJobResult(success:success,error:errmsg)
     }
     /**
      * Attempt to delete a job given an id
