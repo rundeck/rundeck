@@ -52,8 +52,8 @@ dependencies {
     implementation project(":core")
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
-    provided "org.grails:grails-plugin-domain-class"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    compileOnly "org.grails:grails-plugin-domain-class"
+    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"

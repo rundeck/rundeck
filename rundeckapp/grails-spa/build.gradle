@@ -30,7 +30,7 @@ task noop() {
   }
 }
 
-task runNpmBuild(type: NpmTask, group: 'build') {
+tasks.register("runNpmBuild", NpmTask) {
     dependsOn configurations.uiTrellis
 
     inputs.files(configurations.uiTrellis.files)
