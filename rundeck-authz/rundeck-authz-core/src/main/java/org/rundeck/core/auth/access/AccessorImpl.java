@@ -18,7 +18,7 @@ class AccessorImpl<T>
     }
 
     interface Required<T> {
-        T getAccess(AuthActions actions, String description) throws UnauthorizedAccess, NotFound;
+        T getAccess(AuthActions actions) throws UnauthorizedAccess, NotFound;
     }
 
     @Override
@@ -28,7 +28,7 @@ class AccessorImpl<T>
 
     @Override
     public T getResource() throws UnauthorizedAccess, NotFound {
-        return requireActions.getAccess(actions, actions.getDescription());
+        return requireActions.getAccess(actions);
     }
 
 

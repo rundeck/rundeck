@@ -52,7 +52,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
     }
 
     @Override
-    public T requireActions(final AuthActions actions, String description) throws UnauthorizedAccess, NotFound {
+    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
         /*
          *
          */
@@ -64,7 +64,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
         String projectLevel = getProject(res);
 
         if (projectLevel == null) {
-            return super.requireActions(actions, description);
+            return super.requireActions(actions);
         }
 
         UserAndRolesAuthContext authContext = getAuthContext(projectLevel);
@@ -85,7 +85,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
         }
 
         if (!authorized) {
-            throw new UnauthorizedAccess(description!=null?description:actionSet.get(0), getResourceTypeName(), getResourceIdent());
+            throw new UnauthorizedAccess(actions.getDescription(), getResourceTypeName(), getResourceIdent());
         }
 
         return res;

@@ -1,5 +1,6 @@
 package org.rundeck.core.auth.access;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.rundeck.core.auth.AuthConstants;
 
@@ -84,20 +85,35 @@ public class AccessLevels {
                     .or(APP_ADMIN);
 
     @Getter
+    @EqualsAndHashCode
     public static class AnyAuth
             implements AuthActions
     {
 
         private final List<String> anyActions;
-        private String description;
+        @EqualsAndHashCode.Exclude
+        private final String description;
 
         public AnyAuth(final List<String> anyActions) {
-            this.anyActions = anyActions;
+            this(anyActions, null);
         }
 
         public AnyAuth(final List<String> anyActions, String description) {
+            if (null == anyActions || anyActions.size() < 1) {
+                throw new IllegalArgumentException("anyActions cannot be empty");
+            }
             this.anyActions = anyActions;
             this.description = description;
+        }
+
+        public String getDescription() {
+            if (null != this.description) {
+                return this.description;
+            } else if (anyActions != null && anyActions.size() > 0) {
+                return anyActions.get(0);
+            } else {
+                return "(unknown)";
+            }
         }
 
         @Override

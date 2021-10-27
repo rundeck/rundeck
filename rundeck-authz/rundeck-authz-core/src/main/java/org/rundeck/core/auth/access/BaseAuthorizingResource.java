@@ -79,7 +79,7 @@ public abstract class BaseAuthorizingResource<T>
         return accessor(actions).isAllowed();
     }
 
-    public T requireActions(final AuthActions actions, String description) throws UnauthorizedAccess, NotFound {
+    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
         T res = retrieve();
         if (res == null) {
             throw new NotFound(getResourceTypeName(), getResourceIdent());
@@ -103,7 +103,7 @@ public abstract class BaseAuthorizingResource<T>
 
         if (!authorized) {
             throw new UnauthorizedAccess(
-                    description != null ? description : actionSet.get(0),
+                    actions.getDescription(),
                     getResourceTypeName(),
                     getResourceIdent()
             );
@@ -114,7 +114,7 @@ public abstract class BaseAuthorizingResource<T>
 
     public boolean canPerform(final AuthActions actions) throws NotFound {
         try {
-            requireActions(actions, null);
+            requireActions(actions);
         } catch (UnauthorizedAccess ignored) {
             return false;
         }
