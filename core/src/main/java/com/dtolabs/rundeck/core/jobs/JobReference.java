@@ -50,4 +50,14 @@ public interface JobReference {
      * @return server UUID
      */
     String getServerUUID();
+
+    /**
+     * @return original job name in case of renaming
+     */
+    default String getOriginalJobName(){ return null; }
+
+    /**
+     * @return original group name in case of renaming
+     */
+    default String getOriginalGroupName(){ return null; }
 }
