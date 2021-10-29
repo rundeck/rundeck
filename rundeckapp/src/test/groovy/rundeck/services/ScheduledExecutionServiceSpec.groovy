@@ -242,8 +242,8 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 //        def scheduleDate = new Date()
         def data=["project": job.project,
                   "jobId":job.uuid,
-                  "oldJobName": originalJobName,
-                  "oldGroupName": originalGroupName]
+                  "oldQuartzJobName": originalJobName,
+                  "oldQuartzGroupName": originalGroupName]
 
         service.jobSchedulerService=Mock(JobSchedulerService){
             determineExecNode(*_)>>{args->

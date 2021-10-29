@@ -1140,8 +1140,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def data=["project": se.project,
                   "jobId":se.uuid,
-                  "oldJobName": oldJobName,
-                  "oldGroupName": oldGroupName]
+                  "oldQuartzJobName": oldJobName,
+                  "oldQuartzGroupName": oldGroupName]
 
         if(!forceLocal){
             boolean remoteAssign = remoteAssigned ?: jobSchedulerService.scheduleRemoteJob(data)
