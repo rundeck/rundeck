@@ -54,10 +54,10 @@ public interface JobReference {
     /**
      * @return original job name in case of renaming
      */
-    default String getOriginalJobName(){ return null; }
+    default String getOriginalQuartzJobName(){ return null; }
 
     /**
      * @return original group name in case of renaming
      */
-    default String getOriginalGroupName(){ return null; }
+    default String getOriginalQuartzGroupName(){ return null; }
 }

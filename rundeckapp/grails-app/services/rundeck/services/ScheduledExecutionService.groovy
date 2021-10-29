@@ -3364,8 +3364,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(frameworkService.isClusterModeEnabled()){
             if (schedulingWasChanged) {
                 JobReferenceImpl jobReference = scheduledExecution.asReference()
-                jobReference.setOriginalJobName(oldjob.oldjobname)
-                jobReference.setOriginalGroupName(oldjob.oldjobgroup)
+                jobReference.setOriginalQuartzJobName(oldjob.oldjobname)
+                jobReference.setOriginalQuartzGroupName(oldjob.oldjobgroup)
                 modify = jobSchedulerService.updateScheduleOwner(jobReference)
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID

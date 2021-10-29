@@ -3678,15 +3678,15 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                 groupPath: job.groupPath,
                 project: job.project,
                 serverUUID: job.serverNodeUUID,
-                originalJobName: oldJob.oldjobname,
-                originalGroupName: oldJob.oldjobgroup
+                originalQuartzJobName: oldJob.oldjobname,
+                originalQuartzGroupName: oldJob.oldjobgroup
         )
 
         service.jobSchedulerService = Mock(JobSchedulerService){
             1 * updateScheduleOwner(_) >> { arguments ->
                 JobReferenceImpl jobReference = arguments[0];
-                jobReference.getOriginalJobName() == jobReferenceImpl.getOriginalJobName()
-                jobReference.getOriginalGroupName() == jobReferenceImpl.getOriginalGroupName()
+                jobReference.getOriginalQuartzJobName() == jobReferenceImpl.getOriginalQuartzJobName()
+                jobReference.getOriginalQuartzGroupName() == jobReferenceImpl.getOriginalQuartzGroupName()
                 return false
             }
         }
