@@ -2168,9 +2168,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ] + extMeta]
     }
 
-    def metrics(){
-
-    }
     def licenses(){
 
     }
