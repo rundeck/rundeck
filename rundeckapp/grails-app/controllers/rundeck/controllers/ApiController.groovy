@@ -35,10 +35,19 @@ import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 
 /**
  * Contains utility actions for API access and responses
  */
+@Controller("/api/{apiversion}")
 class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
@@ -466,6 +475,13 @@ class ApiController extends ControllerBase{
         value = RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,
         description = 'Read System Info'
     )
+    @Get(uri="/system/info", produces = MediaType.APPLICATION_JSON)
+    @Operation(method = "GET", summary = "Get Rundeck server information and stats",
+            description = "Display stats and info about the server"
+    )
+    @ApiResponse(responseCode = "200", description = "System info response", content = @Content(mediaType = "application/json",
+            schema = @Schema(type="string")))
+    @Tag(name = "system")
     def apiSystemInfo(){
         if (!apiService.requireApi(request, response)) {
             return

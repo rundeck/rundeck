@@ -2,6 +2,9 @@ package rundeckapp
 
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
+import io.swagger.v3.oas.annotations.OpenAPIDefinition
+import io.swagger.v3.oas.annotations.info.Info
+import io.swagger.v3.oas.annotations.info.License
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -19,6 +22,15 @@ import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 
 import java.nio.file.Files
 import java.nio.file.Paths
+
+@OpenAPIDefinition(
+        info = @Info(
+                title = "Rundeck",
+                version = "39",
+                description = "Rundeck provides a Web API for use with your applications.",
+                license = @License(name = "MIT", url = "")
+        )
+)
 
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
