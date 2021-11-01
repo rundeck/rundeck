@@ -1,0 +1,42 @@
+.el-collapse {
+  border: none !important;
+}
+
+.el-collapse-item {
+  background-color: var(--background-color-lvl3);
+  border-radius: $border-radius-small;
+  font-size: $font-size-base;
+  font-weight: $font-weight-light;
+  line-height: 1.6em;
+  margin-top: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--gray-input-outline);
+}
+
+.el-collapse-item__wrap {
+  background-color: var(--background-color-lvl3);
+  border-bottom: none !important;
+}
+
+.el-collapse-item {
+  .el-collapse-item__header {
+    background-color: var(--background-color-lvl3);
+    border: 0 none;
+    border-radius: $border-radius-small;
+    font-weight: bold;
+    font-size: $font-size-medium;
+    color: var(--font-color);
+
+    &:hover,
+    &:active,
+    &:focus {
+      color: var(--danger-color);
+    }
+  }
+
+  .el-collapse-item__content {
+    background-color: var(--background-color-lvl3);
+    border: none;
+    box-shadow: none;
+  }
+}

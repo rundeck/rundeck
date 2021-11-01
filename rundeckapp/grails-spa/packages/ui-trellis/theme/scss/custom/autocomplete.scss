@@ -1,6 +1,6 @@
 .autocomplete-suggestions {
-  border: 1px solid #999;
-  background: #FFF;
+  border: 1px solid var(--border-color);
+  background: var(--background-color);
   overflow: auto;
 }
 
@@ -11,12 +11,12 @@
 }
 
 .autocomplete-selected {
-  background: #F0F0F0;
+  background: var(--background-color-accent);
 }
 
 .autocomplete-suggestions strong {
   font-weight: normal;
-  color: #3399FF;
+  color: var(--link-primary-color);
 }
 
 .autocomplete-group {
@@ -25,5 +25,5 @@
 
 .autocomplete-group strong {
   display: block;
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid var(--border-color);
 }

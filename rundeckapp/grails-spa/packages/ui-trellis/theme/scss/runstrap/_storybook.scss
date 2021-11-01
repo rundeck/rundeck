@@ -1,0 +1,19 @@
+// *************************************
+//
+//   Storybook Modifications
+//   -> Adds Additional classes for better experience
+//
+// -------------------------------------
+
+.sb-show-main.sb-main-fullscreen{
+  overflow: scroll !important;
+  .plain-text{
+    color: var(--grey-100);
+  }
+  .maybe-class-name{
+    color: var(--red-400);
+  }
+  .parameter{
+      color: var(--cyan-400);
+  }
+}

@@ -615,7 +615,7 @@ search
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
                                   <span class="btn-group">
-                                      <button type="button" class="btn btn-xs dropdown-toggle"
+                                      <button type="button" class="btn btn-default btn-xs dropdown-toggle"
                                               data-toggle="dropdown">
                                           <g:message code="execution.log" />
                                           <span class="caret"></span>

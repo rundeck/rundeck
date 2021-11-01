@@ -230,12 +230,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
             getServerUUID() >> 'uuid'
             isClusterModeEnabled() >> clusterEnabled
         }
-        service.jobSchedulerService=Mock(JobSchedulerService){
-            determineExecNode(*_)>>{args->
-                return serverNodeUUID
-            }
-            scheduleRemoteJob(_)>>false
-        }
+
         def job = new ScheduledExecution(
                 createJobParams(
                         scheduled: hasSchedule,
@@ -245,9 +240,20 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
                 )
         ).save()
 //        def scheduleDate = new Date()
+        def data=["project": job.project,
+                  "jobId":job.uuid,
+                  "oldQuartzJobName": originalJobName,
+                  "oldQuartzGroupName": originalGroupName]
+
+        service.jobSchedulerService=Mock(JobSchedulerService){
+            determineExecNode(*_)>>{args->
+                return serverNodeUUID
+            }
+            scheduleRemoteJob(data)>>false
+        }
 
         when:
-        def result = service.scheduleJob(job, null, null, false, remoteAssgined)
+        def result = service.scheduleJob(job, originalJobName, originalGroupName, false, remoteAssgined)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
@@ -255,11 +261,13 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         result == [scheduleDate, serverNodeUUID]
 
         where:
-        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled | clusterEnabled | serverNodeUUID | remoteAssgined | scheduleDate
-        true                | true            | true             | true        | true            | false          | null           | false          | new Date()
-        true                | true            | true             | true        | true            | true           | 'uuid'         | false          | new Date()
-        true                | true            | true             | true        | true            | false          | null           | true           | null
-        true                | true            | true             | true        | true            | true           | null           | true           | null
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled | clusterEnabled | serverNodeUUID | remoteAssgined | scheduleDate | originalJobName | originalGroupName
+        true                | true            | true             | true        | true            | false          | null           | false          | new Date()   | null            | null
+        true                | true            | true             | true        | true            | true           | 'uuid'         | false          | new Date()   | null            | null
+        true                | true            | true             | true        | true            | false          | null           | false          | new Date()   | "aJobName"      | "aGroupName"
+        true                | true            | true             | true        | true            | true           | 'uuid'         | false          | new Date()   | "aJobName"      | "aGroupName"
+        true                | true            | true             | true        | true            | false          | null           | true           | null         | null            | null
+        true                | true            | true             | true        | true            | true           | null           | true           | null         | null            | null
     }
 
     @Unroll
@@ -3617,6 +3625,83 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         then: "validation error results in failure"
             !results.success
             results.error.contains('Validation failed')
+    }
+
+    @Unroll
+    def "do save updated job, renaming a job with cluster enabled should keep original job name on job reference"() {
+        def params = [:]
+        def job = new ScheduledExecution(createJobParams())
+        def oldJob = new OldJob(oldjobname: 'blue', originalRef: ScheduledExecutionService.jobEventRevRef(job))
+        job.jobName = 'other name'
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>'bob'
+            getRoles()>>['a']
+        }
+        setupDoUpdateJob()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProperties() >> [:]
+                getProjectProperties() >> [:]
+            }
+            _ * existsFrameworkProject('BProject') >> true
+
+            _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+            _ * isClusterModeEnabled() >> true
+            _ * getServerUUID() >> null
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * frameworkNodeName () >> null
+            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * filterNodeSet(*_) >> null
+        }
+
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectJobAll(_,_,_,_) >> true
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * authorizeProjectJobAny(*_) >> true
+            _ * filterAuthorizedNodes(*_) >> null
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+        }
+
+
+        JobReferenceImpl jobReferenceImpl = new JobReferenceImpl(
+                id: job.extid,
+                jobName: job.jobName,
+                groupPath: job.groupPath,
+                project: job.project,
+                serverUUID: job.serverNodeUUID,
+                originalQuartzJobName: oldJob.oldjobname,
+                originalQuartzGroupName: oldJob.oldjobgroup
+        )
+
+        service.jobSchedulerService = Mock(JobSchedulerService){
+            1 * updateScheduleOwner(_) >> { arguments ->
+                JobReferenceImpl jobReference = arguments[0];
+                jobReference.getOriginalQuartzJobName() == jobReferenceImpl.getOriginalQuartzJobName()
+                jobReference.getOriginalQuartzGroupName() == jobReferenceImpl.getOriginalQuartzGroupName()
+                return false
+            }
+        }
+
+        service.jobSchedulesService=Mock(SchedulesManager){
+            1 * shouldScheduleExecution(_) >> false
+        }
+
+        def importedJob = RundeckJobDefinitionManager.importedJob(job, [:])
+
+        when: "save the updated the job"
+            def results = service._dosaveupdated(params, importedJob, oldJob, auth)
+
+        then: "validation error results in failure"
+            results.success
     }
     @Unroll
     def "do update job, disabled execution should delete quartz"() {

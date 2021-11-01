@@ -1139,7 +1139,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def data=["project": se.project,
-                  "jobId":se.uuid, "oldServerNodeUUID": se.serverNodeUUID]
+                  "jobId":se.uuid,
+                  "oldQuartzJobName": oldJobName,
+                  "oldQuartzGroupName": oldGroupName]
 
         if(!forceLocal){
             boolean remoteAssign = remoteAssigned ?: jobSchedulerService.scheduleRemoteJob(data)
@@ -3361,7 +3363,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean schedulingWasChanged = oldjob.schedulingWasChanged(scheduledExecution)
         if(frameworkService.isClusterModeEnabled()){
             if (schedulingWasChanged) {
-                modify = jobSchedulerService.updateScheduleOwner(scheduledExecution.asReference())
+                JobReferenceImpl jobReference = scheduledExecution.asReference()
+                jobReference.setOriginalQuartzJobName(oldjob.oldjobname)
+                jobReference.setOriginalQuartzGroupName(oldjob.oldjobgroup)
+                modify = jobSchedulerService.updateScheduleOwner(jobReference)
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
                 }

@@ -1,0 +1,86 @@
+//
+// Labels
+// --------------------------------------------------
+
+.label {
+   @include label-style();
+
+  // [converter] extracted a& to a.label
+
+  // Empty labels collapse automatically (not available in IE8)
+  &:empty {
+    display: none;
+  }
+
+  // Quick fix for labels in buttons
+  .btn & {
+    position: relative;
+    top: -1px;
+  }
+}
+
+// Add hover effects, but only for links
+a.label {
+  &:hover,
+  &:focus {
+    color: $label-link-hover-color;
+    text-decoration: none;
+    cursor: pointer;
+  }
+}
+
+// Colors
+// Contextual variations (linked labels get darker on :hover)
+.label-icon{
+    padding: 0.4em 0.55em;
+    i{
+       font-size: 0.8em;
+       line-height: 1;
+    }
+}
+
+.label-default {
+  @include label-variant($label-default-bg);
+  background-color: var(--font-color);
+}
+
+.label-primary {
+  @include label-variant($label-primary-bg);
+   background-color: var(--primary-color);
+}
+
+.label-success {
+  @include label-variant($label-success-bg);
+  background-color: var(--success-color);
+}
+
+.label-info {
+  @include label-variant($label-info-bg);
+  background-color: var(--info-color);
+}
+
+.label-warning {
+  @include label-variant($label-warning-bg);
+  background-color: var(--warning-color);
+}
+
+.label-danger {
+  @include label-variant($label-danger-bg);
+  background-color: var(--danger-color);
+}
+
+
+.label.label-muted {
+    background-color: var(--grey-300)  !important;
+    color: var(--grey-900)  !important;
+    font-weight: 600;
+}
+.label.label-muted.active {
+    background-color: var(--yellow-300)  !important;
+}
+#nodes_tags{
+  padding-bottom: var(--spacing-6);
+}
+.summary.nodetags{
+  margin-left: var(--spacing-3);
+}

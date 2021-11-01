@@ -311,7 +311,7 @@ class RepositoryController {
 
         @PackageScope
         boolean authorized(Map resourceType = AuthConstants.RESOURCE_TYPE_SYSTEM, String action = AuthConstants.ACTION_ADMIN) {
-            List authorizedActions = [AuthConstants.ACTION_ADMIN]
+            List authorizedActions = [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
             if(action != AuthConstants.ACTION_ADMIN) authorizedActions.add(action)
             AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
             rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,resourceType,authorizedActions)

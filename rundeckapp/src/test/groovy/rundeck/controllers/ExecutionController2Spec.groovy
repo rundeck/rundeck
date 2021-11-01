@@ -327,6 +327,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             return true
         }
         controller.apiService = svcMock
+        controller.configurationService=Mock(ConfigurationService){
+            _ * getInteger(_, _) >> { it[1] }
+        }
         when:
         controller.apiExecutionsQueryv14(new ExecutionQuery())
 
@@ -452,6 +455,9 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             return true
         }
         controller.apiService = svcMock
+        controller.configurationService=Mock(ConfigurationService){
+            _ * getInteger(_, _) >> { it[1] }
+        }
         when:
         controller.apiExecutionsQueryv14(new ExecutionQuery())
 
@@ -824,6 +830,50 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     /**
      * Test execution mode status api
      */
+    public void testApiExecutionsStatusUnauthorized() {
+        given:
+            def controller = controller
+
+            params.api_version = 32
+            request.contentType = "application/json"
+
+
+            controller.apiService = Mock(ApiService)
+            1 * controller.apiService.requireApi(_,_,32)>>true
+
+            // mock exec service
+            controller.configurationService=Mock(ConfigurationService){
+                0*isExecutionModeActive()
+            }
+            controller.frameworkService=Mock(FrameworkService) {
+            }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
+                1 * getAuthContextForSubject(_)
+
+                1 * authorizeApplicationResourceAny(
+                    _,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants
+                        .ACTION_OPS_ADMIN]
+                ) >> false
+            }
+        when:
+            // Call controller
+            controller.apiExecutionModeStatus()
+
+
+        then:
+            1 * controller.apiService.renderErrorFormat(_,_)>>{
+                it[0].status=it[1].status
+            }
+            // Check respose.
+            403 == response.status
+    }
+
+
+    /**
+     * Test execution mode status api
+     */
     public void testApiExecutionsStatusWhenActive() {
 
         given:
@@ -845,7 +895,12 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_)
 
-                1 * authorizeApplicationResource(_,_, _) >> true
+                1 * authorizeApplicationResourceAny(
+                    _,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants
+                        .ACTION_OPS_ADMIN]
+                ) >> true
             }
         when:
             // Call controller
@@ -887,7 +942,12 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
                 1 * getAuthContextForSubject(_)
 
-                1 * authorizeApplicationResource(_,_, _) >> true
+                1 * authorizeApplicationResourceAny(
+                    _,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants
+                        .ACTION_OPS_ADMIN]
+                ) >> true
             }
             // Call controller
         controller.apiExecutionModeStatus()

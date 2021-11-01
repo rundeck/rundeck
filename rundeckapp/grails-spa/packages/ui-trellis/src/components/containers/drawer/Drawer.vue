@@ -139,7 +139,7 @@ export default Vue.extend({
 
     &--active {
         height: 100%;
-        background-color: rgba(0, 0, 0, 0.4);
+        background-color: rgba(0, 0, 0, 0.7);
         transition: background-color var(--rd-drawer-transition-time) ease-in-out;
     }
 }

@@ -313,7 +313,7 @@ function _applyAce(e, height) {
 
   jQuery(e).addClass('ace_editor');
   var editor = ace.edit(generateId(e));
-  editor.setTheme("ace/theme/" + (jQuery(e).data('aceSessionTheme') || 'chrome'));
+  applyAceTheme(editor);
   editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
   editor.setReadOnly(true);
 }
@@ -353,6 +353,35 @@ var _ace_modes = [
   "xml",
   "yaml"
 ];
+
+function getAceTheme() {
+  let theme = document.documentElement.dataset.colorTheme || 'light';
+
+  if (theme == 'system')
+    theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+  return theme == 'dark' ? 'tomorrow_night' : 'chrome';
+}
+
+function applyAceTheme(editor) {
+  editor.setTheme(`ace/theme/${getAceTheme()}`);
+  const query = matchMedia('(prefers-color-scheme: dark)');
+
+  const changeHandler = () => {
+    editor.setTheme(`ace/theme/${getAceTheme()}`);
+  };
+
+  // Support for Safari <14
+  if (typeof query.addEventListener == "function")
+    query.addEventListener('change', changeHandler);
+  else
+    query.addListener(changeHandler);
+
+  const observer = new MutationObserver(() => {
+    editor.setTheme(`ace/theme/${getAceTheme()}`);
+  })
+  observer.observe(document.documentElement, {attributes: true})
+}
 
 function getAceSyntaxMode(aceeditor) {
   "use strict";
@@ -417,7 +446,8 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
   }
 
   setAceSyntaxMode(data.aceSessionMode, editor);
-  editor.setTheme("ace/theme/chrome");
+  applyAceTheme(editor);
+
   editor.getSession().on('change', function (e) {
     jQuery(textarea).val(editor.getValue());
     // Create synthetic change since jQuery val, trigger, and change do not trigger all listeners

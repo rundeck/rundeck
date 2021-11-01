@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../paper/variables";
+@import "../runstrap/variables";
 
 .table.item_details {
 
@@ -22,9 +22,9 @@
   td.displabel {
     text-align: right;
     vertical-align: top;
+    font-weight: 700;
 
     text-transform: uppercase;
-    color: var(--dark-gray);
     width: 200px;
   }
 }
@@ -47,7 +47,7 @@
 
 .subtitlebar {
   &.job-page {
-    background: var(--background-color-accent);
+    background: var(--background-color-lvl3);
   }
 }
 
