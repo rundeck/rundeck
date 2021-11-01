@@ -3,6 +3,7 @@ const webpack = require('webpack')
 
 module.exports = {
   pages: {
+    'components/copybox': { entry: './src/components/copybox/main.ts' },
     'components/central': { entry: './src/components/central/main.ts'},
     'components/ko-paginator': { entry: './src/components/ko-paginator/main.ts'},
     'components/motd': { entry: './src/components/motd/main.js'},
