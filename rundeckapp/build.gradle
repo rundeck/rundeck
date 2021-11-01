@@ -177,6 +177,13 @@ dependencies {
         exclude(group:"org.grails.profiles",module:"web")
     }
 
+    //openapi dependencies
+    annotationProcessor "io.micronaut.configuration:micronaut-openapi:1.4.0"
+    compile "io.swagger.core.v3:swagger-annotations:2.1.1"
+    compileOnly "io.micronaut.configuration:micronaut-openapi:1.4.0"
+    compile 'io.micronaut:micronaut-http-client'
+
+
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     runtimeOnly "com.h2database:h2:2.1.210"
 
