@@ -40,7 +40,8 @@ task noop() {
 tasks.register("runNpmBuild", NpmTask) {
     dependsOn configurations.uiTrellis
 
-    inputs.files(configurations.uiTrellis.files)
+    inputs.files(configurations.uiTrellis.allArtifacts)
+    inputs.file 'packages/ui-trellis/build/package/rundeck-ui-trellis.tgz'
     inputs.file 'packages/ui/package.json'
     inputs.file 'packages/ui/package-lock.json'
     inputs.file 'packages/ui/babel.config.js'

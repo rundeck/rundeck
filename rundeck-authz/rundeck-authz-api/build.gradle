@@ -2,5 +2,5 @@ apply plugin: "groovy"
 
 dependencies {
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testImplementation "org.spockframework:spock-core:0.7-groovy-2.0"
+    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
 }
