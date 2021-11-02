@@ -67,6 +67,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.project.AuthorizingProject
 import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
@@ -1868,6 +1869,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
         return deleteExecutionAuthorized(e, username)
+    }
+
+    /**
+     * Delete an execution and associated log files
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return
+     */
+    @CompileStatic
+    Map deleteExecution(AuthorizingProject authorizingProject, AuthorizingExecution authorizingExecution) throws UnauthorizedAccess, NotFound{
+        authorizingProject.authorize(AuthorizingProject.APP_DELETE_EXECUTION)
+        Execution e = authorizingExecution.locator.resource
+        return deleteExecutionAuthorized(e, authorizingProject.authContext.username)
     }
 
     /**
