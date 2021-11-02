@@ -17,6 +17,8 @@
 plugins {
     id "org.dvaske.gradle.git-build-info"
     id "maven-publish"
+    id "java-library"
+
 }
 import java.text.SimpleDateFormat
 
@@ -43,11 +45,11 @@ apply plugin: "groovy"
 //     classpath += configurations.provided
 // }
 dependencies {
-    implementation project(":rundeck-storage:rundeck-storage-api")
-    implementation project(":rundeck-storage:rundeck-storage-data")
+    api project(":rundeck-storage:rundeck-storage-api")
+    api project(":rundeck-storage:rundeck-storage-data")
     implementation project(":rundeck-storage:rundeck-storage-conf")
-    implementation project(":rundeck-authz:rundeck-authz-api")
-    implementation project(":rundeck-authz:rundeck-authz-core")
+    api project(":rundeck-authz:rundeck-authz-api")
+    api project(":rundeck-authz:rundeck-authz-core")
     implementation project(":rundeck-authz:rundeck-authz-yaml")
     implementation ('com.google.guava:guava:26.0-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
@@ -57,7 +59,7 @@ dependencies {
         exclude group:'com.google.code.findbugs', module: 'jsr305'
     }
 
-    implementation 'org.apache.ant:ant:1.9.15',
+    api 'org.apache.ant:ant:1.9.15',
             'org.slf4j:slf4j-api:1.7.30',
         'commons-codec:commons-codec:1.11',
         'commons-beanutils:commons-beanutils:1.9.4',
@@ -158,7 +160,7 @@ assemble {
     doLast{
         //copy libs to a tools lib dir
         ant.mkdir(dir:"$projectDir/build/tools/lib")
-        configurations.runtime.files.each { file ->
+        configurations.runtimeClasspath.files.each { file ->
             copy{
                 from file
                 into "$projectDir/build/tools/lib"
