@@ -4,7 +4,7 @@
       Tours
     </a> -->
     <section>
-      <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
+      <modal v-model="tourSelectionModal" title="Available Tours" ref="modal" appendToBody>
         <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
           <div class="panel panel-default" style="padding-bottom:1px;">
             <div class="panel-heading">

@@ -215,10 +215,6 @@
 
 <g:set var="projectName" value="${params.project ?: request.project}"/>
 
-<section id="section-header" style="grid-area: header; background-color: red;">
-    <g:render template="/common/mainbar"/>
-</section>
-
 <section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
     <g:if test="${projectName}">
         <section id="section-navbar" style="grid-area: nav;">
@@ -250,8 +246,8 @@
             </nav>
         </g:ifPageProperty>
 
-        <div class="vue-project-motd container-fluid">
-            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
+        <div class="vue-project-motd" style="background-color: var(--background-color-lvl2)">
+            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}"></motd>
         </div>
 
         <g:ifPageProperty name="page.searchbarsection">
@@ -267,6 +263,10 @@
     </section>
 </section>
 
+<section id="section-header" style="grid-area: header; background-color: red;">
+    <g:render template="/common/mainbar"/>
+</section>
+
 <section id="section-utility" style="grid-area: utility;">
     <div id="utilityBar"/>
 </section>
@@ -277,6 +277,11 @@
         jQuery(function(){window.rundeckPage.onPageLoad();});
     </script>
 </g:if>
+
+<script type="text/javascript">
+    jQuery('.modal-container').appendTo('body');
+    jQuery('body > :not(.modal-container) .modal').appendTo('body');
+</script>
 
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>

@@ -79,16 +79,16 @@ a {
     border-bottom: 1px solid transparent;
     border-left: 1px solid transparent;
     * {
-        color: #BCBCBC
+        color: var(--sidebar-item-color);
     }
     :hover{
         cursor: pointer;
     }
     :hover * {
-        color: white;
+        color: var(--sidebar-item-state-color);
     }
     &.navbar__item--active * {
-        color: white;
+        color: var(--sidebar-item-state-color);
     }
     i {
         height: 24px !important;
@@ -101,7 +101,7 @@ a {
         display: none;
     }
     &.active{
-        background-color: #303030;
+        background-color: var(--sidebar-drawer-bg-color);
         border-top: 1px solid #414141;
         border-bottom: 1px solid #414141;
         border-left: 1px solid #414141;
@@ -137,7 +137,7 @@ a {
         .navbar__item-spacer{
             display: block;
             position: absolute;
-            background-color: #303030;
+            background-color: var(--sidebar-drawer-bg-color);
             top: 0;
             bottom: 0;
             right: -3px;
@@ -147,7 +147,7 @@ a {
                 content: '';
                 width: 15px;
                 height: 15px;
-                border: 3px solid #303030;
+                border: 3px solid var(--sidebar-drawer-bg-color);
                 position: absolute;
                 top: -12px;
                 border-top: 0;
@@ -160,7 +160,7 @@ a {
                 content: '';
                 width: 15px;
                 height: 15px;
-                border: 3px solid #303030;
+                border: 3px solid var(--sidebar-drawer-bg-color);
                 position: absolute;
                 bottom: -12px;
                 border-top: 0;
@@ -180,7 +180,7 @@ a {
     flex-wrap: wrap;
     margin: 0;
     padding: 10px;
-    align-items: start;
+    align-items: flex-start;
     align-content: baseline;
 
     i {

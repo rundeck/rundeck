@@ -544,7 +544,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             1 * isClusterModeEnabled()>>false
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResource(_,_,_)>>true
+                1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN])>>true
 
                 1 * getAuthContextForSubject(_)>>null
             }
@@ -572,7 +572,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResource(_,_,_)>>true
+                1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN])>>true
 
                 1 * getAuthContextForSubject(_)>>null
             }
@@ -1607,7 +1607,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             getProjectGlobals(_) >> [:]
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, _, _, _) >> true
+                authorizeProjectResource(_, _, _, _) >> true
                 authorizeProjectExecutionAny(_, exec, _) >> true
 
                 _ * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext) {
@@ -3472,7 +3472,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             getAuthContextForSubjectAndProject(*_) >> auth
             authorizeProjectJobAll(_, _, ['create','view'], _) >> true
-            authorizeProjectResourceAll(_, _ , ['create'] , _ ) >> true
+            authorizeProjectResource(_, _ , 'create' , _ ) >> true
             authorizeProjectJobAll(_, _ , ['read'] , _ ) >> true
         }
 

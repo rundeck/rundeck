@@ -22,6 +22,7 @@ import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
 
 class SetUserInterceptor {
+    public static final String RUNNER_RQ_ATTRIB = "runnerRq"
     @Autowired
     ApplicationContext applicationContext
     InterceptorHelper interceptorHelper
@@ -190,6 +191,8 @@ class SetUserInterceptor {
         AuthToken tokenobj = null
         if(webhookType) {
             tokenobj = AuthToken.tokenLookup(authtoken,AuthTokenType.WEBHOOK)
+        } else if(request.getAttribute(RUNNER_RQ_ATTRIB)) {
+            tokenobj = AuthToken.tokenLookup(authtoken, AuthTokenType.RUNNER)
         } else {
             tokenobj = AuthToken.tokenLookup(authtoken)
         }

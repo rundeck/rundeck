@@ -57,16 +57,44 @@ import java.util.Map;
 @PluginDescription(title = "Local", description = "Executes commands locally on the Rundeck server")
 public class LocalNodeExecutor implements NodeExecutor {
     public static final String SERVICE_PROVIDER_TYPE = "local";
+    public static final String DISABLE_LOCAL_EXECUTOR_ENV = "DISABLED_LOCAL_EXECUTOR";
+    public static final String DISABLE_LOCAL_EXECUTOR_PROP = "rundeck.localExecutor.disabled";
+
     private Framework framework;
     private ExecTaskParameterGenerator parameterGenerator;
+    private boolean disableLocalExecutor = false;
 
     public LocalNodeExecutor(final Framework framework) {
         this.framework = framework;
         parameterGenerator = new ExecTaskParameterGeneratorImpl();
+        this.disableLocalExecutor = getDisableLocalExecutorEnv();
+    }
+
+    static Boolean getDisableLocalExecutorEnv(){
+        String disableLocalExecutor = System.getenv(DISABLE_LOCAL_EXECUTOR_ENV);
+
+        if(disableLocalExecutor!=null && disableLocalExecutor.equals("true")){
+            return true;
+        }
+
+        return Boolean.getBoolean(DISABLE_LOCAL_EXECUTOR_PROP);
+
+    }
+
+    public void setDisableLocalExecutor(boolean disableLocalExecutor) {
+        this.disableLocalExecutor = disableLocalExecutor;
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node)  {
+
+
+        if(disableLocalExecutor){
+            return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
+                    "Local Executor is disabled",
+                    node);
+        }
+
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
         AntSupport.addAntBuildListener(listener, project);

@@ -2,7 +2,7 @@
 <div id="wh-view" style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
   <div id="wh-title" class="screen-title" style="display: flex;">
 
-    <h3>{{ $t('message.webhookPageTitle') }}</h3>
+    <span class="text-h3">{{ $t('message.webhookPageTitle') }}</span>
     <div style="margin-left: auto;">
       <a class="btn"
         :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
@@ -16,7 +16,7 @@
       <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
     </div>
 
-    <div class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
+    <div id="wh-details" class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
       <div>
         <div id="wh-edit" v-if="curHook">
           <div id="wh-header">
@@ -48,7 +48,7 @@
             <Tab :index="0" title="General">
               <div class="wh-edit__body">
                 <div  class="form-group">
-                  <div class="card wh-url-card">
+                  <div class="card card-accent">
                   <div class="card-content">
                     <label>{{ $t('message.webhookPostUrlLabel') }}</label>
                     <div class="help-block">
@@ -86,7 +86,7 @@
                 <div class="card" style="padding: 1em;">
                   <div class="form-group">
                     <div class="btn-group">
-                      <button class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
+                      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
                         aria-expanded="false" >
 
                         <plugin-info
@@ -431,18 +431,17 @@ export default observer(Vue.extend({
     flex-basis: 70px;
     flex-grow: 0;
     flex-shrink: 0;
-    border-color: #d7d7d7;
-    border-bottom: 0.1em solid #d7d7d7;
-    h3 {
-      margin: 0;
-      padding: 0;
-      font-weight: 700;
-      color: black;
-    }
+    background-color: var(--background-color-lvl2);
+    border-color: var(--background-color);
+    border-bottom: 0.1em solid var(--background-color);
+  }
+
+  #wh-details {
+    background-color: var(--background-color-lvl2);
   }
 
   #wh-list {
-    background-color: #f4f5f7;
+    background-color: var(--background-color);
     border-right: 0.1em solid #d3dbe5;
     flex-shrink: 0;
   }
@@ -455,19 +454,19 @@ export default observer(Vue.extend({
   #wh-header {
     display: flex;
     align-items: center;
-    background-color: #f7f7f7;
+    background-color: var(--background-color-accent-lvl2);
     height: 70px;
     padding: 0 2em 0 2em;
 
     h3 {
-      color: black;
+      color: var(--font-color);
       font-weight: 700;
       margin: 0;
     }
   }
 
   ::v-deep [data-tabkey="webhook-header"] > .rdtabs__tabheader {
-    background-color: #f7f7f7;
+    background-color: var(--background-color-accent-lvl2);
     border: none;
     padding: 0 2em;
   }
@@ -508,9 +507,10 @@ export default observer(Vue.extend({
   }
 
   .readonly {
-    color: #555;
-    background-color: #eee;
+    color: var(--input-disabled-color);
+    background-color: var(--input-disabled-bg-color);
     padding: 8px 12px 6px;
+    cursor: not-allowed;
   }
 
   .form-margin {
@@ -528,12 +528,12 @@ export default observer(Vue.extend({
     position: absolute;
     top: -45px;
     left: -200px;
-    background-color: #fefefe;
+    background-color: var(--input-bg-color);
     display: none;
-    border: 1px solid #999;
+    border: 1px solid var(--input-bg-color);
     padding: 10px;
     border-radius: 3px;
-    color: #636363;
+    color: var(--input-color);
     z-index: 999;
     font-family: 'Muli', Arial, sans-serif;
   }

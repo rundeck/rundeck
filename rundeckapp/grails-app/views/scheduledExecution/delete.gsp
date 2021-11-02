@@ -50,10 +50,10 @@
             </div>
         </div>
 
-        <auth:resourceAllowed type="project"
+        <auth:resourceAllowed type="${AuthConstants.TYPE_PROJECT}"
                               name="${scheduledExecution.project}"
-                              context="application"
-                              action="${[AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]}"
+                              context="${AuthConstants.CTX_APPLICATION}"
+                              action="${[AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}"
                               any="true">
             <div class="form-group">
                 <div class="checkbox col-sm-10 col-sm-offset-2">

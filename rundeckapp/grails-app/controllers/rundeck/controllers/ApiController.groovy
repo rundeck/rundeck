@@ -41,7 +41,6 @@ class ApiController extends ControllerBase{
     def quartzScheduler
     def frameworkService
     AppAuthContextProcessor rundeckAuthContextProcessor
-    def apiService
     def userService
     def configurationService
     LinkGenerator grailsLinkGenerator
@@ -53,8 +52,7 @@ class ApiController extends ControllerBase{
             apiTokenRemoveExpired: ['POST']
     ]
     def info () {
-        respond((Object)
-            [
+        respond((Object) [
                 apiversion: ApiVersions.API_CURRENT_VERSION,
                 href: grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}", absolute: true)
             ], formats: ['json']
@@ -100,10 +98,10 @@ class ApiController extends ControllerBase{
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResource(
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
             authContext,
             AuthConstants.RESOURCE_TYPE_SYSTEM,
-            AuthConstants.ACTION_READ
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
         )) {
             return apiService.renderErrorFormat(
                 response,
@@ -476,9 +474,18 @@ class ApiController extends ControllerBase{
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                AuthConstants.ACTION_READ)) {
-            return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN, code: 'api.error.item.unauthorized', args: ['Read System Info', 'Rundeck', ""]])
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_SYSTEM,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+        )) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code  : 'api.error.item.unauthorized', args: ['Read System Info', 'Rundeck', ""]
+                ]
+            )
         }
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")

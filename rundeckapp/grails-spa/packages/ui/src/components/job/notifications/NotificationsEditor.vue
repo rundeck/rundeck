@@ -100,7 +100,7 @@
 
 
 
-    <modal v-model="editModal" :title="$t(editIndex<0?'Create Notification':'Edit Notification')" size="lg" id="job-notifications-edit-modal">
+    <modal v-model="editModal" :title="$t(editIndex<0?'Create Notification':'Edit Notification')" size="lg" id="job-notifications-edit-modal" append-to-body>
       <div>
         <div class="form-group"  >
           <label class="col-sm-2 control-label  " >

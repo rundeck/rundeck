@@ -1,4 +1,4 @@
-@import "../paper/variables";
+@import "../runstrap/variables";
 
 .wfnodestate{
   border-radius: 3px;
@@ -6,16 +6,16 @@
   margin-bottom: 5px;
   cursor: pointer;
   &:hover, &.open{
-    background: $bg-subheader;
+    background: var(--background-color-lvl3);
   }
 }
 
 .wfnodestep {
-  border: 1px solid #eeeeee;
+  border: 1px solid var(--background-color-accent-lvl2);
   border-radius: 3px;
   margin: 4px 0 0 20px;
   padding: 5px 3px;
-  background: white;
+  background: var(--background-color-lvl2);
   .closed {
     display: none;
   }
@@ -31,7 +31,7 @@
 }
 
 .customattributes {
-  border-bottom: 1px solid #eeeeee;
+  border-bottom: 1px solid var(--background-color-accent-lvl2);
   margin-top: 10px;
   margin-bottom: 10px;
 }

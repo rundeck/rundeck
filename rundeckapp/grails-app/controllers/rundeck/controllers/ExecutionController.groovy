@@ -65,7 +65,6 @@ class ExecutionController extends ControllerBase{
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
     OrchestratorPluginService orchestratorPluginService
-    ApiService apiService
     WorkflowService workflowService
     FileUploadService fileUploadService
     PluginService pluginService
@@ -281,7 +280,7 @@ class ExecutionController extends ControllerBase{
 
         if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(e.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]),
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]),
                 AuthConstants.ACTION_DELETE_EXECUTION,'Project',e.project)) {
             return
         }
@@ -541,7 +540,7 @@ class ExecutionController extends ControllerBase{
             def authAction=requestActive?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
             if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                                                       AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                                                      [authAction, AuthConstants.ACTION_ADMIN]),
+                                                                                      [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]),
 
                                      authAction,'for','Rundeck')) {
                 return
@@ -2023,7 +2022,7 @@ setTimeout(function(){
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                         authContext,
                         rundeckAuthContextProcessor.authResourceForProject(e.project),
-                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
                 ),
                 response,
                 [AuthConstants.ACTION_DELETE_EXECUTION, "Project", e.project] as Object[])){
@@ -2203,11 +2202,7 @@ setTimeout(function(){
             query.executionTypeFilter = null
         }
         def resOffset = params.offset ? params.int('offset') : 0
-        def resMax = params.max ?
-                params.int('max') :
-                grailsApplication.config.rundeck?.pagination?.default?.max ?
-                        grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-                        20
+        def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
         def results
         try {
@@ -2247,14 +2242,16 @@ setTimeout(function(){
      * @return
      */
     def apiExecutionModeStatus() {
-
         if (!apiService.requireApi(request, response, ApiVersions.V32)) {
             return
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                AuthConstants.ACTION_READ)) {
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_SYSTEM,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+        )) {
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_FORBIDDEN,
@@ -2315,7 +2312,7 @@ setTimeout(function(){
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [authAction, AuthConstants.ACTION_ADMIN]
+                [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
             )
         ) {
             return apiService.renderErrorFormat(response,

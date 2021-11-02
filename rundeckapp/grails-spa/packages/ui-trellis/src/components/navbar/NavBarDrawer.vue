@@ -75,7 +75,7 @@ export default Vue.extend({
     border-style: solid;
     border-color: #414141;
     border-width: 1px;
-    background-color: #303030;
+    background-color: var(--sidebar-drawer-bg-color);
     width: 250px;
     padding: 10px;
     z-index: 100;

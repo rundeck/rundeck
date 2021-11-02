@@ -76,6 +76,7 @@ import org.rundeck.app.authorization.BaseAuthContextProvider
 import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
+import org.rundeck.app.authorization.WebAuthContextProcessor
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
@@ -267,6 +268,9 @@ beans={
     rundeckAuthContextProcessor(BaseAuthContextProcessor){
         rundeckAuthContextProvider=ref('rundeckAuthContextProvider')
         rundeckAuthContextEvaluator=ref('rundeckAuthContextEvaluator')
+    }
+    rundeckWebAuthContextProcessor(WebAuthContextProcessor){
+        authContextProcessor = ref('rundeckAuthContextProcessor')
     }
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
@@ -460,7 +464,7 @@ beans={
         loggerName='org.rundeck.storage.events'
     }
     rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
-    if(!grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false']) {
+    if(!(grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false'])) {
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
     }else{
         rundeckKeyStorageContextProvider(KeyStorageContextProvider)
@@ -499,6 +503,7 @@ beans={
 
     rundeckEmbeddedPluginExtractor(RundeckEmbeddedPluginExtractor) {
         pluginTargetDir = pluginDir
+        rundeckPluginBlocklist = ref("rundeckPluginBlocklist")
     }
 
     def pluginRegistry=[:]
@@ -554,6 +559,9 @@ beans={
     rundeckPluginRegistryMap(MapFactoryBean) {
         sourceMap = pluginRegistry
     }
+    rundeckPluginBlocklist(RundeckPluginBlocklist){
+        blockListFileName= application.config.rundeck?.plugins?.providerBlockListFile?: null
+    }
     /**
      * Registry bean contains both kinds of plugin
      */
@@ -563,6 +571,7 @@ beans={
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
+        rundeckPluginBlocklist=ref("rundeckPluginBlocklist")
     }
     hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
 

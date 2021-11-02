@@ -1,3 +1,4 @@
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 %{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
@@ -30,7 +31,7 @@
     <li class="dropdown-header">
       <g:message code="Project.plural"/>
     </li>
-    <auth:resourceAllowed action="create" kind="project" context="application">
+    <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
       <g:if test="${!params.nocreate}">
         <li>
           <g:link controller="framework" action="createProject">

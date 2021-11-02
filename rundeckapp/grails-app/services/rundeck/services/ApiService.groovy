@@ -338,22 +338,22 @@ class ApiService {
     }
 
     private boolean authorizedForTokenAction(UserAndRolesAuthContext authContext, String action) {
-        rundeckAuthContextEvaluator.authorizeApplicationResourceType(
+        rundeckAuthContextEvaluator.authorizeApplicationResource(
                 authContext,
-                AuthConstants.TYPE_APITOKEN,
+                AuthConstants.RESOURCE_TYPE_APITOKEN,
                 action
         )
     }
 
     public boolean hasTokenAdminAuth(UserAndRolesAuthContext authContext) {
-        rundeckAuthContextEvaluator.authorizeApplicationResourceType(
+        rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
-                AuthConstants.TYPE_APITOKEN,
-                AuthConstants.ACTION_ADMIN
-        ) || rundeckAuthContextEvaluator.authorizeApplicationResourceType(
+                AuthConstants.RESOURCE_TYPE_APITOKEN,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        ) || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
                 authContext,
-                AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN
+                AuthConstants.RESOURCE_TYPE_USER,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         )
     }
 

@@ -14,6 +14,7 @@ module.exports = {
     'components/version-notification': { entry: './src/components/version-notification/main.js'},
     'components/version': { entry: './src/components/version/main.js'},
     'components/community-news-notification': { entry: './src/components/community-news-notification/main.js'},
+    'pages/login': { entry: './src/pages/login/main.ts'},
     'pages/project-dashboard': { entry: './src/pages/project-dashboard/main.js'},
     'pages/project-activity': { entry: './src/pages/project-activity/main.js'},
     'pages/repository': { entry: './src/pages/repository/main.js'},

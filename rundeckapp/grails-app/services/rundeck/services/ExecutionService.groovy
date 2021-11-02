@@ -621,12 +621,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     def public finishQueueQuery(query,params,model){
-
-       if(!params.max){
-           params.max=20
+       if(!query.max){
+           query.max = configurationService.getInteger('pagination.default.max', 20)
        }
-       if(!params.offset){
-           params.offset=0
+       if(!query.offset){
+           query.offset=0
        }
 
        def paginateParams=[:]
@@ -1040,12 +1039,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //            println "already have dateStarted"
 //        }
 //
+        // Threshold
+        LoggingThreshold globalThreshold = LoggingThreshold.fromMap(getGlobalThresholdLimit(), getGlobalLimitAction())
+        LoggingThreshold jobThreshold    = LoggingThreshold.fromMap(getJobThresholdLimit(scheduledExecution), getJobLimitAction(scheduledExecution))
+        LoggingThreshold threshold       = LoggingThreshold.createMinimum(jobThreshold, globalThreshold)
 
-        //set up log output threshold
-        def thresholdMap = ScheduledExecution.parseLogOutputThreshold(scheduledExecution?.logOutputThreshold)
-        def threshold = LoggingThreshold.fromMap(thresholdMap,scheduledExecution?.logOutputThresholdAction)
-
-        def ExecutionLogWriter loghandler= loggingService.openLogWriter(
+        def ExecutionLogWriter loghandler = loggingService.openLogWriter(
                 execution,
                 logLevelForString(execution.loglevel),
                 [user:execution.user, node: framework.getFrameworkNodeName()],
@@ -1246,6 +1245,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             loghandler.close()
             return null
         }
+    }
+
+    private Map getGlobalThresholdLimit() {
+        String globalLimit = configurationService.getString(LoggingThreshold.EXECUTION_LOGS_OUTPUT_LIMIT)
+        return ScheduledExecution.parseLogOutputThreshold(globalLimit)
+    }
+
+    private Map getJobThresholdLimit(ScheduledExecution scheduledExecution) {
+        String jobLimit = scheduledExecution?.logOutputThreshold
+        return ScheduledExecution.parseLogOutputThreshold(jobLimit)
+    }
+
+    private String getGlobalLimitAction() {
+        return configurationService.getString(LoggingThreshold.EXECUTION_LOGS_LIMIT_ACTION)
+    }
+
+    private String getJobLimitAction(ScheduledExecution scheduledExecution) {
+        return scheduledExecution?.logOutputThresholdAction
     }
 
     /**
@@ -1712,9 +1729,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         if (!e2.abortedby) {
                             e2.abortedby = userIdent
                             e2.save(flush: true)
-                            success = true
                         }
                     }
+                    success = true
                 } catch (org.springframework.dao.ConcurrencyFailureException ex) {
                     log.error("Could not abort ${eid}, the execution was modified")
                 } catch (StaleObjectStateException ex) {
@@ -1811,7 +1828,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     Map deleteExecution(Execution e, AuthContext authContext, String username){
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                  rundeckAuthContextProcessor.authResourceForProject(e.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
 

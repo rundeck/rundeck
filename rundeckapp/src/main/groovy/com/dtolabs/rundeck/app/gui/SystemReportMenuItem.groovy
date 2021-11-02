@@ -35,7 +35,7 @@ class SystemReportMenuItem implements AuthMenuItem {
             authorizeApplicationResourceAny(
                 auth,
                 AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
             )
     }
 }

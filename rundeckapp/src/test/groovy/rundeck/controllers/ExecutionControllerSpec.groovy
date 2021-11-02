@@ -136,6 +136,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         controller.executionService = Mock(ExecutionService)
+        controller.configurationService=Mock(ConfigurationService){
+            _ * getInteger(_, _) >> { it[1] }
+        }
         when:
         params.project = 'test'
         request.api_version = 14
@@ -172,6 +175,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         controller.executionService = Mock(ExecutionService)
+        controller.configurationService=Mock(ConfigurationService){
+            _ * getInteger(_, _) >> { it[1] }
+        }
         when:
         params.project = 'test'
         request.api_version = 14
@@ -201,7 +207,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.frameworkService = Mock(FrameworkService)
         controller.executionService = Mock(ExecutionService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-
+        controller.configurationService=Mock(ConfigurationService){
+            _ * getInteger(_, _) >> { it[1] }
+        }
         when:
         params.project = 'test'
         request.api_version = 14

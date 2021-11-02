@@ -58,7 +58,7 @@
 
         <!-- Modal -->
 
-        <g:form controller="user" action="clearApiToken" useToken="true">
+        <g:form class="modal-container" controller="user" action="clearApiToken" useToken="true">
             <div class="modal fade clearconfirm" id="myModal${enc(attr: ukey)}" tabindex="-1" role="dialog"
                  aria-labelledby="myModalLabel"
                  aria-hidden="true">
@@ -86,7 +86,7 @@
                             </g:else>
                             <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
                                     code="button.action.Cancel"/></button>
-                            <input type="submit" class="btn btn-danger yes" value="Delete"
+                            <input type="submit" class="btn btn-danger yes" value="Delete" data-token-id="${token.uuid}"
                                    name="${message(code: 'button.action.Delete')}">
 
                         </div>

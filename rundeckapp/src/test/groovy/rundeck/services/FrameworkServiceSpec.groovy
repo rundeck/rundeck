@@ -54,6 +54,7 @@ import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.spi.Services
+import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.PluginStep
 import rundeck.services.feature.FeatureService
@@ -939,7 +940,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 getFrameworkProjectMgr() >> projectMgr
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceAny(auth, _, ['read','admin']) >> {
+                authorizeApplicationResourceAny(auth, _, [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> {
                     return it[1].name in authed
                 }
                 authResourceForProject(_)>>{
@@ -973,7 +974,7 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
                 getFrameworkProjectMgr() >> projectMgr
             }
             service.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator) {
-                authorizeApplicationResourceAny(auth, _, ['read','admin']) >> {
+                authorizeApplicationResourceAny(auth, _, [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> {
                     return it[1].name in authed
                 }
                 authResourceForProject(_)>>{

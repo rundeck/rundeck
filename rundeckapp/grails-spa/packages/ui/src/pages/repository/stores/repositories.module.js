@@ -90,7 +90,7 @@ const actions = {
     commit('SET_ERRORS', null)
     dispatch('overlay/openOverlay', {
       loadingSpinner: true,
-      loadingMessage: `installing ${properties.plugin.display}`
+      loadingMessage: `installing ${properties.plugin.display != null ? properties.plugin.display: properties.plugin.name}`
     }, {
       root: true
     })

@@ -84,24 +84,24 @@
                   <g:checkBox name="exportReadmes" value="true"/>
                   <label for="exportReadmes">Readme/Motd</label>
                 </div>
-                <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project_acl" name="${params.project}">
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" any="true" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT_ACL}" name="${params.project}">
                   <div class="checkbox">
                     <g:checkBox name="exportAcls" value="true"/>
                     <label for="exportAcls">ACL Policies</label>
                   </div>
                 </auth:resourceAllowed>
-                <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project_acl" has="false" name="${params.project}">
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" any="true" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT_ACL}" has="false" name="${params.project}">
                   <div class="checkbox disabled text-strong">
                     <i class="glyphicon glyphicon-ban-circle"></i> ACL Policies (Unauthorized)
                   </div>
                 </auth:resourceAllowed>
-                <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}">
                 <div class="checkbox">
                   <g:checkBox name="exportScm" value="true"/>
                   <label for="exportScm">SCM configuration</label>
                 </div>
                 </auth:resourceAllowed>
-                <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" has="false" name="${params.project}">
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" has="false" name="${params.project}">
                   <div class="checkbox disabled text-strong">
                     <i class="glyphicon glyphicon-ban-circle"></i> SCM Configuration (Unauthorized)
                   </div>
@@ -127,10 +127,10 @@
                         </div>
                     </g:set>
                     <g:if test="${projectComponent.exportAuthRequiredActions}">
-                       <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context='application' type="project" name="${params.project}">
+                       <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}">
                           ${raw(projectComponentCheckboxTemplate)}
                         </auth:resourceAllowed>
-                        <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context='application' type="project" name="${params.project}" has="false">
+                        <auth:resourceAllowed action="${projectComponent.exportAuthRequiredActions}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}" has="false">
                           <div class="checkbox disabled text-strong">
                             <i class="glyphicon glyphicon-ban-circle"></i> ${projectComponentTitle} (Unauthorized)
                           </div>
@@ -206,7 +206,7 @@
       <div class="card-footer">
         <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default  btn-sm"/>
         <button type="submit" class="btn btn-cta btn-sm"><g:message code="export.archive"/> <g:icon name="download"/></button>
-        <auth:resourceAllowed action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
+        <auth:resourceAllowed action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}">
           <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-info  btn-sm pull-right"><g:message code="export.another.instance"/></button>
         </auth:resourceAllowed>
       </div>

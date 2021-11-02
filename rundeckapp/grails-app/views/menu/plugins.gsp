@@ -32,11 +32,11 @@ To change this template use File | Settings | File Templates.
   <title><g:message code="page.Plugins.title"/></title>
 </head>
 <g:set var="authAdmin" value="${auth.resourceAllowedTest(
-        type: 'resource',
-        kind: 'system',
-        action: [AuthConstants.ACTION_ADMIN],
+        type: AuthConstants.TYPE_RESOURCE,
+        kind: AuthConstants.TYPE_SYSTEM,
+        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN],
         any: true,
-        context: 'application'
+        context: AuthConstants.CTX_APPLICATION
 )}"/>
 <body>
 <div class="content">

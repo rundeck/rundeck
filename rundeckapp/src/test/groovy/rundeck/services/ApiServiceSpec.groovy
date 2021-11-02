@@ -32,6 +32,7 @@ import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.core.auth.AuthConstants
 import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.CommandExec
@@ -325,13 +326,15 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
-        service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> true
+            service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth,
+                                                                                AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         service.configurationService.getString("api.tokens.duration.max", null) >> '123'
         service.userService.findOrCreateUser('auser') >> user
         Exception e = thrown()
         e.message =~ /Duration exceeds maximum allowed: /
     }
 
+    @Unroll
     def "generate user token own groups any auth"() {
         given:
         def auth = Mock(UserAndRolesAuthContext) {
@@ -356,12 +359,12 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         result.authRoles == 'role1'
         result.authRolesSet() == tokenRoles
         result.expiration != null
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >>
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >>
                 (tokenaction == 'admin')
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_USER, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, AuthConstants.ACTION_GENERATE_SERVICE_TOKEN) >>
                 ((tokenaction == 'generate_service_token'))
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, tokenaction) >> true
 
         service.userService.findOrCreateUser('auser') >> user
 
@@ -372,7 +375,8 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         'generate_service_token' | _
     }
 
-    def "generate service token service groups service/admin auth"() {
+    @Unroll
+    def "generate service token service groups #tokenaction auth"() {
         given:
         def auth = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'auser'
@@ -396,10 +400,11 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         result.authRoles == 'role1,svc_roleA'
         result.authRolesSet() == tokenRoles
         result.expiration != null
-        service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
         if (tokenaction == 'admin') {
+            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             0 * service.rundeckAuthContextEvaluator.authorizeApplicationResource(*_)
         } else {
+            1 * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, tokenaction) >> true
             1 * service.rundeckAuthContextEvaluator.authorizeApplicationResource(
                     auth,
                     [type: 'apitoken', username: tokenUser, roles: 'svc_roleA'],
@@ -438,10 +443,10 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         result.authRoles == 'role1,svc_roleA'
         result.authRolesSet() == tokenRoles
         result.expiration != null
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >>
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >>
                 (tokenaction == 'admin')
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_USER, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, tokenaction) >> true
         if (tokenaction == 'admin') {
             0 * service.rundeckAuthContextEvaluator.authorizeApplicationResource(*_)
         } else {
@@ -477,13 +482,13 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
-        service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
-        service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_USER, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, tokenaction) >> true
         1 * service.rundeckAuthContextEvaluator.authorizeApplicationResource(
                 auth,
                 ['type': 'apitoken', 'username': 'someBuser', 'roles': 'svc_roleA'],
-                'create'
+                AuthConstants.ACTION_CREATE
         ) >> false
 
         Exception e = thrown()
@@ -517,13 +522,13 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         result.user == user
         result.authRolesSet() == tokenRoles
         result.expiration != null
-        service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         service.userService.findOrCreateUser(tokenUser) >> user
 
         where:
-        tokenaction | tokenUser | _
-        'admin'     | 'auser'   | _
-        'admin'     | 'anyuser' | _
+         tokenUser | _
+         'auser'   | _
+         'anyuser' | _
     }
 
     @Unroll
@@ -546,12 +551,12 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_USER, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, AuthConstants.ACTION_GENERATE_SERVICE_TOKEN) >>
                 (tokenaction == 'generate_service_token')
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, _, 'create') >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, tokenaction) >> true
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, _, AuthConstants.ACTION_CREATE) >> false
         service.userService.findOrCreateUser('auser') >> user
         Exception e = thrown()
         e.message =~ expectMessage
@@ -582,11 +587,11 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_USER, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, AuthConstants.ACTION_GENERATE_SERVICE_TOKEN) >>
                 (tokeaction == 'generate_service_token')
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'generate_user_token') >>
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, AuthConstants.ACTION_GENERATE_USER_TOKEN) >>
                 (tokeaction == 'generate_user_token')
 
         service.userService.findOrCreateUser('auser') >> user
@@ -618,9 +623,9 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
-        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_USER, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+        _ * service.rundeckAuthContextEvaluator.authorizeApplicationResource(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, AuthConstants.ACTION_GENERATE_SERVICE_TOKEN) >>
                 true
 
         Exception e = thrown()

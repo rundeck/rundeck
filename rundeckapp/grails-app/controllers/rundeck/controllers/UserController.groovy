@@ -40,7 +40,6 @@ class UserController extends ControllerBase{
     UserService userService
     AppAuthContextProcessor rundeckAuthContextProcessor
     GrailsApplication grailsApplication
-    def apiService
     def configurationService
 
     static allowedMethods = [
@@ -91,9 +90,16 @@ class UserController extends ControllerBase{
     }
     def list={
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN),
-                AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
+        if(unauthorizedResponse(
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_USER,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+            ),
+            AuthConstants.ACTION_ADMIN,
+            'User',
+            'accounts')
+        ) {
             return
         }
         [users:User.listOrderByLogin()]
@@ -107,10 +113,11 @@ class UserController extends ControllerBase{
         }
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        def tokenAdmin = rundeckAuthContextProcessor.authorizeApplicationResourceType(
-                authContext,
-                AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN)
+        def tokenAdmin = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_USER,
+            [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        )
 
         if (unauthorizedResponse(
                 params.login == session.user || tokenAdmin,
@@ -196,7 +203,7 @@ class UserController extends ControllerBase{
                 rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                     auth,
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_ADMIN]
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
                 ),
                 AuthConstants.ACTION_ADMIN,
                 'user',
@@ -222,8 +229,13 @@ class UserController extends ControllerBase{
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(user.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceType
-                (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN, 'Users',
+        if (unauthorizedResponse(
+            user.login == session.user ||
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_USER,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+            ), AuthConstants.ACTION_ADMIN, 'Users',
                 user.login)) {
             return
         }
@@ -261,7 +273,7 @@ class UserController extends ControllerBase{
             if(!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                     auth,
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [ AuthConstants.ACTION_ADMIN]
+                    [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
             )){
                 def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]
 
@@ -393,7 +405,7 @@ class UserController extends ControllerBase{
         if(!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                 auth,
                 AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [ AuthConstants.ACTION_ADMIN]
+                [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         )){
             def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]
 
@@ -478,10 +490,11 @@ class UserController extends ControllerBase{
     def loadUsersList() {
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceType(
-                        authContext, AuthConstants.TYPE_USER,
-                        AuthConstants.ACTION_ADMIN
-                ),
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_USER,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+            ),
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts'
         )) {
             return
@@ -559,10 +572,11 @@ class UserController extends ControllerBase{
     def getSummaryPageConfig(){
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceType(
-                        authContext, AuthConstants.TYPE_USER,
-                        AuthConstants.ACTION_ADMIN
-                ),
+            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_USER,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+            ),
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts'
         )) {
             return
@@ -600,9 +614,11 @@ class UserController extends ControllerBase{
         //check auth to view profile
         //default to current user profile
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(params.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceType
-                (authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'User',params.login)){
+        if(unauthorizedResponse(params.login == session.user || rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_USER,
+            [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        ), AuthConstants.ACTION_ADMIN,'User',params.login)){
             return
         }
         def User u = User.findByLogin(params.login)

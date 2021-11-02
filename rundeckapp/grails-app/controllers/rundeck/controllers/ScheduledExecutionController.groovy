@@ -147,7 +147,6 @@ class ScheduledExecutionController  extends ControllerBase{
     def ScheduledExecutionService scheduledExecutionService
     def OrchestratorPluginService orchestratorPluginService
 	def NotificationService notificationService
-    def ApiService apiService
     def UserService userService
     def ScmService scmService
     def PluginService pluginService
@@ -297,7 +296,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                                  rundeckAuthContextProcessor.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
                                                                   AuthConstants.ACTION_SCM_EXPORT])) {
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
                     model.scmExportEnabled = true
@@ -307,7 +306,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                                  rundeckAuthContextProcessor.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
                                                                   AuthConstants.ACTION_SCM_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                     model.scmImportEnabled = true
@@ -524,7 +523,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def projectResource = rundeckAuthContextProcessor.authResourceForProject(params.project)
         if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
                                                               AuthConstants.ACTION_SCM_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
@@ -534,7 +533,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
                                                               AuthConstants.ACTION_SCM_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true
@@ -1754,8 +1753,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         //authorize
-        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext,
-                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE], params.project),
+        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(authContext,
+                AuthConstants.RESOURCE_TYPE_JOB, AuthConstants.ACTION_CREATE, params.project),
                 AuthConstants.ACTION_CREATE,
                 'New Job'
         )){
@@ -1811,12 +1810,11 @@ class ScheduledExecutionController  extends ControllerBase{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,execution.project)
 
         if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeProjectResourceAll(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_JOB,
-                        [AuthConstants.ACTION_CREATE],
-                        params.project
-                ),
+            rundeckAuthContextProcessor.authorizeProjectResource(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_JOB,
+                AuthConstants.ACTION_CREATE,
+                params.project),
                 AuthConstants.ACTION_CREATE,
                 'New Job'
         )) {
@@ -1862,9 +1860,11 @@ class ScheduledExecutionController  extends ControllerBase{
 
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
         //authorize
-        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResourceAll(authContext,
-                AuthConstants.RESOURCE_TYPE_JOB, [AuthConstants.ACTION_CREATE],
-                params.project),
+        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_JOB,
+            AuthConstants.ACTION_CREATE,
+            params.project),
                 AuthConstants.ACTION_CREATE, 'New Job')) {
             return
         }
@@ -3660,7 +3660,7 @@ class ScheduledExecutionController  extends ControllerBase{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
                 rundeckAuthContextProcessor.authResourceForProject(scheduledExecution.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN])) {
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized', args: ['Delete Execution', 'Project',
                     scheduledExecution.project]])
@@ -3939,11 +3939,11 @@ class ScheduledExecutionController  extends ControllerBase{
                     ]
             )
         }
-        if (!rundeckAuthContextProcessor.authorizeProjectResourceAll(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_EVENT,
-                [AuthConstants.ACTION_READ],
-                scheduledExecution.project
+        if (!rundeckAuthContextProcessor.authorizeProjectResource(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_EVENT,
+            AuthConstants.ACTION_READ,
+            scheduledExecution.project
         )
         ) {
 
@@ -4001,8 +4001,8 @@ class ScheduledExecutionController  extends ControllerBase{
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         //test valid project
 
-        if (!rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
-                AuthConstants.ACTION_ADMIN)) {
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN])) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_FORBIDDEN,
                     code: 'api.error.item.unauthorized',

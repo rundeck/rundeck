@@ -41,7 +41,7 @@
 </g:if>
 
 <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
-<g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
+<g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
 <div class="content">
 <div id="layoutBody">
 <div class="row" style="margin-bottom: 20px;">

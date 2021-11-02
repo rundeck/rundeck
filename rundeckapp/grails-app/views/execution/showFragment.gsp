@@ -33,7 +33,7 @@
     </g:else>
 </g:each>
 <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN,project:execution.project)}"/>
-<g:set var="jobCreateAllowed" value="${auth.resourceAllowedTest(kind: 'job', action: [AuthConstants.ACTION_CREATE],project:execution.project)}"/>
+<g:set var="jobCreateAllowed" value="${auth.resourceAllowedTest(kind: AuthConstants.TYPE_JOB, action: [AuthConstants.ACTION_CREATE],project:execution.project)}"/>
 
 
 

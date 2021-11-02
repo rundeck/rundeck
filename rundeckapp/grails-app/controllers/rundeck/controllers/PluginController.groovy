@@ -37,7 +37,6 @@ class PluginController extends ControllerBase {
     PluginService pluginService
     PluginApiService pluginApiService
     FrameworkService frameworkService
-    ApiService apiService
     def featureService
     AppAuthContextProcessor rundeckAuthContextProcessor
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
@@ -456,9 +455,11 @@ class PluginController extends ControllerBase {
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext,
-                                                          "system",
-                                                          AuthConstants.ACTION_ADMIN)
+        boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_SYSTEM,
+            [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_OPS_ADMIN]
+        )
         if (!authorized) {
             renderErrorCodeAsJson("request.error.unauthorized.title")
             return
@@ -496,9 +497,11 @@ class PluginController extends ControllerBase {
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext,
-                                                                               "system",
-                                                                               AuthConstants.ACTION_ADMIN)
+        boolean authorized = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_SYSTEM,
+            [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_OPS_ADMIN]
+        )
         if (!authorized) {
             renderErrorCodeAsJson("request.error.unauthorized.title")
             return

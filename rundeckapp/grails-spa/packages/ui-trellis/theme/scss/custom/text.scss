@@ -1,4 +1,4 @@
-@import "../paper/variables";
+@import "../runstrap/variables";
 
 .text-truncated-to-first-character{
   display:block;
@@ -34,9 +34,9 @@
 }
 
 .text-h1, .text-h2, .text-h3, .text-h4, .text-h5 {
-  color: var(--grey-800);
-  a{
-    color: var(--grey-800) !important;
+  color: var(--font-color);
+  a {
+    color: var(--font-color) !important;
   }
 }
 
@@ -85,12 +85,12 @@
 
 .row.row-hover:hover {
 
-  background-color: #f5f5f5;
+  background-color: var(--background-color-accent-lvl2);
 }
 
 .row.row-border-top {
   border-width: 2px 0 0 0;
-  border-color: #eeeeee;
+  border-color: var(--border-color);
   border-style: solid;
 }
 

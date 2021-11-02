@@ -178,7 +178,10 @@ export class JobCreatePage extends Page {
     }
     async vueEditNotificationModalHidden() {
         const modal = await this.ctx.driver.findElement(Elems.vueEditNotificationModal)
-        return this.ctx.driver.wait(until.elementIsNotVisible(modal), 15000)
+        if (!modal)
+            return void(0)
+        else
+            return this.ctx.driver.wait(until.stalenessOf(modal), 15000)
     }
     async vueEditNotificationPluginTypeDropdownMenu() {
         return this.ctx.driver.wait(until.elementLocated(Elems.vueEditNotificationPluginTypeDropdownMenu), 15000)

@@ -46,8 +46,8 @@
       </g:else>
       </g:each>
       <g:set var="adhocRunAllowed" value="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN,project:execution.project)}"/>
-      <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
-      <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+      <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
+      <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
@@ -206,7 +206,7 @@ search
                                 <g:if test="${deleteExecAuth || authChecks[AuthConstants.ACTION_READ]}">
                                     <div class="btn-group" data-bind="visible: completed()">
                                         <button type="button"
-                                                class="btn btn-muted btn-sm dropdown-toggle"
+                                                class="btn btn-default btn-sm dropdown-toggle"
                                                 data-toggle="dropdown"
                                                 aria-expanded="false">
                                             <i class="glyphicon glyphicon-list"></i>
@@ -615,7 +615,7 @@ search
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
                                   <span class="btn-group">
-                                      <button type="button" class="btn btn-xs dropdown-toggle"
+                                      <button type="button" class="btn btn-default btn-xs dropdown-toggle"
                                               data-toggle="dropdown">
                                           <g:message code="execution.log" />
                                           <span class="caret"></span>
@@ -893,7 +893,7 @@ search
               <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(
                       project: scheduledExecution.project,
                       action: AuthConstants.ACTION_READ,
-                      kind: 'event'
+                      kind: AuthConstants.TYPE_EVENT
               )}"/>
               <div class="col-sm-12">
 

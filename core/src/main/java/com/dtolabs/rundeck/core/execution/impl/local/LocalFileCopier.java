@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 
 import java.io.File;
 import java.io.InputStream;
@@ -43,9 +45,15 @@ import java.util.List;
  */
 public class LocalFileCopier extends BaseFileCopier implements FileCopier {
     public static final String SERVICE_PROVIDER_TYPE = "local";
+    private boolean disableLocalExecutor = false;
 
     public LocalFileCopier(Framework framework) {
         this.framework = framework;
+        this.disableLocalExecutor = LocalNodeExecutor.getDisableLocalExecutorEnv();
+    }
+
+    public void setDisableLocalExecutor(boolean disableLocalExecutor) {
+        this.disableLocalExecutor = disableLocalExecutor;
     }
 
     private Framework framework;
@@ -59,6 +67,11 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier {
             final String destination
     ) throws FileCopierException
     {
+
+        if(disableLocalExecutor){
+            throw new FileCopierException("Local Executor is disabled", StepFailureReason.ConfigurationFailure);
+        }
+
         return BaseFileCopier.writeLocalFile(
                 scriptfile,
                 input,

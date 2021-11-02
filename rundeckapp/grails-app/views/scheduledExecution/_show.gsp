@@ -41,7 +41,7 @@
                       ]"/>
 
             <section class="section-space">
-                <small class="uuid text-secondary">${scheduledExecution.extid}</small>
+                <small class="uuid">${scheduledExecution.extid}</small>
             </section>
         </div>
 
@@ -52,12 +52,12 @@
                           model="[scheduledExecution: scheduledExecution,
                                   hideTitle         : false,
                                   dropdownClass     : 'dropdown-menu-right',
-                                  btnClass          : 'btn btn-sm']"/>
+                                  btnClass          : 'btn btn-default btn-transparent btn-sm']"/>
             </div>
 
             <g:if test="${readAccess}">
                 <section class="section-space">
-                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-sm ">
+                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-default btn-transparent btn-simple btn-sm ">
 
                         <g:if test="${rundoctext}">
                             <i class="glyphicon glyphicon-book"></i>
@@ -142,7 +142,7 @@
     </g:if>
     <div class="row" id="_job_main_placeholder">
         <div class="col-xs-12">
-            <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(project:scheduledExecution.project, action:AuthConstants.ACTION_READ, kind: 'event')}"/>
+            <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(project:scheduledExecution.project, action:AuthConstants.ACTION_READ, kind: AuthConstants.TYPE_EVENT)}"/>
 
             <div class="card" id="activity_section">
                 <div class="card-content">

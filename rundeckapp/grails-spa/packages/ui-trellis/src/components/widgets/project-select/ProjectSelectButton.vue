@@ -1,16 +1,17 @@
 <template>
-    <button class="btn project-select-btn"
+    <button class="btn btn-default btn-simple btn-transparent project-select-btn"
         aria-describedby="projectPicker"
         aria-controls="projectPicker"
         :aria-expanded="open"
-        @click="handleClick">
+        @click="handleClick"
+        @mousedown="e => e.preventDefault()">
         <i 
             class="fas project-select-btn__left-icon"
             :class="{'fa-box-open': projectLabel, 'fa-box': !projectLabel}"/>
         <span class="project-select-btn__label">{{projectLabel || 'Projects'}}</span>
         <i class="fas project-select-btn__right-icon" :class="[`fa-chevron-${open ? 'up' : 'down'}`]"/>
         <Popper v-if="open" @close="close">
-            <div id="projectPicker" class="card project-select-btn__popper">
+            <div id="projectPicker" class="card card--popover project-select-btn__popper">
                 <ProjectSelect @project:selected="handleSelect" @project:select-all="handleSelectAll"/>
             </div>
         </Popper>

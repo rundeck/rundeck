@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import grails.testing.web.controllers.ControllerUnitTest
+import org.rundeck.core.auth.AuthConstants
 import spock.lang.Specification
 
 import javax.servlet.http.HttpServletRequest
@@ -94,6 +95,32 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.apiService.renderErrorFormat(_,[status: HttpServletResponse.SC_BAD_REQUEST,
                                                        code: 'api.error.parameter.required', args: ['project']])
         0 * controller.webhookService.delete(_)
+    }
+
+    def "get webhook should fail when project param does not match webhook project"() {
+        given:
+            controller.webhookService = Mock(WebhookService) {
+                1 * getWebhookForProjectWithAuth('1234','otherproject')
+            }
+
+            controller.apiService = Mock(MockApiService)
+            controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
+            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        when:
+            params.id = "1234"
+            params.project = 'otherproject'
+            controller.get()
+
+        then:
+            response.status==404
+            response.text == '{"err":"Webhook not found"}'
+            1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,'otherproject')
+            1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_WEBHOOK,
+                [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_READ],
+                'otherproject'
+            ) >> true
     }
 
     def "503 if webhook is not enabled"() {

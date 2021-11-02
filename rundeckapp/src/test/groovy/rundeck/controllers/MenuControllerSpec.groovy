@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
+import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
@@ -519,85 +520,85 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 resource                               |
                 storageExists
         null   | 'acls'                 |
-                ['read', 'admin']   |
+                ['read', 'admin', 'app_admin']   |
                 null                                                                                        |
                 null                  |
                 [kind: 'system_acl', type: 'resource']     |
                 false
         null   | 'editSystemAclFile'    |
-                ['update', 'admin'] |
+                ['update', 'admin', 'app_admin'] |
                 new SysAclFile(id: 'test.aclpolicy', fileType: 'fs')                                        |
                 null                  |
                 [kind: 'system_acl', type: 'resource'] |
                 false
         'POST' | 'saveSystemAclFile'    |
-                ['update', 'admin'] |
+                ['update', 'admin', 'app_admin'] |
                 new SaveSysAclFile(id: 'test.aclpolicy', fileType: 'storage', create: false, fileText: 'z') |
                 null                  |
                 [kind: 'system_acl', type: 'resource'] |
                 false
         'POST' | 'saveSystemAclFile'    |
-                ['create', 'admin'] |
+                ['create', 'admin', 'app_admin'] |
                 new SaveSysAclFile(id: 'test.aclpolicy', fileType: 'storage', create: true, fileText: 'z')  |
                 null                  |
                 [kind: 'system_acl', type: 'resource'] |
                 true
         'POST' | 'deleteSystemAclFile'  |
-                ['delete', 'admin'] |
+                ['delete', 'admin', 'app_admin'] |
                 new SysAclFile(id: 'test.aclpolicy', fileType: 'storage')                                   |
                 null                  |
                 [kind: 'system_acl', type: 'resource'] |
                 true
         'POST' | 'deleteSystemAclFile'  |
-                ['delete', 'admin'] |
+                ['delete', 'admin', 'app_admin'] |
                 new SysAclFile(id: 'test.aclpolicy', fileType: 'fs')                                        |
                 null                  |
                 [kind: 'system_acl', type: 'resource'] |
                 true
         null   | 'createSystemAclFile'  |
-                ['create', 'admin'] |
+                ['create', 'admin', 'app_admin'] |
                 null                                                                                        |
                 [fileType: 'storage'] |
                 [kind: 'system_acl', type: 'resource'] |
                 true
         null   | 'createSystemAclFile'  |
-                ['create', 'admin'] |
+                ['create', 'admin', 'app_admin'] |
                 null                                                                                        |
                 [fileType: 'fs']      |
                 [kind: 'system_acl', type: 'resource'] |
                 true
         null   | 'projectAcls'          |
-                ['read', 'admin']   |
+                ['read', 'admin', 'app_admin']   |
                 null                                                                                        |
                 [project: 'a']        |
                 [name: 'a', type: 'project_acl']       |
                 false
         null   | 'editProjectAclFile'   |
-                ['update', 'admin'] |
+                ['update', 'admin', 'app_admin'] |
                 new ProjAclFile(id: 'test.aclpolicy')                                                       |
                 [project: 'a']        |
                 [name: 'a', type: 'project_acl']       |
                 false
         'POST' | 'saveProjectAclFile'   |
-                ['update', 'admin'] |
+                ['update', 'admin', 'app_admin'] |
                 new SaveProjAclFile(id: 'test.aclpolicy', create: false, fileText: 'x')                     |
                 [project: 'a']        |
                 [name: 'a', type: 'project_acl']       |
                 false
         'POST' | 'saveProjectAclFile'   |
-                ['create', 'admin'] |
+                ['create', 'admin', 'app_admin'] |
                 new SaveProjAclFile(id: 'test.aclpolicy', create: true, fileText: 'x')                      |
                 [project: 'a']        |
                 [name: 'a', type: 'project_acl']       |
                 true
         null   | 'createProjectAclFile' |
-                ['create', 'admin'] |
+                ['create', 'admin', 'app_admin'] |
                 null                                                                                        |
                 [project: 'a']        |
                 [name: 'a', type: 'project_acl']       |
                 false
         'POST' | 'deleteProjectAclFile' |
-                ['delete', 'admin'] |
+                ['delete', 'admin', 'app_admin'] |
                 new ProjAclFile(id: 'test.aclpolicy')                                                       |
                 [project: 'a']        |
                 [name: 'a', type: 'project_acl']       |
@@ -905,7 +906,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def result = controller.deleteSystemAclFile(input)
         then:
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['delete','admin']) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, ['delete','admin', 'app_admin']) >> true
         0 * controller.frameworkService._(*_)
         0 * controller.aclFileManagerService._(*_)
 
@@ -1301,7 +1302,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, 'proj') >> projectAuth
             1 * controller.
                 rundeckAuthContextProcessor.
-                authorizeProjectResourceAll(projectAuth, AuthorizationUtil.resourceType('event'), ['read'], 'proj')>>authEventRead
+                authorizeProjectResource(projectAuth, AuthConstants.RESOURCE_TYPE_EVENT, AuthConstants.ACTION_READ, 'proj')>>authEventRead
             1 * controller.
                 rundeckAuthContextProcessor.authorizeProjectResource(
                 projectAuth,
@@ -1319,6 +1320,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                     [
                         AuthConstants.ACTION_CONFIGURE,
                         AuthConstants.ACTION_ADMIN,
+                        AuthConstants.ACTION_APP_ADMIN,
                         AuthConstants.ACTION_IMPORT,
                         AuthConstants.ACTION_EXPORT,
                         AuthConstants.ACTION_DELETE
@@ -1369,10 +1371,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                         offset:0,
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
                                                                                 AuthConstants.ACTION_SCM_EXPORT]) >> true
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
                                                                                AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
@@ -1410,10 +1412,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                         offset:0,
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
                                                                                AuthConstants.ACTION_SCM_EXPORT]) >> true
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
                                                                                 AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
@@ -1462,10 +1464,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                                                                         offset:0,
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
                                                                                AuthConstants.ACTION_SCM_EXPORT]) >> true
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
                                                                                 AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
@@ -1513,7 +1515,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1548,7 +1550,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1582,7 +1584,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export')
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1833,7 +1835,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService=Mock(FrameworkService){
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeApplicationResourceType(_,_,_) >> true
+                1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_USER,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
                 1 * getAuthContextForSubject(_)>>auth
             }
         def userToSearch = 'admin'
@@ -2015,7 +2017,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.nowrunningAjax()
         then:
         response.status == 403
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
     }
     @Unroll
@@ -2037,7 +2039,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.apiExecutionsRunningv14()
         then:
         response.status == 403
-        1 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> true
 
     }
@@ -2062,7 +2064,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.apiExecutionsRunningv14()
         then:
         response.status == 404
-        0 * controller.rundeckAuthContextProcessor.authorizeProjectResourceAll(_, _, [action], 'aProject')
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, action, 'aProject')
         1 * controller.frameworkService.existsFrameworkProject('aProject') >> false
 
     }
@@ -2142,7 +2144,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
 
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', 'aProject') >> true
 
                 1 * getAuthContextForSubject(_) >> test
             }
@@ -2192,7 +2194,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', 'aProject') >> true
 
                 1 * getAuthContextForSubject(_) >> test
             }
@@ -2244,7 +2246,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'), ['read'], 'aProject') >>
+                1 * authorizeProjectResource(_, AuthorizationUtil.resourceType('event'), 'read', 'aProject') >>
                 true
 
                 1 * getAuthContextForSubjectAndProject(_, 'aProject')
@@ -2297,7 +2299,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> false
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', 'aProject') >> false
 
                 1 * getAuthContextForSubject(_) >> test
             }
@@ -2353,7 +2355,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], 'aProject') >> true
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', 'aProject') >> true
 
                 1 * getAuthContextForSubject(_) >> test
             }
@@ -2410,7 +2412,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         }
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                authorizeProjectResourceAll(_, AuthorizationUtil.resourceType('event'),['read'], _) >> {
+                authorizeProjectResource(_, AuthorizationUtil.resourceType('event'),'read', _) >> {
                     it[3] == 'aProject' ||  it[3] == 'bProject'||  it[3] == 'cProject'
                 }
 
@@ -2432,6 +2434,113 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             assert it[0].projFilter == 'aProject,bProject,cProject'
 
         }
+    }
+
+    @Unroll
+    def "log storage ajax endpoint #endpoint unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            request.addHeader('x-rundeck-ajax','true')
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller."$endpoint"()
+        then:
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
+        where:
+            endpoint << [
+                'logStorageIncompleteAjax',
+                'logStorageMissingAjax',
+                'logStorageAjax',
+            ]
+    }
+    @Unroll
+    def "log storage api endpoint #endpoint unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller."$endpoint"()
+        then:
+            1 * controller.apiService.requireApi(_,_,17)>>true
+            1 * controller.apiService.requireAuthorized(false,_,_)>> {
+                it[1].status=403
+                false
+            }
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
+        where:
+            endpoint << [
+                'apiLogstorageInfo'
+            ]
+    }
+    @Unroll
+    def "log storage api apiLogstorageListIncompleteExecutions unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller.apiLogstorageListIncompleteExecutions(new BaseQuery())
+        then:
+            1 * controller.apiService.requireApi(_,_,17)>>true
+
+            1 * controller.apiService.requireAuthorized(false,_,_)>> {
+                it[1].status=403
+                false
+            }
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
+    }
+    def "systemConfig unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller.systemConfig()
+        then:
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ,
+                 AuthConstants.ACTION_ADMIN,
+                 AuthConstants.ACTION_APP_ADMIN,
+                 AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
+    }
+
+    def "systemInfo unauthorized"(){
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        when:
+            controller.systemInfo()
+        then:
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_READ,
+                 AuthConstants.ACTION_ADMIN,
+                 AuthConstants.ACTION_OPS_ADMIN]
+            ) >> false
+            response.status==403
     }
 
 }

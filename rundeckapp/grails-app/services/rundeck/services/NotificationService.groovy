@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
+import grails.async.Promises
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
@@ -73,6 +74,7 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /*
@@ -176,14 +178,19 @@ public class NotificationService implements ApplicationContextAware{
     void asyncTriggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
             if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){
-                Thread.start {
-                    Thread notificationThread = new NotificationThread(this, trigger, schedId, content)
-                    notificationThread.start()
-                    notificationThread.join(configurationService.getLong("notification.threadTimeOut", defaultThreadTO))
-                    if (notificationThread.isAlive()) {
-                        notificationThread.interrupt()
-                        throw new TimeoutException()
+                def notificationTask = Promises.task {
+                    ScheduledExecution.withNewTransaction {
+                        ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
+                        if(null != scheduledExecution) {
+                            triggerJobNotification(trigger, scheduledExecution, content)
+                        }
                     }
+                }
+                try{
+                    notificationTask.get(configurationService.getLong("notification.threadTimeOut", defaultThreadTO), TimeUnit.MILLISECONDS)
+                }catch(TimeoutException toe){
+                    log.error("Error sending notification " , toe)
+                    notificationTask.cancel(true)
                 }
             }else{
                 ScheduledExecution.withNewTransaction {
@@ -929,28 +936,5 @@ public class NotificationService implements ApplicationContextAware{
         context = DataContextUtils.merge(context, contextMap)
 
         [context, execMap]
-    }
-}
-
-class NotificationThread extends Thread {
-    def notificationService
-    def trigger
-    def schedId
-    def content
-
-    NotificationThread(NotificationService notificationService, trigger, schedId, content){
-        this.notificationService = notificationService
-        this.trigger = trigger
-        this.schedId = schedId
-        this.content = content
-    }
-
-    void run() {
-        ScheduledExecution.withNewTransaction {
-            ScheduledExecution scheduledExecution = ScheduledExecution.get(schedId)
-            if(null != scheduledExecution){
-                notificationService.triggerJobNotification(trigger, scheduledExecution, content)
-            }
-        }
     }
 }

@@ -26,8 +26,8 @@
 
 <g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any       : true,
-        action    : [AuthConstants.ACTION_ADMIN],
-        context   : 'application',
+        action    : [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+        context   : AuthConstants.CTX_APPLICATION,
         type      : AuthConstants.TYPE_PROJECT_ACL,
         attributes: [name: params.project]
 ]
@@ -35,7 +35,7 @@
 <g:set var="hasEditAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any       : true,
         action    : [AuthConstants.ACTION_UPDATE],
-        context   : 'application',
+        context   : AuthConstants.CTX_APPLICATION,
         type      : AuthConstants.TYPE_PROJECT_ACL,
         attributes: [name: params.project]
 ]
@@ -43,7 +43,7 @@
 <g:set var="hasCreateAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any       : true,
         action    : [AuthConstants.ACTION_CREATE],
-        context   : 'application',
+        context   : AuthConstants.CTX_APPLICATION,
         type      : AuthConstants.TYPE_PROJECT_ACL,
         attributes: [name: params.project]
 ]
@@ -51,7 +51,7 @@
 <g:set var="hasDeleteAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any       : true,
         action    : [AuthConstants.ACTION_DELETE],
-        context   : 'application',
+        context   : AuthConstants.CTX_APPLICATION,
         type      : AuthConstants.TYPE_PROJECT_ACL,
         attributes: [name: params.project]
 ]

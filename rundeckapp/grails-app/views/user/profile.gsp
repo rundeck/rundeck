@@ -20,14 +20,14 @@
   --}%
 
     <g:set var="selfToken" value="${auth.resourceAllowedTest(
-            kind: 'apitoken',
+            kind: AuthConstants.TYPE_APITOKEN,
             action: [AuthConstants.ACTION_GENERATE_USER_TOKEN],
-            context: 'application'
+            context: AuthConstants.CTX_APPLICATION
     )}"/>
     <g:set var="serviceToken" value="${auth.resourceAllowedTest(
-            kind: 'apitoken',
+            kind: AuthConstants.TYPE_APITOKEN,
             action: [AuthConstants.ACTION_GENERATE_SERVICE_TOKEN],
-            context: 'application'
+            context: AuthConstants.CTX_APPLICATION
     )}"/>
     <g:appTitle/> - <g:message code="userController.page.profile.title"/>: ${user.login}</title>
     <asset:javascript src="user/profile.js"/>

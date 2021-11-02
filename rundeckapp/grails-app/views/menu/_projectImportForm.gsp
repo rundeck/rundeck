@@ -109,7 +109,7 @@
                 </span>
               </div>
           </div>
-          <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project_acl" name="${params.project}">
+          <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" any="true" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT_ACL}" name="${params.project}">
             <div class="list-group-item">
               <h4 class="list-group-item-heading">ACL Policies</h4>
                 <div class="radio">
@@ -132,7 +132,7 @@
                 </div>
             </div>
           </auth:resourceAllowed>
-          <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project_acl" has="false" name="${params.project}">
+          <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" any="true" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT_ACL}" has="false" name="${params.project}">
             <div class="list-group-item">
               <h4 class="list-group-item-heading">ACL Policies</h4>
               <span class="help-block">
@@ -189,7 +189,7 @@
             <g:set var="projectComponent" value="${projectComponentMap[compName]}"/>
 
 
-            <g:if test="${!projectComponent.importAuthRequiredActions || auth.resourceAllowedTest(action: projectComponent.importAuthRequiredActions,any:true,context:'application',type:'project',name:params.project)}">
+            <g:if test="${!projectComponent.importAuthRequiredActions || auth.resourceAllowedTest(action: projectComponent.importAuthRequiredActions,any:true,context:AuthConstants.CTX_APPLICATION,type:AuthConstants.TYPE_PROJECT,name:params.project)}">
                 <g:set var="componentTitle">
                     <g:if test="${projectComponent.titleCode}">
                         <g:message code="${projectComponent.titleCode}" default="${projectComponent.title?:projectComponent.name}"/>

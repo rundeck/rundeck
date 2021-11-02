@@ -494,6 +494,27 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         output.authToken == "abc123"
     }
 
+    def "getWebhookForProjectWithAuth returns null for wrong project"() {
+        setup:
+            def project = 'aproject'
+            Webhook hook = new Webhook()
+            hook.name = "hit"
+            hook.project = "otherproject"
+            hook.authToken = "abc123"
+            hook.eventPlugin = "do-some-action"
+            hook.pluginConfigurationJson = '{"prop1":"true"}'
+            hook.save()
+
+            service.rundeckAuthTokenManagerService = Mock(AuthTokenManager)
+
+        when:
+            def output = service.getWebhookForProjectWithAuth(hook.id.toString(), project)
+
+        then:
+            output == null
+            0 * service.rundeckAuthTokenManagerService.getToken("abc123")
+    }
+
     def "delete all webhooks in project"() {
         setup:
         String project = "prj1"

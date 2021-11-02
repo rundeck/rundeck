@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../paper/variables";
+@import "../runstrap/variables";
 
 .table.item_details {
 
@@ -22,9 +22,9 @@
   td.displabel {
     text-align: right;
     vertical-align: top;
+    font-weight: 700;
 
     text-transform: uppercase;
-    color: var(--dark-gray);
     width: 200px;
   }
 }
@@ -47,12 +47,12 @@
 
 .subtitlebar {
   &.job-page {
-    background: $grey-300;
+    background: var(--background-color-lvl3);
   }
 }
 
 .exec-options-header {
-  background: #e6e6e6;
+  background: var(--background-color-accent-lvl2);
 
   .jobInfoSection {
     padding: 10px 0;
@@ -85,7 +85,7 @@
   border-radius: 3px;
 
   &:hover {
-    background: #e0e0e0;
+    background: var(--background-color-accent-lvl2);
   }
 
   .jobgroupexpand {
@@ -109,8 +109,8 @@
   border-color: transparent;
 
   &:hover {
-    background: #F8f8f8;
-    border-color: #e8e8e8;
+    background: var(--background-color-accent-lvl2);
+    border-color: var(--border-color);
   }
 }
 

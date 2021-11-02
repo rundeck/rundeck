@@ -1,7 +1,13 @@
+import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
+import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
+
 const w = window as any
 w._rundeck = {
     rdBase: 'http://xubuntu:4440',
+    rundeckClient: new Rundeck(new TokenCredentialProvider('foo'), {baseUri: '/', httpClient: new BrowserFetchHttpClient()})
 }
+
+console.log('foo')
 
 w.appLinks = {
     adhocHistoryAjax: "/execution/adhocHistoryAjax",

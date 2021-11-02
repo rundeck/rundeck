@@ -41,20 +41,22 @@
                    name: (projectName),
                    action: [AuthConstants.ACTION_CONFIGURE,
                             AuthConstants.ACTION_ADMIN,
+                            AuthConstants.ACTION_APP_ADMIN,
                             AuthConstants.ACTION_IMPORT,
                             AuthConstants.ACTION_EXPORT,
                             AuthConstants.ACTION_DELETE],
                    any: true,
-                   context: 'application'
+                   context: AuthConstants.CTX_APPLICATION
            )}"/>
     <g:set var="projACLAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT_ACL,
                    name: (projectName),
                    action: [AuthConstants.ACTION_READ,
-                            AuthConstants.ACTION_ADMIN],
+                            AuthConstants.ACTION_ADMIN,
+                            AuthConstants.ACTION_APP_ADMIN],
                    any: true,
-                   context: 'application'
+                   context: AuthConstants.CTX_APPLICATION
            )}"/>
 </g:if>
 
@@ -104,7 +106,7 @@
                 </g:if>
 
 
-                <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="event">
+                <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="${AuthConstants.TYPE_EVENT}">
                 {
                     type: 'link',
                     id: 'nav-activity-link',

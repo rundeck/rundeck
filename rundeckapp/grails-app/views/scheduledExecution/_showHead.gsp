@@ -24,16 +24,16 @@
     </g:if>
   <section class="${scheduledExecution.groupPath?'section-space':''}" id="jobInfo_">
     <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
-            context: 'application',
-            type: 'project',
-            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT],
             any: true,
             name: scheduledExecution.project
     )}"/>
     <g:set var="authProjectImport" value="${auth.resourceAllowedTest(
-            context: 'application',
-            type: 'project',
-            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT],
+            context: AuthConstants.CTX_APPLICATION,
+            type: AuthConstants.TYPE_PROJECT,
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT],
             any: true,
             name: scheduledExecution.project
     )}"/>
@@ -56,7 +56,7 @@
         <g:if test="${jobActionButtons}">
             <div class="job-action-button">
                 <g:render template="/scheduledExecution/jobActionButton"
-                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-sm', isScheduled: isScheduled]"/>
+                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-default btn-sm btn-transparent', isScheduled: isScheduled]"/>
           </div>
         </g:if>
       </span>
@@ -105,8 +105,8 @@
                   <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}"
                         data-name-truncated="8"
                         data-uuid-label-none="true"
-                        class="rundeck-server-uuid text-secondary">
-                      <i class="fas fa-dot-circle text-muted cluster-status-icon"></i>
+                        class="rundeck-server-uuid">
+                      <i class="fas fa-dot-circle cluster-status-icon"></i>
                   </span>
               </g:if>
           </span>

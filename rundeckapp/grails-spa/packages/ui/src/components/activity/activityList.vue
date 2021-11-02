@@ -63,7 +63,7 @@
               </span>
 
 
-              <btn size="xs" type="secondary" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
+              <btn size="xs" type="default" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
                   {{$t('bulk.delete')}}
               </btn>
             </span>
@@ -72,7 +72,7 @@
     </section>
 
     <!-- Bulk edit modals -->
-    <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')">
+    <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')" append-to-body>
 
       <i18n tag="p" path="clearselected.confirm.text">
         <strong>{{bulkSelectedIds.length}}</strong>
@@ -94,7 +94,7 @@
       </div>
     </modal>
 
-    <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')">
+    <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')" append-to-body>
       <i18n tag="p" path="delete.confirm.text">
         <strong>{{bulkSelectedIds.length}}</strong>
         <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
@@ -112,7 +112,7 @@
       </div>
     </modal>
 
-    <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" >
+    <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" append-to-body>
                 <div  v-if="bulkEditProgress">
                     <em>
                         <b class="glyphicon glyphicon-time text-info"></b>
@@ -336,7 +336,7 @@
     </div>
 
     <div v-if="reports.length < 1 " class="loading-area">
-        <span class="text-secondary" v-if="!loading && !loadError">
+        <span class="loading-text" v-if="!loading && !loadError">
           {{$t('results.empty.text')}}
         </span>
         <div class="loading-text" v-if="loading && lastDate<0">
@@ -884,12 +884,12 @@ export default Vue.extend({
 
 .loading-area{
   padding: 50px;
-  background: #efefefef;
+  background: var(--background-color-accent-lvl2);
   font-size: 14px;
   text-align: center;
   .loading-text{
     font-style:italic;
-    color: #bbbbbb;
+    color: var(--font-color);
   }
 }
 td.eventtitle.adhoc {
@@ -906,7 +906,7 @@ $since-bg: #ccf;
     padding: 2px;
   }
   > tr:hover{
-    background: darken($color: $since-bg, $amount: 20%)
+    background: var(--background-color-accent-lvl2)
   }
 }
 .running-executions + .history-executions,
@@ -921,7 +921,8 @@ $since-bg: #ccf;
   margin:0;
 }
 .missed {
-  background-color: #dddddd;
-  color: #999;
+  background-color: var(--warning-bg-color);
+  --text-muted-color: var(--font-color);
+  --text-secondary-color: var(--font-color);
 }
 </style>

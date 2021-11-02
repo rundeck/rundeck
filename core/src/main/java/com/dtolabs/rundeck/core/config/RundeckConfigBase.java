@@ -95,6 +95,13 @@ public class RundeckConfigBase {
         public static class ExecutionLogs {
             String fileStoragePlugin;
             LogFileStorage fileStorage;
+            LogOutput output;
+        }
+
+        @Data
+        public static class LogOutput {
+            String limit;
+            String limitAction;
         }
 
         @Data
@@ -348,6 +355,7 @@ public class RundeckConfigBase {
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStorage = new Enabled(true);
         Enabled pluginSecurity = new Enabled(false);
+        Enabled healthEndpoint = new Enabled(true);
 
         @Data
         public static class Enabled {

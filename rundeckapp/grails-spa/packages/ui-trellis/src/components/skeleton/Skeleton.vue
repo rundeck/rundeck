@@ -34,7 +34,6 @@ export default Vue.extend({
                 return slot
         },
         skeleton(h: CreateElement): VNode {
-            console.log('foo')
             return h('div', {
                 attrs: {
                     'role': 'alert',

@@ -15,6 +15,7 @@
   --}%
 
 %{--Delete modal--}%
+<div class="modal-container">
 <g:form
         controller="${deleteAction.controller}"
         action="${deleteAction.action}"
@@ -55,8 +56,9 @@
         </div>
     </g:render>
 </g:form>
+</div>
 <g:if test="${uploadAction}">
-    <div id="${uploadFormId ?: 'aclUploadForm'}">
+    <div id="${uploadFormId ?: 'aclUploadForm'}" class="modal-container">
         <g:uploadForm useToken="true"
                       controller="${uploadAction.controller}"
                       action="${uploadAction.action}"

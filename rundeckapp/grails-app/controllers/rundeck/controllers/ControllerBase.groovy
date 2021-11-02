@@ -21,9 +21,12 @@ import org.grails.plugins.web.servlet.mvc.InvalidResponseHandler
 import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.servlet.mvc.TokenResponseHandler
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.UnauthorizedAccess
 import org.rundeck.util.Toposort
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.springframework.web.context.request.RequestContextHolder
+import rundeck.services.ApiService
 import rundeck.services.UiPluginService
 
 import javax.servlet.http.HttpServletRequest
@@ -37,6 +40,8 @@ import java.util.zip.GZIPOutputStream
  */
 class ControllerBase {
     UiPluginService uiPluginService
+    ApiService apiService
+    AppAuthContextProcessor rundeckWebAuthContextProcessor
 
     protected def withHmacToken(Closure valid){
         GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
@@ -144,6 +149,22 @@ class ControllerBase {
             renderUnauthorized(action, type, name, fragment)
         }
         return !test
+    }
+
+    /**
+     * Handle unauthorized exception
+     * @param access exception
+     */
+    def handleUnauthorized(UnauthorizedAccess access){
+        if(request.api_version){
+            apiService.renderErrorFormat(response, [
+                status: HttpServletResponse.SC_FORBIDDEN,
+                code: 'api.error.item.unauthorized',
+                args: [access.action, access.type, access.name]
+            ])
+        }else{
+            renderUnauthorized(access.action, access.type, access.name)
+        }
     }
 
     /**

@@ -53,7 +53,7 @@
             </g:if>
         </span>
 
-        <g:set var="adminauth" value="${auth.resourceAllowedTest(kind:'user',action:[AuthConstants.ACTION_ADMIN],context:'application')}"/>
+        <g:set var="adminauth" value="${auth.resourceAllowedTest(kind:AuthConstants.TYPE_USER,action:[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],context:AuthConstants.CTX_APPLICATION)}"/>
         <g:if test="${adminauth}">
         <span class="useredit">
             <g:link action="edit" params="[login:user.login]" class="textbtn textbtn-info textbtn-on-hover">
