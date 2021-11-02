@@ -108,12 +108,12 @@ def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
 
     if (findProperty('environment')?:'development' == 'release') {
         if (project.vTag == 'GA')
-            args << "${project.vNum}".toString()
+            args.add("${project.vNum}".toString())
         else
-            args << "${project.vNum}-${project.vTag}.${new Date().getTime()}".toString()
+            args.add("${project.vNum}-${project.vTag}.${new Date().getTime()}".toString())
     }
     else {
-        args << "${project.vNum}-snapshot.${new Date().getTime()}".toString()
+        args.add("${project.vNum}-snapshot.${new Date().getTime()}".toString())
     }
 
     /** Copy to staging location where we will modify it */
