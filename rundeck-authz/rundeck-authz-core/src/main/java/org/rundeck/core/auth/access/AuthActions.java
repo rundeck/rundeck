@@ -11,7 +11,7 @@ public interface AuthActions {
     /**
      * @return list of actions any are allowed
      */
-    List<String> getAnyActions();
+    List<String> getActions();
 
     /**
      * @return Description of access

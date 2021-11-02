@@ -71,7 +71,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
         return getRundeckAuthContextProcessor().authorizeProjectResourceAny(
                 authContext,
                 authResource.getResourceMap(),
-                actions.getAnyActions(),
+                actions.getActions(),
                 projectLevel
         );
     }

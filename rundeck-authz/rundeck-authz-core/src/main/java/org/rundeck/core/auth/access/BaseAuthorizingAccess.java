@@ -48,7 +48,7 @@ public abstract class BaseAuthorizingAccess
         return getRundeckAuthContextProcessor().authorizeApplicationResourceAny(
                 getAuthContext(),
                 authResource.getResourceMap(),
-                actions.getAnyActions()
+                actions.getActions()
         );
     }
 

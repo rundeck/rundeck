@@ -478,7 +478,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * system(_)>>Mock(AuthorizingSystem){
-                1 * authorize({it.anyActions.containsAll(expected)}) >>  {
+                1 * authorize({it.actions.containsAll(expected)}) >> {
                     if(!allow){
                         throw new UnauthorizedAccess('x', 'System','resource')
                     }

@@ -16,7 +16,7 @@ public class AccessLevels {
     }
 
     public static AuthActions or(AuthActions a, AuthActions b) {
-        return or(append(a.getAnyActions(), b.getAnyActions()));
+        return or(append(a.getActions(), b.getActions()));
     }
 
     private static List<String> append(
@@ -33,8 +33,8 @@ public class AccessLevels {
     }
 
     public static AuthActions or(List<String> a, AuthActions actions) {
-        if (nonEmpty(actions.getAnyActions())) {
-            return or(append(a, actions.getAnyActions()));
+        if (nonEmpty(actions.getActions())) {
+            return or(append(a, actions.getActions()));
         } else {
             throw new IllegalArgumentException("Cannot combine any and all access levels: "
                                                + actions
@@ -48,8 +48,8 @@ public class AccessLevels {
     }
 
     public static AuthActions or(AuthActions a, List<String> actions) {
-        if (nonEmpty(a.getAnyActions())) {
-            return or(append(a.getAnyActions(), actions));
+        if (nonEmpty(a.getActions())) {
+            return or(append(a.getActions(), actions));
         } else {
             throw new IllegalArgumentException("Cannot combine any and all access levels: "
                                                + a
@@ -67,7 +67,7 @@ public class AccessLevels {
     }
 
     public static AuthActions withDescription(AuthActions actions, String description) {
-        return new AnyAuth(actions.getAnyActions(), description);
+        return new AnyAuth(actions.getActions(), description);
     }
 
     public static final AuthActions
@@ -90,27 +90,27 @@ public class AccessLevels {
             implements AuthActions
     {
 
-        private final List<String> anyActions;
+        private final List<String> actions;
         @EqualsAndHashCode.Exclude
         private final String description;
 
-        public AnyAuth(final List<String> anyActions) {
-            this(anyActions, null);
+        public AnyAuth(final List<String> actions) {
+            this(actions, null);
         }
 
-        public AnyAuth(final List<String> anyActions, String description) {
-            if (null == anyActions || anyActions.size() < 1) {
+        public AnyAuth(final List<String> actions, String description) {
+            if (null == actions || actions.size() < 1) {
                 throw new IllegalArgumentException("anyActions cannot be empty");
             }
-            this.anyActions = anyActions;
+            this.actions = actions;
             this.description = description;
         }
 
         public String getDescription() {
             if (null != this.description) {
                 return this.description;
-            } else if (anyActions != null && anyActions.size() > 0) {
-                return anyActions.get(0);
+            } else if (actions != null && actions.size() > 0) {
+                return actions.get(0);
             } else {
                 return "(unknown)";
             }
@@ -118,7 +118,7 @@ public class AccessLevels {
 
         @Override
         public String toString() {
-            return "AnyAccess{" + getAnyActions() + (description != null ? ": " + description : "") + "}";
+            return "AnyAccess{" + getActions() + (description != null ? ": " + description : "") + "}";
         }
     }
 }
