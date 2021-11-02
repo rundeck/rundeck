@@ -144,26 +144,34 @@ public class RundeckConfigBase {
     }
 
     @Data
+    public static class Enabled {
+        Boolean enabled;
+
+        public Enabled() { this(false); }
+        public Enabled(final Boolean enabled) {
+            this.enabled = enabled;
+        }
+    }
+
+    @Data
     public static class RundeckMetricsConfig {
         Boolean enabled;
         Boolean jmxEnabled;
         Boolean requestFilterEnabled;
         String servletUrlPattern;
         Datasource datasource;
+        Api api;
 
         @Data
         public static class Api {
             Boolean enabled;
-            ApiEnabled metrics;
-            ApiEnabled ping;
-            ApiEnabled threads;
-            ApiEnabled healthcheck;
+            Enabled metrics;
+            Enabled ping;
+            Enabled threads;
+            Enabled healthcheck;
+            Enabled cpuProfile;
         }
 
-        @Data
-        public static class ApiEnabled {
-            Boolean enabled;
-        }
 
         @Data
         public static class Datasource {
@@ -357,15 +365,7 @@ public class RundeckConfigBase {
         Enabled pluginSecurity = new Enabled(false);
         Enabled healthEndpoint = new Enabled(true);
 
-        @Data
-        public static class Enabled {
-            Boolean enabled;
 
-            public Enabled() { this(false); }
-            public Enabled(final Boolean enabled) {
-                this.enabled = enabled;
-            }
-        }
 
         @Data
         public static class Repository {

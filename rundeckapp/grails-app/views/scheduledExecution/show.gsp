@@ -187,6 +187,7 @@ search
 })
     </g:javascript>
     <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+    <asset:javascript src="static/components/copybox.js"/>
 </head>
 
 <body>

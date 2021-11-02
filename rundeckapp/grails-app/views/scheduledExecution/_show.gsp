@@ -41,7 +41,9 @@
                       ]"/>
 
             <section class="section-space">
-                <small class="uuid">${scheduledExecution.extid}</small>
+                <div class="vue-copybox">
+                    <copy-box content="${scheduledExecution.extid}" style="max-width: 375px;"/>
+                </div>
             </section>
         </div>
 

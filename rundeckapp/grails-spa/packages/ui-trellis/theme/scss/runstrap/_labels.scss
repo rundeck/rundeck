@@ -68,3 +68,19 @@ a.label {
   @include label-variant($label-danger-bg);
   background-color: var(--danger-color);
 }
+
+
+.label.label-muted {
+    background-color: var(--grey-300)  !important;
+    color: var(--grey-900)  !important;
+    font-weight: 600;
+}
+.label.label-muted.active {
+    background-color: var(--yellow-300)  !important;
+}
+#nodes_tags{
+  padding-bottom: var(--spacing-6);
+}
+.summary.nodetags{
+  margin-left: var(--spacing-3);
+}
