@@ -3,7 +3,7 @@ package webhooks
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.RdProjectAuthorize
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
@@ -25,69 +25,36 @@ class WebhookController {
 
     def admin() {}
 
+    @RdProjectAuthorize("webhook.save")
     def save() {
-        String project = request.JSON.project
-        if(!project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                           code: 'api.error.parameter.required', args: ['project']])
-
-        }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, project)
-        if (!rundeckAuthContextEvaluator.authorizeProjectResourceAny(
-            authContext,
-            AuthConstants.RESOURCE_TYPE_WEBHOOK,
-            [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
-            project
-        )) {
-            sendJsonError("You are not authorized to perform this action")
-            return
-        }
-
         def msg = webhookService.saveHook(authContext,request.JSON)
         if(msg.err) response.status = 400
 
         render msg as JSON
     }
 
+    @RdProjectAuthorize("webhook.delete")
     def remove() {
-        if(!params.project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                           code: 'api.error.parameter.required', args: ['project']])
-
-        }
         Webhook webhook = webhookService.getWebhook(params.id.toLong())
         if(!webhook) {
             sendJsonError("Webhook not found")
             return
         }
 
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (!authorized(authContext, webhook.project, AuthConstants.ACTION_DELETE)) {
-            sendJsonError("You are not authorized to perform this action")
-            return
-        }
         def output = webhookService.delete(webhook)
         if(output.err) response.status = 400
         render output as JSON
 
     }
 
+    @RdProjectAuthorize(value="webhook.read")
     def get() {
-        if(!params.project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                           code: 'api.error.parameter.required', args: ['project']])
-
-        }
         if(!params.id){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                            code: 'api.error.parameter.required', args: ['id']])
 
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if (!authorized(authContext, params.project, AuthConstants.ACTION_READ)) {
-            sendJsonError("You do not have access to this resource")
-            return
-        }
+
         def webhook = webhookService.getWebhookForProjectWithAuth(params.id, params.project)
         if(!webhook){
             return sendJsonError("Webhook not found", HttpServletResponse.SC_NOT_FOUND)
@@ -95,32 +62,13 @@ class WebhookController {
         render webhook as JSON
     }
 
+    @RdProjectAuthorize(value="webhook.read")
     def list() {
-        if(!params.project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                           code: 'api.error.parameter.required', args: ['project']])
-
-        }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (!authorized(authContext, params.project, AuthConstants.ACTION_READ)) {
-            sendJsonError("You do not have access to this resource")
-            return
-        }
         render webhookService.listWebhooksByProject(params.project) as JSON
     }
 
+    @RdProjectAuthorize(value="webhook.read")
     def editorData() {
-        if(!params.project){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                                                           code: 'api.error.parameter.required', args: ['project']])
-
-        }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (!authorized(authContext, params.project, AuthConstants.ACTION_READ)) {
-            sendJsonError("You do not have access to this resource")
-            return
-        }
-
         def uidata = [:]
         uidata.hooks = webhookService.listWebhooksByProject(params.project)
         uidata.username = authContext.username
@@ -128,6 +76,7 @@ class WebhookController {
         render uidata as JSON
     }
 
+    @RdProjectAuthorize(value="webhook.post")
     def post() {
         Webhook hook = webhookService.getWebhookByToken(Webhook.cleanAuthToken(params.authtoken))
 
@@ -137,12 +86,6 @@ class WebhookController {
         }
         if(!hook.enabled) {
             sendJsonError("Webhook not enabled",503)
-            return
-        }
-
-        UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, hook.project)
-        if (!authorized(authContext, hook.project, AuthConstants.ACTION_POST)) {
-            sendJsonError("You are not authorized to perform this action")
             return
         }
 

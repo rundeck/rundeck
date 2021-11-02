@@ -74,6 +74,8 @@ import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.authorization.BaseAuthContextProcessor
 import org.rundeck.app.authorization.BaseAuthContextProvider
 import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
+import org.rundeck.app.authorization.RdAuthorizeInterceptor
+import org.rundeck.app.authorization.RdProjectAuthorizeInterceptor
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.authorization.WebAuthContextProcessor
@@ -124,6 +126,7 @@ import javax.security.auth.login.Configuration
 
 beans={
     xmlns context: "http://www.springframework.org/schema/context"
+    xmlns aop:"http://www.springframework.org/schema/aop"
 //    if (Environment.PRODUCTION == Environment.current) {
 //        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
 //            targetClass = "org.springframework.util.Log4jConfigurer"
@@ -131,6 +134,19 @@ beans={
 //            arguments = ["classpath:log4j.properties"]
 //        }
 //    }
+
+    aop {
+        config("proxy-target-class": true) {
+            pointcut(id: "rdAuthInterceptorPointcut", expression: "@annotation(com.dtolabs.rundeck.core.authorization.RdAuthorize)")
+            advisor('pointcut-ref': "rdAuthInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdPrjAuthInterceptorPointcut", expression: "@annotation(com.dtolabs.rundeck.core.authorization.RdProjectAuthorize)")
+            advisor('pointcut-ref': "rdPrjAuthInterceptorPointcut", 'advice-ref': "rdProjectAuthorizeInterceptor")
+        }
+    }
+
+    rdAuthorizeInterceptor(RdAuthorizeInterceptor)
+    rdProjectAuthorizeInterceptor(RdProjectAuthorizeInterceptor)
+
     if (application.config.rundeck.multiURL?.enabled in ['true',true]) {
         Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
         String serverURL = application.config.grails.serverURL

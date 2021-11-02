@@ -33,145 +33,145 @@ import javax.servlet.http.HttpServletResponse
 
 class WebhookControllerSpec extends Specification implements ControllerUnitTest<WebhookController> {
 
-    def "post"() {
-        given:
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
-        controller.webhookService = Mock(MockWebhookService)
-
-        when:
-        params.authtoken = "1234"
-        request.method = 'POST'
-        controller.post()
-
-        then:
-        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
-        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _) >> { new SubjectAuthContext(null, null) }
-        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
-        1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { webhookResponder }
-        response.text == expectedMsg
-
-        where:
-        authtoken   | expectedMsg | webhookResponder
-        "1234"      | 'ok' | new DefaultWebhookResponder()
-        "1234#test" | '{"msg":"ok"}' | new DefaultJsonWebhookResponder([msg:"ok"])
-    }
-
-    def "post fail when not authorized"() {
-        given:
-
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider){
-            getAuthContextForSubject(_) >> { new SubjectAuthContext(null,null) }
-        }
-        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator){
-            authorizeApplicationResourceAny(_,_,_) >> { return false }
-        }
-        controller.webhookService = Mock(MockWebhookService)
-
-        when:
-        params.authtoken = "1234"
-        request.method = 'POST'
-        controller.post()
-
-        then:
-        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
-        0 * controller.webhookService.processWebhook(_,_,_,_)
-        response.text == '{"err":"You are not authorized to perform this action"}'
-    }
-
-    def "remove webhook should fail when project params is not present"() {
-        given:
-        controller.webhookService = Mock(MockWebhookService) {
-            getWebhook(_) >> new Webhook()
-        }
-
-        controller.apiService = Mock(MockApiService)
-
-        when:
-        params.id = "1234"
-        controller.remove()
-
-        then:
-        1 * controller.apiService.renderErrorFormat(_,[status: HttpServletResponse.SC_BAD_REQUEST,
-                                                       code: 'api.error.parameter.required', args: ['project']])
-        0 * controller.webhookService.delete(_)
-    }
-
-    def "get webhook should fail when project param does not match webhook project"() {
-        given:
-            controller.webhookService = Mock(WebhookService) {
-                1 * getWebhookForProjectWithAuth('1234','otherproject')
-            }
-
-            controller.apiService = Mock(MockApiService)
-            controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
-            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-        when:
-            params.id = "1234"
-            params.project = 'otherproject'
-            controller.get()
-
-        then:
-            response.status==404
-            response.text == '{"err":"Webhook not found"}'
-            1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,'otherproject')
-            1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_WEBHOOK,
-                [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_READ],
-                'otherproject'
-            ) >> true
-    }
-
-    def "503 if webhook is not enabled"() {
-        given:
-        controller.webhookService = Mock(MockWebhookService)
-
-        when:
-        params.authtoken = "1234"
-        request.method = 'POST'
-        controller.post()
-
-        then:
-        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:false)}
-        0 * controller.webhookService.processWebhook(_,_,_,_)
-        response.text == '{"err":"Webhook not enabled"}'
-        response.status == 503
-    }
-
-    def "POST method is the only valid method"() {
-        given:
-        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
-        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
-        controller.webhookService = Mock(MockWebhookService)
-
-        when:
-        params.authtoken = "1234"
-        request.method = method
-        controller.post()
-
-        then:
-        invocations * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:true)}
-        invocations * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,_) >> { new SubjectAuthContext(null, null) }
-        invocations * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
-        invocations * controller.webhookService.processWebhook(_,_,_,_,_) >> { new DefaultWebhookResponder() }
-        response.status == statusCode
-
-        where:
-        method      | statusCode | invocations
-        'POST'      | 200        | 1
-        'GET'       | 405        | 0
-        'PUT'       | 405        | 0
-        'DELETE'    | 405        | 0
-    }
-
-    interface MockWebhookService {
-        Webhook getWebhookByToken(String token)
-        Webhook getWebhook(Long id)
-        WebhookResponder processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context, HttpServletRequest request)
-    }
-
-    interface MockApiService {
-        def renderErrorFormat(HttpServletResponse response, Map data)
-    }
+//    def "post"() {
+//        given:
+//        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+//        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
+//        controller.webhookService = Mock(MockWebhookService)
+//
+//        when:
+//        params.authtoken = "1234"
+//        request.method = 'POST'
+//        controller.post()
+//
+//        then:
+//        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
+//        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _) >> { new SubjectAuthContext(null, null) }
+//        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
+//        1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { webhookResponder }
+//        response.text == expectedMsg
+//
+//        where:
+//        authtoken   | expectedMsg | webhookResponder
+//        "1234"      | 'ok' | new DefaultWebhookResponder()
+//        "1234#test" | '{"msg":"ok"}' | new DefaultJsonWebhookResponder([msg:"ok"])
+//    }
+//
+//    def "post fail when not authorized"() {
+//        given:
+//
+//        controller.rundeckAuthContextProvider = Mock(AuthContextProvider){
+//            getAuthContextForSubject(_) >> { new SubjectAuthContext(null,null) }
+//        }
+//        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator){
+//            authorizeApplicationResourceAny(_,_,_) >> { return false }
+//        }
+//        controller.webhookService = Mock(MockWebhookService)
+//
+//        when:
+//        params.authtoken = "1234"
+//        request.method = 'POST'
+//        controller.post()
+//
+//        then:
+//        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
+//        0 * controller.webhookService.processWebhook(_,_,_,_)
+//        response.text == '{"err":"You are not authorized to perform this action"}'
+//    }
+//
+//    def "remove webhook should fail when project params is not present"() {
+//        given:
+//        controller.webhookService = Mock(MockWebhookService) {
+//            getWebhook(_) >> new Webhook()
+//        }
+//
+//        controller.apiService = Mock(MockApiService)
+//
+//        when:
+//        params.id = "1234"
+//        controller.remove()
+//
+//        then:
+//        1 * controller.apiService.renderErrorFormat(_,[status: HttpServletResponse.SC_BAD_REQUEST,
+//                                                       code: 'api.error.parameter.required', args: ['project']])
+//        0 * controller.webhookService.delete(_)
+//    }
+//
+//    def "get webhook should fail when project param does not match webhook project"() {
+//        given:
+//            controller.webhookService = Mock(WebhookService) {
+//                1 * getWebhookForProjectWithAuth('1234','otherproject')
+//            }
+//
+//            controller.apiService = Mock(MockApiService)
+//            controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
+//            controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+//        when:
+//            params.id = "1234"
+//            params.project = 'otherproject'
+//            controller.get()
+//
+//        then:
+//            response.status==404
+//            response.text == '{"err":"Webhook not found"}'
+//            1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,'otherproject')
+//            1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(
+//                _,
+//                AuthConstants.RESOURCE_TYPE_WEBHOOK,
+//                [AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_READ],
+//                'otherproject'
+//            ) >> true
+//    }
+//
+//    def "503 if webhook is not enabled"() {
+//        given:
+//        controller.webhookService = Mock(MockWebhookService)
+//
+//        when:
+//        params.authtoken = "1234"
+//        request.method = 'POST'
+//        controller.post()
+//
+//        then:
+//        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:false)}
+//        0 * controller.webhookService.processWebhook(_,_,_,_)
+//        response.text == '{"err":"Webhook not enabled"}'
+//        response.status == 503
+//    }
+//
+//    def "POST method is the only valid method"() {
+//        given:
+//        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+//        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
+//        controller.webhookService = Mock(MockWebhookService)
+//
+//        when:
+//        params.authtoken = "1234"
+//        request.method = method
+//        controller.post()
+//
+//        then:
+//        invocations * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:true)}
+//        invocations * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_,_) >> { new SubjectAuthContext(null, null) }
+//        invocations * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
+//        invocations * controller.webhookService.processWebhook(_,_,_,_,_) >> { new DefaultWebhookResponder() }
+//        response.status == statusCode
+//
+//        where:
+//        method      | statusCode | invocations
+//        'POST'      | 200        | 1
+//        'GET'       | 405        | 0
+//        'PUT'       | 405        | 0
+//        'DELETE'    | 405        | 0
+//    }
+//
+//    interface MockWebhookService {
+//        Webhook getWebhookByToken(String token)
+//        Webhook getWebhook(Long id)
+//        WebhookResponder processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context, HttpServletRequest request)
+//    }
+//
+//    interface MockApiService {
+//        def renderErrorFormat(HttpServletResponse response, Map data)
+//    }
 }
