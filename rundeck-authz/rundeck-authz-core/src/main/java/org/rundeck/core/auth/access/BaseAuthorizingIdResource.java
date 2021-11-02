@@ -1,11 +1,11 @@
 package org.rundeck.core.auth.access;
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor;
+import com.dtolabs.rundeck.core.authorization.AuthResource;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import lombok.Getter;
 
 import javax.security.auth.Subject;
-import java.util.*;
 
 /**
  * Provides base implementation for authorized resource of specific type and ID
@@ -33,12 +33,12 @@ public abstract class BaseAuthorizingIdResource<T, ID>
     /**
      * @return project name for resource, or from ID, or null
      */
-    protected abstract String getProject(T resource);
+    protected abstract String getProject(ID identifier);
 
 
     @Override
     public UserAndRolesAuthContext getAuthContext() {
-        return getAuthContext(getProject(retrieve()));
+        return getAuthContext(getProject(identifier));
     }
 
     private UserAndRolesAuthContext projectAuthContext = null;
@@ -52,43 +52,28 @@ public abstract class BaseAuthorizingIdResource<T, ID>
     }
 
     @Override
-    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
-        /*
-         *
-         */
+    public boolean isAuthorized(final AuthActions actions) throws NotFound {
         T res = retrieve();
         if (res == null) {
             throw new NotFound(getResourceTypeName(), getResourceIdent());
         }
 
-        String projectLevel = getProject(res);
+        String projectLevel = getProject(identifier);
+        AuthResource authResource = getAuthResource(res);
 
-        if (projectLevel == null) {
-            return super.requireActions(actions);
+        if (projectLevel == null || authResource.getContext() == AuthResource.Context.System) {
+            return super.isAuthorized(actions);
         }
+
 
         UserAndRolesAuthContext authContext = getAuthContext(projectLevel);
 
-        boolean authorized = false;
-        List<String> actionSet;
-        if (actions.getAnyActions() != null && actions.getAnyActions().size() > 0) {
-            actionSet = actions.getAnyActions();
-            authorized =
-                    getRundeckAuthContextProcessor().authorizeProjectResourceAny(
-                            authContext,
-                            authresMapForResource(res),
-                            actionSet,
-                            projectLevel
-                    );
-        } else {
-            throw new IllegalArgumentException("Access actions were not defined");
-        }
-
-        if (!authorized) {
-            throw new UnauthorizedAccess(actions.getDescription(), getResourceTypeName(), getResourceIdent());
-        }
-
-        return res;
+        return getRundeckAuthContextProcessor().authorizeProjectResourceAny(
+                authContext,
+                authResource.getResourceMap(),
+                actions.getAnyActions(),
+                projectLevel
+        );
     }
 
 

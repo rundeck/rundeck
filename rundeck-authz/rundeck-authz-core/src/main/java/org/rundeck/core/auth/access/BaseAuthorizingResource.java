@@ -1,12 +1,9 @@
 package org.rundeck.core.auth.access;
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor;
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
-import lombok.Getter;
+import com.dtolabs.rundeck.core.authorization.AuthResource;
 
 import javax.security.auth.Subject;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Provides base implementation for authorized resource of a specific type without ID (singleton)
@@ -14,21 +11,18 @@ import java.util.Map;
  * @param <T> resource type
  */
 public abstract class BaseAuthorizingResource<T>
+    extends BaseAuthorizingAccess
         implements AuthorizingResource<T>
 {
 
-    @Getter private final AuthContextProcessor rundeckAuthContextProcessor;
-    @Getter private final Subject subject;
-
     public BaseAuthorizingResource(final AuthContextProcessor rundeckAuthContextProcessor, final Subject subject) {
-        this.rundeckAuthContextProcessor = rundeckAuthContextProcessor;
-        this.subject = subject;
+        super(rundeckAuthContextProcessor, subject);
     }
 
     /**
      * @return constructed authorization map for the resource
      */
-    protected abstract Map<String, String> authresMapForResource(T resource);
+    protected abstract AuthResource getAuthResource(T resource);
 
     /**
      * @return resource type name
@@ -50,18 +44,9 @@ public abstract class BaseAuthorizingResource<T>
      */
     protected abstract boolean exists();
 
-    private UserAndRolesAuthContext authContext = null;
-
-    public UserAndRolesAuthContext getAuthContext() {
-        if (null == authContext) {
-            authContext = getRundeckAuthContextProcessor().getAuthContextForSubject(getSubject());
-        }
-        return authContext;
-    }
-
     @Override
     public Accessor<T> accessor(final AuthActions actions) {
-        return new AccessorImpl<T>(actions, this::requireActions, this::canPerform, this::retrieve);
+        return new AccessorImpl<T>(actions, this::requireActions, this::isAuthorized, this::retrieve);
     }
 
     @Override
@@ -71,56 +56,29 @@ public abstract class BaseAuthorizingResource<T>
 
     @Override
     public void authorize(final AuthActions actions) throws UnauthorizedAccess, NotFound {
-        accessor(actions).authorize();
+        requireActions(actions);
     }
 
     @Override
-    public boolean isAuthorized(final AuthActions actions) throws NotFound {
-        return accessor(actions).isAllowed();
-    }
-
-    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
+    protected AuthResource getAuthResource() throws NotFound {
         T res = retrieve();
         if (res == null) {
             throw new NotFound(getResourceTypeName(), getResourceIdent());
         }
+        return getAuthResource(res);
+    }
 
-        UserAndRolesAuthContext authContext = getAuthContext();
-        boolean authorized = false;
-        List<String> actionSet;
-        if (actions.getAnyActions() != null && actions.getAnyActions().size() > 0) {
-            actionSet = actions.getAnyActions();
-            authorized =
-                    getRundeckAuthContextProcessor().authorizeApplicationResourceAny(
-                            authContext,
-                            authresMapForResource(res),
-                            actionSet
-                    );
-
-        } else {
-            throw new IllegalArgumentException("Access actions were not defined");
-        }
-
-        if (!authorized) {
+    public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
+        if (!isAuthorized(actions)) {
             throw new UnauthorizedAccess(
                     actions.getDescription(),
                     getResourceTypeName(),
                     getResourceIdent()
             );
         }
-
-        return res;
+        return retrieve();
     }
 
-    public boolean canPerform(final AuthActions actions) throws NotFound {
-        try {
-            requireActions(actions);
-        } catch (UnauthorizedAccess ignored) {
-            return false;
-        }
-
-        return true;
-    }
 
     @Override
     public Locator<T> getLocator() {

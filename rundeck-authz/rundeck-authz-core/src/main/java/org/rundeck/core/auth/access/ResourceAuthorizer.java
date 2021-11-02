@@ -8,11 +8,8 @@ import javax.security.auth.Subject;
  * @param <T>
  * @param <A>
  */
-public interface ResourceAuthorizer<T, A extends AuthorizingResource<T>> {
-    /**
-     *
-     * @param subject authorization
-     * @return authorizing resource
-     */
-    A getAuthorizingResource(Subject subject);
+public interface ResourceAuthorizer<T, A extends AuthorizingResource<T>>
+        extends AccessAuthorizer<A>
+{
+
 }
