@@ -184,5 +184,10 @@ export default class NodeFilterResults extends Vue {
       this.error = ('Nodes Query: request failed: ' + err)
     })
   }
+  async mounted(){
+      if(this.nodeFilter){
+          await this.update()
+      }
+  }
 }
 </script>
