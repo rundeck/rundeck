@@ -40,7 +40,7 @@
           <span class="nodedesc"></span>
         </div>
 
-        <div class="nodedetail" style="overflow-x: scroll;">
+        <div class="nodedetail" style="overflow-x: auto;">
 
           <node-details-simple :attributes="node.attributes"
                                :show-exclude-filter-links="showExcludeFilterLinks"

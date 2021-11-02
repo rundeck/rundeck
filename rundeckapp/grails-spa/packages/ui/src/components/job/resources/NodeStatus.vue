@@ -6,7 +6,7 @@
   >
       <i :class="glyphiconForName(node.attributes['ui:status:icon'])" class="node-status-icon" v-if="node.attributes['ui:status:icon']"></i>
       <slot>
-        <span v-if="showText && node.attributes['ui:status:text']">{{ node.attributes['ui:status:text'] }}</span>
+        <span v-if="showText && node.attributes['ui:status:text']" class="node-status-text">{{ node.attributes['ui:status:text'] }}</span>
       </slot>
   </span>
 </template>
@@ -27,3 +27,8 @@ export default {
   }
 }
 </script>
+<style lang="scss" scoped>
+.node-status-icon + .node-status-text{
+    margin-left: 0.5em;
+}
+</style>
