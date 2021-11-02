@@ -15,7 +15,7 @@
   --}%
 
 
-<div class="job-editor-vue" id="job-editor-notifications-vue">
-    <app :event-bus="EventBus" />
+<div class="job-editor-notifications-vue" id="job-editor-notifications-vue">
+    <notifications-editor-section :event-bus="EventBus" />
 </div>
 

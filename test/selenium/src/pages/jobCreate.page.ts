@@ -48,9 +48,18 @@ export const Elems= {
     tabNodes  : By.css('#job_edit_tabs > li > a[href=\'#tab_nodes\']'),
     doNodedispatchTrue  : By.xpath('//*[@id="doNodedispatchTrue"]'),
     nodeFilter  : By.xpath('//*[@id="schedJobNodeFilter"]'),
-    nodeFilterButton  : By.xpath('//*[@id="nodegroupitem"]/div[3]/div/div/span/div[1]/button'),
-    nodeFilterSelectAllLink  : By.xpath('//*[@id="nodegroupitem"]/div[3]/div/div/span/div[1]/ul/li[1]/a'),
-    matchedNodesText  : By.xpath('//*[@id="nodegroupitem"]/div[6]/div/div[1]/div/div/div[1]/div[1]/span[1]/span'),
+    nodeFilterButton  : By.css('#job_edit__node_filter_include button.node_filter__dosearch'),
+    nodeFilterSelectAllLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_all'),
+    nodeFilterMenuLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown'),
+    matchedNodesText  : By.css('#nodegroupitem .node_filter_results__matched_nodes .node_filter_results__matched_nodes_count'),
+    showExcludedNodesRadioYes  : By.css('#nodegroupitem #excludeFilterTrue'),
+    editableFilterYes  : By.css('#nodegroupitem #editableTrue'),
+    schedJobnodeThreadcount: By.css('#nodegroupitem #schedJobnodeThreadcount'),
+    schedJobnodeRankAttribute: By.css('#nodegroupitem #schedJobnodeRankAttribute'),
+    nodeRankOrderDescending: By.css('#nodegroupitem #nodeRankOrderDescending'),
+    nodeKeepgoingTrue: By.css('#nodegroupitem #nodeKeepgoingTrue'),
+    successOnEmptyNodeFilterTrue: By.css('#nodegroupitem #successOnEmptyNodeFilterTrue'),
+    nodesSelectedByDefaultFalse: By.css('#nodegroupitem #nodesSelectedByDefaultFalse'),
     workflowStrategy  : By.xpath('//*[@id="workflow.strategy"]'),
     strategyPluginparallel: By.xpath('//*[@id="strategyPluginparallel"]'),
     strategyPluginparallelMsg: By.xpath('//*[@id="strategyPluginparallel"]/span/span'),
@@ -231,6 +240,33 @@ export class JobCreatePage extends Page {
     }
     async nodeFilterButton(){
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterButton),15000)
+    }
+    async nodeFilterMenuLink(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterMenuLink),15000)
+    }
+    async showExcludedNodesRadioYes(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.showExcludedNodesRadioYes),15000)
+    }
+    async editableFilterYes(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.editableFilterYes),15000)
+    }
+    async schedJobnodeThreadcount(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.schedJobnodeThreadcount),15000)
+    }
+    async schedJobnodeRankAttribute(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.schedJobnodeRankAttribute),15000)
+    }
+    async nodeRankOrderDescending(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeRankOrderDescending),15000)
+    }
+    async nodeKeepgoingTrue(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeKeepgoingTrue),15000)
+    }
+    async successOnEmptyNodeFilterTrue(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.successOnEmptyNodeFilterTrue),15000)
+    }
+    async nodesSelectedByDefaultFalse(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodesSelectedByDefaultFalse),15000)
     }
     async nodeFilterSelectAllLink(){
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSelectAllLink),15000)
