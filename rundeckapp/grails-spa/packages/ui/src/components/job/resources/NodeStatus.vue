@@ -4,7 +4,7 @@
       :class="statusIconCss(node.attributes)"
       :style="statusIconStyle(node.attributes)"
   >
-      <i :class="glyphiconForName(node.attributes)" v-if="node.attributes['ui:status:icon']"></i>
+      <i :class="glyphiconForName(node.attributes['ui:status:icon'])" class="node-status-icon" v-if="node.attributes['ui:status:icon']"></i>
       <slot>
         <span v-if="showText && node.attributes['ui:status:text']">{{ node.attributes['ui:status:text'] }}</span>
       </slot>
