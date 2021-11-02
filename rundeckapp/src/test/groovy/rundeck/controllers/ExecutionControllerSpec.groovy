@@ -1079,8 +1079,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
                 1 * system(_) >> Mock(AuthorizingSystem) {
-                    1 * "$access"() >>  Singleton.ONLY
-
+                    1 * authorize(access)
                 }
             }
             controller.apiService = Mock(ApiService)
@@ -1093,8 +1092,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * controller.executionService.setExecutionsAreActive(active)
         where:
             active | endpoint                  | access
-            true   | 'apiExecutionModeActive'  | 'getOpsEnableExecution'
-            false  | 'apiExecutionModePassive' | 'getOpsDisableExecution'
+            true   | 'apiExecutionModeActive'  | AuthorizingSystem.OPS_ENABLE_EXECUTION
+            false  | 'apiExecutionModePassive' | AuthorizingSystem.OPS_DISABLE_EXECUTION
     }
 
     @Unroll
@@ -1104,9 +1103,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
                 1 * system(_) >> Mock(AuthorizingSystem) {
-                    1 * "$access"() >>  {
-                            throw new UnauthorizedAccess('x', 'System', '')
-
+                    1 * authorize(access) >>  {
+                        throw new UnauthorizedAccess('x', 'System', '')
                     }
                 }
             }
@@ -1121,7 +1119,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             response.status == 403
         where:
             active | endpoint                  | access
-            true   | 'apiExecutionModeActive'  | 'getOpsEnableExecution'
-            false  | 'apiExecutionModePassive' | 'getOpsDisableExecution'
+            true   | 'apiExecutionModeActive'  | AuthorizingSystem.OPS_ENABLE_EXECUTION
+            false  | 'apiExecutionModePassive' | AuthorizingSystem.OPS_DISABLE_EXECUTION
     }
 }

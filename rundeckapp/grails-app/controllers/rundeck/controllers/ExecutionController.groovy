@@ -38,12 +38,13 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.quartz.JobExecutionContext
 import org.rundeck.app.AppConstants
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.project.AuthorizingProject
+import org.rundeck.app.authorization.domain.system.AuthorizingSystem
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.NotFound
@@ -473,11 +474,10 @@ class ExecutionController extends ControllerBase{
         withForm {
             def requestActive=params.mode == 'active'
 
-            if(requestActive){
-                authorizingSystem.opsEnableExecution.resource
-            }else{
-                authorizingSystem.opsDisableExecution.resource
-            }
+            authorizingSystem.authorize(
+                requestActive ? AuthorizingSystem.OPS_ENABLE_EXECUTION :
+                AuthorizingSystem.OPS_DISABLE_EXECUTION
+            )
 
             if(requestActive == executionService.executionsAreActive){
                 flash.message=g.message(code:'action.executionMode.notchanged.'+(requestActive?'active':'passive')+'.text')
@@ -1888,17 +1888,15 @@ setTimeout(function(){
      * DELETE /api/12/execution/[ID]
      * @return
      */
+    @GrailsCompileStatic
     def apiExecutionDelete (){
         if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
-        def project = authorizingProject
-        project.authorize(AuthorizingProject.APP_DELETE_EXECUTION)
-        def Execution e = authorizingExecution.locator.resource
-        def result = executionService.deleteExecution(e, project.authContext, project.authContext.username)
+        def result = executionService.deleteExecution(authorizingProject, authorizingExecution)
         if(!result.success){
             log.error("Failed to delete execution: ${result.message}")
-            def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+            def respFormat = apiService.extractResponseFormat(getRequest(), response, ['xml', 'json'])
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -2111,7 +2109,7 @@ setTimeout(function(){
             return
         }
 
-        authorizingSystem.readOrAnyAdmin
+        authorizingSystem.authorize(AuthorizingSystem.READ_OR_ANY_ADMIN)
 
         def executionStatus = configurationService.executionModeActive
         int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE
@@ -2159,11 +2157,10 @@ setTimeout(function(){
             return
         }
 
-        if(active){
-            authorizingSystem.opsEnableExecution
-        }else{
-            authorizingSystem.opsDisableExecution
-        }
+        authorizingSystem.authorize(
+            active ? AuthorizingSystem.OPS_ENABLE_EXECUTION :
+            AuthorizingSystem.OPS_DISABLE_EXECUTION
+        )
 
         executionService.setExecutionsAreActive(active)
         withFormat{

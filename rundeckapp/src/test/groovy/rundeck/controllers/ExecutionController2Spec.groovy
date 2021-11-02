@@ -889,7 +889,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             session.subject=new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
                 1 * system(_)>>Mock(AuthorizingSystem){
-                    1 * getReadOrAnyAdmin() >> {
+                    1 * authorize(AuthorizingSystem.READ_OR_ANY_ADMIN) >> {
                         throw new UnauthorizedAccess('read','system','resource')
                     }
                 }
@@ -929,7 +929,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         session.subject=new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * system(_)>>Mock(AuthorizingSystem){
-                1 * getReadOrAnyAdmin() >> Singleton.ONLY
+                1 * authorize(AuthorizingSystem.READ_OR_ANY_ADMIN)
             }
         }
         when:
@@ -972,7 +972,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
             session.subject=new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
                 1 * system(_)>>Mock(AuthorizingSystem){
-                    1 * getReadOrAnyAdmin() >>Singleton.ONLY
+                    1 * authorize(AuthorizingSystem.READ_OR_ANY_ADMIN)
                 }
             }
             // Call controller
