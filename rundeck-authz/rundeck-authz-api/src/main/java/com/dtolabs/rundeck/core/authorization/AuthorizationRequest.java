@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,20 +27,12 @@ public interface AuthorizationRequest {
     /**
      * @return resource map
      */
-    Map<String, String> getResource();
+    AuthResource getResource();
+
 
     /**
-     * @return subject
+     * @return allowed actions
      */
-    AclSubject getSubject();
+    List<String> getActions();
 
-    /**
-     * @return action requested
-     */
-    String getAction();
-
-    /**
-     * @return environment context
-     */
-    Set<Attribute> getEnvironment();
 }

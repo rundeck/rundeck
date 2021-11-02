@@ -3,4 +3,7 @@ apply plugin: "groovy"
 dependencies {
     testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+
+    compileOnly "org.projectlombok:lombok:1.18.16"
+    annotationProcessor "org.projectlombok:lombok:1.18.16"
 }
