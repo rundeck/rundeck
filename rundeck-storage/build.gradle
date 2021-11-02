@@ -33,7 +33,7 @@ subprojects {
 
     dependencies {
         testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
-        testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
+        testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
     }
 
     jar {
@@ -52,11 +52,13 @@ project(':rundeck-storage:rundeck-storage-data') {
 }
 project(':rundeck-storage:rundeck-storage-conf') {
     dependencies {
+        implementation project(':rundeck-storage:rundeck-storage-api')
         implementation project(':rundeck-storage:rundeck-storage-data')
     }
 }
 project(':rundeck-storage:rundeck-storage-filesys') {
     dependencies {
+        implementation project(':rundeck-storage:rundeck-storage-api')
         implementation project(':rundeck-storage:rundeck-storage-data')
         implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     }
