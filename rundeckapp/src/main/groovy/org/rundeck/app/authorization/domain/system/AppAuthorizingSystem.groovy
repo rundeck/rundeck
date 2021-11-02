@@ -1,6 +1,9 @@
 package org.rundeck.app.authorization.domain.system
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.AuthResource
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.*
@@ -13,11 +16,10 @@ import static org.rundeck.core.auth.access.AccessLevels.action
  * Authorized access to System singleton resource
  */
 @CompileStatic
-class AppAuthorizingSystem extends BaseSingletonAuthorizingResource implements AuthorizingSystem {
+class AppAuthorizingSystem extends BaseAuthorizingAccess implements AuthorizingSystem {
     final String resourceTypeName = 'System'
     final String resourceIdent = 'resource'
-    final Map<String, String> authresMapForSingleton = AuthConstants.RESOURCE_TYPE_SYSTEM
-
+    final AuthResource authResource = AuthorizationUtil.systemAuthResource(AuthConstants.RESOURCE_TYPE_SYSTEM)
 
     AppAuthorizingSystem(
         final AuthContextProcessor rundeckAuthContextProcessor,
@@ -26,24 +28,25 @@ class AppAuthorizingSystem extends BaseSingletonAuthorizingResource implements A
         super(rundeckAuthContextProcessor, subject)
     }
 
-    Singleton getReadOrAnyAdmin() throws UnauthorizedAccess, NotFound {
-        return access(READ_OR_ANY_ADMIN)
+
+    void authorizeReadOrAnyAdmin() throws UnauthorizedAccess, NotFound {
+        authorize(READ_OR_ANY_ADMIN)
     }
 
-    Singleton getReadOrOpsAdmin() throws UnauthorizedAccess, NotFound {
-        return access(READ_OR_OPS_ADMIN)
+    void authorizeReadOrOpsAdmin() throws UnauthorizedAccess, NotFound {
+        authorize(READ_OR_OPS_ADMIN)
     }
 
-    Singleton getConfigure() throws UnauthorizedAccess, NotFound {
-        return access(APP_CONFIGURE)
+    void authorizeConfigure() throws UnauthorizedAccess, NotFound {
+        authorize(APP_CONFIGURE)
     }
 
-    Singleton getOpsEnableExecution() throws UnauthorizedAccess, NotFound {
-        return access(OPS_ENABLE_EXECUTION)
+    void authorizeOpsEnableExecution() throws UnauthorizedAccess, NotFound {
+        authorize(OPS_ENABLE_EXECUTION)
     }
 
-    Singleton getOpsDisableExecution() throws UnauthorizedAccess, NotFound {
-        return access(OPS_DISABLE_EXECUTION)
+    void authorizeOpsDisableExecution() throws UnauthorizedAccess, NotFound {
+        authorize(OPS_DISABLE_EXECUTION)
     }
 
 }

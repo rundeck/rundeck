@@ -80,7 +80,7 @@ import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthor
 import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
 import org.rundeck.app.authorization.domain.RdDomainAuthorizer
-import org.rundeck.app.authorization.domain.system.AppSystemResourceAuthorizer
+import org.rundeck.app.authorization.domain.system.AppSystemAccessAuthorizer
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
@@ -280,7 +280,7 @@ beans={
     rundeckExecutionAuthorizer(AppExecutionResourceAuthorizer)
     rundeckProjectAuthorizer(AppProjectResourceAuthorizer)
     rundeckProjectAdhocAuthorizer(AppProjectAdhocResourceAuthorizer)
-    rundeckSystemAuthorizer(AppSystemResourceAuthorizer)
+    rundeckSystemAuthorizer(AppSystemAccessAuthorizer)
     rundeckDomainAuthorizer(RdDomainAuthorizer)
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){

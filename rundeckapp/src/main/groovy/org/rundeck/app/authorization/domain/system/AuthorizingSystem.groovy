@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.AuthActions
+import org.rundeck.core.auth.access.AuthorizingAccess
 import org.rundeck.core.auth.access.AuthorizingResource
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.Singleton
@@ -12,7 +13,7 @@ import org.rundeck.core.auth.access.UnauthorizedAccess
 import static org.rundeck.core.auth.access.AccessLevels.action
 
 @CompileStatic
-interface AuthorizingSystem extends AuthorizingResource<Singleton> {
+interface AuthorizingSystem extends AuthorizingAccess {
 
     public static final AuthActions APP_CONFIGURE =
         action(AuthConstants.ACTION_CONFIGURE)
@@ -38,18 +39,18 @@ interface AuthorizingSystem extends AuthorizingResource<Singleton> {
      *
      * @return access via READ or ADMIN, OPS_ADMIN or APP_ADMIN
      */
-    Singleton getReadOrAnyAdmin() throws UnauthorizedAccess, NotFound
+    void authorizeReadOrAnyAdmin() throws UnauthorizedAccess, NotFound
 
     /**
      *
      * @return access via READ ADMIN or OPS_ADMIN
      */
-    Singleton getReadOrOpsAdmin() throws UnauthorizedAccess, NotFound
+    void authorizeReadOrOpsAdmin() throws UnauthorizedAccess, NotFound
 
-    Singleton getConfigure() throws UnauthorizedAccess, NotFound
+    void authorizeConfigure() throws UnauthorizedAccess, NotFound
 
-    Singleton getOpsEnableExecution() throws UnauthorizedAccess, NotFound
+    void authorizeOpsEnableExecution() throws UnauthorizedAccess, NotFound
 
-    Singleton getOpsDisableExecution() throws UnauthorizedAccess, NotFound
+    void authorizeOpsDisableExecution() throws UnauthorizedAccess, NotFound
 
 }
