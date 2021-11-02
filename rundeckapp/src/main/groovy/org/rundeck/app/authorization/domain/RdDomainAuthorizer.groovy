@@ -10,7 +10,7 @@ import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectIdentifier
 import org.rundeck.app.authorization.domain.project.AuthorizingProject
 import org.rundeck.app.authorization.domain.project.AuthorizingProjectAdhoc
-import org.rundeck.app.authorization.domain.system.AppSystemResourceAuthorizer
+import org.rundeck.app.authorization.domain.system.AppSystemAccessAuthorizer
 import org.rundeck.app.authorization.domain.system.AuthorizingSystem
 import org.rundeck.core.auth.access.ProjectIdentifier
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,7 +27,7 @@ class RdDomainAuthorizer implements DomainAuthorizer{
     @Autowired
     AppProjectResourceAuthorizer rundeckProjectAuthorizer
     @Autowired
-    AppSystemResourceAuthorizer rundeckSystemAuthorizer
+    AppSystemAccessAuthorizer rundeckSystemAuthorizer
     @Autowired
     AppProjectAdhocResourceAuthorizer rundeckProjectAdhocAuthorizer
 
