@@ -1,6 +1,6 @@
 <template>
   <div style="margin-top:10px">
-    <table class="table table-condensed table-embed node-details-simple">
+    <table class="table table-condensed table-embed node-details-simple" style="margin-bottom:0;">
       <tbody>
       <tr v-if=" attributes.description">
         <td class="value text-strong" colspan="4">
@@ -19,7 +19,7 @@
           {{ $t('node.metadata.status') }}
         </td>
         <td class="value">
-          <node-status :node="node" :show-text="true"/>
+          <node-status :node="{attributes}" :show-text="true"/>
         </td>
       </tr>
       <tr>
