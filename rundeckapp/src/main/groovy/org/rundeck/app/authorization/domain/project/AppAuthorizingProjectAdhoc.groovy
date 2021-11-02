@@ -1,6 +1,8 @@
 package org.rundeck.app.authorization.domain.project
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.AuthResource
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import groovy.transform.CompileStatic
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
@@ -24,8 +26,8 @@ class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, Pr
     }
 
     @Override
-    protected Map authresMapForResource(final Singleton resource) {
-        return AuthConstants.RESOURCE_ADHOC
+    protected AuthResource getAuthResource(final Singleton resource) {
+        return AuthorizationUtil.projectAuthResource(AuthConstants.RESOURCE_ADHOC)
     }
 
     @Override
@@ -44,7 +46,7 @@ class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, Pr
     }
 
     @Override
-    protected String getProject(final Singleton resource) {
+    protected String getProject(final ProjectIdentifier identifier) {
         identifier.project
     }
 

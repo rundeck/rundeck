@@ -1,6 +1,8 @@
 package org.rundeck.app.authorization.domain.project
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.AuthResource
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import grails.compiler.GrailsCompileStatic
 import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.access.AccessLevels
@@ -33,8 +35,10 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<Project, ProjectId
     }
 
     @Override
-    protected Map authresMapForResource(final Project resource) {
-        return rundeckAuthContextProcessor.authResourceForProject(resource.name)
+    protected AuthResource getAuthResource(final Project resource) {
+        return AuthorizationUtil.systemAuthResource(
+            rundeckAuthContextProcessor.authResourceForProject(resource.name)
+        )
     }
 
     @Override
@@ -54,8 +58,8 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<Project, ProjectId
     }
 
     @Override
-    protected String getProject(final Project resource) {
-        resource.name
+    protected String getProject(final ProjectIdentifier identifier) {
+        identifier.project
     }
 
     public Project getConfigure() throws UnauthorizedAccess, NotFound {

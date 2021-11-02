@@ -1,6 +1,8 @@
 package org.rundeck.app.authorization.domain.execution
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
+import com.dtolabs.rundeck.core.authorization.AuthResource
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import grails.compiler.GrailsCompileStatic
 import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.access.AccessLevels
@@ -19,7 +21,6 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
     final String resourceTypeName = 'Execution'
 
 
-
     AppAuthorizingExecution(
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject,
@@ -29,14 +30,16 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
     }
 
     @Override
-    protected Map authresMapForResource(final Execution resource) {
-        return resource.scheduledExecution ?
-               rundeckAuthContextProcessor.authResourceForJob(
-                   resource.scheduledExecution.jobName,
-                   resource.scheduledExecution.groupPath,
-                   resource.scheduledExecution.uuid
-               ) :
-               AuthConstants.RESOURCE_ADHOC
+    protected AuthResource getAuthResource(final Execution resource) {
+        return AuthorizationUtil.projectAuthResource(
+            resource.scheduledExecution ?
+            rundeckAuthContextProcessor.authResourceForJob(
+                resource.scheduledExecution.jobName,
+                resource.scheduledExecution.groupPath,
+                resource.scheduledExecution.uuid
+            ) :
+            AuthConstants.RESOURCE_ADHOC
+        )
     }
 
     @Override
@@ -46,7 +49,7 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
 
     @Override
     protected Execution retrieve() {
-        return Execution.get(identifier.id)
+        return Execution.findByIdAndProject(identifier.id.toLong(), identifier.project)
     }
 
 
@@ -56,19 +59,19 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
     }
 
     @Override
-    protected String getProject(final Execution resource) {
-        resource.project
+    protected String getProject(ExecIdentifier identifier) {
+        identifier.project
     }
 
-    public Execution getReadOrView() throws UnauthorizedAccess, NotFound{
+    public Execution getReadOrView() throws UnauthorizedAccess, NotFound {
         return access(AccessLevels.APP_READ_OR_VIEW)
     }
 
-    public Execution getKill() throws UnauthorizedAccess, NotFound{
+    public Execution getKill() throws UnauthorizedAccess, NotFound {
         return access(APP_KILL)
     }
 
-    public Execution getKillAs() throws UnauthorizedAccess, NotFound{
+    public Execution getKillAs() throws UnauthorizedAccess, NotFound {
         return access(APP_KILLAS)
     }
 
