@@ -1,6 +1,7 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
@@ -83,6 +84,9 @@ class SetUserInterceptor {
 
                 roles.each{role->
                     subject.principals << new Group(role.trim());
+                }
+                if(foundToken){
+                    subject.principals.add(new Token(foundToken.uuid, foundToken.type))
                 }
 
                 request.subject = subject
