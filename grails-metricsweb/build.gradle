@@ -17,6 +17,7 @@ apply plugin: "idea"
 apply plugin: "org.grails.grails-plugin"
 apply plugin: "asset-pipeline"
 apply plugin: "org.grails.grails-gsp"
+apply plugin: "java-library"
 
 repositories {
     mavenLocal()
@@ -35,10 +36,10 @@ dependencies {
     compile project(":core")
 
     // Note; grails also has dependency on metrics-core
-    implementation "io.dropwizard.metrics:metrics-core:4.0.7"
-    implementation "io.dropwizard.metrics:metrics-servlets:4.0.7"
-    implementation "io.dropwizard.metrics:metrics-servlet:4.0.7"
-    implementation "io.dropwizard.metrics:metrics-jmx:4.0.7"
+    api "io.dropwizard.metrics:metrics-core:4.0.7"
+    api "io.dropwizard.metrics:metrics-servlets:4.0.7"
+    api "io.dropwizard.metrics:metrics-servlet:4.0.7"
+    api "io.dropwizard.metrics:metrics-jmx:4.0.7"
 
     // Added by create-app
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
