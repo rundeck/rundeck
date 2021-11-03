@@ -177,11 +177,12 @@ dependencies {
 
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
+    api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    implementation ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
+    api ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
-    implementation ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
+    api ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
     testImplementation "org.grails:grails-gorm-testing-support"

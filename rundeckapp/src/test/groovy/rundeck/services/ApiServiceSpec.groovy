@@ -646,8 +646,8 @@ class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiCont
         println result
         result == '{"error":true,"apiversion":' +
                 (ApiVersions.API_CURRENT_VERSION) +
-                        (expectCode ? ',"errorCode":"' + (expectCode) +'"' : '') +
-                        (eMessage ? ',"message":"' + (eMessage) +'"' : '') +
+                        (expectCode ? ',"errorCode":"' + expectCode +'"' : '') +
+                        (eMessage ? ',"message":"' + eMessage +'"' : '') +
                         (eMessages ? ',"messages":' + (eMessages) : '') +
                         '}'
 
