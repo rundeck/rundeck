@@ -47,11 +47,11 @@ apply plugin: "groovy"
 dependencies {
     api project(":rundeck-storage:rundeck-storage-api")
     api project(":rundeck-storage:rundeck-storage-data")
-    implementation project(":rundeck-storage:rundeck-storage-conf")
+    api project(":rundeck-storage:rundeck-storage-conf")
     api project(":rundeck-authz:rundeck-authz-api")
     api project(":rundeck-authz:rundeck-authz-core")
-    implementation project(":rundeck-authz:rundeck-authz-yaml")
-    implementation ('com.google.guava:guava:26.0-jre') {
+    api project(":rundeck-authz:rundeck-authz-yaml")
+    api ('com.google.guava:guava:26.0-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
         exclude group:'com.google.errorprone', module: 'error_prone_annotations'
