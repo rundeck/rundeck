@@ -2619,10 +2619,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return true if not valid
      */
     @CompileStatic
-    boolean validateDefinitionComponents(ImportedJob<ScheduledExecution> importedJob, Map params, Map validation) {
+    boolean validateDefinitionComponents(ImportedJob<ScheduledExecution> importedJob, Map params, Map<String, Map<String, String>> validation) {
         def reports = rundeckJobDefinitionManager.validateImportedJob(importedJob)
         params?.put('jobComponentValidation', reports.validations)
-        validation?.putAll(reports.validations.collectEntries { [it.key, it.value.errors] })
+        validation?.putAll(reports.validations.collectEntries { [it.key, it.value.errors] } as Map<? extends String, ? extends Map<String, String>>)
         return !reports.valid
     }
 
