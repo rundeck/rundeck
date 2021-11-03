@@ -134,7 +134,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return false
     }
 
-    def list = {
+    def list() {
         def results = index(params)
         render(view:"index",model:results)
     }
@@ -281,7 +281,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
 
-    def clearJobsFilter = { ScheduledExecutionQuery query ->
+    def clearJobsFilter(ScheduledExecutionQuery query){
         return redirect(action: 'jobs', params: [project: params.project])
     }
     def jobs (ScheduledExecutionQuery query ){
