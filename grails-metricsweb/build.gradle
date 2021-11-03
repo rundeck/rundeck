@@ -90,6 +90,11 @@ tasks.withType(GroovyCompile) {
 // enable if you wish to package this plugin as a standalone application
 bootJar.enabled = false
 bootRun.enabled = false
+
+gradle.beforeProject {
+    file("grails-app/assets").mkdir()
+}
+
 assets {
     packagePlugin = true
 }

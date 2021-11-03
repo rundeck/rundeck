@@ -81,6 +81,11 @@ tasks.withType(GroovyCompile) {
 bootJar.enabled = false
 bootRun.enabled = false
 
+
+gradle.beforeProject {
+    file("grails-app/assets").mkdir()
+}
+
 assets {
     packagePlugin = true
 }
