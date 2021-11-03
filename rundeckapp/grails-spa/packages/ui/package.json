@@ -21,6 +21,11 @@
   "dependencies": {
     "@iconfu/svg-inject": "1.2.3",
     "@rundeck/client": "0.2.3",
+    "@storybook/addon-backgrounds": "^6.2.9",
+    "@storybook/addon-docs": "^6.2.9",
+    "@storybook/addon-knobs": "^6.2.9",
+    "@storybook/preset-typescript": "^3.0.0",
+    "@storybook/vue": "^6.2.9",
     "ace-builds": "1.4.12",
     "axios": "^0.18.0",
     "brace": "^0.11.1",

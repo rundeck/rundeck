@@ -2,6 +2,9 @@ const Util = require('util')
 const webpack = require('webpack')
 const path = require('path');
 
+const UiDir = process.cwd().replace('ui-trellis', 'ui');
+const UiTrellisDir = process.cwd();
+
 module.exports = {
     addons: [
         {
@@ -29,9 +32,18 @@ module.exports = {
         'storybook-dark-mode',
         '@storybook/addon-backgrounds'
     ],
-    stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
+    stories: [
+        `${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`,
+        `${UiDir}/src/**/*.stories.(ts|js|tsx|jsx)`,
+    ],
 
     webpackFinal: (config) => {
+        const scopePluginIndex = config.resolve.plugins.findIndex(
+            ({ constructor }) =>
+                constructor && constructor.name === 'ModuleScopePlugin',
+        )
+        config.resolve.plugins.splice(scopePluginIndex, 1)
+
         const vueLoader = config.module.rules.find(r => String(r.test) == String(/\.vue$/))
         vueLoader.options.compilerOptions = {
             preserveWhitespace: false
@@ -84,7 +96,7 @@ module.exports = {
                 resource.resource = resource.resource.replace(/node_modules\/ant-design-vue\/es\/style\/index\.less/, 'src/antScope.less')
             }
         }))
-
+        
         return {
             ...config,
         };
