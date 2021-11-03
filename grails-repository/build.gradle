@@ -14,8 +14,9 @@ group "repository"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-apply plugin:"asset-pipeline"
+//apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
+apply plugin: "java-library"
 
 repositories {
     mavenLocal()
@@ -54,7 +55,7 @@ dependencies {
     implementation "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     implementation project(":core")
-    implementation('com.github.rundeck.repository:repository-client:0.12.0') {
+    api ("com.github.rundeck.repository:repository-client:0.12.0") {
         exclude(group:"org.rundeck", module:"rundeck-core")
         exclude(group:"org.rundeck", module:"rundeck-storage-api")
         exclude(group:"org.rundeck", module:"rundeck-storage-data")
@@ -101,10 +102,10 @@ tasks.withType(GroovyCompile) {
 bootJar.enabled = false
 bootRun.enabled = false
 
-gradle.beforeProject {
+/*gradle.beforeProject {
     file("grails-app/assets").mkdir()
 }
 
 assets {
     packagePlugin = true
-}
+}*/
