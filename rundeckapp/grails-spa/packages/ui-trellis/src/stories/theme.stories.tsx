@@ -1,7 +1,9 @@
 import Vue from 'vue'
+import {withKnobs, object,select} from '@storybook/addon-knobs'
 
 export default {
-    title: 'Class Components'
+    title: 'Class Components',
+    decorators: [withKnobs]
 }
 
 export const typography = () => (Vue.extend({
@@ -57,7 +59,22 @@ export const typography = () => (Vue.extend({
         )
     }
 }))
-
+export const labels = () => (Vue.extend({
+  render(h) {
+    return (
+      <div>
+        <h3>H3 Text <span class="label label-default">default</span></h3>
+        <h3>H3 Text <span class="label label-secondary">secondary</span></h3>
+        <h3>H3 Text <span class="label label-muted">muted</span></h3>
+        <h3>H3 Text <span class="label label-danger">danger</span></h3>
+        <h3>H3 Text <span class="label label-warning">warning</span></h3>
+        <h3>H3 Text <span class="label label-success">success</span></h3>
+        <h3>H3 Text <span class="label label-info">info</span></h3>
+        <h3>H3 Text <span class="label label-white">white</span></h3>
+      </div>
+    )
+  }
+}))
 export const buttons = () => (Vue.extend({
     render(h) {
         return (
@@ -143,6 +160,126 @@ export const buttons = () => (Vue.extend({
         )
     }
 }))
+export const table = () => (Vue.extend({
+  props: {
+    rowStyle: {
+      default: select('Table Style', {bordered: 'table-bordered', striped: 'table-striped'}, 'table-bordered')
+    }
+  },
+  template:`
+            <div >
+              <table class="table table-condensed  table-embed table-data-embed " :class="rowStyle">
+                <tbody>
+                <tr>
+                  <th colSpan="2" class="table-header">global</th>
+                </tr>
+                <tr>
+                  <th class="table-header">Key</th>
+                  <th class="table-header">Value</th>
+                </tr>
+                <tr>
+                  <td>globals</td>
+                  <td><span class="text-muted">Empty Map</span></td>
+                </tr>
+                <tr>
+                  <td>job</td>
+                  <td>
+                    <table class="table table-condensed table-embed table-data-embed "  :class="rowStyle">
+                      <tbody>
+                      <tr>
+                        <th class="table-header">Key</th>
+     <th class="table-header">Value</th>
+                      </tr>
+                      <tr>
+                        <td>successOnEmptyNodeFilter</td>
+                        <td>false</td>
+                      </tr>
+                      <tr>
+                        <td>executionType</td>
+                        <td>user</td>
+                      </tr>
+                      <tr>
+                        <td>wasRetry</td>
+                        <td>false</td>
+                      </tr>
+                      <tr>
+                        <td>user.name</td>
+                        <td>admin</td>
+                      </tr>
+                      <tr>
+                        <td>project</td>
+                        <td>test1</td>
+                      </tr>
+                      <tr>
+                        <td>threadcount</td>
+                        <td>1</td>
+                      </tr>
+                      <tr>
+                        <td>url</td>
+                        <td>http://artorias.local:4440/rundeckpro/project/test1/execution/follow/91</td>
+                      </tr>
+                      <tr>
+                        <td>execid</td>
+                        <td>91</td>
+                      </tr>
+                      <tr>
+                        <td>filter</td>
+                        <td>name: outatime.local</td>
+                      </tr>
+                      <tr>
+                        <td>retryPrevExecId</td>
+                        <td>0</td>
+                      </tr>
+                      <tr>
+                        <td>serverUUID</td>
+                        <td>a3de6030-2b7a-47e3-b46f-3e46a11a85d9</td>
+                      </tr>
+                      <tr>
+                        <td>serverUrl</td>
+                        <td>http://artorias.local:4440/rundeckpro/</td>
+                      </tr>
+                      <tr>
+                        <td>loglevel</td>
+                        <td>NORMAL</td>
+                      </tr>
+                      <tr>
+                        <td>name</td>
+                        <td>test echo</td>
+                      </tr>
+                      <tr>
+                        <td>retryInitialExecId</td>
+                        <td>0</td>
+                      </tr>
+                      <tr>
+                        <td>id</td>
+ <td>a616e247-8000-45b0-bce8-4cf8b5712e62</td>
+                      </tr>
+                      <tr>
+                        <td>retryAttempt</td>
+                        <td>0</td>
+                      </tr>
+                      <tr>
+                        <td>group</td>
+                        <td><span class="text-muted">Null Value</span></td>
+                      </tr>
+                      <tr>
+                        <td>username</td>
+                        <td>admin</td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td>option</td>
+                  <td><span class="text-muted">Empty Map</span></td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+        `
+}))
+
 
 export const pagination = () => (Vue.extend({
     render(h) {

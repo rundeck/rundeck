@@ -233,6 +233,8 @@ rundeck:
                 enabled: true
             healthcheck:
                 enabled: true
+            cpuProfile:
+                enabled: false
     gui:
         execution:
             tail:

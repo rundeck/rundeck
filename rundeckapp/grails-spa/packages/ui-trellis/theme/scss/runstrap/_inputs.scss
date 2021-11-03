@@ -29,13 +29,6 @@
         grid-template-columns: repeat(5,minmax(0,1fr));
     }
     
-    // potential move to utilities
-    .col-span-3{
-        grid-column: span 3 / span 3;
-    }
-    .col-span-2{
-        grid-column: span 2 / span 2;
-    }
     .flex-v-center{
         display: flex;
         align-items: center;

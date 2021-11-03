@@ -51,6 +51,16 @@ commands:
           path: ~/test-results
       - store_artifacts:
           path: ~/test-results/junit
+  setup-environment:
+    steps:
+      - run:
+          name: Install packages
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y jq xmlstarlet
+      - run:
+          name: Install aws cli
+          command: pip install awscli --upgrade --user
 
   restore-gradle-cache:
     description: Restore Gradle cache
@@ -82,7 +92,7 @@ commands:
       - run:
           name: Fetch Artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             fetch_common_artifacts
             pull_rdtest
 
@@ -92,7 +102,7 @@ commands:
       - run:
           name: Fetch CI Resources
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             fetch_common_resources
 
 jobs:
@@ -113,23 +123,54 @@ jobs:
       - run:
           name: Build
           command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh build
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh build
       - setup_remote_docker
       - run:
           name: Build Docker Images
           command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh buildDocker
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh buildDocker
             build_rdtest
       - run:
           name: Upload artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             copy_artifacts
             sync_to_s3
             seal_artifacts
       - save-gradle-cache
+      - when:
+          condition:
+            matches: { pattern: "^main$", value: <<pipeline.git.branch>> }
+          steps:
+            - setup-environment
+            - run:
+                name: Gather artifacts
+                command: |
+                  source .circleci/circle-shim.sh
+                  source scripts/circle-helpers.sh
+                  fetch_common_artifacts
+                  fetch_common_resources
+                  sync_commit_to_s3
+                  export VCS_URL=https://github.com/rundeck/rundeck.git
+                  seal_artifacts
+            - run:
+                name: Publish snapshot
+                command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+      - when:
+          condition:
+            matches: { pattern: "/^v.*/", value: <<pipeline.git.tag>> }
+          steps:
+            - setup-environment
+            - run:
+                name: Docker publish
+                command: |
+                  source .circleci/circle-shim.sh
+                  source scripts/circle-helpers.sh
+                  fetch_common_artifacts
+                  fetch_common_resources
+                  DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
   test-gradle:
     <<: *defaults
@@ -158,7 +199,7 @@ jobs:
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             << parameters.command >>
 
   trigger-enterprise:
@@ -186,7 +227,7 @@ jobs:
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             << parameters.command >>
 
   test-selenium:
@@ -199,12 +240,12 @@ jobs:
       - run:
           name: Fetch Artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             pull_rundeck
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             bash test/ci-test-docker-selenium.sh
       - store_artifacts:
           path: test/selenium/test_out/images
@@ -230,18 +271,17 @@ jobs:
           path: build/owasp-reports
           prefix: owasp-reports
 
-  snapshot-publish:
+  trigger-packaging:
     <<: *defaults
-    executor: gradle-docker
-
+    machine: true
+    resource_class: small
     steps:
-      - checkout
-      - run:
-          name: Publish
-          command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh publish_oss
-
+      - trigger/trigger:
+          debug: true
+          branch: 'main'
+          token: '${CIRCLECI_API_TOKEN}'
+          project-slug: 'gh/rundeck/packaging-core'
+          pipeline-number: '<<pipeline.number>>'
   maven-publish:
     <<: *defaults
     executor: gradle-docker
@@ -254,8 +294,8 @@ jobs:
       - run:
           name: Publish
           command: |
-            source .circleci/travis-shim.sh
-            DRY_RUN=false bash scripts/travis-build.sh publish
+            source .circleci/circle-shim.sh
+            DRY_RUN=false bash scripts/circle-build.sh publish
 
 stages:
   test: &stage-test
@@ -343,19 +383,19 @@ workflows:
           name: PAM Test
           requires: [build]
           command: bash test/run-docker-pam-tests.sh
-
       - test-selenium:
-            name: Selenium Test
-            requires: [build]
+          name: Selenium Test
+          requires: [build]
       - test-deps:
-            name: OWASP Dependency Checks
-            requires: [build]
-            continue: 'true'
-
-      # - snapshot-publish:
-      #     name: Publish Snapshots
-      #     requires: *stage-test
-      #     filters: {branches: {only: main}}
+          name: OWASP Dependency Checks
+          requires: [build]
+          continue: 'true'
+      - trigger-packaging:
+          name: Trigger packaging-core
+          requires: *stage-test
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
       - maven-publish:
           name: Maven Publish
           requires: *stage-test

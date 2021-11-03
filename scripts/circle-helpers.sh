@@ -3,13 +3,13 @@
 #
 # Exported variables
 # ==================
-# RUNDECK_BUILD_NUMBER = build number from TRAVIS_BUILD_NUMBER
-# RUNDECK_TAG = Git tag used for this build and extracted from TRAVIS_TAG
-# RUNDECK_RELEASE_TAG = (SNAPSHOT|GA|other) extracted from TRAVIS_TAG
-# RUNDECK_RELEASE_VERSION = version number extracted from TRAVIS_TAG
+# RUNDECK_BUILD_NUMBER = build number from RUNDECK_BUILD_NUMBER
+# RUNDECK_TAG = Git tag used for this build and extracted from CI_TAG
+# RUNDECK_RELEASE_TAG = (SNAPSHOT|GA|other) extracted from CI_TAG
+# RUNDECK_RELEASE_VERSION = version number extracted from CI_TAG
 # RUNDECK_PREV_RELEASE_VERSION = same as above extracted from second oldest tag in git history
 # RUNDECK_PREV_RELEASE_VERSION = same as above extracted from second oldest tag in git history
-# RUNDECK_MAIN_BUILD = (true|false) resolves Travis funkyness to determine if this is a true main build
+# RUNDECK_MAIN_BUILD = (true|false) resolves TCI funkyness to determine if this is a true main build
 
 # BINTRAY_DEB_REPO = selected deb bintray repo based on release tag
 # BINTRAY_RPM_REPO = selected rpm bintray repo based on release tag
@@ -26,16 +26,16 @@ source scripts/helpers.sh
 
 export ECR_REPO=481311893001.dkr.ecr.us-west-2.amazonaws.com/rundeck/rundeck
 export ECR_REGISTRY=481311893001.dkr.ecr.us-west-2.amazonaws.com
-export ECR_IMAGE_PREFIX=${ECR_IMAGE_PREFIX:-"travis"}
+export ECR_IMAGE_PREFIX=${ECR_IMAGE_PREFIX:-"circle"}
 
-export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
-export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
-export RUNDECK_BRANCH="${RUNDECK_BRANCH:-$TRAVIS_BRANCH}"
-export RUNDECK_TAG="${RUNDECK_TAG:-$TRAVIS_TAG}"
+export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$CI_BUILD_NUMBER}"
+export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$CI_COMMIT}"
+export RUNDECK_BRANCH="${RUNDECK_BRANCH:-$CI_BRANCH}"
+export RUNDECK_TAG="${RUNDECK_TAG:-$CI_TAG}"
 
 export RUNDECK_PACKAGING_BRANCH="${RUNDECK_PACKAGING_BRANCH:-"main"}"
 
-if [[ "${TRAVIS_EVENT_TYPE:-}" = "push" && "${RUNDECK_BRANCH}" = "main" ]]; then
+if [[ "${RUNDECK_BRANCH}" = "main" ]]; then
     export RUNDECK_MAIN_BUILD=true
 else
     export RUNDECK_MAIN_BUILD=false
@@ -62,11 +62,11 @@ fi
 
 mkdir -p artifacts/packaging
 
-# Exports tag info for current TRAVIS_TAG and previous tag
+# Exports tag info for current CI_TAG and previous tag
 export_tag_info() {
     local TAG_PARTS
-    if [[ ${TAG_PARTS=$(tag_parts "${TRAVIS_TAG}")} && $? != 0 ]] ; then
-        echo "Invalid tag [${TRAVIS_TAG}]"
+    if [[ ${TAG_PARTS=$(tag_parts "${CI_TAG}")} && $? != 0 ]] ; then
+        echo "Invalid tag [${CI_TAG}]"
     else
         TAG_PARTS=( $TAG_PARTS )
     fi
@@ -88,24 +88,6 @@ export_repo_info() {
     export BINTRAY_DEB_REPO=$deb_repo
     export BINTRAY_RPM_REPO=$rpm_repo
     export BINTRAY_MAVEN_REPO=$maven_repo
-}
-
-# Wraps bash command in code folding and timing "stamps"
-script_block() {
-    local NAME="${1}"; shift;
-    local COMMAND="${@}"
-
-    # Return from 
-    local ret
-
-    travis_fold start "${NAME}"
-        travis_time_start
-            eval "${COMMAND}"
-            ret=$?
-            echo "Command [${COMMAND}] returned ${ret}"
-        travis_time_finish
-    travis_fold end "${NAME}"
-    return $ret
 }
 
 sync_from_s3() {
@@ -169,42 +151,6 @@ fetch_commit_common_artifacts() {
     extract_artifacts
 }
 
-trigger_travis_build() {
-    local token="${1:?Must supply token}"
-    local travis_flav="${2:?Must supply org or com}"
-    local owner="${3:?Must supply owner}"
-    local repo="${4:?Must supply repo}"
-    local branch="${5:?Must spupply branch}"
-
-    local body=$(cat <<EOF
-    {
-        "request": {
-            "branch": "${branch}",
-            "message": "Rundeck OSS triggered build.",
-            "config": {
-                "merge_mode": "deep_merge",
-                "env": { "global": {
-                    "DRY_RUN": "false",
-                    "UPSTREAM_PROJECT": "rundeck",
-                    "UPSTREAM_BUILD_NUMBER": "${RUNDECK_BUILD_NUMBER}",
-                    "UPSTREAM_BRANCH": "${RUNDECK_BRANCH}",
-                    "UPSTREAM_TAG": "${RUNDECK_TAG}"
-                }}
-            }
-        }
-    }
-EOF
-)
-
-    curl -s -X POST \
-        -H "Content-Type: application/json" \
-        -H "Accept: application/json" \
-        -H "Travis-API-Version: 3" \
-        -H "Authorization: token ${token}" \
-        -d "$body" \
-        https://api.travis-ci.${travis_flav}/repo/${owner}%2F${repo}/requests
-}
-
 docker_login() {
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
     $(aws ecr get-login --no-include-email --region us-west-2)
@@ -225,7 +171,7 @@ build_rdtest() {
     docker_login
 
     # Pusheen
-    if [[ "${TRAVIS_PULL_REQUEST}" != 'false' && "${TRAVIS_BRANCH}" == 'main' ]]; then
+    if [[ -v ${CI_PULL_REQUEST} && "${CI_BRANCH}" == 'main' ]]; then
         docker tag rdtest:latest $ECR_REGISTRY/rundeck/rdtest:latest
         docker push $ECR_REGISTRY/rundeck/rdtest:latest
     fi
@@ -256,34 +202,15 @@ pull_rundeck() {
     docker tag $ECR_BUILD_TAG rundeck/rundeck
 }
 
-# If this is a snapshot build we will trigger pro
-trigger_downstream_snapshots() {
-    if [[ -z "${RUNDECK_TAG}" && ( "${RUNDECK_BRANCH}" == "main" || "${RUNDECK_BRANCH}" =~ ^maint- ) && "${TRAVIS_EVENT_TYPE}" == "push" ]] ; then
-        echo "Triggering downstream snapshot build..."
-        seal_artifacts
-        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro "${RUNDECK_BRANCH}"
-        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeck packaging-core "${RUNDECK_BRANCH}"
-    else
-        echo "Skippping downstream snapshot build for non-main/snapshot build..."
-    fi
-}
-
-trigger_downstream_releases() {
-    trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeck packaging-core "${RUNDECK_PACKAGING_BRANCH}"
-}
-
 export_tag_info
 export_repo_info
 
-export -f script_block
 export -f sync_to_s3
 export -f sync_commit_to_s3
 export -f sync_from_s3
 export -f sync_commit_from_s3
 export -f fetch_common_artifacts
-export -f trigger_travis_build
 export -f docker_login
 export -f build_rdtest
 export -f pull_rdtest
 export -f pull_rundeck
-export -f trigger_downstream_snapshots
