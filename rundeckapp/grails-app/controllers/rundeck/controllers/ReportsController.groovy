@@ -212,7 +212,7 @@ class ReportsController extends ControllerBase{
         return model
     }
 
-    def since = { ExecQuery query->
+    def since(ExecQuery query){
        //find previous executions
         def usedFilter
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
@@ -324,7 +324,7 @@ class ReportsController extends ControllerBase{
             }
         }
     }
-    def eventsFragment={ ExecQuery query ->
+    def eventsFragment(ExecQuery query) {
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
 
         if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(
