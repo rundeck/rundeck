@@ -138,6 +138,7 @@ dependencies {
     implementation "org.grails.plugins:scaffolding"
     implementation "org.grails.plugins:events"
     implementation "org.grails.plugins:gsp"
+    implementation 'org.grails:grails-plugin-codecs:4.0.1'
     implementation "io.micronaut:micronaut-inject-groovy"
     implementation "com.google.code.gson:gson:${gsonVersion}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
