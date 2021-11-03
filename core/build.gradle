@@ -92,7 +92,7 @@ dependencies {
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
     testImplementation "com.squareup.retrofit2:retrofit-mock:2.7.2"
-    testImplementation "com.squareup.okhttp3:mockwebserver:3.14.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
     testImplementation "cglib:cglib-nodep:2.2.2"
 
 }

@@ -190,7 +190,8 @@ dependencies {
     testImplementation "org.grails:grails-web-testing-support"
     testImplementation "org.grails.plugins:geb"
     testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.7.2"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
+    testImplementation "com.squareup.okhttp3:okhttp:4.9.2"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
     testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver"
@@ -372,6 +373,7 @@ assetPluginPackage.dependsOn copySpa
 assetCompile.dependsOn copySpa
 
 task vendorAssetDeps(type: NpmTask) { it ->
+    dependsOn copySpa
     def baseDir = "${projectDir}/grails-app/assets/javascripts"
 
     it.inputs.file "${baseDir}/_package-manager/package.json"
