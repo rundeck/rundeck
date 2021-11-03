@@ -392,10 +392,12 @@ task vendorAssetDeps(type: NpmTask) { it ->
         it.workingDir = "${baseDir}/_package-manager"
     }
 }
+
 assetPluginPackage.dependsOn vendorAssetDeps
 assetCompile.dependsOn vendorAssetDeps
 
 archivesBaseName = 'rundeck'
+
 bootWar {
     enabled=true
     it.dependsOn copyPluginLibs
