@@ -38,7 +38,7 @@ class ApiServiceTests implements ServiceUnitTest<ApiServiceTests> {
         assertTrue(apiService.requireVersion([api_version:1],mock.proxyInstance(),1))
     }
 
-    @Test
+    /*@Test
     void testRenderErrorXmlBuilderList() {
         def apiService = new ApiService()
         apiService.messageSource = messageSource
@@ -77,5 +77,5 @@ class ApiServiceTests implements ServiceUnitTest<ApiServiceTests> {
         assertEquals('true', gpath['@error'].text())
         assertEquals(ApiVersions.API_CURRENT_VERSION.toString(), gpath['@apiversion'].text())
         gpath
-    }
+    }*/
 }
