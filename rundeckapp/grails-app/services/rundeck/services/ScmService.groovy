@@ -57,6 +57,8 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
@@ -497,7 +499,8 @@ class ScmService {
         ScmOperationContext context
         @Override
         void jobChangeEvent(final JobChangeEvent event, final JobSerializer serializer) {
-            log.debug("job change event: " + event)
+            Logger logger = LoggerFactory.getLogger(ExportChangeListener)
+            logger.debug("job change event: " + event)
             JobScmReference scmRef = service.scmJobRef(event.jobReference,true, serializer)
             JobScmReference origScmRef = event.originalJobReference?service.scmOrigJobRef(event.originalJobReference, true,null):null
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
