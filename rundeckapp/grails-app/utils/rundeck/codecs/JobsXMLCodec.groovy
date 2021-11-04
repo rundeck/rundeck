@@ -43,7 +43,7 @@ class JobsXMLCodec {
      * @deprecated do not use this directly, instead use the injected JobDefinitionManager.exportAsXml
      */
     @Deprecated
-    static encode = { list ->
+    static encode (List<ScheduledExecution> list){
         RundeckJobDefinitionManager rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
         rundeckJobDefinitionManager.exportAsXml(list)
     }
@@ -440,7 +440,7 @@ class JobsXMLCodec {
     /**
      * Convert structure returned by job.toMap into correct structure for jobs xml
      */
-    static convertJobMap = { Map map, boolean preserveUuid = true, String replaceId = null, String stripJobRef = null ->
+    static Map convertJobMap (Map map, boolean preserveUuid = true, String replaceId = null, String stripJobRef = null) {
         map.remove('project')
         if (!preserveUuid) {
             map.remove('id')
