@@ -177,7 +177,7 @@ dependencies {
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    runtimeOnly "org.apache.tomcat:tomcat-jdbc:10.0.12"
+    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     api ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
