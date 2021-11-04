@@ -186,14 +186,13 @@ select.input-sm{
     border-left:1px solid  var(--background-color-accent-lvl3);
   }
   .input-btn-toggle{
-    padding: 0 var(--spacing-4);
     position: relative;
+    .btn.dropdown-toggle.btn-default{
+      padding: 18px var(--spacing-4);
+      height: 41px;
+      border-radius: 0 !important;
+    }
     .btn{
-      // position: absolute;
-      // top: 0;
-      // bottom: 0;
-      // left:0;
-      // right: 0;
       width: 100%;
     }
   }
