@@ -19,7 +19,7 @@
   }
 
   &[data-execstate=OTHER][data-statusstring=incomplete] {
-    color: orange;
+    color: var(--warning-color);
     &.icon{
       &:before {
         content: "\f12a";
@@ -59,9 +59,19 @@
 
   &.aborted,
   &[data-execstate=ABORTED] {
-    color: var(--dark-gray);
+    color: var(--danger-color);
+    position: relative;
     &.icon{
-      &:before {
+      &:before{
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: white;
+      }
+      &:after {
         content: "\f056";
       }
     }
