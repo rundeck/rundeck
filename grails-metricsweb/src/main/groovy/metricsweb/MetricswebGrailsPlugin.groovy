@@ -127,11 +127,12 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
     }
 
     def doWithSpring = {
-        disablingAdminServlet(ServletRegistrationBean, new DisablingAdminServlet(), grailsApplication.config.rundeck.metrics.servletUrlPattern.toString()) {
-            loadOnStartup = 2
-        }
-        metricRegistry(MetricRegistry)
-        healthCheckRegistry(HealthCheckRegistry)
+        //disablingAdminServlet(ServletRegistrationBean, new DisablingAdminServlet(), grailsApplication.config.rundeck.metrics.servletUrlPattern.toString()) {
+        //    loadOnStartup = 2
+        //}
+        metricRegistry MetricRegistry
+        healthCheckRegistry HealthCheckRegistry
+
     }
 
     def doWithDynamicMethods = { applicationContext ->

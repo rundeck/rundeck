@@ -1,19 +1,12 @@
 package rundeck.quartzjobs
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
-import grails.gorm.transactions.Rollback
-import grails.testing.mixin.integration.Integration
-import groovy.mock.interceptor.MockFor
-import org.junit.Assert
-import org.junit.Test
+
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
@@ -24,12 +17,16 @@ import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 import rundeck.services.execution.ThresholdValue
-import spock.lang.Specification
 import spock.lang.Unroll
+
+import grails.gorm.transactions.Rollback
+import grails.testing.mixin.integration.Integration
+import spock.lang.Specification
 
 @Integration
 @Rollback
 class ExecutionJobIntegrationSpec extends Specification {
+
     /**
      * executeAsyncBegin succeeds,finish succeeds, thread fails
      */
@@ -148,9 +145,9 @@ class ExecutionJobIntegrationSpec extends Specification {
                     )
             )
         then:
-            Assert.assertEquals(true, result.success)
-            Assert.assertEquals(testExecmap, result.execmap)
-            Assert.assertFalse(job.wasThreshold)
+            result.success
+            result.execmap == testExecmap
+            !job.wasThreshold
     }
 
     def testSaveStateWithJob() {
@@ -491,13 +488,13 @@ class ExecutionJobIntegrationSpec extends Specification {
             def result = job.initialize(null, contextMock)
 
         then:
-            Assert.assertEquals(se.id, result.scheduledExecutionId)
-            Assert.assertEquals(se.id, result.scheduledExecution.id)
-            Assert.assertEquals(mockes, result.executionService)
-            Assert.assertEquals(mockeus, result.executionUtilService)
-            Assert.assertEquals([test: 'input'], result.secureOptsExposed)
-            Assert.assertEquals(fwk, result.framework)
-            Assert.assertEquals(e, result.execution)
+        result.scheduledExecutionId == se.id
+        result.scheduledExecution.id == se.id
+        result.executionService == mockes
+        result.executionUtilService == mockeus
+        result.secureOptsExposed == [test: 'input']
+        result.framework == fwk
+        result.execution == e
 
     }
 
@@ -785,7 +782,6 @@ class ExecutionJobIntegrationSpec extends Specification {
     /**
      * executeAsyncBegin succeeds,finish succeeds, thread succeeds
      */
-    @Test
     void testExecuteCommandStartOkFinishOkThreadSuccessful() {
         given:
             ScheduledExecution se = setupJob()
