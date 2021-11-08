@@ -60,17 +60,7 @@
   &.aborted,
   &[data-execstate=ABORTED] {
     color: var(--danger-color);
-    position: relative;
     &.icon{
-      &:before{
-        content: "";
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: white;
-      }
       &:after {
         content: "\f056";
       }
