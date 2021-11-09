@@ -211,7 +211,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def map = it.toMap()
             def data = [
                     status: it.executionState,
-                    executionHref: createLink(controller: 'execution', action: 'show', absolute: true, id: it.id),
+                    executionHref: createLink(controller: 'execution', action: 'show', absolute: true, id: it.id, params:[project:it.project]),
                     executionId: it.id,
                     duration: (it.dateCompleted?:new Date()).time - it.dateStarted.time
             ]
