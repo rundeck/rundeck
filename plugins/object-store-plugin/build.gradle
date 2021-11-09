@@ -1,5 +1,6 @@
 plugins {
     id 'groovy'
+    id 'maven-publish'
 }
 
 ext.pluginClassNames='org.rundeck.plugin.objectstore.ObjectStorePlugin'
@@ -54,8 +55,8 @@ jar {
 //set jar task to depend on copyToLib
 jar.dependsOn(copyToLib)
 
-// apply plugin: 'maven'
-/* task('createPom').doLast {
+
+ task('createPom').doLast {
     pom {
         project {
             artifactId 'rundeck-object-store-plugin'
@@ -101,4 +102,3 @@ jar.dependsOn(copyToLib)
         }
     }.writeTo("pom.xml")
 }
- */

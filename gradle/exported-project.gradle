@@ -15,7 +15,7 @@ else if (archiveName.startsWith('rundeckapp'))
     archiveName = project.name.replace('rundeckapp', 'rundeck')
 
 /* Modify auto-gen POM which gets picked up by Bintray */
-/* install {
+/*  install {
     repositories.mavenInstaller {
         pom.project {
             artifactId archiveName
@@ -52,10 +52,12 @@ else if (archiveName.startsWith('rundeckapp'))
             }
         }
     }
-}
- */
+} */
+
+//apply plugin: 'maven-publish'
+ 
 //build a pom we reuse for both maven builds and release to sonatype
-/* ext.publishPom = pom {
+ /* ext.publishPom = pom {
     project {
         artifactId archiveName
         groupId project.group
@@ -90,7 +92,58 @@ else if (archiveName.startsWith('rundeckapp'))
             version('7')
         }
     }
+}  */
+/* if(project.getProperty('dryRun') == 'true'){
+    System.println("version: " version}) 
+    System.println("project.group: " ${project.group}) 
+    System.println("artifactId: " ${artifactId}) 
+
 } */
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            pom {
+                 project {
+                    artifactId = archiveName
+                    groupId = project.group
+                    inceptionYear = '2014'
+                    packaging = 'jar'
+                    version = version
+                    name = "Rundeck library ${archiveName}"
+                    description = project.description?:'Rundeck'
+                    url = 'http://rundeck.org'
+                    licenses {
+                        license {
+                            name = 'The Apache Software License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution = 'repo'
+                        }
+                    }
+                    scm {
+                        url = 'https://github.com/rundeck/rundeck'
+                        connection = 'scm:git:git@github.com/rundeck/rundeck.git'
+                        developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
+                    }
+                    developers {
+                        developer {
+                            id = 'gschueler'
+                            name = 'Greg Schueler'
+                            email = 'greg@rundeck.com'
+                        }
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+            def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+            url = (project.getProperty('environment') == 'release') ? releasesRepoUrl : snapshotsRepoUrl
+        }
+    }
+}
 
 /* uploadArchives {
     repositories.mavenDeployer {
@@ -153,13 +206,12 @@ existingFiles.builtBy(registerExisting)
 configurations.existing.dependencies.add(project.dependencies.create(existingFiles))
 
 /** Sign existing artifacts **/
-/* signing {
-    required { isReleaseBuild && project.hasProperty("signing.keyId") }
-    sign configurations.existing
+ signing {
+    sign publishing.publications.mavenJava
 }
 tasks.withType(Sign) { t ->
     t.dependsOn configurations.existing
-} */
+} 
 
 
 /* tasks.register('uploadExisting', Upload) {
@@ -180,10 +232,9 @@ tasks.withType(Sign) { t ->
 } */
 
 //utility to create a pom for building
-/* if(!(project.name in ['core','launcher'])){
+ if(!(project.name in ['core','launcher'])){
     //:core buildfile will generate its own pom for specialized purpose
     task('createPom').doLast {
         publishPom.writeTo("pom.xml")
     }
 }
- */

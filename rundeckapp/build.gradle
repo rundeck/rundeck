@@ -38,6 +38,8 @@ apply plugin: "com.energizedwork.idea-base"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
+archivesBaseName = 'rundeck-core'
+
 configurations {
     agent
     war{}
@@ -437,46 +439,57 @@ clean {
     delete "$projectDir/grails-app/assets/javascripts/vendor"
 }
 
-// bintray {
-//     user = findProperty("bintrayUser")
-//     key = findProperty("bintrayApiKey")
-//     publish = true
-//     dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
-//     override = true
+bintray {
+    user = findProperty("bintrayUser")
+    key = findProperty("bintrayApiKey")
+    publish = true
+    dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+    override = true
 
-//     if (findProperty('bintrayUseExisting')) {
-//         filesSpec {
-//             from "$artifactDir/rundeckapp/build/libs"
-//             from "$artifactDir/rundeckapp/build/poms"
-//             into "${project.group}.rundeck".replace('.', '/')
-//             exclude '*.original'
-//             rename { file ->
-//                 if (file =~ /^pom/)
-//                     return "rundeck-${version}.pom"
-//                 else
-//                     return file
-//             }
-//         }
-//     } else {
-//         configurations =  ['archives']
-//     }
+    if (findProperty('bintrayUseExisting')) {
+        filesSpec {
+            from "$artifactDir/rundeckapp/build/libs"
+            from "$artifactDir/rundeckapp/build/poms"
+            into "${project.group}.rundeck".replace('.', '/')
+            exclude '*.original'
+            rename { file ->
+                if (file =~ /^pom/)
+                    return "rundeck-${version}.pom"
+                else
+                    return file
+            }
+        }
+    } else {
+        configurations =  ['archives']
+    }
 
-//     pkg {
-//         repo = 'rundeck-maven'
-//         name = 'rundeck'
-//         userOrg = 'rundeck'
+    pkg {
+        repo = 'rundeck-maven'
+        name = 'rundeck'
+        userOrg = 'rundeck'
 
-//         version {
-//             // mavenCentralSync {
-//             //     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-//             //     user = findProperty('ossUserToken') //OSS user token: mandatory
-//             //     password = findProperty('ossUserPassword') //OSS user password: mandatory
-//             // }
+        version {
+            // mavenCentralSync {
+            //     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
+            //     user = findProperty('ossUserToken') //OSS user token: mandatory
+            //     password = findProperty('ossUserPassword') //OSS user password: mandatory
+            // }
 
-//             gpg {
-//                 sign = true //Determines whether to GPG sign the files. The default is false
-//                 passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
-//             }
-//         }
-//     }
-// }
+            gpg {
+                sign = true //Determines whether to GPG sign the files. The default is false
+                passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
+            }
+        }
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId archivesBaseName
+            artifactId project.group
+            version '${project.version}'
+        }
+    }
+}
