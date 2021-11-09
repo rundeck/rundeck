@@ -169,9 +169,6 @@ assemble {
     }
 }
 
-// make sure that we've rebuilt and assembled before install
- //install.dependsOn(build)
-
 //build a pom we reuse for both maven builds and release to sonatype
 // def buildpom={
 //     pom {
@@ -308,7 +305,7 @@ assemble {
 // }
 // }
 
-publishing {
+/* publishing {
     publications {
         mavenJava(MavenPublication) {
             pom {
@@ -385,7 +382,7 @@ publishing {
                                 version('1.0.3')
                                 }
                                 doclet('com.google.doclava.Doclava')
-                                /* bootclasspath required by Sun's JVM */
+                                 //bootclasspath required by Sun's JVM 
                                 bootclasspath('${sun.boot.class.path}')
                                 additionalparam('''-quiet
                                         -federate JDK http://download.oracle.com/javase/6/docs/api/index.html?
@@ -395,7 +392,7 @@ publishing {
                                         -hide 101
                                         -proofread ./proof-read.txt''')
                                 useStandardDocletOptions('false')
-                                /* Apple's JVM sometimes requires more memory */
+                                /* Apple's JVM sometimes requires more memory 
                                 additionalJOption('-J-Xmx1024m')
                             }
                             executions() {
@@ -445,7 +442,7 @@ publishing {
             }
         }
     }
-}
+} */
 
 task('createPom').doLast {
     buildpom().writeTo("pom.xml")

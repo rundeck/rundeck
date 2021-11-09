@@ -104,10 +104,8 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             pom {
-                 project {
                     artifactId = archiveName
                     groupId = project.group
-                    inceptionYear = '2014'
                     packaging = 'jar'
                     version = version
                     name = "Rundeck library ${archiveName}"
@@ -132,7 +130,6 @@ publishing {
                             email = 'greg@rundeck.com'
                         }
                     }
-                }
             }
         }
     }
@@ -141,6 +138,10 @@ publishing {
             def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
             def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
             url = (project.getProperty('environment') == 'release') ? releasesRepoUrl : snapshotsRepoUrl
+            credentials {
+                username = findProperty('sonatypeUsername')
+                password = findProperty('sonatypePassword')
+            }
         }
     }
 }
