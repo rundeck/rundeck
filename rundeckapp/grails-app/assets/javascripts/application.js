@@ -390,6 +390,14 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
 
   setAceSyntaxMode(data.aceSessionMode, editor);
   editor.setTheme("ace/theme/chrome");
+  editor.getSession().on('change', function (e) {
+    jQuery(textarea).val(editor.getValue());
+    // Create synthetic change since jQuery val, trigger, and change do not trigger all listeners
+    jQuery(textarea).get(0).dispatchEvent(new Event('change'));
+    if (callback) {
+      callback(editor);
+    }
+  });
   if (data.aceAutofocus) {
     editor.focus();
   }
