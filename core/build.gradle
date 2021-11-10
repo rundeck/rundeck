@@ -96,28 +96,31 @@ dependencies {
     testImplementation "cglib:cglib-nodep:2.2.2"
 
 }
-// buildConfig {
-//     clsName = 'BuildConfig'
-//     packageName = project.group + '.meta'
-//     charset = 'UTF-8'
-//     appName = project.name
-//     version = project.version
-//     buildConfigField 'String', 'GIT_COMMIT', {
-//         project.gitCommit
-//     }
-//     buildConfigField 'String', 'GIT_BRANCH', {
-//         project.gitBranch
-//     }
-//     buildConfigField 'String', 'GIT_DESCRIPTION', {
-//         project.gitDescribeInfo
-//     }
-//     buildConfigField 'String', 'BUILD_DATE', {
-//         new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
-//     }
-//     buildConfigField 'String', 'BUILD_NUM', buildNum
-//     buildConfigField 'String', 'BUILD_IDENT', (version + '-' + buildNum)
 
-// }
+version = project.version
+
+/* buildConfig {
+    clsName = 'BuildConfig'
+    packageName = project.group + '.meta'
+    charset = 'UTF-8'
+    appName = project.name
+    
+    buildConfigField 'String', 'GIT_COMMIT', {
+        project.gitCommit
+    }
+    buildConfigField 'String', 'GIT_BRANCH', {
+        project.gitBranch
+    }
+    buildConfigField 'String', 'GIT_DESCRIPTION', {
+        project.gitDescribeInfo
+    }
+    buildConfigField 'String', 'BUILD_DATE', {
+        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
+    }
+    buildConfigField 'String', 'BUILD_NUM', buildNum
+    buildConfigField 'String', 'BUILD_IDENT', (version + '-' + buildNum)
+
+} */
 
 task gitInfo {
     doLast {
@@ -170,269 +173,256 @@ assemble {
 }
 
 //build a pom we reuse for both maven builds and release to sonatype
-// def buildpom={
-//     pom {
-//     project {
-//         artifactId archivesBaseName
-//         groupId project.group
-//         inceptionYear '2011'
-//         packaging 'jar'
-//         version version
-//         name "Rundeck Core"
-//         description "Core library for the Rundeck web console for command dispatching and job scheduling"
-//         url 'http://rundeck.org'
-//         licenses {
-//             license {
-//                 name 'The Apache Software License, Version 2.0'
-//                 url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-//                 distribution 'repo'
-//             }
-//         }
-//         properties{
-//             'version'(version)
-//             'version_build'(buildNum)
-//             'version_ident'(version+'-'+buildNum)
-//         }
-//         scm {
-//             url 'https://github.com/dtolabs/rundeck'
-//             connection 'scm:git:git@github.com/dtolabs/rundeck.git'
-//             developerConnection 'scm:git:git@github.com:dtolabs/rundeck.git'
-//         }
-//         developers {
-//           developer {
-//             id('gschueler')
-//             name('Greg Schueler')
-//             email('greg@dtosolutions.com')
-//           }
-//         }
-//         parent {
-//             groupId('org.sonatype.oss')
-//             artifactId('oss-parent')
-//             version('7')
-//         }
-//         build {
-//             resources{
-//                 resource{
-//                     directory 'src/main/meta'
-//                     targetPath 'META-INF'
-//                     filtering=true
-//                 }
-//                 resource{
-//                     directory 'src/main/resources'
-//                 }
-//             }
-//             plugins{
-//                 plugin() {
-//                   groupId('org.apache.maven.plugins')
-//                   artifactId('maven-source-plugin')
-//                   executions() {
-//                     execution() {
-//                       id('attach-sources')
-//                       goals() {
-//                         goal('jar')
-//                       }
-//                     }
-//                   }
-//                 }
-//                 plugin() {
-//                   groupId('org.apache.maven.plugins')
-//                   artifactId('maven-javadoc-plugin')
-//                   version('2.8')
-//                   configuration() {
-//                     docletArtifact() {
-//                       groupId('com.google.doclava')
-//                       artifactId('doclava')
-//                       version('1.0.3')
-//                     }
-//                     doclet('com.google.doclava.Doclava')
-//                     /* bootclasspath required by Sun's JVM */
-//                     bootclasspath('${sun.boot.class.path}')
-//                     additionalparam('''-quiet
-//                              -federate JDK http://download.oracle.com/javase/6/docs/api/index.html?
-//                              -federationxml JDK http://doclava.googlecode.com/svn/static/api/openjdk-6.xml
-//                              -hdf project.name "${project.name}"
-//                              -d .
-//                              -hide 101
-//                              -proofread ./proof-read.txt''')
-//                     useStandardDocletOptions('false')
-//                     /* Apple's JVM sometimes requires more memory */
-//                     additionalJOption('-J-Xmx1024m')
-//                   }
-//                   executions() {
-//                     execution() {
-//                       id('attach-javadoc')
-//                       goals() {
-//                         goal('jar')
-//                       }
-//                     }
-//                   }
-//                 }
-//                 plugin{
-//                     groupId 'org.apache.maven.plugins'
-//                     artifactId 'maven-compiler-plugin'
-//                     version '2.3.2'
-//                     configuration{
-//                         'source'('1.7')
-//                         'target'('1.7')
-//                     }
-//                 }
-//                 plugin{
-//                     groupId 'org.apache.maven.plugins'
-//                     artifactId 'maven-surefire-plugin'
-//                     version '2.10'
-//                     configuration{
-//                         systemPropertyVariables{
-//                             'rdeck.base'('${project.build.directory}/rdeck_base')
-//                         }
-//                         redirectTestOutputToFile 'true'
-//                     }
-//                 }
-//                 plugin{
-//                     groupId 'org.apache.maven.plugins'
-//                     artifactId 'maven-jar-plugin'
-//                     version '2.3.2'
-//                     configuration{
-//                         archive{
-//                           manifestEntries{
-//                             'Rundeck-Version'(version)
-//                           }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
-// }
+def buildpom={
+    pom {
+    project {
+        artifactId archivesBaseName
+        groupId project.group
+        inceptionYear '2011'
+        packaging 'jar'
+        version version
+        name "Rundeck Core"
+        description "Core library for the Rundeck web console for command dispatching and job scheduling"
+        url 'http://rundeck.org'
+        licenses {
+            license {
+                name 'The Apache Software License, Version 2.0'
+                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                distribution 'repo'
+            }
+        }
+        properties{
+            'version'(version)
+            'version_build'(buildNum)
+            'version_ident'(version+'-'+buildNum)
+        }
+        scm {
+            url 'https://github.com/dtolabs/rundeck'
+            connection 'scm:git:git@github.com/dtolabs/rundeck.git'
+            developerConnection 'scm:git:git@github.com:dtolabs/rundeck.git'
+        }
+        developers {
+          developer {
+            id('gschueler')
+            name('Greg Schueler')
+            email('greg@dtosolutions.com')
+          }
+        }
+        parent {
+            groupId('org.sonatype.oss')
+            artifactId('oss-parent')
+            version('7')
+        }
+        build {
+            resources{
+                resource{
+                    directory 'src/main/meta'
+                    targetPath 'META-INF'
+                    filtering=true
+                }
+                resource{
+                    directory 'src/main/resources'
+                }
+            }
+            plugins{
+                plugin() {
+                  groupId('org.apache.maven.plugins')
+                  artifactId('maven-source-plugin')
+                  executions() {
+                    execution() {
+                      id('attach-sources')
+                      goals() {
+                        goal('jar')
+                      }
+                    }
+                  }
+                }
+                plugin() {
+                  groupId('org.apache.maven.plugins')
+                  artifactId('maven-javadoc-plugin')
+                  version('2.8')
+                  configuration() {
+                    docletArtifact() {
+                      groupId('com.google.doclava')
+                      artifactId('doclava')
+                      version('1.0.3')
+                    }
+                    doclet('com.google.doclava.Doclava')
+                    /* bootclasspath required by Sun's JVM */
+                    bootclasspath('${sun.boot.class.path}')
+                    additionalparam('''-quiet
+                             -federate JDK http://download.oracle.com/javase/6/docs/api/index.html?
+                             -federationxml JDK http://doclava.googlecode.com/svn/static/api/openjdk-6.xml
+                             -hdf project.name "${project.name}"
+                             -d .
+                             -hide 101
+                             -proofread ./proof-read.txt''')
+                    useStandardDocletOptions('false')
+                    /* Apple's JVM sometimes requires more memory */
+                    additionalJOption('-J-Xmx1024m')
+                  }
+                  executions() {
+                    execution() {
+                      id('attach-javadoc')
+                      goals() {
+                        goal('jar')
+                      }
+                    }
+                  }
+                }
+                plugin{
+                    groupId 'org.apache.maven.plugins'
+                    artifactId 'maven-compiler-plugin'
+                    version '2.3.2'
+                    configuration{
+                        'source'('1.7')
+                        'target'('1.7')
+                    }
+                }
+                plugin{
+                    groupId 'org.apache.maven.plugins'
+                    artifactId 'maven-surefire-plugin'
+                    version '2.10'
+                    configuration{
+                        systemPropertyVariables{
+                            'rdeck.base'('${project.build.directory}/rdeck_base')
+                        }
+                        redirectTestOutputToFile 'true'
+                    }
+                }
+                plugin{
+                    groupId 'org.apache.maven.plugins'
+                    artifactId 'maven-jar-plugin'
+                    version '2.3.2'
+                    configuration{
+                        archive{
+                          manifestEntries{
+                            'Rundeck-Version'(version)
+                          }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+}
 
-/* publishing {
+ publishing {
     publications {
         mavenJava(MavenPublication) {
             pom {
-                project {
-                    artifactId archivesBaseName
-                    groupId project.group
-                    inceptionYear '2011'
-                    packaging 'jar'
-                    version version
-                    name "Rundeck Core"
-                    description "Core library for the Rundeck web console for command dispatching and job scheduling"
-                    url 'http://rundeck.org'
-                    licenses {
-                        license {
-                            name 'The Apache Software License, Version 2.0'
-                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                            distribution 'repo'
-                        }
+                artifactId = archivesBaseName
+                groupId = project.group
+                packaging = 'jar'
+                version = project.version
+                name = "Rundeck Core"
+                description = "Core library for the Rundeck web console for command dispatching and job scheduling"
+                url = 'http://rundeck.org'
+                licenses {
+                    license {
+                        name = 'The Apache Software License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
                     }
-                    properties{
-                        'version'(version)
-                        'version_build'(buildNum)
-                        'version_ident'(version+'-'+buildNum)
-                    }
-                    scm {
-                        url 'https://github.com/dtolabs/rundeck'
-                        connection 'scm:git:git@github.com/dtolabs/rundeck.git'
-                        developerConnection 'scm:git:git@github.com:dtolabs/rundeck.git'
-                    }
-                    developers {
+                }
+                scm {
+                    url = 'https://github.com/dtolabs/rundeck'
+                    connection = 'scm:git:git@github.com/dtolabs/rundeck.git'
+                    developerConnection = 'scm:git:git@github.com:dtolabs/rundeck.git'
+                }
+                developers {
                     developer {
-                        id('gschueler')
-                        name('Greg Schueler')
-                        email('greg@dtosolutions.com')
+                        id = 'gschueler'
+                        name = 'Greg Schueler'
+                        email = 'greg@dtosolutions.com'
                     }
-                    }
-                    parent {
-                        groupId('org.sonatype.oss')
-                        artifactId('oss-parent')
-                        version('7')
-                    }
-                    build {
-                        resources{
-                            resource{
-                                directory 'src/main/meta'
-                                targetPath 'META-INF'
-                                filtering=true
-                            }
-                            resource{
-                                directory 'src/main/resources'
-                            }
+                }
+                build {
+                    resources {
+                        resource {
+                            directory = 'src/main/meta'
+                            targetPath = 'META-INF'
+                            filtering = true
                         }
-                        plugins{
-                            plugin() {
-                            groupId('org.apache.maven.plugins')
-                            artifactId('maven-source-plugin')
+                        resource {
+                            directory = 'src/main/resources'
+                        }
+                    }
+                    plugins {
+                        plugin() {
+                            groupId = 'org.apache.maven.plugins'
+                            artifactId = 'maven-source-plugin'
                             executions() {
                                 execution() {
-                                id('attach-sources')
-                                goals() {
-                                    goal('jar')
-                                }
+                                    id = 'attach-sources'
+                                    goals() {
+                                        goal = 'jar'
+                                    }
                                 }
                             }
-                            }
-                            plugin() {
-                            groupId('org.apache.maven.plugins')
-                            artifactId('maven-javadoc-plugin')
-                            version('2.8')
+                        }
+                        plugin() {
+                            groupId = 'org.apache.maven.plugins'
+                            artifactId = 'maven-javadoc-plugin'
+                            version = '2.8'
                             configuration() {
                                 docletArtifact() {
-                                groupId('com.google.doclava')
-                                artifactId('doclava')
-                                version('1.0.3')
+                                    groupId = 'com.google.doclava'
+                                    artifactId = 'doclava'
+                                    version = '1.0.3'
                                 }
-                                doclet('com.google.doclava.Doclava')
-                                 //bootclasspath required by Sun's JVM 
-                                bootclasspath('${sun.boot.class.path}')
-                                additionalparam('''-quiet
-                                        -federate JDK http://download.oracle.com/javase/6/docs/api/index.html?
-                                        -federationxml JDK http://doclava.googlecode.com/svn/static/api/openjdk-6.xml
-                                        -hdf project.name "${project.name}"
-                                        -d .
-                                        -hide 101
-                                        -proofread ./proof-read.txt''')
-                                useStandardDocletOptions('false')
-                                /* Apple's JVM sometimes requires more memory 
-                                additionalJOption('-J-Xmx1024m')
+                                doclet = 'com.google.doclava.Doclava'
+                                /* bootclasspath required by Sun's JVM */
+                                bootclasspath = '${sun.boot.class.path}'
+                                additionalparam = '''-quiet
+                             -federate JDK http://download.oracle.com/javase/6/docs/api/index.html?
+                             -federationxml JDK http://doclava.googlecode.com/svn/static/api/openjdk-6.xml
+                             -hdf project.name "${project.name}"
+                             -d .
+                             -hide 101
+                             -proofread ./proof-read.txt'''
+                                useStandardDocletOptions = 'false'
+                                /* Apple's JVM sometimes requires more memory */
+                                additionalJOption = '-J-Xmx1024m'
                             }
                             executions() {
                                 execution() {
-                                id('attach-javadoc')
-                                goals() {
-                                    goal('jar')
-                                }
-                                }
-                            }
-                            }
-                            plugin{
-                                groupId 'org.apache.maven.plugins'
-                                artifactId 'maven-compiler-plugin'
-                                version '2.3.2'
-                                configuration{
-                                    'source'('1.7')
-                                    'target'('1.7')
-                                }
-                            }
-                            plugin{
-                                groupId 'org.apache.maven.plugins'
-                                artifactId 'maven-surefire-plugin'
-                                version '2.10'
-                                configuration{
-                                    systemPropertyVariables{
-                                        'rdeck.base'('${project.build.directory}/rdeck_base')
+                                    id = 'attach-javadoc'
+                                    goals() {
+                                        goal = 'jar'
                                     }
-                                    redirectTestOutputToFile 'true'
                                 }
                             }
-                            plugin{
-                                groupId 'org.apache.maven.plugins'
-                                artifactId 'maven-jar-plugin'
-                                version '2.3.2'
-                                configuration{
-                                    archive{
-                                    manifestEntries{
-                                        'Rundeck-Version'(version)
-                                    }
+                        }
+                        plugin {
+                            groupId = 'org.apache.maven.plugins'
+                            artifactId = 'maven-compiler-plugin'
+                            version = '2.3.2'
+                            configuration {
+                                source = '1.7'
+                                target = '1.7'
+                            }
+                        }
+                        plugin {
+                            groupId = 'org.apache.maven.plugins'
+                            artifactId = 'maven-surefire-plugin'
+                            version = '2.10'
+                            configuration {
+                                systemPropertyVariables {
+                                    rdeck.base = '${project.build.directory}/rdeck_base'
+                                }
+                                redirectTestOutputToFile = 'true'
+                            }
+                        }
+                        plugin {
+                            groupId = 'org.apache.maven.plugins'
+                            artifactId = 'maven-jar-plugin'
+                            version = '2.3.2'
+                            configuration {
+                                archive {
+                                    manifestEntries {
+                                        Rundeck-Version = version
                                     }
                                 }
                             }
@@ -442,7 +432,7 @@ assemble {
             }
         }
     }
-} */
+ }
 
 task('createPom').doLast {
     buildpom().writeTo("pom.xml")
