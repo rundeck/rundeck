@@ -38,6 +38,11 @@ module.exports = {
     ],
 
     webpackFinal: (config) => {
+        config.resolve.alias = {
+            ...config.resolve.alias,
+            "@": path.resolve(__dirname, "../src/"),
+        };
+        
         const scopePluginIndex = config.resolve.plugins.findIndex(
             ({ constructor }) =>
                 constructor && constructor.name === 'ModuleScopePlugin',
