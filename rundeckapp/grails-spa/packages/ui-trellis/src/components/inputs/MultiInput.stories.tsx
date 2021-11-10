@@ -60,7 +60,6 @@ export const MultiInput = () => (Vue.extend({
                     </ul>
                 </div>
 
-                <script id="filter_select_tokens" type="text/json">{"TOKEN":"6cb1a494ae5310e236adf5662ef5047bd330075b8f7d74b7be906893ab755189","URI":"/project/zingbats-west-prod-8/nodes"}</script>
                 <input type="search" name="filter" class="schedJobNodeFilter form-control" autofocus="" data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText" placeholder="Enter a node filter, or .* for all nodes" value="" id="schedJobNodeFilter" />
                 <div class ="input-group-btn input-btn-toggle">
                 <a class ="btn btn-default dropdown-toggle" tabindex="0" role="button" data-toggle="popover" data-popover-content-ref="#queryFilterHelp" data-placement="bottom" data-trigger="focus" data-container="body" data-popover-template-class ="popover-wide" data-original-title="" title="">
