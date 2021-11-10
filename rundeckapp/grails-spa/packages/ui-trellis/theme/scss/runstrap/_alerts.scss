@@ -77,24 +77,43 @@
 }
 
 .alert-info {
-  background-color: var(--info-bg-color);
+  font-weight: 700;
+  background-color: var(--cyan-500);
+  color: var(--white);
+  margin-bottom: var(--spacing-6);
+  .close{
+    color: var(--white);
+  }
 }
 
 .alert-success {
-  @include alert-variant(--success-color, --success-states-color, --font-color);
-  background-color: var(--success-bg-color);
+  font-weight: 700;
+  background-color: var(--green-500);
+  color: var(--white);
+  margin-bottom: var(--spacing-6);
+  .close{
+    color: var(--white);
+  }
 }
 
 .alert-warning {
-  @include alert-variant($alert-warning-bg, $alert-warning-border, $alert-warning-text);
-  background-color: var(--warning-bg-color);
-  border: 1px solid var(--warning-border-color);
+  font-weight: 700;
+  background-color: var(--orange-500);
+  color: var(--black);
+  margin-bottom: var(--spacing-6);
+  .close{
+    color: var(--black);
+  }
 }
 
 .alert-danger {
-  @include alert-variant($alert-danger-bg, $alert-danger-border, $alert-danger-text);
-  background-color: var(--danger-bg-color);
-  border: 2px solid var(--danger-color);
+  font-weight: 700;
+  background-color: var(--red-500);
+  color: var(--white);
+  margin-bottom: var(--spacing-6);
+  .close{
+    color: var(--white);
+  }
 }
 
 // Dismissible alerts
