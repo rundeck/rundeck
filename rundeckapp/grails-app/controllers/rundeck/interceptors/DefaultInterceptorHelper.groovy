@@ -45,8 +45,8 @@ class DefaultInterceptorHelper implements InterceptorHelper, InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
-        allowedControllers = (List<String>)configurationService.getValue("security.interceptor.allowed.controllers",[])
-        allowedPaths = (List<String>)configurationService.getValue("security.interceptor.allowed.paths",[])
+        allowedControllers = (List<String>)configurationService.getValue("security.interceptor.allowed.controllers",ArrayList.class, [])
+        allowedPaths = (List<String>)configurationService.getValue("security.interceptor.allowed.paths",ArrayList.class,[])
         checkUserAssetsPrefix = configurationService.getBoolean("gui.staticUserResources.enabled", false)
     }
 }

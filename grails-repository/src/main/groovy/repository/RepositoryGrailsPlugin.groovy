@@ -47,7 +47,7 @@ Brief summary/description of the plugin.
 //    def scm = [ url: "http://svn.codehaus.org/grails-plugins/" ]
 
     Closure doWithSpring() { {->
-            if(application.config.rundeck.feature.repository.enabled in ["true",true]) {
+            if(application.config.getProperty("rundeck.feature.repository.enabled", Boolean.class, false)) {
                 def rdeckBase = System.getProperty('rdeck.base')
 
                 ensureRequiredFilesExist(rdeckBase)
@@ -84,12 +84,12 @@ Brief summary/description of the plugin.
                 }
                 repositoryStorageTree(repositoryStorageTreeFactory:"createTree")
 
-                def serverLibextDir = application.config.rundeck?.server?.plugins?.dir ?: "${rdeckBase}/libext"
+                def serverLibextDir = application.config.getProperty("rundeck.server.plugins.dir", String.class, "${rdeckBase}/libext")
                 File pluginDir = new File(serverLibextDir)
 
                 String installedPluginStorageTreePath = "/"
-                if(!application.config.rundeck.feature.repository.installedPlugins.storageTreePath.isEmpty()) {
-                    installedPluginStorageTreePath = application.config.rundeck.feature.repository.installedPlugins.storageTreePath
+                if(!application.config.getProperty("rundeck.feature.repository.installedPlugins.storageTreePath", String.class, "").isEmpty()) {
+                    installedPluginStorageTreePath = application.config.getProperty("rundeck.feature.repository.installedPlugins.storageTreePath", String.class)
                 }
                 //Repository
                 repoArtifactInstaller(StorageTreeArtifactInstaller, ref('repoPluginStorageTree'),installedPluginStorageTreePath)
@@ -101,8 +101,10 @@ Brief summary/description of the plugin.
                 repositoryFactory(RundeckRepositoryFactory) {
                     repositoryStorageTree = ref('repositoryStorageTree')
                 }
-                String repoDefnUrl = grailsApplication.config.rundeck.repository.repositoryDefinitionUrl ?:
-                                     "file:" + System.getProperty("rundeck.server.configDir") + "/artifact-repositories.yaml"
+
+                String defaultValue = "file:" + System.getProperty("rundeck.server.configDir") + "/artifact-repositories.yaml"
+                String repoDefnUrl = grailsApplication.config.getProperty("rundeck.repository.repositoryDefinitionUrl",String.class, defaultValue)
+
                 repositoryManager(RundeckRepositoryManager, ref('repositoryFactory')) {
                     repositoryDefinitionListDatasourceUrl = repoDefnUrl
                 }

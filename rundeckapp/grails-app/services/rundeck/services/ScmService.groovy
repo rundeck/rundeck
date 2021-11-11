@@ -84,7 +84,7 @@ class ScmService {
 
     def JobEventsService jobEventsService
     def ContextJobImporter scmJobImporter
-    def grailsApplication
+    ConfigurationService configurationService
     def frameworkService
     AuthContextProvider rundeckAuthContextProvider
     ScmExportPluginProviderService scmExportPluginProviderService
@@ -110,10 +110,7 @@ class ScmService {
     }
 
     boolean isScmInitDeferred(){
-        if(grailsApplication.config.rundeck?.scm?.startup?.containsKey('initDeferred')) {
-            return grailsApplication.config.rundeck?.scm?.startup?.initDeferred in [true, 'true']
-        }
-        return true
+        return configurationService.getBoolean("scm.startup.initDeferred", false)
     }
 
     /**

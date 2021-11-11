@@ -391,9 +391,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(query?.max){
                 maxResults(query.max.toInteger())
             }else{
-                maxResults(grailsApplication.config.rundeck?.pagination?.default?.max ?
-                                   grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-                                   20 )
+                maxResults(configurationService.getInteger("pagination.default.max",20))
             }
             if(query?.offset){
                 firstResult(query.offset.toInteger())

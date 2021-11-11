@@ -23,7 +23,6 @@ import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.servlet.mvc.TokenResponseHandler
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.UnauthorizedAccess
-import org.rundeck.util.Toposort
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.ApiService
@@ -42,6 +41,7 @@ class ControllerBase {
     UiPluginService uiPluginService
     ApiService apiService
     AppAuthContextProcessor rundeckWebAuthContextProcessor
+    def grailsApplication
 
     protected def withHmacToken(Closure valid){
         GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
@@ -90,8 +90,8 @@ class ControllerBase {
         }
     }
     def renderCompressed(HttpServletRequest request,HttpServletResponse response,String contentType, data){
-        if(grailsApplication.config.rundeck?.ajax?.compression=='gzip'
-                && request.getHeader("Accept-Encoding")?.contains("gzip")){
+        String compression = grailsApplication.config.getProperty("rundeck.ajax.compression", String.class)
+        if(compression=='gzip' && request.getHeader("Accept-Encoding")?.contains("gzip")){
             response.setHeader("Content-Encoding","gzip")
             response.setHeader("Content-Type",contentType)
             def stream = new GZIPOutputStream(response.outputStream)

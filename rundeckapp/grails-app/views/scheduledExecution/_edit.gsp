@@ -20,16 +20,16 @@
 <g:set var="ukey" value="${g.rkey()}" />
 <g:if test="${flash.message}">
     <div class="list-group-item">
-      <div class="alert alert-info">
-        <g:enc>${flash.message}</g:enc>
-      </div>
+        <div class="alert alert-info">
+            <g:enc>${flash.message}</g:enc>
+        </div>
     </div>
 </g:if>
 <g:hasErrors bean="${scheduledExecution}">
     <div class="list-group-item">
-      <div class="alert alert-danger">
-        <g:renderErrors bean="${scheduledExecution}" as="list"/>
-      </div>
+        <div class="alert alert-danger">
+            <g:renderErrors bean="${scheduledExecution}" as="list"/>
+        </div>
     </div>
 </g:hasErrors>
 <g:set var="labelColSize" value="col-sm-2"/>
@@ -47,386 +47,386 @@
              data="${[filterName: params.filterName, matchedNodesMaxCount: matchedNodesMaxCount?:100, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
 <g:embedJSON id="jobDefinitionJSON"
              data="${[jobName:scheduledExecution?.jobName,groupPath:scheduledExecution?.groupPath, uuid: scheduledExecution?.uuid,
-                     href:scheduledExecution?.id?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
+                      href:scheduledExecution?.id?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
              ]}"/>
 
-  <g:if test="${scheduledExecution && scheduledExecution.id}">
-      <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
-  </g:if>
+<g:if test="${scheduledExecution && scheduledExecution.id}">
+    <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
+</g:if>
 
-  <div class="alert alert-danger" style="display: none" id="editerror">
+<div class="alert alert-danger" style="display: none" id="editerror">
 
-  </div>
+</div>
 
-  <div class="tab-pane active" id="tab_details" data-ko-bind="jobeditor">
-  <section class="section-space-lg">
-          %{--name--}%
-      <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
-          <label for="schedJobName"
-                 class="required ${enc(attr:labelColClass)}"
-                 >
-              <g:message code="scheduledExecution.jobName.label" />
-          </label>
-          <div class="${fieldColHalfSize}">
-              <g:textField name="jobName"
-                           value="${scheduledExecution?.jobName}"
-                           id="schedJobName"
+<div class="tab-pane active" id="tab_details" data-ko-bind="jobeditor">
+    <section class="section-space-lg">
+        %{--name--}%
+        <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
+            <label for="schedJobName"
+                   class="required ${enc(attr:labelColClass)}"
+            >
+                <g:message code="scheduledExecution.jobName.label" />
+            </label>
+            <div class="${fieldColHalfSize}">
+                <g:textField name="jobName"
+                             value="${scheduledExecution?.jobName}"
+                             id="schedJobName"
+                             class="form-control"
+                             data-bind="value: jobName"
+                />
+                <g:hasErrors bean="${scheduledExecution}" field="jobName">
+                    <i alt="Error" id="schedJobNameErr" class="glyphicon glyphicon-warning-sign"></i>
+                    <wdgt:eventHandler for="schedJobName" state="unempty"  frequency="1">
+                        <wdgt:action target="schedJobNameLabel" removeClassname="has-error"/>
+                        <wdgt:action visible="false" target="schedJobNameErr"/>
+                    </wdgt:eventHandler>
+                </g:hasErrors>
+            </div>
+            %{--group--}%
+
+            <div class="${fieldColHalfSize}">
+                <div class="input-group">
+                    <g:hasErrors bean="${scheduledExecution}" field="groupPath">
+                        <span class="input-group-addon">
+                            <i class="glyphicon glyphicon-warning-sign"></i>
+                        </span>
+                    </g:hasErrors>
+                    <input type='text' name="groupPath" value="${enc(attr:scheduledExecution?.groupPath)}"
+                           data-bind="value: groupPath"
+                           id="schedJobGroup"
                            class="form-control"
-                  data-bind="value: jobName"
-              />
-              <g:hasErrors bean="${scheduledExecution}" field="jobName">
-                  <i alt="Error" id="schedJobNameErr" class="glyphicon glyphicon-warning-sign"></i>
-                  <wdgt:eventHandler for="schedJobName" state="unempty"  frequency="1">
-                      <wdgt:action target="schedJobNameLabel" removeClassname="has-error"/>
-                      <wdgt:action visible="false" target="schedJobNameErr"/>
-                  </wdgt:eventHandler>
-              </g:hasErrors>
-          </div>
-          %{--group--}%
+                           placeholder="${g.message(code:'scheduledExecution.groupPath.description')}"
+                    />
 
-          <div class="${fieldColHalfSize}">
-              <div class="input-group">
-                  <g:hasErrors bean="${scheduledExecution}" field="groupPath">
-                      <span class="input-group-addon">
-                        <i class="glyphicon glyphicon-warning-sign"></i>
-                      </span>
-                  </g:hasErrors>
-                  <input type='text' name="groupPath" value="${enc(attr:scheduledExecution?.groupPath)}"
-                      data-bind="value: groupPath"
-                         id="schedJobGroup"
-                      class="form-control"
-                      placeholder="${g.message(code:'scheduledExecution.groupPath.description')}"
-                  />
-
-                  <span class="input-group-btn">
-                      <span class="btn btn-default"
-                            data-toggle="modal"
-                            data-target="#groupChooseModal"
-                            title="${message(code:"job.edit.groupPath.choose.text")}">
-                          <g:message code="choose.action.label" />
-                      </span>
-                  </span>
-              </div>
+                    <span class="input-group-btn">
+                        <span class="btn btn-default"
+                              data-toggle="modal"
+                              data-target="#groupChooseModal"
+                              title="${message(code:"job.edit.groupPath.choose.text")}">
+                            <g:message code="choose.action.label" />
+                        </span>
+                    </span>
+                </div>
 
 
-          </div>
-          <g:render template="/common/modal" model="[modalid:'groupChooseModal',titleCode:'job.edit.groupPath.choose.text']">
+            </div>
+            <g:render template="/common/modal" model="[modalid:'groupChooseModal',titleCode:'job.edit.groupPath.choose.text']">
                 <div id="groupChooseModalContent">
 
                 </div>
-          </g:render>
-      </div>
+            </g:render>
+        </div>
 
-          %{--description--}%
-      <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
-          <label for="description" class="${labelColClass}"><g:message code="scheduledExecution.property.description.label" /></label>
-          <div class="${fieldColSize}">
-              <ul class="nav nav-tabs">
+        %{--description--}%
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
+            <label for="description" class="${labelColClass}"><g:message code="scheduledExecution.property.description.label" /></label>
+            <div class="${fieldColSize}">
+                <ul class="nav nav-tabs">
 
-                  <li class="active"><a href="#desceditor" data-toggle="tab">Edit</a></li>
-                  <li id="previewrunbook" style="${wdgt.styleVisible(if: g.textHasMarker(text:scheduledExecution?.description,marker:ScheduledExecution.RUNBOOK_MARKER))}">
-                      <a href="#descpreview" data-toggle="tab">
-                          <g:message code="job.editor.preview.runbook" />
-                      </a>
-                  </li>
-              </ul>
+                    <li class="active"><a href="#desceditor" data-toggle="tab">Edit</a></li>
+                    <li id="previewrunbook" style="${wdgt.styleVisible(if: g.textHasMarker(text:scheduledExecution?.description,marker:ScheduledExecution.RUNBOOK_MARKER))}">
+                        <a href="#descpreview" data-toggle="tab">
+                            <g:message code="job.editor.preview.runbook" />
+                        </a>
+                    </li>
+                </ul>
 
-              <div class="tab-content">
+                <div class="tab-content">
 
-                  <div class="tab-pane active" id="desceditor">
-                      <g:textArea name="description"
-                                  value="${scheduledExecution?.description}"
-                                  cols="80"
-                                  rows="3"
-                                  class="form-control ace_editor _job_description"
-                                  data-ace-session-mode="markdown"
-                                  data-ace-height="120px"
-                                  data-ace-resize-auto="true"
-                                  data-ace-resize-max="30"
-                      />
-                  </div>
-                  <div class="tab-pane panel panel-default panel-tab-content" id="descpreview">
-                      <div class="panel-body" id="descpreview_content"></div>
-                  </div>
-              </div>
-              <g:hasErrors bean="${scheduledExecution}" field="description">
-                  <i class="glyphicon glyphicon-warning-sign text-warning"></i>
-              </g:hasErrors>
-              <g:set var="allowHTML"
-                     value="${!(grailsApplication.config.rundeck?.gui?.job?.description?.disableHTML in [true, 'true'])}"/>
-              <div class="help-block">
-                  <g:if test="${allowHTML}">
-                      <g:render template="/scheduledExecution/description"
-                                model="${[description: g.message(code:"ScheduledExecution.property.description.description"),mode:'collapsed',rkey:g.rkey()]}"/>
-                  </g:if>
-                  <g:else>
-                      <g:message code="ScheduledExecution.property.description.plain.description"/>
-                  </g:else>
-              </div>
-              <g:javascript>
-                  jQuery(function () {
-                      jQuery('textarea.ace_editor._job_description').each(function () {
-                          var editor = _addAceTextarea(this, function (editor) {
-                              "use strict";
-                              //test if a runbook was added, enable preview tab
-                              if (_hasJobDescriptionRunbook(editor.getValue())) {
-                                  jQuery('#previewrunbook').show();
-                              }else{
-                                  jQuery('#previewrunbook').hide();
-                              }
-                          });
+                    <div class="tab-pane active" id="desceditor">
+                        <g:textArea name="description"
+                                    value="${scheduledExecution?.description}"
+                                    cols="80"
+                                    rows="3"
+                                    class="form-control ace_editor _job_description"
+                                    data-ace-session-mode="markdown"
+                                    data-ace-height="120px"
+                                    data-ace-resize-auto="true"
+                                    data-ace-resize-max="30"
+                        />
+                    </div>
+                    <div class="tab-pane panel panel-default panel-tab-content" id="descpreview">
+                        <div class="panel-body" id="descpreview_content"></div>
+                    </div>
+                </div>
+                <g:hasErrors bean="${scheduledExecution}" field="description">
+                    <i class="glyphicon glyphicon-warning-sign text-warning"></i>
+                </g:hasErrors>
+                <g:set var="allowHTML"
+                       value="${!(g.rConfig(value: "gui.job.description.disableHTML", type: 'string') in [true, 'true'])}"/>
+                <div class="help-block">
+                    <g:if test="${allowHTML}">
+                        <g:render template="/scheduledExecution/description"
+                                  model="${[description: g.message(code:"ScheduledExecution.property.description.description"),mode:'collapsed',rkey:g.rkey()]}"/>
+                    </g:if>
+                    <g:else>
+                        <g:message code="ScheduledExecution.property.description.plain.description"/>
+                    </g:else>
+                </div>
+                <g:javascript>
+                    jQuery(function () {
+                        jQuery('textarea.ace_editor._job_description').each(function () {
+                            var editor = _addAceTextarea(this, function (editor) {
+                                "use strict";
+                                //test if a runbook was added, enable preview tab
+                                if (_hasJobDescriptionRunbook(editor.getValue())) {
+                                    jQuery('#previewrunbook').show();
+                                }else{
+                                    jQuery('#previewrunbook').hide();
+                                }
+                            });
 
-                          _setupMarkdeepPreviewTab('previewrunbook', 'descpreview_content', function () {
-                              return _jobDescriptionRunbook(editor.getValue());
-                          });
+                            _setupMarkdeepPreviewTab('previewrunbook', 'descpreview_content', function () {
+                                return _jobDescriptionRunbook(editor.getValue());
+                            });
 
-                      });
-                  });
-              </g:javascript>
-          </div>
-      </div>
+                        });
+                    });
+                </g:javascript>
+            </div>
+        </div>
 
-      <g:render template="jobComponentProperties"
-                model="[
-                        jobComponents:jobComponents,
-                        sectionName:'details',
-                        jobComponentValues:jobComponentValues
-                ]"
-      />
-  </section><!--/.nput-group-item -->
-  </div><!-- end #tab_details -->
-
-      <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
-      <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
-
-      %{--Options--}%
-    <div class="tab-pane" id="tab_workflow">
-      <section id="optionsContent" class=" section-space-lg" >
-          <div class="form-group">
-              <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
-              <div class="${fieldColSize}">
-
-                  <div  id="editoptssect" class="rounded">
-                      <%
-                          def options = sessionOpts
-                          if(!options){
-                              def tmpse = ScheduledExecution.get(scheduledExecution.id)
-                              options = tmpse?tmpse.options:scheduledExecution.options
-                          }
-                      %>
-                      <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
-                      <g:if test="${scheduledExecution && scheduledExecution.argString}">
-                          <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
-                      </g:if>
-                      <g:hiddenField name="_sessionopts" value="true"/>
-
-                  </div>
-              </div>
-          </div>
-      </section>%{--//Options--}%
-
-      %{--Workflow--}%
-      <section id="workflowContent" class="section-separator section-space-lg" >
-          <div class="form-group">
-              <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
-              <div class="${fieldColSize}" style="padding-top:1em;">
-                  <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
-                  <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'',
-                                                                                strategyPlugins:strategyPlugins]}"/>
-                  <g:hiddenField name="_sessionwf" value="true"/>
-                  <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
-                      <g:javascript>
-                          fireWhenReady('workflowContent',function(){
-                              jQuery('#wfnewtypes').show();
-                              jQuery('#wfnewbutton').hide();
-                          });
-                      </g:javascript>
-                  </g:if>
-              </div>
-          </div>
-      </section>%{--//Workflow--}%
-
-    <g:render template="jobComponentProperties"
-              model="[
-                      jobComponents:jobComponents,
-                      sectionName:'workflow',
-                      jobComponentValues:jobComponentValues
-              ]"
-    />
-</div><!-- end#tab_workflow -->
-
-  %{--Node Dispatch--}%
-    <div class="tab-pane" id="tab_nodes">
-  <section class="section-space-lg node_filter_link_holder" id="nodegroupitem">
-
-      <div class="job-editor-resources-vue" id="job-editor-resources-vue">
-          <resources-editor-section :event-bus="EventBus" />
-      </div>
-
-%{--//Node Dispatch--}%
-  </section>
         <g:render template="jobComponentProperties"
                   model="[
                           jobComponents:jobComponents,
-                          sectionName:'nodes',
+                          sectionName:'details',
                           jobComponentValues:jobComponentValues
                   ]"
         />
-  </div><!-- end#tab_nodes-->
+    </section><!--/.nput-group-item -->
+</div><!-- end #tab_details -->
 
-      %{--Notifications--}%
-      <div class="tab-pane" id="tab_notifications"  >
-      <section class="section-space-lg"  >
-          <g:render template="editNotificationsForm" />
+<g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
+<g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
+
+%{--Options--}%
+<div class="tab-pane" id="tab_workflow">
+    <section id="optionsContent" class=" section-space-lg" >
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
+            <div class="${fieldColSize}">
+
+                <div  id="editoptssect" class="rounded">
+                    <%
+                        def options = sessionOpts
+                        if(!options){
+                            def tmpse = ScheduledExecution.get(scheduledExecution.id)
+                            options = tmpse?tmpse.options:scheduledExecution.options
+                        }
+                    %>
+                    <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
+                    <g:if test="${scheduledExecution && scheduledExecution.argString}">
+                        <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
+                    </g:if>
+                    <g:hiddenField name="_sessionopts" value="true"/>
+
+                </div>
+            </div>
+        </div>
+    </section>%{--//Options--}%
+
+%{--Workflow--}%
+    <section id="workflowContent" class="section-separator section-space-lg" >
+        <div class="form-group">
+            <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
+            <div class="${fieldColSize}" style="padding-top:1em;">
+                <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
+                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'',
+                                                                              strategyPlugins:strategyPlugins]}"/>
+                <g:hiddenField name="_sessionwf" value="true"/>
+                <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
+                    <g:javascript>
+                        fireWhenReady('workflowContent',function(){
+                            jQuery('#wfnewtypes').show();
+                            jQuery('#wfnewbutton').hide();
+                        });
+                    </g:javascript>
+                </g:if>
+            </div>
+        </div>
+    </section>%{--//Workflow--}%
+
+<g:render template="jobComponentProperties"
+          model="[
+                  jobComponents:jobComponents,
+                  sectionName:'workflow',
+                  jobComponentValues:jobComponentValues
+          ]"
+/>
+</div><!-- end#tab_workflow -->
+
+%{--Node Dispatch--}%
+<div class="tab-pane" id="tab_nodes">
+    <section class="section-space-lg node_filter_link_holder" id="nodegroupitem">
+
+        <div class="job-editor-resources-vue" id="job-editor-resources-vue">
+            <resources-editor-section :event-bus="EventBus" />
+        </div>
+
+        %{--//Node Dispatch--}%
+    </section>
+    <g:render template="jobComponentProperties"
+              model="[
+                      jobComponents:jobComponents,
+                      sectionName:'nodes',
+                      jobComponentValues:jobComponentValues
+              ]"
+    />
+</div><!-- end#tab_nodes-->
+
+%{--Notifications--}%
+<div class="tab-pane" id="tab_notifications"  >
+    <section class="section-space-lg"  >
+        <g:render template="editNotificationsForm" />
 
 
-              <g:render template="jobComponentProperties"
-                        model="[
-                                jobComponents:jobComponents,
-                                sectionName:'notifications',
-                                jobComponentValues:jobComponentValues
-                        ]"
-              />
-      </section>%{--//Notifications--}%
-      </div><!-- end#tab_notifications -->
+        <g:render template="jobComponentProperties"
+                  model="[
+                          jobComponents:jobComponents,
+                          sectionName:'notifications',
+                          jobComponentValues:jobComponentValues
+                  ]"
+        />
+    </section>%{--//Notifications--}%
+</div><!-- end#tab_notifications -->
 
-  %{--Schedule--}%
-    <div class="tab-pane" id="tab_schedule">
-  <section class="section-space-lg">
+%{--Schedule--}%
+<div class="tab-pane" id="tab_schedule">
+    <section class="section-space-lg">
 
-      <div class="form-group">
-          <div class="${labelColSize}  control-label text-form-label">
-              <g:message code="schedule.to.run.repeatedly" />
-          </div>
-          <div class="${fieldColSize}">
-              <div class="radio radio-inline">
-                <g:radio name="scheduled" value="false"
-                    checked="${scheduledExecution?.scheduled?false:true}"
-                    id="scheduledFalse"/>
-                <label for="scheduledFalse">
-                  <g:message code="no" />
-                </label>
-              </div>
-              <div class="radio radio-inline">
-                <g:radio name="scheduled" value="true"
-                    checked="${scheduledExecution?.scheduled}"
-                    id="scheduledTrue"/>
-                <label for="scheduledTrue">
-                    <g:message code="yes" />
-                </label>
-              </div>
-          </div>
-          <div class="${offsetColSize}" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditCrontab">
-              <g:render template="editCrontab" model="[scheduledExecution:scheduledExecution, crontab:crontab]"/>
-          </div>
-              <g:javascript>
-                  <wdgt:eventHandlerJS for="scheduledTrue" state="unempty">
-                      <wdgt:action visible="true" targetSelector="#scheduledExecutionEditCrontab"/>
-                      <wdgt:action visible="true" targetSelector="#scheduledExecutionEditTZ"/>
-                  </wdgt:eventHandlerJS>
-                  <wdgt:eventHandlerJS for="scheduledFalse" state="unempty" >
-                      <wdgt:action visible="false" target="scheduledExecutionEditCrontab"/>
-                      <wdgt:action visible="false" targetSelector="#scheduledExecutionEditTZ"/>
-                  </wdgt:eventHandlerJS>
-              </g:javascript>
-      </div>
+        <div class="form-group">
+            <div class="${labelColSize}  control-label text-form-label">
+                <g:message code="schedule.to.run.repeatedly" />
+            </div>
+            <div class="${fieldColSize}">
+                <div class="radio radio-inline">
+                    <g:radio name="scheduled" value="false"
+                             checked="${scheduledExecution?.scheduled?false:true}"
+                             id="scheduledFalse"/>
+                    <label for="scheduledFalse">
+                        <g:message code="no" />
+                    </label>
+                </div>
+                <div class="radio radio-inline">
+                    <g:radio name="scheduled" value="true"
+                             checked="${scheduledExecution?.scheduled}"
+                             id="scheduledTrue"/>
+                    <label for="scheduledTrue">
+                        <g:message code="yes" />
+                    </label>
+                </div>
+            </div>
+            <div class="${offsetColSize}" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditCrontab">
+                <g:render template="editCrontab" model="[scheduledExecution:scheduledExecution, crontab:crontab]"/>
+            </div>
+            <g:javascript>
+                <wdgt:eventHandlerJS for="scheduledTrue" state="unempty">
+                    <wdgt:action visible="true" targetSelector="#scheduledExecutionEditCrontab"/>
+                    <wdgt:action visible="true" targetSelector="#scheduledExecutionEditTZ"/>
+                </wdgt:eventHandlerJS>
+                <wdgt:eventHandlerJS for="scheduledFalse" state="unempty" >
+                    <wdgt:action visible="false" target="scheduledExecutionEditCrontab"/>
+                    <wdgt:action visible="false" targetSelector="#scheduledExecutionEditTZ"/>
+                </wdgt:eventHandlerJS>
+            </g:javascript>
+        </div>
 
-      <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
-          <div class="${labelColSize} control-label text-form-label">
-              <g:message code="scheduledExecution.property.timezone.prompt" />
-          </div>
-          <div class="${fieldColHalfSize}">
-                  <input type='text' name="timeZone" value="${enc(attr:scheduledExecution?.timeZone)}"
-                         id="timeZone" class="form-control"/>
+        <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.timezone.prompt" />
+            </div>
+            <div class="${fieldColHalfSize}">
+                <input type='text' name="timeZone" value="${enc(attr:scheduledExecution?.timeZone)}"
+                       id="timeZone" class="form-control"/>
 
-                  <span class="help-block">
-                      <g:message code="scheduledExecution.property.timezone.description" />
-                  </span>
-          </div>
-      <g:javascript>
-          fireWhenReady('timeZone',function(){
-              var timeZonesDataArr = loadJsonData('timeZonesData');
-              jQuery("#timeZone").devbridgeAutocomplete({
-                  lookup: timeZonesDataArr
-              });
-          });
-      </g:javascript>
-      </div>
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.timezone.description" />
+                </span>
+            </div>
+            <g:javascript>
+                fireWhenReady('timeZone',function(){
+                    var timeZonesDataArr = loadJsonData('timeZonesData');
+                    jQuery("#timeZone").devbridgeAutocomplete({
+                        lookup: timeZonesDataArr
+                    });
+                });
+            </g:javascript>
+        </div>
 
-      %{-- scheduleEnabled --}%
-      <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_SCHEDULE)}">
-          <div class="form-group">
-              <div class="${labelColSize} control-label text-form-label">
-                  <g:message code="scheduledExecution.property.scheduleEnabled.label"/>
-              </div>
+    %{-- scheduleEnabled --}%
+        <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_SCHEDULE)}">
+            <div class="form-group">
+                <div class="${labelColSize} control-label text-form-label">
+                    <g:message code="scheduledExecution.property.scheduleEnabled.label"/>
+                </div>
 
-              <div class="${fieldColSize}">
-                  <div class="radio radio-inline">
-                      <g:radio name="scheduleEnabled"
-                               value="true"
-                               checked="${scheduledExecution.hasScheduleEnabled()}"
-                               id="scheduleEnabledTrue"/>
-                      <label for="scheduleEnabledTrue">
-                        <g:message code="yes"/>
-                      </label>
-                  </div>
+                <div class="${fieldColSize}">
+                    <div class="radio radio-inline">
+                        <g:radio name="scheduleEnabled"
+                                 value="true"
+                                 checked="${scheduledExecution.hasScheduleEnabled()}"
+                                 id="scheduleEnabledTrue"/>
+                        <label for="scheduleEnabledTrue">
+                            <g:message code="yes"/>
+                        </label>
+                    </div>
 
-                  <div class="radio radio-inline">
-                      <g:radio value="false"
-                               name="scheduleEnabled"
-                               checked="${!scheduledExecution.hasScheduleEnabled()}"
-                               id="scheduleEnabledFalse"/>
-                      <label for="scheduleEnabledFalse">
-                        <g:message code="no"/>
-                      </label>
-                  </div>
+                    <div class="radio radio-inline">
+                        <g:radio value="false"
+                                 name="scheduleEnabled"
+                                 checked="${!scheduledExecution.hasScheduleEnabled()}"
+                                 id="scheduleEnabledFalse"/>
+                        <label for="scheduleEnabledFalse">
+                            <g:message code="no"/>
+                        </label>
+                    </div>
 
-                  <div class="help-block">
-                      <g:message code="scheduledExecution.property.scheduleEnabled.description"/>
-                  </div>
-              </div>
+                    <div class="help-block">
+                        <g:message code="scheduledExecution.property.scheduleEnabled.description"/>
+                    </div>
+                </div>
 
-          </div>
-      </g:if>
-      %{-- executionEnabled --}%
-      <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_EXECUTION)}">
-          <div class="form-group">
-              <div class="${labelColSize} control-label text-form-label">
-                  <g:message code="scheduledExecution.property.executionEnabled.label"/>
-              </div>
+            </div>
+        </g:if>
+    %{-- executionEnabled --}%
+        <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_EXECUTION)}">
+            <div class="form-group">
+                <div class="${labelColSize} control-label text-form-label">
+                    <g:message code="scheduledExecution.property.executionEnabled.label"/>
+                </div>
 
-              <div class="${fieldColSize}">
-                  <div class="radio radio-inline">
-                      <g:radio name="executionEnabled" value="true"
-                               checked="${scheduledExecution.hasExecutionEnabled()}"
-                               id="executionEnabledTrue"/>
-                      <label for="executionEnabledTrue"><g:message code="yes"/></label>
-                  </div>
+                <div class="${fieldColSize}">
+                    <div class="radio radio-inline">
+                        <g:radio name="executionEnabled" value="true"
+                                 checked="${scheduledExecution.hasExecutionEnabled()}"
+                                 id="executionEnabledTrue"/>
+                        <label for="executionEnabledTrue"><g:message code="yes"/></label>
+                    </div>
 
-                  <div class="radio radio-inline">
-                      <g:radio value="false" name="executionEnabled"
-                               checked="${!scheduledExecution.hasExecutionEnabled()}"
-                               id="executionEnabledFalse"/>
-                      <label for="executionEnabledFalse">
-                        <g:message code="no"/>
-                      </label>
-                  </div>
+                    <div class="radio radio-inline">
+                        <g:radio value="false" name="executionEnabled"
+                                 checked="${!scheduledExecution.hasExecutionEnabled()}"
+                                 id="executionEnabledFalse"/>
+                        <label for="executionEnabledFalse">
+                            <g:message code="no"/>
+                        </label>
+                    </div>
 
-                  <div class="help-block">
-                      <g:message code="scheduledExecution.property.executionEnabled.description"/>
-                  </div>
-              </div>
-          </div>
-      </g:if>
+                    <div class="help-block">
+                        <g:message code="scheduledExecution.property.executionEnabled.description"/>
+                    </div>
+                </div>
+            </div>
+        </g:if>
 
-      <g:render template="jobComponentProperties"
-                model="[
-                        jobComponents:jobComponents,
-                        sectionName:'schedule',
-                        jobComponentValues:jobComponentValues
-                ]"
-      />
-  </section>%{--//Schedule--}%
+        <g:render template="jobComponentProperties"
+                  model="[
+                          jobComponents:jobComponents,
+                          sectionName:'schedule',
+                          jobComponentValues:jobComponentValues
+                  ]"
+        />
+    </section>%{--//Schedule--}%
 </div><!-- end#tab_schedule -->
 <feature:enabled name="executionLifecyclePlugin">
     <g:if test="${executionLifecyclePlugins}">
@@ -495,248 +495,248 @@
     </g:if>
 </feature:enabled>
 
-  %{--Log level--}%
-  <div class="tab-pane" id="tab_other">
-  <section class="section-space-lg">
-      <div class="form-group">
-          <label class="${labelColClass}" for="loglevel">
-            <g:message code="scheduledExecution.property.loglevel.label" />
-          </label>
-          <div class="${fieldColSize}">
-            <div class="radio radio-inline">
-                <g:radio id="log-level-normal" name="loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
-                <label for="log-level-normal">
-                    <g:message code="loglevel.normal" />
-                </label>
+%{--Log level--}%
+<div class="tab-pane" id="tab_other">
+    <section class="section-space-lg">
+        <div class="form-group">
+            <label class="${labelColClass}" for="loglevel">
+                <g:message code="scheduledExecution.property.loglevel.label" />
+            </label>
+            <div class="${fieldColSize}">
+                <div class="radio radio-inline">
+                    <g:radio id="log-level-normal" name="loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
+                    <label for="log-level-normal">
+                        <g:message code="loglevel.normal" />
+                    </label>
+                </div>
+                <div class="radio radio-inline">
+                    <g:radio id="log-level-debug" name="loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
+                    <label for="log-level-debug">
+                        <g:message code="loglevel.debug" />
+                    </label>
+                </div>
+                <div class="help-block">
+                    <g:message code="scheduledExecution.property.loglevel.help" />
+                </div>
             </div>
-            <div class="radio radio-inline">
-              <g:radio id="log-level-debug" name="loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
-              <label for="log-level-debug">
-                  <g:message code="loglevel.debug" />
-              </label>
+        </div>
+
+        %{--multiple exec--}%
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.multipleExecutions.label"/>
             </div>
-            <div class="help-block">
-                <g:message code="scheduledExecution.property.loglevel.help" />
+
+            <div class="${fieldColSize}">
+                <div class="radio radio-inline">
+                    <g:radio value="false" name="multipleExecutions"
+                             checked="${!scheduledExecution.multipleExecutions}"
+                             id="multipleFalse"/>
+                    <label for="multipleFalse">
+                        <g:message code="no"/>
+                    </label>
+                </div>
+                <div class="radio radio-inline">
+                    <g:radio name="multipleExecutions" value="true"
+                             checked="${scheduledExecution.multipleExecutions}"
+                             id="multipleTrue"/>
+                    <label for="multipleTrue">
+                        <g:message code="yes"/>
+                    </label>
+                </div>
+                <div class="help-block">
+                    <g:message code="scheduledExecution.property.multipleExecutions.description"/>
+                </div>
             </div>
-          </div>
-      </div>
-
-      %{--multiple exec--}%
-      <div class="form-group">
-          <div class="${labelColSize} control-label text-form-label">
-              <g:message code="scheduledExecution.property.multipleExecutions.label"/>
-          </div>
-
-          <div class="${fieldColSize}">
-            <div class="radio radio-inline">
-              <g:radio value="false" name="multipleExecutions"
-                       checked="${!scheduledExecution.multipleExecutions}"
-                       id="multipleFalse"/>
-              <label for="multipleFalse">
-                 <g:message code="no"/>
-              </label>
+        </div>
+        %{--Job timeout--}%
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.maxMultipleExecutions.label"/>
             </div>
-            <div class="radio radio-inline">
-              <g:radio name="multipleExecutions" value="true"
-                       checked="${scheduledExecution.multipleExecutions}"
-                       id="multipleTrue"/>
-              <label for="multipleTrue">
-                  <g:message code="yes"/>
-              </label>
+
+            <div class="${fieldColHalfSize}">
+
+                <input type='text' name="maxMultipleExecutions" value="${enc(attr:scheduledExecution?.maxMultipleExecutions)}"
+                       id="maxMultipleExecutions" class="form-control"/>
+
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.maxMultipleExecutions.description"/>
+                </span>
             </div>
-            <div class="help-block">
-                  <g:message code="scheduledExecution.property.multipleExecutions.description"/>
+        </div>
+        %{--Job timeout--}%
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.timeout.label" default="Timeout"/>
             </div>
-          </div>
-      </div>
-      %{--Job timeout--}%
-      <div class="form-group">
-          <div class="${labelColSize} control-label text-form-label">
-              <g:message code="scheduledExecution.property.maxMultipleExecutions.label"/>
-          </div>
 
-          <div class="${fieldColHalfSize}">
+            <div class="${fieldColHalfSize}">
 
-              <input type='text' name="maxMultipleExecutions" value="${enc(attr:scheduledExecution?.maxMultipleExecutions)}"
-                     id="maxMultipleExecutions" class="form-control"/>
+                <input type='text' name="timeout" value="${enc(attr:scheduledExecution?.timeout)}"
+                       id="schedJobTimeout" class="form-control"/>
 
-              <span class="help-block">
-                  <g:message code="scheduledExecution.property.maxMultipleExecutions.description"/>
-              </span>
-          </div>
-      </div>
-      %{--Job timeout--}%
-      <div class="form-group">
-          <div class="${labelColSize} control-label text-form-label">
-              <g:message code="scheduledExecution.property.timeout.label" default="Timeout"/>
-          </div>
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.timeout.description"/>
+                </span>
+            </div>
+        </div>
+        %{--Job retry--}%
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'retry', 'has-error')}">
+            <div class="${labelColSize} control-label">
+                <label for="schedJobRetry"><g:message code="scheduledExecution.property.retry.label" default="Retry"/></label>
+            </div>
 
-          <div class="${fieldColHalfSize}">
+            <div class="${fieldColShortSize}">
 
-              <input type='text' name="timeout" value="${enc(attr:scheduledExecution?.timeout)}"
-                     id="schedJobTimeout" class="form-control"/>
+                <input type='text' name="retry" value="${enc(attr:scheduledExecution?.retry)}"
+                       id="schedJobRetry" class="form-control"/>
+                <g:hasErrors bean="${scheduledExecution}" field="retry">
 
-              <span class="help-block">
-                  <g:message code="scheduledExecution.property.timeout.description"/>
-              </span>
-          </div>
-      </div>
-      %{--Job retry--}%
-      <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'retry', 'has-error')}">
-          <div class="${labelColSize} control-label">
-              <label for="schedJobRetry"><g:message code="scheduledExecution.property.retry.label" default="Retry"/></label>
-          </div>
+                    <div class="text-danger">
+                        <g:renderErrors bean="${scheduledExecution}" as="list" field="retry"/>
+                    </div>
+                </g:hasErrors>
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.retry.description"/>
+                </span>
+            </div>
 
-          <div class="${fieldColShortSize}">
+            <label class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.retry.delay.label" default="Timeout"/>
+            </label>
 
-              <input type='text' name="retry" value="${enc(attr:scheduledExecution?.retry)}"
-                     id="schedJobRetry" class="form-control"/>
-              <g:hasErrors bean="${scheduledExecution}" field="retry">
+            <div class="${fieldColShortSize}">
 
-                  <div class="text-danger">
-                      <g:renderErrors bean="${scheduledExecution}" as="list" field="retry"/>
-                  </div>
-              </g:hasErrors>
-              <span class="help-block">
-                  <g:message code="scheduledExecution.property.retry.description"/>
-              </span>
-          </div>
-
-          <label class="${labelColSize} control-label text-form-label">
-              <g:message code="scheduledExecution.property.retry.delay.label" default="Timeout"/>
-          </label>
-
-          <div class="${fieldColShortSize}">
-
-              <input type='text' name="retryDelay" value="${enc(attr:scheduledExecution?.retryDelay)}"
-                     id="schedJobRetryDelay" class="form-control"/>
+                <input type='text' name="retryDelay" value="${enc(attr:scheduledExecution?.retryDelay)}"
+                       id="schedJobRetryDelay" class="form-control"/>
 
 
-              <span class="help-block">
-                  <g:message code="scheduledExecution.property.retry.delay.description"/>
-              </span>
-          </div>
-      </div>
-      %{--log limit--}%
-      <div class="form-group">
-          <label class="${labelColSize} control-label text-form-label" for="schedJobLogOutputThreshold">
-              <g:message code="scheduledExecution.property.logOutputThreshold.label" default="Output Limit"/>
-          </label>
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.retry.delay.description"/>
+                </span>
+            </div>
+        </div>
+        %{--log limit--}%
+        <div class="form-group">
+            <label class="${labelColSize} control-label text-form-label" for="schedJobLogOutputThreshold">
+                <g:message code="scheduledExecution.property.logOutputThreshold.label" default="Output Limit"/>
+            </label>
 
-          <div class="${fieldColShortSize}">
+            <div class="${fieldColShortSize}">
 
-              <input type='text' name="logOutputThreshold" value="${enc(attr: scheduledExecution?.logOutputThreshold)}"
-                     id="schedJobLogOutputThreshold" class="form-control"
-                     placeholder="${message(code:"scheduledExecution.property.logOutputThreshold.placeholder")}"/>
+                <input type='text' name="logOutputThreshold" value="${enc(attr: scheduledExecution?.logOutputThreshold)}"
+                       id="schedJobLogOutputThreshold" class="form-control"
+                       placeholder="${message(code:"scheduledExecution.property.logOutputThreshold.placeholder")}"/>
 
-              <span class="help-block">
-                  <g:message code="scheduledExecution.property.logOutputThreshold.description" default=""/>
-              </span>
-          </div>
-          <label class="${labelColSize} control-label text-form-label" for="logOutputThresholdAction">
-              <g:message code="scheduledExecution.property.logOutputThresholdAction.label" default="Action"/>
-          </label>
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.logOutputThreshold.description" default=""/>
+                </span>
+            </div>
+            <label class="${labelColSize} control-label text-form-label" for="logOutputThresholdAction">
+                <g:message code="scheduledExecution.property.logOutputThresholdAction.label" default="Action"/>
+            </label>
 
-          <div class="${fieldColShortSize}">
-              <div class="radio">
-                <g:radio id="logOutputThresholdAction" name="logOutputThresholdAction" value="halt" checked="${!scheduledExecution?.logOutputThresholdAction || scheduledExecution?.logOutputThresholdAction=='halt'}"/>
-                <label for="logOutputThresholdAction" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.halt.description")}">
-                    <g:message code="scheduledExecution.property.logOutputThresholdAction.halt.label"/>
-                </label>
-              </div>
+            <div class="${fieldColShortSize}">
+                <div class="radio">
+                    <g:radio id="logOutputThresholdAction" name="logOutputThresholdAction" value="halt" checked="${!scheduledExecution?.logOutputThresholdAction || scheduledExecution?.logOutputThresholdAction=='halt'}"/>
+                    <label for="logOutputThresholdAction" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.halt.description")}">
+                        <g:message code="scheduledExecution.property.logOutputThresholdAction.halt.label"/>
+                    </label>
+                </div>
 
-              <div class="input-group">
-                  <g:helpTooltip code="scheduledExecution.property.logOutputThresholdAction.halt.description" placement="left"/>
-              <input type='text' name="logOutputThresholdStatus" value="${enc(attr: scheduledExecution?.logOutputThresholdStatus)}"
-                         id="schedJobLogOutputThresholdStatus" class="form-control"
-                         placeholder="${message(code:"scheduledExecution.property.logOutputThresholdStatus.placeholder")}"/>
-              </div>
-              <div class="radio">
-                <g:radio id="logOutputThresholdActionTruncateAndContinue" name="logOutputThresholdAction" value="truncate" checked="${scheduledExecution?.logOutputThresholdAction=='truncate'}"/>
-                <label for="logOutputThresholdActionTruncateAndContinue" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.truncate.description")}">
-                  <g:message code="scheduledExecution.property.logOutputThresholdAction.truncate.label"/>
-                </label>
-              </div>
-              <span class="help-block">
-                  <g:message code="scheduledExecution.property.logOutputThresholdAction.description" default=""/>
-              </span>
-          </div>
-      </div>
+                <div class="input-group">
+                    <g:helpTooltip code="scheduledExecution.property.logOutputThresholdAction.halt.description" placement="left"/>
+                    <input type='text' name="logOutputThresholdStatus" value="${enc(attr: scheduledExecution?.logOutputThresholdStatus)}"
+                           id="schedJobLogOutputThresholdStatus" class="form-control"
+                           placeholder="${message(code:"scheduledExecution.property.logOutputThresholdStatus.placeholder")}"/>
+                </div>
+                <div class="radio">
+                    <g:radio id="logOutputThresholdActionTruncateAndContinue" name="logOutputThresholdAction" value="truncate" checked="${scheduledExecution?.logOutputThresholdAction=='truncate'}"/>
+                    <label for="logOutputThresholdActionTruncateAndContinue" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.truncate.description")}">
+                        <g:message code="scheduledExecution.property.logOutputThresholdAction.truncate.label"/>
+                    </label>
+                </div>
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.logOutputThresholdAction.description" default=""/>
+                </span>
+            </div>
+        </div>
 
-      %{--default exec tab--}%
-      <div class="form-group">
-          <div class="${labelColSize} control-label text-form-label">
-              <g:message code="scheduledExecution.property.defaultTab.label"/>
-          </div>
+        %{--default exec tab--}%
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.defaultTab.label"/>
+            </div>
 
-          <div class="${fieldColSize}">
-              <div class="radio radio-inline">
-                <g:radio value="nodes" name="defaultTab"
-                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab in ['summary','monitor','nodes']}"
-                         id="tabSummary"/>
-                <label for="tabSummary">
-                    <g:message code="execution.page.show.tab.Nodes.title"/>
-                </label>
-              </div>
+            <div class="${fieldColSize}">
+                <div class="radio radio-inline">
+                    <g:radio value="nodes" name="defaultTab"
+                             checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab in ['summary','monitor','nodes']}"
+                             id="tabSummary"/>
+                    <label for="tabSummary">
+                        <g:message code="execution.page.show.tab.Nodes.title"/>
+                    </label>
+                </div>
 
-              <div class="radio radio-inline">
-                <g:radio name="defaultTab" value="output"
-                         checked="${scheduledExecution.defaultTab=='output'}"
-                         id="tabOutput"/>
-                <label for="tabOutput">
-                    <g:message code="execution.show.mode.Log.title"/>
-                </label>
-              </div>
-              <div class="radio radio-inline">
-                <g:radio name="defaultTab" value="html"
-                         checked="${scheduledExecution.defaultTab=='html'}"
-                         id="tabHTML"/>
-                <label for="tabHTML">
-                    <g:message code="html"/>
-                </label>
-              </div>
+                <div class="radio radio-inline">
+                    <g:radio name="defaultTab" value="output"
+                             checked="${scheduledExecution.defaultTab=='output'}"
+                             id="tabOutput"/>
+                    <label for="tabOutput">
+                        <g:message code="execution.show.mode.Log.title"/>
+                    </label>
+                </div>
+                <div class="radio radio-inline">
+                    <g:radio name="defaultTab" value="html"
+                             checked="${scheduledExecution.defaultTab=='html'}"
+                             id="tabHTML"/>
+                    <label for="tabHTML">
+                        <g:message code="html"/>
+                    </label>
+                </div>
 
 
 
-              <span class="help-block">
-                  <g:message code="scheduledExecution.property.defaultTab.description"/>
-              </span>
-          </div>
-      </div>
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.defaultTab.description"/>
+                </span>
+            </div>
+        </div>
 
-      %{--uuid--}%
-      <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
-          <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-strong">
-              <g:message code="uuid" />
-          </label>
+        %{--uuid--}%
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
+            <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-strong">
+                <g:message code="uuid" />
+            </label>
 
-          <div class="${fieldColSize}">
-              <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
-                  <p class="form-control-static text-strong" title="${g.message(code:'uuid.for.this.job')}">
-                      <g:enc>${scheduledExecution?.uuid}</g:enc>
-                  </p>
-              </g:if>
-              <g:else>
-                  <input type='text' name="uuid" value="${enc(attr:scheduledExecution?.uuid)}"
-                         id="schedJobUuid" size="36" class="form-control"/>
-                  <g:hasErrors bean="${scheduledExecution}" field="uuid">
-                      <i class="glyphicon glyphicon-warning-sign" id="schedJobUuidErr"></i>
-                      <wdgt:eventHandler for="schedJobUuid" state="unempty" frequency="1">
-                          <wdgt:action target="schedJobUuidLabel" removeClassname="has-error"/>
-                          <wdgt:action visible="false" target="schedJobUuidErr"/>
-                      </wdgt:eventHandler>
-                  </g:hasErrors>
-              </g:else>
-          </div>
-      </div>
-      <g:render template="jobComponentProperties"
-                model="[
-                        jobComponents:jobComponents,
-                        sectionName:'other',
-                        jobComponentValues:jobComponentValues
-                ]"
-      />
-  </section>%{--//Log level--}%
+            <div class="${fieldColSize}">
+                <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
+                    <p class="form-control-static text-strong" title="${g.message(code:'uuid.for.this.job')}">
+                        <g:enc>${scheduledExecution?.uuid}</g:enc>
+                    </p>
+                </g:if>
+                <g:else>
+                    <input type='text' name="uuid" value="${enc(attr:scheduledExecution?.uuid)}"
+                           id="schedJobUuid" size="36" class="form-control"/>
+                    <g:hasErrors bean="${scheduledExecution}" field="uuid">
+                        <i class="glyphicon glyphicon-warning-sign" id="schedJobUuidErr"></i>
+                        <wdgt:eventHandler for="schedJobUuid" state="unempty" frequency="1">
+                            <wdgt:action target="schedJobUuidLabel" removeClassname="has-error"/>
+                            <wdgt:action visible="false" target="schedJobUuidErr"/>
+                        </wdgt:eventHandler>
+                    </g:hasErrors>
+                </g:else>
+            </div>
+        </div>
+        <g:render template="jobComponentProperties"
+                  model="[
+                          jobComponents:jobComponents,
+                          sectionName:'other',
+                          jobComponentValues:jobComponentValues
+                  ]"
+        />
+    </section>%{--//Log level--}%
 </div><!-- end#tab_other -->
 
 %{-- begin: iterate through extra sections not already defined --}%
@@ -752,11 +752,11 @@
         <section class="section-space-lg">
 
             <g:render template="jobComponentProperties"
-                model="[
-                        jobComponents:jobComponents,
-                        sectionName:sectionName,
-                        jobComponentValues:jobComponentValues
-                ]"
+                      model="[
+                              jobComponents:jobComponents,
+                              sectionName:sectionName,
+                              jobComponentValues:jobComponentValues
+                      ]"
             />
 
         </section>
@@ -770,172 +770,172 @@
 %{-- end: json component validation data --}%
 
 <script type="text/javascript">
-//<!CDATA[
-        var selFrameworkProject='${enc(js:project)}';
-        var selArgs='${enc(js:scheduledExecution?.argString)}';
-var curSEID ='${enc(js:editSchedExecId?:"")}';
-function getCurSEID(){
-    return curSEID;
-}
+    //<!CDATA[
+    var selFrameworkProject='${enc(js:project)}';
+    var selArgs='${enc(js:scheduledExecution?.argString)}';
+    var curSEID ='${enc(js:editSchedExecId?:"")}';
+    function getCurSEID(){
+        return curSEID;
+    }
 
 
 
 
-        var wascancelled=false;
-        function jobEditCancelled(){
-            wascancelled=true;
-        }
-        /**
-         * Validate the form
-         *
-         */
-         function validateJobEditForm(form){
-             var wfitem=jQuery(form).find('div.wfitemEditForm');
-             let valid=true
-             if(wfitem.length && !wascancelled){
-                 jobeditor.addError('workflow');
-                 wfitem.addClass('alert-warning')
-                 if (wfitem.find("span.cancelsavemsg").length) {
-                     wfitem.find("span.cancelsavemsg").show();
-                 }
-                 valid= false;
-             }
-            var optedit= jQuery(form).find('div.optEditForm');
-            if (optedit.length && !wascancelled) {
-                jobeditor.addError('option');
-                optedit.addClass('alert-warning')
-                if(optedit.find("span.cancelsavemsg").length){
-                    optedit.find("span.cancelsavemsg").show();
-                }
-                valid= false;
+    var wascancelled=false;
+    function jobEditCancelled(){
+        wascancelled=true;
+    }
+    /**
+     * Validate the form
+     *
+     */
+    function validateJobEditForm(form){
+        var wfitem=jQuery(form).find('div.wfitemEditForm');
+        let valid=true
+        if(wfitem.length && !wascancelled){
+            jobeditor.addError('workflow');
+            wfitem.addClass('alert-warning')
+            if (wfitem.find("span.cancelsavemsg").length) {
+                wfitem.find("span.cancelsavemsg").show();
             }
-             return valid;
-         }
-        function _updateBoxInfo(name, data) {
-
+            valid= false;
         }
-        function setupUndoRedoControls(){
-            jQuery('.undoredocontrols').on('click','.act_undo',function(e){
-                _doUndoAction(jQuery(e.target).data('undo-key'));
-            }).on('click','.act_redo',function(e){
-                _doRedoAction(jQuery(e.target).data('undo-key'));
-            }).on('click','.act_revert_popover',function(e){
-                _initPopoverContentRef("#undoredo"+ jQuery(e.target).data('popover-key'));
-                jQuery(e.target).popover('show');
-            });
-            jQuery('body').on('click','.act_revert_cancel',function(e){
-                jQuery('#revertall_'+ jQuery(e.target).data('popover-key')).popover('hide');
-            }).on('click','.act_revert_confirm',function(e){
-                jQuery('#revertall_'+jQuery(e.target).data('popover-key')).popover('destroy');
-                _doRevertAction(jQuery(e.target).data('undo-key'));
-            });
-        }
-        var nodeFilter;
-        var nodeFilterMap = {};
-        function registerNodeFilters(obj,key){
-            nodeFilterMap[key]=obj;
-        }
-        function handleNodeFilterLink(link){
-            var holder = jQuery(link).parents('.node_filter_link_holder');
-            var nflinkid=holder.data('node-filter-link-id');
-            var nflinkid2=holder.attr('id');
-            if(nflinkid && nodeFilterMap[nflinkid]){
-                nodeFilterMap[nflinkid].selectNodeFilterLink(link);
-            }else if(nflinkid2 && nodeFilterMap['#'+nflinkid2]){
-                nodeFilterMap['#'+nflinkid2].selectNodeFilterLink(link);
-            }else{
-                nodeFilter.selectNodeFilterLink(link);
+        var optedit= jQuery(form).find('div.optEditForm');
+        if (optedit.length && !wascancelled) {
+            jobeditor.addError('option');
+            optedit.addClass('alert-warning')
+            if(optedit.find("span.cancelsavemsg").length){
+                optedit.find("span.cancelsavemsg").show();
             }
+            valid= false;
         }
-        function handleNodeExcludeFilterLink(link){
-            var holder = jQuery(link).parents('.node_filter_link_holder');
-            var nflinkid=holder.data('node-filter-link-id');
-            var nflinkid2=holder.attr('id');
-            if(nflinkid && nodeFilterMap[nflinkid]){
-                nodeFilterMap[nflinkid].selectNodeFilterExcludeLink(link);
-            }else if(nflinkid2 && nodeFilterMap['#'+nflinkid2]){
-                nodeFilterMap['#'+nflinkid2].selectNodeFilterExcludeLink(link);
-            }else{
-                nodeFilter.selectNodeFilterExcludeLink(link);
-            }
+        return valid;
+    }
+    function _updateBoxInfo(name, data) {
 
+    }
+    function setupUndoRedoControls(){
+        jQuery('.undoredocontrols').on('click','.act_undo',function(e){
+            _doUndoAction(jQuery(e.target).data('undo-key'));
+        }).on('click','.act_redo',function(e){
+            _doRedoAction(jQuery(e.target).data('undo-key'));
+        }).on('click','.act_revert_popover',function(e){
+            _initPopoverContentRef("#undoredo"+ jQuery(e.target).data('popover-key'));
+            jQuery(e.target).popover('show');
+        });
+        jQuery('body').on('click','.act_revert_cancel',function(e){
+            jQuery('#revertall_'+ jQuery(e.target).data('popover-key')).popover('hide');
+        }).on('click','.act_revert_confirm',function(e){
+            jQuery('#revertall_'+jQuery(e.target).data('popover-key')).popover('destroy');
+            _doRevertAction(jQuery(e.target).data('undo-key'));
+        });
+    }
+    var nodeFilter;
+    var nodeFilterMap = {};
+    function registerNodeFilters(obj,key){
+        nodeFilterMap[key]=obj;
+    }
+    function handleNodeFilterLink(link){
+        var holder = jQuery(link).parents('.node_filter_link_holder');
+        var nflinkid=holder.data('node-filter-link-id');
+        var nflinkid2=holder.attr('id');
+        if(nflinkid && nodeFilterMap[nflinkid]){
+            nodeFilterMap[nflinkid].selectNodeFilterLink(link);
+        }else if(nflinkid2 && nodeFilterMap['#'+nflinkid2]){
+            nodeFilterMap['#'+nflinkid2].selectNodeFilterLink(link);
+        }else{
+            nodeFilter.selectNodeFilterLink(link);
         }
-        function setupJobExecNodeFilterBinding(root,target,dataId){
-            var filterParams = loadJsonData(dataId);
-            var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
-            var jobRefNodeFilter = new NodeFilters(
-                    appLinks.frameworkAdhoc,
-                    appLinks.scheduledExecutionCreate,
-                    appLinks.frameworkNodes,
-                    Object.assign(filterParams, {
-                        nodeSummary:nodeSummary,
-                        nodefilterLinkId:root,
-                        project: selFrameworkProject,
-                        maxShown:20,
-                        view: 'embed',
-                        emptyMode: 'blank',
-                        emptyMessage: "${g.message(code: 'JobExec.property.nodeFilter.null.description')}",
-                        nodesTitleSingular: "${g.message(code: 'Node', default: 'Node')}",
-                        nodesTitlePlural: "${g.message(code: 'Node.plural', default: 'Nodes')}"
-                    })
-            );
-            ko.applyBindings(jobRefNodeFilter, jQuery(root)[0]);
-            registerNodeFilters(jobRefNodeFilter,root);
+    }
+    function handleNodeExcludeFilterLink(link){
+        var holder = jQuery(link).parents('.node_filter_link_holder');
+        var nflinkid=holder.data('node-filter-link-id');
+        var nflinkid2=holder.attr('id');
+        if(nflinkid && nodeFilterMap[nflinkid]){
+            nodeFilterMap[nflinkid].selectNodeFilterExcludeLink(link);
+        }else if(nflinkid2 && nodeFilterMap['#'+nflinkid2]){
+            nodeFilterMap['#'+nflinkid2].selectNodeFilterExcludeLink(link);
+        }else{
+            nodeFilter.selectNodeFilterExcludeLink(link);
         }
-        function pageinit(){
-            _enableWFDragdrop();
 
-            setupUndoRedoControls();
-
-            //define NodeFilters mvvm for the job
-            var filterParams = loadJsonData('filterParamsJSON');
-            var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
-            nodeFilter = new NodeFilters(
-                    appLinks.frameworkAdhoc,
-                    appLinks.scheduledExecutionCreate,
-                    appLinks.frameworkNodes,
-                    Object.assign(filterParams, {
-                        nodeSummary:nodeSummary,
-                        maxShown:filterParams.matchedNodesMaxCount,
-                        nodefilterLinkId: '#nodegroupitem',
-                         project: selFrameworkProject,
-                         view:'embed',
-                        nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
-                        nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
-                    })
-            );
-            ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
-            registerNodeFilters(nodeFilter, '#nodegroupitem');
-            nodeSummary.reload();
-            nodeFilter.updateMatchedNodes();
-            jQuery('body').on('click', '.nodefilterlink', function (evt) {
-                evt.preventDefault();
-                handleNodeFilterLink(this);
+    }
+    function setupJobExecNodeFilterBinding(root,target,dataId){
+        var filterParams = loadJsonData(dataId);
+        var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
+        var jobRefNodeFilter = new NodeFilters(
+            appLinks.frameworkAdhoc,
+            appLinks.scheduledExecutionCreate,
+            appLinks.frameworkNodes,
+            Object.assign(filterParams, {
+                nodeSummary:nodeSummary,
+                nodefilterLinkId:root,
+                project: selFrameworkProject,
+                maxShown:20,
+                view: 'embed',
+                emptyMode: 'blank',
+                emptyMessage: "${g.message(code: 'JobExec.property.nodeFilter.null.description')}",
+                nodesTitleSingular: "${g.message(code: 'Node', default: 'Node')}",
+                nodesTitlePlural: "${g.message(code: 'Node.plural', default: 'Nodes')}"
             })
-            jQuery('body').on('click', '.nodeexcludefilterlink', function (evt) {
-                evt.preventDefault();
-                handleNodeExcludeFilterLink(this);
+        );
+        ko.applyBindings(jobRefNodeFilter, jQuery(root)[0]);
+        registerNodeFilters(jobRefNodeFilter,root);
+    }
+    function pageinit(){
+        _enableWFDragdrop();
+
+        setupUndoRedoControls();
+
+        //define NodeFilters mvvm for the job
+        var filterParams = loadJsonData('filterParamsJSON');
+        var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
+        nodeFilter = new NodeFilters(
+            appLinks.frameworkAdhoc,
+            appLinks.scheduledExecutionCreate,
+            appLinks.frameworkNodes,
+            Object.assign(filterParams, {
+                nodeSummary:nodeSummary,
+                maxShown:filterParams.matchedNodesMaxCount,
+                nodefilterLinkId: '#nodegroupitem',
+                project: selFrameworkProject,
+                view:'embed',
+                nodesTitleSingular: "${g.message(code:'Node',default:'Node')}",
+                nodesTitlePlural: "${g.message(code:'Node.plural',default:'Nodes')}"
             })
+        );
+        ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
+        registerNodeFilters(nodeFilter, '#nodegroupitem');
+        nodeSummary.reload();
+        nodeFilter.updateMatchedNodes();
+        jQuery('body').on('click', '.nodefilterlink', function (evt) {
+            evt.preventDefault();
+            handleNodeFilterLink(this);
+        })
+        jQuery('body').on('click', '.nodeexcludefilterlink', function (evt) {
+            evt.preventDefault();
+            handleNodeExcludeFilterLink(this);
+        })
             .on('change','.node_dispatch_radio',function(evt){
                 nodeFilter.updateMatchedNodes();
             })
-            ;
-            const jobDef = loadJsonData('jobDefinitionJSON')
-            var jobeditor = new JobEditor(jobDef)
-            window.jobeditor = jobeditor
-            window._jobeditor = jobeditor
-<g:if test="${params.executionLifecyclePluginValidation}">
-            jobeditor.addError('plugins');
-</g:if>
-            initKoBind(null,{jobeditor:jobeditor})
+        ;
+        const jobDef = loadJsonData('jobDefinitionJSON')
+        var jobeditor = new JobEditor(jobDef)
+        window.jobeditor = jobeditor
+        window._jobeditor = jobeditor
+        <g:if test="${params.executionLifecyclePluginValidation}">
+        jobeditor.addError('plugins');
+        </g:if>
+        initKoBind(null,{jobeditor:jobeditor})
 
-            jQuery('#tab_execution_plugins .textarea.form-control.apply_ace').each(function () {
-                _setupAceTextareaEditor(this);
-            });
-        }
+        jQuery('#tab_execution_plugins .textarea.form-control.apply_ace').each(function () {
+            _setupAceTextareaEditor(this);
+        });
+    }
 
-        jQuery(pageinit);
-//]>
+    jQuery(pageinit);
+    //]>
 </script>
 
 <g:javascript>
@@ -947,5 +947,5 @@ function getCurSEID(){
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace/ext-language_tools.js"/><!--<![endif]-->
 <div id="msg"></div>
 
-    <g:render template="/framework/storageBrowseModalKO"/>
+<g:render template="/framework/storageBrowseModalKO"/>
 

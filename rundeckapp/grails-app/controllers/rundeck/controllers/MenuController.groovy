@@ -77,8 +77,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     AppAuthContextProcessor rundeckAuthContextProcessor
     FeatureService featureService
+    ConfigurationService configurationService
 
-    def configurationService
     ScmService scmService
     def quartzScheduler
     ContextACLManager<AppACLContext> aclFileManagerService
@@ -252,7 +252,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!params.project) {
             return redirect(controller: 'menu', action: 'home')
         }
-        def startpage = params.page?: grailsApplication.config.rundeck.gui.startpage ?: 'jobs'
+        def startpage = params.page?: configurationService.getString("gui.startpage", 'jobs')
+
         switch (startpage){
             case 'home':
                 return redirect(controller: 'menu', action: 'home')
@@ -659,7 +660,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         readauthcount= newschedlist.size()
 
-        if(grailsApplication.config.rundeck?.gui?.realJobTree != "false") {
+        if(configurationService.getBoolean("gui.realJobTree", false)) {
             //Adding group entries for empty hierachies to have a "real" tree
             def missinggroups = [:]
             jobgroups.each { k, v ->
@@ -1252,8 +1253,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
-        if(!grailsApplication.config.dataSource.jndiName &&
-                grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+        if(grailsApplication.config.getProperty("dataSource.driverClassName",String.class, '')=='org.h2.Driver'){
             flash.error=message(code: "development.mode.warning")
         }
         [rundeckFramework: frameworkService.rundeckFramework]
@@ -2011,8 +2011,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_READ, 'System information')) {
             return
         }
-        if(!grailsApplication.config.dataSource.jndiName &&
-                grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+        if(grailsApplication.config.getProperty("dataSource.driverClassName",String.class, '')=='org.h2.Driver'){
             flash.error=message(code: "development.mode.warning")
         }
 

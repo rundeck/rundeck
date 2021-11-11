@@ -28,8 +28,8 @@ use Cookie based resolver for Locale.
     Closure doWithSpring() {
         { ->
             localeResolver(CookieLocaleResolver) {
-                cookieMaxAge = grailsApplication.config.rundeck?.web?.cookie?.localeCookieExpiration?.toString()?.toInteger() ?: 7776000 //90days
-                cookieName = grailsApplication.config.rundeck?.web?.cookie?.localeCookieName?.toString() ?: 'rundeck.LOCALE'
+                cookieMaxAge = grailsApplication.config.getProperty("rundeck.web.cookie.localeCookieExpiration",Integer.class, 7776000) //90days
+                cookieName = grailsApplication.config.getProperty("rundeck.web.cookie.localeCookieName",String.class, 'rundeck.LOCALE')
             }
         }
     }

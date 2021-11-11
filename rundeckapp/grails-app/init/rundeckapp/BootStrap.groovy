@@ -81,8 +81,9 @@ class BootStrap {
     def init = { ServletContext servletContext ->
         // Marshal enums to "STRING" instead of {"enumType":"com.package.MyEnum", "name":"OBJECT"}
         JSON.registerObjectMarshaller(Enum, { Enum e -> e.toString() })
+
         //setup profiler logging
-        if(!(grailsApplication.config?.grails?.profiler?.disable) && grailsApplication.mainContext.profilerLog) {
+        if(!(grailsApplication.config.getProperty("grails.profiler.disable", Boolean.class, false)) && grailsApplication.mainContext.profilerLog) {
             //re-enable log output for profiler info, which is disabled by miniprofiler
             grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
         }
@@ -112,7 +113,7 @@ class BootStrap {
         }*/
 
         def String rdeckBase
-        if(!grailsApplication.config.rdeck.base){
+        if(!grailsApplication.config.getProperty("rdeck.base",String.class)){
             //look for system property
             rdeckBase=System.getProperty('rdeck.base')
             log.info("using rdeck.base system property: ${rdeckBase}");
@@ -120,10 +121,10 @@ class BootStrap {
             newconf.rdeck.base = rdeckBase
             grailsApplication.config.merge(newconf)
         }else{
-            rdeckBase=grailsApplication.config.rdeck.base
+            rdeckBase=grailsApplication.config.getProperty("rdeck.base",String.class)
             log.info("using rdeck.base config property: ${rdeckBase}");
         }
-        def serverLibextDir = grailsApplication.config.rundeck?.server?.plugins?.dir ?: "${rdeckBase}/libext"
+        def serverLibextDir = grailsApplication.config.getProperty("rundeck.server.plugins.dir",String.class, "${rdeckBase}/libext")
         File pluginsDir = new File(serverLibextDir)
         def clusterMode = false
         def serverNodeUUID = null
@@ -151,8 +152,8 @@ class BootStrap {
                 //determine hostname and port from grails config if available
                 String hostname
                 String port
-                if (grailsApplication.config.grails.serverURL) {
-                    URL url = new URL(grailsApplication.config.grails.serverURL)
+                if (grailsApplication.config.getProperty("grails.serverURL", String.class)) {
+                    URL url = new URL(grailsApplication.config.getProperty("grails.serverURL",String.class))
                     hostname = url.getHost()
                     port = url.getPort().toString()
                     def urlstr = url.toExternalForm().replaceAll('/+$', '')
@@ -196,7 +197,7 @@ class BootStrap {
             }
             servletContext.setAttribute("FRAMEWORK_NODE", nodeName)
             //check cluster mode
-            clusterMode = grailsApplication.config.rundeck.clusterMode.enabled in [true, 'true']
+            clusterMode = grailsApplication.config.getProperty("rundeck.clusterMode.enabled", Boolean.class, false)
             servletContext.setAttribute("CLUSTER_MODE_ENABLED", Boolean.toString(clusterMode))
             if (clusterMode) {
                 serverNodeUUID = properties.getProperty("rundeck.server.uuid")
@@ -262,14 +263,14 @@ class BootStrap {
         timer("Initialized ScmService"){
             scmService.initialize()
         }
-
-        if(grailsApplication.config.loglevel.default){
-            servletContext.setAttribute("LOGLEVEL_DEFAULT", grailsApplication.config.loglevel.default)
+        String logLevel = grailsApplication.config.getProperty("loglevel.default",String.class)
+        if(logLevel){
+            servletContext.setAttribute("LOGLEVEL_DEFAULT", logLevel)
         }else{
             servletContext.setAttribute("LOGLEVEL_DEFAULT", "INFO")
         }
 
-        if('true' == grailsApplication.config.rss.enabled){
+        if(grailsApplication.config.getProperty("rss.enabled",Boolean.class, false)){
             servletContext.setAttribute("RSS_ENABLED", 'true')
             log.info("RSS feeds enabled")
         }else{
@@ -277,7 +278,7 @@ class BootStrap {
         }
 
         //Setup the correct authentication provider for the configured authentication mechanism
-        if(grailsApplication.config.rundeck.useJaas in [true,'true']) {
+        if(grailsApplication.config.getProperty("rundeck.useJaas",Boolean.class, false)) {
             log.info("Using jaas authentication")
             SpringSecurityUtils.clientRegisterFilter("jaasApiIntegrationFilter", SecurityFilterPosition.OPENID_FILTER.order + 150)
             authenticationManager.providers.add(grailsApplication.mainContext.getBean("jaasAuthProvider"))
@@ -286,54 +287,60 @@ class BootStrap {
             authenticationManager.providers.add(grailsApplication.mainContext.getBean("realmAuthProvider"))
         }
 
-        if('true' == grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled
-                || grailsApplication.config.grails.plugin.springsecurity.useX509 in [true,'true']){
+        if(grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled",Boolean.class, false)
+                || grailsApplication.config.getProperty("grails.plugin.springsecurity.useX509",Boolean.class, false)){
             authenticationManager.providers.add(grailsApplication.mainContext.getBean("preAuthenticatedAuthProvider"))
         }
 
-        if('true' == grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled){
+        if(grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled",Boolean.class, false)){
             SpringSecurityUtils.clientRegisterFilter("rundeckPreauthFilter", SecurityFilterPosition.PRE_AUTH_FILTER.order - 10)
             log.info("Preauthentication is enabled")
         } else {
             log.info("Preauthentication is disabled")
         }
 
-        if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
+        if(grailsApplication.config.getProperty("rundeck.security.enforceMaxSessions", Boolean.class, false)) {
             SpringSecurityUtils.clientRegisterFilter("concurrentSessionFilter", SecurityFilterPosition.CONCURRENT_SESSION_FILTER.order)
         }
 
-        if(!grailsApplication.config.rundeck.logout.redirect.url.isEmpty()) {
-            log.debug("Setting logout url to: ${grailsApplication.config.rundeck.logout.redirect.url}")
+        String redirectUrl = grailsApplication.config.getProperty("rundeck.logout.redirect.url",String.class, '')
+        if(!redirectUrl.isEmpty()) {
+            log.debug("Setting logout url to: ${redirectUrl}")
             def logoutSuccessHandler = grailsApplication.mainContext.getBean("logoutSuccessHandler")
-            logoutSuccessHandler.defaultTargetUrl = grailsApplication.config.rundeck.logout.redirect.url
+            logoutSuccessHandler.defaultTargetUrl = redirectUrl
         }
 
-        if(grailsApplication.config.execution.follow.buffersize){
-            servletContext.setAttribute("execution.follow.buffersize",grailsApplication.config.execution.follow.buffersize)
+        String executionFollowBuffer = grailsApplication.config.getProperty("execution.follow.buffersize",String.class)
+        if(executionFollowBuffer){
+            servletContext.setAttribute("execution.follow.buffersize",executionFollowBuffer)
         }else{
             servletContext.setAttribute("execution.follow.buffersize",(50*1024).toString())
         }
-        if(grailsApplication.config.output.markdown.enabled){
-            servletContext.setAttribute("output.markdown.enabled",grailsApplication.config.output.markdown.enabled=="true"?"true":"false")
+        boolean markdownEnabled = grailsApplication.config.getProperty("output.markdown.enabled",Boolean.class, false)
+        if(markdownEnabled){
+            servletContext.setAttribute("output.markdown.enabled",markdownEnabled)
         }else{
             servletContext.setAttribute("output.markdown.enabled","false")
         }
-        if(grailsApplication.config.nowrunning.interval){
-            servletContext.setAttribute("nowrunning.interval",grailsApplication.config.nowrunning.interval)
+        String nowrunningInterval = grailsApplication.config.getProperty("nowrunning.interval",String.class)
+        if(nowrunningInterval){
+            servletContext.setAttribute("nowrunning.interval",nowrunningInterval)
         }else{
             servletContext.setAttribute("nowrunning.interval",(15).toString())
         }
-        if(grailsApplication.config.output.download.formatted){
-            servletContext.setAttribute("output.download.formatted",grailsApplication.config.output.download.formatted =="true" ? "true":"false")
+        boolean outputDownloadFormatted = grailsApplication.config.getProperty("output.download.formatted",Boolean.class, false)
+        if(outputDownloadFormatted){
+            servletContext.setAttribute("output.download.formatted",outputDownloadFormatted)
         }else{
             servletContext.setAttribute("output.download.formatted","true")
         }
-        if(grailsApplication.config.logging.ant.metadata){
-            servletContext.setAttribute("logging.ant.metadata",grailsApplication.config.logging.ant.metadata =="true" ? "true":"false")
+        boolean loggingMetadata = grailsApplication.config.getProperty("logging.ant.metadata",Boolean.class, false)
+        if(loggingMetadata){
+            servletContext.setAttribute("logging.ant.metadata",loggingMetadata)
         }else{
             servletContext.setAttribute("logging.ant.metadata","true")
         }
-        def defaultLastLines = grailsApplication.config.rundeck.gui.execution.tail.lines.default
+        def defaultLastLines = grailsApplication.config.getProperty("rundeck.gui.execution.tail.lines.default",String.class, '')
         defaultLastLines = defaultLastLines instanceof String ? defaultLastLines.toInteger() : defaultLastLines
         if(!defaultLastLines || !(defaultLastLines instanceof Integer) || defaultLastLines < 1){
             if(defaultLastLines){
@@ -341,7 +348,7 @@ class BootStrap {
              }
              grailsApplication.config.rundeck.gui.execution.tail.lines.default = 20
          }
-         def maxLastLines = grailsApplication.config.rundeck.gui.execution.tail.lines.max
+         def maxLastLines = grailsApplication.config.getProperty("rundeck.gui.execution.tail.lines.max",String.class, '')
          maxLastLines = maxLastLines instanceof String ? maxLastLines.toInteger() : maxLastLines
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
@@ -495,7 +502,7 @@ class BootStrap {
              }
              fileUploadService.onBootstrap()
 
-            if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+            if(grailsApplication.config.getProperty("dataSource.driverClassName",String.class,'')=='org.h2.Driver'){
                 log.warn("[Development Mode] Usage of H2 database is recommended only for development and testing")
             }
             if(canApplyServerUpdates) {
@@ -510,7 +517,7 @@ class BootStrap {
     }
 
     def applyWorkflowConfigFix() {
-        if (grailsApplication.config.rundeck?.applyFix?."$WORKFLOW_CONFIG_FIX973" in [true, 'true']
+        if (grailsApplication.config.getProperty("rundeck.applyFix.${WORKFLOW_CONFIG_FIX973}",Boolean.class, false)
                 || !configStorageService.hasFixIndicator(WORKFLOW_CONFIG_FIX973)) {
             try {
                 log.info("$WORKFLOW_CONFIG_FIX973: applying... ")

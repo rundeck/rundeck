@@ -48,7 +48,7 @@
       <div class="content">
         <div class="container">
           <div class="row">
-            <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+            <g:set var="userDefinedInstanceName" value="${g.rConfig(value: "gui.instanceName", type: 'string')}"/>
             <g:if test="${userDefinedInstanceName}">
               <div class="col-md-12" style="text-align:center;margin-bottom:3em;">
                   <span class="label label-white" style="padding:.8em;font-size: 20px; border-radius:3px;    box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);">
@@ -62,11 +62,12 @@
                   <h4 class="card-title">
                     <div class="logo">
                         <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'logos/rundeck-logo-black.png'}"/>
-                        <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
+                        <g:set var="titleLink" value="${g.rConfig(value: "gui.titleLink", type: 'string')}"/>
+                        <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}" title="Home">
                             <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;" onload="SVGInject(this)"/>
                         </a>
 
-                        <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
+                        <g:set var="userDefinedLogo" value="${g.rConfig(value: "gui.logo", type: 'string')}"/>
                         <g:if test="${userDefinedLogo}">
                           <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
                           <g:set var="userAssetBase" value="/user-assets" />

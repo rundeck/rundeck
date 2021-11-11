@@ -51,8 +51,8 @@
                type: AuthConstants.TYPE_PROJECT_ACL,
                name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
-<g:set var="projectKeyStorageEnabled"
-       value="${!(grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false'])}"/>
+
+<g:set var="projectKeyStorageEnabled" value="${g.rConfig(value: "feature.projectKeyStorage.enabled", type: 'string') in [true,'true']}"/>
 
 <script type="text/javascript">
     [

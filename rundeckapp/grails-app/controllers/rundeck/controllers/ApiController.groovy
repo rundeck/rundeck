@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import grails.web.mapping.LinkGenerator
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
+import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
@@ -42,8 +43,8 @@ class ApiController extends ControllerBase{
     def frameworkService
     AppAuthContextProcessor rundeckAuthContextProcessor
     def userService
-    def configurationService
     LinkGenerator grailsLinkGenerator
+    ConfigurationService configurationService
 
     static allowedMethods = [
             info                 : ['GET'],
@@ -166,8 +167,10 @@ class ApiController extends ControllerBase{
      * @return
      */
     private boolean featurePresent(def name){
+        boolean featureStatus = configurationService.getBoolean("feature.incubator.${name}", false)
+
         def splat=grailsApplication.config.feature?.incubator?.getAt('*') in ['true',true]
-        return splat || (grailsApplication.config.feature?.incubator?.getAt(name) in ['true',true])
+        return splat || featureStatus
     }
     /**
      * Set an incubator feature toggle on or off

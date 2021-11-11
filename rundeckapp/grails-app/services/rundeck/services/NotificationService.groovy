@@ -334,11 +334,12 @@ public class NotificationService implements ApplicationContextAware{
                     }
 
                     def isFormatted =false
-                    if( grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.formatted in [true,'true']){
+
+                    if( configurationService.getBoolean("mail.${source.project}.${source.jobName}.template.log.formatted",false)){
                         isFormatted=true
-                    }else if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){
+                    }else if( configurationService.getBoolean("mail.${trigger}.template.log.formatted",false)){
                         isFormatted=true
-                    }else if( grailsApplication.config.rundeck.mail.template.log.formatted in [true,'true']){
+                    }else if( configurationService.getBoolean("mail.template.log.formatted",false)){
                         isFormatted = true
                     }
                     boolean allowUnsanitized = checkAllowUnsanitized(exec.project)
@@ -362,12 +363,12 @@ public class NotificationService implements ApplicationContextAware{
                     //set up templates
                     def subjecttmpl='${notification.eventStatus} [${exec.project}] ${job.group}/${job.name} ${exec' +
                             '.argstring}'
-					if(grailsApplication.config.rundeck.mail."${source.project}"?."${source.jobName}"?.template?.subject) {
-						subjecttmpl= grailsApplication.config.rundeck.mail."${source.project}"?."${source.jobName}"?.template?.subject.toString()
-					}else if(grailsApplication.config.rundeck.mail."${trigger}"?.template?.subject){
-                        subjecttmpl= grailsApplication.config.rundeck.mail."${trigger}".template.subject.toString()
-                    }else if (grailsApplication.config.rundeck.mail.template.subject) {
-                        subjecttmpl=grailsApplication.config.rundeck.mail.template.subject.toString()
+					if(configurationService.getString("mail.${source.project}.${source.jobName}.template.subject")) {
+						subjecttmpl= configurationService.getString("mail.${source.project}.${source.jobName}.template.subject")
+					}else if(configurationService.getString("mail.${trigger}.template.subject")){
+                        subjecttmpl= configurationService.getString("mail.${trigger}.template.subject")
+                    }else if (configurationService.getString("mail.template.subject")) {
+                        subjecttmpl=configurationService.getString("mail.template.subject")
                     }
                     if(configSubject){
                         subjecttmpl= configSubject
@@ -376,20 +377,29 @@ public class NotificationService implements ApplicationContextAware{
 
                     def htmlemail=null
                     def templatePaths=[]
-					if(grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.body) {
-						htmlemail = renderTemplate(grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.body.toString(), context)
-					}else if (grailsApplication.config.rundeck.mail."${trigger}".template.body) {
-                        htmlemail = renderTemplate(grailsApplication.config.rundeck.mail."${trigger}".template.body.toString(), context)
-                    }else if (grailsApplication.config.rundeck.mail.template.body) {
-                        htmlemail = renderTemplate(grailsApplication.config.rundeck.mail.template.body.toString(), context)
+                    String projectTemplateBody = configurationService.getString("mail.${source.project}.${source.jobName}.template.body")
+                    String triggerTemplateBody = configurationService.getString("mail.${trigger}.template.body")
+                    String templateBody = configurationService.getString("mail.template.body")
+
+                    if(projectTemplateBody) {
+						htmlemail = renderTemplate(projectTemplateBody, context)
+					}else if (triggerTemplateBody) {
+                        htmlemail = renderTemplate(triggerTemplateBody, context)
+                    }else if (templateBody) {
+                        htmlemail = renderTemplate(templateBody, context)
                     }
-					if(grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.file) {
-						templatePaths << grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.file.toString()
-					}else if(grailsApplication.config.rundeck.mail."${trigger}".template.file){
-                        templatePaths << grailsApplication.config.rundeck.mail."${trigger}".template.file.toString()
+
+                    String projectTemplateFile = configurationService.getString("mail.${source.project}.${source.jobName}.template.file")
+                    String triggerTemplateFile = configurationService.getString("mail.${trigger}.template.file")
+                    String templateFile = configurationService.getString("mail.template.file")
+
+                    if(projectTemplateFile) {
+						templatePaths << projectTemplateFile
+					}else if(triggerTemplateFile){
+                        templatePaths << triggerTemplateFile
                     }
-                    if(grailsApplication.config.rundeck.mail.template.file){
-                        templatePaths << grailsApplication.config.rundeck.mail.template.file.toString()
+                    if(templateFile){
+                        templatePaths << templateFile
                     }
                     for (String templatePath : templatePaths) {
                         if (templatePath.indexOf('${') >= 0) {
@@ -436,19 +446,28 @@ public class NotificationService implements ApplicationContextAware{
 
                     def attachedExtension = "log"
                     def attachedContentType = "text/plain"
-                    if( grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.extension ){
-                        attachedExtension=grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.extension
-                    }else if( grailsApplication.config.rundeck.mail."${trigger}".template.log.extension){
-                        attachedExtension=grailsApplication.config.rundeck.mail."${trigger}".template.log.extension
-                    }else if( grailsApplication.config.rundeck.mail.template.log.extension){
-                        attachedExtension = grailsApplication.config.rundeck.mail.template.log.extension
+                    String projectLogExtension = configurationService.getString("mail.${source.project}.${source.jobName}.template.log.extension")
+                    String triggerLogExtension = configurationService.getString("mail.${trigger}.template.log.extension")
+                    String logExtension = configurationService.getString("mail.template.log.extension")
+
+                    if( projectLogExtension ){
+                        attachedExtension=projectLogExtension
+                    }else if( triggerLogExtension){
+                        attachedExtension=triggerLogExtension
+                    }else if( logExtension){
+                        attachedExtension = logExtension
                     }
-                    if( grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.contentType ){
-                        attachedContentType=grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.contentType
-                    }else if( grailsApplication.config.rundeck.mail."${trigger}".template.log.contentType){
-                        attachedContentType=grailsApplication.config.rundeck.mail."${trigger}".template.log.contentType
-                    }else if( grailsApplication.config.rundeck.mail.template.log.contentType){
-                        attachedContentType = grailsApplication.config.rundeck.mail.template.log.contentType
+
+                    String projectLogContentType = configurationService.getString("mail.${source.project}.${source.jobName}.template.log.contentType")
+                    String triggerLogContentType = configurationService.getString("mail.${trigger}.template.log.contentType")
+                    String logContentType = configurationService.getString("mail.template.log.contentType")
+
+                    if( projectLogContentType ){
+                        attachedContentType=projectLogContentType
+                    }else if( triggerLogContentType){
+                        attachedContentType=triggerLogContentType
+                    }else if( logContentType){
+                        attachedContentType = logContentType
                     }
                     File outputfile
                     if(attachlog){

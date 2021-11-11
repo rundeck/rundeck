@@ -131,9 +131,9 @@ beans={
 //            arguments = ["classpath:log4j.properties"]
 //        }
 //    }
-    if (application.config.rundeck.multiURL?.enabled in ['true',true]) {
+    if (application.config.getProperty("rundeck.multiURL.enabled", Boolean.class, false)) {
         Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
-        String serverURL = application.config.grails.serverURL
+        String serverURL = application.config.getProperty("grails.serverURL",String.class)
         String contextPath = application.config.server.servlet["context-path"]
         if (serverURL && (contextPath && "/" != contextPath)) {
             log.info("RequestAwareLinkGenerator using url ${serverURL} and context-path ${contextPath}")
@@ -158,11 +158,11 @@ beans={
         quartzScheduler=ref('quartzScheduler')
     }
     def rdeckBase
-    if (!application.config.rdeck.base) {
+    if (!application.config.getProperty("rdeck.base", String.class)) {
         //look for system property
         rdeckBase = System.getProperty('rdeck.base')
     } else {
-        rdeckBase = application.config.rdeck.base
+        rdeckBase = application.config.getProperty("rdeck.base", String.class)
     }
     if(!rdeckBase){
         System.err.println("rdeck.base was not defined in application config or as a system property")
@@ -171,21 +171,22 @@ beans={
 
     rundeckI18nEnhancer(RundeckExtendedMessageBundle, ref("messageSource"),"file:${rdeckBase}/i18n/messages".toString())
 
-    if(application.config.rundeck.gui.staticUserResources.enabled in ['true',true]) {
+    if(application.config.getProperty("rundeck.gui.staticUserResources.enabled",Boolean.class,false)) {
         externalStaticResourceConfigurer(ExternalStaticResourceConfigurer) {
-            resourceUriLocation = application.config.rundeck.gui.staticUserResources.filesystemLocation.isEmpty() ? "file:${rdeckBase}/user-assets/" : application.config.rundeck.gui.staticUserResources.filesystemLocation
+            String filesystemLocation = application.config.getProperty("rundeck.gui.staticUserResources.filesystemLocation", String.class)
+            resourceUriLocation = filesystemLocation.isEmpty() ? "file:${rdeckBase}/user-assets/" : filesystemLocation
         }
     }
 
-    def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
+    def serverLibextDir = application.config.getProperty("rundeck.server.plugins.dir",String.class,"${rdeckBase}/libext")
     File pluginDir = new File(serverLibextDir)
-    def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
+    def serverLibextCacheDir = application.config.getProperty("rundeck.server.plugins.cacheDir", String.class,"${serverLibextDir}/cache")
     File cacheDir= new File(serverLibextCacheDir)
     File varDir= new File(Constants.getBaseVar(rdeckBase))
 
     rundeckNodeService(EnhancedNodeService)
 
-    if(application.config.rundeck.loadFrameworkPropertiesFromRundeckConfig in ["true",true]) {
+    if(application.config.getProperty("rundeck.loadFrameworkPropertiesFromRundeckConfig", Boolean.class, false)) {
         frameworkPropertyLookupFactory(ConfigFrameworkPropertyLookupFactory) { }
     } else {
         frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
@@ -209,14 +210,14 @@ beans={
         bean.factoryMethod='createProjectManager'
     }
     rundeckFilesystemProjectImporter(RundeckFilesystemProjectImporter){
-        importFilesOption = application.config.rundeck?.projectsStorageImportFilesOption ?: 'known'
-        importStartupMode = application.config.rundeck?.projectsStorageImportStartupMode ?: 'bootstrap'
+        importFilesOption = application.config.getProperty("rundeck.projectsStorageImportFilesOption", String.class, 'known')
+        importStartupMode = application.config.getProperty("rundeck.projectsStorageImportStartupMode", String.class,'bootstrap')
     }
 
     frameworkFactory(RundeckFrameworkFactory){
         frameworkFilesystem=frameworkFilesystem
         propertyLookup=ref('frameworkPropertyLookup')
-        type=application.config.rundeck?.projectsStorageType?:'db'
+        type=application.config.getProperty("rundeck.projectsStorageType", String.class,'db')
         dbProjectManager=ref('projectManagerService')
         pluginManagerService=ref('rundeckServerServiceProviderLoader')
     }
@@ -245,9 +246,8 @@ beans={
     }
 
     authContextEvaluatorCacheManager(AuthContextEvaluatorCacheManager){
-        enabled = !(grailsApplication.config.rundeck?.auth?.evaluation?.cache?.enabled in ["false", false])
-        expirationTime = grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire ?
-                grailsApplication.config.rundeck?.auth?.evaluation?.cache?.expire?.toLong() : 120
+        enabled = grailsApplication.config.getProperty("rundeck.auth.evaluation.cache.enabled", Boolean.class, false)
+        expirationTime = grailsApplication.config.getProperty("rundeck.auth.evaluation.cache.expire", Long.class, 120)
         metricService = ref('metricService')
     }
 
@@ -276,7 +276,7 @@ beans={
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
         projectPattern = ContextACLStorageFileManagerFactory.ACL_PROJECT_STORAGE_PATH_PATTERN
-        projectsStorageType=application.config.rundeck?.projectsStorageType?:'db'
+        projectsStorageType=application.config.getProperty("rundeck.projectsStorageType", String.class, 'db')
         validatorFactory=ref('rundeckYamlAclValidatorFactory')
     }
 
@@ -377,23 +377,23 @@ beans={
 //        pluginRegistry=ref("rundeckPluginRegistry")
     }
     logFileTaskExecutor(SimpleAsyncTaskExecutor, "LogFileTask") {
-        concurrencyLimit = 1 + (application.config.rundeck?.execution?.logs?.fileStorage?.retrievalTasks?.concurrencyLimit ?: 5)
+        concurrencyLimit = 1 + application.config.getProperty("rundeck.execution.logs.fileStorage.retrievalTasks.concurrencyLimit", Integer.class, 5)
     }
     logFileStorageTaskExecutor(SimpleAsyncTaskExecutor, "LogFileStorageTask") {
-        concurrencyLimit = 1 + (application.config.rundeck?.execution?.logs?.fileStorage?.storageTasks?.concurrencyLimit ?: 10)
+        concurrencyLimit = 1 + application.config.getProperty("rundeck.execution.logs.fileStorage.storageTasks.concurrencyLimit", Integer.class, 10)
     }
     logFileStorageTaskScheduler(ThreadPoolTaskScheduler) {
         threadNamePrefix="LogFileStorageScheduledTask"
-        poolSize= (application.config.rundeck?.execution?.logs?.fileStorage?.scheduledTasks?.poolSize ?: 5)
+        poolSize= application.config.getProperty("rundeck.execution.logs.fileStorage.scheduledTasks.poolSize", Integer.class, 5)
 
     }
     logFileStorageDeleteRemoteTask(ThreadPoolTaskExecutor) {
         threadNamePrefix="LogFileStorageDeleteRemoteTask"
-        maxPoolSize= (application.config.rundeck?.execution?.logs?.fileStorage?.removeTasks?.poolSize ?: 5)
+        maxPoolSize= application.config.getProperty("rundeck.execution.logs.fileStorage.removeTasks.poolSize", Integer.class, 5)
 
     }
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
-        concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded
+        concurrencyLimit = application.config.getProperty("rundeck?.nodeService?.concurrencyLimit", Integer.class, 25) //-1 for unbounded
     }
     //alternately use ThreadPoolTaskExecutor ...
 //    nodeTaskExecutor(ThreadPoolTaskExecutor) {
@@ -438,15 +438,15 @@ beans={
     scmJobImporter(ScmJobImporter)
 
     containerPrincipalRoleSource(ContainerPrincipalRoleSource){
-        enabled=grailsApplication.config.rundeck?.security?.authorization?.containerPrincipal?.enabled in [true,'true']
+        enabled=grailsApplication.config.getProperty("rundeck.security.authorization.containerPrincipal.enabled", Boolean.class, false)
     }
     containerRoleSource(ContainerRoleSource){
-        enabled=grailsApplication.config.rundeck?.security?.authorization?.container?.enabled in [true,'true']
+        enabled=grailsApplication.config.getProperty("rundeck.security.authorization.container.enabled", Boolean.class, false)
     }
     preauthenticatedAttributeRoleSource(PreauthenticatedAttributeRoleSource){
-        enabled=grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true,'true']
-        attributeName=grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.attributeName
-        delimiter=grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.delimiter
+        enabled=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled", Boolean.class,false)
+        attributeName=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.attributeName", String.class)
+        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class)
     }
 
     def storageDir= new File(varDir, 'storage')
@@ -464,7 +464,7 @@ beans={
         loggerName='org.rundeck.storage.events'
     }
     rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
-    if(!(grailsApplication.config.rundeck?.feature?.projectKeyStorage?.enabled in [false,'false'])) {
+    if(grailsApplication.config.getProperty("rundeck.feature.projectKeyStorage.enabled", Boolean.class, false)) {
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
     }else{
         rundeckKeyStorageContextProvider(KeyStorageContextProvider)
@@ -511,7 +511,7 @@ beans={
         pluginDir.eachFileMatch(FileType.FILES, ~/.*\.groovy/) { File plugin ->
             String beanName = plugin.name.replace('.groovy', '')
             lang.groovy(id: beanName, 'script-source': "file:${pluginDir}/${plugin.name}",
-                    'refresh-check-delay': application.config.plugin.refreshDelay ?: -1,
+                    'refresh-check-delay': application.config.getProperty("plugin.refreshDelay",Integer.class, null) ?: -1,
                     'customizer-ref':'pluginCustomizer'
             )
         }
@@ -560,7 +560,7 @@ beans={
         sourceMap = pluginRegistry
     }
     rundeckPluginBlocklist(RundeckPluginBlocklist){
-        blockListFileName= application.config.rundeck?.plugins?.providerBlockListFile?: null
+        blockListFileName= application.config.getProperty("rundeck.plugins.providerBlockListFile", String.class)
     }
     /**
      * Registry bean contains both kinds of plugin
@@ -594,7 +594,7 @@ beans={
     //Job List Link Handler
     defaultJobListLinkHandler(GroupedJobListLinkHandler)
     jobListLinkHandlerRegistry(JobListLinkHandlerRegistry) {
-        defaultHandlerName = application.config.rundeck?.gui?.defaultJobList?:GroupedJobListLinkHandler.NAME
+        defaultHandlerName = application.config.getProperty("rundeck.gui.defaultJobList", String.class, GroupedJobListLinkHandler.NAME)
     }
 
     userSummaryMenuItem(UserSummaryMenuItem)
@@ -603,16 +603,16 @@ beans={
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
-        rolePrefix=grailsApplication.config.rundeck.security.jaasRolePrefix?.toString()?:''
+        rolePrefix=grailsApplication.config.getProperty("rundeck.security.jaasRolePrefix", String.class, '')
     }
 
-    if(!grailsApplication.config.rundeck.logout.expire.cookies.isEmpty()) {
-        cookieClearingLogoutHandler(CookieClearingLogoutHandler,grailsApplication.config.rundeck.logout.expire.cookies.split(","))
+    if(!grailsApplication.config.getProperty("rundeck.logout.expire.cookies", String.class,'').isEmpty()) {
+        cookieClearingLogoutHandler(CookieClearingLogoutHandler,grailsApplication.config.getProperty("rundeck.logout.expire.cookies", String.class,'').split(","))
         SpringSecurityUtils.registerLogoutHandler("cookieClearingLogoutHandler")
 
     }
 
-    if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
+    if(grailsApplication.config.getProperty("rundeck.security.enforceMaxSessions", Boolean.class,false)) {
         sessionRegistry(SessionRegistryImpl)
         concurrentSessionFilter(ConcurrentSessionFilter, sessionRegistry)
         registerSessionAuthenticationStrategy(RegisterSessionAuthenticationStrategy, ref('sessionRegistry')) {}
@@ -621,12 +621,12 @@ beans={
                 ref('sessionRegistry')
         ) {
             exceptionIfMaximumExceeded = false
-            maximumSessions = grailsApplication.config.rundeck.security.maxSessions ? grailsApplication.config.rundeck.security.maxSessions.toInteger() : 1
+            maximumSessions = grailsApplication.config.getProperty("rundeck.security.maxSessions",Integer.class, 1)
         }
         sessionFixationProtectionStrategy(SessionFixationProtectionStrategy) {
-            migrateSessionAttributes = grailsApplication.config.grails.plugin.springsecurity.sessionFixationPrevention.migrate
+            migrateSessionAttributes = grailsApplication.config.getProperty("grails.plugin.springsecurity.sessionFixationPrevention.migrate", String.class,'')
             // true
-            alwaysCreateSession = grailsApplication.config.grails.plugin.springsecurity.sessionFixationPrevention.alwaysCreateSession
+            alwaysCreateSession = grailsApplication.config.getProperty("grails.plugin.springsecurity.sessionFixationPrevention.alwaysCreateSession", String.class, '')
             // false
         }
         sessionAuthenticationStrategy(
@@ -636,15 +636,15 @@ beans={
     }
 
     //spring security preauth filter configuration
-    if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']) {
+    if(grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled", Boolean.class,false)) {
         rundeckPreauthSuccessEventHandler(RundeckPreauthSuccessEventHandler) {
             configurationService = ref('configurationService')
         }
         rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
-            enabled = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true, 'true']
-            userNameHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userNameHeader
-            rolesHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userRolesHeader
-            rolesAttribute = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.attributeName
+            enabled = grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled", Boolean.class,false)
+            userNameHeader = grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.userNameHeader", String.class)
+            rolesHeader = grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.userRolesHeader", String.class)
+            rolesAttribute = grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.attributeName", String.class)
             authenticationManager = ref('authenticationManager')
             authenticationSuccessHandler = ref("rundeckPreauthSuccessEventHandler")
         }
@@ -654,20 +654,20 @@ beans={
         }
     }
 
-    if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']
-            || grailsApplication.config.grails.plugin.springsecurity.useX509 in [true,'true']) {
+    if(grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled", Boolean.class, false)
+            || grailsApplication.config.getProperty("grails.plugin.springsecurity.useX509", Boolean.class, false)) {
         preAuthenticatedAuthProvider(PreAuthenticatedAuthenticationProvider) {
             preAuthenticatedUserDetailsService = ref('rundeckUserDetailsService')
         }
     }
 
-    if(grailsApplication.config.rundeck.useJaas in [true,'true']) {
+    if(grailsApplication.config.getProperty("rundeck.useJaas", Boolean.class,false)) {
         //spring security jaas configuration
         jaasApiIntegrationFilter(JaasApiIntegrationFilter)
 
         jaasAuthProvider(RundeckJaasAuthenticationProvider) {
             configuration = Configuration.getConfiguration()
-            loginContextName = grailsApplication.config.rundeck.security.jaasLoginModuleName
+            loginContextName = grailsApplication.config.getProperty("rundeck.security.jaasLoginModuleName")
             authorityGranters = [
                     ref('rundeckJaasAuthorityGranter')
             ]
@@ -676,7 +676,7 @@ beans={
         jettyCompatiblePasswordEncoder(JettyCompatibleSpringSecurityPasswordEncoder)
         //if not using jaas for security provide a simple default
         Properties realmProperties = new Properties()
-        realmProperties.load(new File(grailsApplication.config.rundeck.security.fileUserDataSource).newInputStream())
+        realmProperties.load(new File(grailsApplication.config.getProperty("rundeck.security.fileUserDataSource",String.class)).newInputStream())
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
         realmAuthProvider(DaoAuthenticationProvider) {
             passwordEncoder = ref("jettyCompatiblePasswordEncoder")
@@ -685,7 +685,7 @@ beans={
     }
 
     jettyServletCustomizer(JettyServletContainerCustomizer) {
-        def configParams = grailsApplication.config.rundeck?.web?.jetty?.servlet?.initParams
+        def configParams = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.initParams", String.class)
 
         initParams = configParams?.toProperties()?.collectEntries {
             [it.key.toString(), it.value.toString()]
@@ -696,7 +696,7 @@ beans={
         frameworkService = ref('frameworkService')
     }
 
-    if(grailsApplication.config.rundeck.security.syncLdapUser in [true,'true']) {
+    if(grailsApplication.config.getProperty("rundeck.security.syncLdapUser",Boolean.class,false)) {
         rundeckJaasAuthenticationSuccessEventListener(RundeckJaasAuthenticationSuccessEventListener) {
             configurationService = ref('configurationService')
         }

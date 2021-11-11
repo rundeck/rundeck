@@ -157,6 +157,7 @@ class ScheduledExecutionController  extends ControllerBase{
     ExecutionLifecyclePluginService executionLifecyclePluginService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
+    ConfigurationService configurationService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -324,7 +325,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+            def minLevel = configurationService.getString("min.isolation.level")
             def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
             total = Execution.withTransaction([isolationLevel: isolationLevel]) {
                 Execution.countByScheduledExecution(scheduledExecution)
@@ -470,7 +471,7 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def minLevel = configurationService.getString("min.isolation.level")
         def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
         def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
@@ -604,7 +605,7 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def minLevel = configurationService.getString("min.isolation.level")
         def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
         def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
@@ -2282,7 +2283,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 //error
                 model.nodesetempty=true
             }
-            else if(grailsApplication.config.gui.execution.summarizedNodes != 'false') {
+            else if(configurationService.getBoolean("gui.execution.summarizedNodes", false)) {
                 model.nodes=nodes
                 model.nodemap=[:]
                 model.tagsummary=[:]
@@ -3981,9 +3982,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ?
                 params.int('max') :
-                grailsApplication.config.rundeck?.pagination?.default?.max ?
-                        grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-                        20
+                configurationService.getInteger("pagination.default.max", 20)
         def total=result.total
         withFormat{
             xml{

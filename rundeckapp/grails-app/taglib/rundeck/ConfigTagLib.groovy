@@ -25,7 +25,7 @@ class ConfigTagLib {
         String key = attrs.key
         if (!key) throw new IllegalArgumentException("[key] attribute for tag <cfg:setVar>!")
 
-        this."$scope"."$var" = configurationService.getValue(key,attrs.defaultValue)
+        this."$scope"."$var" = configurationService.getValue(key,String.class,attrs.defaultValue)
 
         null
     }

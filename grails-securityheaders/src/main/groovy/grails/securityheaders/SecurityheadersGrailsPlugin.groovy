@@ -70,8 +70,8 @@ Brief summary/description of the plugin.
                 defaultEnabled = true
             }
             rundeckSecurityHeadersFilter(RundeckSecurityHeadersFilter) {
-                enabled = grailsApplication.config.rundeck?.security?.httpHeaders?.enabled in [true, 'true']
-                config = grailsApplication.config.rundeck?.security?.httpHeaders?.provider
+                enabled = grailsApplication.config.getProperty("rundeck.security.httpHeaders.enabled",Boolean.class, false)
+                config = grailsApplication.config.getProperty("rundeck.security.httpHeaders.provider",HashMap.class,[:])
             }
             rundeckSecHeadersFilterReg(FilterRegistrationBean) {
                 filter = ref("rundeckSecurityHeadersFilter")

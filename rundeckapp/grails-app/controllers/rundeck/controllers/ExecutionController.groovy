@@ -423,7 +423,7 @@ class ExecutionController extends ControllerBase{
         if(execState == 'missed') {
             data.state = [error: 'missed',errorMessage: "Missed execution scheduled at ${StateMapping.encodeDate(e.dateStarted)}"]
         }
-        def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
+        def limit= configurationService.getInteger("ajax.executionState.compression.nodeThreshold", 500)
         if (selectedNodes || data.state?.allNodes?.size() > limit) {
             renderCompressed(request, response, 'application/json', data as JSON)
         }else{
