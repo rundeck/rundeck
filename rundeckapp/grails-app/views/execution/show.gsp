@@ -49,8 +49,9 @@
       <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
       <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
-      <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
-      <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
+      <g:set var="defaultLastLines" value="${g.rConfig(value: "gui.execution.tail.lines.default", type: 'integer')}"/>
+      <g:set var="maxLastLines" value="${g.rConfig(value: "gui.execution.tail.lines.max", type: 'integer')}"/>
+
 
       <asset:javascript src="execution/show.js"/>
 

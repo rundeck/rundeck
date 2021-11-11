@@ -77,7 +77,9 @@
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/version.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
-    <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+    <g:set var="communityNews" value="${g.rConfig(value: "communityNews.disabled", type: 'string') in [true,'true']}"/>
+
+    <g:if test="${!communityNews in [false,'false']}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>
     </g:if>
     <!-- /VUE CSS MODULES -->
@@ -287,7 +289,7 @@
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/tour.js"/>
-<g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+<g:if test="${!communityNews in [false,'false']}">
     <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
 

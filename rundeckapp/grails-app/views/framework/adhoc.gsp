@@ -40,8 +40,9 @@
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="framework/adhoc.js"/>
-    <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
-    <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
+    <g:set var="defaultLastLines" value="${g.rConfig(value: "gui.execution.tail.lines.default", type: 'integer')}"/>
+    <g:set var="maxLastLines" value="${g.rConfig(value: "gui.execution.tail.lines.max", type: 'integer')}"/>
+
     <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, matchedNodesMaxCount: matchedNodesMaxCount?:50, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <g:embedJSON id="pageParams" data="${[
             disableMarkdown: params.boolean('disableMarkdown') ? '&disableMarkdown=true' :'',

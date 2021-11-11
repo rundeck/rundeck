@@ -24,8 +24,10 @@
     <meta name="skipPrototypeJs" content="true"/>
     <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
-    <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs.enabled}" />
-    <g:set var="paginateJobsPerPage" value="${grailsApplication.config.rundeck.gui.paginatejobs.max.per.page}" />
+    <g:set var="paginateJobs" value="${g.rConfig(value: "gui.paginatejobs.enabled", type: 'string') in [true,'true']}"/>
+    <g:set var="paginateJobsPerPage" value="${g.rConfig(value: "gui.paginatejobs.max.per.page", type: 'integer', defValue: 20)}"/>
+
+
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: projectName, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>

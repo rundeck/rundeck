@@ -80,17 +80,17 @@ class ExecutionJob implements InterruptableJob {
     // Implements the Job interface, execute
     void execute(JobExecutionContext context) {
         grailsApplication= context.jobDetail.jobDataMap.get('grailsApplication')
-        if(grailsApplication?.config?.rundeck?.execution?.finalize?.retryMax){
-            finalizeRetryMax= asInt(grailsApplication.config.rundeck?.execution?.finalize?.retryMax)
+        if(grailsApplication?.config?.getProperty("rundeck.execution.finalize.retryMax", Integer.class)){
+            finalizeRetryMax= grailsApplication.config.getProperty("rundeck.execution.finalize.retryMax", Integer.class)
         }
-        if(grailsApplication?.config?.rundeck?.execution?.finalize?.retryDelay){
-            finalizeRetryDelay= asInt(grailsApplication.config.rundeck?.execution?.finalize?.retryDelay)
+        if(grailsApplication?.config?.getProperty("rundeck.execution.finalize.retryDelay", Integer.class)){
+            finalizeRetryDelay= grailsApplication.config.getProperty("rundeck.execution.finalize.retryDelay", Integer.class)
         }
-        if(grailsApplication?.config?.rundeck?.execution?.stats?.retryMax){
-            statsRetryMax= asInt(grailsApplication.config.rundeck?.execution?.stats?.retryMax)
+        if(grailsApplication?.config?.getProperty("rundeck.execution.stats.retryMax", Integer.class)){
+            statsRetryMax= grailsApplication.config.getProperty("rundeck.execution.stats.retryMax", Integer.class)
         }
-        if(grailsApplication?.config?.rundeck?.execution?.stats?.retryDelay){
-            statsRetryDelay= asInt(grailsApplication.config.rundeck?.execution?.stats?.retryDelay)
+        if(grailsApplication?.config?.getProperty("rundeck.execution.stats.retryDelay", Integer.class)){
+            statsRetryDelay= grailsApplication.config.getProperty("rundeck.execution.stats.retryDelay", Integer.class)
         }
         MetricRegistry metricRegistry=context.jobDetail.jobDataMap.get('metricRegistry')
         if(metricRegistry){

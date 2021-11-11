@@ -69,6 +69,7 @@ class UtilityTagLib{
             'jobComponentSectionProperties',
             'jobComponentFieldPrefix',
             'jobComponentMessagesType',
+            'rConfig',
     ]
 
     private static Random rand=new java.util.Random()
@@ -857,8 +858,8 @@ class UtilityTagLib{
 
         def helpBase
         def helpUrl
-        if(grailsApplication.config.rundeck?.gui?.helpLink){
-            helpBase= grailsApplication.config.rundeck?.gui?.helpLink
+        if(configurationService.getString("gui.helpLink")){
+            helpBase= configurationService.getString("gui.helpLink")
             helpUrl=helpBase + path + fragment
         }else{
             def docVersion = rdversion?.contains('SNAPSHOT')?'docs':rdversionShort
@@ -1102,7 +1103,7 @@ class UtilityTagLib{
 
     protected SynchronizerTokensHolder tokensHolder() {
         SynchronizerTokensHolder tokensHolder
-        if (grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true, 'true']) {
+        if (configurationService.getBoolean("security.useHMacRequestTokens", false)) {
             //enable hmac request tokens which expire instead of Grails' default UUID based tokens
             tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user,
                     request.remoteAddr])
@@ -1131,7 +1132,7 @@ class UtilityTagLib{
         if (attrs.containsKey('useToken')) {
             useToken = attrs.boolean('useToken')
         }
-        if(useToken && grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true,'true']){
+        if(useToken && configurationService.getBoolean("security.useHMacRequestTokens",false)){
             //enable hmac request tokens which expire instead of Grails' default UUID based tokens
             def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
         }
@@ -1141,7 +1142,7 @@ class UtilityTagLib{
     }
 
     def appTitle={attrs,body->
-        grailsApplication.config.rundeck.gui.title ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
+        configurationService.getString("gui.title") ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
     }
 
     def executionMode={attrs,body->
@@ -2084,5 +2085,24 @@ ansi-bg-default'''))
             throw new IllegalArgumentException("name attr is required for jobComponentMessagesType tag")
         }
         RundeckJobDefinitionManager.getMessagesTypeForJobComponent(attrs.name)
+    }
+
+    /**
+     * Return a new random string every time it is called.  Attrs are:
+     * len: number of random bytes to use
+     * format: printf format for the byte array, default is a hex string "%x"
+     */
+    def rConfig={attrs,body->
+        def defValue = attrs.defValue
+        if(attrs.type == 'boolean'){
+            out << configurationService.getBoolean(attrs.value,defValue?defValue:false )
+        }else if(attrs.type == 'integer'){
+            out << configurationService.getInteger(attrs.value,defValue?defValue:null )
+        }else if(attrs.type == 'long'){
+            out <<  configurationService.getLong(attrs.value,defValue?defValue:null )
+        }else{
+            def result = configurationService.getString(attrs.value, defValue?defValue:null)
+            out << result
+        }
     }
 }

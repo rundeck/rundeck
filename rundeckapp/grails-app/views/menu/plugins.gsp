@@ -62,7 +62,8 @@ To change this template use File | Settings | File Templates.
           <div class="card-header">
             <h3 class="card-title">
               <g:message code="page.Plugins.title"/>
-              <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled in [true,"true"]}"/>
+              <g:set var="repoEnabled" value="${g.rConfig(value: "feature.repository.enabled", type: 'string') in [true,'true']}"/>
+
               <g:if test="${repoEnabled}">
                 <div class="btn-toolbar">
                   <g:link controller="artifact" action="index" class="btn btn-success pull-right">
@@ -78,8 +79,8 @@ To change this template use File | Settings | File Templates.
               <g:else>
                 <g:set var="pluginParams" value="${g.helpLinkParams(campaign: 'getpluginlink')}"/>
                 <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
-                <g:set var="pluginLinkUrl"
-                value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
+                <g:set var="pluginLinkUrl" value="${g.rConfig(value: "gui.pluginLink", type: 'string', defValue:pluginUrl)}"/>
+
                 <div class="btn-toolbar">
                   <a href="${enc(attr:pluginLinkUrl)}" class="btn-group btn btn-success pull-right">
                     <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>

@@ -66,7 +66,7 @@ class RefererInterceptor {
             return true
         }
 
-        def urlString = (grailsApplication.config.grails.serverURL).toString()
+        def urlString = grailsApplication.config.getProperty("grails.serverURL",String.class,'')
         // Require referer header to be from HTTPS version of server URL, otherwise allow HTTP. Default: true.
         def requireHttps = configurationService.getBoolean('security.csrf.referer.requireHttps', true)
 

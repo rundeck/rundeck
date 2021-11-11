@@ -14,12 +14,12 @@
   - limitations under the License.
   --}%
 
-<g:set var="sidebarColor" value="${grailsApplication.config.rundeck.gui.sidebarColor}"/>
-<g:set var="sidebarTextColor" value="${grailsApplication.config.rundeck.gui.sidebarTextColor}"/>
-<g:set var="sidebarTextActiveColor" value="${grailsApplication.config.rundeck.gui.sidebarTextActiveColor}"/>
+<g:set var="sidebarColor" value="${g.rConfig(value: "gui.sidebarColor", type: 'string')}"/>
+<g:set var="sidebarTextColor" value="${g.rConfig(value: "gui.sidebarTextColor", type: 'string')}"/>
+<g:set var="sidebarTextActiveColor" value="${g.rConfig(value: "gui.sidebarTextActiveColor", type: 'string')}"/>
 
-<g:set var="instanceNameLabelColor" value="${grailsApplication.config.rundeck.gui.instanceNameLabelColor}"/>
-<g:set var="instanceNameLabelTextColor" value="${grailsApplication.config.rundeck.gui.instanceNameLabelTextColor}"/>
+<g:set var="instanceNameLabelColor" value="${g.rConfig(value: "gui.instanceNameLabelColor", type: 'string')}"/>
+<g:set var="instanceNameLabelTextColor" value="${g.rConfig(value: "gui.instanceNameLabelTextColor", type: 'string')}"/>
 
 <style type="text/css">
   <g:if test="sidebarColor">

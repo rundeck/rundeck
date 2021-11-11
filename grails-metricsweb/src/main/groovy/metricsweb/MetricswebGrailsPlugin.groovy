@@ -63,13 +63,17 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
     def scm = [ url: "http://github.com/dtolabs/rundeck" ]
 
     def doWithWebDescriptor = { xml ->
-        if(!(grailsApplication.config.rundeck.metrics.enabled in [true,'true'])){
+        boolean metricsEnabled = grailsApplication.config.getProperty("rundeck.metrics.enabled", Boolean.class, false)
+        boolean requestFilterEnabled = grailsApplication.config.getProperty("rundeck.metrics.requestFilterEnabled", Boolean.class , false)
+        String servletUrlPattern = grailsApplication.config.getProperty("rundeck.metrics.servletUrlPattern", String.class, false)
+
+        if(!metricsEnabled){
             return
         }
-        if(grailsApplication.config.rundeck.metrics.servletUrlPattern){
+        if(servletUrlPattern){
             addServlets(grailsApplication.config,xml)
         }
-        if (grailsApplication.config.rundeck.metrics.requestFilterEnabled in [true,'true']) {
+        if (requestFilterEnabled) {
             addFilters(grailsApplication.config,xml)
         }
     }
@@ -138,8 +142,9 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
 
     def doWithDynamicMethods = { applicationContext ->
         def metricRegistry = applicationContext.getBean(MetricRegistry)
-        def metricsEnabled = grailsApplication.config.rundeck.metrics.enabled in [true, 'true']
-        def disabledClasses = grailsApplication.config.rundeck.metrics.disabledClasses?:[]
+        boolean metricsEnabled = grailsApplication.config.getProperty("rundeck.metrics.enabled", Boolean.class, false)
+        def disabledClasses = grailsApplication.config.getProperty("rundeck.metrics.disabledClasses", String.class, "")?:[]
+
         if(disabledClasses instanceof String){
             disabledClasses= disabledClasses.split(/,\s*/) as List
         }
@@ -211,10 +216,14 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
                 applicationContext.getBean(MetricRegistry))
         applicationContext.servletContext.setAttribute('com.codahale.metrics.servlets.HealthCheckServlet.registry',
                 applicationContext.getBean(HealthCheckRegistry))
-        if (!(grailsApplication.config.rundeck.metrics.enabled in [true, 'true'])) {
+
+        boolean metricsEnabled = grailsApplication.config.getProperty("rundeck.metrics.enabled", Boolean.class, false)
+
+        if (!metricsEnabled) {
             return
         }
-        def metricsJmx = grailsApplication.config.rundeck.metrics.jmxEnabled in ['true', true]
+        boolean metricsJmx = grailsApplication.config.getProperty("rundeck.metrics.jmxEnabled", Boolean.class, false)
+
         if (metricsJmx && applicationContext.getBean(MetricRegistry)) {
             final JmxReporter reporter = JmxReporter.forRegistry(applicationContext.getBean(MetricRegistry)).build();
             reporter.start();
