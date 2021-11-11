@@ -59,7 +59,7 @@
 
   &.aborted,
   &[data-execstate=ABORTED] {
-    color: var(--danger-color);
+    color: var(--background-color-accent-lvl3);
     &.icon{
       &:after {
         content: "\f056";
