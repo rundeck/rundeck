@@ -32,7 +32,7 @@ configurations {
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    compile project(":core")
+    implementation project(":core")
 
     // Note; grails also has dependency on metrics-core
     api "io.dropwizard.metrics:metrics-core:4.1.5"
