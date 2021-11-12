@@ -24,7 +24,8 @@ import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.servlet.mvc.TokenResponseHandler
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.project.AuthorizingProjectAdhoc
-import org.rundeck.app.authorization.domain.system.AuthorizingSystem
+import org.rundeck.app.web.WebExceptionHandler
+import org.rundeck.core.auth.access.MissingParameter
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -51,6 +52,7 @@ class ControllerBase {
     ApiService apiService
     AppAuthContextProcessor rundeckAuthContextProcessor
     RdDomainAuthorizer rundeckDomainAuthorizer
+    WebExceptionHandler rundeckExceptionHandler
 
     protected UserAndRolesAuthContext getSystemAuthContext(){
         rundeckAuthContextProcessor.getAuthContextForSubject(getSubject())
@@ -166,48 +168,21 @@ class ControllerBase {
      * @param access exception
      */
     def handleUnauthorized(UnauthorizedAccess access){
-        if(request.api_version){
-            apiService.renderErrorFormat(response, [
-                status: HttpServletResponse.SC_FORBIDDEN,
-                code: 'api.error.item.unauthorized',
-                args: [access.action, access.type, access.name]
-            ])
-        }else{
-            renderUnauthorized(access.action, access.type, access.name)
-        }
+        rundeckExceptionHandler.handleException(request, response, access)
     }
     /**
      * Handle unauthorized exception
      * @param notFound exception
      */
     def handleNotFound(NotFound notFound){
-        if(request.api_version){
-            apiService.renderErrorFormat(response, [
-                status: HttpServletResponse.SC_NOT_FOUND,
-                code: 'api.error.item.doesnotexist',
-                args: [notFound.type, notFound.name]
-            ])
-        }else{
-            renderNotfound(notFound.type, notFound.name)
-        }
+        rundeckExceptionHandler.handleException(request, response, notFound)
     }
     /**
      * Handle unauthorized exception
      * @param notFound exception
      */
     def handleMissingParameter(MissingParameter notFound){
-        if(request.api_version){
-            apiService.renderErrorFormat(response, [
-                status: HttpServletResponse.SC_BAD_REQUEST,
-                code: 'api.error.parameter.required',
-                args: [notFound.parameters.join(',')]
-            ])
-        }else{
-            request.errorCode = 'api.error.parameter.required'
-            request.errorArgs = [notFound.parameters.join(',')]
-            response.status = HttpServletResponse.SC_BAD_REQUEST
-            renderErrorView("parameters required: $notFound.message")
-        }
+        rundeckExceptionHandler.handleException(request, response, notFound)
     }
 
     /**
