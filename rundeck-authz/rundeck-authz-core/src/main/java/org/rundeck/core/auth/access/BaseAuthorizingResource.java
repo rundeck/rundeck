@@ -11,12 +11,17 @@ import javax.security.auth.Subject;
  * @param <T> resource type
  */
 public abstract class BaseAuthorizingResource<T>
-    extends BaseAuthorizingAccess
+        extends BaseAuthorizingAccess
         implements AuthorizingResource<T>
 {
 
-    public BaseAuthorizingResource(final AuthContextProcessor rundeckAuthContextProcessor, final Subject subject) {
-        super(rundeckAuthContextProcessor, subject);
+    public BaseAuthorizingResource(
+            final AuthContextProcessor rundeckAuthContextProcessor,
+            final Subject subject,
+            final NamedAuthProvider namedAuthActions
+    )
+    {
+        super(rundeckAuthContextProcessor, subject, namedAuthActions);
     }
 
     /**

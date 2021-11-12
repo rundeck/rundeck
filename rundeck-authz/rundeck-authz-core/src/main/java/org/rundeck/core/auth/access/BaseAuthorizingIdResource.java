@@ -22,10 +22,11 @@ public abstract class BaseAuthorizingIdResource<T, ID>
     public BaseAuthorizingIdResource(
             final AuthContextProcessor rundeckAuthContextProcessor,
             final Subject subject,
+            final NamedAuthProvider namedAuthActions,
             final ID identifier
     )
     {
-        super(rundeckAuthContextProcessor, subject);
+        super(rundeckAuthContextProcessor, subject, namedAuthActions);
         this.identifier = identifier;
     }
 
@@ -33,12 +34,12 @@ public abstract class BaseAuthorizingIdResource<T, ID>
     /**
      * @return project name for resource, or from ID, or null
      */
-    protected abstract String getProject(ID identifier);
+    protected abstract String getProject();
 
 
     @Override
     public UserAndRolesAuthContext getAuthContext() {
-        return getAuthContext(getProject(identifier));
+        return getAuthContext(getProject());
     }
 
     private UserAndRolesAuthContext projectAuthContext = null;
@@ -58,7 +59,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
             throw new NotFound(getResourceTypeName(), getResourceIdent());
         }
 
-        String projectLevel = getProject(identifier);
+        String projectLevel = getProject();
         AuthResource authResource = getAuthResource(res);
 
         if (projectLevel == null || authResource.getContext() == AuthResource.Context.System) {
