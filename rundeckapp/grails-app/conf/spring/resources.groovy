@@ -77,7 +77,6 @@ import org.rundeck.app.authorization.RdAuthorizeInterceptor
 import org.rundeck.app.authorization.RdWebDefaultParameterNamesMapper
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
-import org.rundeck.app.authorization.WebAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppNamedAuthProvider
 import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
@@ -300,9 +299,6 @@ beans={
     rundeckAuthContextProcessor(BaseAuthContextProcessor){
         rundeckAuthContextProvider=ref('rundeckAuthContextProvider')
         rundeckAuthContextEvaluator=ref('rundeckAuthContextEvaluator')
-    }
-    rundeckWebAuthContextProcessor(WebAuthContextProcessor){
-        authContextProcessor = ref('rundeckAuthContextProcessor')
     }
 
     rundeckExecutionAuthorizer(AppExecutionResourceAuthorizer)
