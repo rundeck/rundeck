@@ -134,10 +134,12 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
 
         rundeckMetricsDisablingAdminServlet(DisablingAdminServlet)
         disablingAdminServletRegistrationBean(ServletRegistrationBean, ref('rundeckMetricsDisablingAdminServlet'), grailsApplication.config.rundeck.metrics.servletUrlPattern.toString()) {
-            loadOnStartup = 2
+            loadOnStartup = -1
         }
+
         metricRegistry(MetricRegistry)
         healthCheckRegistry(HealthCheckRegistry)
+
     }
 
     def doWithDynamicMethods = { applicationContext ->
