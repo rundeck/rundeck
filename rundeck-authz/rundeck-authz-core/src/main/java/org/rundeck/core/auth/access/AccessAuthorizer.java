@@ -12,5 +12,5 @@ public interface AccessAuthorizer<A extends AuthorizingAccess> {
      * @param subject authorization
      * @return authorizing resource
      */
-    A getAuthorizingResource(Subject subject);
+    A getAuthorizingResource(Subject subject, ResIdResolver resolver) throws MissingParameter;
 }
