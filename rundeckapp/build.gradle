@@ -80,7 +80,7 @@ dependencies {
 
     compile 'com.atlassian.commonmark:commonmark:0.11.0'
     compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
-    compile 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20211018.2' {
+    compile ('com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20211018.2') {
         exclude(group:'com.google.guava',module:'guava')
     }
     compile 'org.owasp.encoder:encoder:1.2.1'
