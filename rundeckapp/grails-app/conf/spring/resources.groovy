@@ -88,6 +88,8 @@ import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.*
+import org.rundeck.web.ExceptionHandler
+import org.rundeck.web.WebUtil
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
@@ -600,6 +602,9 @@ beans={
     /// XML/JSON custom marshaller support
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
+
+    rundeckWebUtil(WebUtil)
+    rundeckExceptionHandler(ExceptionHandler)
 
     //Job List Link Handler
     defaultJobListLinkHandler(GroupedJobListLinkHandler)
