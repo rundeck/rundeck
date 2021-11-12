@@ -9,12 +9,26 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AccessLevels {
+/**
+ * Utility methods for AuthActions interface
+ */
+public class AuthActionsUtil {
 
+    /**
+     * Create for single action
+     *
+     * @param action action
+     */
     public static AuthActions action(String action) {
         return or(Collections.singletonList(action));
     }
 
+    /**
+     * Combine actions
+     *
+     * @param a
+     * @param b
+     */
     public static AuthActions or(AuthActions a, AuthActions b) {
         return or(append(a.getActions(), b.getActions()));
     }
@@ -28,10 +42,22 @@ public class AccessLevels {
         return newList;
     }
 
+    /**
+     * Combine actions
+     *
+     * @param a       single action
+     * @param actions
+     */
     public static AuthActions or(String a, AuthActions actions) {
         return or(Collections.singletonList(a), actions);
     }
 
+    /**
+     * Combine actions
+     *
+     * @param a       list of actions
+     * @param actions
+     */
     public static AuthActions or(List<String> a, AuthActions actions) {
         if (nonEmpty(actions.getActions())) {
             return or(append(a, actions.getActions()));
@@ -47,42 +73,36 @@ public class AccessLevels {
         return list != null && list.size() > 0;
     }
 
+    /**
+     * Combine actions
+     *
+     * @param a
+     * @param actions list of actions
+     */
     public static AuthActions or(AuthActions a, List<String> actions) {
-        if (nonEmpty(a.getActions())) {
-            return or(append(a.getActions(), actions));
-        } else {
-            throw new IllegalArgumentException("Cannot combine any and all access levels: "
-                                               + a
-                                               + " and "
-                                               + actions);
-        }
+        return or(actions, a);
     }
 
+    /**
+     * Combine actions
+     */
     public static AuthActions or(String... args) {
         return or(Arrays.asList(args));
     }
 
+    /**
+     * Combine actions
+     */
     public static AuthActions or(List<String> args) {
         return new AnyAuth(args);
     }
 
+    /**
+     * Add description to AuthActions
+     */
     public static AuthActions withDescription(AuthActions actions, String description) {
         return new AnyAuth(actions.getActions(), description);
     }
-
-    public static final AuthActions
-            ALL_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
-    public static final AuthActions APP_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN);
-    public static final AuthActions OPS_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
-    public static final AuthActions APP_CREATE = or(AuthConstants.ACTION_CREATE, APP_ADMIN);
-    public static final AuthActions APP_READ = or(AuthConstants.ACTION_READ, APP_ADMIN);
-    public static final AuthActions APP_UPDATE = or(AuthConstants.ACTION_UPDATE, APP_ADMIN);
-    public static final AuthActions APP_DELETE = or(AuthConstants.ACTION_DELETE, APP_ADMIN);
-
-    public static final AuthActions APP_READ_OR_VIEW =
-            action(AuthConstants.ACTION_VIEW)
-                    .or(AuthConstants.ACTION_READ)
-                    .or(APP_ADMIN);
 
     @Getter
     @EqualsAndHashCode

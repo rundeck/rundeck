@@ -23,17 +23,20 @@ public interface AuthActions {
      * @param actions
      */
     default AuthActions or(AuthActions actions) {
-        return AccessLevels.or(this, actions);
+        return AuthActionsUtil.or(this, actions);
     }
 
     /**
      * @param actions
      */
     default AuthActions or(String... actions) {
-        return AccessLevels.or(this, Arrays.asList(actions));
+        return AuthActionsUtil.or(this, Arrays.asList(actions));
     }
 
     default AuthActions withDescription(String description) {
-        return AccessLevels.withDescription(this, description);
+        if (description != null && !description.equals("")) {
+            return AuthActionsUtil.withDescription(this, description);
+        }
+        return this;
     }
 }
