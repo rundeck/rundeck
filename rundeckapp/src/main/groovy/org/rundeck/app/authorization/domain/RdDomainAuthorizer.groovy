@@ -7,12 +7,19 @@ import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.authorization.domain.execution.ExecIdentifier
 import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
-import org.rundeck.app.authorization.domain.project.AppProjectIdentifier
+
 import org.rundeck.app.authorization.domain.project.AuthorizingProject
 import org.rundeck.app.authorization.domain.project.AuthorizingProjectAdhoc
 import org.rundeck.app.authorization.domain.system.AppSystemAccessAuthorizer
-import org.rundeck.app.authorization.domain.system.AuthorizingSystem
+import org.rundeck.core.auth.app.type.AuthorizingSystem
+import org.rundeck.core.auth.access.AuthorizingAccess
+import org.rundeck.core.auth.access.MissingParameter
+import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.ProjectIdentifier
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.access.ResIdResolver
+import org.rundeck.core.auth.app.TypedNamedAuthRequest
 import org.springframework.beans.factory.annotation.Autowired
 
 import javax.security.auth.Subject
@@ -21,7 +28,7 @@ import javax.security.auth.Subject
  * Consolidated access to authorized resources
  */
 @CompileStatic
-class RdDomainAuthorizer implements DomainAuthorizer{
+class RdDomainAuthorizer implements AppDomainAuthorizer {
     @Autowired
     AppExecutionResourceAuthorizer rundeckExecutionAuthorizer
     @Autowired
@@ -32,31 +39,51 @@ class RdDomainAuthorizer implements DomainAuthorizer{
     AppProjectAdhocResourceAuthorizer rundeckProjectAdhocAuthorizer
 
 
-    static ExecIdentifier executionId(String id, String project) {
-        new AppExecIdentifier(project, id)
-    }
-
-    static ProjectIdentifier projectId(String project) {
-        new AppProjectIdentifier(project)
+    @Override
+    boolean isAuthorized(final Subject subject, ResIdResolver resolver, final TypedNamedAuthRequest request)
+        throws MissingParameter {
+        def access = getAuthorizingAccess(subject, resolver, request.getType())
+        return access.isAuthorized(request)
     }
 
     @Override
-    AuthorizingExecution execution(Subject subject, ExecIdentifier identifier) {
-        rundeckExecutionAuthorizer.getAuthorizingResource(subject, identifier)
+    void authorize(final Subject subject, ResIdResolver resolver, final TypedNamedAuthRequest request)
+        throws UnauthorizedAccess, NotFound, MissingParameter {
+        def access = getAuthorizingAccess(subject, resolver, request.getType())
+        access.authorizeNamed(request)
+    }
+
+    AuthorizingAccess getAuthorizingAccess(Subject subject, ResIdResolver resolver, String type)
+        throws MissingParameter {
+        if (type == RundeckAccess.System.NAME) {
+            return system(subject)
+        } else if (type == RundeckAccess.Project.NAME) {
+            return project(subject, resolver)
+        } else if (type == RundeckAccess.Adhoc.NAME) {
+            return adhoc(subject, resolver)
+        } else if (type == RundeckAccess.Execution.NAME) {
+            return execution(subject, resolver)
+        }
+        throw new IllegalArgumentException("unknown type for authorizing access: " + type)
     }
 
     @Override
-    AuthorizingProject project(Subject subject, ProjectIdentifier identifier) {
-        rundeckProjectAuthorizer.getAuthorizingResource(subject, identifier)
+    AuthorizingExecution execution(Subject subject, ResIdResolver resolver) {
+        rundeckExecutionAuthorizer.getAuthorizingResource(subject, resolver)
     }
 
     @Override
-    AuthorizingProjectAdhoc adhoc(Subject subject, ProjectIdentifier identifier) {
-        rundeckProjectAdhocAuthorizer.getAuthorizingResource(subject, identifier)
+    AuthorizingProject project(Subject subject, ResIdResolver resolver) {
+        rundeckProjectAuthorizer.getAuthorizingResource(subject, resolver)
+    }
+
+    @Override
+    AuthorizingProjectAdhoc adhoc(Subject subject, ResIdResolver resolver) {
+        rundeckProjectAdhocAuthorizer.getAuthorizingResource(subject, resolver)
     }
 
     @Override
     AuthorizingSystem system(Subject subject) {
-        rundeckSystemAuthorizer.getAuthorizingResource(subject)
+        rundeckSystemAuthorizer.getAuthorizingResource(subject, null)
     }
 }

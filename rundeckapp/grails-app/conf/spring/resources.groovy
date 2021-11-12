@@ -73,9 +73,12 @@ import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.authorization.BaseAuthContextProcessor
 import org.rundeck.app.authorization.BaseAuthContextProvider
 import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
+import org.rundeck.app.authorization.RdAuthorizeInterceptor
+import org.rundeck.app.authorization.RdWebDefaultParameterNamesMapper
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.authorization.WebAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppNamedAuthProvider
 import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
@@ -87,6 +90,7 @@ import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
+import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
 import org.rundeck.web.ExceptionHandler
 import org.rundeck.web.WebUtil
@@ -130,13 +134,35 @@ import javax.security.auth.login.Configuration
 
 beans={
     xmlns context: "http://www.springframework.org/schema/context"
-//    if (Environment.PRODUCTION == Environment.current) {
-//        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-//            targetClass = "org.springframework.util.Log4jConfigurer"
-//            targetMethod = "initLogging"
-//            arguments = ["classpath:log4j.properties"]
-//        }
-//    }
+    xmlns aop:"http://www.springframework.org/schema/aop"
+
+    aop {
+        config("proxy-target-class": true) {
+            pointcut(id: "rdAuthInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorize)")
+            advisor('pointcut-ref': "rdAuthInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthSystemInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeSystem)")
+            advisor('pointcut-ref': "rdAuthSystemInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthProjectInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeProject)")
+            advisor('pointcut-ref': "rdAuthProjectInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthProjectAdhocInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeAdhoc)")
+            advisor('pointcut-ref': "rdAuthProjectAdhocInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthExecutionInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeExecution)")
+            advisor('pointcut-ref': "rdAuthExecutionInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+        }
+    }
+
+    rdAuthorizeInterceptor(RdAuthorizeInterceptor)
+    rundeckWebDefaultParameterNamesMapper(RdWebDefaultParameterNamesMapper) {
+        /**
+         * Default names for ID parameters for resource types
+         */
+        webDefaultParameterNames = [
+            (RundeckAccess.Project.NAME)  : 'project',
+            (RundeckAccess.Adhoc.NAME)    : 'project',
+            (RundeckAccess.Execution.NAME): 'id'
+        ]
+    }
+
     if (application.config.rundeck.multiURL?.enabled in ['true',true]) {
         Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
         String serverURL = application.config.grails.serverURL
@@ -280,10 +306,15 @@ beans={
     }
 
     rundeckExecutionAuthorizer(AppExecutionResourceAuthorizer)
+    rundeckExecutionNamedAuthDefinitionProvider(RundeckAccess.Execution)
     rundeckProjectAuthorizer(AppProjectResourceAuthorizer)
+    rundeckProjectNamedAuthDefinitionProvider(RundeckAccess.Project)
     rundeckProjectAdhocAuthorizer(AppProjectAdhocResourceAuthorizer)
+    rundeckProjectAdhocNamedAuthDefinitionProvider(RundeckAccess.Adhoc)
     rundeckSystemAuthorizer(AppSystemAccessAuthorizer)
+    rundeckSystemNamedAuthDefinitionProvider(RundeckAccess.System)
     rundeckDomainAuthorizer(RdDomainAuthorizer)
+    rundeckNamedAuthProvider(AppNamedAuthProvider)
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE

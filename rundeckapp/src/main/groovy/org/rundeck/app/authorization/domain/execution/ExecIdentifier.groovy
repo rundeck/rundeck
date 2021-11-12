@@ -6,5 +6,4 @@ import org.rundeck.core.auth.access.ProjectIdentifier
 @CompileStatic
 interface ExecIdentifier extends ProjectIdentifier {
     String getId()
-
 }

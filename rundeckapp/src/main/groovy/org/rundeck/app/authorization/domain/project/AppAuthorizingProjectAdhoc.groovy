@@ -5,14 +5,16 @@ import com.dtolabs.rundeck.core.authorization.AuthResource
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import groovy.transform.CompileStatic
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
+import org.rundeck.core.auth.access.NamedAuthProvider
 import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.access.Singleton
 
 import javax.security.auth.Subject
 
 @CompileStatic
-class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, ProjectIdentifier>
+class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, String>
     implements AuthorizingProjectAdhoc {
 
     final String resourceTypeName = 'Adhoc Command'
@@ -20,9 +22,10 @@ class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, Pr
     AppAuthorizingProjectAdhoc(
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject,
-        final ProjectIdentifier identifier
+        final NamedAuthProvider namedAuthActions,
+        final String identifier
     ) {
-        super(rundeckAuthContextProcessor, subject, identifier)
+        super(rundeckAuthContextProcessor, subject, namedAuthActions, identifier)
     }
 
     @Override
@@ -42,12 +45,12 @@ class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, Pr
 
     @Override
     String getResourceIdent() {
-        return identifier.project
+        return identifier
     }
 
     @Override
-    protected String getProject(final ProjectIdentifier identifier) {
-        identifier.project
+    protected String getProject() {
+        identifier
     }
 
 }
