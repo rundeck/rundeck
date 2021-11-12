@@ -99,52 +99,6 @@ class ControllerBase {
         throw new IllegalStateException("no subject found in session")
     }
 
-    protected def withHmacToken(Closure valid){
-        GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
-        TokenResponseHandler handler
-        if(isTokenValid(request)){
-            resetToken(request)
-            handler = new ValidResponseHandler(valid?.call())
-        } else {
-            handler = new InvalidResponseHandler()
-        }
-
-        request.request.setAttribute(TokenResponseHandler.KEY, handler)
-        return handler
-    }
-
-    def resetToken(GrailsWebRequest request) {
-        HMacSynchronizerTokensHolder holder = request.currentRequest.getSession(false)?.getAttribute(HMacSynchronizerTokensHolder.HOLDER)
-        String tokenInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_KEY]
-        if (!tokenInRequest) return
-
-        holder.resetToken(tokenInRequest)
-    }
-
-    boolean isTokenValid(GrailsWebRequest request) {
-        HMacSynchronizerTokensHolder holder = request.currentRequest.getSession(false)?.getAttribute(HMacSynchronizerTokensHolder.HOLDER)
-        if (!holder) return false
-
-        String tokenInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_KEY]
-        if (!tokenInRequest) return false
-
-        String timestampInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_TIMESTAMP]
-        if (!timestampInRequest) return false
-
-        long timestamp=0
-        try{
-            timestamp=Long.parseLong(timestampInRequest)
-        }catch (NumberFormatException e){
-            return false
-        }
-
-        try {
-            return holder.isValid(timestamp, tokenInRequest)
-        }
-        catch (IllegalArgumentException) {
-            return false
-        }
-    }
     def renderCompressed(HttpServletRequest request,HttpServletResponse response,String contentType, data){
         if(grailsApplication.config.rundeck?.ajax?.compression=='gzip'
                 && request.getHeader("Accept-Encoding")?.contains("gzip")){
