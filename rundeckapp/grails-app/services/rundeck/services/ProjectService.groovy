@@ -1614,7 +1614,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     log.error("[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}")
                     return
                 }
-                if (!e.save()) {
+                if (!e.save(flush: true)) {
                     execerrors<<"[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}"
                     log.error("[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}")
                     return
