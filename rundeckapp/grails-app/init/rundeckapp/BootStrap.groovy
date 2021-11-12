@@ -102,7 +102,7 @@ class BootStrap {
         servletContext.setAttribute("app.ident",grailsApplication.metadata['build.ident'])
         log.info("Starting ${appname} ${servletContext.getAttribute('app.ident')} ($shortBuildDate) ...")
         if(Boolean.getBoolean('rundeck.bootstrap.build.info')){
-            def buildInfo=grailsApplication.metadata.findAll{it.key.startsWith('build.core.git.')}
+            def buildInfo=grailsApplication.metadata.findAll{it.key?.startsWith('build.core.git.')}
             log.info("${appname} Build: ${buildInfo}")
         }
         /*filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
