@@ -2,6 +2,7 @@ package org.rundeck.core.auth.access;
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor;
 import com.dtolabs.rundeck.core.authorization.AuthResource;
+import org.rundeck.core.auth.app.RundeckAccess;
 
 import javax.security.auth.Subject;
 
@@ -106,17 +107,17 @@ public abstract class BaseAuthorizingResource<T>
 
     @Override
     public T getRead() throws UnauthorizedAccess, NotFound {
-        return access(AccessLevels.APP_READ);
+        return access(RundeckAccess.General.APP_READ);
     }
 
     @Override
     public T getAppAdmin() throws UnauthorizedAccess, NotFound {
-        return access(AccessLevels.APP_ADMIN);
+        return access(RundeckAccess.General.APP_ADMIN);
     }
 
     @Override
     public T getOpsAdmin() throws UnauthorizedAccess, NotFound {
-        return access(AccessLevels.OPS_ADMIN);
+        return access(RundeckAccess.General.OPS_ADMIN);
     }
 
 

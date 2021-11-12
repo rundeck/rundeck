@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProcessor;
 import com.dtolabs.rundeck.core.authorization.AuthResource;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import lombok.Getter;
+import org.rundeck.core.auth.app.RundeckAccess;
 
 import javax.security.auth.Subject;
 
@@ -79,7 +80,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
 
 
     public T getDelete() throws UnauthorizedAccess, NotFound {
-        return access(AccessLevels.APP_DELETE);
+        return access(RundeckAccess.General.APP_DELETE);
     }
 
 }

@@ -1,5 +1,7 @@
 package org.rundeck.core.auth.access;
 
+import org.rundeck.core.auth.app.RundeckAccess;
+
 /**
  * Authorized access to a Resource of a certain type and identity
  *
@@ -16,7 +18,7 @@ public interface AuthorizingIdResource<T, ID>
     ID getIdentifier();
 
     /**
-     * Authorize with {@link AccessLevels#APP_DELETE}
+     * Authorize with {@link RundeckAccess.General#APP_DELETE}
      * @return object
      * @throws UnauthorizedAccess if unauthorized
      * @throws NotFound if not found
