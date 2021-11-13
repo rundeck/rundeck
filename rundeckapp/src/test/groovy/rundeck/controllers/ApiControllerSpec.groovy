@@ -27,11 +27,8 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.mapping.LinkGenerator
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.RdDomainAuthorizer
-import org.rundeck.app.authorization.domain.system.AuthorizingSystem
-import org.rundeck.core.auth.access.Accessor
-import org.rundeck.core.auth.access.Singleton
-import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.ApiService
@@ -40,7 +37,7 @@ import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.security.auth.Subject
+import java.lang.annotation.Annotation
 
 class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
 
@@ -263,7 +260,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             0 * _(*_)
         }
 
-            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -319,7 +315,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -347,32 +342,21 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         input << ['metrics', 'ping', 'threads', 'healthcheck']
     }
 
+
     @Unroll
-    def "api metrics unauthorized"() {
-        given:
-        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
-        controller.apiService = Mock(ApiService)
-        controller.configurationService = Mock(ConfigurationService)
-        controller.grailsLinkGenerator = Mock(LinkGenerator) {
-            _ * link(*_) >> {
-                it[0].uri
-            }
-            0 * _(*_)
-        }
-
-            setAuthProcessor(false)
+    def "system auth access for endpoint #endpoint"() {
         when:
-        def result = controller.apiMetrics(input)
-
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeSystem)
         then:
-
-        response.status == 403
-
-
-        1 * controller.apiService.requireVersion(_, _, 25) >> true
-
+            result.value() == access
         where:
-        input << ['metrics', 'ping', 'threads', 'healthcheck']
+            endpoint        | access
+            'apiMetrics'    | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            'apiSystemInfo' | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+    }
+
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
 
     @Unroll
@@ -387,7 +371,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -429,7 +412,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -463,30 +445,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         'ping'        | [metrics: true]  | true
         'threads'     | [metrics: true]  | true
     }
-    def "api system info unauthorized"(){
-        given:
-            setAuthProcessor(false,['read','admin','ops_admin'])
-            controller.apiService=Mock(ApiService)
-        when:
-            controller.apiSystemInfo()
-        then:
-            1 * controller.apiService.requireApi(_,_)>>true
-            response.status==403
-    }
 
-    public void setAuthProcessor(boolean allow=true, List<String> expected=['read','admin','app_admin','ops_admin']) {
-        session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
-            1 * system(_)>>Mock(AuthorizingSystem){
-                1 * authorize({it.actions.containsAll(expected)}) >> {
-                    if(!allow){
-                        throw new UnauthorizedAccess('x', 'System','resource')
-                    }
-                    Singleton.ONLY
-                }
-                0*_(*_)
-            }
-            0*_(*_)
-        }
-    }
+
 }

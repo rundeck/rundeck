@@ -21,11 +21,11 @@ import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.system.AuthorizingSystem
-import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import grails.web.mapping.LinkGenerator
+import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 
@@ -41,7 +41,6 @@ class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
     def frameworkService
-    def userService
     def configurationService
     LinkGenerator grailsLinkGenerator
 
@@ -92,14 +91,15 @@ class ApiController extends ControllerBase{
      * @param name
      * @return
      */
+
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Metrics'
+    )
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
         }
-
-        authorizingSystem.authorize(
-            AuthorizingSystem.READ_OR_ANY_ADMIN.withDescription('Read System Metrics')
-        )
 
 
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
@@ -458,11 +458,14 @@ class ApiController extends ControllerBase{
     /**
      * /api/1/system/info: display stats and info about the server
      */
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,
+        description = 'Read System Info'
+    )
     def apiSystemInfo(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        authorizingSystem.authorize(AuthorizingSystem.READ_OR_OPS_ADMIN.withDescription('Read System Info'))
 
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")
