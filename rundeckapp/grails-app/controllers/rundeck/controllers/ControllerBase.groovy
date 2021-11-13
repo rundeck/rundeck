@@ -18,22 +18,18 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
-import org.grails.plugins.web.servlet.mvc.InvalidResponseHandler
-import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
-import org.grails.web.servlet.mvc.GrailsWebRequest
-import org.grails.web.servlet.mvc.TokenResponseHandler
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.web.WebParamsIdResolver
+import org.rundeck.app.authorization.domain.RdDomainAuthorizer
+import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.authorization.domain.project.AuthorizingProject
 import org.rundeck.app.authorization.domain.project.AuthorizingProjectAdhoc
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.access.MissingParameter
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
-import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
-import org.rundeck.app.authorization.domain.project.AuthorizingProject
-import org.rundeck.app.authorization.domain.RdDomainAuthorizer
-import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
-import org.rundeck.web.util.MissingParameter
-import org.springframework.web.context.request.RequestContextHolder
+import org.rundeck.core.auth.app.type.AuthorizingSystem
+import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.services.ApiService
 import rundeck.services.UiPluginService
 
@@ -41,7 +37,6 @@ import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.zip.GZIPOutputStream
-
 /**
  * Mixin utility for controllers
  * @author greg
@@ -53,6 +48,7 @@ class ControllerBase {
     AppAuthContextProcessor rundeckAuthContextProcessor
     RdDomainAuthorizer rundeckDomainAuthorizer
     WebExceptionHandler rundeckExceptionHandler
+    WebDefaultParameterNamesMapper rundeckWebDefaultParameterNamesMapper
 
     protected UserAndRolesAuthContext getSystemAuthContext(){
         rundeckAuthContextProcessor.getAuthContextForSubject(getSubject())
@@ -62,21 +58,26 @@ class ControllerBase {
         requireParams('project')
         rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(getSubject(),params.project.toString())
     }
+
+    private WebParamsIdResolver createParamsIdResolver() {
+        new WebParamsIdResolver(rundeckWebDefaultParameterNamesMapper.webDefaultParameterNames, params)
+    }
     /**
      *
      * @return authorized access to project, requires request parameter 'project'
      */
     protected AuthorizingProject getAuthorizingProject() {
         requireParams('project')
-        rundeckDomainAuthorizer.project(subject, RdDomainAuthorizer.projectId(params.project.toString()))
+        rundeckDomainAuthorizer.project(subject, createParamsIdResolver())
     }
+
     /**
      *
      * @return authorized access to project adhoc resource, requires request parameter 'project'
      */
     protected AuthorizingProjectAdhoc getAuthorizingProjectAdhoc() {
         requireParams('project')
-        rundeckDomainAuthorizer.adhoc(subject, RdDomainAuthorizer.projectId(params.project.toString()))
+        rundeckDomainAuthorizer.adhoc(subject, createParamsIdResolver())
     }
     /**
      *
@@ -84,7 +85,7 @@ class ControllerBase {
      */
     protected AuthorizingExecution getAuthorizingExecution() {
         requireParams('id')
-        rundeckDomainAuthorizer.execution(subject, RdDomainAuthorizer.executionId(params.id.toString(), params.project?.toString()))
+        rundeckDomainAuthorizer.execution(subject, createParamsIdResolver())
     }
     /**
      *
