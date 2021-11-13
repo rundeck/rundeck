@@ -1676,8 +1676,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         boolean forceIncomplete = false
     ) throws UnauthorizedAccess, NotFound
     {
-        if (!execution.isAuthorized(AuthorizingExecution.APP_KILL) ||
-            killAsUser && !execution.isAuthorized(AuthorizingExecution.APP_KILLAS)) {
+        if (!execution.isAuthorized(RundeckAccess.Execution.APP_KILL) ||
+            killAsUser && !execution.isAuthorized(RundeckAccess.Execution.APP_KILLAS)) {
             Execution e = execution.read
             return new AbortResult(
                     abortstate: ABORT_FAILED,
@@ -1880,7 +1880,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @CompileStatic
     Map deleteExecution(AuthorizingProject authorizingProject, AuthorizingExecution authorizingExecution) throws UnauthorizedAccess, NotFound{
-        authorizingProject.authorize(AuthorizingProject.APP_DELETE_EXECUTION)
+        authorizingProject.authorize(RundeckAccess.Project.APP_DELETE_EXECUTION)
         Execution e = authorizingExecution.locator.resource
         return deleteExecutionAuthorized(e, authorizingProject.authContext.username)
     }

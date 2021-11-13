@@ -233,7 +233,7 @@ class ExecutionController extends ControllerBase{
         }
 
         eprev = result ? result[0] : null
-        def readAuth = authorizingExecution.isAuthorized(AccessLevels.APP_READ)
+        def readAuth = authorizingExecution.isAuthorized(RundeckAccess.General.APP_READ)
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
@@ -290,7 +290,7 @@ class ExecutionController extends ControllerBase{
             flash.error="Some IDS are required for bulk delete"
             return redirect(action: 'index',controller: 'reports',params: [project:params.project])
         }
-        authorizingProject.authorize(AuthorizingProject.APP_DELETE_EXECUTION)
+        authorizingProject.authorize(RundeckAccess.Project.APP_DELETE_EXECUTION)
         def result = executionService.deleteBulkExecutionIds(ids, projectAuthContext, session.user)
         if(!result.success){
             flash.error=result.failures*.message.join(", ")
@@ -475,8 +475,8 @@ class ExecutionController extends ControllerBase{
             def requestActive=params.mode == 'active'
 
             authorizingSystem.authorize(
-                requestActive ? AuthorizingSystem.OPS_ENABLE_EXECUTION :
-                AuthorizingSystem.OPS_DISABLE_EXECUTION
+                requestActive ? RundeckAccess.System.OPS_ENABLE_EXECUTION :
+                RundeckAccess.System.OPS_DISABLE_EXECUTION
             )
 
             if(requestActive == executionService.executionsAreActive){
@@ -2158,8 +2158,8 @@ setTimeout(function(){
         }
 
         authorizingSystem.authorize(
-            active ? AuthorizingSystem.OPS_ENABLE_EXECUTION :
-            AuthorizingSystem.OPS_DISABLE_EXECUTION
+            active ? RundeckAccess.System.OPS_ENABLE_EXECUTION :
+            RundeckAccess.System.OPS_DISABLE_EXECUTION
         )
 
         executionService.setExecutionsAreActive(active)

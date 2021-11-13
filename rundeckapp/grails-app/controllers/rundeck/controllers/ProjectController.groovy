@@ -796,7 +796,7 @@ class ProjectController extends ControllerBase{
      * @param actions auth actions
      * @return FrameworkProject for the project
      */
-    private IRundeckProject validateProjectConfigApiRequest(AuthActions actions = AuthorizingProject.APP_CONFIGURE){
+    private IRundeckProject validateProjectConfigApiRequest(AuthActions actions = RundeckAccess.Project.APP_CONFIGURE){
         if (!apiService.requireApi(request, response)) {
             return null
         }
@@ -1501,7 +1501,7 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectExport(ProjectArchiveParams archiveParams) {
-        def project = validateProjectConfigApiRequest(AuthorizingProject.APP_EXPORT)
+        def project = validateProjectConfigApiRequest(RundeckAccess.Project.APP_EXPORT)
         if (!project) {
             return
         }
@@ -1661,7 +1661,7 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectImport(ProjectArchiveParams archiveParams){
-        def project = validateProjectConfigApiRequest(AuthorizingProject.APP_IMPORT)
+        def project = validateProjectConfigApiRequest(RundeckAccess.Project.APP_IMPORT)
         if (!project) {
             return
         }
@@ -1704,7 +1704,7 @@ class ProjectController extends ControllerBase{
         if (archiveParams.importScm && request.api_version >= ApiVersions.V28) {
             //verify scm access requirement
             if (archiveParams.importScm ) {
-                authorizingProject.authorize(AuthorizingProject.APP_CONFIGURE)
+                authorizingProject.authorize(RundeckAccess.Project.APP_CONFIGURE)
             }
         }else{
             archiveParams.importScm=false
