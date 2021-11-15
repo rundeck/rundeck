@@ -1,4 +1,5 @@
 import java.util.jar.JarInputStream
+import java.util.regex.Matcher
 
 buildscript {
     repositories {
@@ -125,6 +126,9 @@ dependencies {
         exclude(group:'org.eclipse.jetty.websocket',module:'websocket-server')
         exclude(group:'org.eclipse.jetty.websocket',module:'javax-websocket-server-impl')
     }
+    implementation platform("org.springframework.boot:spring-boot-dependencies:2.5.6")
+
+
     implementation "org.grails:grails-web-boot"
     implementation "org.grails:grails-logging"
     implementation "org.grails:grails-plugin-rest"
@@ -482,3 +486,18 @@ clean {
 //         }
 //     }
 // }
+
+tasks.withType(GenerateMavenPom).all {
+    doLast {
+        File file = new File("$buildDir/publications/mavenJava/pom-default.xml")
+        def text = file.text
+        def pattern = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)"
+        Matcher matcher = text =~ pattern
+        if (matcher.find()) {
+            text = text.replaceFirst(pattern, "")
+            def firstDeps = matcher.group(2)
+            text = text.replaceFirst(pattern, '$1$2' + firstDeps + '$3')
+        }
+        file.write(text)
+    }
+}
