@@ -1,18 +1,19 @@
+import java.util.regex.Matcher
+
 apply from: "${rootDir}/gradle/java.gradle"
 
 apply plugin: 'signing'
-
-configurations {
-    existing
-    signatures
-}
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
 
 def archiveName = project.name
+
 
 if (! archiveName.startsWith('rundeck'))
     archiveName = "rundeck-${project.name}"
 else if (archiveName.startsWith('rundeckapp'))
     archiveName = project.name.replace('rundeckapp', 'rundeck')
+
 
 /* Modify auto-gen POM which gets picked up by Bintray */
 /* install {
@@ -148,9 +149,11 @@ tasks.register('registerExisting') {
     }
 }
 /** Trick to get Gradle to require copyExisting when resolving configuration */
+/*
 def existingFiles = files("${buildDir}/noop")
 existingFiles.builtBy(registerExisting)
 configurations.existing.dependencies.add(project.dependencies.create(existingFiles))
+*/
 
 /** Sign existing artifacts **/
 /* signing {
@@ -187,3 +190,55 @@ tasks.withType(Sign) { t ->
     }
 }
  */
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = archiveName
+            groupId = project.group
+            version = version
+            from components.java
+            pom {
+                name = "Rundeck library ${archiveName}"
+                description = project.description?:'Rundeck'
+                url = 'http://rundeck.org'
+                properties = [
+                        myProp: "value",
+                        "prop.with.dots": "anotherValue"
+                ]
+                licenses {
+                    license {
+                        name = 'The Apache Software License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'gschueler'
+                        name = 'Greg Schueler'
+                        email = 'greg@rundeck.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git@github.com/rundeck/rundeck.git'
+                    developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
+                    url = 'https://github.com/rundeck/rundeck'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            // change URLs to point to your repos, e.g. http://my.org/repo
+            def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+            def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+
+            credentials {
+                username findProperty('sonatypeUsername')
+                password findProperty('sonatypePassword')
+            }
+        }
+    }
+}
