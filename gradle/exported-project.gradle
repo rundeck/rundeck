@@ -191,6 +191,13 @@ tasks.withType(Sign) { t ->
 }
  */
 
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+
 publishing {
     publications {
         mavenJava(MavenPublication) {

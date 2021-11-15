@@ -21,12 +21,14 @@ main() {
 
 build() {
     ./gradlew -Penvironment="${ENV}" -x check publishToMavenLocal ${RUNDECK_GRADLE_OPTS:-}
+    ./gradlew -Penvironment="${ENV}" -x check bootWar ${RUNDECK_GRADLE_OPTS:-}
     groovy testbuild.groovy --buildType="${ENV}"
     # make ENV="${ENV}" rpm deb
 }
 
 buildFork() {
     ./gradlew -Penvironment="${ENV}" publishToMavenLocal
+    ./gradlew -Penvironment="${ENV}" -x check bootWar ${RUNDECK_GRADLE_OPTS:-}
     groovy testbuild.groovy --buildType="${ENV}"
     # make ENV="${ENV}" rpm deb
 }
