@@ -21,7 +21,7 @@ executors:
         default: medium
       RUNDECK_GRADLE_OPTS:
         type: string
-        default: --no-daemon --max-workers 2 -x check install --stacktrace --info --parallel
+        default: --no-daemon --max-workers 2 -x check publishToMavenLocal --stacktrace --info --parallel
 
     docker:
       - image: rundeck/ci@sha256:ef1db4074daaea2882aaaea390604cb92488289549207211d3ef7cbbaedcdf65
@@ -112,7 +112,7 @@ jobs:
 
     executor:
       name: gradle-docker
-      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info --parallel --build-cache
+      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check publishToMavenLocal --stacktrace --info --parallel --build-cache
       resourceClass: xlarge
 
     steps:
