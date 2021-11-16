@@ -210,3 +210,11 @@ input[type="button"] {
     width: 100%;
   }
 }
+
+.btn-info-hollow.autohilite{
+  line-height: 18px;
+  color: var(--font-color);
+    background-color: var(--default-color);
+    border-color: var(--default-states-color);
+    box-shadow: var(--button-box-shadow);
+}
