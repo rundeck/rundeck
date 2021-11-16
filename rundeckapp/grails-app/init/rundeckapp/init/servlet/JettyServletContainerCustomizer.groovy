@@ -57,7 +57,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
  */
 class JettyConfigPropsInitParameterConfiguration extends AbstractConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(this)
-    Map<String, String> initParams
+    Map<String, String> initParams = [:]
 
     JettyConfigPropsInitParameterConfiguration(final Map<String, String> initParams) {
         this.initParams = initParams
@@ -66,6 +66,9 @@ class JettyConfigPropsInitParameterConfiguration extends AbstractConfiguration {
     @Override
     void preConfigure(final WebAppContext context) throws Exception {
         super.preConfigure(context)
+        if(!initParams){
+            initParams = [:]
+        }
         for (String key : initParams.keySet()) {
             context.setInitParameter(key, initParams[key])
         }

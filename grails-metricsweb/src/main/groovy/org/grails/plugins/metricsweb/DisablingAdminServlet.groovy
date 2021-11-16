@@ -16,6 +16,8 @@
 
 package org.grails.plugins.metricsweb
 
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.health.HealthCheckRegistry
 import com.codahale.metrics.servlets.AdminServlet
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import grails.core.GrailsApplication
@@ -71,6 +73,14 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
 
     @Override
     void init(ServletConfig config) throws ServletException {
+
+        config.getServletContext().setAttribute('com.codahale.metrics.servlet.InstrumentedFilter.registry',
+                applicationContext.getBean(MetricRegistry))
+        config.getServletContext().setAttribute('com.codahale.metrics.servlets.MetricsServlet.registry',
+                applicationContext.getBean(MetricRegistry))
+        config.getServletContext().setAttribute('com.codahale.metrics.servlets.HealthCheckServlet.registry',
+                applicationContext.getBean(HealthCheckRegistry))
+        
         super.init(config)
 
         WebApplicationContext context = WebApplicationContextUtils.getWebApplicationContext(config.servletContext);
