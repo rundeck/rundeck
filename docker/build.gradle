@@ -42,11 +42,13 @@ task officialBuild {
         file(outputDir).mkdir()
 
         def rundeckapp = project(":rundeckapp")
+        def archiveFile = rundeckapp.war.archiveFile.get().toString().replace("-plain","")
+        def archiveFileName = rundeckapp.war.archiveFileName.get().replace("-plain","")
 
         copy {
-            from rundeckapp.war.archiveFile
+            from archiveFile
             into "$projectDir/official/.build"
-            rename "$rundeckapp.war.archiveFileName", "rundeck.war"
+            rename "${archiveFileName}", "rundeck.war"
         }
 
         def args = [
@@ -60,8 +62,6 @@ task officialBuild {
             args.add("-t=rundeck/rundeck:$tag")
         
         args.add( "." )
-
-        println(args)
 
         exec {
             workingDir "./official"
