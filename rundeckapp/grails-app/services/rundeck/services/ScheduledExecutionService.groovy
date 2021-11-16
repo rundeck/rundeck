@@ -1143,7 +1143,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                   "oldQuartzJobName": oldJobName,
                   "oldQuartzGroupName": oldGroupName]
 
-        if(!forceLocal){
+        if(!forceLocal && frameworkService.isClusterModeEnabled()){
             boolean remoteAssign = remoteAssigned ?: jobSchedulerService.scheduleRemoteJob(data)
 
             if(remoteAssign){
@@ -3424,7 +3424,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     .save(flush: true)
         }
 
-        rescheduleJob(
+        def scheduleResult = rescheduleJob(
             scheduledExecution,
             oldjob.isScheduled,
             renamed ? oldjob.oldjobname : scheduledExecution.generateJobScheduledName(),
@@ -3432,12 +3432,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             false, !schedulingWasChanged || !modify
         )
 
+        boolean remoteSchedulingChanged = schedulingWasChanged && (scheduleResult == [null, null])
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
         if (renamed) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
         }
         def event = createJobChangeEvent(eventType, scheduledExecution, oldjob.originalRef)
-        return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
+        return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event, remoteSchedulingChanged: remoteSchedulingChanged]
 
 
     }
