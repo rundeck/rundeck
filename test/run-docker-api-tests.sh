@@ -22,8 +22,6 @@ check_args(){
 copy_jar(){
     local FARGS=("$@")
     local DIR=${FARGS[0]}
-    rm $PWD/rundeckapp/build/libs/*plain.war
-
     local buildJar=( $PWD/rundeckapp/build/libs/*.war )
     echo "Testing against ${buildJar[0]}"
     test -d $DIR || mkdir -p $DIR
