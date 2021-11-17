@@ -4,9 +4,8 @@
       <div class="input-group input-group-lg">
         <span class="input-group-addon">Plugin URL</span>
         <input
-          style="border: 1px solid #d6d7d6;background: #fff; border-right:0; padding-left:1em;"
           type="text"
-          class="form-control"
+          class="form-control input-text"
           placeholder="https://someurl.com/some-path/some-plugin.jar"
           v-model="pluginURL"
         >
@@ -72,4 +71,7 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+.input-text{
+  padding: 0 var(--spacing-6);
+}
 </style>
