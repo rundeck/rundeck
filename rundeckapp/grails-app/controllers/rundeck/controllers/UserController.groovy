@@ -152,9 +152,8 @@ class UserController extends ControllerBase{
         }
 
         int max = (params.max && params.max.isInteger()) ? params.max.toInteger() :
-                grailsApplication.config.getProperty(
-                        "rundeck.gui.user.profile.paginatetoken.max.per.page",
-                        Integer.class,
+                configurationService.getInteger(
+                        "gui.user.profile.paginatetoken.max.per.page",
                         DEFAULT_TOKEN_PAGE_SIZE)
 
         int offset = (params.offset && params.offset.isInteger()) ? params.offset.toInteger() : 0
@@ -522,9 +521,8 @@ class UserController extends ControllerBase{
         }
         def offset = params.getInt('offset', 0)
 
-        int max = grailsApplication.config.getProperty(
-                "rundeck.gui.user.summary.max.per.page",
-                Integer.class,
+        int max = configurationService.getInteger(
+                "gui.user.summary.max.per.page",
                 DEFAULT_USER_PAGE_SIZE
         )
 
