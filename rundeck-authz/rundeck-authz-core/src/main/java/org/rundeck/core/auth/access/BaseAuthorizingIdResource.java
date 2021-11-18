@@ -37,20 +37,31 @@ public abstract class BaseAuthorizingIdResource<T, ID>
      */
     protected abstract String getProject();
 
+    /**
+     * @return true if project value must be set, false otherwise
+     */
+    protected boolean isAuthContextWithProject() {
+        return true;
+    }
+
 
     @Override
     public UserAndRolesAuthContext getAuthContext() {
         return getAuthContext(getProject());
     }
 
-    private UserAndRolesAuthContext projectAuthContext = null;
+    private UserAndRolesAuthContext loadedAuthContext = null;
 
     public UserAndRolesAuthContext getAuthContext(String project) {
-        if (null == projectAuthContext) {
-            projectAuthContext =
-                    getRundeckAuthContextProcessor().getAuthContextForSubjectAndProject(getSubject(), project);
+        if (null == loadedAuthContext) {
+            if (isAuthContextWithProject()) {
+                loadedAuthContext =
+                        getRundeckAuthContextProcessor().getAuthContextForSubjectAndProject(getSubject(), project);
+            } else {
+                loadedAuthContext = getRundeckAuthContextProcessor().getAuthContextForSubject(getSubject());
+            }
         }
-        return projectAuthContext;
+        return loadedAuthContext;
     }
 
     @Override
