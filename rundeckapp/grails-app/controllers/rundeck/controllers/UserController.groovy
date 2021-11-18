@@ -29,6 +29,7 @@ import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
 import rundeck.services.UserService
+import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
 
