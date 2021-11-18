@@ -13,13 +13,13 @@ public class WebParamsIdResolver
 {
 
     private final Map<String, String> paramNames;
-    private final Map<String, Object> paramMap;
+    private final Map<Object, Object> paramMap;
 
     /**
      * @param paramNames parameter names for resource types
      * @param paramMap   parameter values
      */
-    public WebParamsIdResolver(final Map<String, String> paramNames, final Map<String, Object> paramMap) {
+    public WebParamsIdResolver(final Map<String, String> paramNames, final Map<Object, Object> paramMap) {
         this.paramNames = paramNames;
         this.paramMap = paramMap;
     }
