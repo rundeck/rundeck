@@ -1,12 +1,12 @@
 package org.rundeck.core.auth.app;
 
+import lombok.Getter;
 import org.rundeck.core.auth.AuthConstants;
+import org.rundeck.core.auth.AuthResources;
 import org.rundeck.core.auth.access.AuthActions;
 import org.rundeck.core.auth.access.NamedAuthDefinition;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.rundeck.core.auth.access.AuthActionsUtil.action;
 import static org.rundeck.core.auth.access.AuthActionsUtil.or;
@@ -18,7 +18,9 @@ public class RundeckAccess {
 
     public static final class General {
         public static final String AUTH_ANY_ADMIN = "anyAdmin";
-        public static final AuthActions ALL_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
+        public static final AuthActions
+                ALL_ADMIN =
+                or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
 
         public static final String AUTH_APP_ADMIN = "appAdmin";
         public static final AuthActions APP_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN);
@@ -54,23 +56,37 @@ public class RundeckAccess {
         }
     }
 
-    public static final class System implements NamedAuthDefinition {
-        public static final String NAME = "system";
+    @Getter
+    public static final class System
+            implements NamedAuthDefinition
+    {
+        public static final String GROUP = "system";
+        public static final String TYPE = "app.system";
 
         public static final String AUTH_CONFIGURE = "configure";
-        public static final AuthActions APP_CONFIGURE = action(AuthConstants.ACTION_CONFIGURE).or(RundeckAccess.General.ALL_ADMIN);
+        public static final AuthActions
+                APP_CONFIGURE =
+                action(AuthConstants.ACTION_CONFIGURE).or(RundeckAccess.General.ALL_ADMIN);
 
         public static final String AUTH_OPS_ENABLE_EXECUTION = "opsEnableExecution";
-        public static final AuthActions OPS_ENABLE_EXECUTION = action(AuthConstants.ACTION_ENABLE_EXECUTIONS).or(RundeckAccess.General.OPS_ADMIN);
+        public static final AuthActions
+                OPS_ENABLE_EXECUTION =
+                action(AuthConstants.ACTION_ENABLE_EXECUTIONS).or(RundeckAccess.General.OPS_ADMIN);
 
         public static final String AUTH_OPS_DISABLE_EXECUTION = "opsDisableExecution";
-        public static final AuthActions OPS_DISABLE_EXECUTION = action(AuthConstants.ACTION_DISABLE_EXECUTIONS).or(RundeckAccess.General.OPS_ADMIN);
+        public static final AuthActions
+                OPS_DISABLE_EXECUTION =
+                action(AuthConstants.ACTION_DISABLE_EXECUTIONS).or(RundeckAccess.General.OPS_ADMIN);
 
         public static final String AUTH_READ_OR_ANY_ADMIN = "readOrAnyAdmin";
-        public static final AuthActions READ_OR_ANY_ADMIN = action(AuthConstants.ACTION_READ).or(RundeckAccess.General.ALL_ADMIN);
+        public static final AuthActions
+                READ_OR_ANY_ADMIN =
+                action(AuthConstants.ACTION_READ).or(RundeckAccess.General.ALL_ADMIN);
 
         public static final String AUTH_READ_OR_OPS_ADMIN = "readOrOpsAdmin";
-        public static final AuthActions READ_OR_OPS_ADMIN = action(AuthConstants.ACTION_READ).or(RundeckAccess.General.OPS_ADMIN);
+        public static final AuthActions
+                READ_OR_OPS_ADMIN =
+                action(AuthConstants.ACTION_READ).or(RundeckAccess.General.OPS_ADMIN);
 
         public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
 
@@ -85,31 +101,41 @@ public class RundeckAccess {
             }});
         }
 
-        public String getName() {
-            return NAME;
-        }
-        public Map<String, AuthActions> getDefinitions(){
-            return NAMED_AUTH_ACTIONS;
-        }
+        final String groupName = GROUP;
+        final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
     }
 
-    public static final class Project implements NamedAuthDefinition {
-        public static final String NAME = "project";
+    @Getter
+    public static final class Project
+            implements NamedAuthDefinition
+    {
+        public static final String GROUP = "project";
+        public static final String TYPE = "app.project";
 
         public static final String AUTH_APP_CONFIGURE = "appConfigure";
-        public static final AuthActions APP_CONFIGURE = action(AuthConstants.ACTION_CONFIGURE).or(RundeckAccess.General.APP_ADMIN);
+        public static final AuthActions
+                APP_CONFIGURE =
+                action(AuthConstants.ACTION_CONFIGURE).or(RundeckAccess.General.APP_ADMIN);
 
         public static final String AUTH_APP_DELETE_EXECUTION = "appDeleteExecution";
-        public static final AuthActions APP_DELETE_EXECUTION = action(AuthConstants.ACTION_DELETE_EXECUTION).or(RundeckAccess.General.APP_ADMIN);
+        public static final AuthActions
+                APP_DELETE_EXECUTION =
+                action(AuthConstants.ACTION_DELETE_EXECUTION).or(RundeckAccess.General.APP_ADMIN);
 
         public static final String AUTH_APP_EXPORT = "appExport";
-        public static final AuthActions APP_EXPORT = action(AuthConstants.ACTION_EXPORT).or(RundeckAccess.General.APP_ADMIN);
+        public static final AuthActions
+                APP_EXPORT =
+                action(AuthConstants.ACTION_EXPORT).or(RundeckAccess.General.APP_ADMIN);
 
         public static final String AUTH_APP_IMPORT = "appImport";
-        public static final AuthActions APP_IMPORT = action(AuthConstants.ACTION_IMPORT).or(RundeckAccess.General.APP_ADMIN);
+        public static final AuthActions
+                APP_IMPORT =
+                action(AuthConstants.ACTION_IMPORT).or(RundeckAccess.General.APP_ADMIN);
 
         public static final String AUTH_APP_PROMOTE = "appPromote";
-        public static final AuthActions APP_PROMOTE = action(AuthConstants.ACTION_PROMOTE).or(RundeckAccess.General.APP_ADMIN);
+        public static final AuthActions
+                APP_PROMOTE =
+                action(AuthConstants.ACTION_PROMOTE).or(RundeckAccess.General.APP_ADMIN);
 
         public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
 
@@ -125,16 +151,95 @@ public class RundeckAccess {
             }};
             NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
         }
-        public String getName() {
-            return NAME;
-        }
-        public Map<String, AuthActions> getDefinitions(){
-            return NAMED_AUTH_ACTIONS;
-        }
+
+        final String groupName = GROUP;
+        final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
     }
 
-    public static final class Adhoc implements NamedAuthDefinition {
-        public static final String NAME = "adhoc";
+    /**
+     * Named auths for Types within the Application
+     */
+    @Getter
+    public static final class ApplicationType
+            implements NamedAuthDefinition
+    {
+        public static final String GROUP = "appType";
+        public static final String TYPE = "app.resource";
+
+        /**
+         * Resource type id for a resource kind
+         *
+         * @param kind
+         */
+        public static String typeForKind(String kind) {
+            return TYPE + "." + kind;
+        }
+
+        public static String kindForTypeId(String type) {
+            if (type.startsWith(TYPE + ".")) {
+                return type.substring(TYPE.length() + 1);
+            }
+            return null;
+        }
+
+        public static final Set<String> RESOURCE_TYPES;
+        public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
+
+        static {
+            Map<String, AuthActions> named = new HashMap<String, AuthActions>() {{
+                put(General.AUTH_APP_CREATE, General.APP_CREATE);
+            }};
+            NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
+
+            RESOURCE_TYPES = Collections.unmodifiableSet(AuthResources.appKinds);
+        }
+
+        final String groupName = GROUP;
+        final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
+    }
+
+    /**
+     * Named auths for Types within a Project
+     */
+    @Getter
+    public static final class ProjectType
+            implements NamedAuthDefinition
+    {
+        public static final String GROUP = "projectType";
+        public static final String TYPE = "project.resource";
+
+        public static String typeForKind(String kind) {
+            return TYPE + "." + kind;
+        }
+
+        public static String kindForTypeId(String type) {
+            if (type.startsWith(TYPE + ".")) {
+                return type.substring(TYPE.length() + 1);
+            }
+            return null;
+        }
+
+        public static final Set<String> RESOURCE_TYPES;
+        public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
+
+        static {
+            Map<String, AuthActions> named = new HashMap<String, AuthActions>() {{
+                put(General.AUTH_APP_CREATE, General.APP_CREATE);
+            }};
+            NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
+            RESOURCE_TYPES = Collections.unmodifiableSet(AuthResources.projectKinds);
+        }
+
+        final String groupName = GROUP;
+        final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
+    }
+
+    @Getter
+    public static final class Adhoc
+            implements NamedAuthDefinition
+    {
+        public static final String GROUP = "adhoc";
+        public static final String TYPE = "project.adhoc";
         public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
 
         static {
@@ -143,19 +248,22 @@ public class RundeckAccess {
             }};
             NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
         }
-        public String getName() {
-            return NAME;
-        }
-        public Map<String, AuthActions> getDefinitions(){
-            return NAMED_AUTH_ACTIONS;
-        }
+
+        final String groupName = GROUP;
+        final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
     }
 
-    public static final class Execution implements NamedAuthDefinition {
-        public static final String NAME = "execution";
+    @Getter
+    public static final class Execution
+            implements NamedAuthDefinition
+    {
+        public static final String GROUP = "execution";
+        public static final String TYPE = "project.execution";
 
         public static final String AUTH_APP_READ_OR_VIEW = "readOrView";
-        public static final AuthActions APP_READ_OR_VIEW = action(AuthConstants.ACTION_VIEW).or(AuthConstants.ACTION_READ).or(General.APP_ADMIN);
+        public static final AuthActions
+                APP_READ_OR_VIEW =
+                action(AuthConstants.ACTION_VIEW).or(AuthConstants.ACTION_READ).or(General.APP_ADMIN);
 
         public final static String AUTH_APP_KILL = "appKill";
         public final static AuthActions APP_KILL = or(AuthConstants.ACTION_KILL, General.APP_ADMIN);
@@ -176,12 +284,8 @@ public class RundeckAccess {
             NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
         }
 
-        public String getName() {
-            return NAME;
-        }
-        public Map<String, AuthActions> getDefinitions(){
-            return NAMED_AUTH_ACTIONS;
-        }
+        final String groupName = GROUP;
+        final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
     }
 
 }

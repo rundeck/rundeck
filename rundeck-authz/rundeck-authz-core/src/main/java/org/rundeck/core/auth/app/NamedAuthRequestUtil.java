@@ -40,7 +40,7 @@ public class NamedAuthRequestUtil {
 
     public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeSystem authorize) {
         return authorizeRequest(
-                RundeckAccess.System.NAME,
+                RundeckAccess.System.TYPE,
                 authorize.group(),
                 authorize.value(),
                 authorize.description()
@@ -49,7 +49,7 @@ public class NamedAuthRequestUtil {
 
     public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeProject authorize) {
         return authorizeRequest(
-                RundeckAccess.Project.NAME,
+                RundeckAccess.Project.TYPE,
                 authorize.group(),
                 authorize.value(),
                 authorize.description()
@@ -58,7 +58,7 @@ public class NamedAuthRequestUtil {
 
     public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeAdhoc authorize) {
         return authorizeRequest(
-                RundeckAccess.Adhoc.NAME,
+                RundeckAccess.Adhoc.TYPE,
                 authorize.group(),
                 authorize.value(),
                 authorize.description()
@@ -67,7 +67,7 @@ public class NamedAuthRequestUtil {
 
     public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeExecution authorize) {
         return authorizeRequest(
-                RundeckAccess.Execution.NAME,
+                RundeckAccess.Execution.TYPE,
                 authorize.group(),
                 authorize.value(),
                 authorize.description()

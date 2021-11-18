@@ -18,9 +18,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({TYPE, METHOD})
 public @interface RdAuthorizeAdhoc {
     /**
-     * Named auth group, defaults to {@link RundeckAccess.Adhoc#NAME}
+     * Named auth group, defaults to {@link RundeckAccess.Adhoc#GROUP}
      */
-    String group() default RundeckAccess.Adhoc.NAME;
+    String group() default RundeckAccess.Adhoc.GROUP;
 
     /**
      * Named auth value

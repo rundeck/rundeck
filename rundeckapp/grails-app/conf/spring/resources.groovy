@@ -156,9 +156,9 @@ beans={
          * Default names for ID parameters for resource types
          */
         webDefaultParameterNames = [
-            (RundeckAccess.Project.NAME)  : 'project',
-            (RundeckAccess.Adhoc.NAME)    : 'project',
-            (RundeckAccess.Execution.NAME): 'id'
+            (RundeckAccess.Project.TYPE)  : 'project',
+            (RundeckAccess.Adhoc.TYPE)    : 'project',
+            (RundeckAccess.Execution.TYPE): 'id'
         ]
     }
 

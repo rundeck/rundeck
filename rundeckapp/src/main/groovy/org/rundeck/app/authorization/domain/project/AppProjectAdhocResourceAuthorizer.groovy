@@ -22,7 +22,7 @@ class AppProjectAdhocResourceAuthorizer extends BaseResourceIdAuthorizer<Singlet
             rundeckAuthContextProcessor,
             subject,
             namedAuthProvider,
-            resolver.idForType(RundeckAccess.Project.NAME)
+            resolver.idForType(RundeckAccess.Project.TYPE)
         )
     }
 }

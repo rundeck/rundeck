@@ -4,7 +4,6 @@ import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizer
 import org.rundeck.core.auth.access.NamedAuthProvider
 import org.rundeck.core.auth.access.ResIdResolver
-import org.rundeck.core.auth.access.ResourceIdAuthorizer
 import org.rundeck.core.auth.app.RundeckAccess
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
@@ -24,8 +23,8 @@ class AppExecutionResourceAuthorizer extends BaseResourceIdAuthorizer<Execution,
             subject,
             namedAuthProvider,
             new AppExecIdentifier(
-                resolver.idForTypeOptional(RundeckAccess.Project.NAME).orElse(null),
-                resolver.idForType(RundeckAccess.Execution.NAME)
+                resolver.idForTypeOptional(RundeckAccess.Project.TYPE).orElse(null),
+                resolver.idForType(RundeckAccess.Execution.TYPE)
             )
         )
     }

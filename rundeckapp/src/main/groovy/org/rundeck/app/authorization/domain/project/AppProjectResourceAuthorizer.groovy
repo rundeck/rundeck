@@ -6,7 +6,6 @@ import org.rundeck.core.auth.access.MissingParameter
 import org.rundeck.core.auth.access.NamedAuthProvider
 import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.access.ResIdResolver
-import org.rundeck.core.auth.access.ResourceIdAuthorizer
 import org.rundeck.core.auth.app.RundeckAccess
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Project
@@ -25,7 +24,7 @@ class AppProjectResourceAuthorizer extends BaseResourceIdAuthorizer<Project, Aut
             rundeckAuthContextProcessor,
             subject,
             namedAuthProvider,
-            resolver.idForType(RundeckAccess.Project.NAME)
+            resolver.idForType(RundeckAccess.Project.TYPE)
         )
     }
 }

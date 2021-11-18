@@ -18,9 +18,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Target({TYPE, METHOD})
 public @interface RdAuthorizeProject {
     /**
-     * Named auth group, defaults to {@link RundeckAccess.Project#NAME}
+     * Named auth group, defaults to {@link RundeckAccess.Project#GROUP}
      */
-    String group() default RundeckAccess.Project.NAME;
+    String group() default RundeckAccess.Project.GROUP;
 
     /**
      * Named auth value

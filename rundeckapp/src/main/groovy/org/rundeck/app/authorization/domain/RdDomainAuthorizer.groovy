@@ -55,13 +55,13 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
 
     AuthorizingAccess getAuthorizingAccess(Subject subject, ResIdResolver resolver, String type)
         throws MissingParameter {
-        if (type == RundeckAccess.System.NAME) {
+        if (type == RundeckAccess.System.TYPE) {
             return system(subject)
-        } else if (type == RundeckAccess.Project.NAME) {
+        } else if (type == RundeckAccess.Project.TYPE) {
             return project(subject, resolver)
-        } else if (type == RundeckAccess.Adhoc.NAME) {
+        } else if (type == RundeckAccess.Adhoc.TYPE) {
             return adhoc(subject, resolver)
-        } else if (type == RundeckAccess.Execution.NAME) {
+        } else if (type == RundeckAccess.Execution.TYPE) {
             return execution(subject, resolver)
         }
         throw new IllegalArgumentException("unknown type for authorizing access: " + type)

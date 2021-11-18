@@ -9,7 +9,7 @@ public interface NamedAuthDefinition {
     /**
      * The group name
      */
-    String getName();
+    String getGroupName();
 
     /**
      * The auth action defintions by name

@@ -20,7 +20,7 @@ class AppNamedAuthProvider implements NamedAuthProvider, ApplicationContextAware
     Map<String, AuthActions> getAuthDefinitions(final String group) {
         Map<String, AuthActions> map = new HashMap<>()
         def beans = applicationContext.getBeansOfType(NamedAuthDefinition)
-        def provider = beans.values().find { it.name == group }
+        def provider = beans.values().find { it.groupName == group }
         if (provider) {
             map.putAll(provider.definitions)
         }
