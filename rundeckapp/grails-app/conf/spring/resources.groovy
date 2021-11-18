@@ -78,10 +78,12 @@ import org.rundeck.app.authorization.RdWebDefaultParameterNamesMapper
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.authorization.domain.AppNamedAuthProvider
+import org.rundeck.app.authorization.domain.appType.AppResourceTypeAuthorizer
 import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
 import org.rundeck.app.authorization.domain.RdDomainAuthorizer
+import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizer
 import org.rundeck.app.authorization.domain.system.AppSystemAccessAuthorizer
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
@@ -147,6 +149,10 @@ beans={
             advisor('pointcut-ref': "rdAuthProjectAdhocInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
             pointcut(id: "rdAuthExecutionInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeExecution)")
             advisor('pointcut-ref': "rdAuthExecutionInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthProjectTypeInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeProjectType)")
+            advisor('pointcut-ref': "rdAuthProjectTypeInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthApplicationTypeInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeApplicationType)")
+            advisor('pointcut-ref': "rdAuthApplicationTypeInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
         }
     }
 
@@ -309,6 +315,13 @@ beans={
     rundeckProjectAdhocNamedAuthDefinitionProvider(RundeckAccess.Adhoc)
     rundeckSystemAuthorizer(AppSystemAccessAuthorizer)
     rundeckSystemNamedAuthDefinitionProvider(RundeckAccess.System)
+
+    rundeckProjectTypeNamedAuthDefinitionProvider(RundeckAccess.ProjectType)
+    rundeckProjectTypeAuthorizer(AppProjectTypeAuthorizer)
+    
+    rundeckAppTypeNamedAuthDefinitionProvider(RundeckAccess.ApplicationType)
+    rundeckAppResourceTypeAuthorizer(AppResourceTypeAuthorizer)
+
     rundeckDomainAuthorizer(RdDomainAuthorizer)
     rundeckNamedAuthProvider(AppNamedAuthProvider)
 

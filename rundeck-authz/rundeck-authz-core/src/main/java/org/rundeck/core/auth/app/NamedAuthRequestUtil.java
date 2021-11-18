@@ -38,6 +38,30 @@ public class NamedAuthRequestUtil {
         return authorizeRequest(authorize.type(), authorize.group(), authorize.access(), authorize.description());
     }
 
+    /**
+     * Create request for the annotation
+     */
+    public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeApplicationType authorize) {
+        return authorizeRequest(
+                RundeckAccess.ApplicationType.typeForKind(authorize.type()),
+                authorize.group(),
+                authorize.access(),
+                authorize.description()
+        );
+    }
+
+    /**
+     * Create request for the annotation
+     */
+    public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeProjectType authorize) {
+        return authorizeRequest(
+                RundeckAccess.ProjectType.typeForKind(authorize.type()),
+                authorize.group(),
+                authorize.access(),
+                authorize.description()
+        );
+    }
+
     public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeSystem authorize) {
         return authorizeRequest(
                 RundeckAccess.System.TYPE,
@@ -98,6 +122,16 @@ public class NamedAuthRequestUtil {
                                     Collectors.toList()));
         list.addAll(Arrays
                             .stream(method.getAnnotationsByType(RdAuthorizeExecution.class))
+                            .map(NamedAuthRequestUtil::authorizeRequest)
+                            .collect(
+                                    Collectors.toList()));
+        list.addAll(Arrays
+                            .stream(method.getAnnotationsByType(RdAuthorizeApplicationType.class))
+                            .map(NamedAuthRequestUtil::authorizeRequest)
+                            .collect(
+                                    Collectors.toList()));
+        list.addAll(Arrays
+                            .stream(method.getAnnotationsByType(RdAuthorizeProjectType.class))
                             .map(NamedAuthRequestUtil::authorizeRequest)
                             .collect(
                                     Collectors.toList()));
