@@ -5,10 +5,8 @@ import com.dtolabs.rundeck.core.authorization.AuthResource
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import groovy.transform.CompileStatic
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.access.NamedAuthProvider
-import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.access.Singleton
 
 import javax.security.auth.Subject
