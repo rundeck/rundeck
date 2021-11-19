@@ -1740,7 +1740,7 @@ class ScheduledExecutionController  extends ControllerBase{
             flash.savedJobMessage="Saved changes to Job"
 
             if(result.remoteSchedulingChanged){
-                flash.info = "INFO: The schedule change will take effect after a few seconds."
+                flash.info = "INFO: Any scheduling changes will take effect after a few seconds."
             }
             scheduledExecutionService.logJobChange(changeinfo,scheduledExecution.properties)
             redirect(controller: 'scheduledExecution', action: 'show', params: [id: scheduledExecution.extid])

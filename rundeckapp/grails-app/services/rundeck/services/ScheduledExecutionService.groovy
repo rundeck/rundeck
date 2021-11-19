@@ -696,16 +696,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal, boolean remoteAssigned = false) {
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
-            def nextdate = null
-            def nextExecNode = null
             try {
-                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
+                return scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
             }
         } else if (wasScheduled && oldJobName && oldJobGroup) {
-            deleteJob(oldJobName, oldJobGroup)
+            return deleteJob(oldJobName, oldJobGroup)
         }
+
+        return false
     }
 
     /**
@@ -3432,7 +3432,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             false, !schedulingWasChanged || !modify
         )
 
-        boolean remoteSchedulingChanged = schedulingWasChanged && (scheduleResult == [null, null])
+        boolean remoteSchedulingChanged = scheduleResult == null || scheduleResult == [null, null]
+
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
         if (renamed) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
