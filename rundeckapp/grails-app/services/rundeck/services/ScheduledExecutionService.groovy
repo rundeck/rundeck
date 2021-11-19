@@ -696,16 +696,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal, boolean remoteAssigned = false) {
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
-            def nextdate = null
-            def nextExecNode = null
             try {
-                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
+                return scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
             }
         } else if (wasScheduled && oldJobName && oldJobGroup) {
-            deleteJob(oldJobName, oldJobGroup)
+            return deleteJob(oldJobName, oldJobGroup)
         }
+
+        return false
     }
 
     /**
@@ -1143,7 +1143,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                   "oldQuartzJobName": oldJobName,
                   "oldQuartzGroupName": oldGroupName]
 
-        if(!forceLocal){
+        if(!forceLocal && frameworkService.isClusterModeEnabled()){
             boolean remoteAssign = remoteAssigned ?: jobSchedulerService.scheduleRemoteJob(data)
 
             if(remoteAssign){
@@ -3424,7 +3424,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     .save(flush: true)
         }
 
-        rescheduleJob(
+        def scheduleResult = rescheduleJob(
             scheduledExecution,
             oldjob.isScheduled,
             renamed ? oldjob.oldjobname : scheduledExecution.generateJobScheduledName(),
@@ -3432,12 +3432,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             false, !schedulingWasChanged || !modify
         )
 
+        boolean remoteSchedulingChanged = scheduleResult == null || scheduleResult == [null, null]
+
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
         if (renamed) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
         }
         def event = createJobChangeEvent(eventType, scheduledExecution, oldjob.originalRef)
-        return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
+        return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event, remoteSchedulingChanged: remoteSchedulingChanged]
 
 
     }
