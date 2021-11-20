@@ -47,7 +47,7 @@ class ControllerBase {
     UiPluginService uiPluginService
     ApiService apiService
     AppAuthContextProcessor rundeckAuthContextProcessor
-    RdDomainAuthorizer rundeckDomainAuthorizer
+    AppDomainAuthorizer rundeckDomainAuthorizer
     WebExceptionHandler rundeckExceptionHandler
     WebDefaultParameterNamesMapper rundeckWebDefaultParameterNamesMapper
 
