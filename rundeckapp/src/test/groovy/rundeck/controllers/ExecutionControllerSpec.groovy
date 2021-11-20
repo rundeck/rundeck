@@ -37,14 +37,17 @@ import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.AppConstants
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.system.AuthorizingSystem
-import org.rundeck.core.auth.access.Accessor
+import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.access.NotFound
-import org.rundeck.core.auth.access.Singleton
-import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.authorization.domain.RdDomainAuthorizer
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeAdhoc
+import org.rundeck.core.auth.web.RdAuthorizeExecution
+import org.rundeck.core.auth.web.RdAuthorizeProject
+import org.rundeck.core.auth.web.RdAuthorizeSystem
+import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.Execution
 import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
@@ -56,6 +59,7 @@ import spock.lang.Unroll
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
+import java.lang.annotation.Annotation
 import java.text.SimpleDateFormat
 /**
  * Created by greg on 1/6/16.
@@ -68,6 +72,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         mockCodec(AnsiColorCodec)
         mockCodec(HTMLElementCodec)
         mockCodec(JSONCodec)
+        controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
+        controller.rundeckExceptionHandler=Mock(WebExceptionHandler)
     }
     def "api execution query no project"() {
         setup:
@@ -118,7 +124,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  { throw new NotFound('Execution', '-999') }
+                1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  { throw new NotFound('Execution', '-999') }
             }
         }
         when:
@@ -333,9 +339,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
             session.subject = new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
-                1 * execution(_,_)>>Mock(AuthorizingExecution){
-                    1 * getReadOrView() >>   e1
-
+                1 * execution(_, _) >> Mock(AuthorizingExecution) {
+                    1 * getResource() >> e1
                 }
             }
         when:
@@ -407,9 +412,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
             session.subject = new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
-                1 * execution(_,_)>>Mock(AuthorizingExecution){
-                    1 * getReadOrView() >>  e1
-
+                1 * execution(_, _) >> Mock(AuthorizingExecution) {
+                    1 * getResource() >> e1
                 }
             }
 
@@ -482,7 +486,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
                 1 * execution(_,_)>>Mock(AuthorizingExecution){
-                    1 * getReadOrView() >>  e1
+                    1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
                 }
             }
@@ -532,7 +536,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             session.subject = new Subject()
             controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
                 1 * execution(_,_)>>Mock(AuthorizingExecution){
-                    1 * getReadOrView() >>  e1
+                    1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
                 }
             }
@@ -584,7 +588,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  e1
+                1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
             }
         }
@@ -711,7 +715,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  e1
+                1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
             }
         }
@@ -846,7 +850,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  e1
+                1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
             }
         }
@@ -896,7 +900,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  e1
+                1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
             }
         }
@@ -936,9 +940,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
-            1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  e1
-
+            1 * execution(_, _) >> Mock(AuthorizingExecution) {
+                1 * getResource() >> e1
             }
         }
 
@@ -1024,9 +1027,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
 
         session.subject = new Subject()
         controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
-            1 * execution(_,_)>>Mock(AuthorizingExecution){
-                1 * getReadOrView() >>  e1
-
+            1 * execution(_, _) >> Mock(AuthorizingExecution) {
+                1 * getResource() >> e1
             }
         }
         when:
@@ -1040,36 +1042,65 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         response.text == "No output"
     }
 
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
+    }
+
     @Unroll
-    def "endpoint #endpoint requires authorization"() {
-        given:
-            Execution e1 = new Execution(
-                project: 'test1',
-                user: 'bob',
-                dateStarted: new Date(),
-                status: 'running'
-            )
-            e1.save() != null
-            controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
-            params.id = e1.id.toString()
-
-            session.subject = new Subject()
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
-                1 * execution(_,_)>>Mock(AuthorizingExecution){
-                    1 * getReadOrView() >>  {
-                            throw new UnauthorizedAccess('read', 'Execution', e1.id.toString())
-
-                    }
-
-                }
-            }
+    def "RdAuthorizeExecution required #access for endpoint #endpoint"() {
         when:
-            controller."$endpoint"()
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeExecution)
         then:
-            response.status == 403
+            result!=null
+            result.value() == access
         where:
-            endpoint << ["mail", "downloadOutput", "renderOutput"]
+            endpoint                 | access
+            'mail'                   | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
+            'downloadOutput'         | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
+            'renderOutput'           | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
+            'show'                   | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
+            'ajaxExecNodeState'      | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
+            'apiExecution'           | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
+            'apiExecutionState'      | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
+            'apiExecutionAbort'      | RundeckAccess.Execution.AUTH_APP_KILL
+            'apiExecutionInputFiles' | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
+    }
+
+    @Unroll
+    def "RdAuthorizeAdhoc required #access for endpoint #endpoint"() {
+        when:
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeAdhoc)
+        then:
+            result!=null
+            result.value() == access
+        where:
+            endpoint                 | access
+            'adhocHistoryAjax'       | RundeckAccess.General.AUTH_APP_READ
+    }
+
+    @Unroll
+    def "RdAuthorizeProject required #access for endpoint #endpoint"() {
+        when:
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeProject)
+        then:
+            result.value() == access
+        where:
+            endpoint             | access
+            'delete'             | RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION
+            'apiExecutionDelete' | RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION
+    }
+
+    @Unroll
+    def "RdAuthorizeSystem required #access for endpoint #endpoint"() {
+        when:
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeSystem)
+        then:
+            result.value() == access
+        where:
+            endpoint                  | access
+            'apiExecutionModeActive'  | RundeckAccess.System.AUTH_OPS_ENABLE_EXECUTION
+            'apiExecutionModePassive' | RundeckAccess.System.AUTH_OPS_DISABLE_EXECUTION
+            'apiExecutionModeStatus'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
     }
 
     @Unroll
@@ -1077,11 +1108,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         given:
 
             session.subject = new Subject()
-            controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
-                1 * system(_) >> Mock(AuthorizingSystem) {
-                    1 * authorize(access)
-                }
-            }
+
             controller.apiService = Mock(ApiService)
             controller.executionService = Mock(ExecutionService)
             request.method = 'POST'
@@ -1091,35 +1118,9 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * controller.apiService.requireApi(_, _, ApiVersions.V14) >> true
             1 * controller.executionService.setExecutionsAreActive(active)
         where:
-            active | endpoint                  | access
-            true   | 'apiExecutionModeActive'  | AuthorizingSystem.OPS_ENABLE_EXECUTION
-            false  | 'apiExecutionModePassive' | AuthorizingSystem.OPS_DISABLE_EXECUTION
+            active | endpoint
+            true   | 'apiExecutionModeActive'
+            false  | 'apiExecutionModePassive'
     }
 
-    @Unroll
-    def "api #endpoint unauthorized"() {
-        given:
-
-            session.subject = new Subject()
-            controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
-                1 * system(_) >> Mock(AuthorizingSystem) {
-                    1 * authorize(access) >>  {
-                        throw new UnauthorizedAccess('x', 'System', '')
-                    }
-                }
-            }
-            controller.apiService = Mock(ApiService)
-            controller.executionService = Mock(ExecutionService)
-            request.method = 'POST'
-        when:
-            controller."$endpoint"()
-        then:
-            1 * controller.apiService.requireApi(_, _, ApiVersions.V14) >> true
-            0 * controller.executionService.setExecutionsAreActive(_)
-            response.status == 403
-        where:
-            active | endpoint                  | access
-            true   | 'apiExecutionModeActive'  | AuthorizingSystem.OPS_ENABLE_EXECUTION
-            false  | 'apiExecutionModePassive' | AuthorizingSystem.OPS_DISABLE_EXECUTION
-    }
 }

@@ -43,12 +43,14 @@ import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.quartz.JobExecutionContext
 import org.rundeck.app.AppConstants
-import org.rundeck.app.authorization.domain.project.AuthorizingProject
-import org.rundeck.app.authorization.domain.system.AuthorizingSystem
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.core.auth.access.AccessLevels
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeAdhoc
+import org.rundeck.core.auth.web.RdAuthorizeExecution
+import org.rundeck.core.auth.web.RdAuthorizeProject
+import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
@@ -106,8 +108,8 @@ class ExecutionController extends ControllerBase{
      * @param max maximum results, defaults to 10
      * @return
      */
+    @RdAuthorizeAdhoc(RundeckAccess.General.AUTH_APP_READ)
     def adhocHistoryAjax(String project, int max, String query){
-        authorizingProjectAdhoc.authorize(AccessLevels.APP_READ)
 
         def execs = []
         def uniques=new HashSet<String>()
@@ -190,13 +192,14 @@ class ExecutionController extends ControllerBase{
         ]
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     public def show (ExecutionViewParams viewparams){
         if (viewparams.hasErrors()) {
             flash.errors=viewparams.errors
             render(view: '/common/error')
             return
         }
-        def Execution e = authorizingExecution.readOrView
+        def Execution e = authorizingExecution.resource
         def filesize=-1
         if(null!=e.outputfilepath){
             def file = new File(e.outputfilepath)
@@ -254,13 +257,13 @@ class ExecutionController extends ControllerBase{
         ]
     }
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION)
     def delete() {
         withForm{
-        def project = authorizingProject
-        project.authorize(AuthorizingProject.APP_DELETE_EXECUTION)
-        def Execution e = authorizingExecution.locator.resource
+        def authed = authorizingExecution
+        def Execution e = authorizingExecution.resource
         def jobid=e.scheduledExecution?.extid
-        def result = executionService.deleteExecution(e, project.authContext, project.authContext.username)
+        def result = executionService.deleteExecution(authorizingProject, authed)
         if(!result.success){
             flash.error=result.error
             return redirect(controller: 'execution', action: 'show', id: params.id, params: [project: params.project])
@@ -307,7 +310,7 @@ class ExecutionController extends ControllerBase{
         Execution e
         //NB: send custom response for unauthorized/not found
         try {
-            e = authorizingExecution.readOrView
+            e = authorizingExecution.access(RundeckAccess.Execution.APP_READ_OR_VIEW)
         } catch (UnauthorizedAccess ignored) {
             response.status=HttpServletResponse.SC_FORBIDDEN
             return render(contentType: 'application/json',text:[error: "Unauthorized: View Execution ${params.id}"] as JSON)
@@ -405,6 +408,7 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def ajaxExecNodeState(ExecutionViewParams viewparams) {
         if (viewparams.hasErrors()) {
             response.status = HttpServletResponse.SC_BAD_REQUEST
@@ -417,7 +421,7 @@ class ExecutionController extends ControllerBase{
         if (requireAjax(action: 'show', controller: 'execution', params: params)) {
             return
         }
-        def Execution e = authorizingExecution.readOrView
+        def Execution e = authorizingExecution.resource
 
         def data=[:]
         def selectedNode=params.node
@@ -448,8 +452,9 @@ class ExecutionController extends ControllerBase{
         return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def mail() {
-        Execution e = authorizingExecution.readOrView
+        Execution e = authorizingExecution.resource
         def file = loggingService.getLogFileForExecution(e)
         def filesize=-1
         if (file.exists()) {
@@ -663,8 +668,10 @@ class ExecutionController extends ControllerBase{
         }
 
     }
+
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def downloadOutput() {
-        Execution e = authorizingExecution.readOrView
+        Execution e = authorizingExecution.resource
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
@@ -729,8 +736,9 @@ class ExecutionController extends ControllerBase{
         iterator.close()
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def renderOutput() {
-        Execution e = authorizingExecution.readOrView
+        Execution e = authorizingExecution.resource
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
@@ -868,6 +876,7 @@ setTimeout(function(){
 
     }
 
+    @PackageScope
     boolean checkAllowUnsanitized(String project) {
         if(frameworkService.getRundeckFramework().hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
             if ("true" != frameworkService.getRundeckFramework().
@@ -1136,7 +1145,7 @@ setTimeout(function(){
 
         //NB: handle authorization/not found response uniquely for this endpoint
         try {
-            e = authorizingExecution.readOrView
+            e = authorizingExecution.access(RundeckAccess.Execution.APP_READ_OR_VIEW)
         } catch (UnauthorizedAccess ignored) {
             return apiError(
                 'api.error.item.unauthorized',
@@ -1671,11 +1680,12 @@ setTimeout(function(){
     /**
      * API: /api/execution/{id} , version 1
      */
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecution(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def Execution e = authorizingExecution.readOrView
+        def Execution e = authorizingExecution.resource
 
         if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
@@ -1696,11 +1706,12 @@ setTimeout(function(){
     /**
      * API: /api/execution/{id}/state , version 11
      */
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecutionState(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        Execution e = authorizingExecution.readOrView
+        Execution e = authorizingExecution.resource
 
         def loader = workflowService.requestState(e)
         def state= loader.workflowState
@@ -1802,31 +1813,24 @@ setTimeout(function(){
     /**
      * API: /api/execution/{id}/abort, version 1
      */
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_KILL)
     def apiExecutionAbort(){
         if (!apiService.requireApi(request, response)) {
             return
         }
 
         def auth = authorizingExecution
-        Execution e = auth.kill
+        Execution e = auth.resource
         ExecutionService.AbortResult abortresult
         try {
-
-            def ScheduledExecution se = e.scheduledExecution
-            def user=session.user
             def killas=null
             if (params.asUser) {
                 //authorized within service call
                 killas= params.asUser
             }
 
-
-
             abortresult = executionService.abortExecution(
-                se,
-                e,
-                user,
-                auth.authContext,
+                auth,
                 killas,
                 params.forceIncomplete == 'true'
             )
@@ -1889,11 +1893,13 @@ setTimeout(function(){
      * @return
      */
     @GrailsCompileStatic
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION)
     def apiExecutionDelete (){
         if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
-        def result = executionService.deleteExecution(authorizingProject, authorizingExecution)
+        def eauth=authorizingExecution
+        def result = executionService.deleteExecution(authorizingProject(eauth.resource.project), authorizingExecution)
         if(!result.success){
             log.error("Failed to delete execution: ${result.message}")
             def respFormat = apiService.extractResponseFormat(getRequest(), response, ['xml', 'json'])
@@ -2104,12 +2110,11 @@ setTimeout(function(){
      *
      * @return
      */
+    @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN)
     def apiExecutionModeStatus() {
         if (!apiService.requireApi(request, response, ApiVersions.V32)) {
             return
         }
-
-        authorizingSystem.authorize(AuthorizingSystem.READ_OR_ANY_ADMIN)
 
         def executionStatus = configurationService.executionModeActive
         int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE
@@ -2138,6 +2143,10 @@ setTimeout(function(){
      *
      * @return
      */
+
+    @RdAuthorizeSystem(
+        RundeckAccess.System.AUTH_OPS_ENABLE_EXECUTION
+    )
     def apiExecutionModeActive() {
         apiExecutionMode(true)
     }
@@ -2145,6 +2154,9 @@ setTimeout(function(){
      *
      * @return
      */
+    @RdAuthorizeSystem(
+        RundeckAccess.System.AUTH_OPS_DISABLE_EXECUTION
+    )
     def apiExecutionModePassive() {
         apiExecutionMode(false)
     }
@@ -2156,11 +2168,6 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
-
-        authorizingSystem.authorize(
-            active ? RundeckAccess.System.OPS_ENABLE_EXECUTION :
-            RundeckAccess.System.OPS_DISABLE_EXECUTION
-        )
 
         executionService.setExecutionsAreActive(active)
         withFormat{
@@ -2180,12 +2187,13 @@ setTimeout(function(){
     /**
      * List input files for an execution
      */
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecutionInputFiles() {
         if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
 
-        Execution e = authorizingExecution.readOrView
+        Execution e = authorizingExecution.resource
 
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
 
