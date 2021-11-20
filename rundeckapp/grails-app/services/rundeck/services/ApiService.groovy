@@ -404,7 +404,7 @@ class ApiService implements WebUtilService{
         if (status) {
             response.status = status
         }
-        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderXml(recall))
+        respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderXml(recall))
     }
     /**
      *
