@@ -145,7 +145,7 @@ class WebUtil implements WebUtilService, ResponseRenderer {
         respondOutput(response, JSON_CONTENT_TYPE, renderErrorJson(error, error.code.toString()))
     }
 
-    String renderErrorJson(Object messages, String code = null) {
+    Map<String,Object> createErrorMap(Object messages, String code = null) {
         Map<String, Object> result = new HashMap<>()
         result.putAll(
             [
@@ -172,7 +172,10 @@ class WebUtil implements WebUtilService, ResponseRenderer {
         } else if (messages instanceof Map && messages.message) {
             result.put('message', messages.message.toString())
         }
-        return (result as JSON).toString()
+        return result
+    }
+    String renderErrorJson(Object messages, String code = null) {
+        return (createErrorMap(messages,code) as JSON).toString()
     }
 
     void respondOutput(HttpServletResponse response, String contentType, String output) {

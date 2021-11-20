@@ -20,6 +20,10 @@ public interface WebUtilService {
      */
     void renderErrorFormat(HttpServletResponse response, Map<String, Object> error);
 
+    void renderErrorJson(HttpServletResponse response, Map<String, Object> error);
+
+    void renderErrorXml(HttpServletResponse response, Map<String, Object> error);
+
     /**
      * Require API request with a minimum API version
      *
