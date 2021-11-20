@@ -8,6 +8,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.access.NamedAuthProvider
 import org.rundeck.core.auth.access.Singleton
+import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc
 
 import javax.security.auth.Subject
 
@@ -37,8 +38,8 @@ class AppAuthorizingProjectAdhoc extends BaseAuthorizingIdResource<Singleton, St
     }
 
     @Override
-    protected Singleton retrieve() {
-        return Singleton.ONLY
+    protected Optional<Singleton> retrieve() {
+        return Optional.of(Singleton.ONLY)
     }
 
     @Override

@@ -8,7 +8,6 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import grails.compiler.GrailsCompileStatic
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.core.auth.access.*
-import org.rundeck.core.auth.app.RundeckAccess
 import rundeck.Project
 
 import javax.security.auth.Subject
@@ -46,9 +45,8 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<IRundeckProject, S
     }
 
     @Override
-    protected Project retrieve() {
-        //TODO
-        return Project.findByName(identifier)
+    protected Optional<IRundeckProject> retrieve() {
+        return Optional.ofNullable(projectManager.getFrameworkProject(identifier))
     }
 
     @Override
@@ -59,26 +57,6 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<IRundeckProject, S
     @Override
     protected String getProject() {
         identifier
-    }
-
-    public Project getConfigure() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.Project.APP_CONFIGURE);
-    }
-
-    public Project getDeleteExecution() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.Project.APP_DELETE_EXECUTION);
-    }
-
-    public Project getExport() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.Project.APP_EXPORT);
-    }
-
-    public Project getImport() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.Project.APP_IMPORT);
-    }
-
-    public Project getPromote() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.Project.APP_PROMOTE);
     }
 
 }

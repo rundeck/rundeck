@@ -66,10 +66,7 @@ public abstract class BaseAuthorizingIdResource<T, ID>
 
     @Override
     public boolean isAuthorized(final AuthActions actions) throws NotFound {
-        T res = retrieve();
-        if (res == null) {
-            throw new NotFound(getResourceTypeName(), getResourceIdent());
-        }
+        T res = getResource();
 
         String projectLevel = getProject();
         AuthResource authResource = getAuthResource(res);
@@ -88,10 +85,4 @@ public abstract class BaseAuthorizingIdResource<T, ID>
                 projectLevel
         );
     }
-
-
-    public T getDelete() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.General.APP_DELETE);
-    }
-
 }

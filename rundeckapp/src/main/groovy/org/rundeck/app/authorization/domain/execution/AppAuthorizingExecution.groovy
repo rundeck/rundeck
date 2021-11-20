@@ -51,16 +51,16 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
     private Execution found
 
     @Override
-    protected Execution retrieve() {
+    protected Optional<Execution> retrieve() {
         if (null != found) {
-            return found
+            return Optional.of(found)
         }
         if (identifier.project) {
             found = Execution.findByIdAndProject(identifier.id.toLong(), identifier.project)
         } else {
             found = Execution.get(identifier.id.toLong())
         }
-        found
+        Optional.ofNullable(found)
     }
 
 
@@ -74,7 +74,7 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
         if (identifier.project) {
             return identifier.project
         } else {
-            retrieve().project
+            retrieve().get().project
         }
     }
 

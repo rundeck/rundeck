@@ -6,10 +6,11 @@ import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import rundeck.Execution
 
+/**
+ * Authorizing access to Execution domain object. nb: currently tied to Domain class, but should be migrated
+ * to common java lib (rundeck-core) once there is an interface type that can be used instead of the Domain class.
+ */
 @CompileStatic
 interface AuthorizingExecution extends AuthorizingIdResource<Execution, ExecIdentifier> {
 
-    Execution getReadOrView() throws UnauthorizedAccess, NotFound
-    Execution getKill() throws UnauthorizedAccess, NotFound
-    Execution getKillAs() throws UnauthorizedAccess, NotFound
 }

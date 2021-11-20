@@ -2,9 +2,9 @@ package org.rundeck.core.auth.access;
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor;
 import com.dtolabs.rundeck.core.authorization.AuthResource;
-import org.rundeck.core.auth.app.RundeckAccess;
 
 import javax.security.auth.Subject;
+import java.util.Optional;
 
 /**
  * Provides base implementation for authorized resource of a specific type without ID (singleton)
@@ -43,21 +43,17 @@ public abstract class BaseAuthorizingResource<T>
     /**
      * @return resource or null if it does not exist
      */
-    protected abstract T retrieve();
+    protected abstract Optional<T> retrieve();
 
     /**
      * @return resource or null if it does not exist
      */
     protected abstract boolean exists();
 
-    @Override
-    public Accessor<T> accessor(final AuthActions actions) {
-        return new AccessorImpl<T>(actions, this::requireActions, this::isAuthorized, this::retrieve);
-    }
 
     @Override
     public T access(final AuthActions actions) throws UnauthorizedAccess, NotFound {
-        return accessor(actions).getResource();
+        return requireActions(actions);
     }
 
     @Override
@@ -67,11 +63,10 @@ public abstract class BaseAuthorizingResource<T>
 
     @Override
     protected AuthResource getAuthResource() throws NotFound {
-        T res = retrieve();
-        if (res == null) {
-            throw new NotFound(getResourceTypeName(), getResourceIdent());
-        }
-        return getAuthResource(res);
+        Optional<T> res = retrieve();
+        return getAuthResource(
+                res.orElseThrow(() -> new NotFound(getResourceTypeName(), getResourceIdent()))
+        );
     }
 
     public T requireActions(final AuthActions actions) throws UnauthorizedAccess, NotFound {
@@ -82,43 +77,12 @@ public abstract class BaseAuthorizingResource<T>
                     getResourceIdent()
             );
         }
-        return retrieve();
-    }
-
-
-    @Override
-    public Locator<T> getLocator() {
-        return new Locator<T>() {
-            @Override
-            public T getResource() throws NotFound {
-                T retrieve = retrieve();
-                if (retrieve == null) {
-                    throw new NotFound(getResourceTypeName(), getResourceIdent());
-                }
-                return retrieve;
-            }
-
-            @Override
-            public boolean isExists() {
-                return exists();
-            }
-        };
+        return getResource();
     }
 
     @Override
-    public T getRead() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.General.APP_READ);
+    public T getResource() throws NotFound {
+        Optional<T> retrieve = retrieve();
+        return retrieve.orElseThrow(() -> new NotFound(getResourceTypeName(), getResourceIdent()));
     }
-
-    @Override
-    public T getAppAdmin() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.General.APP_ADMIN);
-    }
-
-    @Override
-    public T getOpsAdmin() throws UnauthorizedAccess, NotFound {
-        return access(RundeckAccess.General.OPS_ADMIN);
-    }
-
-
 }

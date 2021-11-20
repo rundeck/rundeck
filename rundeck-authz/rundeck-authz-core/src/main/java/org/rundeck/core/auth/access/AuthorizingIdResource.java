@@ -15,13 +15,8 @@ public interface AuthorizingIdResource<T, ID>
      */
     boolean exists();
 
-    ID getIdentifier();
-
     /**
-     * Authorize with {@link RundeckAccess.General#APP_DELETE}
-     * @return object
-     * @throws UnauthorizedAccess if unauthorized
-     * @throws NotFound if not found
+     * @return identifier
      */
-    T getDelete() throws UnauthorizedAccess, NotFound;
+    ID getIdentifier();
 }

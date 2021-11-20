@@ -7,16 +7,12 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
  *
  * @param <T>
  */
-public interface AuthorizingResource<T> extends AuthorizingAccess{
+public interface AuthorizingResource<T>
+        extends AuthorizingAccess
+{
 
     /**
-     * @param actions auth actions
-     * @return authorized accessor
-     */
-    Accessor<T> accessor(AuthActions actions);
-
-    /**
-     * Access object
+     * Access resource with required authorization
      *
      * @param actions auth actions
      * @throws UnauthorizedAccess if unauthorized
@@ -25,28 +21,10 @@ public interface AuthorizingResource<T> extends AuthorizingAccess{
     T access(AuthActions actions) throws UnauthorizedAccess, NotFound;
 
     /**
-     * @return locator
-     */
-    Locator<T> getLocator();
-
-    /**
-     * READ access
+     * Access resource without authorization checks
      *
      * @return resource
+     * @throws NotFound if not found
      */
-    T getRead() throws UnauthorizedAccess, NotFound;
-
-    /**
-     * APP_ADMIN access
-     *
-     * @return resource
-     */
-    T getAppAdmin() throws UnauthorizedAccess, NotFound;
-
-    /**
-     * OPS_ADMIN access
-     *
-     * @return resource
-     */
-    T getOpsAdmin() throws UnauthorizedAccess, NotFound;
+    T getResource() throws NotFound;
 }

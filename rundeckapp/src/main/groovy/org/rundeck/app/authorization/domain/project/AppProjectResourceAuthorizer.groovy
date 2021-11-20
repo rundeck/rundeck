@@ -1,6 +1,8 @@
 package org.rundeck.app.authorization.domain.project
 
+import com.dtolabs.rundeck.core.common.ProjectManager
 import groovy.transform.CompileStatic
+import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizer
 import org.rundeck.core.auth.access.MissingParameter
 import org.rundeck.core.auth.access.NamedAuthProvider

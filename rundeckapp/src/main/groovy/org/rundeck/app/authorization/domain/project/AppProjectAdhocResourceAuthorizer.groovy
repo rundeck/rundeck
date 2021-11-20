@@ -7,6 +7,7 @@ import org.rundeck.core.auth.access.ProjectIdentifier
 import org.rundeck.core.auth.access.ResIdResolver
 import org.rundeck.core.auth.access.Singleton
 import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc
 import org.springframework.beans.factory.annotation.Autowired
 
 import javax.security.auth.Subject
