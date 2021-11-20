@@ -19,11 +19,12 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppDomainAuthorizer
 import org.rundeck.core.auth.web.WebParamsIdResolver
 import org.rundeck.app.authorization.domain.RdDomainAuthorizer
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
-import org.rundeck.app.authorization.domain.project.AuthorizingProject
-import org.rundeck.app.authorization.domain.project.AuthorizingProjectAdhoc
+import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.access.MissingParameter
 import org.rundeck.core.auth.access.NotFound
