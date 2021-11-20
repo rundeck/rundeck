@@ -15,7 +15,9 @@ import javax.security.auth.Subject
 @CompileStatic
 class AppProjectResourceAuthorizer extends BaseResourceIdAuthorizer<Project, AuthorizingProject, ProjectIdentifier> {
     @Autowired
-    NamedAuthProvider namedAuthProvider;
+    NamedAuthProvider namedAuthProvider
+    @Autowired
+    ProjectManager projectManagerService
 
     @Override
     AuthorizingProject getAuthorizingResource(final Subject subject, final ResIdResolver resolver)
@@ -24,7 +26,8 @@ class AppProjectResourceAuthorizer extends BaseResourceIdAuthorizer<Project, Aut
             rundeckAuthContextProcessor,
             subject,
             namedAuthProvider,
-            resolver.idForType(RundeckAccess.Project.TYPE)
+            resolver.idForType(RundeckAccess.Project.TYPE),
+            projectManagerService
         )
     }
 }
