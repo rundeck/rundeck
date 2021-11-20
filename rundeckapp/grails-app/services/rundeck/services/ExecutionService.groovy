@@ -67,13 +67,13 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.project.AuthorizingProject
-import org.rundeck.core.auth.access.AccessLevels
+import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
@@ -1676,17 +1676,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         boolean forceIncomplete = false
     ) throws UnauthorizedAccess, NotFound
     {
-        if (!execution.isAuthorized(RundeckAccess.Execution.APP_KILL) ||
-            killAsUser && !execution.isAuthorized(RundeckAccess.Execution.APP_KILLAS)) {
-            Execution e = execution.read
-            return new AbortResult(
-                    abortstate: ABORT_FAILED,
-                    jobstate: getExecutionState(e),
-                    status: getExecutionState(e),
-                    reason: "unauthorized"
-            )
+        Execution e = execution.access(RundeckAccess.Execution.APP_KILL)
+        if(killAsUser){
+            execution.authorize(RundeckAccess.Execution.APP_KILLAS)
         }
-        Execution e = execution.kill
         abortExecutionDirect(e.scheduledExecution, e, execution.authContext.username, killAsUser, forceIncomplete)
     }
 
@@ -1881,7 +1874,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     @CompileStatic
     Map deleteExecution(AuthorizingProject authorizingProject, AuthorizingExecution authorizingExecution) throws UnauthorizedAccess, NotFound{
         authorizingProject.authorize(RundeckAccess.Project.APP_DELETE_EXECUTION)
-        Execution e = authorizingExecution.locator.resource
+        Execution e = authorizingExecution.resource
         return deleteExecutionAuthorized(e, authorizingProject.authContext.username)
     }
 

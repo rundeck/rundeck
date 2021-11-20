@@ -26,7 +26,9 @@ import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import groovy.time.TimeCategory
+import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -54,6 +56,8 @@ import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.json.JSONObject
 import org.rundeck.app.services.ExecutionFile
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
@@ -79,6 +83,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     def setup(){
         service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
         service.executionValidatorService = new ExecutionValidatorService()
+        service.logFileStorageService=Mock(LogFileStorageService)
+        service.fileUploadService=Mock(FileUploadService)
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -1160,6 +1166,57 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         !result.success
         result.error == 'unauthorized'
 
+    }
+
+    def "delete execution authorizingProject unauthorized"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        def eauth = Mock(AuthorizingExecution)
+        def pauth = Mock(AuthorizingProject)
+
+        when:
+        def result = service.deleteExecution(pauth,eauth)
+
+        then:
+        1 * pauth.authorize(RundeckAccess.Project.APP_DELETE_EXECUTION)>>{
+            throw new UnauthorizedAccess('delete','execution','blah')
+        }
+        UnauthorizedAccess t = thrown()
+    }
+    def "delete execution authorizingProject ok"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        def execution = new Execution(
+            user: 'userB',
+            project: 'AProject',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(
+                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+            ),
+            )
+        execution.dateStarted = new Date()
+        execution.dateCompleted = new Date()
+        execution.status = 'succeeded'
+        assert execution.save()
+        def eauth = Mock(AuthorizingExecution){
+            getResource()>>execution
+        }
+        def pauth = Mock(AuthorizingProject)
+
+        when:
+        def result = service.deleteExecution(pauth,eauth)
+
+        then:
+        1 * pauth.authorize(RundeckAccess.Project.APP_DELETE_EXECUTION)
+        1 * pauth.getAuthContext()>>Mock(UserAndRolesAuthContext){
+            getUsername()>>'auser'
+        }
+        1 * service.logFileStorageService.getExecutionFiles(execution,_,_)>>[:]
+        result.success
     }
 
     def "delete execution running"() {
@@ -2696,6 +2753,49 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         false           | false                  | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | null    | 'Marked as incompletestatus'
         false           | false                  | false        | false     | true   | true   | 'aborted'   | 'aborted'| 'incompletestatus' | false      | 'userC' | 'Marked as incompletestatus'
 
+    }
+
+    @Unroll
+    def "abort execution authorizing check fail"() {
+        given:
+            service.scheduledExecutionService = Mock(ScheduledExecutionService)
+            service.metricService = Mock(MetricService)
+            service.frameworkService = Mock(FrameworkService)
+            service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            service.reportService = Mock(ReportService)
+            service.notificationService = Mock(NotificationService)
+            service.workflowService = Mock(WorkflowService)
+            def authorizingExec = Mock(AuthorizingExecution){
+                1 * access(RundeckAccess.Execution.APP_KILL)>>{
+                    throw new UnauthorizedAccess('kill','execution','blah')
+                }
+            }
+        when:
+            def result = service.abortExecution(authorizingExec, null, false)
+        then:
+            UnauthorizedAccess t = thrown()
+    }
+    @Unroll
+    def "abort execution as user authorizing check fail"() {
+        given:
+            service.scheduledExecutionService = Mock(ScheduledExecutionService)
+            service.metricService = Mock(MetricService)
+            service.frameworkService = Mock(FrameworkService)
+            service.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+            service.reportService = Mock(ReportService)
+            service.notificationService = Mock(NotificationService)
+            service.workflowService = Mock(WorkflowService)
+            def authorizingExec = Mock(AuthorizingExecution){
+                1 * access(RundeckAccess.Execution.APP_KILL) >> new Execution()
+                1 * authorize(RundeckAccess.Execution.APP_KILLAS) >> {
+                    throw new UnauthorizedAccess('killAs', 'execution', 'blah')
+                }
+            }
+        when:
+            def result = service.abortExecution(authorizingExec, 'user1', false)
+        then:
+            UnauthorizedAccess t = thrown()
+            t.action=='killAs'
     }
 
     def "get NodeService from Context"() {
