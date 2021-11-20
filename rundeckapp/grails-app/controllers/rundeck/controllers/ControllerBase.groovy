@@ -74,6 +74,14 @@ class ControllerBase {
 
     /**
      *
+     * @return authorized access to project, requires request parameter 'project'
+     */
+    protected AuthorizingProject authorizingProject(String project) {
+        rundeckDomainAuthorizer.project(subject, project)
+    }
+
+    /**
+     *
      * @return authorized access to project adhoc resource, requires request parameter 'project'
      */
     protected AuthorizingProjectAdhoc getAuthorizingProjectAdhoc() {
