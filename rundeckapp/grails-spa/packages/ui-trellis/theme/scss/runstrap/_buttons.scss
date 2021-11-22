@@ -210,3 +210,17 @@ input[type="button"] {
     width: 100%;
   }
 }
+
+.btn.btn-xs{
+  line-height: var(--line-height-xs);
+}
+.btn-info-hollow.autohilite{
+  color: var(--font-color);
+    background-color: var(--default-color);
+    border-color: var(--default-states-color);
+    box-shadow: var(--button-box-shadow);
+  & + .btn.btn-danger.btn-xs{
+    line-height: var(--line-height-md);
+    border: 1px solid var(--danger-color);
+  }
+}
