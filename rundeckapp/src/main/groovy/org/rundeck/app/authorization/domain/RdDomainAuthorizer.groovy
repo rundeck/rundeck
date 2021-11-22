@@ -4,6 +4,8 @@ import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.domain.appType.AppResourceTypeAuthorizer
 import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizer
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.authorization.domain.job.AppJobResourceAuthorizer
+import org.rundeck.app.authorization.domain.job.AuthorizingJob
 import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
 
@@ -30,6 +32,8 @@ import javax.security.auth.Subject
  */
 @CompileStatic
 class RdDomainAuthorizer implements AppDomainAuthorizer {
+    @Autowired
+    AppJobResourceAuthorizer rundeckJobAuthorizer
     @Autowired
     AppExecutionResourceAuthorizer rundeckExecutionAuthorizer
     @Autowired
@@ -68,6 +72,8 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
             return adhoc(subject, resolver)
         } else if (type == RundeckAccess.Execution.TYPE) {
             return execution(subject, resolver)
+        } else if (type == RundeckAccess.Job.TYPE) {
+            return job(subject, resolver)
         } else if (type.startsWith(RundeckAccess.ApplicationType.TYPE)) {
             return applicationType(
                 subject,
@@ -144,6 +150,16 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
     @Override
     AuthorizingExecution execution(Subject subject, ResIdResolver resolver) {
         rundeckExecutionAuthorizer.getAuthorizingResource(subject, resolver)
+    }
+
+    @Override
+    AuthorizingJob job(Subject subject, ResIdResolver resolver) {
+        rundeckJobAuthorizer.getAuthorizingResource(subject, resolver)
+    }
+
+    @Override
+    AuthorizingJob job(final Subject subject, final String project, final String id) {
+        rundeckJobAuthorizer.getAuthorizingResource(subject, project, id)
     }
 
     @Override

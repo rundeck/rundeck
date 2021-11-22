@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppDomainAuthorizer
+import org.rundeck.app.authorization.domain.job.AuthorizingJob
 import org.rundeck.core.auth.web.WebParamsIdResolver
 import org.rundeck.app.authorization.domain.RdDomainAuthorizer
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -95,6 +96,14 @@ class ControllerBase {
     protected AuthorizingExecution getAuthorizingExecution() {
         requireParams('id')
         rundeckDomainAuthorizer.execution(subject, createParamsIdResolver())
+    }
+    /**
+     *
+     * @return authorized access to execution, requires request parameter 'id'
+     */
+    protected AuthorizingJob getAuthorizingJob() {
+        requireParams('id')
+        rundeckDomainAuthorizer.job(subject, createParamsIdResolver())
     }
     /**
      *

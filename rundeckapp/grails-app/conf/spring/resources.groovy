@@ -80,6 +80,7 @@ import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.authorization.domain.AppNamedAuthProvider
 import org.rundeck.app.authorization.domain.appType.AppResourceTypeAuthorizer
 import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizer
+import org.rundeck.app.authorization.domain.job.AppJobResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
 import org.rundeck.app.authorization.domain.RdDomainAuthorizer
@@ -164,7 +165,8 @@ beans={
         webDefaultParameterNames = [
             (RundeckAccess.Project.TYPE)  : 'project',
             (RundeckAccess.Adhoc.TYPE)    : 'project',
-            (RundeckAccess.Execution.TYPE): 'id'
+            (RundeckAccess.Execution.TYPE): 'id',
+            (RundeckAccess.Job.TYPE): 'id'
         ]
     }
 
@@ -309,6 +311,8 @@ beans={
 
     rundeckExecutionAuthorizer(AppExecutionResourceAuthorizer)
     rundeckExecutionNamedAuthDefinitionProvider(RundeckAccess.Execution)
+    rundeckJobAuthorizer(AppJobResourceAuthorizer)
+    rundeckJobNamedAuthDefinitionProvider(RundeckAccess.Job)
     rundeckProjectAuthorizer(AppProjectResourceAuthorizer)
     rundeckProjectNamedAuthDefinitionProvider(RundeckAccess.Project)
     rundeckProjectAdhocAuthorizer(AppProjectAdhocResourceAuthorizer)
@@ -318,7 +322,7 @@ beans={
 
     rundeckProjectTypeNamedAuthDefinitionProvider(RundeckAccess.ProjectType)
     rundeckProjectTypeAuthorizer(AppProjectTypeAuthorizer)
-    
+
     rundeckAppTypeNamedAuthDefinitionProvider(RundeckAccess.ApplicationType)
     rundeckAppResourceTypeAuthorizer(AppResourceTypeAuthorizer)
 

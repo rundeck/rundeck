@@ -188,6 +188,22 @@ public class RundeckAccess {
                 APP_PROMOTE =
                 action(AuthConstants.ACTION_PROMOTE).or(RundeckAccess.General.APP_ADMIN);
 
+        public static final String AUTH_APP_SCM_EXPORT = "appScmExport";
+        /**
+         * scmExport, export, or appAdmin
+         */
+        public static final AuthActions
+                APP_SCM_EXPORT =
+                or(AuthConstants.ACTION_EXPORT).or(AuthConstants.ACTION_SCM_EXPORT).or(RundeckAccess.General.APP_ADMIN);
+
+        public static final String AUTH_APP_SCM_IMPORT = "appScmImport";
+        /**
+         * scmExport, export, or appAdmin
+         */
+        public static final AuthActions
+                APP_SCM_IMPORT =
+                or(AuthConstants.ACTION_IMPORT).or(AuthConstants.ACTION_SCM_IMPORT).or(RundeckAccess.General.APP_ADMIN);
+
         public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
 
         static {
@@ -197,6 +213,8 @@ public class RundeckAccess {
                 put(AUTH_APP_EXPORT, APP_EXPORT);
                 put(AUTH_APP_IMPORT, APP_IMPORT);
                 put(AUTH_APP_PROMOTE, APP_PROMOTE);
+                put(AUTH_APP_SCM_EXPORT, APP_SCM_EXPORT);
+                put(AUTH_APP_SCM_IMPORT, APP_SCM_IMPORT);
                 putAll(General.NAMED_AUTH_ACTIONS);
             }};
             NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
@@ -344,6 +362,33 @@ public class RundeckAccess {
                 put(General.AUTH_APP_DELETE, General.APP_DELETE);
                 put(AUTH_APP_KILL, APP_KILL);
                 put(AUTH_APP_KILLAS, APP_KILLAS);
+                putAll(General.NAMED_AUTH_ACTIONS);
+            }};
+            NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
+        }
+
+        final String groupName = GROUP;
+        final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
+    }
+
+    @Getter
+    public static final class Job
+            implements NamedAuthDefinition
+    {
+        public static final String GROUP = "job";
+        public static final String TYPE = "project.job";
+
+        public final static String AUTH_APP_READ_OR_VIEW = "appReadOrView";
+        /**
+         * read or view or app_admin
+         */
+        public final static AuthActions APP_READ_OR_VIEW = or(AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW).or(General.APP_ADMIN);
+
+        public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
+
+        static {
+            Map<String, AuthActions> named = new HashMap<String, AuthActions>() {{
+                put(AUTH_APP_READ_OR_VIEW, APP_READ_OR_VIEW);
                 putAll(General.NAMED_AUTH_ACTIONS);
             }};
             NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);

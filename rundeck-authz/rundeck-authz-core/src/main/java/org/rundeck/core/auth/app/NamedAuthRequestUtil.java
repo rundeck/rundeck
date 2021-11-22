@@ -98,6 +98,15 @@ public class NamedAuthRequestUtil {
         );
     }
 
+    public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeJob authorize) {
+        return authorizeRequest(
+                RundeckAccess.Job.TYPE,
+                authorize.group(),
+                authorize.value(),
+                authorize.description()
+        );
+    }
+
     public static List<TypedNamedAuthRequest> requestsFromAnnotations(Method method) {
         List<TypedNamedAuthRequest> list = new ArrayList<>();
         list.addAll(Arrays
@@ -122,6 +131,11 @@ public class NamedAuthRequestUtil {
                                     Collectors.toList()));
         list.addAll(Arrays
                             .stream(method.getAnnotationsByType(RdAuthorizeExecution.class))
+                            .map(NamedAuthRequestUtil::authorizeRequest)
+                            .collect(
+                                    Collectors.toList()));
+        list.addAll(Arrays
+                            .stream(method.getAnnotationsByType(RdAuthorizeJob.class))
                             .map(NamedAuthRequestUtil::authorizeRequest)
                             .collect(
                                     Collectors.toList()));
