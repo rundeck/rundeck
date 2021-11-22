@@ -18,26 +18,47 @@ public class RundeckAccess {
 
     public static final class General {
         public static final String AUTH_ANY_ADMIN = "anyAdmin";
+        /**
+         * Any admin level
+         */
         public static final AuthActions
                 ALL_ADMIN =
                 or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
 
         public static final String AUTH_APP_ADMIN = "appAdmin";
+        /**
+         * Admin or App Admin
+         */
         public static final AuthActions APP_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN);
 
         public static final String AUTH_OPS_ADMIN = "opsAdmin";
+        /**
+         * Admin or Ops Admin
+         */
         public static final AuthActions OPS_ADMIN = or(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN);
 
         public static final String AUTH_APP_CREATE = "appCreate";
+        /**
+         * Create or AppAdmin
+         */
         public static final AuthActions APP_CREATE = or(AuthConstants.ACTION_CREATE, APP_ADMIN);
 
         public static final String AUTH_APP_READ = "appRead";
+        /**
+         * Read or AppAdmin
+         */
         public static final AuthActions APP_READ = or(AuthConstants.ACTION_READ, APP_ADMIN);
 
         public static final String AUTH_APP_UPDATE = "appUpdate";
+        /**
+         * Update or AppAdmin
+         */
         public static final AuthActions APP_UPDATE = or(AuthConstants.ACTION_UPDATE, APP_ADMIN);
 
         public static final String AUTH_APP_DELETE = "appDelete";
+        /**
+         * Delete or AppAdmin
+         */
         public static final AuthActions APP_DELETE = or(AuthConstants.ACTION_DELETE, APP_ADMIN);
 
         public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
@@ -64,26 +85,41 @@ public class RundeckAccess {
         public static final String TYPE = "app.system";
 
         public static final String AUTH_CONFIGURE = "configure";
+        /**
+         * Configure or all admin
+         */
         public static final AuthActions
                 APP_CONFIGURE =
                 action(AuthConstants.ACTION_CONFIGURE).or(RundeckAccess.General.ALL_ADMIN);
 
         public static final String AUTH_OPS_ENABLE_EXECUTION = "opsEnableExecution";
+        /**
+         * Enable executions or ops admin
+         */
         public static final AuthActions
                 OPS_ENABLE_EXECUTION =
                 action(AuthConstants.ACTION_ENABLE_EXECUTIONS).or(RundeckAccess.General.OPS_ADMIN);
 
         public static final String AUTH_OPS_DISABLE_EXECUTION = "opsDisableExecution";
+        /**
+         * Disable execution or ops admin
+         */
         public static final AuthActions
                 OPS_DISABLE_EXECUTION =
                 action(AuthConstants.ACTION_DISABLE_EXECUTIONS).or(RundeckAccess.General.OPS_ADMIN);
 
         public static final String AUTH_READ_OR_ANY_ADMIN = "readOrAnyAdmin";
+        /**
+         * Read or any admin
+         */
         public static final AuthActions
                 READ_OR_ANY_ADMIN =
                 action(AuthConstants.ACTION_READ).or(RundeckAccess.General.ALL_ADMIN);
 
         public static final String AUTH_READ_OR_OPS_ADMIN = "readOrOpsAdmin";
+        /**
+         * Read or ops admin
+         */
         public static final AuthActions
                 READ_OR_OPS_ADMIN =
                 action(AuthConstants.ACTION_READ).or(RundeckAccess.General.OPS_ADMIN);
@@ -113,26 +149,41 @@ public class RundeckAccess {
         public static final String TYPE = "app.project";
 
         public static final String AUTH_APP_CONFIGURE = "appConfigure";
+        /**
+         * configure or app admin
+         */
         public static final AuthActions
                 APP_CONFIGURE =
                 action(AuthConstants.ACTION_CONFIGURE).or(RundeckAccess.General.APP_ADMIN);
 
         public static final String AUTH_APP_DELETE_EXECUTION = "appDeleteExecution";
+        /**
+         * delete execution or app admin
+         */
         public static final AuthActions
                 APP_DELETE_EXECUTION =
                 action(AuthConstants.ACTION_DELETE_EXECUTION).or(RundeckAccess.General.APP_ADMIN);
 
         public static final String AUTH_APP_EXPORT = "appExport";
+        /**
+         * export or app admin
+         */
         public static final AuthActions
                 APP_EXPORT =
                 action(AuthConstants.ACTION_EXPORT).or(RundeckAccess.General.APP_ADMIN);
 
         public static final String AUTH_APP_IMPORT = "appImport";
+        /**
+         * import or app admin
+         */
         public static final AuthActions
                 APP_IMPORT =
                 action(AuthConstants.ACTION_IMPORT).or(RundeckAccess.General.APP_ADMIN);
 
         public static final String AUTH_APP_PROMOTE = "appPromote";
+        /**
+         * promote or app admin
+         */
         public static final AuthActions
                 APP_PROMOTE =
                 action(AuthConstants.ACTION_PROMOTE).or(RundeckAccess.General.APP_ADMIN);
@@ -147,7 +198,6 @@ public class RundeckAccess {
                 put(AUTH_APP_IMPORT, APP_IMPORT);
                 put(AUTH_APP_PROMOTE, APP_PROMOTE);
                 putAll(General.NAMED_AUTH_ACTIONS);
-
             }};
             NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
         }
@@ -182,6 +232,9 @@ public class RundeckAccess {
             return null;
         }
 
+        /**
+         * Available resource types
+         */
         public static final Set<String> RESOURCE_TYPES;
         public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
 
@@ -219,6 +272,9 @@ public class RundeckAccess {
             return null;
         }
 
+        /**
+         * Available project resource types
+         */
         public static final Set<String> RESOURCE_TYPES;
         public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
 
@@ -261,14 +317,23 @@ public class RundeckAccess {
         public static final String TYPE = "project.execution";
 
         public static final String AUTH_APP_READ_OR_VIEW = "readOrView";
+        /**
+         * view, read or app admin
+         */
         public static final AuthActions
                 APP_READ_OR_VIEW =
                 action(AuthConstants.ACTION_VIEW).or(AuthConstants.ACTION_READ).or(General.APP_ADMIN);
 
         public final static String AUTH_APP_KILL = "appKill";
+        /**
+         * kill or app admin
+         */
         public final static AuthActions APP_KILL = or(AuthConstants.ACTION_KILL, General.APP_ADMIN);
 
         public final static String AUTH_APP_KILLAS = "appKillAs";
+        /**
+         * killAs or app_admin
+         */
         public final static AuthActions APP_KILLAS = or(AuthConstants.ACTION_KILLAS, General.APP_ADMIN);
 
         public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
