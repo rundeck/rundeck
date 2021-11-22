@@ -8,6 +8,6 @@ import org.rundeck.core.auth.access.ProjectIdentifier;
  * Authorizing resource interface for IRundeckProject
  */
 public interface AuthorizingProject
-    extends AuthorizingIdResource<IRundeckProject, ProjectIdentifier>
+    extends AuthorizingIdResource<IRundeckProject, String>
 {
 }
