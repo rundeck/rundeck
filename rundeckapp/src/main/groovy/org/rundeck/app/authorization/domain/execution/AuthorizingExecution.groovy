@@ -1,9 +1,8 @@
 package org.rundeck.app.authorization.domain.execution
 
 import groovy.transform.CompileStatic
+import org.rundeck.core.auth.access.ProjectResIdentifier
 import org.rundeck.core.auth.access.AuthorizingIdResource
-import org.rundeck.core.auth.access.NotFound
-import org.rundeck.core.auth.access.UnauthorizedAccess
 import rundeck.Execution
 
 /**
@@ -11,6 +10,6 @@ import rundeck.Execution
  * to common java lib (rundeck-core) once there is an interface type that can be used instead of the Domain class.
  */
 @CompileStatic
-interface AuthorizingExecution extends AuthorizingIdResource<Execution, ExecIdentifier> {
+interface AuthorizingExecution extends AuthorizingIdResource<Execution, ProjectResIdentifier> {
 
 }

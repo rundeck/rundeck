@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.AuthResource
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import grails.compiler.GrailsCompileStatic
-import org.rundeck.core.auth.access.AuthActions
+import org.rundeck.core.auth.access.ProjectResIdentifier
 import org.rundeck.core.auth.access.BaseAuthorizingIdResource
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NamedAuthProvider
@@ -16,7 +16,7 @@ import rundeck.Execution
 import javax.security.auth.Subject
 
 @GrailsCompileStatic
-class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecIdentifier>
+class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ProjectResIdentifier>
     implements AuthorizingExecution {
     final String resourceTypeName = 'Execution'
 
@@ -25,7 +25,7 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
         final AuthContextProcessor rundeckAuthContextProcessor,
         final Subject subject,
         final NamedAuthProvider namedAuthActions,
-        final ExecIdentifier identifier
+        final ProjectResIdentifier identifier
     ) {
         super(rundeckAuthContextProcessor, subject, namedAuthActions, identifier)
     }
@@ -45,6 +45,9 @@ class AppAuthorizingExecution extends BaseAuthorizingIdResource<Execution, ExecI
 
     @Override
     boolean exists() {
+        if(identifier.project){
+            return Execution.countByIdAndProject(identifier.id.toLong(), identifier.project) == 1
+        }
         return Execution.countById(identifier.id.toLong()) == 1
     }
 
