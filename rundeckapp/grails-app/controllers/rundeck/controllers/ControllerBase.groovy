@@ -99,12 +99,22 @@ class ControllerBase {
     }
     /**
      *
-     * @return authorized access to execution, requires request parameter 'id'
+     * @return authorized access to job, requires request parameter 'id'
      */
     protected AuthorizingJob getAuthorizingJob() {
         requireParams('id')
         rundeckDomainAuthorizer.job(subject, createParamsIdResolver())
     }
+
+    /**
+     * @return authorized job, requires request parameter 'id'
+     * @param project project name
+     * @param id job UUID
+     */
+    protected AuthorizingJob getAuthorizingJob(String project, String id) {
+        rundeckDomainAuthorizer.job(subject, project, id)
+    }
+
     /**
      *
      * @return authorized access to system
