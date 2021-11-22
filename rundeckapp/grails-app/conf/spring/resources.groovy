@@ -139,7 +139,7 @@ beans={
     xmlns aop:"http://www.springframework.org/schema/aop"
 
     aop {
-        config("proxy-target-class": true) {
+        config("proxy-target-class": false) {
             pointcut(id: "rdAuthInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorize)")
             advisor('pointcut-ref': "rdAuthInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
             pointcut(id: "rdAuthSystemInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeSystem)")
@@ -154,6 +154,8 @@ beans={
             advisor('pointcut-ref': "rdAuthProjectTypeInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
             pointcut(id: "rdAuthApplicationTypeInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeApplicationType)")
             advisor('pointcut-ref': "rdAuthApplicationTypeInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthJobInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeJob)")
+            advisor('pointcut-ref': "rdAuthJobInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
         }
     }
 
