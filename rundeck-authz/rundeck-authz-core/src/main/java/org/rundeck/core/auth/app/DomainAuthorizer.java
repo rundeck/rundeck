@@ -2,6 +2,7 @@ package org.rundeck.core.auth.app;
 
 import org.rundeck.core.auth.access.*;
 import org.rundeck.core.auth.app.type.AuthorizingAppType;
+import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc;
 import org.rundeck.core.auth.app.type.AuthorizingProjectType;
 import org.rundeck.core.auth.app.type.AuthorizingSystem;
 
@@ -70,6 +71,7 @@ public interface DomainAuthorizer {
      * @return
      */
     AuthorizingAppType applicationType(Subject subject, ResIdResolver resolver);
+    AuthorizingAppType applicationType(Subject subject, String type);
 
     /**
      * Authorizing project resource type
@@ -78,4 +80,10 @@ public interface DomainAuthorizer {
      * @return
      */
     AuthorizingProjectType projectType(Subject subject, ResIdResolver resolver);
+    AuthorizingProjectType projectType(Subject subject, String project, String type);
+
+
+
+    AuthorizingProjectAdhoc adhoc(Subject subject, ResIdResolver resolver);
+    AuthorizingProjectAdhoc adhoc(Subject subject, String project);
 }

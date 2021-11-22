@@ -13,6 +13,6 @@ interface AppDomainAuthorizer extends DomainAuthorizer {
     AuthorizingExecution execution(Subject subject, ResIdResolver resolver)
 
     AuthorizingProject project(Subject subject, ResIdResolver resolver)
+    AuthorizingProject project(Subject subject, String project)
 
-    AuthorizingProjectAdhoc adhoc(Subject subject, ResIdResolver resolver)
 }

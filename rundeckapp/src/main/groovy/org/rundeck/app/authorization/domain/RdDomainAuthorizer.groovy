@@ -127,8 +127,18 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
     }
 
     @Override
+    AuthorizingAppType applicationType(Subject subject, String type) {
+        rundeckAppResourceTypeAuthorizer.getAuthorizingResource(subject, type)
+    }
+
+    @Override
     AuthorizingProjectType projectType(Subject subject, ResIdResolver resolver) {
         rundeckProjectTypeAuthorizer.getAuthorizingResource(subject, resolver)
+    }
+
+    @Override
+    AuthorizingProjectType projectType(Subject subject, String project, String type) {
+        rundeckProjectTypeAuthorizer.getAuthorizingResource(subject, project, type)
     }
 
     @Override
@@ -142,8 +152,18 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
     }
 
     @Override
+    AuthorizingProject project(Subject subject, String project) {
+        rundeckProjectAuthorizer.getAuthorizingResource(subject, project)
+    }
+
+    @Override
     AuthorizingProjectAdhoc adhoc(Subject subject, ResIdResolver resolver) {
         rundeckProjectAdhocAuthorizer.getAuthorizingResource(subject, resolver)
+    }
+
+    @Override
+    AuthorizingProjectAdhoc adhoc(Subject subject, String project) {
+        rundeckProjectAdhocAuthorizer.getAuthorizingResource(subject, project)
     }
 
     @Override

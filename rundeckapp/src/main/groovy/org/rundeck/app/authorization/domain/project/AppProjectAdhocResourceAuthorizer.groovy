@@ -13,16 +13,24 @@ import org.springframework.beans.factory.annotation.Autowired
 import javax.security.auth.Subject
 
 @CompileStatic
-class AppProjectAdhocResourceAuthorizer extends BaseResourceIdAuthorizer<Singleton, AuthorizingProjectAdhoc, ProjectIdentifier> {
+class AppProjectAdhocResourceAuthorizer
+    extends BaseResourceIdAuthorizer<Singleton, AuthorizingProjectAdhoc, ProjectIdentifier> {
     @Autowired
     NamedAuthProvider namedAuthProvider;
 
-    @Override
-    AuthorizingProjectAdhoc getAuthorizingResource(final Subject subject, final ResIdResolver resolver) {
+    AuthorizingProjectAdhoc getAuthorizingResource(final Subject subject, String project) {
         return new AppAuthorizingProjectAdhoc(
             rundeckAuthContextProcessor,
             subject,
             namedAuthProvider,
+            project
+        )
+    }
+
+    @Override
+    AuthorizingProjectAdhoc getAuthorizingResource(final Subject subject, final ResIdResolver resolver) {
+        return getAuthorizingResource(
+            subject,
             resolver.idForType(RundeckAccess.Project.TYPE)
         )
     }

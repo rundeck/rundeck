@@ -16,16 +16,21 @@ class AppExecutionResourceAuthorizer extends BaseResourceIdAuthorizer<Execution,
     @Autowired
     NamedAuthProvider namedAuthProvider;
 
-    @Override
-    AuthorizingExecution getAuthorizingResource(final Subject subject, final ResIdResolver resolver) {
+    AuthorizingExecution getAuthorizingResource(final Subject subject, String execId, String project) {
         return new AppAuthorizingExecution(
             rundeckAuthContextProcessor,
             subject,
             namedAuthProvider,
-            new AppExecIdentifier(
-                resolver.idForTypeOptional(RundeckAccess.Project.TYPE).orElse(null),
-                resolver.idForType(RundeckAccess.Execution.TYPE)
-            )
+            new AppExecIdentifier(project, execId)
+        )
+    }
+
+    @Override
+    AuthorizingExecution getAuthorizingResource(final Subject subject, final ResIdResolver resolver) {
+        return getAuthorizingResource(
+            subject,
+            resolver.idForTypeOptional(RundeckAccess.Project.TYPE).orElse(null),
+            resolver.idForType(RundeckAccess.Execution.TYPE)
         )
     }
 }

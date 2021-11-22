@@ -21,15 +21,20 @@ class AppProjectResourceAuthorizer extends BaseResourceIdAuthorizer<Project, Aut
     @Autowired
     ProjectManager projectManagerService
 
-    @Override
-    AuthorizingProject getAuthorizingResource(final Subject subject, final ResIdResolver resolver)
+    AuthorizingProject getAuthorizingResource(final Subject subject, String project)
         throws MissingParameter {
         return new AppAuthorizingProject(
             rundeckAuthContextProcessor,
             subject,
             namedAuthProvider,
-            resolver.idForType(RundeckAccess.Project.TYPE),
+            project,
             projectManagerService
         )
+    }
+
+    @Override
+    AuthorizingProject getAuthorizingResource(final Subject subject, final ResIdResolver resolver)
+        throws MissingParameter {
+        return getAuthorizingResource(subject, resolver.idForType(RundeckAccess.Project.TYPE))
     }
 }
