@@ -867,7 +867,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * requireApi(_, _) >> true
             1 * renderErrorFormat(_,{map->
                 map.status==404
-            })>>'404result'
+            })>>{it[0].status=it[1].status}
         }
         def query = new ExtNodeFilters(project: 'test')
         params.project="test"
@@ -876,7 +876,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         def result=controller.apiResourcesv2(query)
 
         then:
-        result == '404result'
+        response.status==404
     }
 
     def "get project resources filters authorized nodes"() {
