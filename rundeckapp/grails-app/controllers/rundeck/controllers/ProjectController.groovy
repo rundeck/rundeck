@@ -21,11 +21,7 @@ import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.core.authorization.providers.Validator
-import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -33,15 +29,18 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.CompileStatic
+import groovy.transform.PackageScope
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.project.AuthorizingProject
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AuthActions
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeProject
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 import rundeck.services.ProjectServiceException
@@ -80,6 +79,7 @@ class ProjectController extends ControllerBase{
     }
 
     @GrailsCompileStatic
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
     public def export(ProjectArchiveParams archiveParams){
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
@@ -87,10 +87,8 @@ class ProjectController extends ControllerBase{
         }
 
         def authorizing = authorizingProject
-        def projectObj = authorizing.export
-        String project = projectObj.name
-
-        def project1 = frameworkService.getFrameworkProject(project)
+        def project1 = authorizing.resource
+        String project = project1.name
 
         ProjectArchiveExportRequest options = archiveParams.toArchiveOptions()
         //temp file
@@ -117,6 +115,7 @@ class ProjectController extends ControllerBase{
      * @return
      */
     @GrailsCompileStatic
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
     public def exportPrepare(ProjectArchiveParams archiveParams){
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
@@ -126,8 +125,7 @@ class ProjectController extends ControllerBase{
             return redirect(controller: 'menu', action: 'index', params: [project: params.project])
         }
         def authorizing = authorizingProject
-        def projectObj = authorizing.export
-        def project1 = frameworkService.getFrameworkProject(projectObj.name)
+        def project1 = authorizing.resource
 
         //request token
 
@@ -153,6 +151,7 @@ class ProjectController extends ControllerBase{
     }
 
     @GrailsCompileStatic
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_PROMOTE)
     public def exportInstancePrepare(ProjectArchiveParams archiveParams){
         def error = 0
         def msg = 'In order to export'
@@ -189,10 +188,9 @@ class ProjectController extends ControllerBase{
         IFramework framework = frameworkService.getRundeckFramework()
 
         def authorizing = authorizingProject
-        def projectObj = authorizing.promote
-        String project = projectObj.name
+        def project1 = authorizing.resource
+        String project = project1.name
 
-        def project1 = frameworkService.getFrameworkProject(project)
 
         archiveParams.cleanComponentOpts()
         //validate component input options
@@ -344,6 +342,7 @@ class ProjectController extends ControllerBase{
     }
 
 //    @GrailsCompileStatic //TODO: change use of flash context vars
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     public def importArchive(ProjectArchiveParams archiveParams){
         withForm{
             if(archiveParams.hasErrors()){
@@ -356,7 +355,7 @@ class ProjectController extends ControllerBase{
             }
 
             def authorizing = authorizingProject
-            def projectObj = authorizing.import
+            def projectObj = authorizing.resource
             String project = projectObj.name
 
             AuthContext appContext = authorizing.authContext
@@ -438,6 +437,7 @@ class ProjectController extends ControllerBase{
         }
     }
 
+    @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
     def delete (ProjectArchiveParams archiveParams){
         withForm{
             if (archiveParams.hasErrors()) {
@@ -446,9 +446,8 @@ class ProjectController extends ControllerBase{
             }
 
             def authorizing = authorizingProject
-            def projectObj = authorizing.delete
-            String project = projectObj.name
-            def project1 = frameworkService.getFrameworkProject(project)
+            def project1 = authorizing.resource
+            String project = project1.name
 
             def result = projectService.deleteProject(
                 project1,
@@ -476,7 +475,8 @@ class ProjectController extends ControllerBase{
      * @param hasConfigAuth true if 'configure' action is allowed
      * @param vers api version requested
      */
-    private def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
+    @PackageScope
+    def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject,vers)
         def pmap = [url: data.url]
         delegate.'project'(pmap) {
@@ -503,7 +503,8 @@ class ProjectController extends ControllerBase{
      * @param pject framework project object
      * @param delegate builder delegate for response
      */
-    private def renderApiProjectConfigXml (def pject, delegate){
+    @PackageScope
+    def renderApiProjectConfigXml (def pject, delegate){
         delegate.'config' {
             frameworkService.loadProjectProperties(pject).each { k, v ->
                 delegate.'property'(key: k, value: v)
@@ -518,13 +519,16 @@ class ProjectController extends ControllerBase{
      * @param hasConfigAuth true if 'configure' action is allowed
      * @param vers api version requested
      */
-    private def renderApiProjectJson (def pject, hasConfigAuth=false, vers=1){
+    @PackageScope
+    def renderApiProjectJson (def pject, hasConfigAuth=false, vers=1){
         Map data=basicProjectDetails(pject,vers)
         Map json = [url: data.url, name: data.name, description: data.description]
         if(data.label){
             json.label = data.label
         }
-        def ctrl=this
+        if(data.created){
+            json.created = ExecutionService.ISO_8601_DATE_FORMAT.get().format(data.created)
+        }
         if(hasConfigAuth){
             json.config = frameworkService.loadProjectProperties(pject)
         }
@@ -550,16 +554,6 @@ class ProjectController extends ControllerBase{
         retMap
 
     }
-
-    /**
-     * Render project config JSON content using a builder
-     * @param pject framework project object
-     * @param delegate builder delegate for response
-     */
-    private def renderApiProjectConfigJson (def pject){
-        frameworkService.loadProjectProperties(pject)
-    }
-
 
     /**
      * Generate absolute api URL for the project
@@ -606,15 +600,13 @@ class ProjectController extends ControllerBase{
     /**
      * API: /api/11/project/NAME
      */
+    @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_READ)
     def apiProjectGet() {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def authorizing = authorizingProject
-        def projectObj = authorizing.read
-        String project = projectObj.name
-        def configAuth = authorizing.isAuthorized(AuthorizingProject.APP_CONFIGURE)
-        def pject = frameworkService.getFrameworkProject(project)
+        def configAuth = authorizingProject.isAuthorized(RundeckAccess.Project.APP_CONFIGURE)
+        def pject = authorizingProject.resource
         withFormat{
             xml{
 
@@ -629,23 +621,16 @@ class ProjectController extends ControllerBase{
     }
 
 
+    @RdAuthorizeApplicationType(
+        type = AuthConstants.TYPE_PROJECT,
+        access = RundeckAccess.General.AUTH_APP_CREATE
+    )
     def apiProjectCreate() {
         if (!apiService.requireApi(request, response)) {
             return
         }
         //allow Accept: header, but default to the request format
         def respFormat = apiService.extractResponseFormat(request,response,['xml','json'])
-        //TODO: project type authorizing resource
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceType(authContext, 'project', AuthConstants.ACTION_CREATE)) {
-            return apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code: "api.error.item.unauthorized",
-                            args: [AuthConstants.ACTION_CREATE, "Rundeck", "Project"],
-                            format:respFormat
-                    ])
-        }
 
         def project = null
         def description = null
@@ -764,14 +749,13 @@ class ProjectController extends ControllerBase{
     }
 
     @GrailsCompileStatic
+    @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
     def apiProjectDelete(){
         if (!apiService.requireApi(request, response)) {
             return
         }
         def authorizing = authorizingProject
-        def projectObj = authorizing.delete
-        String project = projectObj.name
-        def project1 = frameworkService.getFrameworkProject(project)
+        def project1 = authorizing.resource
 
         ProjectService.DeleteResponse result = projectService.deleteProject(
             project1,
@@ -780,12 +764,16 @@ class ProjectController extends ControllerBase{
             authorizing.authContext.username
         )
         if (!result.success) {
-            return apiService.renderErrorFormat(response,
+            return apiService.renderErrorFormat(
+                response,
+                new HashMap<>(
                     [
-                            status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                            code: "api.error.unknown",
-                            message: result.error,
-                    ])
+                        status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        code   : "api.error.unknown",
+                        message: result.error,
+                    ]
+                )
+            )
         }
         //success
         render(status:  HttpServletResponse.SC_NO_CONTENT)
@@ -800,11 +788,7 @@ class ProjectController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return null
         }
-        def authorizing = authorizingProject
-        def projectObj = authorizing.access(actions)
-        String project = projectObj.name
-
-        return frameworkService.getFrameworkProject(project)
+        return authorizingProject.access(actions)
     }
     /**
      * support project/NAME/config and project/NAME/acl endpoints: validate project and appropriate authorization,
@@ -851,11 +835,12 @@ class ProjectController extends ControllerBase{
         return frameworkService.getFrameworkProject(project)
     }
     @GrailsCompileStatic
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigGet(){
-        def proj = validateProjectConfigApiRequest()
-        if(!proj){
+        if (!apiService.requireApi(request, response)) {
             return
         }
+        def proj = authorizingProject.resource
         //render project config only
 
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'], 'xml')
@@ -863,7 +848,8 @@ class ProjectController extends ControllerBase{
     }
 
     @CompileStatic
-    private void respondProjectConfig(String respFormat, IRundeckProject proj) {
+    @PackageScope
+    void respondProjectConfig(String respFormat, IRundeckProject proj) {
         switch (respFormat) {
             case 'text':
                 response.setContentType("text/plain")
@@ -877,7 +863,8 @@ class ProjectController extends ControllerBase{
                 }
                 break
             case 'json':
-                render renderApiProjectConfigJson(proj) as JSON
+                def config=frameworkService.loadProjectProperties(proj)
+                render(config as JSON)
                 break
         }
     }
@@ -1312,11 +1299,12 @@ class ProjectController extends ControllerBase{
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigPut() {
-        def project = validateProjectConfigApiRequest()
-        if (!project) {
+        if(!apiService.requireApi(request,response)){
             return
         }
+        def project = authorizingProject.resource
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
         //parse config data
         def config=null
@@ -1386,11 +1374,12 @@ class ProjectController extends ControllerBase{
 
         respondProjectConfig(respFormat, project)
     }
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyGet() {
-        def project = validateProjectConfigApiRequest()
-        if (!project) {
+        if(!apiService.requireApi(request,response)){
             return
         }
+        def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'text')
         def properties = frameworkService.loadProjectProperties(project)
@@ -1420,11 +1409,12 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyPut() {
-        def project = validateProjectConfigApiRequest()
-        if (!project) {
+        if(!apiService.requireApi(request,response)){
             return
         }
+        def project = authorizingProject.resource
         def key_ = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
         def value_=null
@@ -1481,11 +1471,12 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyDelete() {
-        def project = validateProjectConfigApiRequest()
-        if (!project) {
-            return
+        if (!apiService.requireApi(request, response)) {
+            return null
         }
+        def project = authorizingProject.resource
         def key = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'json')
 
@@ -1500,11 +1491,12 @@ class ProjectController extends ControllerBase{
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
     def apiProjectExport(ProjectArchiveParams archiveParams) {
-        def project = validateProjectConfigApiRequest(RundeckAccess.Project.APP_EXPORT)
-        if (!project) {
+        if(!apiService.requireApi(request,response)){
             return
         }
+        def project = authorizingProject.resource
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
         if (archiveParams.hasErrors()) {
             return apiService.renderErrorFormat(response, [
@@ -1660,11 +1652,12 @@ class ProjectController extends ControllerBase{
         projectService.releasePromise(session.user, token)
     }
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
     def apiProjectImport(ProjectArchiveParams archiveParams){
-        def project = validateProjectConfigApiRequest(RundeckAccess.Project.APP_IMPORT)
-        if (!project) {
+        if(!apiService.requireApi(request,response)){
             return
         }
+        def project = authorizingProject.resource
         if(!apiService.requireRequestFormat(request,response,['application/zip'])){
             return
         }
