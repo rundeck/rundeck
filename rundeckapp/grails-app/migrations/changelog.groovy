@@ -108,6 +108,6 @@ databaseChangeLog = {
         include file: 'core/WorkflowStepVARCHARtoNVARCHAR.groovy'
         include file: 'core/Tag-3.4.4.groovy'
         include file: 'core/WorkflowStepNVARCHAR.groovy'
-        include file: 'core/Tag-3.4.8.groovy'
+        include file: 'core/Tag-3.4.7.groovy'
 
 }
