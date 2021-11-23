@@ -1,33 +1,26 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.GroovyPageUnitTestMixin
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.app.type.AuthorizingAppType
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
-import rundeck.AuthToken
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.ScheduledExecution
-import rundeck.User
-import rundeck.UtilityTagLib
-import rundeck.Workflow
+import rundeck.*
 import rundeck.services.ApiService
-import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
@@ -42,6 +35,11 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         mockDomain CommandExec
         mockDomain Workflow
     }
+    def setup(){
+        controller.apiService = Stub(ApiService)
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer)
+        session.subject = new Subject()
+    }
 
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
@@ -50,6 +48,19 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
     }
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
         artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
+    }
+
+    @Unroll
+    def "RdAuthorizeApplicationType required for endpoint #endpoint access #access type #type"() {
+        given:
+            def auth = getControllerMethodAnnotation(endpoint, RdAuthorizeApplicationType)
+        expect:
+            auth.type() == type
+            auth.access() == access
+        where:
+            endpoint  | access                               | type
+            'list'    | RundeckAccess.General.AUTH_APP_ADMIN | AuthConstants.TYPE_USER
+
     }
 
 

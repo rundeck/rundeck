@@ -22,8 +22,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.core.GrailsApplication
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
@@ -87,20 +88,12 @@ class UserController extends ControllerBase{
         response.setStatus(403)
         renderErrorFragment('Access denied')
     }
-    def list={
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_USER,
-                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-            ),
-            AuthConstants.ACTION_ADMIN,
-            'User',
-            'accounts')
-        ) {
-            return
-        }
+
+    @RdAuthorizeApplicationType(
+        type = AuthConstants.TYPE_USER,
+        access = RundeckAccess.General.AUTH_APP_ADMIN
+    )
+    def list(){
         [users:User.listOrderByLogin()]
     }
 
