@@ -2449,7 +2449,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     }
 
     @Unroll
-    def "log storage ajax endpoint #endpoint authorize check"() {
+    def "RdAuthorizeSystem required for endpoint #endpoint authorize #access"() {
         when:
             def result = getControllerMethodAnnotation(endpoint, RdAuthorizeSystem)
         then:
