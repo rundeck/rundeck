@@ -19,10 +19,11 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.AppDomainAuthorizer
+import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.authorization.domain.job.AuthorizingJob
+import org.rundeck.core.auth.app.type.AuthorizingAppType
+import org.rundeck.core.auth.app.type.AuthorizingProjectType
 import org.rundeck.core.auth.web.WebParamsIdResolver
-import org.rundeck.app.authorization.domain.RdDomainAuthorizer
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc
@@ -48,7 +49,7 @@ class ControllerBase {
     UiPluginService uiPluginService
     ApiService apiService
     AppAuthContextProcessor rundeckAuthContextProcessor
-    AppDomainAuthorizer rundeckDomainAuthorizer
+    AppAuthorizer rundeckAppAuthorizer
     WebExceptionHandler rundeckExceptionHandler
     WebDefaultParameterNamesMapper rundeckWebDefaultParameterNamesMapper
 
@@ -70,7 +71,7 @@ class ControllerBase {
      */
     protected AuthorizingProject getAuthorizingProject() {
         requireParams('project')
-        rundeckDomainAuthorizer.project(subject, createParamsIdResolver())
+        rundeckAppAuthorizer.project(subject, createParamsIdResolver())
     }
 
     /**
@@ -78,7 +79,7 @@ class ControllerBase {
      * @return authorized access to project, requires request parameter 'project'
      */
     protected AuthorizingProject authorizingProject(String project) {
-        rundeckDomainAuthorizer.project(subject, project)
+        rundeckAppAuthorizer.project(subject, project)
     }
 
     /**
@@ -87,7 +88,7 @@ class ControllerBase {
      */
     protected AuthorizingProjectAdhoc getAuthorizingProjectAdhoc() {
         requireParams('project')
-        rundeckDomainAuthorizer.adhoc(subject, createParamsIdResolver())
+        rundeckAppAuthorizer.adhoc(subject, createParamsIdResolver())
     }
     /**
      *
@@ -95,7 +96,7 @@ class ControllerBase {
      */
     protected AuthorizingExecution getAuthorizingExecution() {
         requireParams('id')
-        rundeckDomainAuthorizer.execution(subject, createParamsIdResolver())
+        rundeckAppAuthorizer.execution(subject, createParamsIdResolver())
     }
     /**
      *
@@ -103,7 +104,7 @@ class ControllerBase {
      */
     protected AuthorizingJob getAuthorizingJob() {
         requireParams('id')
-        rundeckDomainAuthorizer.job(subject, createParamsIdResolver())
+        rundeckAppAuthorizer.job(subject, createParamsIdResolver())
     }
 
     /**
@@ -112,7 +113,7 @@ class ControllerBase {
      * @param id job UUID
      */
     protected AuthorizingJob getAuthorizingJob(String project, String id) {
-        rundeckDomainAuthorizer.job(subject, project, id)
+        rundeckAppAuthorizer.job(subject, project, id)
     }
 
     /**
@@ -120,7 +121,22 @@ class ControllerBase {
      * @return authorized access to system
      */
     protected AuthorizingSystem getAuthorizingSystem() {
-        rundeckDomainAuthorizer.system(subject)
+        rundeckAppAuthorizer.system(subject)
+    }
+
+    /**
+     * @return authorizing application type, requires type name
+     * @param type type name
+     */
+    protected AuthorizingAppType getAuthorizingApplicationType(String type) {
+        rundeckAppAuthorizer.applicationType(subject, type)
+    }
+    /**
+     * @return authorizing application type, requires type name
+     * @param type type name
+     */
+    protected AuthorizingProjectType getAuthorizingProjectType(String project, String type) {
+        rundeckAppAuthorizer.projectType(subject,project, type)
     }
 
     protected Subject getSubject(){

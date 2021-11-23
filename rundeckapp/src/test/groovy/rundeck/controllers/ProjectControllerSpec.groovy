@@ -29,7 +29,7 @@ import org.grails.plugins.testing.GrailsMockMultipartFile
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.RdDomainAuthorizer
+import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
@@ -41,7 +41,6 @@ import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
-import rundeck.Project
 import rundeck.services.AclFileManagerService
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
@@ -106,7 +105,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         String name = 'test'
     ) {
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
             1 * project(_, _) >> Mock(AuthorizingProject) {
                 _ * getAuthContext() >> Mock(UserAndRolesAuthContext)
                 1 * getResource() >> {
@@ -130,7 +129,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         AuthActions actions = RundeckAccess.Project.APP_CONFIGURE
     ) {
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
             _ * project(_, _) >> Mock(AuthorizingProject) {
                 1 * access(actions) >> {
                     if(!auth) {
@@ -270,7 +269,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
 
     private void setupGetResource(IRundeckProject pject=null) {
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
             1 * project(_, _) >> Mock(AuthorizingProject) {
                 1 * getResource() >> {
                     pject?:Stub(IRundeckProject){
@@ -450,7 +449,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer)
         params.project = 'aproject'
         params.exportAll = all
         params.exportJobs = jobs
@@ -463,7 +462,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.exportPrepare()
 
         then:
-        1 * controller.rundeckDomainAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
+        1 * controller.rundeckAppAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
             _ * getAuthContext() >> Mock(UserAndRolesAuthContext) {
                 _ * getUsername() >> 'auser'
             }
@@ -1884,7 +1883,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * project(_,_)>>Mock(AuthorizingProject){
                     1 * getResource()>>Stub(IRundeckProject){
                         getName()>>'test'
@@ -1940,7 +1939,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 0 * authResourceForProjectAcl('test') >> null
                 0 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * project(_,_)>>Mock(AuthorizingProject){
                     1 * getResource()>>Stub(IRundeckProject){
                         getName()>>'test'
@@ -1989,7 +1988,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
                 1 * authResourceForProjectAcl('test') >> null
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
             }
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * project(_,_)>>Mock(AuthorizingProject){
                     1 * getResource()>>Stub(IRundeckProject){
                         getName()>>'test'
@@ -2065,7 +2064,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer)
                 params.project = 'aproject'
         params.exportAll = true
         params.exportJobs = true
@@ -2083,7 +2082,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.exportInstancePrepare()
 
         then:
-        1 * controller.rundeckDomainAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
+        1 * controller.rundeckAppAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
             _ * getAuthContext() >> Mock(UserAndRolesAuthContext) {
                 _ * getUsername() >> 'auser'
             }
@@ -2161,7 +2160,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         controller.projectService = Mock(ProjectService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer)
                 params.project = 'aproject'
         params.exportAll = true
         params.exportJobs = true
@@ -2180,7 +2179,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         def result = controller.exportInstancePrepare()
 
         then:
-        1 * controller.rundeckDomainAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
+        1 * controller.rundeckAppAuthorizer.project(_, _) >> Mock(AuthorizingProject) {
             _ * getAuthContext() >> Mock(UserAndRolesAuthContext) {
                 _ * getUsername() >> 'auser'
             }
@@ -2290,7 +2289,7 @@ class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<
         given:
             def aparams = new ProjectArchiveParams()
             aparams.project='aproject'
-            controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
 
                 1 * project(_, _) >> Mock(AuthorizingProject) {
                     _*getAuthContext()>>Mock(UserAndRolesAuthContext){

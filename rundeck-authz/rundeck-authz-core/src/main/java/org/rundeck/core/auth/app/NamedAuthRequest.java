@@ -1,7 +1,7 @@
 package org.rundeck.core.auth.app;
 
 /**
- * Untyped authorization request
+ * Untyped named authorization request
  */
 public interface NamedAuthRequest {
     /**

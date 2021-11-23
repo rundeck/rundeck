@@ -13,6 +13,8 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
@@ -28,6 +30,7 @@ import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.lang.annotation.Annotation
 
 class UserControllerSpec extends Specification implements ControllerUnitTest<UserController>, DataTest {
 
@@ -45,6 +48,10 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
+    }
+
 
     @Unroll
     def "generate service token unauthorized"() {

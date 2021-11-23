@@ -1,20 +1,20 @@
 package org.rundeck.app.authorization.domain
 
 import groovy.transform.CompileStatic
-import org.rundeck.app.authorization.domain.appType.AppResourceTypeAuthorizer
-import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizer
+import org.rundeck.app.authorization.domain.appType.AppResourceTypeAuthorizingProvider
+import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizingProvider
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
-import org.rundeck.app.authorization.domain.job.AppJobResourceAuthorizer
+import org.rundeck.app.authorization.domain.job.AppJobResourceAuthorizingProvider
 import org.rundeck.app.authorization.domain.job.AuthorizingJob
-import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
-import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
+import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizingProvider
 
 import org.rundeck.app.auth.types.AuthorizingProject
-import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizer
+import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizingProvider
 import org.rundeck.core.auth.app.type.AuthorizingProjectAcl
 import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc
-import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizer
-import org.rundeck.app.authorization.domain.system.AppSystemAccessAuthorizer
+import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizingProvider
+import org.rundeck.app.authorization.domain.system.AppSystemAuthorizingProvider
 import org.rundeck.core.auth.app.type.AuthorizingAppType
 import org.rundeck.core.auth.app.type.AuthorizingProjectType
 import org.rundeck.core.auth.app.type.AuthorizingSystem
@@ -33,23 +33,23 @@ import javax.security.auth.Subject
  * Consolidated access to authorized resources
  */
 @CompileStatic
-class RdDomainAuthorizer implements AppDomainAuthorizer {
+class RundeckAppAuthorizer implements AppAuthorizer {
     @Autowired
-    AppJobResourceAuthorizer rundeckJobAuthorizer
+    AppJobResourceAuthorizingProvider rundeckJobAuthorizer
     @Autowired
-    AppExecutionResourceAuthorizer rundeckExecutionAuthorizer
+    AppExecutionResourceAuthorizingProvider rundeckExecutionAuthorizer
     @Autowired
-    AppProjectResourceAuthorizer rundeckProjectAuthorizer
+    AppProjectResourceAuthorizingProvider rundeckProjectAuthorizer
     @Autowired
-    AppSystemAccessAuthorizer rundeckSystemAuthorizer
+    AppSystemAuthorizingProvider rundeckSystemAuthorizer
     @Autowired
-    AppProjectAdhocResourceAuthorizer rundeckProjectAdhocAuthorizer
+    AppProjectAdhocResourceAuthorizingProvider rundeckProjectAdhocAuthorizer
     @Autowired
-    AppResourceTypeAuthorizer rundeckAppResourceTypeAuthorizer
+    AppResourceTypeAuthorizingProvider rundeckAppResourceTypeAuthorizer
     @Autowired
-    AppProjectTypeAuthorizer rundeckProjectTypeAuthorizer
+    AppProjectTypeAuthorizingProvider rundeckProjectTypeAuthorizer
     @Autowired
-    AppProjectAclAuthorizer rundeckProjectAclAuthorizer
+    AppProjectAclAuthorizingProvider rundeckProjectAclAuthorizer
 
 
     @Override
@@ -66,6 +66,14 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
         access.authorizeNamed(request)
     }
 
+    /**
+     * Get authorizing access to a resource type, for types defined in {@link RundeckAccess}
+     * @param subject  subject
+     * @param resolver id resolver
+     * @param type     resource type
+     * @return
+     * @throws MissingParameter
+     */
     AuthorizingAccess getAuthorizingAccess(Subject subject, ResIdResolver resolver, String type)
         throws MissingParameter {
         if (type == RundeckAccess.System.TYPE) {
@@ -156,6 +164,11 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
     @Override
     AuthorizingExecution execution(Subject subject, ResIdResolver resolver) {
         rundeckExecutionAuthorizer.getAuthorizingResource(subject, resolver)
+    }
+
+    @Override
+    AuthorizingExecution execution(final Subject subject, final String id, final String project) {
+        rundeckExecutionAuthorizer.getAuthorizingResource(subject, id, project)
     }
 
     @Override

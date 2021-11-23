@@ -78,15 +78,15 @@ import org.rundeck.app.authorization.RdWebDefaultParameterNamesMapper
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
 import org.rundeck.app.authorization.domain.AppNamedAuthProvider
-import org.rundeck.app.authorization.domain.appType.AppResourceTypeAuthorizer
-import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizer
-import org.rundeck.app.authorization.domain.job.AppJobResourceAuthorizer
-import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
-import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
-import org.rundeck.app.authorization.domain.RdDomainAuthorizer
-import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizer
-import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizer
-import org.rundeck.app.authorization.domain.system.AppSystemAccessAuthorizer
+import org.rundeck.app.authorization.domain.appType.AppResourceTypeAuthorizingProvider
+import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.job.AppJobResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.RundeckAppAuthorizer
+import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizingProvider
+import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizingProvider
+import org.rundeck.app.authorization.domain.system.AppSystemAuthorizingProvider
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
@@ -314,26 +314,26 @@ beans={
         rundeckAuthContextEvaluator=ref('rundeckAuthContextEvaluator')
     }
 
-    rundeckExecutionAuthorizer(AppExecutionResourceAuthorizer)
+    rundeckExecutionAuthorizer(AppExecutionResourceAuthorizingProvider)
     rundeckExecutionNamedAuthDefinitionProvider(RundeckAccess.Execution)
-    rundeckJobAuthorizer(AppJobResourceAuthorizer)
+    rundeckJobAuthorizer(AppJobResourceAuthorizingProvider)
     rundeckJobNamedAuthDefinitionProvider(RundeckAccess.Job)
-    rundeckProjectAuthorizer(AppProjectResourceAuthorizer)
+    rundeckProjectAuthorizer(AppProjectResourceAuthorizingProvider)
     rundeckProjectNamedAuthDefinitionProvider(RundeckAccess.Project)
-    rundeckProjectAdhocAuthorizer(AppProjectAdhocResourceAuthorizer)
+    rundeckProjectAdhocAuthorizer(AppProjectAdhocResourceAuthorizingProvider)
     rundeckProjectAdhocNamedAuthDefinitionProvider(RundeckAccess.Adhoc)
-    rundeckProjectAclAuthorizer(AppProjectAclAuthorizer)
+    rundeckProjectAclAuthorizer(AppProjectAclAuthorizingProvider)
     rundeckProjectAclNamedAuthDefinitionProvider(RundeckAccess.ProjectAcl)
-    rundeckSystemAuthorizer(AppSystemAccessAuthorizer)
+    rundeckSystemAuthorizer(AppSystemAuthorizingProvider)
     rundeckSystemNamedAuthDefinitionProvider(RundeckAccess.System)
 
     rundeckProjectTypeNamedAuthDefinitionProvider(RundeckAccess.ProjectType)
-    rundeckProjectTypeAuthorizer(AppProjectTypeAuthorizer)
+    rundeckProjectTypeAuthorizer(AppProjectTypeAuthorizingProvider)
 
     rundeckAppTypeNamedAuthDefinitionProvider(RundeckAccess.ApplicationType)
-    rundeckAppResourceTypeAuthorizer(AppResourceTypeAuthorizer)
+    rundeckAppResourceTypeAuthorizer(AppResourceTypeAuthorizingProvider)
 
-    rundeckDomainAuthorizer(RdDomainAuthorizer)
+    rundeckAppAuthorizer(RundeckAppAuthorizer)
     rundeckNamedAuthProvider(AppNamedAuthProvider)
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){

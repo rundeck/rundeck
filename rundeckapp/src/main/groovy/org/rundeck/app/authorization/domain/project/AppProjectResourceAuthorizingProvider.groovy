@@ -3,7 +3,7 @@ package org.rundeck.app.authorization.domain.project
 import com.dtolabs.rundeck.core.common.ProjectManager
 import groovy.transform.CompileStatic
 import org.rundeck.app.auth.types.AuthorizingProject
-import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizer
+import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizingProvider
 import org.rundeck.core.auth.access.MissingParameter
 import org.rundeck.core.auth.access.NamedAuthProvider
 import org.rundeck.core.auth.access.ProjectIdentifier
@@ -15,7 +15,7 @@ import rundeck.Project
 import javax.security.auth.Subject
 
 @CompileStatic
-class AppProjectResourceAuthorizer extends BaseResourceIdAuthorizer<Project, AuthorizingProject, ProjectIdentifier> {
+class AppProjectResourceAuthorizingProvider extends BaseResourceIdAuthorizingProvider<Project, AuthorizingProject, ProjectIdentifier> {
     @Autowired
     NamedAuthProvider namedAuthProvider
     @Autowired

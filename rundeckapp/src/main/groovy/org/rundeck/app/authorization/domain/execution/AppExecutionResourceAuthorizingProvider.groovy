@@ -2,7 +2,7 @@ package org.rundeck.app.authorization.domain.execution
 
 import groovy.transform.CompileStatic
 import org.rundeck.app.authorization.domain.AppProjectResIdentifier
-import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizer
+import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizingProvider
 import org.rundeck.core.auth.access.ProjectResIdentifier
 import org.rundeck.core.auth.access.NamedAuthProvider
 import org.rundeck.core.auth.access.ResIdResolver
@@ -13,7 +13,7 @@ import rundeck.Execution
 import javax.security.auth.Subject
 
 @CompileStatic
-class AppExecutionResourceAuthorizer extends BaseResourceIdAuthorizer<Execution, AuthorizingExecution, ProjectResIdentifier> {
+class AppExecutionResourceAuthorizingProvider extends BaseResourceIdAuthorizingProvider<Execution, AuthorizingExecution, ProjectResIdentifier> {
 
     @Autowired
     NamedAuthProvider namedAuthProvider;

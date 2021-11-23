@@ -1,14 +1,13 @@
 package org.rundeck.core.auth.app;
 
 import org.rundeck.core.auth.access.*;
-import org.rundeck.core.auth.app.type.*;
 
 import javax.security.auth.Subject;
 
 /**
- * Authorizing access to resources
+ * Authorize typed requests, or provide AuthorizingAccess
  */
-public interface DomainAuthorizer {
+public interface TypedRequestAuthorizer {
     /**
      * Test authorized access
      *
@@ -31,7 +30,6 @@ public interface DomainAuthorizer {
      * @param subject  subject
      * @param resolver id resolver
      * @param request  auth request
-     * @return true if authorized
      * @throws MissingParameter if required id parameter is missing
      */
     void authorize(
@@ -52,38 +50,4 @@ public interface DomainAuthorizer {
      */
     AuthorizingAccess getAuthorizingAccess(Subject subject, ResIdResolver resolver, String type)
             throws MissingParameter;
-
-    /**
-     * Authorizing system
-     *
-     * @param subject subject
-     * @return authorizing system
-     */
-    AuthorizingSystem system(Subject subject);
-
-    /**
-     * Authorizing application resource type
-     * @param subject
-     * @param resolver
-     * @return
-     */
-    AuthorizingAppType applicationType(Subject subject, ResIdResolver resolver);
-    AuthorizingAppType applicationType(Subject subject, String type);
-
-    /**
-     * Authorizing project resource type
-     * @param subject
-     * @param resolver
-     * @return
-     */
-    AuthorizingProjectType projectType(Subject subject, ResIdResolver resolver);
-    AuthorizingProjectType projectType(Subject subject, String project, String type);
-
-
-
-    AuthorizingProjectAdhoc adhoc(Subject subject, ResIdResolver resolver);
-    AuthorizingProjectAdhoc adhoc(Subject subject, String project);
-
-    AuthorizingProjectAcl projectAcl(Subject subject, ResIdResolver resolver);
-    AuthorizingProjectAcl projectAcl(Subject subject, String project);
 }

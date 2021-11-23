@@ -40,7 +40,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
-import org.rundeck.app.authorization.domain.RdDomainAuthorizer
+import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeAdhoc
@@ -122,7 +122,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * _(*_)
         }
         session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
                 1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  { throw new NotFound('Execution', '-999') }
             }
@@ -338,7 +338,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             }
 
             session.subject = new Subject()
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * execution(_, _) >> Mock(AuthorizingExecution) {
                     1 * getResource() >> e1
                 }
@@ -411,7 +411,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                 }
             }
             session.subject = new Subject()
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * execution(_, _) >> Mock(AuthorizingExecution) {
                     1 * getResource() >> e1
                 }
@@ -484,7 +484,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
                     ]
             )
             session.subject = new Subject()
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * execution(_,_)>>Mock(AuthorizingExecution){
                     1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
@@ -534,7 +534,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
             reader.reader = new TestReader(logs: [])
             session.subject = new Subject()
-            controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * execution(_,_)>>Mock(AuthorizingExecution){
                     1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
@@ -586,7 +586,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * _(*_)
         }
         session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
                 1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
@@ -713,7 +713,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * _(*_)
         }
         session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
                 1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
@@ -848,7 +848,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * _(*_)
         }
         session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
                 1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
@@ -898,7 +898,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             0 * _(*_)
         }
         session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
             1 * execution(_,_)>>Mock(AuthorizingExecution){
                 1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >>  e1
 
@@ -939,7 +939,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
         session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
             1 * execution(_, _) >> Mock(AuthorizingExecution) {
                 1 * getResource() >> e1
             }
@@ -1026,7 +1026,7 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         }
 
         session.subject = new Subject()
-        controller.rundeckDomainAuthorizer=Mock(RdDomainAuthorizer){
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
             1 * execution(_, _) >> Mock(AuthorizingExecution) {
                 1 * getResource() >> e1
             }

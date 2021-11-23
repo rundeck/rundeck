@@ -7,7 +7,7 @@ import javax.security.auth.Subject;
  *
  * @param <A>
  */
-public interface AccessAuthorizer<A extends AuthorizingAccess> {
+public interface AuthorizingAccessProvider<A extends AuthorizingAccess> {
     /**
      * @param subject authorization
      * @return authorizing resource

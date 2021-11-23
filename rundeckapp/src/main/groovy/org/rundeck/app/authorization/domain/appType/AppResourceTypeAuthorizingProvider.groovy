@@ -1,7 +1,7 @@
 package org.rundeck.app.authorization.domain.appType
 
 import groovy.transform.CompileStatic
-import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizer
+import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizingProvider
 import org.rundeck.core.auth.access.NamedAuthProvider
 import org.rundeck.core.auth.access.ResIdResolver
 import org.rundeck.core.auth.access.Singleton
@@ -15,7 +15,7 @@ import javax.security.auth.Subject
  * Creates AuthorizingAppType
  */
 @CompileStatic
-class AppResourceTypeAuthorizer extends BaseResourceIdAuthorizer<Singleton, AuthorizingAppType, String> {
+class AppResourceTypeAuthorizingProvider extends BaseResourceIdAuthorizingProvider<Singleton, AuthorizingAppType, String> {
     @Autowired
     NamedAuthProvider namedAuthProvider
 

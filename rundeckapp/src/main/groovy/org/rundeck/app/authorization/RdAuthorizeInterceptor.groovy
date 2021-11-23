@@ -27,7 +27,7 @@ import javax.security.auth.Subject
 @CompileStatic
 class RdAuthorizeInterceptor implements MethodInterceptor, ServletAttributes {
     @Autowired
-    DomainAuthorizer rundeckDomainAuthorizer
+    BaseTypedRequestAuthorizer rundeckAppAuthorizer
     @Autowired
     ExceptionHandler rundeckExceptionHandler
     @Autowired
@@ -52,7 +52,7 @@ class RdAuthorizeInterceptor implements MethodInterceptor, ServletAttributes {
         def idResolver = new WebParamsIdResolver(nameResolver, getParams())
         for (TypedNamedAuthRequest req : reqs) {
             try {
-                rundeckDomainAuthorizer.authorize(subject, idResolver, req)
+                rundeckAppAuthorizer.authorize(subject, idResolver, req)
             } catch (Throwable e) {
                 if (rundeckExceptionHandler.handleException(request, response, e)) {
                     return null
@@ -77,12 +77,4 @@ class RdAuthorizeInterceptor implements MethodInterceptor, ServletAttributes {
         }
         map
     }
-
-    /**
-     * create resolver for resource ids
-     * @param resolver parameter name resolver
-     * @param names default names for resource type id params
-     * @param paramMap input parameters
-     * @return
-     */
 }

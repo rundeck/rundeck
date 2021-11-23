@@ -1,7 +1,7 @@
 package org.rundeck.app.authorization.domain.job
 
 import groovy.transform.CompileStatic
-import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizer
+import org.rundeck.app.authorization.domain.BaseResourceIdAuthorizingProvider
 import org.rundeck.app.authorization.domain.AppProjectResIdentifier
 import org.rundeck.core.auth.access.ProjectResIdentifier
 import org.rundeck.core.auth.access.NamedAuthProvider
@@ -13,8 +13,8 @@ import rundeck.ScheduledExecution
 import javax.security.auth.Subject
 
 @CompileStatic
-class AppJobResourceAuthorizer
-    extends BaseResourceIdAuthorizer<ScheduledExecution, AuthorizingJob, ProjectResIdentifier> {
+class AppJobResourceAuthorizingProvider
+    extends BaseResourceIdAuthorizingProvider<ScheduledExecution, AuthorizingJob, ProjectResIdentifier> {
 
     @Autowired
     NamedAuthProvider namedAuthProvider;

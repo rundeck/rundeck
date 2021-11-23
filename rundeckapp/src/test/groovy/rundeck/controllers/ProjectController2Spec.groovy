@@ -27,10 +27,8 @@ import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
-import org.grails.plugins.testing.GrailsMockHttpServletResponse
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.domain.AppDomainAuthorizer
-import org.rundeck.app.authorization.domain.RdDomainAuthorizer
+import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
@@ -38,12 +36,10 @@ import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.access.MissingParameter
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
-import org.rundeck.core.auth.app.DomainAuthorizer
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
-import org.springframework.context.MessageSource
 import rundeck.Project
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
@@ -757,7 +753,7 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
 
     private def setupAuthDelete(String name='test1',boolean allowed=true, boolean found=true){
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer){
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer){
             1 * project(_,_)>>Mock(AuthorizingProject){
                 _ * getAuthContext() >> Mock(UserAndRolesAuthContext)
                 1 * getResource()>>{
@@ -1005,7 +1001,7 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         AuthActions authCheck = null,
         boolean authCheckValue=true
     ) {
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
             (authCheck?2:1) * project(_, _) >> Mock(AuthorizingProject) {
                 1 * access(actions) >> {
                     if(!auth) {
@@ -1030,7 +1026,7 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
     private void setupGetResource(IRundeckProject pject=null) {
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
             1 * project(_, _) >> Mock(AuthorizingProject) {
                 1 * getResource() >> {
                     pject?:Stub(IRundeckProject){
@@ -1506,14 +1502,14 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     void "apiProjectExport requires api"() {
         given:
             controller.apiService=Mock(ApiService)
-            controller.rundeckDomainAuthorizer=Mock(AppDomainAuthorizer)
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer)
         when:
             params.project = 'test1'
             controller.apiProjectExport()
         then:
 
             1 * controller.apiService.requireApi(_,_)>>false
-            0 * controller.rundeckDomainAuthorizer._(*_)
+            0 * controller.rundeckAppAuthorizer._(*_)
     }
 
 
@@ -1762,7 +1758,7 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             setupImportApiService('json')
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService)
-            controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
                 2 * project(_, _) >> Mock(AuthorizingProject) {
                     1 * getResource() >> {
                         Stub(IRundeckProject){
@@ -1797,7 +1793,7 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             setupImportApiService('json')
             controller.frameworkService = Mock(FrameworkService)
             controller.projectService=Mock(ProjectService)
-            controller.rundeckDomainAuthorizer = Mock(RdDomainAuthorizer) {
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
                 2 * project(_, _) >> Mock(AuthorizingProject) {
                     1 * getResource() >> {
                         Stub(IRundeckProject){

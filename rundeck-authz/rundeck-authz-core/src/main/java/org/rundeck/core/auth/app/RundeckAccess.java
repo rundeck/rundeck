@@ -258,8 +258,7 @@ public class RundeckAccess {
 
         static {
             Map<String, AuthActions> named = new HashMap<String, AuthActions>() {{
-                put(General.AUTH_APP_CREATE, General.APP_CREATE);
-                put(General.AUTH_APP_READ, General.APP_READ);
+                putAll(General.NAMED_AUTH_ACTIONS);
             }};
             NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
 
