@@ -80,6 +80,15 @@ public class NamedAuthRequestUtil {
         );
     }
 
+    public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeProjectAcl authorize) {
+        return authorizeRequest(
+                RundeckAccess.ProjectAcl.TYPE,
+                authorize.group(),
+                authorize.value(),
+                authorize.description()
+        );
+    }
+
     public static TypedNamedAuthRequest authorizeRequest(RdAuthorizeAdhoc authorize) {
         return authorizeRequest(
                 RundeckAccess.Adhoc.TYPE,
@@ -141,6 +150,11 @@ public class NamedAuthRequestUtil {
                                     Collectors.toList()));
         list.addAll(Arrays
                             .stream(method.getAnnotationsByType(RdAuthorizeApplicationType.class))
+                            .map(NamedAuthRequestUtil::authorizeRequest)
+                            .collect(
+                                    Collectors.toList()));
+        list.addAll(Arrays
+                            .stream(method.getAnnotationsByType(RdAuthorizeProjectAcl.class))
                             .map(NamedAuthRequestUtil::authorizeRequest)
                             .collect(
                                     Collectors.toList()));

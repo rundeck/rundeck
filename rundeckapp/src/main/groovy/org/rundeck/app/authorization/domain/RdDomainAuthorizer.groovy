@@ -10,6 +10,8 @@ import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAutho
 import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
 
 import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizer
+import org.rundeck.core.auth.app.type.AuthorizingProjectAcl
 import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc
 import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizer
 import org.rundeck.app.authorization.domain.system.AppSystemAccessAuthorizer
@@ -46,6 +48,8 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
     AppResourceTypeAuthorizer rundeckAppResourceTypeAuthorizer
     @Autowired
     AppProjectTypeAuthorizer rundeckProjectTypeAuthorizer
+    @Autowired
+    AppProjectAclAuthorizer rundeckProjectAclAuthorizer
 
 
     @Override
@@ -74,6 +78,8 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
             return execution(subject, resolver)
         } else if (type == RundeckAccess.Job.TYPE) {
             return job(subject, resolver)
+        } else if (type == RundeckAccess.ProjectAcl.TYPE) {
+            return projectAcl(subject, resolver)
         } else if (type.startsWith(RundeckAccess.ApplicationType.TYPE)) {
             return applicationType(
                 subject,
@@ -180,6 +186,16 @@ class RdDomainAuthorizer implements AppDomainAuthorizer {
     @Override
     AuthorizingProjectAdhoc adhoc(Subject subject, String project) {
         rundeckProjectAdhocAuthorizer.getAuthorizingResource(subject, project)
+    }
+
+    @Override
+    AuthorizingProjectAcl projectAcl(Subject subject, ResIdResolver resolver) {
+        rundeckProjectAclAuthorizer.getAuthorizingResource(subject, resolver)
+    }
+
+    @Override
+    AuthorizingProjectAcl projectAcl(Subject subject, String project) {
+        rundeckProjectAclAuthorizer.getAuthorizingResource(subject, project)
     }
 
     @Override

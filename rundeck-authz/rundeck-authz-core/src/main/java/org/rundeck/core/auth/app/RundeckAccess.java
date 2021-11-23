@@ -326,6 +326,27 @@ public class RundeckAccess {
         final String groupName = GROUP;
         final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
     }
+    @Getter
+    public static final class ProjectAcl
+            implements NamedAuthDefinition
+    {
+        public static final String GROUP = "projectAcl";
+        public static final String TYPE = "app.projectAcl";
+        public static final Map<String, AuthActions> NAMED_AUTH_ACTIONS;
+
+        static {
+            Map<String, AuthActions> named = new HashMap<String, AuthActions>() {{
+                put(General.AUTH_APP_CREATE, General.APP_CREATE);
+                put(General.AUTH_APP_READ, General.APP_READ);
+                put(General.AUTH_APP_UPDATE, General.APP_UPDATE);
+                put(General.AUTH_APP_DELETE, General.APP_DELETE);
+            }};
+            NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(named);
+        }
+
+        final String groupName = GROUP;
+        final Map<String, AuthActions> definitions = NAMED_AUTH_ACTIONS;
+    }
 
     @Getter
     public static final class Execution

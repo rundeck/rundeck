@@ -84,6 +84,7 @@ import org.rundeck.app.authorization.domain.job.AppJobResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizer
 import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizer
 import org.rundeck.app.authorization.domain.RdDomainAuthorizer
+import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizer
 import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizer
 import org.rundeck.app.authorization.domain.system.AppSystemAccessAuthorizer
 import org.rundeck.app.cluster.ClusterInfo
@@ -156,6 +157,8 @@ beans={
             advisor('pointcut-ref': "rdAuthApplicationTypeInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
             pointcut(id: "rdAuthJobInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeJob)")
             advisor('pointcut-ref': "rdAuthJobInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthProjectAclInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeProjectAcl)")
+            advisor('pointcut-ref': "rdAuthProjectAclInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
         }
     }
 
@@ -319,6 +322,8 @@ beans={
     rundeckProjectNamedAuthDefinitionProvider(RundeckAccess.Project)
     rundeckProjectAdhocAuthorizer(AppProjectAdhocResourceAuthorizer)
     rundeckProjectAdhocNamedAuthDefinitionProvider(RundeckAccess.Adhoc)
+    rundeckProjectAclAuthorizer(AppProjectAclAuthorizer)
+    rundeckProjectAclNamedAuthDefinitionProvider(RundeckAccess.ProjectAcl)
     rundeckSystemAuthorizer(AppSystemAccessAuthorizer)
     rundeckSystemNamedAuthDefinitionProvider(RundeckAccess.System)
 
