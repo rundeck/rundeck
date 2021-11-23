@@ -92,16 +92,18 @@ class ExecutionController extends ControllerBase{
         redirect(controller:'menu',action:'index')
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def follow() {
         def m = show()
         if(response.status != 302) {
             render(view:'show',model:m)
         }
     }
-
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def followFragment() {
         return render(view:'showFragment',model:show())
     }
+
     /**
      * List recent adhoc executions to fill the recent commands menu on commands page.
      * @param project project name
@@ -280,6 +282,7 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION)
     def bulkDelete(){
         withForm{
         def ids
@@ -293,7 +296,7 @@ class ExecutionController extends ControllerBase{
             flash.error="Some IDS are required for bulk delete"
             return redirect(action: 'index',controller: 'reports',params: [project:params.project])
         }
-        authorizingProject.authorize(RundeckAccess.Project.APP_DELETE_EXECUTION)
+
         def result = executionService.deleteBulkExecutionIds(ids, projectAuthContext, session.user)
         if(!result.success){
             flash.error=result.failures*.message.join(", ")
