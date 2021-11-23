@@ -45,6 +45,7 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
@@ -1510,18 +1511,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
 
+    @RdAuthorizeApplicationType(
+        type = AuthConstants.TYPE_SYSTEM_ACL,
+        access = RundeckAccess.General.AUTH_APP_READ
+    )
     def acls() {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
-                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-                ),
-                AuthConstants.ACTION_READ, 'System configuration')) {
-            return
-        }
         systemAclsModel()
     }
 

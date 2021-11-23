@@ -49,6 +49,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.auth.app.NamedAuthRequestUtil
 import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
 import rundeck.CommandExec
@@ -530,12 +531,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 paramvals             |
                 resource                               |
                 storageExists
-        null   | 'acls'                 |
-                ['read', 'admin', 'app_admin']   |
-                null                                                                                        |
-                null                  |
-                [kind: 'system_acl', type: 'resource']     |
-                false
         null   | 'editSystemAclFile'    |
                 ['update', 'admin', 'app_admin'] |
                 new SysAclFile(id: 'test.aclpolicy', fileType: 'fs')                                        |
@@ -1062,6 +1057,19 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         where:
             exists = false
     }
+
+    @Unroll
+    def "RdAuthorizeApplicationType required for endpoint #endpoint authorize type #type access #access"() {
+        when:
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeApplicationType)
+        then:
+            result.type() == type
+            result.access() == access
+        where:
+            endpoint | type                          | access
+            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_APP_READ
+    }
+
     def "acls does not load metadata for policies"() {
         given:
         def id = 'test.aclpolicy'
@@ -1070,8 +1078,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                controller.aclFileManagerService = Mock(AclFileManagerService){
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id]
         }
 
@@ -1079,7 +1086,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def result = controller.acls()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.fwkConfigDir==confdir
@@ -1099,8 +1105,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                controller.aclFileManagerService = Mock(AclFileManagerService){
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
         }
 
@@ -1108,7 +1113,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def result = controller.acls()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.fwkConfigDir==confdir
