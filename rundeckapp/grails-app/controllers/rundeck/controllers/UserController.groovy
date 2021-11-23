@@ -103,19 +103,12 @@ class UserController extends ControllerBase{
         if (!params.login) {
             params.login = session.user
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-        def tokenAdmin = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-            authContext,
-            AuthConstants.RESOURCE_TYPE_USER,
-            [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-        )
-
-        if (unauthorizedResponse(
-                params.login == session.user || tokenAdmin,
-                AuthConstants.ACTION_ADMIN, 'Users', params.login)) {
-            return
+        def authorizingAppType = getAuthorizingApplicationType(AuthConstants.TYPE_USER)
+        if(params.login != session.user){
+            authorizingAppType.authorize(RundeckAccess.General.APP_ADMIN)
         }
+        boolean tokenAdmin = authorizingAppType.isAuthorized(RundeckAccess.General.APP_ADMIN)
+        def authContext = authorizingAppType.authContext
 
         def User u = User.findByLogin(params.login)
         if (!u && params.login == session.user) {

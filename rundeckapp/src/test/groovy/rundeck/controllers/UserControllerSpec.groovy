@@ -511,6 +511,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         response.status==200
     }
 
+    @Unroll
     def "profile"() {
         setup:
         User user = new User(login: "admin")
@@ -518,25 +519,57 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         createAuthToken(user:user,type:null)
         createAuthToken(user:user,type: AuthTokenType.USER)
         createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
+        createAuthToken(user:user,creator:'admin',type: AuthTokenType.USER)
         def authCtx = Mock(UserAndRolesAuthContext)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                _ * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-
-                1 * getAuthContextForSubject(_) >> authCtx
+        session.user='admin'
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+                1 * applicationType(_,AuthConstants.TYPE_USER)>>Mock(AuthorizingAppType){
+                    1 * isAuthorized(RundeckAccess.General.APP_ADMIN) >> isAdmin
+                    1 * getAuthContext()>>authCtx
+                    0 * _(*_)
+                }
             }
-        controller.apiService = Stub(ApiService)
-
-        controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }
-        controller.metaClass.notFoundResponse = { Object tst, String action, Object name, boolean fg -> false }
-
         when:
         params.login = "admin"
         def result = controller.profile()
 
         then:
-        AuthToken.count() == 3
-        result.tokenTotal == 2
-        result.tokenList.size() == 2
+        AuthToken.count() == 4
+        result.tokenTotal == total
+        result.tokenList.size() == total
+        where:
+            isAdmin | total
+            true    | 3
+            false   | 1
+    }
+
+    def "profile unauthorized"() {
+        setup:
+        User user = new User(login: "admin")
+        user.save()
+        createAuthToken(user:user,type:null)
+        createAuthToken(user:user,type: AuthTokenType.USER)
+        createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
+        controller.apiService = Stub(ApiService)
+
+        controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }
+        controller.metaClass.notFoundResponse = { Object tst, String action, Object name, boolean fg -> false }
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+            1 * applicationType(_,AuthConstants.TYPE_USER)>>Mock(AuthorizingAppType){
+                1 * authorize(RundeckAccess.General.APP_ADMIN)>>{
+                    throw new UnauthorizedAccess('admin','system','resource')
+                }
+            }
+        }
+        controller.rundeckExceptionHandler=Mock(WebExceptionHandler)
+
+        when:
+            session.user='notadmin'
+            params.login = "admin"
+            def result = controller.profile()
+
+        then:
+            1 * controller.rundeckExceptionHandler.handleException(_,_,_ as UnauthorizedAccess)
     }
 
 
