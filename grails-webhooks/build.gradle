@@ -14,7 +14,7 @@ group "webhooks"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-//apply plugin:"asset-pipeline"
+apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
 repositories {
@@ -81,11 +81,10 @@ tasks.withType(GroovyCompile) {
 bootJar.enabled = false
 bootRun.enabled = false
 
-
-/*gradle.beforeProject {
+gradle.beforeProject {
     file("grails-app/assets").mkdir()
 }
 
 assets {
     packagePlugin = true
-}*/
+}

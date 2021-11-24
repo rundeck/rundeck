@@ -450,50 +450,6 @@ clean {
     delete "$projectDir/grails-app/assets/javascripts/vendor"
 }
 
-// bintray {
-//     user = findProperty("bintrayUser")
-//     key = findProperty("bintrayApiKey")
-//     publish = true
-//     dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
-//     override = true
-
-//     if (findProperty('bintrayUseExisting')) {
-//         filesSpec {
-//             from "$artifactDir/rundeckapp/build/libs"
-//             from "$artifactDir/rundeckapp/build/poms"
-//             into "${project.group}.rundeck".replace('.', '/')
-//             exclude '*.original'
-//             rename { file ->
-//                 if (file =~ /^pom/)
-//                     return "rundeck-${version}.pom"
-//                 else
-//                     return file
-//             }
-//         }
-//     } else {
-//         configurations =  ['archives']
-//     }
-
-//     pkg {
-//         repo = 'rundeck-maven'
-//         name = 'rundeck'
-//         userOrg = 'rundeck'
-
-//         version {
-//             // mavenCentralSync {
-//             //     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
-//             //     user = findProperty('ossUserToken') //OSS user token: mandatory
-//             //     password = findProperty('ossUserPassword') //OSS user password: mandatory
-//             // }
-
-//             gpg {
-//                 sign = true //Determines whether to GPG sign the files. The default is false
-//                 passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
-//             }
-//         }
-//     }
-// }
-
 tasks.withType(GenerateMavenPom).all {
     doLast {
         File file = new File("$buildDir/publications/mavenJava/pom-default.xml")

@@ -5,7 +5,6 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:${assetPluginVersion}"
     }
 }
 
@@ -14,7 +13,6 @@ group "org.rundeck.grails.plugins.securityheaders"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-//apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
 repositories {
@@ -79,11 +77,3 @@ tasks.withType(GroovyCompile) {
 
 // enable if you wish to package this plugin as a standalone application
 bootJar.enabled = false
-
-/*gradle.beforeProject {
-    file("grails-app/assets").mkdir()
-}
-
-assets {
-    packagePlugin = true
-}*/
