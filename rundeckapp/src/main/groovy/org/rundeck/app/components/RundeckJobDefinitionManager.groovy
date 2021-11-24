@@ -41,7 +41,7 @@ import rundeck.services.JobFromMapSerializer
 class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationContextAware {
     ApplicationContext applicationContext
 
-    private Map<String, JobFormat> defaultFormats = new HashMap<>(xml: new JobYAMLFormat(), yaml: new JobYAMLFormat())
+    private Map<String, JobFormat> defaultFormats = new HashMap<>(xml: new JobXMLFormat(), yaml: new JobYAMLFormat())
 
     RundeckJobDefinitionManager() {
     }
