@@ -46,7 +46,10 @@ class AppAuthorizingProject extends BaseAuthorizingIdResource<IRundeckProject, S
 
     @Override
     protected Optional<IRundeckProject> retrieve() {
-        return Optional.ofNullable(projectManager.getFrameworkProject(identifier))
+        if(projectManager.existsFrameworkProject(identifier)){
+            return Optional.ofNullable(projectManager.getFrameworkProject(identifier))
+        }
+        return Optional.empty()
     }
 
     @Override
