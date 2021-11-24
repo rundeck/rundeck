@@ -52,6 +52,8 @@ configurations {
         extendsFrom developmentOnly
     }
     implementation.exclude module: "spring-boot-starter-tomcat"
+    //avoid error request.XML
+    implementation.exclude group: 'pull-parser'
 
 }
 
