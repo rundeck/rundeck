@@ -266,7 +266,7 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         true                | true            | true             | true        | true            | true           | 'uuid'         | false          | new Date()   | null            | null
         true                | true            | true             | true        | true            | false          | null           | false          | new Date()   | "aJobName"      | "aGroupName"
         true                | true            | true             | true        | true            | true           | 'uuid'         | false          | new Date()   | "aJobName"      | "aGroupName"
-        true                | true            | true             | true        | true            | false          | null           | true           | null         | null            | null
+        true                | true            | true             | true        | true            | false          | null           | false          | null         | null            | null
         true                | true            | true             | true        | true            | true           | null           | true           | null         | null            | null
     }
 
@@ -3703,6 +3703,74 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         then: "validation error results in failure"
             results.success
     }
+
+    @Unroll
+    def "do save updated job, check if remote scheduling was changed"() {
+        def params = [:]
+        def job = new ScheduledExecution(createJobParams())
+        def oldJob = new OldJob(oldjobname: 'blue', originalRef: ScheduledExecutionService.jobEventRevRef(job))
+        job.jobName = 'other name'
+        def auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>'bob'
+            getRoles()>>['a']
+        }
+        setupDoUpdateJob()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> Mock(IRundeckProject) {
+                getProperties() >> [:]
+                getProjectProperties() >> [:]
+            }
+            _ * existsFrameworkProject('BProject') >> true
+
+            _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+            _ * isClusterModeEnabled() >> true
+            _ * getServerUUID() >> null
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * frameworkNodeName () >> null
+            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * filterNodeSet(*_) >> null
+        }
+
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectJobAll(_,_,_,_) >> true
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * authorizeProjectJobAny(*_) >> true
+            _ * filterAuthorizedNodes(*_) >> null
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+        }
+
+        service.jobSchedulerService = Mock(JobSchedulerService){
+            1 * updateScheduleOwner(_) >> false
+        }
+
+        service.jobSchedulesService=Mock(SchedulesManager){
+            1 * shouldScheduleExecution(_) >> remoteSchedulingChanged
+        }
+
+        def importedJob = RundeckJobDefinitionManager.importedJob(job, [:])
+
+        when: "save the updated the job"
+        def results = service._dosaveupdated(params, importedJob, oldJob, auth)
+
+        then: "validation error results in failure"
+        results.success
+        results.remoteSchedulingChanged == remoteSchedulingChanged
+
+        where:
+        remoteSchedulingChanged |_
+        true                    |_
+        false                   |_
+    }
+
     @Unroll
     def "do update job, disabled execution should delete quartz"() {
         def params = [:]

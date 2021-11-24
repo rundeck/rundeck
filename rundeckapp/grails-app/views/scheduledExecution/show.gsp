@@ -193,6 +193,13 @@ search
 <body>
 <div class="content">
 <div id="layoutBody">
+    <g:if test="${flash.info}">
+        <div class="list-group-item">
+            <div class="alert alert-info">
+                <g:enc>${flash.info}</g:enc>
+            </div>
+        </div>
+    </g:if>
 <tmpl:show scheduledExecution="${scheduledExecution}" crontab="${crontab}"/>
 <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>

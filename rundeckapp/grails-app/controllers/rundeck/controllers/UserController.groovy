@@ -70,7 +70,12 @@ class UserController extends ControllerBase{
 
     def loggedout(){
         if(grailsApplication.config.rundeck.security.authorization.preauthenticated.redirectLogout in ['true',true]) {
-            return redirect(url: grailsApplication.config.grails.serverURL + grailsApplication.config.rundeck.security.authorization.preauthenticated.redirectUrl)
+            final URI redirectUrl = new URI(grailsApplication.config.rundeck.security.authorization.preauthenticated.redirectUrl)
+            if (redirectUrl.isAbsolute()) {
+                return redirect(url: redirectUrl)
+            } else {
+                return redirect(url: grailsApplication.config.grails.serverURL + redirectUrl)
+            }
         }
     }
 

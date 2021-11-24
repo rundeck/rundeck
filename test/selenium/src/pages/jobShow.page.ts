@@ -9,8 +9,17 @@ export const Elems= {
   jobDescription: By.css('#subtitlebar.job-page > div > div > div.jobInfoSection > section > span.h5'),
   optionInput: By.css('#8f95c8d5_seleniumOption1'),
   jobDefinition  : By.css('a[href=\'#job-definition-modal\']'),
-  notificationDefinition: By.css('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx')
-
+  jobDefinitionModal  : By.css('#job-definition-modal'),
+  jobDefinitionModalCloseBtn  : By.css('#job-definition-modal .modal-footer button[data-dismiss="modal"]'),
+  notificationDefinition: By.css('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx'),
+  nodeFilterSection: By.css('#detailtable.tab-pane  tr#exec_detail_nodes '),
+  nodeFilterSectionMatchednodes: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__matchednodes'),
+  nodeFilterSectionThreadcount: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__threadcount'),
+  nodeFilterSectionNodeKeepgoing: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__nodeKeepgoing'),
+  nodeFilterSectionNodeRankOrderAscending: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__nodeRankOrderAscending'),
+  nodeFilterSectionNodeSelectedByDefault: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__nodeSelectedByDefault'),
+  jobEditButton: By.css('.job-action-button .btn-group ul.dropdown-menu > li > a[title="Edit this Job"]'),
+  jobActionDropdown: By.css('.job-action-button > .btn-group > a.dropdown-toggle')
 }
 
 export class JobShowPage extends Page {
@@ -24,6 +33,12 @@ export class JobShowPage extends Page {
 
   async jobTitleLink(){
     return await this.ctx.driver.findElement(Elems.jobTitleLink)
+  }
+  async jobEditButton(){
+    return await this.ctx.driver.findElement(Elems.jobEditButton)
+  }
+  async jobActionDropdown(){
+    return await this.ctx.driver.findElement(Elems.jobActionDropdown)
   }
   async jobDescription(){
     return await this.ctx.driver.findElement(Elems.jobDescription)
@@ -54,6 +69,33 @@ export class JobShowPage extends Page {
   async jobDefinitionNotificationText(){
     let data= await this.ctx.driver.findElement(Elems.notificationDefinition)
     return await data.getText()
+  }
+  async waitDefinitionNodefilters(){
+    await this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSection), 25000)
+  }
+  async jobDefinitionNodeFilterMatchedText(){
+    let data= await this.ctx.driver.findElement(Elems.nodeFilterSectionMatchednodes)
+    return await data.getText()
+  }
+  async jobDefinitionNodeThreadcountText(){
+    let data= await this.ctx.driver.findElement(Elems.nodeFilterSectionThreadcount)
+    return await data.getText()
+  }
+  async jobDefinitionNodeKeepgoingText(){
+    let data= await this.ctx.driver.findElement(Elems.nodeFilterSectionNodeKeepgoing)
+    return await data.getText()
+  }
+  async jobDefinitionNodeRankOrderAscendingText(){
+    let data= await this.ctx.driver.findElement(Elems.nodeFilterSectionNodeRankOrderAscending)
+    return await data.getText()
+  }
+  async jobDefinitionNodeSelectedByDefaultText(){
+    let data= await this.ctx.driver.findElement(Elems.nodeFilterSectionNodeSelectedByDefault)
+    return await data.getText()
+  }
+  async closeJobDefinitionModal(){
+    let data= await this.ctx.driver.findElement(Elems.jobDefinitionModalCloseBtn)
+    return await data.click()
   }
   async optionInputText(name: string){
       return await this.ctx.driver.findElement(By.css(`#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']`))

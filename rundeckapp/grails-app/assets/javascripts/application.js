@@ -412,51 +412,19 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
 
   //create editor
   var editor = ace.edit(generateId(_shadow));
-  editor.$blockScrolling = Infinity;
-
-  var checkResize;
-  if (data.aceResizeMax) {
-    var heightPx = parseInt(height.replace(/px$/, ''));
-    var lineheight = editor.renderer.lineHeight;
-    var checkSize = Math.floor(heightPx / lineheight);
-    var checkSizeMax = parseInt(data.aceResizeMax);
-    if (checkSize < checkSizeMax) {
-
-      var checkSizeInc = 5;
-      var pxInc = lineheight;
-      checkResize = function (editor) {
-        "use strict";
-        var lineCount = editor.session.getLength();
-        if (lineCount > checkSize && checkSize < checkSizeMax) {
-          var diff = Math.min(checkSizeMax - checkSize, lineCount - checkSize);
-          var increment = Math.max(checkSizeInc, diff);
-          checkSize += increment;
-          heightPx += increment * pxInc;
-          _shadow.css({
-            height: heightPx + 'px'
-          });
-          editor.resize();
-        }
-      };
-
-      if (data.aceResizeAuto) {
-        checkResize(editor);
-      }
-    }
-  }
+  editor.setOptions({
+    maxLines: Infinity,
+    minLines: 10
+  });
 
   setAceSyntaxMode(data.aceSessionMode, editor);
-  applyAceTheme(editor);
-
+  editor.setTheme("ace/theme/chrome");
   editor.getSession().on('change', function (e) {
     jQuery(textarea).val(editor.getValue());
     // Create synthetic change since jQuery val, trigger, and change do not trigger all listeners
     jQuery(textarea).get(0).dispatchEvent(new Event('change'));
     if (callback) {
       callback(editor);
-    }
-    if (checkResize) {
-      checkResize(editor);
     }
   });
   if (data.aceAutofocus) {

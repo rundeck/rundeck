@@ -438,6 +438,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
     def show () {
         log.debug("ScheduledExecutionController: show : params: " + params)
+        def infoMessage = flash.info
         def crontab = [:]
         def framework = frameworkService.getRundeckFramework()
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
@@ -461,6 +462,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         if (!params.project || params.project != scheduledExecution.project) {
+            flash.info = infoMessage
             return redirect(controller: 'scheduledExecution', action: 'show',
                     params: [id: params.id, project: scheduledExecution.project])
         }
@@ -1736,6 +1738,10 @@ class ScheduledExecutionController  extends ControllerBase{
             clearEditSession(scheduledExecution.id.toString())
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Saved changes to Job"
+
+            if(result.remoteSchedulingChanged){
+                flash.info = "INFO: Any scheduling changes will take effect after a few seconds."
+            }
             scheduledExecutionService.logJobChange(changeinfo,scheduledExecution.properties)
             redirect(controller: 'scheduledExecution', action: 'show', params: [id: scheduledExecution.extid])
         }
