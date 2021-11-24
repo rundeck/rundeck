@@ -167,8 +167,8 @@ class RundeckAppAuthorizer implements AppAuthorizer {
     }
 
     @Override
-    AuthorizingExecution execution(final Subject subject, final String id, final String project) {
-        rundeckExecutionAuthorizer.getAuthorizingResource(subject, id, project)
+    AuthorizingExecution execution(final Subject subject, final String project, final String id) {
+        rundeckExecutionAuthorizer.getAuthorizingResource(subject, project, id)
     }
 
     @Override

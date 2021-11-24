@@ -13,7 +13,7 @@ import javax.security.auth.Subject
 interface AppAuthorizer extends CoreTypedRequestAuthorizer {
 
     AuthorizingExecution execution(Subject subject, ResIdResolver resolver)
-    AuthorizingExecution execution(final Subject subject, final String id, final String project)
+    AuthorizingExecution execution(final Subject subject, final String project, final String id)
 
     AuthorizingJob job(Subject subject, ResIdResolver resolver)
     AuthorizingJob job(Subject subject,String project, String id)

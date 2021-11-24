@@ -18,7 +18,7 @@ class AppExecutionResourceAuthorizingProvider extends BaseResourceIdAuthorizingP
     @Autowired
     NamedAuthProvider namedAuthProvider;
 
-    AuthorizingExecution getAuthorizingResource(final Subject subject, String execId, String project) {
+    AuthorizingExecution getAuthorizingResource(final Subject subject, String project, String execId) {
         return new AppAuthorizingExecution(
             rundeckAuthContextProcessor,
             subject,
