@@ -552,6 +552,24 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * controller.loggingService.getLogReader(e1) >> reader
 
     }
+    def "tailExecutionOutput missing should cause NotFound exception"() {
+        given:
+            session.subject = new Subject()
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+                1 * execution(_,_)>>Mock(AuthorizingExecution){
+                    1 * access(RundeckAccess.Execution.APP_READ_OR_VIEW) >> {
+                        throw new NotFound('execution','123')
+                    }
+
+                }
+            }
+        when:
+            params.id = '123'
+            controller.tailExecutionOutput()
+        then:
+            1 * controller.rundeckExceptionHandler.handleException(_,_,_ as NotFound)
+
+    }
 
     /**
      * compacted=true, the log entries returned will include only the changed

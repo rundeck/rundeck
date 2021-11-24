@@ -1155,8 +1155,6 @@ setTimeout(function(){
                 [AuthConstants.ACTION_VIEW, "Execution", params.id],
                 HttpServletResponse.SC_FORBIDDEN
             )
-        } catch (NotFound ignored) {
-            return apiError('api.error.item.doesnotexist', ['execution', params.id], HttpServletResponse.SC_NOT_FOUND);
         }
 
         if (params.stepctx && !(params.stepctx ==~ /^(\d+e?(@.+?)?\/?)+$/)) {
