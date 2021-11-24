@@ -10,9 +10,9 @@ proj="DNEProject"
 
 runurl="${APIURL}/project/${proj}"
 
-echo "TEST: get mising project ${proj}..."
+echo "TEST: get missing project ${proj}..."
 
-$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "project does not exist: DNEProject" 404 || exit 2
+$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "Project does not exist: DNEProject" 404 || exit 2
 echo "OK"
 
 
