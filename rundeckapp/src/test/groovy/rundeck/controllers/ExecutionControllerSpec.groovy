@@ -42,6 +42,7 @@ import org.rundeck.core.auth.access.NotFound
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeAdhoc
 import org.rundeck.core.auth.web.RdAuthorizeExecution
@@ -133,12 +134,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         request.api_version = 21
         response.format = 'json'
         controller.apiExecutionOutput()
-        def json = response.json
         then:
-        json.error == 'execution does not exist: -999'
-        json.id == "-999"
-        json.offset == "0"
-        json.completed == false
+            1 * controller.rundeckExceptionHandler.handleException(_,_,_ as NotFound)
 
     }
 
