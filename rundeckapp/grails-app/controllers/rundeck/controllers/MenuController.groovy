@@ -2231,6 +2231,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def welcome(){
+
+        def buildDataKeys = []
+        def buildMap = [:]
+
+        def properties = grailsApplication.metadata.getProperties("build")
+
+        properties.each {key, value->
+            buildDataKeys.add("build."+key)
+            buildMap.put("build."+key, value)
+        }
+
+        render(view:'welcome',model: [buildData: buildMap, buildDataKeys: buildDataKeys])
+
+
+
+
+
     }
 
     private def cachedSummaryProjectStats(final List projectNames) {
