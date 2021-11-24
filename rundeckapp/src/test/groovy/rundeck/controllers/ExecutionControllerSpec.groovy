@@ -1089,7 +1089,6 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
         where:
             endpoint             | access
             'delete'             | RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION
-            'apiExecutionDelete' | RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION
             'bulkDelete'         | RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION
     }
 

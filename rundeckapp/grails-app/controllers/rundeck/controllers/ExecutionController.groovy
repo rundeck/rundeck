@@ -1896,13 +1896,15 @@ setTimeout(function(){
      * @return
      */
     @GrailsCompileStatic
-    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION)
     def apiExecutionDelete (){
         if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
         def eauth=authorizingExecution
-        def result = executionService.deleteExecution(authorizingProject(eauth.resource.project), authorizingExecution)
+        def result = executionService.deleteExecution(
+            authorizingProject(eauth.resource.project),
+            eauth
+        )
         if(!result.success){
             log.error("Failed to delete execution: ${result.message}")
             def respFormat = apiService.extractResponseFormat(getRequest(), response, ['xml', 'json'])
