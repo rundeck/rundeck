@@ -16,45 +16,6 @@ else if (archiveName.startsWith('rundeckapp'))
 
 
 /* Modify auto-gen POM which gets picked up by Bintray */
-/* install {
-    repositories.mavenInstaller {
-        pom.project {
-            artifactId archiveName
-            groupId project.group
-            inceptionYear '2014'
-            packaging 'jar'
-            version version
-            name "Rundeck library ${archiveName}"
-            description project.description?:'Rundeck'
-            url 'http://rundeck.org'
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-            scm {
-                url 'https://github.com/rundeck/rundeck'
-                connection 'scm:git:git@github.com/rundeck/rundeck.git'
-                developerConnection 'scm:git:git@github.com:rundeck/rundeck.git'
-            }
-            developers {
-                developer {
-                    id('gschueler')
-                    name('Greg Schueler')
-                    email('greg@rundeck.com')
-                }
-            }
-            parent {
-                groupId('org.sonatype.oss')
-                artifactId('oss-parent')
-                version('7')
-            }
-        }
-    }
-}
- */
 //build a pom we reuse for both maven builds and release to sonatype
 /* ext.publishPom = pom {
     project {
@@ -151,31 +112,6 @@ tasks.withType(Sign) { t ->
     t.dependsOn configurations.existing
 } */
 
-
-/* tasks.register('uploadExisting', Upload) {
-    it.dependsOn tasks.named('signExisting'), configurations.existing
-
-    it.outputs.dir "${rootProject.buildDir}/deploy-serialize"
-
-    it.configuration = configurations.existing.extendsFrom(configurations.signatures)
-    it.repositories.mavenDeployer {
-        name = "${project.name}"
-        repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
-            authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
-        }
-        snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-            authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
-        }
-    }
-} */
-
-//utility to create a pom for building
-if(!(project.name in ['core','launcher'])){
-    //:core buildfile will generate its own pom for specialized purpose
-    task('createPom').doLast {
-        publishPom.writeTo("pom.xml")
-    }
-}
 
 
 java {
