@@ -96,21 +96,6 @@ tasks.register('registerExisting') {
         }
     }
 }
-/** Trick to get Gradle to require copyExisting when resolving configuration */
-/*
-def existingFiles = files("${buildDir}/noop")
-existingFiles.builtBy(registerExisting)
-configurations.existing.dependencies.add(project.dependencies.create(existingFiles))
-*/
-
-/** Sign existing artifacts **/
- signing {
-    required { isReleaseBuild && project.hasProperty("signing.keyId") }
-    sign configurations.existing
-}
-tasks.withType(Sign) { t ->
-    t.dependsOn configurations.existing
-}
 
 
 
