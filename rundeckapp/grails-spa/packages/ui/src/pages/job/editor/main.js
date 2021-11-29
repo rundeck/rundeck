@@ -5,6 +5,7 @@ import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
 import NotificationsEditorSection from './NotificationsEditorSection'
 import ResourcesEditorSection from './ResourcesEditorSection'
+import SchedulesEditorSection from './SchedulesEditorSection'
 import * as uiv from 'uiv'
 import international from './i18n'
 import VueI18n from 'vue-i18n'
@@ -66,4 +67,16 @@ for (var i = 0; i < resels.length; i++) {
         components: { ResourcesEditorSection },
         i18n
     })
+}
+const scsels = document.body.getElementsByClassName('job-editor-schedules-vue')
+
+for (var i = 0; i < scsels.length; i++) {
+  const e = scsels[i]
+  /* eslint-disable no-new */
+  new Vue({
+    el: e,
+    data(){return{EventBus,}},
+    components: { SchedulesEditorSection },
+    i18n
+  })
 }
