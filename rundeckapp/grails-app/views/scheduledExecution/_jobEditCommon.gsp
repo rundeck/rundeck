@@ -13,6 +13,13 @@
     scheduledExecution.property.notified.label.text,
     scheduledExecution.property.notifyAvgDurationThreshold.label,
     scheduledExecution.property.notifyAvgDurationThreshold.description,
+    scheduledExecution.property.scheduleEnabled.label,
+    scheduledExecution.property.executionEnabled.label,
+    scheduledExecution.property.scheduleEnabled.description,
+    scheduledExecution.property.executionEnabled.description,
+    scheduledExecution.property.timezone.description,
+    scheduledExecution.property.timezone.prompt,
+    documentation.reference.cron.url,
     to,
     subject,
     notification.email.description,
@@ -127,12 +134,27 @@
                              config:scheduledExecution?.orchestrator?.type?scheduledExecution.orchestrator.configuration:[:]
                      ]
              ]}"/>
+<g:embedJSON id="jobSchedulesJSON"
+             data="${ [
+                     allMonths:scheduledExecution?.month.equals('*') ? true: false,
+                     everyDayOfWeek:scheduledExecution?.dayOfWeek.equals('*') ? true: false,
+                     scheduled:scheduledExecution?.scheduled,
+                     scheduleEnabled:scheduledExecution.hasScheduleEnabled(),
+                     executionEnabled:scheduledExecution.hasExecutionEnabled(),
+                     crontabString:scheduledExecution?.crontabString?scheduledExecution?.crontabString:scheduledExecution?.generateCrontabExression(),
+                     timeZone:enc(attr:scheduledExecution?.timeZone),
+                     minuteSelected:rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.minute),
+                     hourSelected:rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.hour),
+                     useCrontabString:scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false,
+                     timeZones:timeZones ?: []
+             ]}"/>
 
 <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
             notificationData: loadJsonData('jobNotificationsJSON'),
-            resourcesData: loadJsonData('jobResourcesJSON')
+            resourcesData: loadJsonData('jobResourcesJSON'),
+            schedulesData: loadJsonData('jobSchedulesJSON')
         }
     })
     var workflowEditor = new WorkflowEditor();
