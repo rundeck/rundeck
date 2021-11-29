@@ -93,19 +93,6 @@ else if (archiveName.startsWith('rundeckapp'))
     }
 } */
 
-/* uploadArchives {
-    repositories.mavenDeployer {
-        configuration = configurations.archives
-        repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
-            authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
-        }
-        snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-            authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
-        }
-        pom = project.publishPom
-    }
-} */
-
 tasks.register('removeExisting') {
     it.doLast {
         delete("${buildDir}/existing")
@@ -183,13 +170,12 @@ tasks.withType(Sign) { t ->
 } */
 
 //utility to create a pom for building
-/* if(!(project.name in ['core','launcher'])){
+if(!(project.name in ['core','launcher'])){
     //:core buildfile will generate its own pom for specialized purpose
     task('createPom').doLast {
         publishPom.writeTo("pom.xml")
     }
 }
- */
 
 
 java {
