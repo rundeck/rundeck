@@ -77,14 +77,14 @@ publish() {
         -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
-        uploadExisting --info
+        publish --info
 }
 
 publish_oss() {
     ./gradlew \
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
-        uploadExisting --info
+        publish --info
 }
 
 main "${@}"
