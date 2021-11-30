@@ -201,6 +201,7 @@ a {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    margin-top: 40px;
     padding-left: 20px;
 
     // i {
