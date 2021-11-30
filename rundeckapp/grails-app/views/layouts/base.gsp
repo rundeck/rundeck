@@ -215,14 +215,14 @@
 
 <g:set var="projectName" value="${params.project ?: request.project}"/>
 
-<section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
+<section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;position:relative;">
     <g:if test="${projectName}">
         <section id="section-navbar" style="grid-area: nav;">
             <div id="navbar"/>
         </section>
     </g:if>
 
-    <section id="section-content" style="grid-area: content;display: flex; flex-direction: column">
+    <section id="section-content" style="grid-area: content;display: flex; flex-direction: column;position:relative;">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">
