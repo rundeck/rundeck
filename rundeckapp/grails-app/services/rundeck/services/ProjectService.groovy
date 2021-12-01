@@ -15,21 +15,22 @@
  */
 
 package rundeck.services
+
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFilesystemFramework
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.net.api.Client
+import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
@@ -46,18 +47,19 @@ import org.apache.commons.io.FileUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
-import org.rundeck.app.components.project.BuiltinExportComponents
-import org.rundeck.app.components.project.BuiltinImportComponents
-import org.rundeck.app.components.project.ProjectComponent
-import org.rundeck.core.auth.AuthConstants
-import org.rundeck.util.Toposort
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
+import org.rundeck.app.components.project.BuiltinExportComponents
+import org.rundeck.app.components.project.BuiltinImportComponents
+import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.services.ExecutionFile
+import org.rundeck.app.services.ExecutionFileProducer
+import org.rundeck.core.auth.AuthConstants
+import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
-import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
@@ -66,14 +68,10 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
-import org.rundeck.app.services.ExecutionFile
-
-import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.function.Function
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
@@ -1510,7 +1508,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 return
             }
             report.ctxProject = projectName
-            if (!report.save()) {
+            if (!report.save(flush: true)) {
                 log.error("[${reportxmlnames[rxml]}] Unable to save report: ${report.errors}")
                 return
             }
@@ -1614,7 +1612,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     log.error("[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}")
                     return
                 }
-                if (!e.save()) {
+                if (!e.save(flush: true)) {
                     execerrors<<"[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}"
                     log.error("[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}")
                     return
