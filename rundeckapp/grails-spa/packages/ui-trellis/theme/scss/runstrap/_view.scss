@@ -56,29 +56,24 @@ body.view{
 }
 
 #section-navbar {
+    display: flex;
+    flex: none;
     overflow: hidden;
     background-color: var(--sidebar-background-color);
 }
 
 #section-content {
     display: flex;
+    flex: 1;
     flex-direction: column;
-    overflow: scroll;
+    overflow: auto;
 }
 
 #section-main {
-    display: grid;
+    display: flex;
     z-index: 1;
-    grid-template-areas: "content";
-    grid-template-rows: 1fr;
-    grid-auto-columns: 1fr;
     overflow: hidden;
     position: relative;
-
-    &.with-project {
-        grid-template-areas: "nav content";
-        grid-auto-columns: 65px 1fr;
-    }
 }
 
 #section-utility {
