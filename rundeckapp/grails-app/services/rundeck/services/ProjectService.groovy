@@ -63,6 +63,7 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
+import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
