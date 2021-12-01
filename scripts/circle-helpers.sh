@@ -52,7 +52,7 @@ S3_BUILD_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build/${RUN
 S3_BUILD_ARTIFACT_SEAL="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build-seal/${RUNDECK_BUILD_NUMBER}"
 S3_COMMIT_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/commit/${RUNDECK_COMMIT}/artifacts"
 S3_TAG_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/tag/${RUNDECK_TAG}/artifacts"
-S3_LATEST_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/latest/artifacts"
+S3_LATEST_ARTIFACT_PATH="s3://rundeck-ci-artifacts/oss/circle/latest/artifacts"
 
 # Store artifacts in a predictable location in the case of version tags.
 # This will allow us to locate them across repos without passing information explicitly.
