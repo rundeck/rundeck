@@ -52,6 +52,7 @@ S3_BUILD_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build/${RUN
 S3_BUILD_ARTIFACT_SEAL="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build-seal/${RUNDECK_BUILD_NUMBER}"
 S3_COMMIT_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/commit/${RUNDECK_COMMIT}/artifacts"
 S3_TAG_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/tag/${RUNDECK_TAG}/artifacts"
+S3_LATEST_ARTIFACT_PATH="s3://rundeck-ci-artifacts/oss/circle/latest/artifacts"
 
 # Store artifacts in a predictable location in the case of version tags.
 # This will allow us to locate them across repos without passing information explicitly.
@@ -96,6 +97,15 @@ sync_from_s3() {
 
 sync_to_s3() {
     aws s3 sync --delete ./artifacts "${S3_ARTIFACT_PATH}"
+}
+
+sync_to_latest_s3() {
+    if [[ "${RUNDECK_BRANCH}" = "main" ]]; then
+        aws s3 rm "${S3_LATEST_ARTIFACT_PATH}" --recursive --include "latest/*"
+        aws s3 sync --delete ./artifacts "${S3_LATEST_ARTIFACT_PATH}"
+    else
+        echo "not main branch, not posting to latest"
+    fi
 }
 
 sync_commit_from_s3() {
