@@ -58,6 +58,8 @@ body.view{
 #section-navbar {
     display: flex;
     flex: none;
+    width: 65px;
+    align-items: center;
     overflow: hidden;
     background-color: var(--sidebar-background-color);
 }
