@@ -92,7 +92,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     ContextACLManager<AppACLContext> aclFileManagerService
     def scmService
     def executionUtilService
-    def reportService
     def AppAuthContextEvaluator rundeckAuthContextEvaluator
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
