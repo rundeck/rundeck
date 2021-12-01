@@ -100,7 +100,7 @@ sync_to_s3() {
 }
 
 sync_to_latest_s3() {
-    if [[ "${RUNDECK_BRANCH}" = "latest_artifacts_s3" ]]; then
+    if [[ "${RUNDECK_BRANCH}" = "main" ]]; then
         aws s3 rm "${S3_LATEST_ARTIFACT_PATH}" --recursive --include "latest/*"
         aws s3 sync --delete ./artifacts "${S3_LATEST_ARTIFACT_PATH}"
     else
