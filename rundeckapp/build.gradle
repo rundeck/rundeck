@@ -435,7 +435,7 @@ bootWar {
 
 artifacts {
     war war
-    bootWar file: war.archivePath, builtBy: bootWar
+    bootWar file: file(war.archiveFile.get().toString().replace("-plain","")), builtBy: bootWar
 }
 //install.dependsOn assemble
 def signArchives = project.tasks.findByName('signArchives')
