@@ -22,8 +22,8 @@ body.view{
     position: relative;
 }
 #section-main{
-    padding-top: 45px;
-    height: calc(100vh - 24px);
+    margin-top: 45px;
+    height: calc(100vh - 69px);
     #section-navbar{
 
     }
@@ -56,29 +56,26 @@ body.view{
 }
 
 #section-navbar {
+    display: flex;
+    flex: none;
+    width: 65px;
+    align-items: center;
     overflow: hidden;
     background-color: var(--sidebar-background-color);
 }
 
 #section-content {
     display: flex;
+    flex: 1;
     flex-direction: column;
-    overflow: scroll;
+    overflow: auto;
 }
 
 #section-main {
-    display: grid;
+    display: flex;
     z-index: 1;
-    grid-template-areas: "content";
-    grid-template-rows: 1fr;
-    grid-auto-columns: 1fr;
     overflow: hidden;
     position: relative;
-
-    &.with-project {
-        grid-template-areas: "nav content";
-        grid-auto-columns: 65px 1fr;
-    }
 }
 
 #section-utility {
