@@ -62,7 +62,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
-import rundeck.*
+import rundeck.BaseReport
+import rundeck.Execution
+import rundeck.JobFileRecord
+import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ProducedExecutionFile
 
