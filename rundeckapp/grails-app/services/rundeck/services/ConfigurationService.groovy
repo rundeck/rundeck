@@ -122,7 +122,7 @@ class ConfigurationService implements InitializingBean {
      * @return
      */
     boolean getBoolean(String service, String name, String property, boolean defval) {
-        return grailsApplication.config.getProperty("rundeck.${service}"?."${name}"?."${property}",Boolean.class, defval)
+        return grailsApplication.config.getProperty("rundeck.${service}.${name}.${property}",Boolean.class, defval)
     }
 
     /**
