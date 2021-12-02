@@ -15,45 +15,6 @@ else if (archiveName.startsWith('rundeckapp'))
     archiveName = project.name.replace('rundeckapp', 'rundeck')
 
 
-/* Modify auto-gen POM which gets picked up by Bintray */
-//build a pom we reuse for both maven builds and release to sonatype
-/* ext.publishPom = pom {
-    project {
-        artifactId archiveName
-        groupId project.group
-        inceptionYear '2014'
-        packaging 'jar'
-        version version
-        name "Rundeck library ${archiveName}"
-        description project.description?:'Rundeck'
-        url 'http://rundeck.org'
-        licenses {
-            license {
-                name 'The Apache Software License, Version 2.0'
-                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                distribution 'repo'
-            }
-        }
-        scm {
-            url 'https://github.com/rundeck/rundeck'
-            connection 'scm:git:git@github.com/rundeck/rundeck.git'
-            developerConnection 'scm:git:git@github.com:rundeck/rundeck.git'
-        }
-        developers {
-            developer {
-                id('gschueler')
-                name('Greg Schueler')
-                email('greg@rundeck.com')
-            }
-        }
-        parent {
-            groupId('org.sonatype.oss')
-            artifactId('oss-parent')
-            version('7')
-        }
-    }
-} */
-
 tasks.register('removeExisting') {
     it.doLast {
         delete("${buildDir}/existing")
@@ -104,7 +65,6 @@ java {
     withSourcesJar()
 }
 
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -116,10 +76,6 @@ publishing {
                 name = "Rundeck library ${archiveName}"
                 description = project.description?:'Rundeck'
                 url = 'http://rundeck.org'
-                properties = [
-                        myProp: "value",
-                        "prop.with.dots": "anotherValue"
-                ]
                 licenses {
                     license {
                         name = 'The Apache Software License, Version 2.0'

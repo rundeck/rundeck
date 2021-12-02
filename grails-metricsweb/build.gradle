@@ -58,10 +58,7 @@ dependencies {
     implementation "org.grails.plugins:scaffolding"
     implementation "org.grails.plugins:gsp"
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
-    implementation "io.micronaut:micronaut-i" +
-            "" +
-            "" +
-            "nject-groovy"
+    implementation "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     profile ("org.grails.profiles:web-plugin"){
         exclude(group:"org.grails.profiles",module:"web")

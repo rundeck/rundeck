@@ -38,12 +38,12 @@
     window.repocaninstall = ${pluginInstall ?: false};
 </script>
 
-<g:set var="repoEnabled" value="${grailsApplication.config.getProperty("rundeck.feature.repository.enabled", String.class) in [true,"true"]}"/>
+<g:set var="repoEnabled" value="${grailsApplication.config.getProperty("rundeck.feature.repository.enabled", Boolean.class) in [true,"true"]}"/>
 <script type="text/javascript">
   window.repoEnabled = ${repoEnabled ?: false};
 </script>
 
-<g:set var="localSearchOnly" value="${grailsApplication.config.getProperty("rundeck.feature.repository.localSearchOnly", String.class)}"/>
+<g:set var="localSearchOnly" value="${grailsApplication.config.getProperty("rundeck.feature.repository.localSearchOnly", Boolean.class)}"/>
 <script type="text/javascript">
   window.repositoryLocalSearchOnly = ${localSearchOnly ?: false};
 </script>
