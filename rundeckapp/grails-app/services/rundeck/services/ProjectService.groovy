@@ -1508,13 +1508,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 return
             }
             report.ctxProject = projectName
-            if (!report.save(flush: true)) {
+            if (!report.save()) {
                 log.error("[${reportxmlnames[rxml]}] Unable to save report: ${report.errors}")
                 return
             }
             execids.remove(Long.parseLong(report.jcExecId))
             loadedreports << report
         }
+
+        // Updating session to really save the data on Oracle and Postgres
+        ExecReport.withSession { session ->
+            session.flush()
+        }
+
         //generate reports for executions without matching reports
         execids.each { eid ->
             Execution newe = Execution.get(eid)
@@ -1612,7 +1618,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     log.error("[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}")
                     return
                 }
-                if (!e.save(flush: true)) {
+                if (!e.save()) {
                     execerrors<<"[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}"
                     log.error("[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}")
                     return
@@ -1663,6 +1669,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 }
             }
         }
+
+        // Updating session to really save the data on Oracle and Postgres
+        Execution.withSession { session ->
+            session.flush()
+        }
+
         //reassign retry execution links
         loadexecresults.each { Execution e ->
             if (retryexecs[e]) {
