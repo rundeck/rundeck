@@ -103,7 +103,7 @@ class ConfigurationService implements InitializingBean {
      * @param val value to set
      */
     def setBoolean(String property, boolean val) {
-        def cval =  grailsApplication.config.rundeck
+        def cval =  grailsApplication.config.getProperty("rundeck")
         def strings = property.split('\\.')
         if(strings.length>1) {
             strings[0..-2].each {
