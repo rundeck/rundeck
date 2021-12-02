@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.rundeck.app.components.jobs.ImportedJob
@@ -37,13 +36,16 @@ import rundeck.services.JobFromMapSerializer
 /**
  * Handles job definition import/export processing
  */
-@CompileDynamic
+@CompileStatic
 class RundeckJobDefinitionManager implements JobDefinitionManager, ApplicationContextAware {
     ApplicationContext applicationContext
 
-    private Map<String, JobFormat> defaultFormats = new HashMap<>(xml: new JobXMLFormat(), yaml: new JobYAMLFormat())
+    private Map<String, JobFormat> defaultFormats = new HashMap<>()
+
 
     RundeckJobDefinitionManager() {
+        defaultFormats.put('xml', new JobXMLFormat())
+        defaultFormats.put('yaml', new JobYAMLFormat())
     }
 
     /**
