@@ -71,3 +71,25 @@ pre {
 .markdown-body img{
   background-color: transparent !important;
 }
+
+// Ace Editor
+.ace_layer.ace_gutter-layer{
+  background-color: var(--background-color-lvl2);
+  color: var(--font-color);
+}
+.ace_gutter-cell.ace_gutter-active-line{
+  background-color: var(--background-color);
+  color: var(--font-color);
+} 
+.ace-chrome .ace_cursor {
+    color: var(--font-color);
+}
+.ace_text.ace_xml{
+  color: var(--font-color);
+}
+.ace_text.ace_editor{
+  background-color: var(--background-color);
+}
+.ace-chrome .ace_print-margin {
+  background: var(--background-color-accent-lvl2);
+}

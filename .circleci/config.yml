@@ -138,6 +138,7 @@ jobs:
             source .circleci/circle-shim.sh
             copy_artifacts
             sync_to_s3
+            sync_to_latest_s3
             seal_artifacts
       - save-gradle-cache
       - when:
