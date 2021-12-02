@@ -7,23 +7,25 @@ def providedTags = findProperty('dockerTags')?: ''
 
 def dockerTags = [].plus(providedTags.split(',').findAll())
 
-if (vTag != 'SNAPSHOT')
-    dockerTags << vNum && dockerTags << resolvedVersion
-else if (dockerTags.size() == 0)
+if (vTag != 'SNAPSHOT') {
+    dockerTags << vNum
+    dockerTags << resolvedVersion
+}else if (dockerTags.size() == 0) {
     dockerTags << vTag
-
-task ensureWar {
-    def rundeckapp = project(":rundeckapp")
-
-    /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
-    def warFile = file(rundeckapp.war.archiveFile)
-    if (! warFile.exists()) {
-        dependsOn rundeckapp.bootWar
-    }
+}
+configurations{
+    docker
+}
+dependencies{
+    docker project(path: ":rundeckapp", configuration: 'bootWar')
 }
 
 task officialBuild {
-    dependsOn ensureWar
+    /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
+    def warFile = file(project(":rundeckapp").bootWar.archiveFile)
+    if (!warFile.exists()) {
+        dependsOn configurations.docker
+    }
 
     inputs.dir "official/etc"
     inputs.dir "official/lib"
@@ -41,9 +43,8 @@ task officialBuild {
     doLast {
         file(outputDir).mkdir()
 
-        def rundeckapp = project(":rundeckapp")
-        def archiveFile = rundeckapp.war.archiveFile.get().toString().replace("-plain","")
-        def archiveFileName = rundeckapp.war.archiveFileName.get().replace("-plain","")
+        def archiveFile = configurations.docker.files.first()
+        def archiveFileName = archiveFile.name
 
         copy {
             from archiveFile
