@@ -1,6 +1,5 @@
 package rundeck
 
-import grails.converters.XML
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
@@ -27,8 +26,6 @@ import org.junit.Test
 import org.rundeck.app.components.jobs.JobDefinitionException
 import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
-
-import javax.xml.stream.XMLEventWriter
 
 import static org.junit.Assert.*
 
@@ -3930,6 +3927,467 @@ void testDecodeBasic__no_group(){
     }
 
     @Test
+    void testEncodeBasic(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true,
+                        uuid:UUID.randomUUID().toString()
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+            def doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "wrong root node name",'joblist',doc.name()
+            assertEquals "wrong number of jobs",1,doc.job.size()
+            assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+        assertEquals "incorrect uuid", 1, doc.job[0].uuid.size()
+        assertEquals "incorrect uuid", jobs1[0].uuid, doc.job[0].uuid[0].text()
+        assertEquals "incorrect id", 1, doc.job[0].id.size()
+            assertEquals "wrong description","test descrip",doc.job[0].description[0].text()
+            assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+            assertEquals "wrong scheduleEnabled", "true", doc.job[0].scheduleEnabled[0].text()
+            assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
+            assertNotNull "missing context",doc.job[0].context
+            assertEquals "incorrect context size",1,doc.job[0].context.size()
+            assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
+            assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+            assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+            assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+            assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+            assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+            assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+            assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+            assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+            assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+
+    @Test
+    void testEncodeBasicStripUuid() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(
+                                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese ' +
+                                                '-particle']
+                                )]
+                        ),
+                        options: [new Option([name: 'delay', defaultValue: '12']), new Option(
+                                [name: 'monkey', defaultValue: 'cheese']
+                        ), new Option([name: 'particle', defaultValue: 'true'])] as TreeSet,
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
+                        uuid: UUID.randomUUID().toString()
+                )
+        ]
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeMapsWithBuilder(jobs1*.toMap(), xml, false)
+        def xmlstr = writer.toString()
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name", 'joblist', doc.name()
+        assertEquals "wrong number of jobs", 1, doc.job.size()
+        assertEquals "wrong name", "test job 1", doc.job[0].name[0].text()
+        assertEquals "incorrect uuid", 0, doc.job[0].uuid.size()
+        assertEquals "incorrect id", 0, doc.job[0].id.size()
+
+
+    }
+
+    @Test
+    void testEncodeNullDescription(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+            def doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "wrong root node name",'joblist',doc.name()
+            assertEquals "wrong number of jobs",1,doc.job.size()
+            assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+            assertEquals "wrong description","",doc.job[0].description[0].text()
+            assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+            assertEquals "wrong scheduleEnabled", "true", doc.job[0].scheduleEnabled[0].text()
+            assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
+            assertNotNull "missing context",doc.job[0].context
+            assertEquals "incorrect context size",1,doc.job[0].context.size()
+            assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
+            assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+            assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+            assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+            assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+            assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+            assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+            assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+            assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+            assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+
+    @Test
+    void testScheduleAndExecutionDisabled(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true,
+                        scheduleEnabled: false,
+                        executionEnabled: false
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+        assertEquals "wrong description","test descrip",doc.job[0].description[0].text()
+        assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+        assertEquals "wrong scheduleEnabled", "false", doc.job[0].scheduleEnabled[0].text()
+        assertEquals "wrong executionEnabled", "false", doc.job[0].executionEnabled[0].text()
+        assertNotNull "missing context",doc.job[0].context
+        assertEquals "incorrect context size",1,doc.job[0].context.size()
+        assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
+        assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+        assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+        assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+        assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+        assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+
+    @Test
+    void testScheduleAndExecutionEnabled(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true,
+                        scheduleEnabled: true,
+                        executionEnabled: true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+        assertEquals "wrong description","test descrip",doc.job[0].description[0].text()
+        assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+        assertEquals "wrong scheduleEnabled", "true", doc.job[0].scheduleEnabled[0].text()
+        assertEquals "wrong executionEnabled", "true", doc.job[0].executionEnabled[0].text()
+        assertNotNull "missing context",doc.job[0].context
+        assertEquals "incorrect context size",1,doc.job[0].context.size()
+        assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
+        assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+        assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+        assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+        assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+        assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+
+    @Test
+    void testEncodeMarkdownDescription(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'<b>a description</b>\n' +
+                                '\n' +
+                                'The spacing is very important.\n' +
+                                '\n' +
+                                'For *markdown*',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+            def doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "wrong root node name",'joblist',doc.name()
+            assertEquals "wrong number of jobs",1,doc.job.size()
+            assertEquals "wrong name","test job 1",doc.job[0].name[0].text()
+            assertEquals "wrong description", '<b>a description</b>\n' +
+                    '\n' +
+                    'The spacing is very important.\n' +
+                    '\n' +
+                    'For *markdown*',doc.job[0].description[0].text()
+            assertEquals "wrong loglevel","INFO",doc.job[0].loglevel[0].text()
+            assertNotNull "missing context",doc.job[0].context
+            assertEquals "incorrect context size",1,doc.job[0].context.size()
+            assertEquals "incorrect context project",0,doc.job[0].context[0].project.size()
+            assertEquals "incorrect context options size",3,doc.job[0].context[0].options[0].option.size()
+            assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+            assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+            assertEquals "incorrect context options option 2 name",'monkey',doc.job[0].context[0].options[0].option[1]['@name'].text()
+            assertEquals "incorrect context options option 2 value",'cheese',doc.job[0].context[0].options[0].option[1]['@value'].text()
+            assertEquals "incorrect context options option 3 name",'particle',doc.job[0].context[0].options[0].option[2]['@name'].text()
+            assertEquals "incorrect context options option 3 value",'true',doc.job[0].context[0].options[0].option[2]['@value'].text()
+
+            assertEquals "incorrect dispatch threadcount",'1',doc.job[0].dispatch[0].threadcount[0].text()
+            assertEquals "incorrect dispatch keepgoing",'true',doc.job[0].dispatch[0].keepgoing[0].text()
+
+
+    }
+
+    @Test
+    void testEncodeTimeout(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        timeout:'2h',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong number of timeout elements",1,doc.job.timeout.size()
+        assertEquals "wrong timeout value","2h",doc.job[0].timeout[0].text()
+    }
+
+    @Test
+    void testEncodeScriptInterpreter(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        workflow: new Workflow(keepgoing: true, commands: [
+                                new CommandExec([adhocLocalString: 'test buddy', argString: '-a b']),
+                                new CommandExec([adhocLocalString: 'test buddy', argString: '-a b',scriptInterpreter:'bash -c']),
+                                new CommandExec([adhocLocalString: 'test buddy', argString: '-a b',scriptInterpreter:'bash -c', interpreterArgsQuoted:true]),
+                        ]),
+                        options:[new Option([name:'delay',defaultValue:'12']), new Option([name:'monkey',defaultValue:'cheese']), new Option([name:'particle',defaultValue:'true'])] as TreeSet,
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println(xmlstr)
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong name", 3, doc.job[0].sequence[0].command.size()
+
+        assertEquals "wrong script", 'test buddy', doc.job[0].sequence[0].command[0].script.text()
+        assertEquals "wrong script", '-a b', doc.job[0].sequence[0].command[0].scriptargs.text()
+        assertEquals "wrong scriptInterpreter", 0, doc.job[0].sequence[0].command[0].scriptinterpreter.size()
+
+        assertEquals "wrong script", 'test buddy', doc.job[0].sequence[0].command[1].script.text()
+        assertEquals "wrong script", '-a b', doc.job[0].sequence[0].command[1].scriptargs.text()
+        assertEquals "wrong scriptinterpreter", 1, doc.job[0].sequence[0].command[1].scriptinterpreter.size()
+        assertEquals "wrong scriptinterpreter", 'bash -c', doc.job[0].sequence[0].command[1].scriptinterpreter[0].text()
+        assertEquals "wrong argsquoted", 0, doc.job[0].sequence[0].command[1].interpreterArgsQuoted.size()
+        assertEquals "wrong argsquoted", 0, doc.job[0].sequence[0].command[1].scriptinterpreter[0].'@argsquoted'.size()
+
+
+
+        assertEquals "wrong script", 'test buddy', doc.job[0].sequence[0].command[2].script.text()
+        assertEquals "wrong script", '-a b', doc.job[0].sequence[0].command[2].scriptargs.text()
+        assertEquals "wrong scriptinterpreter", 1, doc.job[0].sequence[0].command[2].scriptinterpreter.size()
+        assertEquals "wrong scriptinterpreter", 'bash -c', doc.job[0].sequence[0].command[2].scriptinterpreter[0].text()
+        assertEquals "wrong argsquoted", 0, doc.job[0].sequence[0].command[2].interpreterArgsQuoted.size()
+        assertEquals "wrong argsquoted", 1, doc.job[0].sequence[0].command[2].scriptinterpreter[0].'@argsquoted'.size()
+        assertEquals "wrong argsquoted", 'true', doc.job[0].sequence[0].command[2].scriptinterpreter[0].'@argsquoted'.text()
+
+
+
+
+    }
+
+    @Test
+    void testEncodeErrorhandler(){
+        def XmlSlurper parser = new XmlSlurper()
+        def eh1= new CommandExec([adhocLocalString: 'test err', argString: 'blah err'])
+        def eh2= new CommandExec([adhocRemoteString: 'exec err', argString: 'blah err2', keepgoingOnSuccess: false])
+        def eh3= new CommandExec([adhocFilepath: 'file err', argString: 'blah err3',keepgoingOnSuccess:true])
+        def eh4= new JobExec([jobName: 'job err', jobGroup: 'group err', argString: 'blah err4', keepgoingOnSuccess: false])
+        def eh5= new PluginStep([type:'blah',nodeStep:true,configuration:[elf: 'buster',plate:'maker'], keepgoingOnSuccess: true])
+        def jobs1 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+                workflow: new Workflow(keepgoing: true, commands: [
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh1]),
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh2]),
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh3]),
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh4]),
+                    new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle',errorHandler: eh5]),
+                ]),
+                options: [new Option([name: 'delay', defaultValue: '12']), new Option([name: 'monkey', defaultValue: 'cheese']), new Option([name: 'particle', defaultValue: 'true'])] as TreeSet,
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                doNodedispatch: true
+            )
+        ]
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "wrong root node name", 'joblist', doc.name()
+        assertEquals "wrong number of jobs", 1, doc.job.size()
+        assertEquals "wrong name", "test job 1", doc.job[0].name[0].text()
+        assertEquals "wrong command count", 5, doc.job[0].sequence[0].command.size()
+        def ndx=0
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals "wrong handler script", 'test err', doc.job[0].sequence[0].command[ndx].errorhandler[0].script[0].text()
+        assertEquals "wrong handler script", 'blah err', doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptargs[0].text()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
+
+        ndx++
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals "wrong handler exec", 'exec err', doc.job[0].sequence[0].command[ndx].errorhandler[0].exec[0].text()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptargs.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
+        ndx++
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals "wrong handler scriptfile", 'file err', doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile[0].text()
+        assertEquals "wrong handler script", 'blah err3', doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptargs[0].text()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 'true', doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.text()
+        ndx++
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals 1, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref.size()
+        assertEquals 1, doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref[0].arg.size()
+        assertEquals 'job err', doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref[0].'@name'.text()
+        assertEquals 'group err', doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref[0].'@group'.text()
+        assertEquals 'blah err4', doc.job[0].sequence[0].command[ndx].errorhandler[0].jobref[0].arg[0].'@line'.text()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].exec.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].script.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].scriptfile.size()
+        assertEquals 0, doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.size()
+        ndx++
+        assertEquals "wrong handler count", 1, doc.job[0].sequence[0].command[ndx].errorhandler.size()
+        assertEquals 1, doc.job[0].sequence[0].command[ndx].errorhandler[0]['node-step-plugin'].size()
+        assertEquals 'blah', doc.job[0].sequence[0].command[ndx].errorhandler[0]['node-step-plugin'][0].'@type'.text()
+        assertEquals 1, doc.job[0].sequence[0].command[ndx].errorhandler[0]['node-step-plugin'].configuration.size()
+        assertEquals 2, doc.job[0].sequence[0].command[ndx].errorhandler[0]['node-step-plugin'].configuration[0].entry.size()
+        assertEquals 'elf', doc.job[0].sequence[0].command[ndx].errorhandler[0]['node-step-plugin'][0].configuration[0].entry[0].'@key'.text()
+        assertEquals 'buster', doc.job[0].sequence[0].command[ndx].errorhandler[0]['node-step-plugin'][0].configuration[0].entry[0].'@value'.text()
+        assertEquals 'plate', doc.job[0].sequence[0].command[ndx].errorhandler[0]['node-step-plugin'][0].configuration[0].entry[1].'@key'.text()
+        assertEquals 'maker', doc.job[0].sequence[0].command[ndx].errorhandler[0]['node-step-plugin'][0].configuration[0].entry[1].'@value'.text()
+        assertEquals 'true', doc.job[0].sequence[0].command[ndx].errorhandler[0].'@keepgoingOnSuccess'.text()
+
+
+    }
+
+    @Test
     void testEncodeScheduled(){
          def XmlParser parser = new XmlParser()
         def jobs1 = [
@@ -5304,4 +5762,1024 @@ void testDecodeBasic__no_group(){
             }
         }
     }
+
+    @Test
+    void testEncodeOptionValues(){
+         def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        options:[
+                            new Option(name:'test1',defaultValue:'monkey',values:['a','b','c'] as TreeSet,enforced:true,regex:'abcdefg',required:true),
+                            new Option(name:'delay',defaultValue:'12')
+                        ] as TreeSet,
+                )
+        ]
+
+            def xmlstr = JobsXMLCodec.encode(jobs1)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+            def doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "incorrect context options size",2,doc.job[0].context[0].options[0].option.size()
+            assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+            assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+            assertEquals 1,doc.job[0].context[0].options[0].option[0]['@value'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@enforcedvalues'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@values'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@valuesUrl'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@regex'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@required'].size()
+            assertEquals 1,doc.job[0].context[0].options[0].option[0]['@value'].size()
+            assertEquals 1,doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].size()
+            assertEquals 1,doc.job[0].context[0].options[0].option[1]['@values'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[1]['@valuesUrl'].size()
+            assertEquals 1,doc.job[0].context[0].options[0].option[1]['@regex'].size()
+            assertEquals 1,doc.job[0].context[0].options[0].option[1]['@required'].size()
+            assertEquals "incorrect context options option 2 name",'test1',doc.job[0].context[0].options[0].option[1]['@name'].text()
+            assertEquals "incorrect context options option 2 value",'monkey',doc.job[0].context[0].options[0].option[1]['@value'].text()
+            assertEquals "incorrect context options option 2 enforcedvalues",'true',doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].text()
+            assertEquals "incorrect context options option 2 values",'a,b,c',doc.job[0].context[0].options[0].option[1]['@values'].text()
+            assertEquals "incorrect context options option 2 regex",'abcdefg',doc.job[0].context[0].options[0].option[1]['@regex'].text()
+            assertEquals "incorrect context options option 2 regex",'true',doc.job[0].context[0].options[0].option[1]['@required'].text()
+
+
+        def jobs2 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
+                        nodeThreadcount:1,
+                        nodeKeepgoing:true,
+                        options:[
+                            new Option(name:'test1',defaultValue:'monkey',valuesUrl:new URL('http://monkey/somewhere'),enforced:false),
+                            new Option(name:'delay',defaultValue:'12')
+                        ] as TreeSet
+                )
+        ]
+
+            xmlstr = JobsXMLCodec.encode(jobs2)
+            assertNotNull xmlstr
+            assertTrue xmlstr instanceof String
+
+            doc = parser.parse(new StringReader(xmlstr))
+            assertNotNull doc
+            assertEquals "incorrect context options size",2,doc.job[0].context[0].options[0].option.size()
+            assertEquals "incorrect context options option 1 name",'delay',doc.job[0].context[0].options[0].option[0]['@name'].text()
+            assertEquals "incorrect context options option 1 value",'12',doc.job[0].context[0].options[0].option[0]['@value'].text()
+            assertEquals 1,doc.job[0].context[0].options[0].option[0]['@value'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@enforcedvalues'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@values'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@valuesUrl'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[0]['@regex'].size()
+            assertEquals 1,doc.job[0].context[0].options[0].option[0]['@value'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[1]['@values'].size()
+            assertEquals 1,doc.job[0].context[0].options[0].option[1]['@valuesUrl'].size()
+            assertEquals 0,doc.job[0].context[0].options[0].option[1]['@regex'].size()
+            assertEquals "incorrect context options option 2 name",'test1',doc.job[0].context[0].options[0].option[1]['@name'].text()
+            assertEquals "incorrect context options option 2 value",'monkey',doc.job[0].context[0].options[0].option[1]['@value'].text()
+            assertEquals "incorrect context options option 2 valuesUrl",'http://monkey/somewhere',doc.job[0].context[0].options[0].option[1]['@valuesUrl'].text()
+
+
+    }
+
+    @Test
+    void testEncodeOptionSecure() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                                )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'test1', defaultValue: 'monkey', secureInput: true, required: true),
+                                new Option(name: 'delay', defaultValue: '12')
+                        ] as TreeSet,
+                        )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 2, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options option 1 name", 'delay',
+                     doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 value", '12',
+                     doc.job[0].context[0].options[0].option[0]['@value'].text()
+        assertEquals 1, doc.job[0].context[0].options[0].option[0]['@value'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@enforcedvalues'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@values'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@valuesUrl'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@regex'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@required'].size()
+        assertEquals 1, doc.job[0].context[0].options[0].option[0]['@value'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@values'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@valuesUrl'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@regex'].size()
+        assertEquals 1, doc.job[0].context[0].options[0].option[1]['@required'].size()
+        assertEquals 1, doc.job[0].context[0].options[0].option[1]['@secure'].size()
+        assertEquals "incorrect context options option 2 name", 'test1',
+                     doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 2 value", 'monkey',
+                     doc.job[0].context[0].options[0].option[1]['@value'].text()
+        assertEquals "incorrect context options option 2 regex", 'true',
+                     doc.job[0].context[0].options[0].option[1]['@required'].text()
+        assertEquals "incorrect context options option 2 regex", 'true',
+                     doc.job[0].context[0].options[0].option[1]['@secure'].text()
+    }
+
+    @Test
+    void testEncodeOptionSecure2(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs2 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                options: [
+                    new Option(name: 'test1', defaultValue: 'monkey', secureInput: false, required: true),
+                    new Option(name: 'test2', defaultValue: 'monkey', secureInput: true, required: true),
+                    new Option(name: 'test3', defaultValue: 'monkey', secureInput: true, secureExposed: true, required: true),
+                    new Option(name: 'test4', defaultValue: 'monkey', secureInput: true, secureExposed: false, required: true),
+                    new Option(name: 'test5', defaultValue: 'monkey', secureInput: false, secureExposed: true, required: true),
+                ] as TreeSet,
+            )
+        ]
+
+        def xml2 = JobsXMLCodec.encode(jobs2)
+        assertNotNull xml2
+        assertTrue xml2 instanceof String
+
+        def doc2 = parser.parse(new StringReader(xml2))
+        assertNotNull doc2
+        assertEquals "incorrect context options size", 5, doc2.job[0].context[0].options[0].option.size()
+        def opts= doc2.job[0].context[0].options[0].option
+
+        assertEquals 0, opts[0]['@secure'].size()
+        assertEquals 0, opts[0]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test1', opts[0]['@name'].text()
+
+        assertEquals 1, opts[1]['@secure'].size()
+        assertEquals 0, opts[1]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test2', opts[1]['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opts[1]['@secure'].text()\
+
+        assertEquals 1, opts[2]['@secure'].size()
+        assertEquals 1, opts[2]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test3', opts[2]['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opts[2]['@secure'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opts[2]['@valueExposed'].text()
+
+        assertEquals 1, opts[3]['@secure'].size()
+        assertEquals 0, opts[3]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test4', opts[3]['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opts[3]['@secure'].text()
+
+        assertEquals 0, opts[4]['@secure'].size()
+        assertEquals 0, opts[4]['@valueExposed'].size()
+        assertEquals "incorrect context options option 1 name", 'test5', opts[4]['@name'].text()
+    }
+
+    @Test
+    void testEncodeOptionSecureDefaultStoragePath(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs2 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                options: [
+                    new Option(name: 'test3', defaultValue: 'monkey', secureInput: true, secureExposed: true, defaultStoragePath: 'keys/test3'),
+                    new Option(name: 'test4', defaultValue: 'monkey', secureInput: true, secureExposed: false, defaultStoragePath: 'keys/test4'),
+                    new Option(name: 'test5', defaultValue: 'monkey', secureInput: true, secureExposed: false,),
+                ] as TreeSet,
+            )
+        ]
+
+        def xml2 = JobsXMLCodec.encode(jobs2)
+        assertNotNull xml2
+        assertTrue xml2 instanceof String
+
+        def doc2 = parser.parse(new StringReader(xml2))
+        assertNotNull doc2
+        assertEquals "incorrect context options size", 3, doc2.job[0].context[0].options[0].option.size()
+        def opts= doc2.job[0].context[0].options[0].option
+
+        def opt1=opts[0]
+        def opt2=opts[1]
+        assertEquals 1, opt1['@secure'].size()
+        assertEquals 1, opt1['@valueExposed'].size()
+        assertEquals 1, opt1['@storagePath'].size()
+        assertEquals "incorrect context options option 1 name", 'test3', opt1['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opt1['@secure'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opt1['@valueExposed'].text()
+        assertEquals "incorrect context options option 2 regex", 'keys/test3', opt1['@storagePath'].text()
+
+        assertEquals 1, opt2['@secure'].size()
+        assertEquals 0, opt2['@valueExposed'].size()
+        assertEquals 1, opt2['@storagePath'].size()
+        assertEquals "incorrect context options option 1 name", 'test4', opt2['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opt2['@secure'].text()
+        assertEquals "incorrect context options option 2 regex", 'keys/test4', opt2['@storagePath'].text()
+        def opt3=opts[2]
+        assertEquals 1, opt3['@secure'].size()
+        assertEquals 0, opt3['@valueExposed'].size()
+        assertEquals 0, opt3['@storagePath'].size()
+        assertEquals "incorrect context options option 1 name", 'test5', opt3['@name'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', opt3['@secure'].text()
+
+    }
+
+    @Test
+    void testEncodeOptionMultivalued(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                options: [
+                    new Option(name: 'test1', defaultValue: 'monkey', multivalued: true, required: true,delimiter: ' '),
+                    new Option(name: 'delay', defaultValue: '12')
+                ] as TreeSet,
+            )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 2, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options option 1 name", 'delay', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 value", '12', doc.job[0].context[0].options[0].option[0]['@value'].text()
+        assertEquals 1, doc.job[0].context[0].options[0].option[0]['@value'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@enforcedvalues'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@values'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@valuesUrl'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@regex'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[0]['@required'].size()
+        assertEquals 1, doc.job[0].context[0].options[0].option[0]['@value'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@enforcedvalues'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@values'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@valuesUrl'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@regex'].size()
+        assertEquals 1, doc.job[0].context[0].options[0].option[1]['@required'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['@secure'].size()
+        assertEquals 1, doc.job[0].context[0].options[0].option[1]['@multivalued'].size()
+        assertEquals 0, doc.job[0].context[0].options[0].option[1]['delimiter'].size()
+        assertEquals 1, doc.job[0].context[0].options[0].option[1]['@delimiter'].size()
+        assertEquals "incorrect context options option 2 name", 'test1', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 2 value", 'monkey', doc.job[0].context[0].options[0].option[1]['@value'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', doc.job[0].context[0].options[0].option[1]['@required'].text()
+        assertEquals "incorrect context options option 2 regex", 'true', doc.job[0].context[0].options[0].option[1]['@multivalued'].text()
+        assertEquals "incorrect context options option 2 regex", ',', doc.job[0].context[0].options[0].option[1]['@delimiter'].text()
+
+        def jobs2 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                options: [
+                    new Option(name: 'test1', defaultValue: 'monkey', multivalued: true, required: true, delimiter: '<'),
+                ] as TreeSet,
+            )
+        ]
+
+        def xmlstr2 = JobsXMLCodec.encode(jobs2)
+        assertNotNull xmlstr2
+        assertTrue xmlstr2 instanceof String
+
+        def doc2 = parser.parse(new StringReader(xmlstr2))
+        assertNotNull doc2
+        assertEquals "incorrect context options size", 1, doc2.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options option 1 name", 'test1', doc2.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals 1, doc2.job[0].context[0].options[0].option[0]['@multivalued'].size()
+        assertEquals 1, doc2.job[0].context[0].options[0].option[0]['@delimiter'].size()
+        assertEquals "incorrect context options option 2 regex", 'true', doc2.job[0].context[0].options[0].option[0]['@multivalued'].text()
+        assertEquals "incorrect context options option 2 regex", '<', doc2.job[0].context[0].options[0].option[0]['@delimiter'].text()
+    }
+
+    @Test
+    void testEncodeOptionSortIndexPreservesOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: 4),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: 2),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: 3),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: 1),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder", 'true', doc.job[0].context[0].options[0]['@preserveOrder'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[3]['@name'].text()
+    }
+
+    @Test
+    void testEncodeOptionAlwaysPreserveOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: null),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder",1, doc.job[0].context[0].options[0]['@preserveOrder'].size()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[3]['@name'].text()
+    }
+
+    @Test
+    void testEncodeOptionMixedSortIndexDoesNotPreserveOrder() {
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        options: [
+                                new Option(name: 'abc', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'bcd', defaultValue: '12', sortIndex: 1),
+                                new Option(name: 'cde', defaultValue: '12', sortIndex: null),
+                                new Option(name: 'def', defaultValue: '12', sortIndex: 0),
+                        ] as TreeSet,
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect context options size", 4, doc.job[0].context[0].options[0].option.size()
+        assertEquals "incorrect context options/@preserveOrder",1, doc.job[0].context[0].options[0]['@preserveOrder'].size()
+        assertEquals "incorrect context options/@preserveOrder",'true', doc.job[0].context[0].options[0]['@preserveOrder'].text()
+        assertEquals "incorrect context options option 1 name", 'def', doc.job[0].context[0].options[0].option[0]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'bcd', doc.job[0].context[0].options[0].option[1]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'abc', doc.job[0].context[0].options[0].option[2]['@name'].text()
+        assertEquals "incorrect context options option 1 name", 'cde', doc.job[0].context[0].options[0].option[3]['@name'].text()
+    }
+
+    @Test
+    void testEncodePluginNodeStep(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                         workflow: new Workflow(keepgoing: true, commands: [
+                                 new PluginStep(
+                                     type: 'monkey',
+                                     nodeStep: true,
+                                     configuration: [elf:'hider']
+                                 )]
+                         ),
+                         nodeThreadcount: 1,
+                         nodeKeepgoing: true,
+                                     )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertEquals "wrong command/node-step-plugin size", 1, doc.job[0].sequence[0].command[0]['node-step-plugin'].size()
+        assertNotNull "missing type", doc.job[0].sequence[0].command[0]['node-step-plugin'].'@type'
+        assertEquals "wrong plugin type", "monkey", doc.job[0].sequence[0].command[0]['node-step-plugin'].'@type'.text()
+        assertEquals "missing configuration", 1, doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration.size()
+        assertEquals "missing configuration", 1, doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration[0].entry.size()
+        assertEquals "wrong configuration", 'elf', doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration[0].entry[0].'@key'.text()
+        assertEquals "wrong configuration", 'hider', doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration[0].entry[0].'@value'.text()
+    }
+
+    @Test
+    void testEncodePluginNodeStepEmptyConfig(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                         workflow: new Workflow(keepgoing: true, commands: [
+                                 new PluginStep(
+                                     type: 'monkey',
+                                     nodeStep: true,
+                                 )]
+                         ),
+                         nodeThreadcount: 1,
+                         nodeKeepgoing: true,
+                                     )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertEquals "wrong command/node-step-plugin size", 1, doc.job[0].sequence[0].command[0]['node-step-plugin'].size()
+        assertNotNull "missing type", doc.job[0].sequence[0].command[0]['node-step-plugin'].'@type'
+        assertEquals "wrong plugin type", "monkey", doc.job[0].sequence[0].command[0]['node-step-plugin'].'@type'.text()
+        assertEquals "missing configuration", 0, doc.job[0].sequence[0].command[0]['node-step-plugin'].configuration.size()
+    }
+
+    @Test
+    void testEncodePluginStep(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                         workflow: new Workflow(keepgoing: true, commands: [
+                                 new PluginStep(
+                                     type: 'bonkey',
+                                     nodeStep: false,
+                                     configuration: [alert:'magpie']
+                                 )]
+                         ),
+                         nodeThreadcount: 1,
+                         nodeKeepgoing: true,
+                                     )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertEquals "wrong command/step-plugin size", 1, doc.job[0].sequence[0].command[0]['step-plugin'].size()
+        assertNotNull "missing type", doc.job[0].sequence[0].command[0]['step-plugin'].'@type'
+        assertEquals "wrong plugin type", "bonkey", doc.job[0].sequence[0].command[0]['step-plugin'].'@type'.text()
+        assertEquals "missing configuration", 1, doc.job[0].sequence[0].command[0]['step-plugin'].configuration.size()
+        assertEquals "missing configuration", 1, doc.job[0].sequence[0].command[0]['step-plugin'].configuration[0].entry.size()
+        assertEquals "wrong configuration", 'alert', doc.job[0].sequence[0].command[0]['step-plugin'].configuration[0].entry[0].'@key'.text()
+        assertEquals "wrong configuration", 'magpie', doc.job[0].sequence[0].command[0]['step-plugin'].configuration[0].entry[0].'@value'.text()
+    }
+
+    @Test
+    void testEncodePluginStepEmptyConfig(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+                         workflow: new Workflow(keepgoing: true, commands: [
+                                 new PluginStep(
+                                     type: 'bonkey',
+                                     nodeStep: false,
+                                 )]
+                         ),
+                         nodeThreadcount: 1,
+                         nodeKeepgoing: true,
+                                     )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        println xmlstr
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "missing job", 1, doc.job.size()
+        assertEquals "missing sequence", 1, doc.job.sequence.size()
+        assertEquals "wrong command count", 1, doc.job[0].sequence[0].command.size()
+        assertEquals "wrong command/step-plugin size", 1, doc.job[0].sequence[0].command[0]['step-plugin'].size()
+        assertNotNull "missing type", doc.job[0].sequence[0].command[0]['step-plugin'].'@type'
+        assertEquals "wrong plugin type", "bonkey", doc.job[0].sequence[0].command[0]['step-plugin'].'@type'.text()
+        assertEquals "missing configuration", 0, doc.job[0].sequence[0].command[0]['step-plugin'].configuration.size()
+    }
+
+    @Test
+    void testEncodeNotification(){
+            def XmlSlurper parser = new XmlSlurper()
+           def jobs1 = [
+                   new ScheduledExecution(
+                           jobName:'test job 1',
+                           description:'test descrip',
+                           loglevel: 'INFO',
+                           project:'test1',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
+                           nodeThreadcount:1,
+                           nodeKeepgoing:true,
+                           notifications:[
+                               new Notification(eventTrigger:'onsuccess',type:'email',content:'c@example.com,d@example.com')
+                           ]
+                   )
+           ]
+
+               def xmlstr = JobsXMLCodec.encode(jobs1)
+               assertNotNull xmlstr
+               assertTrue xmlstr instanceof String
+
+               def doc = parser.parse(new StringReader(xmlstr))
+               assertNotNull doc
+               assertEquals "incorrect notifications onsuccess email size",1,doc.job[0].notification[0].onsuccess[0].email.size()
+               assertEquals "incorrect notifications onsuccess email size","c@example.com,d@example.com",doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
+
+
+           def jobs2 = [
+                   new ScheduledExecution(
+                           jobName:'test job 1',
+                           description:'test descrip',
+                           loglevel: 'INFO',
+                           project:'test1',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
+                           nodeThreadcount:1,
+                           nodeKeepgoing:true,
+                           notifications:[
+                               new Notification(eventTrigger:'onfailure',type:'email',content:'e@example.com,f@example.com')
+                           ]
+                   )
+           ]
+
+               xmlstr = JobsXMLCodec.encode(jobs2)
+               assertNotNull xmlstr
+               assertTrue xmlstr instanceof String
+
+               doc = parser.parse(new StringReader(xmlstr))
+               assertNotNull doc
+               assertEquals "incorrect notifications onsuccess email size",1,doc.job[0].notification[0].onfailure[0].email.size()
+               assertEquals "incorrect notifications onsuccess email size","e@example.com,f@example.com",doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
+
+
+           def jobs3 = [
+                   new ScheduledExecution(
+                           jobName:'test job 1',
+                           description:'test descrip',
+                           loglevel: 'INFO',
+                           project:'test1',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                    jobName:'a Job',
+                                    jobGroup:'/some/path',
+                                )]
+                            ),
+                           nodeThreadcount:1,
+                           nodeKeepgoing:true,
+                           notifications:[
+                               new Notification(eventTrigger:'onsuccess',type:'email',content:'z@example.com,y@example.com'),
+                               new Notification(eventTrigger:'onfailure',type:'email',content:'e@example.com,f@example.com')
+                           ]
+                   )
+           ]
+
+               xmlstr = JobsXMLCodec.encode(jobs3)
+               assertNotNull xmlstr
+               assertTrue xmlstr instanceof String
+
+               doc = parser.parse(new StringReader(xmlstr))
+               assertNotNull doc
+               assertEquals "incorrect notifications onsuccess email size",1,doc.job[0].notification[0].onfailure[0].email.size()
+               assertEquals "incorrect notifications onsuccess email size","e@example.com,f@example.com",doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
+                assertEquals "incorrect notifications onsuccess email size",1,doc.job[0].notification[0].onsuccess[0].email.size()
+               assertEquals "incorrect notifications onsuccess email size","z@example.com,y@example.com",doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
+
+
+    }
+
+    @Test
+    void testEncodeNotificationUrl(){
+
+        def XmlSlurper parser = new XmlSlurper()
+
+
+        def jobs1 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                notifications: [
+                    new Notification(eventTrigger: 'onsuccess', type: 'url', content: 'http://example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'url', content: 'http://2.example.com'),
+                ]
+            )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 1, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess webhook/@urls", "http://example.com", doc.job[0].notification[0].onsuccess[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onfailure webhook size", 1, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook/@urls value", "http://2.example.com", doc.job[0].notification[0].onfailure[0].webhook[0]['@urls'].text()
+
+
+        def jobs2 = [
+            new ScheduledExecution(
+                jobName: 'test job 1',
+                description: 'test descrip',
+                loglevel: 'INFO',
+                project: 'test1',
+
+
+                workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                    jobName: 'a Job',
+                    jobGroup: '/some/path',
+                )]
+                ),
+                nodeThreadcount: 1,
+                nodeKeepgoing: true,
+                notifications: [
+                    new Notification(eventTrigger: 'onsuccess', type: 'url', content: 'http://example.com'),
+                    new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'test@example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'url', content: 'http://2.example.com'),
+                    new Notification(eventTrigger: 'onfailure', type: 'email', content: 'test2@example.com'),
+                ]
+            )
+        ]
+
+        xmlstr = JobsXMLCodec.encode(jobs2)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 1, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess webhook/@urls", "http://example.com", doc.job[0].notification[0].onsuccess[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onfailure webhook size", 1, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook/@urls value", "http://2.example.com", doc.job[0].notification[0].onfailure[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onsuccess[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test@example.com", doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onfailure[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test2@example.com", doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
+    }
+
+    @Test
+    void testEncodeNotificationPlugin() {
+
+        def XmlSlurper parser = new XmlSlurper()
+
+        def notifs= [
+                new Notification(eventTrigger: 'onsuccess', type: 'test1'),
+                new Notification(eventTrigger: 'onfailure', type: 'test2'),
+        ]
+        notifs[0].configuration=[a:'b', c:'d' ]
+        notifs[1].configuration=[x:'yz' ]
+
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        notifications: notifs
+                )
+        ]
+
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 0, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook size", 0, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess email size", 0, doc.job[0].notification[0].onsuccess[0].email.size()
+        assertEquals "incorrect notifications onfailure email size", 0, doc.job[0].notification[0].onfailure[0].email.size()
+
+        assertEquals "incorrect notifications onsuccess plugin size", 1, doc.job[0].notification[0].onsuccess[0].plugin.size()
+        assertEquals "incorrect notifications onfailure plugin size", 1, doc.job[0].notification[0].onfailure[0].plugin.size()
+        assertEquals "incorrect notifications onsuccess plugin/@type", "test1", doc.job[0].notification[0].onsuccess[0].plugin[0]['@type'].text()
+        assertEquals "incorrect notifications onfailure plugin/@type", "test2", doc.job[0].notification[0].onfailure[0].plugin[0]['@type'].text()
+
+        assertEquals "incorrect notifications onsuccess plugin/configuration size", 1, doc.job[0].notification[0].onsuccess[0].plugin[0].configuration.size()
+        assertEquals "incorrect notifications onfailure plugin/configuration size", 1, doc.job[0].notification[0].onfailure[0].plugin[0].configuration.size()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry size", 2, doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry.size()
+        assertEquals "incorrect notifications onfailure plugin/configuration/entry size", 1, doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry.size()
+
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "a", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[0]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "b", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[0]['@value'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "c", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[1]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "d", doc.job[0].notification[0].onsuccess[0].plugin[0].configuration[0].entry[1]['@value'].text()
+
+
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@key value", "x", doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry[0]['@key'].text()
+        assertEquals "incorrect notifications onsuccess plugin/configuration/entry/@value value", "yz", doc.job[0].notification[0].onfailure[0].plugin[0].configuration[0].entry[0]['@value'].text()
+
+        def jobs2 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+
+
+                        workflow: new Workflow(keepgoing: true, commands: [new JobExec(
+                                jobName: 'a Job',
+                                jobGroup: '/some/path',
+                        )]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        notifications: [
+                                new Notification(eventTrigger: 'onsuccess', type: 'url', content: 'http://example.com'),
+                                new Notification(eventTrigger: 'onsuccess', type: 'email', content: 'test@example.com'),
+                                new Notification(eventTrigger: 'onfailure', type: 'url', content: 'http://2.example.com'),
+                                new Notification(eventTrigger: 'onfailure', type: 'email', content: 'test2@example.com'),
+                        ]
+                )
+        ]
+
+        xmlstr = JobsXMLCodec.encode(jobs2)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        doc = parser.parse(new StringReader(xmlstr))
+        assertNotNull doc
+        assertEquals "incorrect notifications onsuccess webhook size", 1, doc.job[0].notification[0].onsuccess[0].webhook.size()
+        assertEquals "incorrect notifications onsuccess webhook/@urls", "http://example.com", doc.job[0].notification[0].onsuccess[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onfailure webhook size", 1, doc.job[0].notification[0].onfailure[0].webhook.size()
+        assertEquals "incorrect notifications onfailure webhook/@urls value", "http://2.example.com", doc.job[0].notification[0].onfailure[0].webhook[0]['@urls'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onsuccess[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test@example.com", doc.job[0].notification[0].onsuccess[0].email[0]['@recipients'].text()
+        assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onfailure[0].email.size()
+        assertEquals "incorrect notifications onsuccess email size", "test2@example.com", doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
+    }
+
+    @Test
+    void testNotificationThreshold(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        timeout:'2h',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        nodeThreadcountDynamic: "10",
+                        nodeKeepgoing:true,
+                        doNodedispatch:true,
+                        notifications: [
+                                new Notification(eventTrigger: 'avgduration', type: 'email', content: 'test2@example.com')
+                        ],
+                        notifyAvgDurationThreshold: '30s'
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+
+        println(jobs1)
+        println(xmlstr)
+        println(doc)
+
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "incorrect notification Threshold","30s",doc.job[0].notifyAvgDurationThreshold.text()
+    }
+
+    @Test
+    void testEncodeThreadCountFromOption(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        timeout:'2h',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'threadCount',defaultValue:'30'])] as TreeSet,
+                        nodeThreadcountDynamic: "\${option.threadCount}",
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong timeout value","\${option.threadCount}",doc.job[0].dispatch[0].threadcount.text()
+    }
+
+    @Test
+    void testEncodeThreadCountFromValue(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        timeout:'2h',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        nodeThreadcountDynamic: "10",
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong timeout value","10",doc.job[0].dispatch[0].threadcount.text()
+    }
+
+
 }
