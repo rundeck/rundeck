@@ -556,22 +556,28 @@ class BootStrap {
 
     /**
      * Convert to a map whose keys are tokens.
-     * @param userMap a map "user" -> "token[,role,...]"
+     * @param userMap a map "user" -> "token[;...][role,...]"
      * @return a map "token" -> "user,role[,...]"
      */
     static Properties convertToTokenMap(Properties userMap) {
         def tokenMap = new Properties()
-        def splitRegex = " *, *"
+        def splitTokensAndRolesRegex = " *, *"
+        def splitTokensRegex = " *; *"
         userMap.each { k, v ->
-            def roles='api_token_group'
-            def tokenTmp=v
-            def split = v.toString().split(splitRegex)
+            def user = k.toString()
+            def tokensAndRoles = v.toString()
+            def split = tokensAndRoles.split(splitTokensAndRolesRegex)
+            def tokens = split[0]
+            def roles
             if (split.length > 1) {
-                tokenTmp = split[0]
                 def groupList = split.drop(1)
                 roles = groupList.join(',')
+            } else {
+                roles = 'api_token_group'
             }
-            tokenMap[tokenTmp]=k+','+roles
+            tokens.split(splitTokensRegex).each { token ->
+                tokenMap[token] = user + ',' + roles
+            }
         }
         return tokenMap
     }
