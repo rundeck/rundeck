@@ -239,6 +239,48 @@ class ProjectSelectInterceptorSpec extends Specification implements InterceptorU
 //        response.redirectedUrl == '/menu/jobs' //TODO: The interceptor test dont get redirectedUrl, even the status is 302.
 
     }
+    def "projectSelection project param is string[]"() {
+        given:
+        def controller = (ProjectController)mockController(ProjectController)
+        def featureMock = Mock(FeatureService){
+            featurePresent(Features.SIDEBAR_PROJECT_LISTING)>>true
+        }
+        def frameworkMock=Mock(FrameworkService) {
+            1 * existsFrameworkProject(_) >> true
+            1 * refreshSessionProjects(_,_)
+        }
+        defineBeans {
+            rundeckAuthContextEvaluator(InstanceFactoryBean,Mock(AppAuthContextEvaluator){
+                1 * authorizeApplicationResourceAny(*_) >> true
+            })
+            frameworkService(InstanceFactoryBean,frameworkMock)
+            featureService(InstanceFactoryBean, featureMock)
+        }
+        interceptor.interceptorHelper = Mock(InterceptorHelper) {
+            matchesAllowedAsset(_,_) >> false
+        }
+        session.user = 'bob'
+        session.subject = new Subject()
+        request.remoteUser = 'bob'
+        request.userPrincipal = Mock(Principal) {
+            getName() >> 'bob'
+        }
+        params.project = ['testProject','testProject'].toArray(new String[2])
+
+        when:
+        withInterceptors(controller: 'project') {
+            controller.index()
+        }
+        then:
+        response.status == 302
+
+        flash.error == null
+        request.title == null
+        request.titleCode == null
+        request.errorCode == null
+        request.errorArgs == null
+
+    }
 
     def "projectSelection disable sidebarProjectListing feature"() {
         given:

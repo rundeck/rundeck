@@ -57,6 +57,9 @@ class ProjectSelectInterceptor {
 
     boolean before() {
         if(interceptorHelper.matchesAllowedAsset(controllerName, request)) return true
+        if (params.project instanceof String[]) {
+            params.project = params.project[0]
+        }
         if (request.is_allowed_api_request || request.api_version || request.is_api_req) {
             //only default the project if not an api request
             return true
