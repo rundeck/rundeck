@@ -29,6 +29,9 @@ import java.text.SimpleDateFormat
 evaluationDependsOn(':rundeck-storage')
 apply plugin: 'idea'
 apply plugin: "org.dvaske.gradle.git-build-info"
+apply plugin: 'signing'
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
 
 description = 'The Rundeck Core API project'
 
@@ -114,6 +117,43 @@ buildConfig {
 
 }
 
+def archiveName = project.name
+
+
+if (! archiveName.startsWith('rundeck'))
+    archiveName = "rundeck-${project.name}"
+else if (archiveName.startsWith('rundeckapp'))
+    archiveName = project.name.replace('rundeckapp', 'rundeck')
+
+
+tasks.register('removeExisting') {
+    it.doLast {
+        delete("${buildDir}/existing")
+    }
+}
+
+tasks.register('copyExisting') {
+    it.dependsOn removeExisting
+
+    it.inputs.dir 'build/libs'
+    it.inputs.dir 'build/poms'
+    it.outputs.dir 'build/existing'
+
+    it.doLast {
+
+        copy {
+            from "build/libs"
+            from "build/poms"
+            into "build/existing"
+            exclude "*.original"
+            rename { file ->
+                if (file =~ /^pom/)
+                    return "$project.name-${version}.pom"
+            }
+        }
+    }
+}
+
 task gitInfo {
     doLast {
         println "HEAD:     $project.gitHead"
@@ -149,6 +189,68 @@ processResources.dependsOn tasks.expandTemplate
 
 test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
+}
+
+tasks.register('registerExisting') {
+    it.dependsOn copyExisting
+    it.inputs.dir 'build/existing'
+
+    it.doLast {
+        file("build/existing").eachFile {f ->
+            println(f)
+            artifacts {
+                existing file: f, name: archiveName
+            }
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = archiveName
+            groupId = project.group
+            version = version
+            from components.java
+            pom {
+                name = "Rundeck library ${archiveName}"
+                description = project.description?:'Rundeck'
+                url = 'http://rundeck.org'
+                licenses {
+                    license {
+                        name = 'The Apache Software License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'gschueler'
+                        name = 'Greg Schueler'
+                        email = 'greg@rundeck.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git@github.com/rundeck/rundeck.git'
+                    developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
+                    url = 'https://github.com/rundeck/rundeck'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            // change URLs to point to your repos, e.g. http://my.org/repo
+            def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+            def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+
+            credentials {
+                username findProperty('sonatypeUsername')
+                password findProperty('sonatypePassword')
+            }
+        }
+    }
 }
 
 assemble {
