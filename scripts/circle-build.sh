@@ -68,6 +68,8 @@ publish_docker() {
 }
 
 publish() {
+    cd core
+    
     ./gradlew \
         -Penvironment="${ENV}" \
         -PdryRun="${DRY_RUN}" \
