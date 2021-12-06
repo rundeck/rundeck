@@ -17,11 +17,17 @@
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description" %>
 <g:set var="desc" value="${orchestratorPlugins?.get(orchestrator.type)}"/>
 <g:if test="${desc && desc instanceof Description}">
-    <g:expander key="orchestratorplugin${orchestrator.type}">${desc.title.encodeAsHTML()} </g:expander>
-    <span class="" id="orchestratorplugin${orchestrator.type}" style="display:none;" title="">
-        <g:render template="/framework/renderPluginConfig"
-                  model="${[serviceName:'Orchestrator',values: orchestrator.configuration, description: desc, hideTitle: true]}"/>
-    </span>
+    <details id="exec_detail__orchestrator" class="details-reset more-info">
+        <summary>${desc.title.encodeAsHTML()}
+            <span class="more-indicator-verbiage more-info-icon"><g:icon name="chevron-right"/></span>
+            <span class="less-indicator-verbiage more-info-icon"><g:icon name="chevron-down"/></span>
+        </summary>
+        <div id="orchestratorplugin_${orchestrator.type}">
+            <g:render template="/framework/renderPluginConfig"
+                      model="${[serviceName:'Orchestrator',values: orchestrator.configuration, description: desc, hideTitle: true]}"/>
+        </div>
+    </details>
+
 </g:if>
 <g:elseif test="${!orchestratorPlugins?.get(orchestrator.type)}">
     <span class="warn note"><g:message code="plugin.not.found.0" args="[orchestrator.type?.encodeAsHTML()]" /></span>

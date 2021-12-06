@@ -5210,6 +5210,31 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
 
     }
 
+    @Unroll
+    def "parseParamOrchestrator config params input #inparams"() {
+        given:
+            def type = 'rankTiered'
+        when:
+            def orch = service.parseParamOrchestrator(inparams, type)
+
+        then:
+            orch != null
+            orch.type == type
+            orch.configuration == expect
+
+        where:
+            inparams                                               | expect
+            [:]                                                    | null
+            [orchestratorPlugin: 'x']                              | null
+            [orchestratorPlugin: ['x']]                            | null
+            [orchestratorPlugin: [a: 'x']]                         | null
+            [orchestratorPlugin: [rankTiered: 'x']]                | null
+            [orchestratorPlugin: [rankTiered: ['x']]]              | null
+            [orchestratorPlugin: [rankTiered: [z: 'x']]]           | null
+            [orchestratorPlugin: [rankTiered: [config: [a: 'b']]]] | [a: 'b']
+
+    }
+
     def "jobDefinitionGlobalLogFilters add logFilter"(){
         given:
         def job = new ScheduledExecution(

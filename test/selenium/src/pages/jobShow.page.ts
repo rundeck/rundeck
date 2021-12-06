@@ -3,7 +3,7 @@ import {By, until} from 'selenium-webdriver'
 import {Page} from '@rundeck/testdeck/page'
 import { Context } from '@rundeck/testdeck/context'
 
-export const Elems= {
+export const Elems = {
   jobTitleLink: By.css('#jobInfo_ > span > a.job-header-link'),
   jobUuidText: By.css('#subtitlebar.job-page > div > div > section > small.uuid'),
   jobDescription: By.css('#subtitlebar.job-page > div > div > div.jobInfoSection > section > span.h5'),
@@ -18,8 +18,9 @@ export const Elems= {
   nodeFilterSectionNodeKeepgoing: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__nodeKeepgoing'),
   nodeFilterSectionNodeRankOrderAscending: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__nodeRankOrderAscending'),
   nodeFilterSectionNodeSelectedByDefault: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__nodeSelectedByDefault'),
+  orchestratorText: By.css('#detailtable.tab-pane  tr#exec_detail_orchestrator  #exec_detail__orchestrator summary'),
   jobEditButton: By.css('.job-action-button .btn-group ul.dropdown-menu > li > a[title="Edit this Job"]'),
-  jobActionDropdown: By.css('.job-action-button > .btn-group > a.dropdown-toggle')
+  jobActionDropdown: By.css('.job-action-button > .btn-group > a.dropdown-toggle'),
 }
 
 export class JobShowPage extends Page {
@@ -99,6 +100,9 @@ export class JobShowPage extends Page {
   }
   async optionInputText(name: string){
       return await this.ctx.driver.findElement(By.css(`#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']`))
+  }
+  async jobDefinitionOrchestratorText() {
+    return this.ctx.driver.findElement(Elems.orchestratorText)
   }
 
 }

@@ -2032,12 +2032,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         nots
     }
 
-    static Orchestrator parseParamOrchestrator(params){
-        Orchestrator orchestrator = new Orchestrator(type:params.orchestratorId)
-        def plugin = params.orchestratorPlugin[params.orchestratorId];
-        //def config = params.orchestratorPlugin[params.orchestratorId].config
-        if(plugin){
-            orchestrator.configuration = plugin.config
+    @CompileStatic
+    static Orchestrator parseParamOrchestrator(Map params, String type){
+        Orchestrator orchestrator = new Orchestrator(type:type)
+        def plugin = (params.orchestratorPlugin instanceof Map) ? params.orchestratorPlugin[type] : [:]
+        if(plugin instanceof Map){
+            def configVal = plugin.get('config')
+            if(configVal instanceof Map){
+                orchestrator.configuration = configVal
+            }
         }
         orchestrator
     }
@@ -2988,7 +2991,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(input){
             orchestrator = input.orchestrator
         }else if (params.orchestratorId) {
-            orchestrator = parseParamOrchestrator(params)
+            orchestrator = parseParamOrchestrator(params, params.orchestratorId.toString())
         }
         if(scheduledExecution.id && scheduledExecution.orchestrator){
             if(!hasExecutionsLinkedToOrchestrator(scheduledExecution.orchestrator)) scheduledExecution.orchestrator.delete() //cannot deleted this orchestrator if linked to executions
