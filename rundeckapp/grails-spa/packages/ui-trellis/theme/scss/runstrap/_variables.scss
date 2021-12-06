@@ -277,6 +277,21 @@ $screen-xs-max:              ($screen-sm-min - 1) !default;
 $screen-sm-max:              ($screen-md-min - 1) !default;
 $screen-md-max:              ($screen-lg-min - 1) !default;
 
+$max-width:(
+  "max-w-sm":         24rem,
+  "max-w-md":         28rem,
+  "max-w-lg":         32rem,
+  "max-w-xl":         36rem,
+  "max-w-2xl":        42rem,
+  "max-w-3xl":        48rem,
+  "max-w-4xl":        56rem
+);
+:root {
+  @each $key_name, $value in $max-width {
+    --#{$key_name}: #{$value};
+  }
+}
+
 $height-base:                  40px !default;
 
 $font-size-base:               14px !default;

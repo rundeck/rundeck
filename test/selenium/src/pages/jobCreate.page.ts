@@ -8,6 +8,7 @@ export const Elems= {
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
     saveButton  : By.css('#Create'),
+    updateButton  : By.css('#jobUpdateSaveButton'),
     cancelButton  : By.css('#createFormCancelButton'),
     editSaveButton: By.css('#editForm div.card-footer input.btn.btn-primary[type=submit][value=Save]'),
     errorAlert  : By.css('#error'),
@@ -60,6 +61,8 @@ export const Elems= {
     nodeKeepgoingTrue: By.css('#nodegroupitem #nodeKeepgoingTrue'),
     successOnEmptyNodeFilterTrue: By.css('#nodegroupitem #successOnEmptyNodeFilterTrue'),
     nodesSelectedByDefaultFalse: By.css('#nodegroupitem #nodesSelectedByDefaultFalse'),
+    orchestratorDropdown: By.css('#orchestrator-edit-type-dropdown'),
+    orchestratorDropdownButton: By.css('#orchestrator-edit-type-dropdown > button'),
     workflowStrategy  : By.xpath('//*[@id="workflow.strategy"]'),
     strategyPluginparallel: By.xpath('//*[@id="strategyPluginparallel"]'),
     strategyPluginparallelMsg: By.xpath('//*[@id="strategyPluginparallel"]/span/span'),
@@ -107,10 +110,13 @@ export class JobCreatePage extends Page {
     async descriptionTextarea(){
         return await this.ctx.driver.findElement(Elems.descriptionTextarea)
     }
-    saveButton():WebElementPromise{
+    async saveButton() {
         return this.ctx.driver.findElement(Elems.saveButton)
     }
-    cancelButton():WebElementPromise{
+    async  updateButton() {
+        return this.ctx.driver.findElement(Elems.updateButton)
+    }
+    async cancelButton() {
         return this.ctx.driver.findElement(Elems.cancelButton)
     }
     async editSaveButton(){
@@ -276,8 +282,17 @@ export class JobCreatePage extends Page {
     }
     async matchedNodesText(){
         let matchedNodeElem = await this.matchedNodes()
-        await matchedNodeElem.isDisplayed();
+        await matchedNodeElem.isDisplayed()
         return await matchedNodeElem.getText()
+    }
+    async orchestratorDropdownButton() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.orchestratorDropdownButton),15000)
+    }
+    async orchestratorChoice(val: string) {
+        const orchChoiceLink = By.css(
+          '#orchestrator-edit-type-dropdown > ul > li > a[role=button][data-plugin-type=' + val + ']'
+        )
+        return this.ctx.driver.findElement(orchChoiceLink)
     }
     async workflowStrategy(){
         return this.ctx.driver.wait(until.elementLocated(Elems.workflowStrategy),15000)

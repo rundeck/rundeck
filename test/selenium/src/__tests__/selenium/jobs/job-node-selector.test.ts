@@ -30,38 +30,41 @@ const expectInputValue=async function(elem:WebElement,val:string){
     let valueText = await elem.getAttribute('value')
     expect(valueText).toBe(val)
 }
+const createBasicJob = async function(name: string){
+
+    await jobCreatePage.get()
+    await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+    let jobName=await jobCreatePage.jobNameInput()
+    await jobName.sendKeys(name)
+
+    //add workflow step
+    let wfTab=await jobCreatePage.tabWorkflow()
+    await wfTab.click()
+    let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+
+    //click add Command step, and wait until input fields are loaded
+    await addWfStepCommand.click()
+    await jobCreatePage.waitWfStepCommandRemoteText()
+
+
+    let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+    await wfStepCommandRemoteText.sendKeys('echo selenium test')
+
+    let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
+
+    //click step Save button and wait for the step content to display
+    let wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
+    await wfStep0SaveButton.click()
+    await jobCreatePage.waitWfstep0vis()
+
+    //wait until edit form section for step is removed from dom
+    await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
+}
 
 describe('job', () => {
     it('create job with dispatch to nodes', async () => {
-        
-        await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
-        let jobName=await jobCreatePage.jobNameInput()
-        await jobName.sendKeys('jobs with nodes')
+        await createBasicJob('jobs with nodes')
 
-        //add workflow step
-        let wfTab=await jobCreatePage.tabWorkflow()
-        await wfTab.click()
-        let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
-
-        //click add Command step, and wait until input fields are loaded
-        await addWfStepCommand.click()
-        await jobCreatePage.waitWfStepCommandRemoteText()
-
-
-        let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
-        await wfStepCommandRemoteText.sendKeys('echo selenium test')
-
-        let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
-
-        //click step Save button and wait for the step content to display
-        let wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
-        await wfStep0SaveButton.click()
-        await jobCreatePage.waitWfstep0vis()
-
-        //wait until edit form section for step is removed from dom
-        await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
-        
         let tabNodes=await jobCreatePage.tabNodes()
         await tabNodes.click()
 
@@ -77,36 +80,36 @@ describe('job', () => {
 
         let nodeFilterSelectAllLink= await jobCreatePage.nodeFilterSelectAllLink()
         await nodeFilterSelectAllLink.click()
-        
+
         let matchedNodesText= await jobCreatePage.matchedNodesText()
         expect(matchedNodesText).toEqual("1 Node Matched")
 
         let showExcludedYes= await jobCreatePage.showExcludedNodesRadioYes()
         await showExcludedYes.click()
-        
+
         let editableFilterYes= await jobCreatePage.editableFilterYes()
         await editableFilterYes.click()
-        
+
         let schedJobnodeThreadcount= await jobCreatePage.schedJobnodeThreadcount()
         await schedJobnodeThreadcount.clear()
         await schedJobnodeThreadcount.sendKeys('3')
-        
+
         let schedJobnodeRankAttribute= await jobCreatePage.schedJobnodeRankAttribute()
         await schedJobnodeRankAttribute.clear()
         await schedJobnodeRankAttribute.sendKeys('arank')
-        
+
         let nodeRankOrderDescending= await jobCreatePage.nodeRankOrderDescending()
         await nodeRankOrderDescending.click()
-        
+
         let nodeKeepgoingTrue= await jobCreatePage.nodeKeepgoingTrue()
         await nodeKeepgoingTrue.click()
-        
+
         let successOnEmptyNodeFilterTrue= await jobCreatePage.successOnEmptyNodeFilterTrue()
         await successOnEmptyNodeFilterTrue.click()
-        
+
         let nodesSelectedByDefaultFalse= await jobCreatePage.nodesSelectedByDefaultFalse()
         await nodesSelectedByDefaultFalse.click()
-        
+
         //save the job
         let save = await jobCreatePage.saveButton()
         await save.click()
@@ -161,31 +164,105 @@ describe('job', () => {
 
         let valueShowExcludedYes= await jobEditPage.showExcludedNodesRadioYes()
         await expectRadioValue(valueShowExcludedYes,true)
-        
+
         let valueEditableFilterYes= await jobEditPage.editableFilterYes()
         await expectRadioValue(valueEditableFilterYes, true)
-        
+
         let valueSchedJobnodeThreadcount= await jobEditPage.schedJobnodeThreadcount()
         await expectInputValue(valueSchedJobnodeThreadcount,'3')
-        
+
         let valueSchedJobnodeRankAttribute= await jobEditPage.schedJobnodeRankAttribute()
         await expectInputValue(valueSchedJobnodeRankAttribute,'arank')
-        
+
         let valueNodeRankOrderDescending= await jobEditPage.nodeRankOrderDescending()
         await expectRadioValue(valueNodeRankOrderDescending, true)
-        
+
         let valueNodeKeepgoingTrue= await jobEditPage.nodeKeepgoingTrue()
         await expectRadioValue(valueNodeKeepgoingTrue, true)
-        
+
         let valueSuccessOnEmptyNodeFilterTrue= await jobEditPage.successOnEmptyNodeFilterTrue()
         await expectRadioValue(valueSuccessOnEmptyNodeFilterTrue, true)
-        
+
         let valuenodesSelectedByDefaultFalse= await jobEditPage.nodesSelectedByDefaultFalse()
         await expectRadioValue(valuenodesSelectedByDefaultFalse, true)
-        
+
 
 
     })
 
-    
+    it('rename job with orchestrator', async () => {
+        await createBasicJob('job with node orchestrator')
+
+        const tabNodes = await jobCreatePage.tabNodes()
+        await tabNodes.click()
+
+        const enableDispatchNodes = await jobCreatePage.dispatchNodes()
+        await enableDispatchNodes.click()
+        await sleep(500)
+
+        const nodeFilter = await jobCreatePage.nodeFilter()
+        expect(nodeFilter).toBeDefined()
+
+        const nodeFilterMenuLink = await jobCreatePage.nodeFilterMenuLink()
+        await nodeFilterMenuLink.click()
+
+        const nodeFilterSelectAllLink = await jobCreatePage.nodeFilterSelectAllLink()
+        await nodeFilterSelectAllLink.click()
+
+        const matchedNodesText = await jobCreatePage.matchedNodesText()
+        expect(matchedNodesText).toEqual('1 Node Matched')
+
+        // choose orchestrator rankTiered
+
+        const dropdown = await jobCreatePage.orchestratorDropdownButton()
+        await dropdown.click()
+
+        // select rankTiered
+        const choice = await jobCreatePage.orchestratorChoice('rankTiered')
+        await choice.click()
+
+        // save the job
+        const save = await jobCreatePage.saveButton()
+        await save.click()
+
+        const jobShowPage = new JobShowPage(ctx, 'SeleniumBasic', '')
+
+        // verfiy job description
+        await jobShowPage.waitJobDefinition()
+        const jobDefinitionModal = await jobShowPage.jobDefinition()
+        await jobDefinitionModal.click()
+
+        await jobShowPage.waitDefinitionNodefilters()
+        const orchName = await jobShowPage.jobDefinitionOrchestratorText()
+        const orchText = await orchName.getText()
+        expect(orchText).toEqual('Rank Tiered')
+
+        // close modal
+        await jobShowPage.closeJobDefinitionModal()
+        await sleep(500)
+
+        const showUrl = await ctx.driver.getCurrentUrl()
+
+        // change to edit page
+        const editUrl = showUrl.replace('/job/show', '/job/edit')
+
+        // edit job and verify values are set in form
+
+        await ctx.driver.navigate().to(editUrl)
+
+        const jobEditPage = new JobCreatePage(ctx, 'SeleniumBasic')
+
+        // rename job
+        const nameInput = await jobEditPage.jobNameInput()
+        await nameInput.clear()
+        await nameInput.sendKeys('renamed job with node orchestrator')
+
+        // save and reload
+        // save the job
+        const save2 = await jobCreatePage.updateButton()
+        await save2.click()
+
+        await ctx.driver.wait(until.urlContains('/job/show'), 35000)
+        const jobShowPage2 = new JobShowPage(ctx, 'SeleniumBasic', '')
+    })
 })

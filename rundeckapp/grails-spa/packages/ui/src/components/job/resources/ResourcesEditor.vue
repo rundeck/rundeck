@@ -2,7 +2,7 @@
   <div v-if="modelData">
     <div class="form-group">
       <label class="col-sm-2 control-label">
-        Resources
+        Nodes
       </label>
       <div class="col-sm-10 ">
         <div class="radio radio-inline">
@@ -13,7 +13,7 @@
                  v-model="modelData.doNodedispatch"
                  id="doNodedispatchTrue"/>
           <label for="doNodedispatchTrue">
-            Dispatch to Resources
+            Dispatch to Nodes
           </label>
         </div>
         <div class="radio radio-inline">
