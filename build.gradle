@@ -179,7 +179,7 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
-subproject libs that are uploaded to maven central
+//subproject libs that are uploaded to maven central
 exportedProjects.each {
     project(it) {
         apply from: "${rootDir}/gradle/exported-project.gradle"
