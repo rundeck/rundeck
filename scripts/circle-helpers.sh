@@ -121,13 +121,13 @@ copy_artifacts() {
     (
         # find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
         cp -r --parents core/build/libs artifacts/
-        cp -r --parents core/build/publications/mavenJava artifacts/
+        cp -r --parents core/build/publications/core artifacts/
         cp -r --parents rundeckapp/**/build/libs artifacts/
-        cp -r --parents rundeckapp/**/build/publications/mavenJava artifacts/
+        cp -r --parents rundeckapp/**/build/publications/rundeckapp artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
-        cp -r --parents rundeck-storage/**/build/publications/mavenJava artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage artifacts/
         cp -r --parents rundeck-authz/**/build/libs artifacts/
-        cp -r --parents rundeck-authz/**/build/publications/mavenJava artifacts/
+        cp -r --parents rundeck-authz/**/build/publications/rundeck-authz artifacts/
         tar -czf artifacts/m2.tgz -C ~/.m2/repository/ org/rundeck
     )
 }
