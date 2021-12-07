@@ -67,33 +67,26 @@ publish_docker() {
     ./gradlew -Penvironment="${ENV}" docker:officialPush
 }
 
-# publish() {
-#     ./gradlew \
-#         -Penvironment="${ENV}" \
-#         -PdryRun="${DRY_RUN}" \
-#         -Psigning.secretKeyRingFile="$(realpath ./ci-resources/secring.gpg)" \
-#         -Psigning.password="${RUNDECK_SIGNING_PASSWORD}" \
-#         -Psigning.keyId="${RUNDECK_SIGNING_KEYID}" \
-#         -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
-#         -PsonatypeUsername="${SONATYPE_USERNAME}" \
-#         -PsonatypePassword="${SONATYPE_PASSWORD}" \
-#         publish --info
-# }
-
 publish() {
     ./gradlew \
-       -PsigningKey="${RUNDECK_SIGNING_KEYID}" \
-       -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
-       -PsonatypeUsername="${SONATYPE_USERNAME}" \
-       -PsonatypePassword="${SONATYPE_PASSWORD}" \
-       publishToSonatype
-}
-
-publish_oss() {
-    ./gradlew \
+        -Penvironment="${ENV}" \
+        -PdryRun="${DRY_RUN}" \
+        -Psigning.secretKeyRingFile="$(realpath ./ci-resources/secring.gpg)" \
+        -Psigning.password="${RUNDECK_SIGNING_PASSWORD}" \
+        -Psigning.keyId="${RUNDECK_SIGNING_KEYID}" \
+        -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
-        publish --info
+        publishToSonatype --info
 }
+
+# publish() {
+#     ./gradlew \
+#        -PsigningKey="${SIGNING_KEY_B64}" \
+#        -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
+#        -PsonatypeUsername="${SONATYPE_USERNAME}" \
+#        -PsonatypePassword="${SONATYPE_PASSWORD}" \
+#        publishToSonatype
+# }
 
 main "${@}"

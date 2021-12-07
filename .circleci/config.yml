@@ -297,6 +297,8 @@ jobs:
           command: |
             source .circleci/circle-shim.sh
             DRY_RUN=false bash scripts/circle-build.sh publish
+          env:
+            SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY_B64 }}
 
 stages:
   test: &stage-test
