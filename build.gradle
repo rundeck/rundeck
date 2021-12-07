@@ -49,6 +49,7 @@ plugins {
     id "com.dorongold.task-tree" version "1.5"
     id "org.ajoberstar.grgit" version "2.2.1"
     id "signing"
+    id 'io.github.gradle-nexus.publish-plugin' version "1.1.0"
 }
 
 apply plugin: 'java'
@@ -184,6 +185,16 @@ gradle.taskGraph.whenReady { taskGraph ->
 //         apply from: "${rootDir}/gradle/exported-project.gradle"
 //     }
 // }
+
+nexusPublishing {
+    packageGroup = 'org.rundeck'
+    repositories {
+        sonatype{
+            stagingProfileId = '67d196ce5bae'
+        }
+    }
+}
+
 
 task bashVersionInfo {
     doLast {

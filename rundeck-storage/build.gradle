@@ -38,6 +38,10 @@ subprojects {
     jar {
         manifest.attributes provider: 'gradle'
     }
+    ext.description= "Rundeck Rundeck project ${project.name}"
+    ext.publishName = project.name
+
+    apply from: "${rootDir}/gradle/publishing.gradle"
 }
 
 project(':rundeck-storage:rundeck-storage-api') {
