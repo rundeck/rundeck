@@ -125,7 +125,11 @@ copy_artifacts() {
         cp -r --parents rundeckapp/**/build/libs artifacts/
         cp -r --parents rundeckapp/**/build/publications/rundeckapp artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
-        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-api artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-data artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-filesys artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-conf artifacts/
+        
         cp -r --parents rundeck-authz/**/build/libs artifacts/
         cp -r --parents rundeck-authz/**/build/publications/rundeck-authz artifacts/
         tar -czf artifacts/m2.tgz -C ~/.m2/repository/ org/rundeck
