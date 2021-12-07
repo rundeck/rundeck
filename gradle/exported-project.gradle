@@ -60,7 +60,7 @@ tasks.register('registerExisting') {
 
 publishing {
      publications {
-         "${project.name}"(MavenPublication) { publication ->
+         mavenJava(MavenPublication) {
              artifactId = archiveName
              groupId = project.group
              version = version
