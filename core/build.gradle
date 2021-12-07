@@ -125,35 +125,6 @@ if (! archiveName.startsWith('rundeck'))
 else if (archiveName.startsWith('rundeckapp'))
     archiveName = project.name.replace('rundeckapp', 'rundeck')
 
-
-tasks.register('removeExisting') {
-    it.doLast {
-        delete("${buildDir}/existing")
-    }
-}
-
-tasks.register('copyExisting') {
-    it.dependsOn removeExisting
-
-    it.inputs.dir 'build/libs'
-    it.inputs.dir 'build/poms'
-    it.outputs.dir 'build/existing'
-
-    it.doLast {
-
-        copy {
-            from "build/libs"
-            from "build/poms"
-            into "build/existing"
-            exclude "*.original"
-            rename { file ->
-                if (file =~ /^pom/)
-                    return "$project.name-${version}.pom"
-            }
-        }
-    }
-}
-
 task gitInfo {
     doLast {
         println "HEAD:     $project.gitHead"
