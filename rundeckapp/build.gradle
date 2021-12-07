@@ -437,7 +437,7 @@ clean {
 
 tasks.withType(GenerateMavenPom).all {
     doLast {
-        File file = new File("$buildDir/publications/mavenJava/pom-default.xml")
+        File file = new File("$buildDir/publications/${project.name}/pom-default.xml")
         def text = file.text
         def pattern = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)"
         Matcher matcher = text =~ pattern
