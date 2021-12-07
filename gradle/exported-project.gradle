@@ -52,7 +52,7 @@ tasks.register('registerExisting') {
         file("build/existing").eachFile {f ->
             println(f)
             artifacts {
-                existing file: f, name: archiveName
+                existing file: f, name: project.name
             }
         }
     }
@@ -61,12 +61,12 @@ tasks.register('registerExisting') {
 publishing {
      publications {
          "${project.name}"(MavenPublication) {
-             artifactId = archiveName
+             artifactId = project.name
              groupId = project.group
              version = version
              from components.java
              pom {
-                 name = "Rundeck library ${archiveName}"
+                 name = "Rundeck library ${project.name}"
                  description = project.description?:'Rundeck'
                  url = 'http://rundeck.org'
                  licenses {
