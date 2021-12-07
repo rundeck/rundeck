@@ -179,12 +179,12 @@ gradle.taskGraph.whenReady { taskGraph ->
     }
 }
 
-//subproject libs that are uploaded to maven central
-// exportedProjects.each {
-//     project(it) {
-//         apply from: "${rootDir}/gradle/exported-project.gradle"
-//     }
-// }
+subproject libs that are uploaded to maven central
+exportedProjects.each {
+    project(it) {
+        apply from: "${rootDir}/gradle/exported-project.gradle"
+    }
+}
 
 nexusPublishing {
     packageGroup = 'org.rundeck'
