@@ -27,17 +27,6 @@ publishing {
                     connection = 'scm:git:git@github.com/rundeck/rundeck.git'
                     developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
                 }
-                if (project.ext.developers) {
-                    developers {
-                        project.ext.developers.each { dev ->
-                            developer {
-                                id = dev.id
-                                name = dev.name
-                                email = dev.email
-                            }
-                        }
-                    }
-                }
             }
 
         }
