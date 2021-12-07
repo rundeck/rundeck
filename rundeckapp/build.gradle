@@ -435,20 +435,20 @@ clean {
     delete "$projectDir/grails-app/assets/javascripts/vendor"
 }
 
-tasks.withType(GenerateMavenPom).all {
-    doLast {
-        File file = new File("$buildDir/publications/mavenJava/pom-default.xml")
-        def text = file.text
-        def pattern = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)"
-        Matcher matcher = text =~ pattern
-        if (matcher.find()) {
-            text = text.replaceFirst(pattern, "")
-            def firstDeps = matcher.group(2)
-            text = text.replaceFirst(pattern, '$1$2' + firstDeps + '$3')
-        }
-        file.write(text)
-    }
-}
+// tasks.withType(GenerateMavenPom).all {
+//     doLast {
+//         File file = new File("$buildDir/publications/mavenJava/pom-default.xml")
+//         def text = file.text
+//         def pattern = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)"
+//         Matcher matcher = text =~ pattern
+//         if (matcher.find()) {
+//             text = text.replaceFirst(pattern, "")
+//             def firstDeps = matcher.group(2)
+//             text = text.replaceFirst(pattern, '$1$2' + firstDeps + '$3')
+//         }
+//         file.write(text)
+//     }
+// }
 
 ext.description="Rundeck Rundeck project ${project.name}"
 ext.publishName = project.name
