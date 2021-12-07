@@ -86,7 +86,7 @@ publish() {
        -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
        -PsonatypeUsername="${SONATYPE_USERNAME}" \
        -PsonatypePassword="${SONATYPE_PASSWORD}" \
-       publishToSonatype closeAndReleaseSonatypeStagingRepository
+       publishToSonatype
 }
 
 publish_oss() {
