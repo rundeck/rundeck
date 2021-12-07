@@ -14,7 +14,7 @@ publishing {
                 name = publishName
                 description = project.ext.hasProperty('publishDescription') ? project.ext.publishDescription :
                               project.description ?: publishName
-                url = "https://github.com/${githubSlug}"
+                url = url = 'http://rundeck.org'
                 licenses {
                     license {
                         name = 'The Apache Software License, Version 2.0'
@@ -23,9 +23,9 @@ publishing {
                     }
                 }
                 scm {
-                    url = "https://github.com/${githubSlug}"
-                    connection = "scm:git:git@github.com/${githubSlug}.git"
-                    developerConnection = "scm:git:git@github.com:${githubSlug}.git"
+                    url = 'https://github.com/rundeck/rundeck'
+                    connection = 'scm:git:git@github.com/rundeck/rundeck.git'
+                    developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
                 }
                 if (project.ext.developers) {
                     developers {
