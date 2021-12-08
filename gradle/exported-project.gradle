@@ -14,8 +14,8 @@ if (! archiveName.startsWith('rundeck'))
 else if (archiveName.startsWith('rundeckapp'))
     archiveName = project.name.replace('rundeckapp', 'rundeck')
 
-if (project.name == "core"){
-    archiveName == "rundeck-core"
+if (project.name.startsWith('core')){
+    archiveName = "rundeck-core"
 }
 
 
@@ -64,7 +64,7 @@ tasks.register('registerExisting') {
 }
 
 def fromSource = "components.java"
-if(project.name == "rundeckapp"){
+if(project.name.startsWith('rundeckapp')){
     fromSource = "configurations.bootwar"
 }
 
