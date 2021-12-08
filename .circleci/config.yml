@@ -158,7 +158,7 @@ jobs:
                   seal_artifacts
             - run:
                 name: Publish snapshot
-                command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+                command: ./gradlew publish -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
       - when:
           condition:
             matches: { pattern: "/^v.*/", value: <<pipeline.git.tag>> }
