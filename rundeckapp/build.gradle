@@ -38,6 +38,7 @@ apply plugin: "com.energizedwork.idea-base"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 apply plugin: "maven-publish"
+apply plugin: "signing"
 
 configurations {
     agent
@@ -490,6 +491,30 @@ publishing {
             groupId = project.group
             artifact bootWar
             version = version
+            pom {
+                 name = "Rundeck library Rundeck"
+                 description = project.description?:'Rundeck'
+                 url = 'http://rundeck.org'
+                 licenses {
+                     license {
+                         name = 'The Apache Software License, Version 2.0'
+                         url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                         distribution = 'repo'
+                     }
+                 }
+                 developers {
+                     developer {
+                         id = 'gschueler'
+                         name = 'Greg Schueler'
+                         email = 'greg@rundeck.com'
+                     }
+                 }
+                 scm {
+                     connection = 'scm:git:git@github.com/rundeck/rundeck.git'
+                     developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
+                     url = 'https://github.com/rundeck/rundeck'
+                 }
+             }
         }
     }
     repositories {
@@ -504,6 +529,12 @@ publishing {
              }
          }
      }
+}
+
+if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password')) {
+    signing {
+        sign(publishing.publications)
+    }
 }
 
 apply from: "${rootDir}/gradle/java.gradle"
