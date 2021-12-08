@@ -94,27 +94,42 @@ def genericPublication = "${archiveName}"(MavenPublication) {
                             }
                         }
 
-
-def appPublication ="${archiveName}"(MavenPublication) {
-                        artifactId = archiveName
-                        groupId = project.group
-                        version = version
-                        artifact bootRun
-                     }
-         
-
-def officialPublication
-
-if(project.name.startsWith('rundeckapp')){
-    officialPublication = appPublication
-}
 else {
-    officialPublication = genericPublication
+    officialPublication = (MavenPublication) {
+                            artifactId = archiveName
+                            groupId = project.group
+                            version = version
+                            from components.java
+                            pom {
+                                name = "Rundeck library ${archiveName}"
+                                description = project.description?:'Rundeck'
+                                url = 'http://rundeck.org'
+                                licenses {
+                                    license {
+                                        name = 'The Apache Software License, Version 2.0'
+                                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                                        distribution = 'repo'
+                                    }
+                                }
+                                developers {
+                                    developer {
+                                        id = 'gschueler'
+                                        name = 'Greg Schueler'
+                                        email = 'greg@rundeck.com'
+                                    }
+                                }
+                                scm {
+                                    connection = 'scm:git:git@github.com/rundeck/rundeck.git'
+                                    developerConnection = 'scm:git:git@github.com:rundeck/rundeck.git'
+                                    url = 'https://github.com/rundeck/rundeck'
+                                }
+                            }
+                        }
 }
 
 publishing {
     publications{
-        officialPublication
+        "${archiveName}"officialPublication
     }
      repositories {
          maven {
