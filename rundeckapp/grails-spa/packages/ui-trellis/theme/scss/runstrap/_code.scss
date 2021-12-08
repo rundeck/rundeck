@@ -74,7 +74,7 @@ pre {
 
 // Ace Editor
 .ace_layer.ace_gutter-layer{
-  background-color: var(--background-color-lvl2);
+  background-color: var(--background-color-lvl3);
   color: var(--font-color);
 }
 .ace_gutter-cell.ace_gutter-active-line{
@@ -92,4 +92,7 @@ pre {
 }
 .ace-chrome .ace_print-margin {
   background: var(--background-color-accent-lvl2);
+}
+.ace_scroller{
+  background-color: var(--background-color);
 }
