@@ -14,6 +14,10 @@ if (! archiveName.startsWith('rundeck'))
 else if (archiveName.startsWith('rundeckapp'))
     archiveName = project.name.replace('rundeckapp', 'rundeck')
 
+if (project.name == "core"){
+    archiveName == "rundeck-core"
+}
+
 
 
 tasks.register('removeExisting') {
@@ -59,15 +63,20 @@ tasks.register('registerExisting') {
     }
 }
 
+def fromSource = "components.java"
+if(project.name == "rundeckapp"){
+    fromSource = "configurations.bootwar"
+}
+
 publishing {
      publications {
-         "${project.name}"(MavenPublication) {
-             artifactId = project.name
+         "${archiveName}"(MavenPublication) {
+             artifactId = archiveName
              groupId = project.group
              version = version
-             from components.java
+             from fromSource
              pom {
-                 name = "Rundeck library ${project.name}"
+                 name = "Rundeck library ${archiveName}"
                  description = project.description?:'Rundeck'
                  url = 'http://rundeck.org'
                  licenses {
@@ -97,7 +106,7 @@ publishing {
              // change URLs to point to your repos, e.g. http://my.org/repo
              def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
              def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+             url = version.contains('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
              credentials {
                  username findProperty('sonatypeUsername')
