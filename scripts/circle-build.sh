@@ -77,7 +77,6 @@ publish() {
         -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
-        -Dorg.gradle.jvmargs=-Xmx1536m
         publishToSonatype
 }
 
