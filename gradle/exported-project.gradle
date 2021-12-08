@@ -69,7 +69,7 @@ publishing {
              artifactId = archiveName
              groupId = project.group
              version = version
-             from fromSource
+             from components.java
              pom {
                  name = "Rundeck library ${archiveName}"
                  description = project.description?:'Rundeck'
