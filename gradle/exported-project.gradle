@@ -65,7 +65,7 @@ tasks.register('registerExisting') {
 
 def fromSource = components.java
 if(project.name.startsWith('rundeckapp')){
-    fromSource = components.web
+    fromSource = configurations.bootWar
 }
 
 publishing {
@@ -74,7 +74,7 @@ publishing {
              artifactId = archiveName
              groupId = project.group
              version = version
-             from components.java
+             from fromSource
              pom {
                  name = "Rundeck library ${archiveName}"
                  description = project.description?:'Rundeck'
