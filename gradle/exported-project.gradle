@@ -68,8 +68,12 @@ if(project.name.startsWith('rundeckapp')){
     fromSource = components.web
 }
 
-publishing {
-     publications {
+def warArtifact = artifacts.add('archives', file("build/libs/rundeck-${version}")) {
+    type 'war'
+    builtBy 'war'
+}
+
+def genericPublication = publications {
          "${archiveName}"(MavenPublication) {
              artifactId = archiveName
              groupId = project.group
@@ -101,6 +105,28 @@ publishing {
              }
          }
      }
+
+
+def appPublication = publications {
+         "${archiveName}"(MavenPublication) {
+            artifactId = archiveName
+            groupId = project.group
+            version = version
+            artifact warArtifact
+     }
+}
+
+def officialPublication
+
+if(project.name.startsWith('rundeckapp')){
+    officialPublication = appPublication
+}
+else {
+    officialPublication = genericPublication
+}
+
+publishing {
+     officialPublication
      repositories {
          maven {
              // change URLs to point to your repos, e.g. http://my.org/repo
