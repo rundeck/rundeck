@@ -63,9 +63,9 @@ tasks.register('registerExisting') {
     }
 }
 
-def fromSource = "components.java"
+def fromSource = 'components.java'
 if(project.name.startsWith('rundeckapp')){
-    fromSource = "configurations.bootwar"
+    fromSource = 'configurations.bootwar'
 }
 
 publishing {
