@@ -461,9 +461,6 @@ tasks.withType(GenerateMavenPom).all {
     }
 }
 
-ext.description="Rundeck Rundeck project ${project.name}"
-ext.publishName = project.name
-
 // publishing {
 //     publications {
 //         "rundeck"(MavenPublication) {
@@ -487,6 +484,8 @@ ext.publishName = project.name
 publishing {
     publications {
         "rundeck"(MavenPublication) {
+            artifactId = "rundeck"
+            groupId = project.group
             artifact bootWar
             version = version
         }
