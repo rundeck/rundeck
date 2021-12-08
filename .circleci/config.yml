@@ -187,7 +187,9 @@ jobs:
 
   test-docker:
     <<: *defaults
-    executor: gradle-docker
+    executor: 
+      name: gradle-docker
+      resourceClass: xlarge
 
     parameters:
       command:
@@ -285,8 +287,7 @@ jobs:
           pipeline-number: '<<pipeline.number>>'
   maven-publish:
     <<: *defaults
-    machine: true
-    resource_class: large
+    executor: gradle-docker
     steps:
       - checkout
       - restore-gradle-cache
