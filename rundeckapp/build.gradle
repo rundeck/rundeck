@@ -30,6 +30,7 @@ apply plugin:"com.energizedwork.webdriver-binaries"
 apply plugin:"com.energizedwork.idea-project-components"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
+apply plugin: "maven-publish"
 
 configurations {
     agent
@@ -463,4 +464,24 @@ tasks.withType(GenerateMavenPom).all {
 ext.description="Rundeck Rundeck project ${project.name}"
 ext.publishName = project.name
 
- apply from: "${rootDir}/gradle/exported-project.gradle"
+publishing {
+    publications {
+        "rundeck"(MavenPublication) {
+            artifact bootWar
+        }
+    }
+    repositories {
+         maven {
+             // change URLs to point to your repos, e.g. http://my.org/repo
+             def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+             def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+             credentials {
+                 username findProperty('sonatypeUsername')
+                 password findProperty('sonatypePassword')
+             }
+         }
+     }
+}
+
+ //apply from: "${rootDir}/gradle/exported-project.gradle"
