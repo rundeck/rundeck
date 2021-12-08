@@ -53,6 +53,7 @@ $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" |
 
 # prepare a new project
 #$SHELL $SRC_DIR/prepare.sh ${URL} 'test'
+ls -lart ./
 
 TESTS=$(ls test-*.sh)
 if [ -n "$TEST_NAME" ] ; then
