@@ -77,7 +77,7 @@ publish() {
         -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
-        publishToSonatype --info
+        publishToSonatype --info --no-daemon
 }
 
 # publish() {
