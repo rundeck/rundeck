@@ -123,7 +123,7 @@ copy_artifacts() {
         cp -r --parents core/build/libs artifacts/
         cp -r --parents core/build/publications/rundeck-core artifacts/
         cp -r --parents rundeckapp/**/build/libs artifacts/
-        cp -r --parents rundeckapp/**/build/publications/rundeckapp artifacts/
+        cp -r --parents rundeckapp/**/build/publications/rundeck artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
         cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-api artifacts/
         cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-data artifacts/
