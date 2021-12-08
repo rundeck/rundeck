@@ -30,7 +30,9 @@ COPY api_test /api_test
 RUN chmod -R a+x /api_test
 RUN chmod -R a+x /api_test/*
 RUN chmod -R a+x /api_test/api
+RUN chmod -R a+x /api_test/api/*
 RUN chmod -R a+x /api_test/src
+RUN chmod -R a+x /api_test/src/*
 RUN chmod -R go+r /api_test/*
 RUN chmod -R go+r /api_test/api/*
 RUN chmod -R go+r /api_test/src/*
