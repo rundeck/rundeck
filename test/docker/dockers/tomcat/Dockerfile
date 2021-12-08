@@ -28,6 +28,7 @@ RUN chmod -R a+x /scripts/*
 RUN mkdir -p /api_test
 COPY api_test /api_test
 RUN chmod -R a+x /api_test/*
+RUN chmod -R go+r /api_test/*
 
 # RUN mkdir -p /tests
 # COPY tests /tests
