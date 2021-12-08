@@ -401,6 +401,7 @@ assetCompile.dependsOn vendorAssetDeps
 
 archivesBaseName = 'rundeck'
 
+
 bootWar {
     enabled=true
     it.dependsOn copyPluginLibs
@@ -440,6 +441,9 @@ tasks.withType(GenerateMavenPom).all {
         File file
         if(project.name == "rundeckapp"){
             file = new File("$buildDir/publications/rundeck/pom-default.xml")
+        }
+        else if (project.name == "core") {
+            file = new File("$buildDir/publications/rundeck-core/pom-default.xml")
         }
         else{
             file = new File("$buildDir/publications/${project.name}/pom-default.xml")

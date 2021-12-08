@@ -121,7 +121,7 @@ copy_artifacts() {
     (
         # find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
         cp -r --parents core/build/libs artifacts/
-        cp -r --parents core/build/publications/core artifacts/
+        cp -r --parents core/build/publications/rundeck-core artifacts/
         cp -r --parents rundeckapp/**/build/libs artifacts/
         cp -r --parents rundeckapp/**/build/publications/rundeckapp artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
