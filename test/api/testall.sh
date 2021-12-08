@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
 cd $SRC_DIR
@@ -32,7 +33,7 @@ test_fail(){
 myexit=0
 
 
-for i in $(ls ./unauthorized-test*.sh)  ; do
+for i in ./unauthorized-test*.sh  ; do
     tname=$(basename $i)
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
@@ -57,6 +58,7 @@ TESTS=$(ls test-*.sh)
 if [ -n "$TEST_NAME" ] ; then
     TESTS=$(ls $TEST_NAME)
 fi
+set +e
 for i in $TESTS ; do
     tname=$(basename $i)
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
