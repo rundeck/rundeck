@@ -464,10 +464,31 @@ tasks.withType(GenerateMavenPom).all {
 ext.description="Rundeck Rundeck project ${project.name}"
 ext.publishName = project.name
 
+// publishing {
+//     publications {
+//         "rundeck"(MavenPublication) {
+//             artifact bootWar
+//         }
+//     }
+//     repositories {
+//          maven {
+//              // change URLs to point to your repos, e.g. http://my.org/repo
+//              def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+//              def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+//              url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+//              credentials {
+//                  username findProperty('sonatypeUsername')
+//                  password findProperty('sonatypePassword')
+//              }
+//          }
+//      }
+// }
+
 publishing {
     publications {
         "rundeck"(MavenPublication) {
             artifact bootWar
+            version = version
         }
     }
     repositories {
@@ -483,5 +504,7 @@ publishing {
          }
      }
 }
+
+apply from: "${rootDir}/gradle/java.gradle"
 
  //apply from: "${rootDir}/gradle/exported-project.gradle"
