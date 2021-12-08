@@ -285,7 +285,8 @@ jobs:
           pipeline-number: '<<pipeline.number>>'
   maven-publish:
     <<: *defaults
-    executor: gradle-docker
+    machine: true
+    resource_class: large
     steps:
       - checkout
       - restore-gradle-cache
