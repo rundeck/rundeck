@@ -531,6 +531,10 @@ class EditOptsController extends ControllerBase{
                 return result
             }
 
+            //if it was a dupplicate then shift right all next items
+            if(option.sortIndex != null)
+                editopts.forEach({ nameKey, opVal -> if (opVal.sortIndex >= option.sortIndex) opVal.sortIndex++ })
+
             editopts[name] = option
             result['undo'] = [action: 'remove', name: name]
         }  else if ('reorder' == input.action) {
@@ -998,6 +1002,9 @@ class EditOptsController extends ControllerBase{
         }
         def newName = duplicateName(params.name, 1, editopts)
         newOption.name = newName
+
+        if(newOption.sortIndex != null)
+            newOption.sortIndex++
 
         def result = _applyOptionAction(editopts, [action: 'insert', name: newName, params: _getParamsFromOption(newOption)])
 
