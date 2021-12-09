@@ -1,0 +1,39 @@
+{
+  "name": "rundeck-vue-ui",
+  "version": "1.0.0",
+  "description": "Rundeck User Interface",
+  "author": "mramos@pagerduty.com",
+  "private": true,
+  "scripts": {
+    "dev": "vite -c vite.app.js",
+    "build:app": "vite build -c vite.app.js",
+    "build:lib": "vite build -c vite.lib.js",
+    "lint": "eslint './src/**/*.{js,ts,tsx,vue,md}'",
+    "lint:fix": "eslint './src/**/*.{js,ts,tsx,vue,md}' --fix"
+  },
+  "dependencies": {
+    "@vue/composition-api": "^1.2.4",
+    "@vueuse/core": "^6.5.3",
+    "core-js": "^3.18.3",
+    "vue": "^2.6.14",
+    "vue-demi": "^0.11.4",
+    "vue-router": "^3.5.2"
+  },
+  "devDependencies": {
+    "@iconify/json": "^1.1.415",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "@vue/eslint-config-prettier": "^6.0.0",
+    "@vue/eslint-config-typescript": "^8.0.0",
+    "eslint": "^8.0.1",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^7.19.1",
+    "prettier": "2.2.1",
+    "typescript": "^4.4.4",
+    "unplugin-vue-components": "^0.15.6",
+    "vite": "^2.6.7",
+    "vite-plugin-vue2": "^1.9.0",
+    "vite-plugin-windicss": "^1.4.11",
+    "vue-template-compiler": "^2.6.14"
+  }
+}
