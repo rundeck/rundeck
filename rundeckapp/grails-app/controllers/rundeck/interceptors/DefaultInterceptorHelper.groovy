@@ -28,25 +28,22 @@ import javax.servlet.http.HttpServletRequest
 class DefaultInterceptorHelper implements InterceptorHelper, InitializingBean {
     private List<String> allowedControllers = []
     private List<String> allowedPaths = []
-    private boolean checkUserAssetsPrefix = false;
 
     @Autowired
     ConfigurationService configurationService
 
     @Override
     boolean matchesAllowedAsset(String controllerName, HttpServletRequest request) {
-        return allowedControllers.contains(controllerName) || matchesStaticServletPath(request.pathInfo)
+        return allowedControllers.contains(controllerName) || matchesStaticServletPath(request.servletPath)
     }
 
-    boolean matchesStaticServletPath(String pathInfo) {
-        if(checkUserAssetsPrefix && pathInfo.startsWith("/user-assets")) return true
-        return allowedPaths.contains(pathInfo)
+    boolean matchesStaticServletPath(String servletPath) {
+        return allowedPaths.contains(servletPath)
     }
 
     @Override
     void afterPropertiesSet() throws Exception {
         allowedControllers = (List<String>)configurationService.getValue("security.interceptor.allowed.controllers",[])
         allowedPaths = (List<String>)configurationService.getValue("security.interceptor.allowed.paths",[])
-        checkUserAssetsPrefix = configurationService.getBoolean("gui.staticUserResources.enabled", false)
     }
 }
