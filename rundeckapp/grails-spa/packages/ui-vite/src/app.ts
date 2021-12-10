@@ -8,6 +8,8 @@ import router from "@/routes";
 Vue.config.productionTip = false;
 Vue.config.devtools = true;
 
+import "@/entries/nav";
+
 const app = createApp({
   router,
   render: () => h(App),

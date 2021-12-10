@@ -4,6 +4,7 @@
     <main class="mt-10 mb-10">
       <RouterView />
     </main>
+
     <global-utilitybar />
   </div>
 </template>
