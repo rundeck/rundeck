@@ -262,7 +262,7 @@ describe('job', () => {
         const save2 = await jobCreatePage.updateButton()
         await save2.click()
 
-        await ctx.driver.wait(until.urlContains('/job/show'), 35000)
+        await ctx.driver.wait(until.urlContains('/job/show'), 5000)
         const jobShowPage2 = new JobShowPage(ctx, 'SeleniumBasic', '')
     })
 })
