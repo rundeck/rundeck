@@ -294,7 +294,7 @@
             <g:hiddenField name="project" value="${params.project}"/>
             <g:render template="nodeFiltersHidden"/>
             <g:render template="/common/queryFilterManagerModal"
-                      model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+                      model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>
         </g:form>
 </div>
 </div>
