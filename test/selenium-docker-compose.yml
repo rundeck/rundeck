@@ -5,7 +5,7 @@ services:
     image: ${RUNDECK_IMAGE:-rundeck/rundeck}
     environment:
       RUNDECK_SERVER_ADDRESS: rundeck
-      RUNDECK_GRAILS_URL: http://rundeck:4440/
+      RUNDECK_GRAILS_URL: http://rundeck:4440
     expose: ['4440']
 
   selenium:

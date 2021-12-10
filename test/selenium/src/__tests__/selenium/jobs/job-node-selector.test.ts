@@ -7,6 +7,7 @@ import {JobShowPage} from "pages/jobShow.page"
 import {until, By, Key, WebElement} from 'selenium-webdriver'
 import '@rundeck/testdeck/test/rundeck'
 import {sleep} from '@rundeck/testdeck/async/util'
+import {JobsListPage} from '../../../pages/jobsList.page'
 
 // We will initialize and cleanup in the before/after methods
 let ctx = CreateContext({projects: ['SeleniumBasic']})
@@ -30,34 +31,42 @@ const expectInputValue=async function(elem:WebElement,val:string){
     let valueText = await elem.getAttribute('value')
     expect(valueText).toBe(val)
 }
-const createBasicJob = async function(name: string){
+const echologs = async () => {
+    const logs = await ctx.driver.manage().logs().get('browser')
+    // tslint:disable-next-line:prefer-for-of
+    for (let i = 0 ; i < logs.length ; i++ ) {
+        const value = logs[i]
+        console.log(`${value.level} [${value.type}]: ${value.message} `)
+    }
+}
+const createBasicJob = async (name: string) => {
 
     await jobCreatePage.get()
     await ctx.driver.wait(until.urlContains('/job/create'), 25000)
-    let jobName=await jobCreatePage.jobNameInput()
+    const jobName = await jobCreatePage.jobNameInput()
     await jobName.sendKeys(name)
 
-    //add workflow step
-    let wfTab=await jobCreatePage.tabWorkflow()
+    // add workflow step
+    const wfTab = await jobCreatePage.tabWorkflow()
     await wfTab.click()
-    let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+    const addWfStepCommand = await jobCreatePage.addNewWfStepCommand()
 
-    //click add Command step, and wait until input fields are loaded
+    // click add Command step, and wait until input fields are loaded
     await addWfStepCommand.click()
     await jobCreatePage.waitWfStepCommandRemoteText()
 
 
-    let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+    const wfStepCommandRemoteText = await jobCreatePage.wfStepCommandRemoteText()
     await wfStepCommandRemoteText.sendKeys('echo selenium test')
 
-    let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
+    const wfStep0SaveButton = await jobCreatePage.wfStep0SaveButton()
 
-    //click step Save button and wait for the step content to display
-    let wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
+    // click step Save button and wait for the step content to display
+    const wfstepEditDiv = await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
     await wfStep0SaveButton.click()
     await jobCreatePage.waitWfstep0vis()
 
-    //wait until edit form section for step is removed from dom
+    // wait until edit form section for step is removed from dom
     await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
 }
 
@@ -186,7 +195,8 @@ describe('job', () => {
         let valuenodesSelectedByDefaultFalse= await jobEditPage.nodesSelectedByDefaultFalse()
         await expectRadioValue(valuenodesSelectedByDefaultFalse, true)
 
-
+        const listPage = new JobsListPage(ctx, 'SeleniumBasic')
+        await listPage.get()
 
     })
 
@@ -257,12 +267,12 @@ describe('job', () => {
         await nameInput.clear()
         await nameInput.sendKeys('renamed job with node orchestrator')
 
-        // save and reload
-        // save the job
-        const save2 = await jobCreatePage.updateButton()
+        const save2 = await jobCreatePage.editSaveButton()
         await save2.click()
 
-        await ctx.driver.wait(until.urlContains('/job/show'), 5000)
-        const jobShowPage2 = new JobShowPage(ctx, 'SeleniumBasic', '')
+        await ctx.driver.wait(until.urlContains('/job/show'), 95000)
+        const listPage = new JobsListPage(ctx, 'SeleniumBasic')
+        await listPage.get()
+
     })
 })
