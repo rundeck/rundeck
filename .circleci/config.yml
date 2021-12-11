@@ -332,7 +332,7 @@ workflows:
           name: Enterprise Snapshot
           requires: [build]
           filters:
-            branches: {only: main}
+            branches: {only: maint-3.3.x}
       - test-docker:
           <<: *filter-default
           name: Docker Test
@@ -417,7 +417,7 @@ workflows:
           name: Enterprise Snapshot
           requires: [build]
           filters:
-            branches: {only: main}
+            branches: {only: maint-3.3.x}
       - test-docker:
           <<: *filter-default
           name: Docker Test
