@@ -2,8 +2,8 @@
 
 set -eo pipefail
 
-source .circleci/travis-shim.sh
-source scripts/travis-helpers.sh
+source .circleci/circle-shim.sh
+source scripts/circle-helpers.sh
 
 echo "${@}"
 
