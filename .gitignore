@@ -2,6 +2,7 @@
 *.orig
 !.github
 !.gitignore
+!.circleci
 *~
 *.swp
 *.iws
