@@ -124,13 +124,13 @@ jobs:
           name: Build
           command: |
             source .circleci/circle-shim.sh
-            bash scripts/travis-build.sh build
+            bash scripts/circle-build.sh build
       - setup_remote_docker
       - run:
           name: Build Docker Images
           command: |
             source .circleci/circle-shim.sh
-            bash scripts/travis-build.sh buildDocker
+            bash scripts/circle-build.sh buildDocker
             build_rdtest
       - run:
           name: Upload artifacts
@@ -158,19 +158,19 @@ jobs:
             - run:
                 name: Publish snapshot
                 command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
-          - when:
-              condition:
-                matches: { pattern: "/^v.*/", value: <<pipeline.git.tag>> }
-              steps:
-                - setup-environment
-                - run:
-                    name: Docker publish
-                    command: |
-                      source .circleci/circle-shim.sh
-                      source scripts/circle-helpers.sh
-                      fetch_common_artifacts
-                      fetch_common_resources
-                      DRY_RUN=false bash scripts/circle-build.sh publish_docker
+      - when:
+          condition:
+            matches: { pattern: "/^v.*/", value: <<pipeline.git.tag>> }
+          steps:
+            - setup-environment
+            - run:
+                name: Docker publish
+                command: |
+                  source .circleci/circle-shim.sh
+                  source scripts/circle-helpers.sh
+                  fetch_common_artifacts
+                  fetch_common_resources
+                  DRY_RUN=false bash scripts/circle-build.sh publish_docker
   test-gradle:
     <<: *defaults
     machine: true
@@ -270,18 +270,17 @@ jobs:
           path: build/owasp-reports
           prefix: owasp-reports
 
-  snapshot-publish:
+  trigger-packaging:
     <<: *defaults
-    executor: gradle-docker
-
+    machine: true
+    resource_class: small
     steps:
-      - checkout
-      - run:
-          name: Publish
-          command: |
-            source .circleci/circle-shim.sh
-            bash scripts/travis-build.sh publish_oss
-
+      - trigger/trigger:
+          debug: true
+          branch: 'maint-3.3.x'
+          token: '${CIRCLECI_API_TOKEN}'
+          project-slug: 'gh/rundeck/packaging-core'
+          pipeline-number: '<<pipeline.number>>'
   maven-publish:
     <<: *defaults
     executor: gradle-docker
@@ -295,21 +294,21 @@ jobs:
           name: Publish
           command: |
             source .circleci/circle-shim.sh
-            DRY_RUN=false bash scripts/travis-build.sh publish
+            DRY_RUN=false bash scripts/circle-build.sh publish
 
 stages:
   test: &stage-test
-  - Gradle Test
-  - Docker Test
-  - Tomcat 8 API Test
-  - Tomcat 9 API Test
-  - API Test
-  - Selenium Test
-  - SSL Test
-  - Ansible Test
-  - LDAP Test
-  - LDAP Bind Test
-  - PAM Test
+    - Gradle Test
+    - Docker Test
+    - Tomcat 8 API Test
+    - Tomcat 9 API Test
+    - API Test
+    - Selenium Test
+    - SSL Test
+    - Ansible Test
+    - LDAP Test
+    - LDAP Bind Test
+    - PAM Test
 
 filters:
   all: &filter-default
@@ -378,19 +377,19 @@ workflows:
           name: PAM Test
           requires: [build]
           command: bash test/run-docker-pam-tests.sh
-
       - test-selenium:
-            name: Selenium Test
-            requires: [build]
+          name: Selenium Test
+          requires: [build]
       - test-deps:
-            name: OWASP Dependency Checks
-            requires: [build]
-            continue: 'true'
-
-      # - snapshot-publish:
-      #     name: Publish Snapshots
-      #     requires: *stage-test
-      #     filters: {branches: {only: main}}
+          name: OWASP Dependency Checks
+          requires: [build]
+          continue: 'true'
+      - trigger-packaging:
+          name: Trigger packaging-core
+          requires: *stage-test
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
       - maven-publish:
           name: Maven Publish
           requires: *stage-test
@@ -465,10 +464,9 @@ workflows:
           command: bash test/run-docker-pam-tests.sh
 
       - test-selenium:
-            name: Selenium Test
-            requires: [build]
+          name: Selenium Test
+          requires: [build]
       - test-deps:
-            name: OWASP Dependency Checks
-            requires: [build]
-            continue: 'false'
-      
+          name: OWASP Dependency Checks
+          requires: [build]
+          continue: 'false'
