@@ -277,7 +277,7 @@ jobs:
     steps:
       - trigger/trigger:
           debug: true
-          branch: 'main'
+          branch: 'maint-3.3.x'
           token: '${CIRCLECI_API_TOKEN}'
           project-slug: 'gh/rundeck/packaging-core'
           pipeline-number: '<<pipeline.number>>'
