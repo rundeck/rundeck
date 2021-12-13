@@ -281,20 +281,20 @@ jobs:
           token: '${CIRCLECI_API_TOKEN}'
           project-slug: 'gh/rundeck/packaging-core'
           pipeline-number: '<<pipeline.number>>'
-  maven-publish:
-    <<: *defaults
-    executor: gradle-docker
-    steps:
-      - checkout
-      - restore-gradle-cache
-      - setup_remote_docker
-      - fetch-common-artifacts
-      - fetch-ci-resources
-      - run:
-          name: Publish
-          command: |
-            source .circleci/circle-shim.sh
-            DRY_RUN=false bash scripts/circle-build.sh publish
+  # maven-publish:
+  #   <<: *defaults
+  #   executor: gradle-docker
+  #   steps:
+  #     - checkout
+  #     - restore-gradle-cache
+  #     - setup_remote_docker
+  #     - fetch-common-artifacts
+  #     - fetch-ci-resources
+  #     - run:
+  #         name: Publish
+  #         command: |
+  #           source .circleci/circle-shim.sh
+  #           DRY_RUN=false bash scripts/circle-build.sh publish
 
 stages:
   test: &stage-test
@@ -390,12 +390,12 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-      - maven-publish:
-          name: Maven Publish
-          requires: *stage-test
-          filters:
-            branches: {ignore: /.*/}
-            tags: {only: /^v.*$/}
+      # - maven-publish:
+      #     name: Maven Publish
+      #     requires: *stage-test
+      #     filters:
+      #       branches: {ignore: /.*/}
+      #       tags: {only: /^v.*$/}
 
   nightly:
     triggers:
