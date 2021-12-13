@@ -85,8 +85,7 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-api",
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
-        ":rundeck-storage:rundeck-storage-conf",
-        ":rundeckapp"
+        ":rundeck-storage:rundeck-storage-conf"
 ]
 
 project.ext.environment = project.hasProperty('environment') ? environment : 'development'
@@ -180,11 +179,11 @@ gradle.taskGraph.whenReady { taskGraph ->
 }
 
 //subproject libs that are uploaded to maven central
-// exportedProjects.each {
-//     project(it) {
-//         apply from: "${rootDir}/gradle/exported-project.gradle"
-//     }
-// }
+exportedProjects.each {
+    project(it) {
+        apply from: "${rootDir}/gradle/exported-project.gradle"
+    }
+}
 
 nexusPublishing {
     packageGroup = 'org.rundeck'
