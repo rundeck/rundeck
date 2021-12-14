@@ -25,6 +25,8 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
+import org.rundeck.data.Pageable
+import org.rundeck.data.webhook.WebhookEntity
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -48,10 +50,11 @@ class WebhookService {
     def storageService
     def gormEventStoreService
     def featureService
+    ExtWebhookDataService extWebhookDataService
 
-    def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext, HttpServletRequest request) {
+    def processWebhook(String pluginName, Map pluginConfig, WebhookDataImpl data, UserAndRolesAuthContext authContext, HttpServletRequest request) {
         LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+ "'")
-        Map pluginConfig = pluginConfigJson ? mapper.readValue(pluginConfigJson,HashMap) : [:]
+        //Map pluginConfig = pluginConfigJson ? mapper.readValue(pluginConfigJson,HashMap) : [:]
         replaceSecureOpts(authContext,pluginConfig)
         WebhookEventPlugin plugin = pluginService.configurePlugin(pluginName, WebhookEventPlugin.class, frameworkService.getFrameworkPropertyResolver(data.project,pluginConfig),
                                                                   PropertyScope.Instance).instance
@@ -131,15 +134,16 @@ class WebhookService {
     }
 
     def listWebhooksByProject(String project) {
-        Webhook.findAllByProject(project).collect {
+        extWebhookDataService.listByProject(project,new Pageable()).collect {
             getWebhookWithAuthAsMap(it)
         }
     }
 
     def saveHook(UserAndRolesAuthContext authContext,def hookData) {
-        Webhook hook
+        WebhookEntity hook
         if(hookData.id) {
-            hook = Webhook.get(hookData.id)
+            //hook = Webhook.get(hookData.id)
+            hook = extWebhookDataService.get(id)
             if (!hook) return [err: "Webhook not found"]
             if(hookData.roles && !hookData.importData) {
                 try {
@@ -149,11 +153,13 @@ class WebhookService {
                 }
             }
         } else {
-            int countByNameInProject = Webhook.countByNameAndProject(hookData.name,hookData.project)
-            if(countByNameInProject > 0) return [err: "A Webhook by that name already exists in this project"]
+            //int countByNameInProject = Webhook.countByNameAndProject(hookData.name,hookData.project)
+            boolean exists = extWebhookDataService.existsWebhookNameInProject(hookData.name,hookData.project)
+            //if(countByNameInProject > 0) return [err: "A Webhook by that name already exists in this project"]
+            if(exists) return [err: "A Webhook by that name already exists in this project"]
             String checkUser = hookData.user ?: authContext.username
             if (!hookData.importData && !userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
-            hook = new Webhook()
+            hook = new WebhookEntity()
             hook.uuid = UUID.randomUUID().toString()
         }
         hook.uuid = hookData.uuid ?: hook.uuid
@@ -179,7 +185,8 @@ class WebhookService {
             return [err: errMsg, errors: vPlugin.report.errors]
         }
 
-        hook.pluginConfigurationJson = mapper.writeValueAsString(pluginConfig)
+        hook.pluginConfiguration = pluginConfig
+        //hook.pluginConfigurationJson = mapper.writeValueAsString(pluginConfig)
         Set<String> roles = hookData.roles ? rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles) : authContext.roles
         if((!hook.id || !hook.authToken) && !hookData.shouldImportToken){
             //create token
@@ -205,16 +212,23 @@ class WebhookService {
             hook.authToken = hookData.authToken
         }
 
-        if(hook.validate()) {
-            hook.save(failOnError:true, flush:true)
+        try {
+            extWebhookDataService.save(hook)
             return [msg: "Saved webhook"]
-        } else {
+        } catch(Throwable thx) {
             if(!hook.id && hook.authToken){
                 //delete the created token
                 rundeckAuthTokenManagerService.deleteToken(hook.authToken)
             }
-            return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
+            return [err: "Failed to save the webhook"]
         }
+
+        //if(hook.validate()) {
+            //hook.save(failOnError:true, flush:true)
+
+        //} else {
+
+        //}
     }
 
     boolean importIsAllowed(Webhook hook, Map hookData) {
@@ -287,35 +301,35 @@ class WebhookService {
     }
 
     def getWebhookWithAuth(String id) {
-        Webhook hook = Webhook.get(id.toLong())
-        getWebhookWithAuthAsMap(hook)
+        //Webhook hook = Webhook.get(id.toLong())
+        getWebhookWithAuthAsMap(extWebhookDataService.get(id))
     }
     def getWebhookForProjectWithAuth(String id, String project) {
-        Webhook hook = getWebhookWithProject(id.toLong(), project)
+        WebhookEntity hook = getWebhookWithProject(id.toLong(), project)
         if(!hook){
             return null
         }
         getWebhookWithAuthAsMap(hook)
     }
 
-    private Map getWebhookWithAuthAsMap(Webhook hook) {
+    private Map getWebhookWithAuthAsMap(WebhookEntity hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
-        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
+        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, eventPlugin:hook.eventPlugin, config:hook.pluginConfiguration?:[:]]
     }
 
-    Webhook getWebhook(Long id) {
-        return Webhook.get(id)
+    WebhookEntity getWebhook(Long id) {
+        return extWebhookDataService.get(id)
     }
-    Webhook getWebhookWithProject(Long id, String project) {
-        return Webhook.findByIdAndProject(id,project)
-    }
-
-    Webhook getWebhookByUuid(String uuid) {
-        return Webhook.findByUuid(uuid)
+    WebhookEntity getWebhookWithProject(Long id, String project) {
+        return extWebhookDataService.get(id)
     }
 
-    Webhook getWebhookByToken(String token) {
-        return Webhook.findByAuthToken(token)
+    WebhookEntity getWebhookByUuid(String uuid) {
+        return extWebhookDataService.findByUuid(uuid)
+    }
+
+    WebhookEntity getWebhookByToken(String token) {
+        return extWebhookDataService.findByAuthToken(token)
     }
 
     class Evt extends EventImpl {}

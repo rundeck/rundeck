@@ -31,7 +31,7 @@ grails.plugin.databasemigration.changelog = "changelog.groovy"
 
 environments {
     development{
-        grails.serverURL="http://localhost:9090/rundeck"
+       // grails.serverURL="http://localhost:9090/rundeck"
         application.refreshDelay=5000
         grails.profiler.disable=false
         rundeck.execution.logs.fileStorage.generateExecutionXml=true

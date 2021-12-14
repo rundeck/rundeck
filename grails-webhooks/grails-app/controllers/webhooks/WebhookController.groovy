@@ -11,6 +11,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.data.Pageable
+import org.rundeck.data.webhook.WebhookDataService
+import org.rundeck.data.webhook.WebhookEntity
+import webhooks.data.WebhookGormDataService
 
 import javax.servlet.http.HttpServletResponse
 
@@ -22,6 +26,8 @@ class WebhookController {
     AuthContextEvaluator rundeckAuthContextEvaluator
     AuthContextProvider rundeckAuthContextProvider
     def apiService
+    ExtWebhookDataService extWebhookDataService
+    //WebhookGormDataService webhookGormDataService
 
     def admin() {}
 
@@ -129,7 +135,7 @@ class WebhookController {
     }
 
     def post() {
-        Webhook hook = webhookService.getWebhookByToken(Webhook.cleanAuthToken(params.authtoken))
+        WebhookEntity hook = webhookService.getWebhookByToken(Webhook.cleanAuthToken(params.authtoken))
 
         if(!hook) {
             sendJsonError("Webhook not found")
@@ -156,7 +162,7 @@ class WebhookController {
         whkdata.data = request.inputStream
 
         try {
-            def responder = webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata, authContext, request)
+            def responder = webhookService.processWebhook(hook.eventPlugin, hook.pluginConfiguration?:[:], whkdata, authContext, request)
             responder.respond(response)
         } catch(WebhookEventException wee) {
             sendJsonError(wee.message)

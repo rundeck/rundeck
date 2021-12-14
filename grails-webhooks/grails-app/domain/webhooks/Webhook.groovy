@@ -15,15 +15,14 @@
  */
 package webhooks
 
-class Webhook {
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.data.webhook.WebhookEntity
 
-    String uuid
-    String name
-    String project
-    String authToken
-    String eventPlugin
-    String pluginConfigurationJson = '{}'
-    boolean enabled = true
+class Webhook extends WebhookEntity {
+    static ObjectMapper mapper = new ObjectMapper()
+    @JsonIgnore
+    String pluginConfigurationJson
 
     static constraints = {
         uuid(nullable: true)
@@ -33,6 +32,7 @@ class Webhook {
         eventPlugin(nullable: false)
     }
 
+    static transients = ['pluginConfiguration']
     static mapping = {
         pluginConfigurationJson type: 'text'
     }
@@ -40,5 +40,18 @@ class Webhook {
     static String cleanAuthToken(String authtoken) {
         if(authtoken.contains("#")) return authtoken.substring(0,authtoken.indexOf("#"))
         return authtoken
+    }
+
+    static Webhook fromWebhookEntity(WebhookEntity e) {
+        Webhook w = e.uuid ? Webhook.get(e.id) : new Webhook()
+        if(!w) w = new Webhook()
+        w.name = e.name
+        w.uuid = e.uuid
+        w.enabled = e.enabled
+        w.project = e.project
+        w.authToken = e.authToken
+        w.eventPlugin = e.eventPlugin
+        w.projectConfiguration = e.pluginConfiguration
+        w
     }
 }

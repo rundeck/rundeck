@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.authorization.providers.BaseValidatorImpl
-import com.dtolabs.rundeck.core.authorization.providers.ValidatorFactory
 import com.dtolabs.rundeck.core.authorization.providers.YamlValidator
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
@@ -119,6 +118,7 @@ import rundeckapp.init.PluginCachePreloader
 import rundeckapp.init.RundeckConfigReloader
 import rundeckapp.init.RundeckExtendedMessageBundle
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
+import webhooks.GormWebhookDataService
 
 import javax.security.auth.login.Configuration
 
@@ -708,4 +708,6 @@ beans={
     rundeckConfigReloader(RundeckConfigReloader)
     pluginCachePreloader(PluginCachePreloader)
     interceptorHelper(DefaultInterceptorHelper)
+
+    webhookDataService(GormWebhookDataService)
 }

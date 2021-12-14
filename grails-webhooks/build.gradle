@@ -47,6 +47,7 @@ dependencies {
     compile "org.grails.plugins:async"
     compile "org.grails.plugins:scaffolding"
     compile "org.grails.plugins:gsp"
+    compile "io.micronaut:micronaut-http-client"
     compileOnly "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     compile project(":core")
