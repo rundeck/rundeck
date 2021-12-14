@@ -95,8 +95,10 @@ dependencies {
     // https://github.com/gpc/greenmail
     //compile 'org.grails.plugins:greenmail:2.0.0.RC2'
 
-    implementation 'com.atlassian.commonmark:commonmark:0.11.0'
-    implementation 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
+    //implementation 'com.atlassian.commonmark:commonmark:0.11.0'
+    implementation group: 'org.commonmark', name: 'commonmark', version: '0.18.1'
+    //implementation 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
+    implementation group: 'org.commonmark', name: 'commonmark-ext-gfm-tables', version: '0.18.1'
     implementation ('com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20211018.2'){
         exclude(group:'com.google.guava',module:'guava')
     }
