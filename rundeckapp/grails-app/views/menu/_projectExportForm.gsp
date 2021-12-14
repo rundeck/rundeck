@@ -43,7 +43,7 @@
             jQuery('#exportModal').on('show.bs.modal', function () {
                 let form = jQuery('#userTokenGenerateForm');
                 form.find('#exportInputs').remove();
-                form.append(jQuery('#exportInputs').clone().css('display','block'));
+                form.append(jQuery('#exportInputs').clone().css('display','none'));
             });
         });
     });
