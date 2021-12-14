@@ -12,7 +12,9 @@ buildscript {
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:7.0.0"
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
-        classpath "org.grails.plugins:database-migration:$dbMigrationPluginVersion"
+        classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
+            exclude group: 'org.spockframework', module: 'spock-core'
+        }
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
@@ -74,6 +76,15 @@ dependencies {
     // Rundeck project dependencies.
     implementation project(':core')
     implementation project(':rundeck-storage:rundeck-storage-filesys')
+    implementation project(':grails-metricsweb')
+
+    /** It's important that the configuration addition follow the form 'compile project("")'
+     * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
+     * can produce broken plugins in development mode. */
+    for(proj in project.findProperty('bundledGrailsPlugins')) {
+        logger.info("Injecting Grails plugin ${proj}")
+        implementation project("$proj")
+    }
 
     // From BuildConfig.groovy.
     implementation 'org.quartz-scheduler:quartz:2.3.2'
@@ -117,6 +128,7 @@ dependencies {
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation (group: 'org.springframework.cloud', name: 'spring-cloud-starter-bootstrap', version: '3.0.0')
 
     implementation "org.grails:grails-core"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
@@ -165,7 +177,7 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
-    implementation 'org.liquibase:liquibase-core:3.10.1'
+    implementation 'org.liquibase:liquibase-core:4.6.2'
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
@@ -515,4 +527,4 @@ if (project.hasProperty('signing.keyId') && project.hasProperty('signing.passwor
     }
 }
 
-apply from: "${rootDir}/gradle/java.gradle"
+//apply from: "${rootDir}/gradle/java.gradle"
