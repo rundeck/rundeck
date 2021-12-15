@@ -34,11 +34,11 @@ class DefaultInterceptorHelper implements InterceptorHelper, InitializingBean {
 
     @Override
     boolean matchesAllowedAsset(String controllerName, HttpServletRequest request) {
-        return allowedControllers.contains(controllerName) || matchesStaticServletPath(request.pathInfo)
+        return allowedControllers.contains(controllerName) || matchesStaticServletPath(request.servletPath, request.pathInfo)
     }
 
-    boolean matchesStaticServletPath(String pathInfo) {
-        return allowedPaths.contains(pathInfo)
+    boolean matchesStaticServletPath(String servletPath, String pathInfo) {
+        return allowedPaths.contains(servletPath) || allowedPaths.contains(pathInfo)
     }
 
     @Override
