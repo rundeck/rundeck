@@ -59,15 +59,19 @@ dependencies {
         exclude group:'com.google.errorprone', module: 'error_prone_annotations'
         exclude group:'com.google.j2objc', module: 'j2objc-annotations'
         exclude group:'com.google.code.findbugs', module: 'jsr305'
+        exclude group:'org.checkerframework', module: 'checker-qual'
     }
 
-    api 'org.apache.ant:ant:1.9.15',
-            'org.slf4j:slf4j-api:1.7.30',
-        'commons-codec:commons-codec:1.11',
+    api('org.dom4j:dom4j:2.1.3'){
+        exclude group:'javax.xml.bind', module: 'jaxb-api'
+    }
+
+    api 'org.apache.ant:ant:1.10.11',
+        'org.slf4j:slf4j-api:1.7.32',
+        'commons-codec:commons-codec:1.15',
         'commons-beanutils:commons-beanutils:1.9.4',
         'commons-collections:commons-collections:3.2.2',
         'commons-lang:commons-lang:2.6',
-        'org.dom4j:dom4j:2.1.3',
         'jaxen:jaxen:1.2.0',
         'commons-cli:commons-cli:1.0',
         'org.apache.ant:ant-jsch:1.9.15',
@@ -80,14 +84,20 @@ dependencies {
         'com.jcraft:jsch.agentproxy.core:0.0.9',
         "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         "org.yaml:snakeyaml:${snakeyamlVersion}",
-        'com.squareup.retrofit2:retrofit:2.7.2',
-        'com.squareup.retrofit2:converter-jackson:2.7.2',
+        'com.squareup.retrofit2:retrofit:2.9.0',
+        'com.squareup.retrofit2:converter-jackson:2.9.0',
         'javax.servlet:javax.servlet-api:4.0.1'
 
 
-    implementation ("org.apache.httpcomponents:httpclient:${httpClientVersion}")
-    implementation "org.projectlombok:lombok:1.18.10"
-    annotationProcessor "org.projectlombok:lombok:1.18.10"
+    implementation ("org.apache.httpcomponents:httpclient:${httpClientVersion}"){
+      exclude group:'commons-codec', module: 'commons-codec'
+      exclude group:'org.apache.httpcomponents', module: 'httpcore'
+    }
+    
+    implementation ("org.apache.httpcomponents:httpcore:4.4.14")
+
+    implementation "org.projectlombok:lombok:1.18.20"
+    annotationProcessor "org.projectlombok:lombok:1.18.20"
     testImplementation 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.10.19'
 
