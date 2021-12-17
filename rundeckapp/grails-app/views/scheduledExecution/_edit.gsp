@@ -199,31 +199,11 @@
       <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
       <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
-      %{--Options--}%
-    <div class="tab-pane" id="tab_workflow">
-      <section id="optionsContent" class=" section-space-lg" >
-          <div class="form-group">
-              <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
-              <div class="${fieldColSize}">
-
-                  <div  id="editoptssect" class="rounded">
-                      <%
-                          def options = sessionOpts
-                          if(!options){
-                              def tmpse = ScheduledExecution.get(scheduledExecution.id)
-                              options = tmpse?tmpse.options:scheduledExecution.options
-                          }
-                      %>
-                      <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
-                      <g:if test="${scheduledExecution && scheduledExecution.argString}">
-                          <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
-                      </g:if>
-                      <g:hiddenField name="_sessionopts" value="true"/>
-
-                  </div>
-              </div>
-          </div>
-      </section>%{--//Options--}%
+    %{--Options--}%
+        <div id="job-editor-workflow-options-vue">
+            <workflow-options :event-bus="EventBus" :options="${options}" :editMode="true"  />
+        </div>
+    %{--//Options--}%
 
       %{--Workflow--}%
       <section id="workflowContent" class="section-separator section-space-lg" >

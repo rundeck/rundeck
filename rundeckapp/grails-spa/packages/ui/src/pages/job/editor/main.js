@@ -43,6 +43,19 @@ const i18n = new VueI18n({
     locale: locale, // set locale
     messages // set locale messages,
 })
+
+const workflow = document.body.getElementsByClassName('job-editor-workflow-vue')
+
+for (var i = 0; i < workflow.length; i++) {
+    const e = workflow[i]
+    /* eslint-disable no-new */
+    new Vue({
+        el: e,
+        data(){return{EventBus,}},
+        components: { WorkflowEditorSection },
+        i18n
+    })
+}
 const els = document.body.getElementsByClassName('job-editor-notifications-vue')
 
 for (var i = 0; i < els.length; i++) {

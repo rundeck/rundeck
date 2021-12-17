@@ -229,6 +229,26 @@ class UrlMappings {
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 
+        //Workflow mappings for Vue conversion
+        "/api/$api_version/workflow"(controller: 'workflow'){
+            action = [GET: 'index', POST: 'save', DELETE: 'remove']
+        }
+        "/api/$api_version/workflow/edit"(controller: 'workflow', action: 'edit')
+        "/api/$api_version/workflow/copy"(controller: 'workflow', action: 'copy')
+        "/api/$api_version/workflow/editStepFilter"(controller: 'workflow', action: 'editStepFilter')
+        "/api/$api_version/workflow/saveStepFilter"(controller: 'workflow', action: 'saveStepFilter')
+        "/api/$api_version/workflow/validateStepFilter"(controller: 'workflow', action: 'validateStepFilter')
+        "/api/$api_version/workflow/removeStepFilter"(controller: 'workflow', action: 'removeStepFilter')
+        "/api/$api_version/workflow/renderItem"(controller: 'workflow', action: 'renderItem')
+        "/api/$api_version/workflow/reorder"(controller: 'workflow', action: 'reorder')
+        "/api/$api_version/workflow/undo"(controller: 'workflow', action: 'undo')
+        "/api/$api_version/workflow/redo"(controller: 'workflow', action: 'redo')
+        "/api/$api_version/workflow/revert"(controller: 'workflow', action: 'revert')
+        "/api/$api_version/workflow/renderUndo"(controller: 'workflow', action: 'renderUndo')
+        "/project/$project/job/$action?/$id?"(controller: 'scheduledExecution')
+        "/job/$id"(controller: 'scheduledExecution',action: 'show')
+        "/job/$id/edit"(controller: 'scheduledExecution', action: 'edit')
+
         //simplified url mappings for link generation
         "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')

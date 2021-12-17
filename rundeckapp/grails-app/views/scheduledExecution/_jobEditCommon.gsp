@@ -100,6 +100,15 @@
         'onretryablefailure'
 ].collect{'notification.event.'+it}}"/>
 
+<g:embedJSON id="jobWorkflowJSON"
+            data="${[
+                scheduledExecution: scheduledExecution?,
+                crontab: crontab?,
+                authorized: authorized?,
+                notificationPlugins: notificationPlugins?,
+                sessionOpts: sessionOpts?
+            ]}"
+/>
 <g:embedJSON id="jobNotificationsJSON"
              data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
                        notifyAvgDurationThreshold:scheduledExecution?.notifyAvgDurationThreshold,
@@ -131,6 +140,7 @@
 <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
+            workflowData: loadJsonData('jobWorkflowJSON'),
             notificationData: loadJsonData('jobNotificationsJSON'),
             resourcesData: loadJsonData('jobResourcesJSON')
         }

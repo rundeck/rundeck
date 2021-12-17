@@ -566,6 +566,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
                 flush(response)
             }
+            json{
+                render(dataMap as JSON)
+            }
         }
     }
     private static String getFname(name){
@@ -1673,12 +1676,15 @@ class ScheduledExecutionController  extends ControllerBase{
             flash.message = g.message(code:'scheduledExecution.invalid.message', args: [scheduledExecution.jobName])
         }
 
+        json{
+            render(result as JSON)
+        }
         return result
     }
 
 
 
-    public def update (){
+    def update (){
         withForm{
         def changeinfo=[method:'update',change:'modify',user:session.user]
 
