@@ -11,11 +11,9 @@ import {sleep} from '@rundeck/testdeck/async/util'
 // We will initialize and cleanup in the before/after methods
 let ctx = CreateContext({projects: ['SeleniumBasic']})
 let loginPage: LoginPage
-let jobCreatePage: JobCreatePage
 
 beforeAll( async () => {
     loginPage = new LoginPage(ctx)
-    jobCreatePage = new JobCreatePage(ctx, 'SeleniumBasic')
 })
 
 beforeAll(async () => {
@@ -31,7 +29,7 @@ const expectInputValue=async function(elem:WebElement,val:string){
     expect(valueText).toBe(val)
 }
 const createBasicJob = async function(name: string){
-
+    const jobCreatePage: JobCreatePage = new JobCreatePage(ctx, 'SeleniumBasic')
     await jobCreatePage.get()
     await ctx.driver.wait(until.urlContains('/job/create'), 25000)
     let jobName=await jobCreatePage.jobNameInput()
@@ -59,11 +57,12 @@ const createBasicJob = async function(name: string){
 
     //wait until edit form section for step is removed from dom
     await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
+    return jobCreatePage
 }
 
 describe('job', () => {
     it('create job with dispatch to nodes', async () => {
-        await createBasicJob('jobs with nodes')
+        const jobCreatePage: JobCreatePage = await createBasicJob('jobs with nodes')
 
         let tabNodes=await jobCreatePage.tabNodes()
         await tabNodes.click()
@@ -148,7 +147,7 @@ describe('job', () => {
 
         //edit job and verify values are set in form
 
-        await ctx.driver.navigate().to(editUrl)
+        await ctx.driver.get(editUrl)
 
         let jobEditPage = new JobCreatePage(ctx,'SeleniumBasic')
 
@@ -186,8 +185,11 @@ describe('job', () => {
         let valuenodesSelectedByDefaultFalse= await jobEditPage.nodesSelectedByDefaultFalse()
         await expectRadioValue(valuenodesSelectedByDefaultFalse, true)
 
+        // choose cancel button
+        const cancelbtn = await jobEditPage.editCancelButton()
+        await cancelbtn.click()
 
-
+        await ctx.driver.wait(until.urlContains('/job/show'), 15000)
     })
     // TODO: fix, test is flaky and fails on CI run
     //
