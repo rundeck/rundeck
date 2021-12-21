@@ -192,80 +192,79 @@ describe('job', () => {
         await ctx.driver.wait(until.urlContains('/job/show'), 15000)
     })
     // TODO: fix, test is flaky and fails on CI run
-    //
-    // it('rename job with orchestrator', async () => {
-    //     await createBasicJob('job with node orchestrator')
-    //
-    //     const tabNodes = await jobCreatePage.tabNodes()
-    //     await tabNodes.click()
-    //
-    //     const enableDispatchNodes = await jobCreatePage.dispatchNodes()
-    //     await enableDispatchNodes.click()
-    //     await sleep(500)
-    //
-    //     const nodeFilter = await jobCreatePage.nodeFilter()
-    //     expect(nodeFilter).toBeDefined()
-    //
-    //     const nodeFilterMenuLink = await jobCreatePage.nodeFilterMenuLink()
-    //     await nodeFilterMenuLink.click()
-    //
-    //     const nodeFilterSelectAllLink = await jobCreatePage.nodeFilterSelectAllLink()
-    //     await nodeFilterSelectAllLink.click()
-    //
-    //     const matchedNodesText = await jobCreatePage.matchedNodesText()
-    //     expect(matchedNodesText).toEqual('1 Node Matched')
-    //
-    //     // choose orchestrator rankTiered
-    //
-    //     const dropdown = await jobCreatePage.orchestratorDropdownButton()
-    //     await dropdown.click()
-    //
-    //     // select rankTiered
-    //     const choice = await jobCreatePage.orchestratorChoice('rankTiered')
-    //     await choice.click()
-    //
-    //     // save the job
-    //     const save = await jobCreatePage.saveButton()
-    //     await save.click()
-    //
-    //     const jobShowPage = new JobShowPage(ctx, 'SeleniumBasic', '')
-    //
-    //     // verfiy job description
-    //     await jobShowPage.waitJobDefinition()
-    //     const jobDefinitionModal = await jobShowPage.jobDefinition()
-    //     await jobDefinitionModal.click()
-    //
-    //     await jobShowPage.waitDefinitionNodefilters()
-    //     const orchName = await jobShowPage.jobDefinitionOrchestratorText()
-    //     const orchText = await orchName.getText()
-    //     expect(orchText).toEqual('Rank Tiered')
-    //
-    //     // close modal
-    //     await jobShowPage.closeJobDefinitionModal()
-    //     await sleep(500)
-    //
-    //     const showUrl = await ctx.driver.getCurrentUrl()
-    //
-    //     // change to edit page
-    //     const editUrl = showUrl.replace('/job/show', '/job/edit')
-    //
-    //     // edit job and verify values are set in form
-    //
-    //     await ctx.driver.navigate().to(editUrl)
-    //
-    //     const jobEditPage = new JobCreatePage(ctx, 'SeleniumBasic')
-    //
-    //     // rename job
-    //     const nameInput = await jobEditPage.jobNameInput()
-    //     await nameInput.clear()
-    //     await nameInput.sendKeys('renamed job with node orchestrator')
-    //
-    //     // save and reload
-    //     // save the job
-    //     const save2 = await jobCreatePage.updateButton()
-    //     await save2.click()
-    //
-    //     await ctx.driver.wait(until.urlContains('/job/show'), 5000)
-    //     const jobShowPage2 = new JobShowPage(ctx, 'SeleniumBasic', '')
-    // })
+
+    it('rename job with orchestrator', async () => {
+        const jobCreatePage: JobCreatePage = await createBasicJob('job with node orchestrator')
+
+        const tabNodes = await jobCreatePage.tabNodes()
+        await tabNodes.click()
+
+        const enableDispatchNodes = await jobCreatePage.dispatchNodes()
+        await enableDispatchNodes.click()
+
+        const nodeFilter = await jobCreatePage.nodeFilter()
+        expect(nodeFilter).toBeDefined()
+
+        const nodeFilterMenuLink = await jobCreatePage.nodeFilterMenuLink()
+        await nodeFilterMenuLink.click()
+
+        const nodeFilterSelectAllLink = await jobCreatePage.nodeFilterSelectAllLink()
+        await nodeFilterSelectAllLink.click()
+
+        const matchedNodesText = await jobCreatePage.matchedNodesText()
+        expect(matchedNodesText).toEqual('1 Node Matched')
+
+        // choose orchestrator rankTiered
+
+        const dropdown = await jobCreatePage.orchestratorDropdownButton()
+        await dropdown.click()
+
+        // select rankTiered
+        const choice = await jobCreatePage.orchestratorChoice('rankTiered')
+        await choice.click()
+
+        // save the job
+        const save = await jobCreatePage.saveButton()
+        await save.click()
+
+        const jobShowPage = new JobShowPage(ctx, 'SeleniumBasic', '')
+
+        // verfiy job description
+        await jobShowPage.waitJobDefinition()
+        const jobDefinitionModal = await jobShowPage.jobDefinition()
+        await jobDefinitionModal.click()
+
+        await jobShowPage.waitDefinitionNodefilters()
+        const orchName = await jobShowPage.jobDefinitionOrchestratorText()
+        const orchText = await orchName.getText()
+        expect(orchText).toEqual('Rank Tiered')
+
+        // close modal
+        await jobShowPage.closeJobDefinitionModal()
+        await sleep(500)
+
+        const showUrl = await ctx.driver.getCurrentUrl()
+
+        // change to edit page
+        const editUrl = showUrl.replace('/job/show', '/job/edit')
+
+        // edit job and verify values are set in form
+
+        await ctx.driver.get(editUrl)
+
+        const jobEditPage = new JobCreatePage(ctx, 'SeleniumBasic')
+
+        // rename job
+        const nameInput = await jobEditPage.jobNameInput()
+        await nameInput.clear()
+        await nameInput.sendKeys('renamed job with node orchestrator')
+
+        // save and reload
+        // save the job
+        const save2 = await jobCreatePage.updateButton()
+        await save2.click()
+
+        await ctx.driver.wait(until.urlContains('/job/show'), 5000)
+        const jobShowPage2 = new JobShowPage(ctx, 'SeleniumBasic', '')
+    })
 })
