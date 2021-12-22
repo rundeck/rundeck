@@ -1676,7 +1676,7 @@ class ScheduledExecutionController  extends ControllerBase{
             flash.message = g.message(code:'scheduledExecution.invalid.message', args: [scheduledExecution.jobName])
         }
 
-        json{
+        json {
             render(result as JSON)
         }
         return result
