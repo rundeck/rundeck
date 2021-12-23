@@ -34,11 +34,11 @@ class TestAppInitializer implements SpringApplicationRunListener, Ordered {
         return 1
     }
 
-    @Override
+    //@Override
     void starting() {
     }
 
-    @Override
+    //@Override
     void environmentPrepared(final ConfigurableEnvironment environment) {
         new InitializeRundeckPreboostrap().run()
     }

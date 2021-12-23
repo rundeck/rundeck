@@ -40,7 +40,10 @@ import javax.security.auth.login.FailedLoginException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.anyString;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
