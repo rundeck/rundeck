@@ -67,7 +67,7 @@ dependencies {
         exclude group: 'pull-parser'
     }
 
-    api 'org.apache.ant:ant:1.10.11',
+    api 'org.apache.ant:ant:1.10.12',
         'org.slf4j:slf4j-api:1.7.32',
         'commons-codec:commons-codec:1.15',
         'commons-beanutils:commons-beanutils:1.9.4',
@@ -97,8 +97,8 @@ dependencies {
     
     implementation ("org.apache.httpcomponents:httpcore:4.4.14")
 
-    implementation "org.projectlombok:lombok:1.18.20"
-    annotationProcessor "org.projectlombok:lombok:1.18.20"
+    implementation "org.projectlombok:lombok:1.18.22"
+    annotationProcessor "org.projectlombok:lombok:1.18.22"
     testImplementation 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.10.19'
 
