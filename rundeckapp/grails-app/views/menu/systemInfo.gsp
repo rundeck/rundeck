@@ -136,7 +136,7 @@
     </div>
     <div class="row">
       <div class="col-xs-6">
-        <g:set var="repoEnabled" value="${g.rConfig(value: "feature.repository.enabled", type: 'string') in [true,'true']}"/>
+        <g:set var="repoEnabled" value="${cfg.getString(config: "feature.repository.enabled") in [true,'true']}"/>
 
         <div class="card">
           <div class="card-header">

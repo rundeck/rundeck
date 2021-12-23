@@ -108,12 +108,12 @@
                     <h3 class="card-title">
                       <div class="logo">
                           <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'static/img/rundeck-combination.svg'}"/>
-                          <g:set var="titleLink" value="${g.rConfig(value: "gui.titleLink", type: 'string')}"/>
+                          <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
                           <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}" title="Home">
                             <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;" onload="SVGInject(this)"/>
                           </a>
 %{--                          <asset:image src="${g.message(code: 'app.login.logo')}"/>--}%
-                          <g:set var="userDefinedLogo" value="${g.rConfig(value: "gui.logo", type: 'string')}"/>
+                          <g:set var="userDefinedLogo" value="${cfg.getString(config: "gui.logo")}"/>
                           <g:if test="${userDefinedLogo}">
                             <g:set var="userAssetBase" value="/user-assets" />
                             <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
@@ -134,14 +134,14 @@
                       </div>
                     </g:if>
                     <!--SSO Login Feature-->
-                    <g:set var="loginButtonEnabled" value="${g.rConfig(value: "sso.loginButton.image.enabled", type: 'string') in [true,'true']}"/>
+                    <g:set var="loginButtonEnabled" value="${cfg.getString(config: "sso.loginButton.image.enabled") in [true,'true']}"/>
                     <g:if test="${request.getAttribute("showSSOButton") && loginButtonEnabled}">
                           <div class="sso-login">
                               <div class='form-group'>
                                   <div class="sso-login-container">
-                                  <g:set var="loginButtonEnabled" value="${g.rConfig(value: "sso.loginButton.image.enabled", type: 'string') in [true,'true']}"/>
-                                  <g:set var="loginButtonUrl" value="${g.rConfig(value: "sso.loginButton.url", type: 'string')}"/>
-                                  <g:set var="loginButtonTile" value="${g.rConfig(value: "sso.loginButton.title", type: 'string')}"/>
+                                  <g:set var="loginButtonEnabled" value="${cfg.getString(config: "sso.loginButton.image.enabled") in [true,'true']}"/>
+                                  <g:set var="loginButtonUrl" value="${cfg.getString(config: "sso.loginButton.url")}"/>
+                                  <g:set var="loginButtonTile" value="${cfg.getString(config: "sso.loginButton.title")}"/>
 
                                   <g:if test="${loginButtonEnabled}"><img src="${resource(dir: 'images', file: 'rundeck2-icon-16.png')}" alt="Rundeck" class="sso-login-img" /></g:if>
 
@@ -153,7 +153,7 @@
                     <!--/SSO Login Feature-->
                     <g:showLocalLogin>
 
-                    <g:set var="loginmsg" value="${g.rConfig(value: "gui.login.welcome", type: 'string', defVal: g.message(code: 'gui.login.welcome', default: ''))}"/>
+                    <g:set var="loginmsg" value="${cfg.getString(config: "gui.login.welcome",  default: g.message(code: 'gui.login.welcome', default: ''))}"/>
                     <g:if test="${loginmsg}">
                       <div style="margin-bottom:2em;">
                         <span>
@@ -188,7 +188,7 @@
                       <span><g:message code="user.login.empty.username"/></span>
                   </div>
 
-                    <g:set var="footermessagehtml" value="${g.rConfig(value: "gui.login.footerMessageHtml", type: 'string', defVal: '')}"/>
+                    <g:set var="footermessagehtml" value="${cfg.getString(config: "gui.login.footerMessageHtml",  default: '')}"/>
                     <g:if test="${footermessagehtml}">
                       <div>
                         <span>
@@ -201,7 +201,7 @@
             </div>
           </div>
         </div>
-        <g:set var="loginDisclaimer" value="${g.rConfig(value: "gui.login.disclaimer", type: 'string', defVal: '')}"/>
+        <g:set var="loginDisclaimer" value="${cfg.getString(config: "gui.login.disclaimer", default: '')}"/>
         <g:if test="${loginDisclaimer}">
           <div class="row" style="margin-top:1em;">
             <div class="col-xs-12 col-sm-8 col-sm-offset-2 card">

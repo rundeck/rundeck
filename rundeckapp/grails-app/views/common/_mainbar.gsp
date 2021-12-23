@@ -5,7 +5,7 @@
   </g:if>
   <nav id="mainbar" class="mainbar">
     <div id="nav-rd-home">
-      <g:set var="titleLink" value="${g.rConfig(value: "gui.titleLink", type: 'string')}"/>
+      <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
       <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}">
         <i class="rdicon app-logo" style="display:block"></i>
       </a>
@@ -25,8 +25,8 @@
 %{--        <span class="icon-bar bar3"></span>--}%
 %{--      </button>--}%
 
-      <g:set var="userDefinedLogo" value="${g.rConfig(value: "gui.logo", type: 'string')}"/>
-      <g:set var="userDefinedSmallLogo" value="${g.rConfig(value: "gui.logoSmall", type: 'string')}"/>
+      <g:set var="userDefinedLogo" value="${cfg.getString(config: "gui.logo")}"/>
+      <g:set var="userDefinedSmallLogo" value="${cfg.getString(config: "gui.logoSmall")}"/>
       <g:set var="userAssetBase" value="/user-assets" />
       <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
       <g:set var="safeUserSmallLogo" value="${userDefinedSmallLogo.toString().encodeAsSanitizedHTML()}" />
@@ -112,7 +112,7 @@
         </g:if>
 
       <ul id="navbar-menu" class="mainbar__group mainbar__menu">
-        <g:set var="userDefinedInstanceName" value="${g.rConfig(value: "gui.instanceName", type: 'string')}"/>
+        <g:set var="userDefinedInstanceName" value="${cfg.getString(config: "gui.instanceName")}"/>
         <g:if test="${userDefinedInstanceName}">
           <li>
             <span class="label label-default instance-label" style="float:left;font-size: 20px;margin: 10px 15px 0 0;">
@@ -125,7 +125,7 @@
 
         <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
           <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
-            <g:set var="clusterIdentityInHeader" value="${g.rConfig(value: "gui.clusterIdentityInHeader", type: 'string')}"/>
+            <g:set var="clusterIdentityInHeader" value="${cfg.getString(config: "gui.clusterIdentityInHeader")}"/>
             <g:if test="${clusterIdentityInHeader in [true,'true']}">
               <li>
                 <span class="rundeck-server-uuid" data-server-uuid="${ servletContextAttribute(attribute: 'SERVER_UUID')}" data-server-name="${ servletContextAttribute(attribute: 'FRAMEWORK_NODE')}"></span>

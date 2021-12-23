@@ -14,12 +14,12 @@
   - limitations under the License.
   --}%
 
-<g:set var="sidebarColor" value="${g.rConfig(value: "gui.sidebarColor", type: 'string')}"/>
-<g:set var="sidebarTextColor" value="${g.rConfig(value: "gui.sidebarTextColor", type: 'string')}"/>
-<g:set var="sidebarTextActiveColor" value="${g.rConfig(value: "gui.sidebarTextActiveColor", type: 'string')}"/>
+<g:set var="sidebarColor" value="${cfg.getString(config: "gui.sidebarColor")}"/>
+<g:set var="sidebarTextColor" value="${cfg.getString(config: "gui.sidebarTextColor")}"/>
+<g:set var="sidebarTextActiveColor" value="${cfg.getString(config: "gui.sidebarTextActiveColor")}"/>
 
-<g:set var="instanceNameLabelColor" value="${g.rConfig(value: "gui.instanceNameLabelColor", type: 'string')}"/>
-<g:set var="instanceNameLabelTextColor" value="${g.rConfig(value: "gui.instanceNameLabelTextColor", type: 'string')}"/>
+<g:set var="instanceNameLabelColor" value="${cfg.getString(config: "gui.instanceNameLabelColor")}"/>
+<g:set var="instanceNameLabelTextColor" value="${cfg.getString(value: "gui.instanceNameLabelTextColor")}"/>
 
 <style type="text/css">
   <g:if test="sidebarColor">

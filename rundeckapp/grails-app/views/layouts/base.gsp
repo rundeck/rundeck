@@ -77,7 +77,7 @@
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/version.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
-    <g:set var="communityNews" value="${g.rConfig(value: "communityNews.disabled", type: 'string') in [true,'true']}"/>
+    <g:set var="communityNews" value="${cfg.getString(config: "communityNews.disabled") in [true,'true']}"/>
 
     <g:if test="${!communityNews in [false,'false']}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>

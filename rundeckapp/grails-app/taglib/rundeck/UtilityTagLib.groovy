@@ -2086,23 +2086,4 @@ ansi-bg-default'''))
         }
         RundeckJobDefinitionManager.getMessagesTypeForJobComponent(attrs.name)
     }
-
-    /**
-     * Return a new random string every time it is called.  Attrs are:
-     * len: number of random bytes to use
-     * format: printf format for the byte array, default is a hex string "%x"
-     */
-    def rConfig={attrs,body->
-        def defValue = attrs.defValue
-        if(attrs.type == 'boolean'){
-            out << configurationService.getBoolean(attrs.value,defValue?defValue:false )
-        }else if(attrs.type == 'integer'){
-            out << configurationService.getInteger(attrs.value,defValue?defValue:null )
-        }else if(attrs.type == 'long'){
-            out <<  configurationService.getLong(attrs.value,defValue?defValue:null )
-        }else{
-            def result = configurationService.getString(attrs.value, defValue?defValue:null)
-            out << result
-        }
-    }
 }

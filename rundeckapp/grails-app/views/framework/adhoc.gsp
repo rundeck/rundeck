@@ -40,8 +40,8 @@
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="framework/adhoc.js"/>
-    <g:set var="defaultLastLines" value="${g.rConfig(value: "gui.execution.tail.lines.default", type: 'integer')}"/>
-    <g:set var="maxLastLines" value="${g.rConfig(value: "gui.execution.tail.lines.max", type: 'integer')}"/>
+    <g:set var="defaultLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.default", default: 20)}"/>
+    <g:set var="maxLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.max", default: 20)}"/>
 
     <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, matchedNodesMaxCount: matchedNodesMaxCount?:50, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <g:embedJSON id="pageParams" data="${[

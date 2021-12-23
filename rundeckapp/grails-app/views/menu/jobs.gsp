@@ -24,8 +24,8 @@
     <meta name="skipPrototypeJs" content="true"/>
     <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
-    <g:set var="paginateJobs" value="${g.rConfig(value: "gui.paginatejobs.enabled", type: 'string') in [true,'true']}"/>
-    <g:set var="paginateJobsPerPage" value="${g.rConfig(value: "gui.paginatejobs.max.per.page", type: 'integer', defValue: 20)}"/>
+    <g:set var="paginateJobs" value="${cfg.getString(config: "gui.paginatejobs.enabled") in [true,'true']}"/>
+    <g:set var="paginateJobsPerPage" value="${cfg.getInteger(config: "gui.paginatejobs.max.per.page", default: 20)}"/>
 
 
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
