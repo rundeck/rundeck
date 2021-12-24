@@ -19,7 +19,7 @@
 <g:set var="sidebarTextActiveColor" value="${cfg.getString(config: "gui.sidebarTextActiveColor")}"/>
 
 <g:set var="instanceNameLabelColor" value="${cfg.getString(config: "gui.instanceNameLabelColor")}"/>
-<g:set var="instanceNameLabelTextColor" value="${cfg.getString(value: "gui.instanceNameLabelTextColor")}"/>
+<g:set var="instanceNameLabelTextColor" value="${cfg.getString(config: "gui.instanceNameLabelTextColor")}"/>
 
 <style type="text/css">
   <g:if test="sidebarColor">
