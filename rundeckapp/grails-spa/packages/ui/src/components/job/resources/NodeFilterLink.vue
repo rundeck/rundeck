@@ -51,7 +51,11 @@ export default class NodeFilterLink extends Vue {
 
   getFilter() {
     if (this.nodeFilter) {
-      return this.nodeFilter
+      let nodeFilterCpy = this.nodeFilter.trim() + "\""
+      let idxKey = nodeFilterCpy.indexOf(": ") + 2
+      nodeFilterCpy = nodeFilterCpy.slice(0, idxKey) + "\"" + nodeFilterCpy.slice(idxKey)
+
+      return nodeFilterCpy
     } else if (this.filterKey && this.filterVal) {
       return `${this.filterKey}: ${this.filterVal}`
     }
