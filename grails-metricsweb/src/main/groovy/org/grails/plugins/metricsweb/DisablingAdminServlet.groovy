@@ -96,13 +96,13 @@ class DisablingAdminServlet extends AdminServlet implements ApplicationContextAw
         def healthcheckUri = notNullParam(config.getInitParameter(HEALTHCHECK_URI_PARAM_KEY), DEFAULT_HEALTHCHECK_URI);
         def cpuProfileUri = notNullParam(config.getInitParameter(CPU_PROFILE_URI_PARAM_KEY), DEFAULT_CPU_PROFILE_URI);
 
-        def apiEnabled = (gapp.config.rundeck?.metrics?.enabled in [true, 'true']) &&
-                         (gapp.config.rundeck?.metrics?.api?.enabled in [true, 'true'])
-        map[metricsUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.metrics?.enabled in [true, 'true']
-        map[pingUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.ping?.enabled in [true, 'true']
-        map[threadsUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.threads?.enabled in [true, 'true']
-        map[healthcheckUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.healthcheck?.enabled in [true, 'true']
-        map[cpuProfileUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.cpuProfile?.enabled in [true, 'true']
+        def apiEnabled = (gapp.config.getProperty("rundeck.metrics.enabled", String.class) in [true, 'true']) &&
+                         (gapp.config.getProperty("rundeck.metrics.api.enabled", String.class) in [true, 'true'])
+        map[metricsUri] = apiEnabled && gapp.config.getProperty("rundeck.metrics.api.metrics.enabled", String.class) in [true, 'true']
+        map[pingUri] = apiEnabled && gapp.config.getProperty("rundeck.metrics.api.ping.enabled", String.class) in [true, 'true']
+        map[threadsUri] = apiEnabled && gapp.config.getProperty("rundeck.metrics.api.threads.enabled", String.class) in [true, 'true']
+        map[healthcheckUri] = apiEnabled && gapp.config.getProperty("rundeck.metrics.api.healthcheck.enabled", String.class) in [true, 'true']
+        map[cpuProfileUri] = apiEnabled && gapp.config.getProperty("rundeck.metrics.api.cpuProfile.enabled", String.class) in [true, 'true']
         this.enabledMap = Collections.unmodifiableMap(map)
     }
 

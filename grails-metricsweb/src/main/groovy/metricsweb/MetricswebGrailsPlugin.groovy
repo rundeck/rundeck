@@ -124,7 +124,7 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
             lastMapping + {
                 'servlet-mapping' {
                     'servlet-name'("metrics-admin-servlet")
-                    'url-pattern'(config.rundeck.metrics.servletUrlPattern.toString())
+                    'url-pattern'(config.getProperty("rundeck.metrics.servletUrlPattern", String.class))
                 }
             }
         }
@@ -133,7 +133,7 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
     def doWithSpring = {
 
         rundeckMetricsDisablingAdminServlet(DisablingAdminServlet)
-        disablingAdminServletRegistrationBean(ServletRegistrationBean, ref('rundeckMetricsDisablingAdminServlet'), grailsApplication.config.rundeck.metrics.servletUrlPattern.toString()) {
+        disablingAdminServletRegistrationBean(ServletRegistrationBean, ref('rundeckMetricsDisablingAdminServlet'), grailsApplication.config.getProperty("rundeck.metrics.servletUrlPattern", String.class)) {
             loadOnStartup = 2
         }
 
