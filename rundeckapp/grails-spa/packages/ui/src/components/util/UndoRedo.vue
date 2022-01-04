@@ -10,60 +10,60 @@
     </btn>
   </span>
 </template>
+
 <script lang="ts">
+  import Vue from "vue"
 
-import Vue from "vue"
-
-export default Vue.extend({
-  name: "UndoRedo",
-  props: {
-    'eventBus': Vue,
-    'ident': String,
-    'max': Number
-  },
-  data() {
-    return {
-      stack: <any>[],
-      index: 0,
-    }
-  },
-  computed: {
-    hasUndo(): boolean {
-      return this.stack.length > this.index
+  export default Vue.extend({
+    name: "UndoRedo",
+    props: {
+      'eventBus': Vue,
+      'ident': String,
+      'max': Number
     },
-    hasRedo(): boolean {
-      return this.index > 0
-    }
-  },
-  methods: {
-    addChange(val: any) {
-      if (this.index > 0) {
-        this.stack.splice(0, this.index)
-        this.index = 0
+    data() {
+      return {
+        stack: <any>[],
+        index: 0
       }
-      this.stack.unshift(val)
     },
-    doUndo() {
-      if(this.index>=this.stack.length){
-        return
+    computed: {
+      hasUndo(): boolean {
+        return (this.stack.length > this.index);
+      },
+      hasRedo(): boolean {
+        return this.index > 0
       }
-      let newindex = this.index + 1
-      let change = this.stack[this.index]
-      this.index = newindex
-      this.eventBus.$emit('undo', change)
     },
-    doRedo() {
-      if (this.index < 1) {
-        return
+    methods: {
+      addChange(val: any) {
+        if (this.index > 0) {
+          this.stack.splice(0, this.index)
+          this.index = 0
+        }
+        this.stack.unshift(val)
+      },
+      doUndo() {
+        if(this.index>=this.stack.length){
+          return
+        }
+        let newindex = this.index + 1
+        let change = this.stack[this.index]
+        this.index = newindex
+        this.eventBus.$emit('undo', change)
+      },
+      doRedo() {
+        if (this.index < 1) {
+          return
+        }
+        let newindex = this.index - 1
+        let change = this.stack[newindex]
+        this.index = newindex
+        this.eventBus.$emit('redo', change)
       }
-      let newindex = this.index - 1
-      let change = this.stack[newindex]
-      this.index = newindex
-      this.eventBus.$emit('redo', change)
+    },
+    mounted() {
+      this.eventBus.$on('change', this.addChange)
     }
-  },
-  mounted() {
-    this.eventBus.$on('change', this.addChange)
-  }
-})
+  })
 </script>

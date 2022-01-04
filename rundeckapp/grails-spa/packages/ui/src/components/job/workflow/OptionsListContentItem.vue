@@ -17,7 +17,11 @@
       </span>
 
       <span class="opt item" :id="optionName" >
-        <OptView :option="option" :editMode="editMode" :elemIdSuffix="elementIdSuffix" />
+        <OptView
+          :option="option"
+          :editMode="editMode"
+          :elemIdSuffix="elementIdSuffix"
+        />
       </span>
 
       <div :id="`optdel${elementIdSuffix}`" class="panel panel-danger" v-show="deleteConfirm">
@@ -58,10 +62,9 @@
   import VueI18n from 'vue-i18n';
   import i18n from './i18n';
   import OptionsView from './OptionsView.vue';
-  Vue.use(VueI18n)
 
   const w = window as any;
-  const jqery = w.jQuery;
+  const jquery = w.jQuery;
   const _i18n = i18n as any;
   const lang = w._rundeck.language || 'en';
   const locale = w._rundeck.locale || 'en_US';
@@ -79,56 +82,58 @@
     messages
   })
 
+  // @ts-ignore
+  Vue.use(VueI18n);
 
-export default {
-  name: 'OptionsListContentItem',
-  components: {
-    i18n: i18nInstance,
-    OptionsView
-  },
-  props: {
-    option: Object,
-    editMode: Boolean,
-    optIndex: Number,
-    optCount: Number
-  },
-  mounted() {},
-  computed: {
-    canMoveUp(): boolean {
-      return this.optIndex != 0;
+  export default Vue.extend({
+    name: 'OptionsListContentItem',
+    components: {
+      OptionsView
     },
-    canMoveDown(): boolean {
-      return this.optIndex < this.optCount - 1;
+    props: {
+      option: Array,
+      optionName: String,
+      editMode: Boolean,
+      optIndex: Number,
+      optCount: Number
     },
-    optionName(): string {
-      return JSON.stringify(this.option.name);
-    }
-  },
-  methods: {
-    reorder(value: string, pos: number) {
-      w._doReorderOption(value, {pos: pos});
+    computed: {
+      canMoveUp: function(): boolean {
+        return this.optIndex != 0;
+      },
+      canMoveDown: function(): boolean {
+        return this.optIndex < this.optCount - 1;
+      },
+      optionName: function(): string {
+        return JSON.stringify(this.option.name);
+      }
     },
-    legacyOptions(actionType: string, reorderPos: number) {
-      const jq = this.jquery(w);
-      const optName = this.optionName;
-      const i = this.optIndex;
-      if (actionType === 'remove') {
-        w._doRemoveOption(optName, jq.select(`#optli_${i}`));
-      } else if (actionType === 'copy') {
-        w._optcopy(optName)
-      } else if (actionType === 'edit') {
-        w._optedit(optName, jq.select(`#optli_${i}`));
-      } else if (actionType === 'reorder') {
-        w._doReorderOption(optName, {pos: reorderPos});
+    methods: {
+      reorder: function(value: string, pos: number) {
+        w._doReorderOption(value, {pos: pos});
+      },
+      legacyOptions: function(actionType: string, reorderPos: number) {
+        const jq = jquery(w);
+        const optName = this.optionName;
+        const i = this.optIndex;
+        if (actionType === 'remove') {
+          w._doRemoveOption(optName, jq.select(`#optli_${i}`));
+        } else if (actionType === 'copy') {
+          w._optcopy(optName)
+        } else if (actionType === 'edit') {
+          w._optedit(optName, jq.select(`#optli_${i}`));
+        } else if (actionType === 'reorder') {
+          w._doReorderOption(optName, {pos: reorderPos});
+        }
+      }
+    },
+    data() {
+      return {
+        optionName: "",
+        elementIdSuffix: `_${this.optionName}_${this.optIndex}`,
+        editMode: this.editMode,
+        deleteConfirm: false
       }
     }
-  },
-  data() {
-    return {
-      elementIdSuffix: `_${this.optionName}_${this.optIndex}`,
-      editMode: this.editMode,
-      deleteConfirm: false
-    }
-  }
-}
+  })
 </script>

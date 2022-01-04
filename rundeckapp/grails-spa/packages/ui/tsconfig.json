@@ -1,18 +1,21 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "strict": true,
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-    "allowJs": true,
+    "outDir": "lib",
     "baseUrl": ".",
+    "sourceMap": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "target": "es5",
+    "module": "es2015",
+    "experimentalDecorators": true,
     "skipLibCheck": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "jsx": "preserve",
+    "allowSyntheticDefaultImports": true,
+    "noImplicitThis": true,
+    "importHelpers": true,
+    "allowJs": true,
     "types": [
       "webpack-env",
       "@types/jest"
@@ -20,7 +23,8 @@
     "paths": {
       "@/*": [
         "src/*"
-      ]
+      ],
+      "react": [".sink.d.ts"]
     },
     "lib": [
       "esnext",
@@ -30,9 +34,9 @@
     ]
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue"
+    "./src/**/*",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
   ],
   "exclude": [
     "node_modules"

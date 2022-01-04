@@ -26,7 +26,7 @@
     },
     props: {
       editMode: Boolean,
-      options: Object
+      options: Array
     }
   })
 </script>

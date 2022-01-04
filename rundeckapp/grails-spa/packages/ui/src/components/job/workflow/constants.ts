@@ -1,4 +1,4 @@
-import {getRundeckContext} from '../ui-trellis'
+import {getRundeckContext} from '@rundeck/ui-trellis'
 
 const context = getRundeckContext()
 

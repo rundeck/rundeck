@@ -201,7 +201,7 @@
 
     %{--Options--}%
         <div id="job-editor-workflow-options-vue">
-            <workflow-options :event-bus="EventBus" :options="${options}" :editMode="true"  />
+            <workflow-editor-section :receivedEventBus="EventBus" :recievedOptions="options" :editMode="true" />
         </div>
     %{--//Options--}%
 

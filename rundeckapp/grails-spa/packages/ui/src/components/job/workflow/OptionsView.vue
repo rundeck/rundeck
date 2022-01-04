@@ -74,15 +74,14 @@
 </template>
 
 <script lang="ts">
-  import Vue from 'vue'
-  import VueI18n from 'vue-i18n'
-  import i18n from './i18n'
-  import VTooltipPlugin from 'v-tooltip'
-  Vue.use(VueI18n)
-  Vue.use(VTooltipPlugin)
+  import Vue from 'vue';
+  import VueI18n from 'vue-i18n';
+  import i18n from './i18n';
+  import VTooltipPlugin from 'v-tooltip';
+  Vue.use(VTooltipPlugin);
 
   const w = window as any;
-  const jqery = w.jQuery;
+  const jquery = w.jQuery;
   const _i18n = i18n as any;
   const lang = w._rundeck.language || 'en';
   const locale = w._rundeck.locale || 'en_US';
@@ -98,113 +97,114 @@
     silentTranslationWarn: true,
     locale: locale,
     messages
-  })
+  });
 
-export default {
+  // @ts-ignore
+  Vue.use(VueI18n);
+
+  export default Vue.extend({
   name: 'OptionsView',
-  components: {i18n: i18nInstance},
   props: {
-    option: Object,
-    editMode: Boolean,
-    elemIdSuffix: String,
+      option: Object,
+      editMode: Boolean,
+      elemIdSuffix: String,
   },
-  mounted() {},
   computed: {
-    optionName(): string {
+    optionName: function(): string {
       return JSON.stringify(this.option.name);
     },
-    optionVals(): object {
-        return this.option.optionValues;
+    optionVals: function(): object {
+      return this.option.optionValues;
     },
-    valuesDesc(): string {
-        const optSize = this.optionVals ? this.optionVals.length : 0;
-        const label = `Value${optSize == 1 ? '' : 's'}`;
-        return `${optSize} ${label}`;
+    valuesDesc: function(): string {
+      const optSize = this.optionVals ? this.optionVals.length : 0;
+      const label = `Value${optSize == 1 ? '' : 's'}`;
+      return `${optSize} ${label}`;
     },
-    valuesExist(): boolean {
+    valuesExist: function(): boolean {
         return (this.option.values || this.option.valuesList);
     },
-    secureInput(): string {
-        if (this.option.secureInput && this.option.defaultValue) {
-            return '****';
-        } else {
-            return this.option.defaultValue;
-        }
+    secureInput: function(): string {
+      if (this.option.secureInput && this.option.defaultValue) {
+          return '****';
+      } else {
+          return this.option.defaultValue;
+      }
     },
-    showTitle(): boolean {
+    showTitle: function(): boolean {
         return this.truncSettings.showTitle;
     },
-    wasTruncated(): boolean {
+    wasTruncated: function(): boolean {
         return this.truncSettings.wasTruncated;
     },
-    truncatedText(): string {
+    truncatedText: function(): string {
         return this.truncSettings.text;
     },
-    showMultivalueIcon(): string {
+    showMultivalueIcon: function(): string {
         if (this.option.multivalued) {
             return '(+)';
         };
     },
-    showLockIcon(): boolean {
-       return this.option.secureInput && this.option.defaultStoragePath;
+    showLockIcon: function(): boolean {
+    return this.option.secureInput && this.option.defaultStoragePath;
     },
-    optionDesc(): string {
+    optionDesc: function(): string {
         let tmp = document.createElement("DIV");
         tmp.innerHTML = this.option.description;
         return tmp.textContent || tmp.innerText || "";
     }
   },
   methods: {
-    reorder(value: string, pos: number) {
-      w._doReorderOption(value, {pos: pos});
+    reorder: function(value: string, pos: number) {
+    w._doReorderOption(value, {pos: pos});
     },
-    legacyOptions(actionType: string, reorderPos: number) {
-      const jq = this.jquery(w);
+    legacyOptions: function(actionType: string, reorderPos: number) {
+      const jq = jquery(w);
       const optName = this.optionName;
       const i = this.optIndex;
       if (actionType === 'remove') {
-        w._doRemoveOption(optName, jq.select(`#optli_${i}`));
+          w._doRemoveOption(optName, jq.select(`#optli_${i}`));
       } else if (actionType === 'copy') {
-        w._optcopy(optName)
+          w._optcopy(optName)
       } else if (actionType === 'edit') {
-        w._optedit(optName, jq.select(`#optli_${i}`));
+          w._optedit(optName, jq.select(`#optli_${i}`));
       } else if (actionType === 'reorder') {
-        w._doReorderOption(optName, {pos: reorderPos});
+          w._doReorderOption(optName, {pos: reorderPos});
       }
     },
-    optionAltText() {
+    optionAltText: function() {
         let title = this.option.description;
         if (this.option.required) {
             title + " (Required)";
         };
         return title;
     },
-    truncateText(text, options = {max: 30, front: false}) {
-        const max = options.max;
-        const front = options.front;
-        let newText;
-        text.trim();
-        if (front) {
-            const beginIndex = (text.length() - max);
-            newText = "..." + text.slice(beginIndex);
-        } else {
-            newText = text.slice(0, max);
-            newText += "...";
-        }
+    truncateText: function(text, options = {max: 30, front: false}) {
+      const max = options.max;
+      const front = options.front;
+      let newText;
+      text.trim();
+      if (front) {
+          const beginIndex = (text.length() - max);
+          newText = "..." + text.slice(beginIndex);
+      } else {
+          newText = text.slice(0, max);
+          newText += "...";
+      }
     }
   },
   data() {
     return {
-      elementIdSuffix: `_${this.optionName}_${this.optIndex}`,
+      optionName: "",
       editMode: this.editMode,
       deleteConfirm: false,
       truncSettings: {
-          originalText: "",
-          text: "",
-          wasTruncated: false,
-          showTitle: false
-      }
+        originalText: "",
+        text: "",
+        wasTruncated: false,
+        showTitle: false
     }
+      }
   }
-}
+  })
 </script>

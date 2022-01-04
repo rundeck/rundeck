@@ -1,7 +1,7 @@
 <template>
   <div>
     <div id="optundoredo" class="undoredocontrols" style="margin-top:1em" v-if=editMode>
-      <UndoRedo key='opts'/>
+      <UndoRedo key='opts' :eventBus="eventBus" />
     </div>
 
     <div class="optslist" id="optionContent">
@@ -61,10 +61,9 @@
   import i18n from './i18n';
   import UndoRedo from '../../util/UndoRedo.vue';
   import OptionsListContent from './OptionsListContent.vue';
-  Vue.use(VueI18n)
 
   const w = window as any;
-  const jqery = w.jQuery as any;
+  const jquery = w.jQuery as any;
   const _i18n = i18n as any;
   const lang = w._rundeck.language || 'en';
   const locale = w._rundeck.locale || 'en_US';
@@ -82,41 +81,44 @@
     messages
   })
 
-export default Vue.extend({
-  name: 'DetailsOptions',
-  components: {
-    OptionsListContent,
-    UndoRedo
-  },
-  props: {
-    eventBus: Object,
-    editMode: Boolean,
-    options: Object
-  },
-  mounted() {
-    w._enableOptDragDrop();
-  },
-  computed: {
-    optionsCheck() {
-      return (this.options && this.options.length > 0);
+  // @ts-ignore
+  Vue.use(VueI18n);
+
+  export default Vue.extend({
+    name: 'Options',
+    components: {
+      OptionsListContent,
+      UndoRedo
+    },
+    props: {
+      options: Array,
+      eventBus: Vue,
+      editMode: Boolean
+    },
+    mounted() {
+      w._enableOptDragDrop();
+    },
+    computed: {
+      optionsCheck: function(): boolean {
+        return (this.options && this.options.length > 0);
+      }
+    },
+    watch: {
+      options: function() {
+        const optList = this.options.map(option => ({
+          name: option.name,
+          type: option.optionType,
+          multivalued: option.multivalued,
+          delimiter: option.delimiter
+        }));
+        this.optDataList = optList;
+        w._optionData(this.optDataList);
+      }
+    },
+    data() {
+      return {
+        optDataList: {}
+      }
     }
-  },
-  watch: {
-    options: function() {
-      const optList = this.options.map(option => ({
-        name: option.name,
-        type: option.optionType,
-        multivalued: option.multivalued,
-        delimiter: option.delimiter
-      }));
-      this.optDataList = optList;
-      w._optionData(this.optDataList);
-    }
-  },
-  data() {
-    return {
-      optDataList: {}
-    }
-  }
-})
+  })
 </script>

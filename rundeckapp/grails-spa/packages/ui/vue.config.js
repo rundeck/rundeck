@@ -61,13 +61,16 @@ module.exports = {
       .loader('source-map-loader')
       .end()
   },
-  configureWebpack: {
-    devtool: process.env.VUE_APP_DEVTOOL,
-    output: {
-      filename: '[name].js',
-      library: 'rundeckCore',
+  configureWebpack: config => {
+    config.devtool = process.env.VUE_APP_DEVTOOL
+    config.output.filename = (asset) => {
+      if (asset.chunk.entryModule._identifier.endsWith('vue'))
+        return '[name].vue.js';
+      else
+        return '[name].js';
     },
-    devServer: {
+    config.output.library = 'rundeckCore';
+    config.devServer = {
       hot: true,
       watchOptions: {
         followSymlinks: true,
@@ -77,14 +80,60 @@ module.exports = {
           target: "http://localhost:4440"
         }
       }
-    },
-    externals: {'vue': 'Vue'},
-    plugins: [
+    };
+    config.externals = {'vue': 'Vue'}
+    config.plugins = [
       /** Generate source maps for CSS as it does not support eval-source-map */
       new webpack.SourceMapDevToolPlugin({
         filename: "[file].map",
         include: [/\.css$/]
       })
-    ]
+    ],
+    /** Don't minimize or split chunks */
+    config.optimization.minimize = false
+    config.optimization.splitChunks = false
+    config.optimization.minimizer.shift()
+
+    /**
+     * Disable transpile only so types are emitted
+     * Use custom tsconfig to exclude stories
+    */
+    config.module.rules.forEach( r => {
+      if (r.use)
+        r.use.forEach( u => {
+          if (u.loader.match(/ts-loader/)) {
+            u.options.transpileOnly = false
+            u.options.onlyCompileBundledFiles = false
+            u.options.configFile = 'tsconfig.webpack.json'
+            u.options.compilerOptions = {
+              declarationDir: './lib',
+            }
+          }
+        })
+    })
+
+    /**
+     * Add plugin to fixup .d.ts locations after webpack emit
+     * Randomly the webpack build will spit the TypeScript .d.ts
+     * files out into the wrong directory structure. This appears to be an interplay
+     * between ts-loader and how it utilizes the TypeScript compiler in multi-entry(page)
+     * builds. Or an error in either.
+     * */
+    config.plugins.push({
+      apply: (compiler) => {
+        const logger = compiler.getInfrastructureLogger('RundeckTsFixup')
+        compiler.hooks.afterEmit.tap('RundeckTsFixup', (compilation) => {
+          if (fse.existsSync('./lib/src')) {
+            logger.error('Fixing up .d.ts location')
+            fse.copySync('./lib/src', './lib')
+            fse.removeSync('./lib/src')
+          }
+          if (fse.existsSync('./lib/node_modules')) {
+            logger.error('Removing extraneous lib/node_modules')
+            fse.removeSync('./lib/node_modules')
+          }
+        })
+      }
+    })
   }
 };
