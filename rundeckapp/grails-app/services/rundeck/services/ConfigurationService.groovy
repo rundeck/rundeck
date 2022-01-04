@@ -165,7 +165,7 @@ class ConfigurationService implements InitializingBean {
     }
 
     protected def getDeprecatedPropertyValue(property) {
-        return getValueFromRoot(RundeckConfigBase.DEPRECATED_PROPS[property], grailsApplication.config.getProperty("rundeck", Map.class).toFlatConfig())
+        return getValueFromRoot(RundeckConfigBase.DEPRECATED_PROPS[property], grailsApplication.config.getProperty("rundeck", Map.class)?.toFlatConfig())
     }
     /**
      * Lookup a string property and interpret it as a time duration in the form "1d2h3m15s"
