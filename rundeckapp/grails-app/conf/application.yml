@@ -203,6 +203,7 @@ rundeck:
                     - /error
                     - /favicon.ico
                     - /health
+                    - /user/reset
     storage:
         default: deleteMe
     execution:
