@@ -31,6 +31,8 @@ import java.util.Set;
  * @since 2014-03-24
  */
 public class AuthorizationUtil {
+    private AuthorizationUtil() {
+    }
 
     /**
      * Base URI for rundeck environment attribute URIs

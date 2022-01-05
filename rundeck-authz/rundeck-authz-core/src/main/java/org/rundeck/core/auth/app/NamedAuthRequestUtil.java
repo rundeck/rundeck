@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
  * Utility methods for AuthRequest
  */
 public class NamedAuthRequestUtil {
+    private NamedAuthRequestUtil() {
+    }
 
     @Getter
     @RequiredArgsConstructor

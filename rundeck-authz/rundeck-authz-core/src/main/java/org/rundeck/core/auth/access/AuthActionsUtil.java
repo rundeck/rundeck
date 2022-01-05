@@ -13,6 +13,8 @@ import java.util.List;
  * Utility methods for AuthActions interface
  */
 public class AuthActionsUtil {
+    private AuthActionsUtil() {
+    }
 
     /**
      * Create for single action
