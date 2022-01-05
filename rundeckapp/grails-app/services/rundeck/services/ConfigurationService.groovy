@@ -248,8 +248,7 @@ class ConfigurationService implements InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
-        def config = grailsApplication.config.getProperty("rundeck", Map.class)
-        appCfg = config.toFlatConfig()
+        appCfg = grailsApplication.config.getProperty("rundeck", Map.class)?.toFlatConfig()
     }
 
 }
