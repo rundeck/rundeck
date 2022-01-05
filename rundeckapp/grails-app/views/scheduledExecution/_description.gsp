@@ -15,7 +15,7 @@
   --}%
 
 <g:set var="allowHTML"
-       value="${!(grailsApplication?.config?.rundeck?.gui?.job?.description?.disableHTML in [true,'true'])}"/>
+       value="${!(cfg.getString(config: "gui.job.description.disableHTML") in [true,'true'])}"/>
 <g:set var="firstline" value="${g.textFirstLine(text: description)}"/>
 <g:if test="${allowHTML && !firstLineOnly}">
     <g:set var="remainingLine" value="${g.textRemainingLines(text: description)}"/>

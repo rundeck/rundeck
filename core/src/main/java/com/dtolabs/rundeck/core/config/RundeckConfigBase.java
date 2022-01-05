@@ -496,6 +496,16 @@ public class RundeckConfigBase {
         Job job;
         Home home;
         GuiSystemConfig system;
+        String title;
+        String sidebarColor;
+        String sidebarTextColor;
+        String sidebarTextActiveColor;
+        String instanceNameLabelColor;
+        String instanceNameLabelTextColor;
+        String titleLink;
+        String helpLink;
+        Boolean realJobTree;
+        String logoSmall;
 
         @Data
         public static class GuiSystemConfig{
