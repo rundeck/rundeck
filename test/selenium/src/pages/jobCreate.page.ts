@@ -10,6 +10,7 @@ export const Elems= {
     saveButton  : By.css('#Create'),
     updateButton  : By.css('#jobUpdateSaveButton'),
     cancelButton  : By.css('#createFormCancelButton'),
+    editCancelButton  : By.css('#editFormCancelButton'),
     editSaveButton: By.css('#editForm div.card-footer input.btn.btn-primary[type=submit][value=Save]'),
     errorAlert  : By.css('#error'),
     formValidationAlert: By.css('#page_job_edit > div.list-group-item > div.alert.alert-danger'),
@@ -118,6 +119,9 @@ export class JobCreatePage extends Page {
     }
     async cancelButton() {
         return this.ctx.driver.findElement(Elems.cancelButton)
+    }
+    async editCancelButton() {
+        return this.ctx.driver.findElement(Elems.editCancelButton)
     }
     async editSaveButton(){
         return this.ctx.driver.findElement(Elems.editSaveButton)
