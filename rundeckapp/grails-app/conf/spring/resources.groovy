@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.authorization.providers.BaseValidatorImpl
-import com.dtolabs.rundeck.core.authorization.providers.ValidatorFactory
 import com.dtolabs.rundeck.core.authorization.providers.YamlValidator
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
@@ -74,16 +73,30 @@ import org.rundeck.app.authorization.BaseAuthContextEvaluator
 import org.rundeck.app.authorization.BaseAuthContextProcessor
 import org.rundeck.app.authorization.BaseAuthContextProvider
 import org.rundeck.app.authorization.ContextACLStorageFileManagerFactory
+import org.rundeck.app.authorization.RdAuthorizeInterceptor
+import org.rundeck.app.authorization.RdWebDefaultParameterNamesMapper
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.authorization.TimedAuthContextEvaluator
-import org.rundeck.app.authorization.WebAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppNamedAuthProvider
+import org.rundeck.app.authorization.domain.appType.AppResourceTypeAuthorizingProvider
+import org.rundeck.app.authorization.domain.execution.AppExecutionResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.job.AppJobResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.project.AppProjectAdhocResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.project.AppProjectResourceAuthorizingProvider
+import org.rundeck.app.authorization.domain.RundeckAppAuthorizer
+import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizingProvider
+import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizingProvider
+import org.rundeck.app.authorization.domain.system.AppSystemAuthorizingProvider
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
+import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
+import org.rundeck.web.ExceptionHandler
+import org.rundeck.web.WebUtil
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
@@ -124,13 +137,44 @@ import javax.security.auth.login.Configuration
 
 beans={
     xmlns context: "http://www.springframework.org/schema/context"
-//    if (Environment.PRODUCTION == Environment.current) {
-//        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-//            targetClass = "org.springframework.util.Log4jConfigurer"
-//            targetMethod = "initLogging"
-//            arguments = ["classpath:log4j.properties"]
-//        }
-//    }
+    xmlns aop:"http://www.springframework.org/schema/aop"
+
+    aop {
+        config("proxy-target-class": false) {
+            pointcut(id: "rdAuthInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorize)")
+            advisor('pointcut-ref': "rdAuthInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthSystemInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeSystem)")
+            advisor('pointcut-ref': "rdAuthSystemInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthProjectInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeProject)")
+            advisor('pointcut-ref': "rdAuthProjectInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthProjectAdhocInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeAdhoc)")
+            advisor('pointcut-ref': "rdAuthProjectAdhocInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthExecutionInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeExecution)")
+            advisor('pointcut-ref': "rdAuthExecutionInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthProjectTypeInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeProjectType)")
+            advisor('pointcut-ref': "rdAuthProjectTypeInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthApplicationTypeInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeApplicationType)")
+            advisor('pointcut-ref': "rdAuthApplicationTypeInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthJobInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeJob)")
+            advisor('pointcut-ref': "rdAuthJobInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+            pointcut(id: "rdAuthProjectAclInterceptorPointcut", expression: "@annotation(org.rundeck.core.auth.web.RdAuthorizeProjectAcl)")
+            advisor('pointcut-ref': "rdAuthProjectAclInterceptorPointcut", 'advice-ref': "rdAuthorizeInterceptor")
+        }
+    }
+
+    rdAuthorizeInterceptor(RdAuthorizeInterceptor)
+    rundeckWebDefaultParameterNamesMapper(RdWebDefaultParameterNamesMapper) {
+        /**
+         * Default names for ID parameters for resource types
+         */
+        webDefaultParameterNames = [
+            (RundeckAccess.Project.TYPE)  : 'project',
+            (RundeckAccess.Adhoc.TYPE)    : 'project',
+            (RundeckAccess.Execution.TYPE): 'id',
+            (RundeckAccess.Job.TYPE): 'id'
+        ]
+    }
+
     if (application.config.rundeck.multiURL?.enabled in ['true',true]) {
         Class requestAwareLinkGeneratorClass = RequestAwareLinkGenerator
         String serverURL = application.config.grails.serverURL
@@ -269,9 +313,28 @@ beans={
         rundeckAuthContextProvider=ref('rundeckAuthContextProvider')
         rundeckAuthContextEvaluator=ref('rundeckAuthContextEvaluator')
     }
-    rundeckWebAuthContextProcessor(WebAuthContextProcessor){
-        authContextProcessor = ref('rundeckAuthContextProcessor')
-    }
+
+    rundeckExecutionAuthorizer(AppExecutionResourceAuthorizingProvider)
+    rundeckExecutionNamedAuthDefinitionProvider(RundeckAccess.Execution)
+    rundeckJobAuthorizer(AppJobResourceAuthorizingProvider)
+    rundeckJobNamedAuthDefinitionProvider(RundeckAccess.Job)
+    rundeckProjectAuthorizer(AppProjectResourceAuthorizingProvider)
+    rundeckProjectNamedAuthDefinitionProvider(RundeckAccess.Project)
+    rundeckProjectAdhocAuthorizer(AppProjectAdhocResourceAuthorizingProvider)
+    rundeckProjectAdhocNamedAuthDefinitionProvider(RundeckAccess.Adhoc)
+    rundeckProjectAclAuthorizer(AppProjectAclAuthorizingProvider)
+    rundeckProjectAclNamedAuthDefinitionProvider(RundeckAccess.ProjectAcl)
+    rundeckSystemAuthorizer(AppSystemAuthorizingProvider)
+    rundeckSystemNamedAuthDefinitionProvider(RundeckAccess.System)
+
+    rundeckProjectTypeNamedAuthDefinitionProvider(RundeckAccess.ProjectType)
+    rundeckProjectTypeAuthorizer(AppProjectTypeAuthorizingProvider)
+
+    rundeckAppTypeNamedAuthDefinitionProvider(RundeckAccess.ApplicationType)
+    rundeckAppResourceTypeAuthorizer(AppResourceTypeAuthorizingProvider)
+
+    rundeckAppAuthorizer(RundeckAppAuthorizer)
+    rundeckNamedAuthProvider(AppNamedAuthProvider)
 
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
@@ -590,6 +653,9 @@ beans={
     /// XML/JSON custom marshaller support
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
+
+    rundeckWebUtil(WebUtil)
+    rundeckExceptionHandler(ExceptionHandler)
 
     //Job List Link Handler
     defaultJobListLinkHandler(GroupedJobListLinkHandler)

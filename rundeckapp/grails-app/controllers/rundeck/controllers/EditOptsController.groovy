@@ -35,7 +35,6 @@ import java.util.regex.PatternSyntaxException
 class EditOptsController extends ControllerBase{
     static Logger logger = LoggerFactory.getLogger(EditOptsController)
     def FrameworkService frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     def fileUploadService
     def optionValuesService
     def static allowedMethods = [

@@ -22,8 +22,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.core.GrailsApplication
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
@@ -38,7 +39,6 @@ class UserController extends ControllerBase{
     private static final int DEFAULT_TOKEN_PAGE_SIZE = 50
 
     UserService userService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     GrailsApplication grailsApplication
     def configurationService
 
@@ -93,20 +93,12 @@ class UserController extends ControllerBase{
         response.setStatus(403)
         renderErrorFragment('Access denied')
     }
-    def list={
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_USER,
-                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-            ),
-            AuthConstants.ACTION_ADMIN,
-            'User',
-            'accounts')
-        ) {
-            return
-        }
+
+    @RdAuthorizeApplicationType(
+        type = AuthConstants.TYPE_USER,
+        access = RundeckAccess.General.AUTH_APP_ADMIN
+    )
+    def list(){
         [users:User.listOrderByLogin()]
     }
 
@@ -116,19 +108,12 @@ class UserController extends ControllerBase{
         if (!params.login) {
             params.login = session.user
         }
-        UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-        def tokenAdmin = rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-            authContext,
-            AuthConstants.RESOURCE_TYPE_USER,
-            [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-        )
-
-        if (unauthorizedResponse(
-                params.login == session.user || tokenAdmin,
-                AuthConstants.ACTION_ADMIN, 'Users', params.login)) {
-            return
+        def authorizingAppType = getAuthorizingApplicationType(AuthConstants.TYPE_USER)
+        if(params.login != session.user){
+            authorizingAppType.authorize(RundeckAccess.General.APP_ADMIN)
         }
+        boolean tokenAdmin = authorizingAppType.isAuthorized(RundeckAccess.General.APP_ADMIN)
+        def authContext = authorizingAppType.authContext
 
         def User u = User.findByLogin(params.login)
         if (!u && params.login == session.user) {

@@ -27,7 +27,8 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.mapping.LinkGenerator
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.ApiService
@@ -35,6 +36,8 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import java.lang.annotation.Annotation
 
 class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
 
@@ -257,7 +260,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             0 * _(*_)
         }
 
-            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -313,7 +315,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -341,38 +342,21 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         input << ['metrics', 'ping', 'threads', 'healthcheck']
     }
 
+
     @Unroll
-    def "api metrics unauthorized"() {
-        given:
-        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
-        controller.apiService = Mock(ApiService)
-        controller.configurationService = Mock(ConfigurationService)
-        controller.grailsLinkGenerator = Mock(LinkGenerator) {
-            _ * link(*_) >> {
-                it[0].uri
-            }
-            0 * _(*_)
-        }
-
-            setAuthProcessor(false)
+    def "system auth access for endpoint #endpoint"() {
         when:
-        def result = controller.apiMetrics(input)
-
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeSystem)
         then:
-
-        response.status == 403
-
-
-        1 * controller.apiService.requireVersion(_, _, 25) >> true
-
-        1 * controller.apiService.renderErrorFormat(
-            _, {
-            it.code == 'api.error.item.unauthorized' && it.status == 403
-        }
-        ) >> { it[0].status = it[1].status }
-
+            result.value() == access
         where:
-        input << ['metrics', 'ping', 'threads', 'healthcheck']
+            endpoint        | access
+            'apiMetrics'    | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            'apiSystemInfo' | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+    }
+
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
 
     @Unroll
@@ -387,7 +371,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -429,7 +412,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             }
             0 * _(*_)
         }
-            setAuthProcessor()
         when:
         def result = controller.apiMetrics(input)
 
@@ -463,29 +445,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         'ping'        | [metrics: true]  | true
         'threads'     | [metrics: true]  | true
     }
-    def "api system info unauthorized"(){
-        given:
-            setAuthProcessor(false)
-            controller.apiService=Mock(ApiService)
-        when:
-            controller.apiSystemInfo()
-        then:
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.renderErrorFormat(_,_)>>{
-                it[0].status=it[1].status
-            }
-            response.status==403
-    }
 
-    public void setAuthProcessor(boolean allow=true) {
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor) {
-            1 * getAuthContextForSubject(_)
 
-            1 * authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            ) >> allow
-        }
-    }
 }

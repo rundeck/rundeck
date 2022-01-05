@@ -49,7 +49,6 @@ class ReportsController extends ControllerBase{
     def reportService
     def userService
     def FrameworkService frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     def scheduledExecutionService
     def MetricService metricService
     static allowedMethods = [

@@ -103,7 +103,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             "0 0 12 1 1/3 ? *"   : "Every 3 months (Day 1)"
     ]
     FrameworkService frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     ExecutionService executionService
     ScheduledExecutionService scheduledExecutionService
     UserService userService

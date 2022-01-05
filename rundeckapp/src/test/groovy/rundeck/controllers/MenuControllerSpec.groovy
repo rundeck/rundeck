@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import grails.web.Action
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -46,6 +47,10 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.core.auth.app.NamedAuthRequestUtil
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
@@ -67,9 +72,13 @@ import rundeck.services.UserService
 import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
+import spock.lang.Ignore
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
+import java.lang.annotation.Annotation
+import java.lang.reflect.Method
 import java.nio.file.Files
 
 /**
@@ -79,6 +88,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
 
+    def setup(){
+        session.subject=new Subject()
+    }
     def "home without sidebar feature"(){
         given:
             controller.configurationService=Mock(ConfigurationService)
@@ -519,12 +531,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 paramvals             |
                 resource                               |
                 storageExists
-        null   | 'acls'                 |
-                ['read', 'admin', 'app_admin']   |
-                null                                                                                        |
-                null                  |
-                [kind: 'system_acl', type: 'resource']     |
-                false
         null   | 'editSystemAclFile'    |
                 ['update', 'admin', 'app_admin'] |
                 new SysAclFile(id: 'test.aclpolicy', fileType: 'fs')                                        |
@@ -1051,6 +1057,19 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         where:
             exists = false
     }
+
+    @Unroll
+    def "RdAuthorizeApplicationType required for endpoint #endpoint authorize type #type access #access"() {
+        when:
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeApplicationType)
+        then:
+            result.type() == type
+            result.access() == access
+        where:
+            endpoint | type                          | access
+            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_APP_READ
+    }
+
     def "acls does not load metadata for policies"() {
         given:
         def id = 'test.aclpolicy'
@@ -1059,8 +1078,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                controller.aclFileManagerService = Mock(AclFileManagerService){
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id]
         }
 
@@ -1068,7 +1086,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def result = controller.acls()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.fwkConfigDir==confdir
@@ -1088,8 +1105,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                controller.aclFileManagerService = Mock(AclFileManagerService){
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
         }
 
@@ -1097,7 +1113,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def result = controller.acls()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.fwkConfigDir==confdir
@@ -1515,7 +1530,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1550,7 +1564,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1584,7 +1597,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export')
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -2437,110 +2449,32 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     }
 
     @Unroll
-    def "log storage ajax endpoint #endpoint unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            request.addHeader('x-rundeck-ajax','true')
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+    def "RdAuthorizeSystem required for endpoint #endpoint authorize #access"() {
         when:
-            controller."$endpoint"()
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeSystem)
         then:
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
+            result.value() == access
         where:
-            endpoint << [
-                'logStorageIncompleteAjax',
-                'logStorageMissingAjax',
-                'logStorageAjax',
-            ]
+            endpoint                                | access
+            'logStorageIncompleteAjax'              | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'logStorageMissingAjax'                 | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'logStorageAjax'                        | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'apiLogstorageInfo'                     | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'apiLogstorageListIncompleteExecutions' | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'systemConfig'                          | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            'systemInfo'                            | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
     }
+
     @Unroll
-    def "log storage api endpoint #endpoint unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        when:
-            controller."$endpoint"()
-        then:
-            1 * controller.apiService.requireApi(_,_,17)>>true
-            1 * controller.apiService.requireAuthorized(false,_,_)>> {
-                it[1].status=403
-                false
-            }
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
+    @Ignore("TODO: could enforce authorize annotation of every controller Action")
+    def "all methods #method authorize check"() {
+        expect:
+            NamedAuthRequestUtil.requestsFromAnnotations(method).size() >0
         where:
-            endpoint << [
-                'apiLogstorageInfo'
-            ]
-    }
-    @Unroll
-    def "log storage api apiLogstorageListIncompleteExecutions unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        when:
-            controller.apiLogstorageListIncompleteExecutions(new BaseQuery())
-        then:
-            1 * controller.apiService.requireApi(_,_,17)>>true
-
-            1 * controller.apiService.requireAuthorized(false,_,_)>> {
-                it[1].status=403
-                false
-            }
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
-    }
-    def "systemConfig unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        when:
-            controller.systemConfig()
-        then:
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ,
-                 AuthConstants.ACTION_ADMIN,
-                 AuthConstants.ACTION_APP_ADMIN,
-                 AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
+            method << MenuController.declaredMethods.findAll { it.getAnnotation(Action) != null }
     }
 
-    def "systemInfo unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        when:
-            controller.systemInfo()
-        then:
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ,
-                 AuthConstants.ACTION_ADMIN,
-                 AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
-
 }

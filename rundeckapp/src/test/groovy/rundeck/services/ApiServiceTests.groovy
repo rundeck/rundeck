@@ -31,23 +31,7 @@ import javax.servlet.http.HttpServletResponse
 
 class ApiServiceTests implements ServiceUnitTest<ApiServiceTests> {
 
-    @Test
-    void testRequireVersion() {
-        def mock = new MockFor(HttpServletResponse)
-        def apiService = new ApiService()
-        assertTrue(apiService.requireVersion([api_version:1],mock.proxyInstance(),1))
-    }
 
-    @Test
-    void testRenderErrorXmlBuilderList() {
-        def apiService = new ApiService()
-        apiService.messageSource = messageSource
-        def xml = apiService.renderErrorXml(['message1', 'message2'], 'test.code')
-        assertNotNull(xml)
-        def gpath = assertXmlErrorText(xml)
-        assertEquals('test.code', gpath.error['@code'].text())
-        assertEquals(['message1', 'message2'], gpath.error.messages[0].message*.text())
-    }
 
     @Test
     void testRenderSuccessXmlClosure(){

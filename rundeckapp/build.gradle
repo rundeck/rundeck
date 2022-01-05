@@ -158,6 +158,8 @@ dependencies {
         exclude(group:"org.grails.profiles",module:"web")
     }
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
+
+    runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     runtime "com.h2database:h2:1.4.199"
     // Database drivers
     runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
@@ -187,6 +189,7 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntime "org.seleniumhq.selenium:selenium-api"
     testRuntime 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
+    testRuntime 'org.aspectj:aspectjweaver:1.9.7'
 
     // transitive dependencies constraints.
     constraints {

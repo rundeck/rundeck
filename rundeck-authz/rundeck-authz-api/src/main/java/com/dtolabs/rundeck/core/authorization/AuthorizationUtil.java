@@ -31,6 +31,8 @@ import java.util.Set;
  * @since 2014-03-24
  */
 public class AuthorizationUtil {
+    private AuthorizationUtil() {
+    }
 
     /**
      * Base URI for rundeck environment attribute URIs
@@ -107,7 +109,7 @@ public class AuthorizationUtil {
      *
      * @return the resource map describing a resource type
      */
-    public static Map<String, Object> resourceTypeRule(String kind) {
+    public static Map<String, String> resourceTypeRule(String kind) {
         return resourceTypeRule(kind, null);
     }
 
@@ -128,6 +130,18 @@ public class AuthorizationUtil {
         authResource.put(TYPE_KIND_FIELD, kind);
         return Collections.unmodifiableMap(authResource);
     }
+
+    public static AuthResource authResourceKind(AuthResource.Context context, String kind, Map<String, String> meta) {
+        return authResource(context, resourceType(kind, meta));
+    }
+
+    public static AuthResource authResource(AuthResource.Context context, String type, Map<String, String> meta) {
+        return authResource(context, resourceTypeRule(type, meta));
+    }
+
+    public static AuthResource authResourceKind(AuthResource.Context context, String kind) {
+        return authResourceKind(context, kind, null);
+    }
     /**
      * Return a resource map for a generic resource type
      *
@@ -136,14 +150,26 @@ public class AuthorizationUtil {
      *
      * @return the resource map describing a resource type
      */
-    public static Map<String, Object> resourceTypeRule(String kind, Map<String, Object> meta) {
-        HashMap<String, Object> authResource = new HashMap<String, Object>();
+    public static Map<String, String> resourceTypeRule(String kind, Map<String, String> meta) {
+        HashMap<String, String> authResource = new HashMap<>();
         if (null != meta) {
             authResource.putAll(meta);
         }
         authResource.put(TYPE_FIELD, GENERIC_RESOURCE_TYPE_NAME);
         authResource.put(TYPE_KIND_FIELD, kind);
         return Collections.unmodifiableMap(authResource);
+    }
+
+    public static AuthResource systemAuthResource(Map<String, String> resourceMap) {
+        return authResource(AuthResource.Context.System, resourceMap);
+    }
+
+    public static AuthResource projectAuthResource(Map<String, String> resourceMap) {
+        return authResource(AuthResource.Context.Project, resourceMap);
+    }
+
+    public static AuthResource authResource(AuthResource.Context context, Map<String, String> resourceMap) {
+        return new AuthResourceImpl(context, resourceMap);
     }
 
     /**
