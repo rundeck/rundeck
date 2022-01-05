@@ -371,9 +371,6 @@ class ApiService implements WebUtilService{
 
 
 
-//    def respondXml(HttpServletResponse response, Closure recall) {
-//        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderXml(recall))
-//    }
 
     def renderXml(Closure recall) {
         def writer = new StringWriter()
