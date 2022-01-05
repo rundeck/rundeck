@@ -370,10 +370,6 @@ class ApiService implements WebUtilService{
     }
 
 
-//    @CompileStatic
-//    def appendResponseOutput(HttpServletResponse response, String output) {
-//        response.outputStream << output
-//    }
 
 //    def respondXml(HttpServletResponse response, Closure recall) {
 //        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderXml(recall))
