@@ -78,13 +78,18 @@
   import VueI18n from 'vue-i18n';
   import i18n from './i18n';
   import VTooltipPlugin from 'v-tooltip';
+  import {
+    getRundeckContext,
+    RundeckContext
+  } from "@rundeck/ui-trellis";
   Vue.use(VTooltipPlugin);
 
   const w = window as any;
+  const winRd = getRundeckContext();
   const jquery = w.jQuery;
   const _i18n = i18n as any;
-  const lang = w._rundeck.language || 'en';
-  const locale = w._rundeck.locale || 'en_US';
+  const lang = winRd.language || 'en';
+  const locale = winRd.locale || 'en_US';
 
   const messages = {
     [locale]: {
@@ -103,108 +108,95 @@
   Vue.use(VueI18n);
 
   export default Vue.extend({
-  name: 'OptionsView',
-  props: {
-      option: Object,
-      editMode: Boolean,
-      elemIdSuffix: String,
-  },
-  computed: {
-    optionName: function(): string {
-      return JSON.stringify(this.option.name);
+    name: 'OptionsView',
+    components: {
+      VTooltipPlugin
     },
-    optionVals: function(): object {
-      return this.option.optionValues;
+    props: {
+        option: Object,
+        editMode: Boolean,
+        elemIdSuffix: String,
     },
-    valuesDesc: function(): string {
-      const optSize = this.optionVals ? this.optionVals.length : 0;
-      const label = `Value${optSize == 1 ? '' : 's'}`;
-      return `${optSize} ${label}`;
-    },
-    valuesExist: function(): boolean {
-        return (this.option.values || this.option.valuesList);
-    },
-    secureInput: function(): string {
-      if (this.option.secureInput && this.option.defaultValue) {
-          return '****';
-      } else {
-          return this.option.defaultValue;
+    computed: {
+      optionName: function(): string {
+        return JSON.stringify(this.option.name);
+      },
+      optionVals: function(): string[] {
+        return this.option.optionValues;
+      },
+      valuesDesc: function(): string {
+        const optSize = this.optionVals ? this.optionVals.length : 0;
+        const label = `Value${optSize == 1 ? '' : 's'}`;
+        return `${optSize} ${label}`;
+      },
+      valuesExist: function(): boolean {
+          return (this.option.values || this.option.valuesList);
+      },
+      secureInput: function(): string {
+        if (this.option.secureInput && this.option.defaultValue) {
+            return '****';
+        } else {
+            return this.option.defaultValue;
+        }
+      },
+      showTitle: function(): boolean {
+          return this.truncSettings.showTitle;
+      },
+      wasTruncated: function(): boolean {
+          return this.truncSettings.wasTruncated;
+      },
+      truncatedText: function(): string {
+          return this.truncSettings.text;
+      },
+      showMultivalueIcon: function(): string {
+          if (this.option.multivalued) {
+              return '(+)';
+          }
+          return "";
+      },
+      showLockIcon: function(): boolean {
+      return this.option.secureInput && this.option.defaultStoragePath;
+      },
+      optionDesc: function(): string {
+          let tmp = document.createElement("DIV");
+          tmp.innerHTML = this.option.description;
+          return tmp.textContent || tmp.innerText || "";
       }
     },
-    showTitle: function(): boolean {
-        return this.truncSettings.showTitle;
+    methods: {
+      optionAltText: function() {
+          let title = this.option.description;
+          if (this.option.required) {
+              title += " (Required)";
+          };
+          return title;
+      },
+      truncateText: function(text: string, options = {max: 30, front: false}) {
+        const max = options.max;
+        const front = options.front;
+        let newText;
+        text.trim();
+        if (front) {
+            const beginIndex = (text.length - max);
+            newText = "..." + text.slice(beginIndex);
+        } else {
+            newText = text.slice(0, max);
+            newText += "...";
+        }
+      }
     },
-    wasTruncated: function(): boolean {
-        return this.truncSettings.wasTruncated;
-    },
-    truncatedText: function(): string {
-        return this.truncSettings.text;
-    },
-    showMultivalueIcon: function(): string {
-        if (this.option.multivalued) {
-            return '(+)';
-        };
-    },
-    showLockIcon: function(): boolean {
-    return this.option.secureInput && this.option.defaultStoragePath;
-    },
-    optionDesc: function(): string {
-        let tmp = document.createElement("DIV");
-        tmp.innerHTML = this.option.description;
-        return tmp.textContent || tmp.innerText || "";
+    data() {
+      return {
+        optionName: "",
+        editMode: this.editMode,
+        deleteConfirm: false,
+        truncSettings: {
+          originalText: "",
+          text: "",
+          wasTruncated: false,
+          showTitle: false
+      }
+        }
     }
-  },
-  methods: {
-    reorder: function(value: string, pos: number) {
-    w._doReorderOption(value, {pos: pos});
-    },
-    legacyOptions: function(actionType: string, reorderPos: number) {
-      const jq = jquery(w);
-      const optName = this.optionName;
-      const i = this.optIndex;
-      if (actionType === 'remove') {
-          w._doRemoveOption(optName, jq.select(`#optli_${i}`));
-      } else if (actionType === 'copy') {
-          w._optcopy(optName)
-      } else if (actionType === 'edit') {
-          w._optedit(optName, jq.select(`#optli_${i}`));
-      } else if (actionType === 'reorder') {
-          w._doReorderOption(optName, {pos: reorderPos});
-      }
-    },
-    optionAltText: function() {
-        let title = this.option.description;
-        if (this.option.required) {
-            title + " (Required)";
-        };
-        return title;
-    },
-    truncateText: function(text, options = {max: 30, front: false}) {
-      const max = options.max;
-      const front = options.front;
-      let newText;
-      text.trim();
-      if (front) {
-          const beginIndex = (text.length() - max);
-          newText = "..." + text.slice(beginIndex);
-      } else {
-          newText = text.slice(0, max);
-          newText += "...";
-      }
-    }
-  },
-  data() {
-    return {
-      optionName: "",
-      editMode: this.editMode,
-      deleteConfirm: false,
-      truncSettings: {
-        originalText: "",
-        text: "",
-        wasTruncated: false,
-        showTitle: false
-    }
-      }
-  }
   })
 </script>

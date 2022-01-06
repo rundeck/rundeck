@@ -4,6 +4,7 @@
         "baseUrl": ".",
         "sourceMap": true,
         "strict": true,
+        "noImplicitThis": true,
         "moduleResolution": "node",
         "target": "esnext",
         "experimentalDecorators": true,

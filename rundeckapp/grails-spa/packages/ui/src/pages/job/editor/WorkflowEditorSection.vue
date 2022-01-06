@@ -19,12 +19,16 @@
   import { defineComponent, ref, reactive } from '@vue/composition-api';
   import Options from '../../../components/job/workflow/Options.vue';
   import JsonEmbed from './JsonEmbed.vue';
+  import {
+    getRundeckContext,
+    RundeckContext
+  } from "@rundeck/ui-trellis";
+  import {OptionData, WorkflowData} from "@/components/job/workflow/Workflow";
 
   const w = window as any;
+  const winRd = getRundeckContext() as any;
 
-  Vue.use(VueCompositionAPI);
-
-  export default defineComponent({
+  export default Vue.extend({
     name: 'WorkflowEditorSection',
     props: {
       eventBus: Object,
@@ -43,20 +47,19 @@
       }
     },
     methods: {
-      async fetchWorkflowData() {
-        if (w._rundeck && w._rundeck.rdBase && w._rundeck.projectName) {
-          this.rdBase = w._rundeck.rdBase;
-          this.project = w._rundeck.projectName;
-          const workflowData = {wfData: w._rundeck.data.workflowData};
-          this.updatedData = Object.assign(this, workflowData);
+      async fetchWorkflowData(): Promise<void> {
+        if (winRd && winRd.rdBase && winRd.projectName) {
+          this.rdBase = winRd.rdBase;
+          this.project = winRd.projectName;
+          this.updatedData = Object.assign(this, winRd.data.workflowData);
         };
       },
-      async fetchOptions() {
-        let options = this.updatedData.sessionOpts;
+      async fetchOptions(): Promise<any> {
+        let options = this.updatedData.sessionOpts as any;
         if (!options) {
           await this.fetchWorkflowData();
-          options = this.updatedData.scheduledExecution.options;
-        };
+          options = this.updatedData.scheduledExecution.options as any;
+        }
         return options;
       }
     },
@@ -68,8 +71,8 @@
       return {
         project: "",
         rdBase: "",
-        options: [],
-        updatedData: {}
+        options: [<OptionData>{}],
+        updatedData: <WorkflowData>{}
       };
     }
   });

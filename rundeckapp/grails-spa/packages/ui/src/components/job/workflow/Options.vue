@@ -43,7 +43,7 @@
         <span
           class="btn btn-default btn-sm ready"
           :title="$t('label.addNewOption')"
-          :click="w._optaddnew()"
+          @click="w._optaddnew()"
         >
           <span class="glyphicon glyphicon-plus" />
             {{ $t('label.addOption') }}
@@ -61,12 +61,16 @@
   import i18n from './i18n';
   import UndoRedo from '../../util/UndoRedo.vue';
   import OptionsListContent from './OptionsListContent.vue';
+  import {
+    getRundeckContext,
+    RundeckContext
+  } from "@rundeck/ui-trellis";
 
   const w = window as any;
-  const jquery = w.jQuery as any;
+  const winRd = getRundeckContext();
   const _i18n = i18n as any;
-  const lang = w._rundeck.language || 'en';
-  const locale = w._rundeck.locale || 'en_US';
+  const lang = winRd.language || 'en';
+  const locale = winRd.locale || 'en_US';
 
   const messages = {
     [locale]: {
@@ -105,13 +109,12 @@
     },
     watch: {
       options: function() {
-        const optList = this.options.map(option => ({
+        this.optDataList = this.options.map((option: any) => ({
           name: option.name,
           type: option.optionType,
           multivalued: option.multivalued,
           delimiter: option.delimiter
         }));
-        this.optDataList = optList;
         w._optionData(this.optDataList);
       }
     },

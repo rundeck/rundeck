@@ -203,6 +203,10 @@
         <div id="job-editor-workflow-options-vue">
             <workflow-editor-section :receivedEventBus="EventBus" :recievedOptions="options" :editMode="true" />
         </div>
+        <g:if test="${scheduledExecution && scheduledExecution.argString}">
+            <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
+        </g:if>
+        <g:hiddenField name="_sessionopts" value="true"/>
     %{--//Options--}%
 
       %{--Workflow--}%

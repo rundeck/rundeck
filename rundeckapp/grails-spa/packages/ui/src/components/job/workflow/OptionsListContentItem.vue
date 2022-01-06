@@ -62,12 +62,17 @@
   import VueI18n from 'vue-i18n';
   import i18n from './i18n';
   import OptionsView from './OptionsView.vue';
+  import {
+    getRundeckContext,
+    RundeckContext
+  } from "@rundeck/ui-trellis";
 
   const w = window as any;
+  const winRd = getRundeckContext();
   const jquery = w.jQuery;
   const _i18n = i18n as any;
-  const lang = w._rundeck.language || 'en';
-  const locale = w._rundeck.locale || 'en_US';
+  const lang = winRd.language || 'en';
+  const locale = winRd.locale || 'en_US';
 
   const messages = {
     [locale]: {
