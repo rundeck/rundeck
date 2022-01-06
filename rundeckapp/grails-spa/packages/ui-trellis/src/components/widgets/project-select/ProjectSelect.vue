@@ -31,7 +31,7 @@
             </Skeleton>
         </div>
         <div class="widget-section" style="height: 40px; flex-grow: 0; flex-shrink: 0;border-top: solid 1px grey; padding-left: 10px">
-            <a class="text-info" :href="allProjectsLink" @click@keypress.enter="handleSelect">View All Projects</a>
+            <a class="text-info" :href="allProjectsLink" @click.prevent="allClicked" @keypress.enter.prevent="allClicked">View All Projects</a>
         </div>
     </div>
 </template>
@@ -108,7 +108,7 @@ export default class ProjectSelect extends Vue {
         this.$emit('project:selected', project)
     }
 
-    allClickekd() {
+    allClicked() {
         this.$emit('project:select-all')
     }
 }
