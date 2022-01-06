@@ -189,7 +189,6 @@ dependencies {
         exclude(group:"org.grails.profiles",module:"web")
     }
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
-    runtimeOnly "org.springframework:spring-test:5.3.9"
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     runtime "com.h2database:h2:1.4.199"
