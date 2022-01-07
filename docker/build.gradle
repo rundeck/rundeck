@@ -9,8 +9,6 @@ def dockerTags = [].plus(providedTags.split(',').findAll())
 
 if (vTag != 'SNAPSHOT')
     dockerTags << resolvedVersion
-if(vTag != 'GA')
-    dockerTags << resolvedVersion
 if(vTag == 'GA')
     dockerTags << vNum
 else if (dockerTags.size() == 0)
