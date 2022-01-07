@@ -229,9 +229,6 @@ class UrlMappings {
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 
-        //Workflow mappings for Vue conversion
-        "/job/$id/edit"(controller: 'scheduledExecution', action: 'edit')
-
         //simplified url mappings for link generation
         "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
