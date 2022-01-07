@@ -7,6 +7,7 @@ orbs:
   docker-publish: circleci/docker-publish@0.1.6
   node: circleci/node@5.0.0
   trigger: rundeck/trigger-pipeline@0.0.5
+  slack: circleci/slack@4.4.0
 
 defaults: &defaults
   working_directory: ~/repo
@@ -431,6 +432,100 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
+      - slack/notify:
+          channel: C01D89KV4JX
+          event: fail
+          custom: |
+            {
+            	"blocks": [
+            		{
+            			"type": "section",
+            			"fields": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":red_circle: *Job Failed*: ${CIRCLE_JOB}"
+            				}
+            			]
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Branch*: $CIRCLE_BRANCH"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Author*: $CIRCLE_USERNAME"
+            				}
+            			]
+            		},
+            		{
+            			"type": "actions",
+            			"elements": [
+            				{
+            					"type": "button",
+            					"text": {
+            						"type": "plain_text",
+            						"text": "View Job"
+            					},
+            					"url": "${CIRCLE_BUILD_URL}"
+            				}
+            			]
+            		}
+            	]
+            }
+      - slack/notify:
+          channel: C01D89KV4JX
+          event: pass
+          custom: |
+            {
+            	"blocks": [
+            		{
+            			"type": "section",
+            			"fields": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":white_check_mark: *Job Success*: ${CIRCLE_JOB}"
+            				}
+            			]
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Branch*: $CIRCLE_BRANCH"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Author*: $CIRCLE_USERNAME"
+            				}
+            			]
+            		},
+            		{
+            			"type": "actions",
+            			"elements": [
+            				{
+            					"type": "button",
+            					"text": {
+            						"type": "plain_text",
+            						"text": "View Job"
+            					},
+            					"url": "${CIRCLE_BUILD_URL}"
+            				}
+            			]
+            		}
+            	]
+            }
 
   nightly:
     triggers:
