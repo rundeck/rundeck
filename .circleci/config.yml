@@ -533,6 +533,8 @@ workflows:
       - slack-notification:
           name: Slack Notification
           requires: *stage-test
+          context:
+            - slack-secrets
 
 
   nightly:
