@@ -345,6 +345,7 @@ jobs:
             source .circleci/circle-shim.sh
             << parameters.command >>
 
+<<<<<<< HEAD
   test-selenium:
     <<: *defaults
     machine: true
@@ -367,6 +368,30 @@ jobs:
           destination: images
       - store_test_results:
           path: test/selenium/test_out/junit
+=======
+  # test-selenium:
+  #   <<: *defaults
+  #   machine: true
+  #   steps:
+  #     - checkout
+  #     - node/install-node:
+  #         version: '12.16.3'
+  #     - run:
+  #         name: Fetch Artifacts
+  #         command: |
+  #           source .circleci/circle-shim.sh
+  #           pull_rundeck
+  #     - run:
+  #         name: Test
+  #         command: |
+  #           source .circleci/circle-shim.sh
+  #           bash test/ci-test-docker-selenium.sh
+  #     - store_artifacts:
+  #         path: test/selenium/test_out/images
+  #         destination: images
+  #     - store_test_results:
+  #         path: test/selenium/test_out/junit
+>>>>>>> e5ddcf576 (comment out selenium to test what happens when all jobs succeed)
 
   test-deps:
     <<: *defaults
@@ -424,7 +449,7 @@ stages:
   - Tomcat 8 API Test
   - Tomcat 9 API Test
   - API Test
-  - Selenium Test
+  #- Selenium Test
   - SSL Test
   - Ansible Test
   - LDAP Test
@@ -621,9 +646,15 @@ workflows:
           requires: *stage-build
           command: bash test/run-docker-pam-tests.sh
 
+<<<<<<< HEAD
       - test-selenium:
             name: Selenium Test
             requires: *stage-build
+=======
+      # - test-selenium:
+      #       name: Selenium Test
+      #       requires: [build]
+>>>>>>> e5ddcf576 (comment out selenium to test what happens when all jobs succeed)
       - test-deps:
             name: OWASP Dependency Checks
             requires: *stage-build
