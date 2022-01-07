@@ -299,11 +299,6 @@ jobs:
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
 
-  slack-notification:
-    <<: *defaults
-    machine: true
-    steps:   
-
   test-docker:
     <<: *defaults
     executor: gradle-docker
