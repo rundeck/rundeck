@@ -448,6 +448,8 @@ workflows:
   build_and_test:
     jobs:
       - build:
+          context:
+            - slack-secrets
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
@@ -456,6 +458,8 @@ workflows:
           <<: *filter-no-tags
           name: Gradle Test
           requires: *stage-build
+          context:
+            - slack-secrets
           <<: *slack-fail-post-step
           <<: *slack-success-post-step
       ## Optimistically build snapshot
@@ -483,6 +487,8 @@ workflows:
           <<: *filter-no-tags
           name: API Test
           requires: *stage-build
+          context:
+            - slack-secrets
           <<: *slack-fail-post-step
           <<: *slack-success-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
@@ -520,6 +526,8 @@ workflows:
           <<: *filter-no-tags
           name: Selenium Test
           requires: *stage-build
+          context:
+            - slack-secrets
           <<: *slack-fail-post-step
           <<: *slack-success-post-step
       - test-deps:
@@ -539,11 +547,6 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-      - slack-notification:
-          name: Slack Notification
-          requires: *stage-test
-          context:
-            - slack-secrets
 
 
   nightly:
