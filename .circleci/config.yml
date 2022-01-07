@@ -199,6 +199,104 @@ jobs:
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
 
+  slack-notification:
+    <<: *defaults
+    machine: true
+    steps:   
+      - slack/notify:
+          channel: C01D89KV4JX
+          event: fail
+          custom: |
+            {
+            	"blocks": [
+            		{
+            			"type": "section",
+            			"fields": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":red_circle: *Job Failed*: ${CIRCLE_JOB}"
+            				}
+            			]
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Branch*: $CIRCLE_BRANCH"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Author*: $CIRCLE_USERNAME"
+            				}
+            			]
+            		},
+            		{
+            			"type": "actions",
+            			"elements": [
+            				{
+            					"type": "button",
+            					"text": {
+            						"type": "plain_text",
+            						"text": "View Job"
+            					},
+            					"url": "${CIRCLE_BUILD_URL}"
+            				}
+            			]
+            		}
+            	]
+            }
+      - slack/notify:
+          channel: C01D89KV4JX
+          event: pass
+          custom: |
+            {
+            	"blocks": [
+            		{
+            			"type": "section",
+            			"fields": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":white_check_mark: *Job Success*: ${CIRCLE_JOB}"
+            				}
+            			]
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Branch*: $CIRCLE_BRANCH"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Author*: $CIRCLE_USERNAME"
+            				}
+            			]
+            		},
+            		{
+            			"type": "actions",
+            			"elements": [
+            				{
+            					"type": "button",
+            					"text": {
+            						"type": "plain_text",
+            						"text": "View Job"
+            					},
+            					"url": "${CIRCLE_BUILD_URL}"
+            				}
+            			]
+            		}
+            	]
+            }
 
   test-docker:
     <<: *defaults
@@ -432,100 +530,9 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-      - slack/notify:
-          channel: C01D89KV4JX
-          event: fail
-          custom: |
-            {
-            	"blocks": [
-            		{
-            			"type": "section",
-            			"fields": [
-            				{
-            					"type": "mrkdwn",
-            					"text": ":red_circle: *Job Failed*: ${CIRCLE_JOB}"
-            				}
-            			]
-            		},
-            		{
-            			"type": "context",
-            			"elements": [
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
-            				},
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Branch*: $CIRCLE_BRANCH"
-            				},
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Author*: $CIRCLE_USERNAME"
-            				}
-            			]
-            		},
-            		{
-            			"type": "actions",
-            			"elements": [
-            				{
-            					"type": "button",
-            					"text": {
-            						"type": "plain_text",
-            						"text": "View Job"
-            					},
-            					"url": "${CIRCLE_BUILD_URL}"
-            				}
-            			]
-            		}
-            	]
-            }
-      - slack/notify:
-          channel: C01D89KV4JX
-          event: pass
-          custom: |
-            {
-            	"blocks": [
-            		{
-            			"type": "section",
-            			"fields": [
-            				{
-            					"type": "mrkdwn",
-            					"text": ":white_check_mark: *Job Success*: ${CIRCLE_JOB}"
-            				}
-            			]
-            		},
-            		{
-            			"type": "context",
-            			"elements": [
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
-            				},
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Branch*: $CIRCLE_BRANCH"
-            				},
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Author*: $CIRCLE_USERNAME"
-            				}
-            			]
-            		},
-            		{
-            			"type": "actions",
-            			"elements": [
-            				{
-            					"type": "button",
-            					"text": {
-            						"type": "plain_text",
-            						"text": "View Job"
-            					},
-            					"url": "${CIRCLE_BUILD_URL}"
-            				}
-            			]
-            		}
-            	]
-            }
+      - slack-notification:
+          name: Slack Notification
+
 
   nightly:
     triggers:
