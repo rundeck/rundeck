@@ -205,7 +205,7 @@ jobs:
 
   trigger-enterprise:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:lts
     resource_class: small
     steps:
       - trigger/trigger:
