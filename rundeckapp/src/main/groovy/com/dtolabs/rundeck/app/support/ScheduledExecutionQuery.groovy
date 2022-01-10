@@ -44,7 +44,7 @@ public class ScheduledExecutionQuery extends BaseQuery implements JobQueryInput,
 
     Integer daysAhead
     Boolean runJobLaterFilter
-    Boolean apiCall
+    Boolean paginatedRequired
 
     /**
      * text filters
@@ -118,7 +118,7 @@ public class ScheduledExecutionQuery extends BaseQuery implements JobQueryInput,
         })
         daysAhead(nullable: true)
         runJobLaterFilter(nullable: true)
-        apiCall(nullable: true)
+        paginatedRequired(nullable: true)
     }
 
 
