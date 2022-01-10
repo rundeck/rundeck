@@ -236,25 +236,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }.sort { a, b -> a.name <=> b.name }
     }
 
-    boolean getPaginationEnabled() {
-        grailsApplication.config.rundeck.gui.paginatejobs.enabled in ["true",true]
-    }
-
     def getMatchedNodesMaxCount() {
         !grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.isEmpty() ? grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.toInteger() : null
-    }
-
-    def getConfiguredMaxPerPage(int defaultMax) {
-        if(paginationEnabled) {
-            return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
-        }
-        return defaultMax
     }
 
     def Map finishquery ( query,params,model){
 
         if(!params.max){
-            params.max=getConfiguredMaxPerPage(10)
+            params.max=query.max
         }
         if(!params.offset){
             params.offset=0
@@ -315,10 +304,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Integer queryMax=query.max
         Integer queryOffset=query.offset
 
-        if(paginationEnabled) {
-            if (!queryMax) {
-                queryMax = getConfiguredMaxPerPage(10)
-            }
+        if(query.paginatedRequired) {
             if (!queryOffset) {
                 queryOffset = 0
             }
@@ -422,7 +408,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(query && query.sortBy && xfilters[query.sortBy]){
                 order(xfilters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
             }else{
-                if(paginationEnabled) {
+                if(query.paginatedRequired) {
                     order("groupPath","asc")
                 }
                 order("jobName","asc")

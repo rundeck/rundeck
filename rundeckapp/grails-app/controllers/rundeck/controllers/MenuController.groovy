@@ -577,11 +577,25 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 formatted
         )
     }
+
+    private def getConfiguredMaxPerPage(int defaultMax) {
+        if(paginationEnabled) {
+            return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
+        }
+        return defaultMax
+    }
+
+    private boolean getPaginationEnabled() {
+        grailsApplication.config.rundeck.gui.paginatejobs.enabled in ["true",true]
+    }
+
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
         if(null!=query){
             query.configureFilter()
         }
+
+        query.max = getConfiguredMaxPerPage(10)
         def qres = scheduledExecutionService.listWorkflows(query, params)
         log.debug("service.listWorkflows: "+(System.currentTimeMillis()-start));
         long rest=System.currentTimeMillis()
