@@ -1,5 +1,5 @@
 // Ready translated locale messages
-export default {
+const messages = {
   en: {
     label: {
       addOption: 'Add an option',

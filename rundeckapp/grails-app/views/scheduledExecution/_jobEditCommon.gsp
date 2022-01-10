@@ -102,11 +102,8 @@
 
 <g:embedJSON id="jobWorkflowJSON"
             data="${[
-                scheduledExecution: scheduledExecution?,
-                crontab: crontab?,
-                authorized: authorized?,
-                notificationPlugins: notificationPlugins?,
-                sessionOpts: sessionOpts?
+                scheduledExecution: scheduledExecution,
+                sessionOpts: sessionOpts
             ]}"
 />
 <g:embedJSON id="jobNotificationsJSON"
