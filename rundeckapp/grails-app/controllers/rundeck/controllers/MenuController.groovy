@@ -3112,7 +3112,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         }
 
-        query.apiCall = true
         query.projFilter = params.project
         //test valid project
 
