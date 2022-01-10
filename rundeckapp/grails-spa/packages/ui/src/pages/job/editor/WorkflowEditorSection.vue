@@ -3,8 +3,8 @@
     <Options
       v-if="updatedData"
       :eventBus="eventBus"
-      :options=options
-      :editMode=editMode
+      :options="options"
+      :editMode="editMode"
     />
     <JsonEmbed
       :output-data="updatedData"
@@ -15,25 +15,17 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import VueCompositionAPI from '@vue/composition-api';
-  import { defineComponent, ref, reactive } from '@vue/composition-api';
   import Options from '../../../components/job/workflow/Options.vue';
   import JsonEmbed from './JsonEmbed.vue';
-  import {
-    getRundeckContext,
-    RundeckContext
-  } from "@rundeck/ui-trellis";
   import {OptionData, WorkflowData} from "@/components/job/workflow/Workflow";
 
   const w = window as any;
-  const winRd = getRundeckContext() as any;
 
   export default Vue.extend({
     name: 'WorkflowEditorSection',
     props: {
-      eventBus: Object,
-      recievedOptions: Array,
-      editMode: Boolean
+      "event-bus": Object,
+      "edit-mode": Boolean
     },
     components: {
       Options,
@@ -47,31 +39,37 @@
       }
     },
     methods: {
-      async fetchWorkflowData(): Promise<void> {
-        if (winRd && winRd.rdBase && winRd.projectName) {
-          this.rdBase = winRd.rdBase;
-          this.project = winRd.projectName;
-          this.updatedData = Object.assign(this, winRd.data.workflowData);
+      async fetchWorkflowData(): Promise<WorkflowData> {
+        if (w._rundeck && w._rundeck.rdBase && w._rundeck.projectName) {
+          this.rdBase = w._rundeck.rdBase;
+          this.project = w._rundeck.projectName;
+          if (w._rundeck.data) {
+            this.workflowData = w._rundeck.data.workflowData
+            return Object.assign({}, this.workflowData);
+          }
         };
+        return {} as WorkflowData;
       },
-      async fetchOptions(): Promise<any> {
-        let options = this.updatedData.sessionOpts as any;
-        if (!options) {
-          await this.fetchWorkflowData();
-          options = this.updatedData.scheduledExecution.options as any;
+      async fetchOptions(): Promise<OptionData[]> {
+        this.updatedData = await this.fetchWorkflowData();
+        let options = this.updatedData.sessionOpts as OptionData[];
+        if (options != null && !options[0].name) {
+          options = this.updatedData.scheduledExecution.options as OptionData[];
+        } else {
+          options = [{}] as OptionData[]
         }
         return options;
       }
     },
     async mounted() {
-      await this.fetchOptions();
-      await this.fetchWorkflowData();
+      this.options = await this.fetchOptions();
     },
     data () {
       return {
         project: "",
         rdBase: "",
         options: [<OptionData>{}],
+        workflowData: <WorkflowData>{},
         updatedData: <WorkflowData>{}
       };
     }

@@ -9,7 +9,7 @@
     header
     -->
 
-    <div v-if=optionsCheck() id="optheader">
+    <div v-if="optionsCheck" id="optheader">
       <div class="optheader optctrlholder">
         <span class="optdetail">
           <span class="header" >{{ $t('label.name') }}</span>
@@ -31,7 +31,7 @@
     </ul>
     <div id="optionDropFinal"
         class="dragdropfinal droppableitem"
-        :data-abs-index="(options.length() || 1)"
+        :data-abs-index="(options.length || 1)"
         data-is-final="true"
         style="display:none"></div>
 
@@ -43,7 +43,7 @@
         <span
           class="btn btn-default btn-sm ready"
           :title="$t('label.addNewOption')"
-          @click="w._optaddnew()"
+          @click="jQueryAddNew"
         >
           <span class="glyphicon glyphicon-plus" />
             {{ $t('label.addOption') }}
@@ -57,36 +57,12 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import VueI18n from 'vue-i18n';
-  import i18n from './i18n';
+  import 'vue-i18n';
+  import { OptionDataShort } from "@/components/job/workflow/Workflow";
   import UndoRedo from '../../util/UndoRedo.vue';
   import OptionsListContent from './OptionsListContent.vue';
-  import {
-    getRundeckContext,
-    RundeckContext
-  } from "@rundeck/ui-trellis";
 
   const w = window as any;
-  const winRd = getRundeckContext();
-  const _i18n = i18n as any;
-  const lang = winRd.language || 'en';
-  const locale = winRd.locale || 'en_US';
-
-  const messages = {
-    [locale]: {
-      ...(_i18n[lang] || _i18n.en),
-      ...(w.Messages[lang])
-    }
-  }
-
-  const i18nInstance = new VueI18n({
-    silentTranslationWarn: true,
-    locale: locale,
-    messages
-  })
-
-  // @ts-ignore
-  Vue.use(VueI18n);
 
   export default Vue.extend({
     name: 'Options',
@@ -96,7 +72,7 @@
     },
     props: {
       options: Array,
-      eventBus: Vue,
+      eventBus: Object,
       editMode: Boolean
     },
     mounted() {
@@ -104,7 +80,7 @@
     },
     computed: {
       optionsCheck: function(): boolean {
-        return (this.options && this.options.length > 0);
+        return (this.options != null && this.options.length > 0);
       }
     },
     watch: {
@@ -118,9 +94,14 @@
         w._optionData(this.optDataList);
       }
     },
+    methods: {
+      jQueryAddNew() {
+        w._optaddnew();
+      }
+    },
     data() {
       return {
-        optDataList: {}
+        optDataList: [] as OptionDataShort[]
       }
     }
   })

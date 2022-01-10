@@ -1,5 +1,5 @@
 <template>
-  <div :id="`optvis${elementIdSuffix}`" :ref="`optvis${elementIdSuffix}`" v-show="visible">
+  <div :id="`optvis${elementIdSuffix}`" :ref="`optvis${elementIdSuffix}`" v-show="editMode">
     <div class="optitem optctrlholder">
       <span v-if=editMode class="optctrl opteditcontrols controls ">
         <span :class="['btn', 'btn-xs', 'btn-default', canMoveUp||canMoveDown ? 'dragHandle' : 'disabled']" :title="$t('edit.dragReorder')">
@@ -17,7 +17,7 @@
       </span>
 
       <span class="opt item" :id="optionName" >
-        <OptView
+        <OptionsView
           :option="option"
           :editMode="editMode"
           :elemIdSuffix="elementIdSuffix"
@@ -59,36 +59,10 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import VueI18n from 'vue-i18n';
-  import i18n from './i18n';
   import OptionsView from './OptionsView.vue';
-  import {
-    getRundeckContext,
-    RundeckContext
-  } from "@rundeck/ui-trellis";
 
   const w = window as any;
-  const winRd = getRundeckContext();
   const jquery = w.jQuery;
-  const _i18n = i18n as any;
-  const lang = winRd.language || 'en';
-  const locale = winRd.locale || 'en_US';
-
-  const messages = {
-    [locale]: {
-      ...(_i18n[lang] || _i18n.en),
-      ...(w.Messages[lang])
-    }
-  }
-
-  const i18nInstance = new VueI18n({
-    silentTranslationWarn: true,
-    locale: locale,
-    messages
-  })
-
-  // @ts-ignore
-  Vue.use(VueI18n);
 
   export default Vue.extend({
     name: 'OptionsListContentItem',
@@ -96,8 +70,7 @@
       OptionsView
     },
     props: {
-      option: Array,
-      optionName: String,
+      option: Object,
       editMode: Boolean,
       optIndex: Number,
       optCount: Number
@@ -134,9 +107,7 @@
     },
     data() {
       return {
-        optionName: "",
         elementIdSuffix: `_${this.optionName}_${this.optIndex}`,
-        editMode: this.editMode,
         deleteConfirm: false
       }
     }

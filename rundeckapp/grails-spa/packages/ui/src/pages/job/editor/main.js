@@ -5,6 +5,7 @@ import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
 import NotificationsEditorSection from './NotificationsEditorSection'
 import ResourcesEditorSection from './ResourcesEditorSection'
+import WorkflowEditorSection from "./WorkflowEditorSection";
 import * as uiv from 'uiv'
 import international from './i18n'
 import VueI18n from 'vue-i18n'

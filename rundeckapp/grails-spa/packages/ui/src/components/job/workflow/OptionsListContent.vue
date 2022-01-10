@@ -1,6 +1,6 @@
 <template>
   <div id="optionList">
-    <li v-for="optionsel in options"
+    <li v-for="(optionsel, index) in options"
         :id="`optli_${index}`"
         :key="optionsel+index"
         :class="['el-collapse-item', 'optEntry', 'draggableitem', 'droppableitem', {highlight: 'dohighlight'}]"
@@ -9,7 +9,7 @@
         :option="optionsel"
         :editMode="editMode"
         :optIndex="index"
-        :optCount="options.length()"
+        :optCount="options.length"
       />
     </li>
   </div>

@@ -1,12 +1,12 @@
 <template>
     <span :id="`opt${elemIdSuffix}`" class="optview">
-        <span :class="['optdetail', editMode ? 'autohilite autoedit' : '']" :title="edit ? 'Click to edit' : ''">
+        <span :class="['optdetail', editMode ? 'autohilite autoedit' : '']" :title="editMode ? 'Click to edit' : ''">
             <span v-if="option.optionType==='file'" class="glyphicon glyphicon-file" />
             <span :class="option.required ? 'required' : ''" :title="optionAltText()">{{ optionName }}</span>
             <span class="">
                 <span :title="{showTitle:truncatedText}" :class="{wasTruncated: 'truncatedtext'}">
-                    {{ truncateText(secureInput(), {max: 20, showTitle: true}) }}
-                    {{ multivalueIcon }}
+                    {{ truncateText(secureInput, {max: 20, showTitle: true}) }}
+                    {{ showMultivalueIcon }}
                 </span>
                 <span v-show="showLockIcon" class="glyphicon glyphicon-lock" />
             </span>
@@ -75,37 +75,10 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import VueI18n from 'vue-i18n';
-  import i18n from './i18n';
   import VTooltipPlugin from 'v-tooltip';
-  import {
-    getRundeckContext,
-    RundeckContext
-  } from "@rundeck/ui-trellis";
   Vue.use(VTooltipPlugin);
 
   const w = window as any;
-  const winRd = getRundeckContext();
-  const jquery = w.jQuery;
-  const _i18n = i18n as any;
-  const lang = winRd.language || 'en';
-  const locale = winRd.locale || 'en_US';
-
-  const messages = {
-    [locale]: {
-      ...(_i18n[lang] || _i18n.en),
-      ...(w.Messages[lang])
-    }
-  }
-
-  const i18nInstance = new VueI18n({
-    silentTranslationWarn: true,
-    locale: locale,
-    messages
-  });
-
-  // @ts-ignore
-  Vue.use(VueI18n);
 
   export default Vue.extend({
     name: 'OptionsView',
@@ -172,6 +145,9 @@
           return title;
       },
       truncateText: function(text: string, options = {max: 30, front: false}) {
+        if (!text) {
+          return "";
+        }
         const max = options.max;
         const front = options.front;
         let newText;
@@ -187,8 +163,6 @@
     },
     data() {
       return {
-        optionName: "",
-        editMode: this.editMode,
         deleteConfirm: false,
         truncSettings: {
           originalText: "",
