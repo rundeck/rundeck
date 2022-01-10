@@ -315,7 +315,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Integer queryMax=query.max
         Integer queryOffset=query.offset
 
-        if(paginationEnabled && !query.apiCall) {
+        if(paginationEnabled) {
             if (!queryMax) {
                 queryMax = getConfiguredMaxPerPage(10)
             }

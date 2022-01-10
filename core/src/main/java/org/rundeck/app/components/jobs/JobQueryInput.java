@@ -49,5 +49,5 @@ public interface JobQueryInput extends BaseQueryInput {
 
     Boolean getRunJobLaterFilter();
 
-    default Boolean getApiCall(){return false;};
+    default Boolean getPaginatedRequired(){return false;};
 }
