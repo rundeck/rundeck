@@ -326,7 +326,6 @@ export default class ScheduleEditor extends Vue {
   }
   async mounted() {
     this.modelData = Object.assign({}, this.value)
-    console.log(JSON.stringify(this.modelData))
   }
 
   loadScheduleIntoSimpleTab (decomposedSchedule:any){
