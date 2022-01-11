@@ -2,8 +2,8 @@ name: Releases
 
 on: 
   push:
-    tags:
-    - v*
+    branches-ignore:
+    - '**'
     tags-ignore:
     - '*rc'
 
