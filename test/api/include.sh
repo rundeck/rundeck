@@ -181,7 +181,7 @@ assert_http_status(){
     egrep -v "HTTP/1.1 100" $2 | egrep -q "HTTP/1.1 $1"
     if [ 0 != $? ] ; then
         errorMsg "ERROR: Expected $1 result"
-        egrep 'HTTP/1.1' $2
+        egrep 'HTTP/1.1' $2 1>&2
         exit 2
     fi
 }
@@ -193,7 +193,7 @@ assert_xml_valid(){
     $XMLSTARLET val -w ${1} > /dev/null 2>&1
     if [ 0 != $? ] ; then
         errorMsg "FAIL: Response was not valid xml, file: $1"
-        cat $1
+        cat $1 1>&2
         exit 2
     fi
 
@@ -205,12 +205,12 @@ assert_xml_value(){
     local value=$(xmlsel "$2" $3)
     if [ $? != 0 -a -n "$1" ] ; then
         errorMsg "xmlstarlet failed: $!: $value, for $1 $2 $3"
-        cat $3
+        cat $3 1>&2
         exit 2
     fi
     if [ "$1" != "$value" ] ; then
         errorMsg "XPath $2 wrong value, expected $1 was $value (in file $3)"
-        cat $3
+        cat $3 1>&2
         exit 2
     fi
 }
@@ -218,12 +218,12 @@ assert_xml_notblank(){
     local value=$(xmlsel "$1" $2)
     if [ $? != 0 ] ; then
         errorMsg "Expected value for XPath $1, but select failed: $! (in file $2)"
-        cat $2
+        cat $2 1>&2
         exit 2
     fi
     if [ "" == "$value" ] ; then
         errorMsg "XPath $1 wrong value, expected (not blank) was $value (in file $2)"
-        cat $2
+        cat $2 1>&2
         exit 2
     fi
 }
@@ -241,12 +241,13 @@ assert_json_value(){
     local propval=$($JQ -r "$2" < $3 )
     if [ $? != 0 ] ; then
         errorMsg "Json query invalid: $2: $!"
+        cat $3 1>&2
         exit 2
     fi
     local expval=$(echo "$1")
     if [ "$expval" != "$propval" ] ; then
         errorMsg "Json query $2 wrong value, expected '$1' was $propval (in file $3)"
-        cat $3
+        cat $3 1>&2
         exit 2
     fi
 }
@@ -272,11 +273,12 @@ assert_json_null(){
     local propval=$($JQ  "$1" < $2 )
     if [ $? != 0 ] ; then
         errorMsg "Json query invalid: $1: $!"
+        cat $2 1>&2
         exit 2
     fi
     if [ "null" != "$propval" ] ; then
         errorMsg "Json query $1 wrong value, expected null was $propval (in file $2)"
-        cat $2
+        cat $2 1>&2
         exit 2
     fi
 }
@@ -293,11 +295,12 @@ assert_json_not_null(){
     local propval=$($JQ  "$1" < $2 )
     if [ $? != 0 ] ; then
         errorMsg "Json query invalid: $1: $!"
+        cat $2 1>&2
         exit 2
     fi
     if [ "null" == "$propval" ] ; then
         errorMsg "Json query $1 wrong value, expected not null was $propval (in file $2)"
-        cat $2
+        cat $2 1>&2
         exit 2
     fi
 }
@@ -315,6 +318,7 @@ json_val(){
     local propval=$($JQ -r "$1" < $2 )
     if [ $? != 0 ] ; then
         errorMsg "Json query invalid: $1: $!"
+        cat $2 1>&2
         exit 2
     fi
     echo $propval
@@ -345,7 +349,8 @@ uploadJob(){
     jobid=$(xmlsel "$select" $DIR/curl.out)
 
     if [ "" == "$jobid" ] ; then
-        errorMsg  "Upload was not successful."
+        errorMsg  "Upload was not successful for file $file"
+        cat $DIR/curl.out 1>&2
         exit
     fi
 
