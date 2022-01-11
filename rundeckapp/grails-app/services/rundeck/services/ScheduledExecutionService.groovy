@@ -278,7 +278,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
 
-        def tmod=[max: query?.max?query.max:getConfiguredMaxPerPage(10),
+        def tmod=[max: query?query.max:null,
             offset:query?.offset?query.offset:0,
             paginateParams:paginateParams,
             displayParams:displayParams]
@@ -307,6 +307,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (!queryOffset) {
                 queryOffset = 0
             }
+        }else{ //ignore pagination controls
+            queryMax=null
+            queryOffset=null
         }
 
         def idlist=[]
@@ -328,8 +331,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def scheduled = crit.list{
             if(queryMax && queryMax>0){
                 maxResults(queryMax)
-            }else{
-//                maxResults(10)
             }
             if(queryOffset){
                 firstResult(queryOffset.toInteger())
