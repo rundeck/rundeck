@@ -639,7 +639,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_CREATE, query.projFilter)
 
 
-        def Map jobauthorizations=[:]
+        Map jobauthorizations=[:]
 
         //produce map: [actionName:[id1,id2,...],actionName2:[...]] for all allowed actions for jobs
         decisions=decisions.findAll { it.authorized}
