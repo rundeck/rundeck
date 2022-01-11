@@ -1723,6 +1723,90 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             false      | false      | 0
     }
 
+    @Unroll
+    def "next scheduled jobs pagination"() {
+        given:
+
+        params.project='test'
+        def job1 = new ScheduledExecution(createJobParams(jobName:'another job1',groupPath: '', project: params.project)).save()
+        def job2 = new ScheduledExecution(createJobParams(jobName:'another job2',groupPath:'', project: params.project)).save()
+        def job3 = new ScheduledExecution(createJobParams(jobName:'another job3',groupPath:'', project: params.project)).save()
+        def job4 = new ScheduledExecution(createJobParams(jobName:'another job4',groupPath:'', project: params.project)).save()
+        def job5 = new ScheduledExecution(createJobParams(jobName:'another job5',groupPath:'', project: params.project)).save()
+        def job6 = new ScheduledExecution(createJobParams(jobName:'another job6',groupPath:'', project: params.project)).save()
+        def job7 = new ScheduledExecution(createJobParams(jobName:'another job7',groupPath:'', project: params.project)).save()
+
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = new ScheduledExecutionService()
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.scheduledExecutionService.applicationContext = applicationContext
+
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+                isClusterModeEnabled() >> false
+            }
+
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+            authorizeProjectResource(_, _, _, _) >> true
+            authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job1.groupPath, name: job1.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job2.groupPath, name: job2.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job3.groupPath, name: job3.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job4.groupPath, name: job4.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job5.groupPath, name: job5.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job6.groupPath, name: job6.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job7.groupPath, name: job7.jobName]]]
+        }
+
+        controller.scheduledExecutionService.frameworkService = controller.frameworkService
+
+
+        def query = new ScheduledExecutionQuery()
+        grailsApplication.config.rundeck.gui.paginatejobs.enabled = requirePagination
+        grailsApplication.config.rundeck.gui.paginatejobs.max.per.page = maxPerPage
+        query.offset = offset
+
+        when:
+        def model = controller.jobs(query)
+
+        then:
+        model.nextScheduled.size() == count
+
+        where:
+        requirePagination | offset | maxPerPage | count
+        true              | 5      | "3"        | 2
+        false             | 3      | "3"        | 7
+        true              | 0      | "3"        | 3
+        true              | 7      | "3"        | 0
+        false             | 5      | "5"        | 7
+        true              | 4      | "3"        | 3
+        true              | 6      | "3"        | 1
+
+    }
+
     def "jobs list next execution times"() {
         given:
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
