@@ -1,6 +1,13 @@
 plugins{
     id 'base'
 }
+configurations{
+    docker
+}
+dependencies{
+    docker project(path: ":rundeckapp", configuration: 'bootWar')
+}
+
 project.evaluationDependsOn(":rundeckapp")
 
 def providedTags = findProperty('dockerTags')?: ''
