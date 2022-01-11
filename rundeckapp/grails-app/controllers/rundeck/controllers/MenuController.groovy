@@ -300,6 +300,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
+
+        query.paginatedRequired = paginationEnabled
         def results = jobsFragment(query, JobsScmInfo.MINIMAL)
         results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
@@ -349,6 +351,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
+
+        query.paginatedRequired = paginationEnabled
         query.projFilter = params.project
         //test valid project
 
