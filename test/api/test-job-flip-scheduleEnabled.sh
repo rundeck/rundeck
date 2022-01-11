@@ -49,7 +49,7 @@ END
     NDATES=$(( $NDATES + 10 ))
     osname=$(uname)
     if [ "Darwin" = "$osname" ] ; then
-       NDATE=$(env TZ=GMT date -r "$NDATES" '+%Y %m %d %H %M %S')
+        NDATE=$(env TZ=GMT date -r "$NDATES" '+%Y %m %d %H %M %S')
     else
         NDATE=$(env TZ=GMT date -u --date="@$NDATES" '+%Y %m %d %H %M %S')
     fi
