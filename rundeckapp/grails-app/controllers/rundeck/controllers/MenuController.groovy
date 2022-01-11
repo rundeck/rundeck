@@ -586,7 +586,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(paginationEnabled) {
             return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
         }
-        return defaultMax
+        return null
     }
 
     private boolean getPaginationEnabled() {
