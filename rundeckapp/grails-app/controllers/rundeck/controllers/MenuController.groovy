@@ -301,7 +301,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
 
-        query.paginatedRequired = paginationEnabled
+        if(paginationEnabled)
+            query.paginatedRequired = true
+        else{
+            query.max = null
+            query.offset = null
+        }
+
         def results = jobsFragment(query, JobsScmInfo.MINIMAL)
         results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
@@ -352,7 +358,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
 
-        query.paginatedRequired = paginationEnabled
+        if(paginationEnabled)
+            query.paginatedRequired = true
+        else{
+            query.max = null
+            query.offset = null
+        }
+
         query.projFilter = params.project
         //test valid project
 
