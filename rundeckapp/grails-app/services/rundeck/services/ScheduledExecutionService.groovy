@@ -308,9 +308,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (!queryOffset) {
                 queryOffset = 0
             }
-        }else{ //ignore pagination controls
-            queryMax=null
-            queryOffset=null
         }
 
         def idlist=[]
