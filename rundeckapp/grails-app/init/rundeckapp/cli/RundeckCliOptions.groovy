@@ -27,6 +27,7 @@ class RundeckCliOptions {
     boolean rewrite = false
     boolean useJaas = true
     boolean rollback = false
+    boolean migrate = false
 
     String baseDir
     String serverBaseDir
