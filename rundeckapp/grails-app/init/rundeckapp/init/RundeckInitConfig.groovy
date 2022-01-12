@@ -94,6 +94,10 @@ class RundeckInitConfig {
         cliOptions.rollback
     }
 
+    boolean isMigrate() {
+        cliOptions.migrate
+    }
+
     String tagName(){
         cliOptions.tag
     }
