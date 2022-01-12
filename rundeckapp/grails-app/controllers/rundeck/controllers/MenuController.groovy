@@ -303,7 +303,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
 
-        if(paginationEnabled)
+        if(guiPaginationEnabled)
             query.paginatedRequired = true
         else{
             query.max = null
@@ -360,7 +360,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
 
-        if(paginationEnabled)
+        if(guiPaginationEnabled)
             query.paginatedRequired = true
         else{
             query.max = null
@@ -595,14 +595,21 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     private def getConfiguredMaxPerPage(int defaultMax) {
-        if(paginationEnabled) {
+        if(guiPaginationEnabled) {
             return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
         }
         return null
     }
 
-    private boolean getPaginationEnabled() {
+    private boolean getGuiPaginationEnabled() {
         grailsApplication.config.rundeck.gui.paginatejobs.enabled in ["true",true]
+    }
+
+    private boolean getApiPaginationEnabled() {
+        if(grailsApplication.config.rundeck.api.paginatejobs.enabled)
+            return grailsApplication.config.rundeck.api.paginatejobs.enabled in ["false",false]
+        else
+            return true
     }
 
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
@@ -2942,6 +2949,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
+
+        if (!apiPaginationEnabled){
+            query.max = null
+            query.offset = null
+        }
+
         if (!apiService.requireApi(request, response)) {
             return
         }
