@@ -35,7 +35,6 @@ buildscript {
             }
         }
         mavenCentral()
-        jcenter()
     }
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'

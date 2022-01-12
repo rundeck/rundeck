@@ -117,7 +117,7 @@ class CommandLineSetup {
                 .withDescription("Down migrate or rollback to previous db versions.")
                 .create('r');
 
-        Option migrate =   OptionBuilder.withLongOpt("migrate")
+        Option migrate =   OptionBuilder.withLongOpt("migrate-only")
                 .withDescription("Run database migrations then exit.")
                 .create('m');
 
