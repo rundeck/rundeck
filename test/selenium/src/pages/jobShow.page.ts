@@ -19,7 +19,7 @@ export const Elems = {
   nodeFilterSectionNodeRankOrderAscending: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__nodeRankOrderAscending'),
   nodeFilterSectionNodeSelectedByDefault: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__nodeSelectedByDefault'),
   orchestratorText: By.css('#detailtable.tab-pane  tr#exec_detail_orchestrator  #exec_detail__orchestrator summary'),
-  jobEditButton: By.css('.job-action-button .btn-group ul.dropdown-menu > li > a[title="Edit this Job"]'),
+  jobEditButton: By.xpath('//*[@id="subtitlebar"]/div/div[2]/div/div/ul/li[1]/a'),
   jobActionDropdown: By.css('.job-action-button > .btn-group > a.dropdown-toggle'),
 }
 
@@ -99,10 +99,9 @@ export class JobShowPage extends Page {
     return await data.click()
   }
   async optionInputText(name: string){
-      return await this.ctx.driver.findElement(By.css(`#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']`))
+    return await this.ctx.driver.findElement(By.css(`#optionSelect #_commandOptions input[type=text][name='extra.option.${name}']`))
   }
   async jobDefinitionOrchestratorText() {
     return this.ctx.driver.findElement(Elems.orchestratorText)
   }
-
 }

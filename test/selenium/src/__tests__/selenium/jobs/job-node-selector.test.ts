@@ -1,10 +1,8 @@
-import {Context} from '@rundeck/testdeck/context'
 import {CreateContext} from '@rundeck/testdeck/test/selenium'
-import {ProjectCreatePage} from 'pages/projectCreate.page'
 import {LoginPage} from 'pages/login.page'
 import {JobCreatePage} from 'pages/jobCreate.page'
 import {JobShowPage} from "pages/jobShow.page"
-import {until, By, Key, WebElement} from 'selenium-webdriver'
+import {until, By, Key, WebElement, logging} from 'selenium-webdriver'
 import '@rundeck/testdeck/test/rundeck'
 import {sleep} from '@rundeck/testdeck/async/util'
 
@@ -191,7 +189,6 @@ describe('job', () => {
 
         await ctx.driver.wait(until.urlContains('/job/show'), 15000)
     })
-    // TODO: fix, test is flaky and fails on CI run
 
     it('rename job with orchestrator', async () => {
         const jobCreatePage: JobCreatePage = await createBasicJob('job with node orchestrator')
@@ -241,16 +238,14 @@ describe('job', () => {
 
         // close modal
         await jobShowPage.closeJobDefinitionModal()
-        await sleep(500)
+        await sleep(5000)
 
-        const showUrl = await ctx.driver.getCurrentUrl()
+        const jobActionDropdown = await jobShowPage.jobActionDropdown()
+        await jobActionDropdown.click()
+        const jobEditButton = await jobShowPage.jobEditButton()
+        await jobEditButton.click()
 
-        // change to edit page
-        const editUrl = showUrl.replace('/job/show', '/job/edit')
-
-        // edit job and verify values are set in form
-
-        await ctx.driver.get(editUrl)
+        await ctx.driver.sleep(1000)
 
         const jobEditPage = new JobCreatePage(ctx, 'SeleniumBasic')
 
@@ -259,12 +254,18 @@ describe('job', () => {
         await nameInput.clear()
         await nameInput.sendKeys('renamed job with node orchestrator')
 
+        await ctx.driver.sleep(1000)
+        const tabNodes2 = await jobEditPage.tabNodes()
+        await tabNodes2.click()
+
         // save and reload
         // save the job
-        const save2 = await jobCreatePage.updateButton()
+        const save2 = await jobEditPage.updateButton()
         await save2.click()
 
-        await ctx.driver.wait(until.urlContains('/job/show'), 5000)
+        await ctx.driver.sleep(5000)
+
         const jobShowPage2 = new JobShowPage(ctx, 'SeleniumBasic', '')
+        await jobShowPage2.waitDefinitionNodefilters()
     })
 })
