@@ -8,7 +8,7 @@ export const Elems= {
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
     saveButton  : By.css('#Create'),
-    updateButton  : By.xpath('//*[@id="jobUpdateSaveButton"]'),
+    updateButton  : By.css('#jobUpdateSaveButton'),
     cancelButton  : By.css('#createFormCancelButton'),
     editCancelButton  : By.css('#editFormCancelButton'),
     editSaveButton: By.css('#editForm div.card-footer input.btn.btn-cta[type=submit][value=Save]'),
@@ -115,7 +115,7 @@ export class JobCreatePage extends Page {
         return this.ctx.driver.findElement(Elems.saveButton)
     }
     async  updateButton() {
-        return await this.ctx.driver.findElement(Elems.updateButton)
+        return this.ctx.driver.findElement(Elems.updateButton)
     }
     async cancelButton() {
         return this.ctx.driver.findElement(Elems.cancelButton)
