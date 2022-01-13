@@ -566,6 +566,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
                 flush(response)
             }
+
+            json {
+                render(dataMap as JSON)
+            }
         }
     }
     private static String getFname(name){
@@ -3993,6 +3997,34 @@ class ScheduledExecutionController  extends ControllerBase{
                 return executionService.respondExecutionsJson(request,response,result.result,[total:total,offset:resOffset,max:resMax])
             }
         }
+
+    }
+
+    def apiGet() {
+        if (!apiService.requireApi(request,response,ApiVersions.V14)) {
+            return
+        }
+
+        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        //test valid project
+
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext, AuthConstants.RESOURCE_TYPE_JOB,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN])) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [
+                            'Get ScheduledExecution Data (admin)',
+                            'Server',
+                            frameworkService.getServerUUID()
+                    ]
+            ])
+        }
+
+        ScheduledExecution schedEx = scheduledExecutionService.getByIDorUUID(params.id)
+
+
+        render(schedEx as JSON)
 
     }
     /**

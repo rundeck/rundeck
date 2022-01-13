@@ -164,6 +164,7 @@ class UrlMappings {
         "/api/$api_version/project/$project/run/script"(controller: 'scheduledExecution', action: 'apiRunScriptv14')
         "/api/$api_version/project/$project/run/url"(controller: 'scheduledExecution', action: 'apiRunScriptUrlv14')
         "/api/$api_version/project/$project/history"(controller: 'reports', action: 'apiHistoryv14')
+        "/api/$api_version/job/show/$id"(controller: 'scheduledExecution', action: 'apiGet')
 
         "/api/$api_version/project/$project/scm/$integration/plugins"(controller: 'scm', action: 'apiPlugins')
         "/api/$api_version/project/$project/scm/$integration/plugin/$type/input"(controller: 'scm', action: 'apiPluginInput')

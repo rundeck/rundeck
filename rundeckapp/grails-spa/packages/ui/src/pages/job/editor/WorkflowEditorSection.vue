@@ -15,17 +15,18 @@
 
 <script lang="ts">
   import Vue from 'vue';
+  import axios from "axios";
   import Options from '../../../components/job/workflow/Options.vue';
   import JsonEmbed from './JsonEmbed.vue';
-  import {OptionData, WorkflowData} from "@/components/job/workflow/Workflow";
+  import {OptionData, ScheduledExecution, WorkflowData} from "@/components/job/workflow/Workflow";
 
   const w = window as any;
 
   export default Vue.extend({
     name: 'WorkflowEditorSection',
     props: {
-      "event-bus": Object,
-      "edit-mode": Boolean
+      eventBus: Object,
+      editMode: Boolean
     },
     components: {
       Options,
@@ -47,27 +48,49 @@
             this.workflowData = w._rundeck.data.workflowData
             return Object.assign({}, this.workflowData);
           }
-        };
+        }
         return {} as WorkflowData;
       },
-      async fetchOptions(): Promise<OptionData[]> {
-        this.updatedData = await this.fetchWorkflowData();
-        let options = this.updatedData.sessionOpts as OptionData[];
-        if (options != null && !options[0].name) {
-          options = this.updatedData.scheduledExecution.options as OptionData[];
-        } else {
-          options = [{}] as OptionData[]
+      createOptions(): OptionData[] {
+        let options = [] as OptionData[]
+        if (options === null || options[0].name === null) {
+          options = this.scheduledExecutionData.options as OptionData[];
         }
         return options;
+      },
+      fetchSchedEx(): object {
+        let payload = {
+          options: [] as OptionData[]
+        };
+        axios({
+          method: "get",
+          headers: {
+            "Accept": "application/json",
+            "Content-type": "application/json"
+          },
+          url: `${this.rdBase}/api/36/job/show/${this.schedExUUID}`,
+          withCredentials: true
+        }).then(response => {
+          payload = JSON.parse(response.data)
+        }).catch((error: string) => {
+          this.errors.push(error)
+        })
+        return payload;
       }
     },
     async mounted() {
-      this.options = await this.fetchOptions();
+      this.updatedData = await this.fetchWorkflowData();
+      this.schedExUUID = w._rundeck.rundeckClient.uri.split('/')[-1];
+      this.scheduledExecutionData = this.fetchSchedEx();
+      this.options = this.createOptions();
     },
     data () {
       return {
+        errors: [] as any,
         project: "",
         rdBase: "",
+        schedExUUID: "",
+        scheduledExecutionData: <ScheduledExecution>{},
         options: [<OptionData>{}],
         workflowData: <WorkflowData>{},
         updatedData: <WorkflowData>{}

@@ -5,15 +5,15 @@
             <span :class="option.required ? 'required' : ''" :title="optionAltText()">{{ optionName }}</span>
             <span class="">
                 <span :title="{showTitle:truncatedText}" :class="{wasTruncated: 'truncatedtext'}">
-                    {{ truncateText(secureInput, {max: 20, showTitle: true}) }}
+                    {{ truncateText(secureInput, {max: 20, front: false, showTitle: true}) }}
                     {{ showMultivalueIcon }}
                 </span>
                 <span v-show="showLockIcon" class="glyphicon glyphicon-lock" />
             </span>
             <span class="desc">{{ optionDesc }}</span>
         </span>
-        <div v-if="valuesExist">
-            <VTooltip>
+        <span v-if="valuesExist">
+            <VTooltip style="display:inline;">
                 <span class="valuesSet">
                     <span class="valueslist">
                         {{ valuesDesc }}
@@ -29,8 +29,8 @@
                     </div>
                 </template>
             </VTooltip>
-        </div>
-        <div v-else-if="option.realValuesUrl">
+        </span>
+        <span v-else-if="option.realValuesUrl">
             <span class="valuesSet">
                 <span
                     class="valuesUrl"
@@ -39,8 +39,8 @@
                     {{ $t('label.url') }}
                 </span>
             </span>
-        </div>
-        <div v-if="option.enforced">
+        </span>
+        <span v-if="option.enforced">
             <span class="enforceSet">
                 <span
                 class="enforced"
@@ -49,8 +49,8 @@
                 {{ $t('label.strict') }}
             </span>
             </span>
-        </div>
-        <div v-else-if="option.regex">
+        </span>
+        <span v-else-if="option.regex">
             <VTooltip>
                 <span class="enforceSet">
                     <span class="regex">
@@ -64,12 +64,12 @@
                     </div>
                 </template>
             </VTooltip>
-        </div>
-        <div v-else>
+        </span>
+        <span v-else>
             <span class="enforceSet">
                 <span class="any" :title="$t('message.noRestrictionsInputValue')">{{ $t('label.none') }}</span>
             </span>
-        </div>
+        </span>
     </span>
 </template>
 
@@ -144,14 +144,18 @@
           };
           return title;
       },
-      truncateText: function(text: string, options = {max: 30, front: false}) {
+      truncateText: function(text: string, options = {max: 30, showTitle: false, front: false}) {
         if (!text) {
           return "";
         }
         const max = options.max;
         const front = options.front;
-        let newText;
-        text.trim();
+        this.truncSettings.originalText = text;
+        this.truncSettings.showTitle = options.showTitle;
+        let newText = text.trim();
+        if (newText.length > max) {
+          this.truncSettings.wasTruncated = true;
+        }
         if (front) {
             const beginIndex = (text.length - max);
             newText = "..." + text.slice(beginIndex);
@@ -159,6 +163,8 @@
             newText = text.slice(0, max);
             newText += "...";
         }
+        this.truncSettings.text = newText;
+        return newText;
       }
     },
     data() {

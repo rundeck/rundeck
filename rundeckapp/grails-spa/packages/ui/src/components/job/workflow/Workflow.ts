@@ -1,11 +1,10 @@
 export interface WorkflowData {
-  scheduledExecution: ScheduledExecution,
-  crontab: object,
-  authorized: boolean,
+  schedExOptions: OptionData[],
   sessionOpts: OptionData[]
 }
 
 export interface OptionData {
+  optionType: string,
   name: string,
   description: string,
   label: string,
@@ -21,13 +20,14 @@ export interface OptionData {
   isDate: boolean,
   sortIndex: number,
   sortValues: boolean,
-  scheduledExecution: ScheduledExecution,
+  scheduledExecution: {},
   defaultValue: string,
   value: string,
+  valuesList: string,
+  values: string[],
   optionValues: string[],
   optionValuesPluginType: string,
   valuesFromPlugin: string[][],
-  values: string[],
   defaultMultiValues: string[],
   selectedMultiValues: string[],
   valuesUrl: string,
@@ -49,24 +49,25 @@ export interface OptionDataShort {
 }
 
 export interface ScheduledExecution {
-  id: number,
+  id?: number,
+  uuid?: string,
   options: OptionData[],
-  workflow: Workflow,
-  groupPath: string,
-  userRoleList: string,
-  jobName: string,
-  description: string,
-  minute: string,
-  hour: string,
-  dayOfMonth: string,
-  month: string,
-  dayOfWeek: string,
-  seconds: string,
-  year: string,
-  crontabString: string,
-  logOutputThreshold: string,
-  logOutputThresholdAction: string,
-  logOutputThresholdStatus: string
+  workflow?: Workflow,
+  groupPath?: string,
+  userRoleList?: string,
+  jobName?: string,
+  description?: string,
+  minute?: string,
+  hour?: string,
+  dayOfMonth?: string,
+  month?: string,
+  dayOfWeek?: string,
+  seconds?: string,
+  year?: string,
+  crontabString?: string,
+  logOutputThreshold?: string,
+  logOutputThresholdAction?: string,
+  logOutputThresholdStatus?: string
 }
 
 export interface Workflow {
@@ -82,4 +83,16 @@ export interface WorkflowStep {
   keepgoingOnSuccess: boolean,
   description: string,
   pluginConfigData: string
+}
+
+export interface NewOption {
+  type: number,
+  name: string,
+  label: string,
+  description: string,
+  defaultValue: string,
+  inputType: number,
+  allowedValuesType: number,
+  valuesList: string,
+
 }

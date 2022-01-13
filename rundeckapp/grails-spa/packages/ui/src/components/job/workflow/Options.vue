@@ -1,13 +1,14 @@
 <template>
   <div>
-    <div id="optundoredo" class="undoredocontrols" style="margin-top:1em" v-if=editMode>
+    <div class="optslist" id="optionContent">
+    <div class="col-sm-2 control-label text-form-label">
+      <span id="optsload"></span>Options
+    </div>
+    <div class="col-sm-10">
+      <div id="editoptssect" class="rounded">
+    <div id="optundoredo" class="undoRedo undoredocontrols" style="margin-top:1em" v-if=editMode>
       <UndoRedo key='opts' :eventBus="eventBus" />
     </div>
-
-    <div class="optslist" id="optionContent">
-    <!--
-    header
-    -->
 
     <div v-if="optionsCheck" id="optheader">
       <div class="optheader optctrlholder">
@@ -52,13 +53,15 @@
     </div>
 
     <div id="optnewitem"></div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
   import Vue from 'vue';
   import 'vue-i18n';
-  import { OptionDataShort } from "@/components/job/workflow/Workflow";
+  import { OptionData, OptionDataShort } from "@/components/job/workflow/Workflow";
   import UndoRedo from '../../util/UndoRedo.vue';
   import OptionsListContent from './OptionsListContent.vue';
 
@@ -106,3 +109,10 @@
     }
   })
 </script>
+
+<style lang="scss">
+.undoRedo {
+  margin-top: 1em;
+  margin-bottom: 10px;
+}
+</style>

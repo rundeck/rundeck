@@ -83,7 +83,7 @@
         return this.optIndex < this.optCount - 1;
       },
       optionName: function(): string {
-        return JSON.stringify(this.option.name);
+        return this.option.name;
       }
     },
     methods: {
@@ -107,7 +107,7 @@
     },
     data() {
       return {
-        elementIdSuffix: `_${this.optionName}_${this.optIndex}`,
+        elementIdSuffix: `_${this.option.name}_${this.optIndex}`,
         deleteConfirm: false
       }
     }
