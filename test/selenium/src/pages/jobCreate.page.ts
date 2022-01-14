@@ -3,10 +3,12 @@ import {By, until, WebElementPromise} from 'selenium-webdriver'
 import {Page} from '@rundeck/testdeck/page'
 import {Context} from '@rundeck/testdeck/context'
 
-export const Elems= {
+export const Elems = {
     jobNameInput  : By.css('form input[name="jobName"]'),
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
+    tagsInputArea  : By.css('div.tag-input-wrapper > input.form-control'),
+    tagsPillsArea : By.css('ul.tags-list'),
     saveButton  : By.css('#Create'),
     updateButton  : By.css('#jobUpdateSaveButton'),
     cancelButton  : By.css('#createFormCancelButton'),
@@ -102,14 +104,20 @@ export class JobCreatePage extends Page {
         await driver.get(this.ctx.urlFor(this.editPagePath(jobId)))
     }
 
-    async jobNameInput(){
+    async jobNameInput() {
         return await this.ctx.driver.findElement(Elems.jobNameInput)
     }
-    async groupPathInput(){
+    async groupPathInput() {
         return await this.ctx.driver.findElement(Elems.groupPathInput)
     }
-    async descriptionTextarea(){
+    async descriptionTextarea() {
         return await this.ctx.driver.findElement(Elems.descriptionTextarea)
+    }
+    async tagsInputArea() {
+        return await this.ctx.driver.findElement(Elems.tagsInputArea)
+    }
+    async tagsPillsArea() {
+        return await this.ctx.driver.findElement(Elems.tagsPillsArea)
     }
     async saveButton() {
         return this.ctx.driver.findElement(Elems.saveButton)

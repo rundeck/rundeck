@@ -11,40 +11,63 @@ import '@rundeck/testdeck/test/rundeck'
 let ctx = CreateContext({projects: ['SeleniumBasic']})
 let loginPage: LoginPage
 let jobCreatePage: JobCreatePage
+let jobShowPage: JobShowPage
 
 beforeAll( async () => {
     loginPage = new LoginPage(ctx)
     jobCreatePage = new JobCreatePage(ctx, 'SeleniumBasic')
+    jobShowPage = new JobShowPage(ctx, 'SeleniumBasic', '')
 })
 
 beforeAll(async () => {
     await loginPage.login('admin', 'admin')
 })
 
-describe('job', () => {
-    it('edit job description', async () => {
+describe('edit job', () => {
+    beforeEach(async () => {
         await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
         await ctx.driver.wait(until.urlContains('/job/edit'), 30000)
-        let descriptionTextField= await jobCreatePage.descriptionTextarea()
+    })
+    it('adds and saves tags correctly', async () => {
+        const tagsField = await jobCreatePage.tagsInputArea()
+        await ctx.driver.wait(until.elementIsVisible(tagsField))
+        expect(tagsField).toBeDefined()
+        const tags = 'test1,test2,test3,'
+        tagsField.sendKeys(tags)
+
+        //ensure they were tag-ified
+        const pilledTagsField = await jobCreatePage.tagsPillsArea()
+        expect(pilledTagsField).toBeDefined()
+
+        const save = await jobCreatePage.editSaveButton()
+        await save.click()
+
+        await ctx.driver.wait(until.urlContains('/job/show'), 21000)
+
+        //verify tags post save
+        const showTags = await jobShowPage.jobTags()
+        expect(showTags).toHaveLength(3)
+    })
+    it('edit job description', async () => {
+        let descriptionTextField = await jobCreatePage.descriptionTextarea()
         expect(descriptionTextField).toBeDefined()
 
         //NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
         //make textarea visible
         await ctx.driver.executeScript('jQuery(\'form textarea[name="description"]\').show()')
         await ctx.driver.wait(until.elementIsVisible(descriptionTextField))
-        let newDescriptionText='a new job description'
+        const newDescriptionText = 'a new job description'
         descriptionTextField.clear()
         descriptionTextField.sendKeys(newDescriptionText)
 
         //save the job
-        let save = await jobCreatePage.editSaveButton()
+        const save = await jobCreatePage.editSaveButton()
         await save.click()
 
         await ctx.driver.wait(until.urlContains('/job/show'), 15000)
-        let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
 
         //verfiy job description
-        let foundText=await jobShowPage.jobDescriptionText()
+        const foundText = await jobShowPage.jobDescriptionText()
         expect(foundText).toEqual(newDescriptionText)
 
         //verify options exist
