@@ -97,6 +97,8 @@
           </div>
         </div>
       </g:if>
+    </div>
+    <div class="row">
       <div class="flex justify-between">
         <div style="margin-left:15px;margin-right:15px;" class="col-sm-12 col-md-5 card">
           <div class="card-content">
