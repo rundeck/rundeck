@@ -606,10 +606,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     private boolean getApiPaginationEnabled() {
-        if(grailsApplication.config.rundeck.api.paginatejobs.enabled)
+        if(grailsApplication.config.rundeck.api.paginatejobs.enabled != null)
             return grailsApplication.config.rundeck.api.paginatejobs.enabled in ["false",false]
-        else
-            return true
+        
+        return true
     }
 
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
