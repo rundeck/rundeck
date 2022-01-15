@@ -20,6 +20,10 @@ export const Elems = {
     descriptionTextarea  : By.css('form textarea[name="description"]'),
     tagsInputArea  : By.css('div.tag-input-wrapper > input.form-control'),
     tagsPillsArea : By.css('ul.tags-list'),
+    groupChooseButton: By.css('span.btn[data-target="#groupChooseModal"]'),
+    groupChooseModal : By.css('div#groupChooseModal_content'),
+    modalGroupEntry : By.css('span.groupname.jobgroupexpand'),
+    modalCancel : By.css('button.btn[data-dismiss="modal"]'),
     // Workflow tab
     tabWorkflow  : By.css('#job_edit_tabs > li > a[href=\'#tab_workflow\']'),
     addNewWfStepButton: By.xpath('//*[@id="wfnewbutton"]/span'),
