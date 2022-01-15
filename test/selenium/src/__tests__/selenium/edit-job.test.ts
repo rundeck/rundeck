@@ -80,4 +80,7 @@ describe('edit job', () => {
         expect(optionRunInput2).toBeDefined()
 
     })
+    it('correctly opens the group choose modal and picks an option', async () => {
+
+    })
 })
