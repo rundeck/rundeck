@@ -21,9 +21,9 @@
    $Id$
 --%>
 <%@ page contentType="text/html" %>
-<g:set var="emailCSSFrameworkEnabled" value="${cfg.getBoolean(config: 'feature.emailCSSFramework.enabled', false)}"/>
+<g:set var="emailCSSFrameworkEnabled" value="${cfg.getString(config: "feature.emailCSSFramework.enabled") in [true,'true']}"/>
 
-<g:if test="${emailCSSFrameworkEnabled}">
+<g:if test="${emailCSSFrameworkEnabled == 'true'}">
   <g:render template="/execution/mailNotification/newStatus"/>
 </g:if>
 <g:else>

@@ -52,7 +52,7 @@
                name: (params.project ?: request.project), context: AuthConstants.CTX_APPLICATION
        )}"/>
 
-<g:set var="projectKeyStorageEnabled" value="${cfg.getBoolean(config: 'feature.projectKeyStorage.enabled', false)}"/>
+<g:set var="projectKeyStorageEnabled" value="${cfg.getString(config: "feature.projectKeyStorage.enabled") in [true,'true']}"/>
 
 <script type="text/javascript">
     [

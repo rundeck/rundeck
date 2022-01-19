@@ -34,7 +34,7 @@ apply plugin: 'java-library'
 description = 'The Rundeck Core API project'
 
 archivesBaseName = 'rundeck-core'
-defaultTasks 'clean'
+defaultTasks 'clean','assemble'
 apply plugin: "groovy"
 configurations {
      provided
@@ -171,6 +171,19 @@ test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
 }
 
-ext.description= "Rundeck project ${project.name}"
+assemble {
+    doLast{
+        //copy libs to a tools lib dir
+        ant.mkdir(dir:"$projectDir/build/tools/lib")
+        configurations.runtimeClasspath.files.each { file ->
+            copy{
+                from file
+                into "$projectDir/build/tools/lib"
+            }
+        }
+    }
+}
+
+ext.description= "Rundeck Rundeck project ${project.name}"
 ext.publishName = project.name
 //apply from: "${rootDir}/gradle/exported-project.gradle"

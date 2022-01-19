@@ -32,9 +32,9 @@
                 <li>
                     <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
                         <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
-                            <g:set var="clusterIdentityInFooter" value="${cfg.getBoolean(config: "gui.clusterIdentityInFooter", default: false)}"/>
+                            <g:set var="clusterIdentityInFooter" value="${cfg.getString(config: "gui.clusterIdentityInFooter")}"/>
 
-                            <g:if test="${clusterIdentityInFooter}">
+                            <g:if test="${clusterIdentityInFooter in [true, 'true']}">
                                 <span class="rundeck-server-uuid"
                                       data-server-uuid="${enc(attr: servletContextAttribute(attribute: 'SERVER_UUID'))}"
                                       data-server-name="${enc(attr: servletContextAttribute(attribute: 'FRAMEWORK_NODE'))}">
