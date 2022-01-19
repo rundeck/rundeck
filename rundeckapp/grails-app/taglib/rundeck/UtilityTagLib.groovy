@@ -69,7 +69,6 @@ class UtilityTagLib{
             'jobComponentSectionProperties',
             'jobComponentFieldPrefix',
             'jobComponentMessagesType',
-            'rConfig',
     ]
 
     private static Random rand=new java.util.Random()
