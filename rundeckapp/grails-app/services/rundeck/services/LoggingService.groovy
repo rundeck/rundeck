@@ -64,7 +64,7 @@ class LoggingService implements ExecutionFileProducer {
     def grailsLinkGenerator
 
     public boolean isLocalFileStorageEnabled() {
-        boolean fileDisabled = configurationService.getBoolean("execution.logs.localFileStorageEnabled",true)
+        boolean fileDisabled = configurationService.getBoolean("execution.logs.localFileStorageEnabled",false)
         boolean readerPluginConfigured = getConfiguredStreamingReaderPluginName()
         return !(fileDisabled && readerPluginConfigured)
     }
@@ -123,7 +123,7 @@ class LoggingService implements ExecutionFileProducer {
                 }
             }
             log.debug("Configured log writer plugins: ${names}")
-            boolean enableLabels = configurationService.getBoolean("execution.logs.plugins.streamingWriterStepLabelsEnabled", true)
+            boolean enableLabels = configurationService.getBoolean("execution.logs.plugins.streamingWriterStepLabelsEnabled", false)
 
             names.each { name ->
                 def result = pluginService.configurePlugin(
@@ -207,14 +207,14 @@ class LoggingService implements ExecutionFileProducer {
 
     String getConfiguredStreamingReaderPluginName() {
         if (configurationService.getProperty("execution.logs.streamingReaderPlugin")) {
-            return configurationService.getProperty("rundeck.execution.logs.streamingReaderPlugin")
+            return configurationService.getProperty("execution.logs.streamingReaderPlugin")
         }
         null
     }
 
     List<String> listConfiguredStreamingWriterPluginNames() {
-        if (configurationService.getProperty("rundeck.execution.logs.streamingWriterPlugins")){
-            def value = configurationService.getProperty("rundeck.execution.logs.streamingWriterPlugins")
+        if (configurationService.getProperty("execution.logs.streamingWriterPlugins")){
+            def value = configurationService.getProperty("execution.logs.streamingWriterPlugins")
             return value?.split(/,\s*/) as List
         }
         []
