@@ -56,7 +56,7 @@ class LoggingService implements ExecutionFileProducer {
 
     FrameworkService frameworkService
     LogFileStorageService logFileStorageService
-    def configurationService
+    ConfigurationService configurationService
     def pluginService
     def StreamingLogWriterPluginProviderService streamingLogWriterPluginProviderService
     def StreamingLogReaderPluginProviderService streamingLogReaderPluginProviderService
@@ -206,15 +206,15 @@ class LoggingService implements ExecutionFileProducer {
     }
 
     String getConfiguredStreamingReaderPluginName() {
-        if (configurationService.getProperty("execution.logs.streamingReaderPlugin")) {
-            return configurationService.getProperty("execution.logs.streamingReaderPlugin")
+        if (configurationService.getValue("execution.logs.streamingReaderPlugin")) {
+            return configurationService.getValue("execution.logs.streamingReaderPlugin")
         }
         null
     }
 
     List<String> listConfiguredStreamingWriterPluginNames() {
-        if (configurationService.getProperty("execution.logs.streamingWriterPlugins")){
-            def value = configurationService.getProperty("execution.logs.streamingWriterPlugins")
+        if (configurationService.getValue("execution.logs.streamingWriterPlugins")){
+            def value = configurationService.getValue("execution.logs.streamingWriterPlugins")
             return value?.split(/,\s*/) as List
         }
         []
