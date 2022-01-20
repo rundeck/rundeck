@@ -66,7 +66,7 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckApiConfig {
         ApiTokensConfig tokens;
-        PaginateJobs paginateJobs;
+        PaginateJobs paginatejobs;
 
         @Data
         public static class PaginateJobs {

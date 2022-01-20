@@ -2933,7 +2933,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
 
-        if (!configurationService.getBoolean('api.paginatejobs.enable',true)){
+        if (!configurationService.getBoolean('api.paginatejobs.enabled',true)){
             query.max = null
             query.offset = null
         }
