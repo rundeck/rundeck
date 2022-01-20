@@ -206,15 +206,15 @@ class LoggingService implements ExecutionFileProducer {
     }
 
     String getConfiguredStreamingReaderPluginName() {
-        if (configurationService.getValue("execution.logs.streamingReaderPlugin")) {
-            return configurationService.getValue("execution.logs.streamingReaderPlugin")
+        if (configurationService.getString("execution.logs.streamingReaderPlugin")) {
+            return configurationService.getString("execution.logs.streamingReaderPlugin")
         }
         null
     }
 
     List<String> listConfiguredStreamingWriterPluginNames() {
-        if (configurationService.getValue("execution.logs.streamingWriterPlugins")){
-            def value = configurationService.getValue("execution.logs.streamingWriterPlugins")
+        if (configurationService.getString("execution.logs.streamingWriterPlugins")){
+            def value = configurationService.getString("execution.logs.streamingWriterPlugins")
             return value?.split(/,\s*/) as List
         }
         []
