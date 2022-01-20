@@ -303,9 +303,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
 
-        if(guiPaginationEnabled)
+        if(configurationService.getBoolean('gui.paginatejobs.enabled',false)) {
             query.paginatedRequired = true
-        else{
+            query.max = configurationService.getInteger('gui.paginatejobs.max.per.page', 10)
+        }else{
             query.max = null
             query.offset = null
         }
@@ -360,9 +361,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
 
-        if(guiPaginationEnabled)
+        if(configurationService.getBoolean('gui.paginatejobs.enabled',false)){
             query.paginatedRequired = true
-        else{
+            query.max = configurationService.getInteger('gui.paginatejobs.max.per.page', 10)
+        }else{
             query.max = null
             query.offset = null
         }
@@ -594,31 +596,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
 
-    private def getConfiguredMaxPerPage(int defaultMax) {
-        if(guiPaginationEnabled) {
-            return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
-        }
-        return null
-    }
-
-    private boolean getGuiPaginationEnabled() {
-        grailsApplication.config.rundeck.gui.paginatejobs.enabled in ["true",true]
-    }
-
-    private boolean getApiPaginationEnabled() {
-        if(grailsApplication.config.rundeck.api.paginatejobs.enabled != null)
-            return grailsApplication.config.rundeck.api.paginatejobs.enabled in ["false",false]
-        
-        return true
-    }
-
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
         if(null!=query){
             query.configureFilter()
         }
 
-        query.max = getConfiguredMaxPerPage(10)
         def qres = scheduledExecutionService.listWorkflows(query, params)
         log.debug("service.listWorkflows: "+(System.currentTimeMillis()-start));
         long rest=System.currentTimeMillis()
@@ -2950,7 +2933,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
 
-        if (!apiPaginationEnabled){
+        if (!configurationService.getBoolean('api.paginatejobs.enable',true)){
             query.max = null
             query.offset = null
         }

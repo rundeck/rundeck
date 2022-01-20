@@ -299,6 +299,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -343,6 +344,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -392,6 +394,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -439,6 +442,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -1635,6 +1639,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     def "jobs jobListIds"() {
         given:
+        controller.configurationService = Mock(ConfigurationService)
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
             getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
         }
@@ -1676,6 +1681,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     @Unroll
     def "jobs scheduledJobListIds"() {
         given:
+        controller.configurationService = Mock(ConfigurationService)
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
             getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
         }
@@ -1746,6 +1752,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         def job6 = new ScheduledExecution(createJobParams(jobName:'another job6',groupPath:'', project: params.project)).save()
         def job7 = new ScheduledExecution(createJobParams(jobName:'another job7',groupPath:'', project: params.project)).save()
 
+        controller.configurationService = new ConfigurationService()
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = new ScheduledExecutionService()
         controller.scmService = Mock(ScmService)
@@ -1795,8 +1802,10 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
 
         def query = new ScheduledExecutionQuery()
+
         grailsApplication.config.rundeck.gui.paginatejobs.enabled = requirePagination
         grailsApplication.config.rundeck.gui.paginatejobs.max.per.page = maxPerPage
+        controller.configurationService.setAppConfig(grailsApplication.config.rundeck)
         query.offset = offset
 
         when:
@@ -1819,6 +1828,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     def "jobs list next execution times"() {
         given:
+        controller.configurationService = Mock(ConfigurationService)
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
             getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
         }
@@ -2165,6 +2175,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     def "test project job list handler"() {
         given:
+        controller.configurationService = Mock(ConfigurationService)
         controller.scmService = Mock(ScmService)
         controller.frameworkService = Mock(FrameworkService) {
             getRundeckFramework() >> Mock(Framework) {
