@@ -554,7 +554,7 @@ public class RundeckConfigBase {
                 Per per;
                 @Data
                 public static class Per {
-                    String page;
+                    Integer page;
                 }
             }
         }
