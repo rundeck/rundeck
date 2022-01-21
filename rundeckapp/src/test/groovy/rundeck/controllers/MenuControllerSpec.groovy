@@ -16,9 +16,9 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
-import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
@@ -76,7 +76,6 @@ import spock.lang.Unroll
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
-import java.lang.reflect.Method
 import java.nio.file.Files
 
 /**
@@ -1823,6 +1822,97 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         false             | 5      | "5"        | 7
         true              | 4      | "3"        | 3
         true              | 6      | "3"        | 1
+
+    }
+
+    @Unroll
+    def "api jobs list pagination"() {
+        given:
+
+        params.project='test'
+        def job1 = new ScheduledExecution(createJobParams(jobName:'another job1',groupPath: '', project: params.project)).save()
+        def job2 = new ScheduledExecution(createJobParams(jobName:'another job2',groupPath:'', project: params.project)).save()
+        def job3 = new ScheduledExecution(createJobParams(jobName:'another job3',groupPath:'', project: params.project)).save()
+        def job4 = new ScheduledExecution(createJobParams(jobName:'another job4',groupPath:'', project: params.project)).save()
+        def job5 = new ScheduledExecution(createJobParams(jobName:'another job5',groupPath:'', project: params.project)).save()
+        def job6 = new ScheduledExecution(createJobParams(jobName:'another job6',groupPath:'', project: params.project)).save()
+        def job7 = new ScheduledExecution(createJobParams(jobName:'another job7',groupPath:'', project: params.project)).save()
+
+        controller.configurationService = new ConfigurationService()
+        controller.apiService = Mock(ApiService){
+            requireApi(_, _) >> true
+            requireExists(_,_,_) >> true
+        }
+        controller.scheduledExecutionService = new ScheduledExecutionService()
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.scheduledExecutionService.applicationContext = applicationContext
+
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+                isClusterModeEnabled() >> false
+            }
+
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+            authorizeProjectResource(_, _, _, _) >> true
+            authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job1.groupPath, name: job1.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job2.groupPath, name: job2.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job3.groupPath, name: job3.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job4.groupPath, name: job4.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job5.groupPath, name: job5.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job6.groupPath, name: job6.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job7.groupPath, name: job7.jobName]]]
+        }
+
+        controller.scheduledExecutionService.frameworkService = controller.frameworkService
+
+
+        def query = new ScheduledExecutionQuery()
+        request.api_version = ApiVersions.V18
+
+        grailsApplication.config.rundeck.gui.paginatejobs.enabled = guiPagEnabled
+        grailsApplication.config.rundeck.gui.paginatejobs.max.per.page = 5
+        if(apiPagDisabled) grailsApplication.config.rundeck.api.paginatejobs.enabled = false
+        else grailsApplication.config.rundeck.api.paginatejobs = null
+        controller.configurationService.setAppConfig(grailsApplication.config.rundeck)
+        query.offset = offset
+        query.max = apiPagMax
+
+        when:
+        def model = controller.apiJobsListv2(query)
+
+        then:
+        response.xml.count == count
+
+        where:
+        guiPagEnabled | apiPagDisabled| offset | apiPagMax  | count
+        true          | false         | 5      | 3          | 2
+        false         | true          | 3      | 3          | 7
+        true          | false         | 0      | 3          | 3
+        true          | false         | 7      | 3          | 0
+        false         | true          | 5      | 5          | 7
+        true          | false         | 4      | 3          | 3
+        true          | false         | 6      | 3          | 1
 
     }
 

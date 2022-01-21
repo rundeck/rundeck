@@ -5399,43 +5399,6 @@ class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnit
         output[3].workflow == [[script:"script"]]
 
     }
-
-    def "list workflows by api call with pagination enabled"() {
-        given:
-        grailsApplication.config.rundeck.gui.paginatejobs.enabled = true
-        def job1 = new ScheduledExecution(createJobParams()).save()
-        def job2 = new ScheduledExecution(createJobParams(jobName:'another job',groupPath: '')).save()
-        def job3 = new ScheduledExecution(createJobParams(jobName:'another job3',groupPath:'')).save()
-        def job4 = new ScheduledExecution(createJobParams(jobName:'another job4',groupPath:'')).save()
-        def job5 = new ScheduledExecution(createJobParams(jobName:'another job5',groupPath:'')).save()
-        def job6 = new ScheduledExecution(createJobParams(jobName:'another job6',groupPath:'')).save()
-        def job7 = new ScheduledExecution(createJobParams(jobName:'another job7',groupPath:'')).save()
-        def job8 = new ScheduledExecution(createJobParams(jobName:'another job8',groupPath:'')).save()
-        def job9 = new ScheduledExecution(createJobParams(jobName:'another job9',groupPath:'')).save()
-        def job10 = new ScheduledExecution(createJobParams(jobName:'another job10',groupPath:'')).save()
-        def job11 = new ScheduledExecution(createJobParams(jobName:'another job11',groupPath:'')).save()
-        def input = Mock(JobQueryInput){
-            getMax()>>queryMax
-            getProjFilter()>>'AProject'
-            getGroupPath()>>groupPath
-            getPaginatedRequired()>>true
-        }
-        service.applicationContext = applicationContext
-        when:
-        def result = service.listWorkflows(input, [:])
-        then:
-        result != null
-        result.schedlist.size()==count
-        result.total == total
-
-        where:
-        queryMax |  groupPath    | total | count
-        0        |  'some/where' | 1     | 1
-        0        |  '-'          | 10    | 10
-        1        |  '-'          | 10    | 1
-        null     |  '-'          | 10    | 10
-    }
-
 }
 
 class TriggersExtenderImpl implements TriggersExtender {
