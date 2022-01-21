@@ -236,25 +236,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }.sort { a, b -> a.name <=> b.name }
     }
 
-    boolean getPaginationEnabled() {
-        grailsApplication.config.rundeck.gui.paginatejobs.enabled in ["true",true]
-    }
-
     def getMatchedNodesMaxCount() {
         !grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.isEmpty() ? grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.toInteger() : null
     }
 
-    def getConfiguredMaxPerPage(int defaultMax) {
-        if(paginationEnabled) {
-            return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
-        }
-        return defaultMax
-    }
-
-    def Map finishquery ( query,params,model){
+    Map finishquery ( query,params,model){
 
         if(!params.max){
-            params.max=getConfiguredMaxPerPage(10)
+            params.max=query.max
         }
         if(!params.offset){
             params.offset=0
@@ -290,7 +279,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
 
-        def tmod=[max: query?.max?query.max:getConfiguredMaxPerPage(10),
+        def tmod=[max: query?query.max:null,
             offset:query?.offset?query.offset:0,
             paginateParams:paginateParams,
             displayParams:displayParams]
@@ -315,10 +304,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Integer queryMax=query.max
         Integer queryOffset=query.offset
 
-        if(paginationEnabled) {
-            if (!queryMax) {
-                queryMax = getConfiguredMaxPerPage(10)
-            }
+        if(query.paginatedRequired) {
             if (!queryOffset) {
                 queryOffset = 0
             }
@@ -343,8 +329,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def scheduled = crit.list{
             if(queryMax && queryMax>0){
                 maxResults(queryMax)
-            }else{
-//                maxResults(10)
             }
             if(queryOffset){
                 firstResult(queryOffset.toInteger())
@@ -422,7 +406,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(query && query.sortBy && xfilters[query.sortBy]){
                 order(xfilters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
             }else{
-                if(paginationEnabled) {
+                if(query.paginatedRequired) {
                     order("groupPath","asc")
                 }
                 order("jobName","asc")
@@ -508,7 +492,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /**
      * return a map of defined group path to count of the number of jobs with that exact path
      */
-    def Map getGroups(project, AuthContext authContext){
+    Map getGroups(project, AuthContext authContext){
         def groupMap=[:]
 
         //collect all jobs and authorize the user for the set of available Job actions
@@ -599,7 +583,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * @return Map of job ID to boolean, indicating whether the job was claimed
      */
-    def Map claimScheduledJobs(
+    Map claimScheduledJobs(
             String toServerUUID,
             String fromServerUUID = null,
             boolean selectAll = false,
@@ -878,7 +862,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
           ]
      * </pre>
      */
-    def Map getGroupTree(project, AuthContext authContext){
+    Map getGroupTree(project, AuthContext authContext){
         def groupMap = getGroups(project, authContext)
         def tree=[:]
         groupMap.keySet().each{
@@ -1416,7 +1400,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /**
      * Schedule a temp job to execute immediately.
      */
-    def Map scheduleTempJob(AuthContext authContext, Execution e) {
+    Map scheduleTempJob(AuthContext authContext, Execution e) {
         if(!executionService.getExecutionsAreActive()){
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message:msg]
@@ -1532,7 +1516,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param scheduledExecutions
      * @return
      */
-    def Map clusterScheduledJobs(Collection<ScheduledExecution> scheduledExecutions) {
+    Map clusterScheduledJobs(Collection<ScheduledExecution> scheduledExecutions) {
         def map = [ : ]
         if(frameworkService.isClusterModeEnabled()) {
             def serverUUID = frameworkService.getServerUUID()
@@ -3047,8 +3031,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             } else if (params.options instanceof Map) {
                 while (params.options["options[${i}]"]) {
-                    def Map optdefparams = params.options["options[${i}]"]
-                    def Option theopt = new Option(optdefparams)
+                    Map optdefparams = params.options["options[${i}]"]
+                    Option theopt = new Option(optdefparams)
                     scheduledExecution.addToOptions(theopt)
                     theopt.scheduledExecution = scheduledExecution
                     i++
@@ -3860,7 +3844,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param mapConfig
      * @return option remote
      */
-    def Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
+    Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()

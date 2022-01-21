@@ -1,12 +1,10 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import org.hibernate.StaleObjectStateException
-import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.JobDetail
 import org.quartz.Scheduler
 import org.quartz.SimpleTrigger

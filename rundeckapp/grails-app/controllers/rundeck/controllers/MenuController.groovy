@@ -302,6 +302,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
+
+        if(configurationService.getBoolean('gui.paginatejobs.enabled',false)) {
+            query.paginatedRequired = true
+            query.max = configurationService.getInteger('gui.paginatejobs.max.per.page', 10)
+        }else{
+            query.max = null
+            query.offset = null
+        }
+
         def results = jobsFragment(query, JobsScmInfo.MINIMAL)
         results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
@@ -351,6 +360,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
+
+        if(configurationService.getBoolean('gui.paginatejobs.enabled',false)){
+            query.paginatedRequired = true
+            query.max = configurationService.getInteger('gui.paginatejobs.max.per.page', 10)
+        }else{
+            query.max = null
+            query.offset = null
+        }
+
         query.projFilter = params.project
         //test valid project
 
@@ -577,11 +595,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 formatted
         )
     }
+
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
         if(null!=query){
             query.configureFilter()
         }
+
         def qres = scheduledExecutionService.listWorkflows(query, params)
         log.debug("service.listWorkflows: "+(System.currentTimeMillis()-start));
         long rest=System.currentTimeMillis()
@@ -621,7 +641,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_CREATE, query.projFilter)
 
 
-        def Map jobauthorizations=[:]
+        Map jobauthorizations=[:]
 
         //produce map: [actionName:[id1,id2,...],actionName2:[...]] for all allowed actions for jobs
         decisions=decisions.findAll { it.authorized}
@@ -2912,6 +2932,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
+
+        if (!configurationService.getBoolean('api.paginatejobs.enabled',true)){
+            query.max = null
+            query.offset = null
+        }
+
         if (!apiService.requireApi(request, response)) {
             return
         }
