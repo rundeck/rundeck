@@ -310,6 +310,7 @@ server:
     port: 4440
     servlet:
         session:
+            persistent: false
             cookie:
                 http-only: true
             tracking-modes: 'cookie'
