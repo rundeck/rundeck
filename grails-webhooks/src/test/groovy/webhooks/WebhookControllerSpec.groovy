@@ -19,14 +19,18 @@ import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.webhook.DefaultJsonWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookResponder
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.storage.api.Resource
 import spock.lang.Specification
+import spock.lang.Unroll
 
+import javax.rmi.CORBA.Stub
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -77,6 +81,51 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
         0 * controller.webhookService.processWebhook(_,_,_,_)
         response.text == '{"err":"You are not authorized to perform this action"}'
+    }
+
+    @Unroll
+    def "test post Authorization header and secret"() {
+        given:
+        controller.rundeckAuthContextProvider = Mock(AuthContextProvider)
+        controller.rundeckAuthContextEvaluator = Mock(AuthContextEvaluator)
+        controller.webhookService = Mock(MockWebhookService)
+        def mockResourceMeta = Mock(ResourceMeta) {
+            writeContent(_ as OutputStream) >> {
+                OutputStream out = it[0]
+                out.write(keystorevalue.bytes)
+                return keystorevalue.bytes.size()
+            }
+        }
+        def mockResource = Mock(Resource) {
+            getContents() >> mockResourceMeta
+        }
+        def mockTree = Mock(MockStorageTree) {
+            getResource(_) >> mockResource
+        }
+        controller.storageService = Mock(MockStorageService)
+
+        when:
+        request.addHeader(WebhookController.AUTH_HEADER, secretHeader)
+        params.authtoken = "1234"
+        request.method = 'POST'
+        controller.post()
+
+        then:
+        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234", secret: secret)}
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubjectAndProject(_, _) >> { new SubjectAuthContext(null, null) }
+        1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
+        ssCount * controller.storageService.storageTreeWithContext(_) >> { mockTree }
+        phCount * controller.webhookService.processWebhook(_,_,_,_,_) >> { new DefaultWebhookResponder() }
+        response.text == expectedMsg
+
+        where:
+        secret              | secretHeader   | keystorevalue | ssCount   | expectedMsg                              | phCount
+        "AuthMe!!"          | "AuthMe!!"     | null          | 0         | 'ok'                                     |    1
+        "AuthMe!!"          | "something"    | null          | 0         | '{"err":"Failed webhook authorization"}' |    0
+        "keys/hooks/hk1"    | "AuthMe!!"     | 'AuthMe!!'    | 1         | 'ok'                                     |    1
+        "keys/hooks/hk1"    | "AuthMe!!"     | 'wonmatch'    | 1         | '{"err":"Failed webhook authorization"}' |    0
+        "keys/hooks/hk1"    | "wrongval"     | 'AuthMe!!'    | 1         | '{"err":"Failed webhook authorization"}' |    0
+        "wontmatch"         | "AuthMe!!"     | null          | 0         | '{"err":"Failed webhook authorization"}' |    0
     }
 
     def "remove webhook should fail when project params is not present"() {
@@ -163,6 +212,13 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         'GET'       | 405        | 0
         'PUT'       | 405        | 0
         'DELETE'    | 405        | 0
+    }
+
+    interface MockStorageService {
+        Object storageTreeWithContext(Object obj)
+    }
+    interface MockStorageTree {
+        Resource getResource(String path)
     }
 
     interface MockWebhookService {

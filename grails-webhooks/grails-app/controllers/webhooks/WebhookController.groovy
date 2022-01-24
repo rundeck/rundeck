@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -15,13 +16,14 @@ import org.rundeck.core.auth.AuthConstants
 import javax.servlet.http.HttpServletResponse
 
 class WebhookController {
+    static final String AUTH_HEADER = "Authorization"
     static allowedMethods = [post:'POST']
 
     def webhookService
-    def frameworkService
     AuthContextEvaluator rundeckAuthContextEvaluator
     AuthContextProvider rundeckAuthContextProvider
     def apiService
+    def storageService
 
     def admin() {}
 
@@ -146,6 +148,11 @@ class WebhookController {
             return
         }
 
+        if(!authorizeWebhookSecret(authContext, hook, request.getHeader(AUTH_HEADER))) {
+            sendJsonError("Failed webhook authorization")
+            return
+        }
+
         WebhookDataImpl whkdata = new WebhookDataImpl()
         whkdata.webhookUUID = hook.uuid
         whkdata.webhook = hook.name
@@ -174,5 +181,25 @@ class WebhookController {
         List authorizedActions = [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         if(action != AuthConstants.ACTION_ADMIN) authorizedActions.add(action)
         rundeckAuthContextEvaluator.authorizeProjectResourceAny(authContext,AuthConstants.RESOURCE_TYPE_WEBHOOK,authorizedActions,project)
+    }
+
+    @PackageScope
+    boolean authorizeWebhookSecret(AuthContext authContext, Webhook hook, String headerAuthValue) {
+        if(!hook.secret || hook.secret.isEmpty()) return true
+        if(hook.secret.startsWith("keys/")) {
+            try {
+                def keyStorageService = storageService.storageTreeWithContext(authContext)
+                ResourceMeta contents = keyStorageService.getResource(hook.secret).getContents();
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                contents.writeContent(byteArrayOutputStream);
+
+                return headerAuthValue == new String(byteArrayOutputStream.toByteArray());
+            } catch (IOException e) {
+                log.warn("Failed to get webhook storage key: ${hook.secret}", e)
+                return false
+            }
+        } else {
+            return hook.secret == headerAuthValue
+        }
     }
 }

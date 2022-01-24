@@ -41,4 +41,14 @@ databaseChangeLog = {
             }
         }
     }
+    changeSet(author: "Stephen Joyner", id: "3.4.11-webhook-secret") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "webhook", columnName: 'secret')
+            }
+        }
+        addColumn(tableName: "webhook") {
+            column(name: 'secret', type: '${varchar255.type}')
+        }
+    }
 }
