@@ -21,6 +21,7 @@ class Webhook {
     String name
     String project
     String authToken
+    String secret
     String eventPlugin
     String pluginConfigurationJson = '{}'
     boolean enabled = true
@@ -28,6 +29,7 @@ class Webhook {
     static constraints = {
         uuid(nullable: true)
         name(nullable: false)
+        secret(nullable: true)
         project(nullable: false)
         authToken(nullable: false)
         eventPlugin(nullable: false)

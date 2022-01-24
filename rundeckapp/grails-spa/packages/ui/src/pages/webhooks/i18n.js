@@ -20,6 +20,8 @@ const translationStrings = {
       webhookUserHelp:'The authorization username assumed when running this webhook. All ACL policies matching this username will apply.',
       webhookRolesLabel:'Roles',
       webhookRolesHelp:'The authorization roles assumed when running this webhook (comma separated). All ACL policies matching these roles will apply.',
+      webhookSecretLabel:'Secret',
+      webhookSecretHelp:'If you want to authenticate the webhook, put a value in this field or store the value in the key store. All posts to this webhook must have the secret in the Authorization header.',
       webhookPluginLabel:'Choose Webhook Plugin'
     }
   }

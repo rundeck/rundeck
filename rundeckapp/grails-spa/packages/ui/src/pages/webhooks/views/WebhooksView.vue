@@ -10,7 +10,7 @@
         @click="handleAddNew"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
     </div>
   </div>
-  
+
   <div style="display: flex; height: 100%;overflow: hidden;">
     <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 20px;overflow-x: hidden;overflow-y: auto;">
       <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
@@ -72,6 +72,14 @@
                   <div class="form-group"><label>{{ $t('message.webhookRolesLabel') }}</label><input v-model="curHook.roles" class="form-control">
                     <div class="help-block">
                       {{$t('message.webhookRolesHelp')}}
+                    </div>
+                  </div>
+                  <div class="form-group"><label>{{ $t('message.webhookSecretLabel') }}</label><input v-model="curHook.secret" class="form-control">
+                    <key-storage-selector :value="secretInput"
+                                          :allow-upload="true"
+                                          v-on:input="handleKeyStorage($event)"/>
+                    <div class="help-block">
+                      {{$t('message.webhookSecretHelp')}}
                     </div>
                   </div>
                   <div class="form-group">
@@ -159,6 +167,7 @@ import CopyBox from '@rundeck/ui-trellis/lib/components/containers/copybox/CopyB
 import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
 import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
 import WebhookPicker from '@rundeck/ui-trellis/lib/components/widgets/webhook-select/WebhookSelect.vue'
+import KeyStorageSelector from '@rundeck/ui-trellis/lib/components/plugins/KeyStorageSelector.vue'
 
 import {getServiceProviderDescription,
   getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
@@ -199,7 +208,8 @@ export default observer(Vue.extend({
     Tabs,
     Tab,
     WebhookPicker,
-    WebhookTitle
+    WebhookTitle,
+    KeyStorageSelector
   },
   inject: ["rootStore"],
   data() {
@@ -218,7 +228,15 @@ export default observer(Vue.extend({
       dirty: false
     }
   },
+  computed: {
+    secretInput() {
+      return this.curHook.secret ? this.curHook.secret : ''
+    }
+  },
   methods: {
+    handleKeyStorage(val) {
+      Vue.set(this.curHook, "secret", val)
+    },
     input() {
       this.dirty = true
     },
@@ -280,7 +298,7 @@ export default observer(Vue.extend({
       }, (data) => {
         this.dirty = true
       })
-      
+
       this.setValidation(true)
       this.setSelectedPlugin(true)
     },
