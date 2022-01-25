@@ -9,7 +9,7 @@ RUN go install github.com/HeavyHorst/remco/cmd/remco
 
 # Build base container
 ######################
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
@@ -41,13 +41,12 @@ RUN set -euxo pipefail \
     && chmod g+w /etc/passwd
 
 # Add Tini
-ENV TINI_VERSION v0.18.0
-RUN wget -O /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini \
-    && wget -O /tini.asc https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc \
-    && export GNUPGHOME="$(mktemp -d)" &&  echo "disable-ipv6" >> "${GNUPGHOME}/dirmngr.conf" \
-    && gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
-    && gpg --batch --verify /tini.asc /tini \
-    && chmod +x /tini
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc /tini.asc
+RUN gpg --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
+ && gpg --batch --verify /tini.asc /tini
+RUN chmod +x /tini
 
 COPY --from=0 /go/bin/remco /usr/local/bin/remco
 
