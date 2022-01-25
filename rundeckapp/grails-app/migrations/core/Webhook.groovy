@@ -41,14 +41,14 @@ databaseChangeLog = {
             }
         }
     }
-    changeSet(author: "Stephen Joyner", id: "3.4.11-webhook-secret") {
+    changeSet(author: "Stephen Joyner", id: "3.4.11-webhook-auth_config_json") {
         preConditions(onFail: "MARK_RAN") {
             not {
-                columnExists(tableName: "webhook", columnName: 'secret')
+                columnExists(tableName: "webhook", columnName: 'auth_config_json')
             }
         }
         addColumn(tableName: "webhook") {
-            column(name: 'secret', type: '${varchar255.type}')
+            column(name: 'auth_config_json', type: '${text.type}')
         }
     }
 }

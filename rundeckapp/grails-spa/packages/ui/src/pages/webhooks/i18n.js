@@ -20,8 +20,8 @@ const translationStrings = {
       webhookUserHelp:'The authorization username assumed when running this webhook. All ACL policies matching this username will apply.',
       webhookRolesLabel:'Roles',
       webhookRolesHelp:'The authorization roles assumed when running this webhook (comma separated). All ACL policies matching these roles will apply.',
-      webhookSecretLabel:'Secret',
-      webhookSecretHelp:'If you want to authenticate the webhook, put a value in this field or store the value in the key store. All posts to this webhook must have the secret in the Authorization header.',
+      webhookSecretLabel:'Authorization String',
+      webhookSecretHelp:'[Optional] A Webhook Authentication string can be generated to increase security of this webhook. All posts will need to include the generated string in the Authorization header. NOTE: The generated string is only shown once! Make sure you save the string or you will need to generate it again.',
       webhookPluginLabel:'Choose Webhook Plugin'
     }
   }

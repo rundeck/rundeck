@@ -150,7 +150,7 @@ export class Webhook {
     @observable project!: string
     @observable roles!: string
     @observable user!: string
-    @observable secret!: string
+    @observable authString!: string
     @observable eventPluginName!: string
     @observable eventPlugin?: Plugin
 
@@ -175,7 +175,7 @@ export class Webhook {
         this.project = json.project
         this.roles = json.roles
         this.user = json.user
-        this.secret = json.secret
+        this.authString = json.authString
         this.eventPluginName = json.eventPlugin
     }
 
@@ -193,7 +193,7 @@ export class Webhook {
             project: this.project,
             roles: this.roles,
             user: this.user,
-            secret: this.secret,
+            authString: this.authString,
             eventPlugin: this.eventPlugin?.name
         }
     }

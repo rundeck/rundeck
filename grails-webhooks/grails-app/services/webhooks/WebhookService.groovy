@@ -27,6 +27,7 @@ import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
 import javax.servlet.http.HttpServletRequest
 
@@ -159,7 +160,11 @@ class WebhookService {
         hook.uuid = hookData.uuid ?: hook.uuid
         hook.name = hookData.name ?: hook.name
         hook.project = hookData.project ?: hook.project
-        if(hookData.secret != null) hook.secret = hookData.secret
+        if(hookData.authString != null && !hookData.authString.isEmpty()) {
+            hook.authConfigJson = mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:hookData.authString.toString().sha256()))
+        } else if(hookData.authString == '') {
+            hook.authConfigJson = null
+        }
         if(hookData.enabled != null) hook.enabled = hookData.enabled
         if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}){
             hook.discard()
@@ -301,7 +306,7 @@ class WebhookService {
 
     private Map getWebhookWithAuthAsMap(Webhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
-        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, secret: hook.secret, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
+        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, authString: hook.authConfigJson ? "***********" : null, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
 
     Webhook getWebhook(Long id) {
