@@ -77,9 +77,9 @@
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/version.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
-    <g:set var="communityNews" value="${cfg.getBoolean(config: 'communityNews.disabled', default: true)}"/>
+    <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
 
-    <g:if test="${communityNews}">
+    <g:if test="${!communityNewsDisabled}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>
     </g:if>
     <!-- /VUE CSS MODULES -->
@@ -289,7 +289,7 @@
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/tour.js"/>
-<g:if test="${!communityNews in [false,'false']}">
+<g:if test="${!communityNewsDisabled}">
     <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
 
