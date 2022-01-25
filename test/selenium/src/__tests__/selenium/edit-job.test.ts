@@ -19,68 +19,80 @@ beforeAll( async () => {
     jobShowPage = new JobShowPage(ctx, 'SeleniumBasic', '')
 })
 
+const testVars = {
+    group: 'testGroup',
+    newDescriptionText: 'a new job description',
+    optionInputText: ['seleniumOption1', 'xyz'],
+    tags: 'test1,test2,test3,',
+    tagsCount: 3,
+}
+
 beforeAll(async () => {
     await loginPage.login('admin', 'admin')
 })
 
-describe('edit job', () => {
-    beforeEach(async () => {
+describe('editing a job', () => {
+    beforeAll(async () => {
         await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
         await ctx.driver.wait(until.urlContains('/job/edit'), 30000)
     })
-    it('adds and saves tags correctly', async () => {
+    afterAll(async () => {
+        const save = await jobCreatePage.editSaveButton()
+        await save.click()
+    })
+    it('adds tags correctly', async () => {
         const tagsField = await jobCreatePage.tagsInputArea()
         await ctx.driver.wait(until.elementIsVisible(tagsField))
         expect(tagsField).toBeDefined()
-        const tags = 'test1,test2,test3,'
-        tagsField.sendKeys(tags)
+        tagsField.clear()
+        tagsField.sendKeys(testVars.tags)
 
         //ensure they were tag-ified
         const pilledTagsField = await jobCreatePage.tagsPillsArea()
         expect(pilledTagsField).toBeDefined()
-
-        const save = await jobCreatePage.editSaveButton()
-        await save.click()
-
-        await ctx.driver.wait(until.urlContains('/job/show'), 21000)
-
-        //verify tags post save
-        const showTags = await jobShowPage.jobTags()
-        expect(showTags).toHaveLength(3)
     })
-    it('edit job description', async () => {
-        let descriptionTextField = await jobCreatePage.descriptionTextarea()
+    it('edits and saves job description correctly', async () => {
+        const descriptionTextField = await jobCreatePage.descriptionTextarea()
         expect(descriptionTextField).toBeDefined()
 
-        //NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
-        //make textarea visible
+        // NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
+        // make textarea visible
         await ctx.driver.executeScript('jQuery(\'form textarea[name="description"]\').show()')
         await ctx.driver.wait(until.elementIsVisible(descriptionTextField))
-        const newDescriptionText = 'a new job description'
         descriptionTextField.clear()
-        descriptionTextField.sendKeys(newDescriptionText)
+        descriptionTextField.sendKeys(testVars.newDescriptionText)
+    })
+    it('correctly sets the group', async () => {
+        const chooseGroupInput = await jobCreatePage.groupChooseInput()
+        await ctx.driver.wait(until.elementIsVisible(chooseGroupInput))
+        expect(chooseGroupInput).toBeDefined()
+        chooseGroupInput.sendKeys(testVars.group)
+    })
+})
 
-        //save the job
-        const save = await jobCreatePage.editSaveButton()
-        await save.click()
-
+describe('showing the edited job', () => {
+    beforeAll(async () => {
         await ctx.driver.wait(until.urlContains('/job/show'), 15000)
-
-        //verfiy job description
+    })
+    it('verifies job group', async () => {
+        const groupLabel = await jobShowPage.jobGroupText()
+        expect(groupLabel).toEqual(testVars.group)
+    })
+    it('verifies job tags', async () => {
+        const showTags = await jobShowPage.jobTags()
+        expect(showTags).toHaveLength(testVars.tagsCount)
+    })
+    it('verifies job description', async () => {
         const foundText = await jobShowPage.jobDescriptionText()
-        expect(foundText).toEqual(newDescriptionText)
-
-        //verify options exist
+        expect(foundText).toEqual(testVars.newDescriptionText)
+    })
+    it('verifies options exist', async () => {
         await ctx.driver.wait(until.elementLocated(By.css('#optionSelect')), 10000)
-        //get option input field
-        let optionRunInput1 = await jobShowPage.optionInputText('seleniumOption1')
+
+        const optionRunInput1 = await jobShowPage.optionInputText(testVars.optionInputText[0])
         expect(optionRunInput1).toBeDefined()
 
-        let optionRunInput2 = await jobShowPage.optionInputText('xyz')
+        const optionRunInput2 = await jobShowPage.optionInputText(testVars.optionInputText[1])
         expect(optionRunInput2).toBeDefined()
-
-    })
-    it('correctly opens the group choose modal and picks an option', async () => {
-
     })
 })
