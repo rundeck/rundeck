@@ -66,6 +66,12 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckApiConfig {
         ApiTokensConfig tokens;
+        PaginateJobs paginatejobs;
+
+        @Data
+        public static class PaginateJobs {
+            Boolean enabled;
+        }
 
         @Data
         public static class ApiTokensConfig {
@@ -542,7 +548,15 @@ public class RundeckConfigBase {
         @Data
         public static class PaginateJobs {
             Boolean enabled;
-            String maxPerPage;
+            Max max;
+            @Data
+            public static class Max {
+                Per per;
+                @Data
+                public static class Per {
+                    Integer page;
+                }
+            }
         }
 
         @Data

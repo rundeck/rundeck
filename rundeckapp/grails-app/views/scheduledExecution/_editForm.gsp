@@ -64,7 +64,7 @@
                       onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                       class="btn btn-default reset_page_confirm"
                       action="Cancel"/>
-      <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-primary reset_page_confirm "/>
+      <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-primary reset_page_confirm " id="jobUpdateSaveButton"/>
         <span data-bind="if: inPageError()" class="text-warning">
             <g:message code="job.editor.workflow.unsavedchanges.warning" />
         </span>

@@ -16,15 +16,14 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
-import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.SysAclFile
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
@@ -36,8 +35,8 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
+import grails.web.Action
 import org.rundeck.app.acl.AppACLContext
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -46,6 +45,10 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.core.auth.app.NamedAuthRequestUtil
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
@@ -67,9 +70,12 @@ import rundeck.services.UserService
 import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
+import spock.lang.Ignore
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
+import java.lang.annotation.Annotation
 import java.nio.file.Files
 
 /**
@@ -79,6 +85,9 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
 
+    def setup(){
+        session.subject=new Subject()
+    }
     def "home without sidebar feature"(){
         given:
             controller.configurationService=Mock(ConfigurationService)
@@ -289,6 +298,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -333,6 +343,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -382,6 +393,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -429,6 +441,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         given:
         def testUUID = UUID.randomUUID().toString()
         def testUUID2 = UUID.randomUUID().toString()
+        controller.configurationService = Mock(ConfigurationService)
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -519,12 +532,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
                 paramvals             |
                 resource                               |
                 storageExists
-        null   | 'acls'                 |
-                ['read', 'admin', 'app_admin']   |
-                null                                                                                        |
-                null                  |
-                [kind: 'system_acl', type: 'resource']     |
-                false
         null   | 'editSystemAclFile'    |
                 ['update', 'admin', 'app_admin'] |
                 new SysAclFile(id: 'test.aclpolicy', fileType: 'fs')                                        |
@@ -1051,6 +1058,19 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         where:
             exists = false
     }
+
+    @Unroll
+    def "RdAuthorizeApplicationType required for endpoint #endpoint authorize type #type access #access"() {
+        when:
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeApplicationType)
+        then:
+            result.type() == type
+            result.access() == access
+        where:
+            endpoint | type                          | access
+            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_APP_READ
+    }
+
     def "acls does not load metadata for policies"() {
         given:
         def id = 'test.aclpolicy'
@@ -1059,8 +1079,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                controller.aclFileManagerService = Mock(AclFileManagerService){
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id]
         }
 
@@ -1068,7 +1087,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def result = controller.acls()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.fwkConfigDir==confdir
@@ -1088,8 +1106,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
         }
-        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                controller.aclFileManagerService = Mock(AclFileManagerService){
+        controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
         }
 
@@ -1097,7 +1114,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         when:
         def result = controller.acls()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, _) >> true
         0 * controller.aclFileManagerService.validatePolicyFile(*_)
         result
         result.fwkConfigDir==confdir
@@ -1515,7 +1531,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1550,7 +1565,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1584,7 +1598,6 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         params.project = project
         controller.projectToggleSCM()
         then:
-        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         1 * controller.scmService.loadScmConfig(project, 'export')
         1 * controller.scmService.loadScmConfig(project, 'import')
 
@@ -1625,6 +1638,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     def "jobs jobListIds"() {
         given:
+        controller.configurationService = Mock(ConfigurationService)
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
             getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
         }
@@ -1666,6 +1680,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     @Unroll
     def "jobs scheduledJobListIds"() {
         given:
+        controller.configurationService = Mock(ConfigurationService)
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
             getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
         }
@@ -1723,8 +1738,187 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             false      | false      | 0
     }
 
+    @Unroll
+    def "next scheduled jobs pagination"() {
+        given:
+
+        params.project='test'
+        def job1 = new ScheduledExecution(createJobParams(jobName:'another job1',groupPath: '', project: params.project)).save()
+        def job2 = new ScheduledExecution(createJobParams(jobName:'another job2',groupPath:'', project: params.project)).save()
+        def job3 = new ScheduledExecution(createJobParams(jobName:'another job3',groupPath:'', project: params.project)).save()
+        def job4 = new ScheduledExecution(createJobParams(jobName:'another job4',groupPath:'', project: params.project)).save()
+        def job5 = new ScheduledExecution(createJobParams(jobName:'another job5',groupPath:'', project: params.project)).save()
+        def job6 = new ScheduledExecution(createJobParams(jobName:'another job6',groupPath:'', project: params.project)).save()
+        def job7 = new ScheduledExecution(createJobParams(jobName:'another job7',groupPath:'', project: params.project)).save()
+
+        controller.configurationService = new ConfigurationService()
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = new ScheduledExecutionService()
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.scheduledExecutionService.applicationContext = applicationContext
+
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+                isClusterModeEnabled() >> false
+            }
+
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+            authorizeProjectResource(_, _, _, _) >> true
+            authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job1.groupPath, name: job1.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job2.groupPath, name: job2.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job3.groupPath, name: job3.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job4.groupPath, name: job4.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job5.groupPath, name: job5.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job6.groupPath, name: job6.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job7.groupPath, name: job7.jobName]]]
+        }
+
+        controller.scheduledExecutionService.frameworkService = controller.frameworkService
+
+
+        def query = new ScheduledExecutionQuery()
+
+        grailsApplication.config.rundeck.gui.paginatejobs.enabled = requirePagination
+        grailsApplication.config.rundeck.gui.paginatejobs.max.per.page = maxPerPage
+        controller.configurationService.setAppConfig(grailsApplication.config.rundeck)
+        query.offset = offset
+
+        when:
+        def model = controller.jobs(query)
+
+        then:
+        model.nextScheduled.size() == count
+
+        where:
+        requirePagination | offset | maxPerPage | count
+        true              | 5      | "3"        | 2
+        false             | 3      | "3"        | 7
+        true              | 0      | "3"        | 3
+        true              | 7      | "3"        | 0
+        false             | 5      | "5"        | 7
+        true              | 4      | "3"        | 3
+        true              | 6      | "3"        | 1
+
+    }
+
+    @Unroll
+    def "api jobs list pagination"() {
+        given:
+
+        params.project='test'
+        def job1 = new ScheduledExecution(createJobParams(jobName:'another job1',groupPath: '', project: params.project)).save()
+        def job2 = new ScheduledExecution(createJobParams(jobName:'another job2',groupPath:'', project: params.project)).save()
+        def job3 = new ScheduledExecution(createJobParams(jobName:'another job3',groupPath:'', project: params.project)).save()
+        def job4 = new ScheduledExecution(createJobParams(jobName:'another job4',groupPath:'', project: params.project)).save()
+        def job5 = new ScheduledExecution(createJobParams(jobName:'another job5',groupPath:'', project: params.project)).save()
+        def job6 = new ScheduledExecution(createJobParams(jobName:'another job6',groupPath:'', project: params.project)).save()
+        def job7 = new ScheduledExecution(createJobParams(jobName:'another job7',groupPath:'', project: params.project)).save()
+
+        controller.configurationService = new ConfigurationService()
+        controller.apiService = Mock(ApiService){
+            requireApi(_, _) >> true
+            requireExists(_,_,_) >> true
+        }
+        controller.scheduledExecutionService = new ScheduledExecutionService()
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.scheduledExecutionService.applicationContext = applicationContext
+
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+                isClusterModeEnabled() >> false
+            }
+
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            getAuthContextForUserAndRolesAndProject(_,_,_)>>Mock(UserAndRolesAuthContext)
+            authorizeProjectResource(_, _, _, _) >> true
+            authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job1.groupPath, name: job1.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job2.groupPath, name: job2.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job3.groupPath, name: job3.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job4.groupPath, name: job4.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job5.groupPath, name: job5.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job6.groupPath, name: job6.jobName]],
+                                                      [authorized: true,
+                                                       action    : AuthConstants.ACTION_READ,
+                                                       resource  : [group: job7.groupPath, name: job7.jobName]]]
+        }
+
+        controller.scheduledExecutionService.frameworkService = controller.frameworkService
+
+
+        def query = new ScheduledExecutionQuery()
+        request.api_version = ApiVersions.V18
+
+        grailsApplication.config.rundeck.gui.paginatejobs.enabled = guiPagEnabled
+        grailsApplication.config.rundeck.gui.paginatejobs.max.per.page = 5
+        if(apiPagDisabled) grailsApplication.config.rundeck.api.paginatejobs.enabled = false
+        else grailsApplication.config.rundeck.api.paginatejobs = null
+        controller.configurationService.setAppConfig(grailsApplication.config.rundeck)
+        query.offset = offset
+        query.max = apiPagMax
+
+        when:
+        def model = controller.apiJobsListv2(query)
+
+        then:
+        response.xml.count == count
+
+        where:
+        guiPagEnabled | apiPagDisabled| offset | apiPagMax  | count
+        true          | false         | 5      | 3          | 2
+        false         | true          | 3      | 3          | 7
+        true          | false         | 0      | 3          | 3
+        true          | false         | 7      | 3          | 0
+        false         | true          | 5      | 5          | 7
+        true          | false         | 4      | 3          | 3
+        true          | false         | 6      | 3          | 1
+
+    }
+
     def "jobs list next execution times"() {
         given:
+        controller.configurationService = Mock(ConfigurationService)
         controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
             getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
         }
@@ -2071,6 +2265,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     def "test project job list handler"() {
         given:
+        controller.configurationService = Mock(ConfigurationService)
         controller.scmService = Mock(ScmService)
         controller.frameworkService = Mock(FrameworkService) {
             getRundeckFramework() >> Mock(Framework) {
@@ -2437,110 +2632,32 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
     }
 
     @Unroll
-    def "log storage ajax endpoint #endpoint unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            request.addHeader('x-rundeck-ajax','true')
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+    def "RdAuthorizeSystem required for endpoint #endpoint authorize #access"() {
         when:
-            controller."$endpoint"()
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeSystem)
         then:
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
+            result.value() == access
         where:
-            endpoint << [
-                'logStorageIncompleteAjax',
-                'logStorageMissingAjax',
-                'logStorageAjax',
-            ]
+            endpoint                                | access
+            'logStorageIncompleteAjax'              | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'logStorageMissingAjax'                 | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'logStorageAjax'                        | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'apiLogstorageInfo'                     | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'apiLogstorageListIncompleteExecutions' | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
+            'systemConfig'                          | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
+            'systemInfo'                            | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
     }
+
     @Unroll
-    def "log storage api endpoint #endpoint unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        when:
-            controller."$endpoint"()
-        then:
-            1 * controller.apiService.requireApi(_,_,17)>>true
-            1 * controller.apiService.requireAuthorized(false,_,_)>> {
-                it[1].status=403
-                false
-            }
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
+    @Ignore("TODO: could enforce authorize annotation of every controller Action")
+    def "all methods #method authorize check"() {
+        expect:
+            NamedAuthRequestUtil.requestsFromAnnotations(method).size() >0
         where:
-            endpoint << [
-                'apiLogstorageInfo'
-            ]
-    }
-    @Unroll
-    def "log storage api apiLogstorageListIncompleteExecutions unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        when:
-            controller.apiLogstorageListIncompleteExecutions(new BaseQuery())
-        then:
-            1 * controller.apiService.requireApi(_,_,17)>>true
-
-            1 * controller.apiService.requireAuthorized(false,_,_)>> {
-                it[1].status=403
-                false
-            }
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
-    }
-    def "systemConfig unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        when:
-            controller.systemConfig()
-        then:
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ,
-                 AuthConstants.ACTION_ADMIN,
-                 AuthConstants.ACTION_APP_ADMIN,
-                 AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
+            method << MenuController.declaredMethods.findAll { it.getAnnotation(Action) != null }
     }
 
-    def "systemInfo unauthorized"(){
-        given:
-            controller.apiService=Mock(ApiService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-        when:
-            controller.systemInfo()
-        then:
-            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
-            1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                _,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ,
-                 AuthConstants.ACTION_ADMIN,
-                 AuthConstants.ACTION_OPS_ADMIN]
-            ) >> false
-            response.status==403
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
-
 }

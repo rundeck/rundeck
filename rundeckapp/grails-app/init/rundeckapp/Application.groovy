@@ -30,6 +30,10 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         Application.startArgs = args
         runPrebootstrap()
         ctx = GrailsApp.run(Application, args)
+        if(rundeckConfig.isMigrate()) {
+            println "\nMigrations complete"
+            System.exit(0)
+        }
     }
 
     static void restartServer() {
@@ -61,6 +65,9 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
                 new PropertiesPropertySource("hardcoded-rundeck-props", hardCodedRundeckConfigs)
         )
         environment.propertySources.addFirst(ReloadableRundeckPropertySource.getRundeckPropertySourceInstance())
+        if(rundeckConfig.migrate) {
+            environment.propertySources.addFirst(new MapPropertySource("ensure-migration-flag",["grails.plugin.databasemigration.updateOnStart":true]))
+        }
         loadGroovyRundeckConfigIfExists(environment)
     }
 

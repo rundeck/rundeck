@@ -23,25 +23,25 @@ export default {
   },
   data () {
     return {
-      project: null,
-      rdBase: null,
       resourcesData: {},
-      updatedData:null
+      updatedData:null,
+      watching:false
     }
   },
   watch:{
     updatedData(){
-      window.jobWasEdited()
+        if(this.watching) {
+            if(!_.isEqual(this.resourcesData,this.updatedData)){
+                window.jobWasEdited()
+            }
+        }
     }
   },
   async mounted () {
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-      this.rdBase = window._rundeck.rdBase
-      this.project = window._rundeck.projectName
-      if(window._rundeck && window._rundeck.data){
+    if(window._rundeck && window._rundeck.data){
         this.resourcesData = window._rundeck.data.resourcesData
         this.updatedData = Object.assign({}, this.resourcesData)
-      }
+        this.watching = true
     }
   }
 }

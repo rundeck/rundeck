@@ -7,10 +7,17 @@ def providedTags = findProperty('dockerTags')?: ''
 
 def dockerTags = [].plus(providedTags.split(',').findAll())
 
-if (vTag != 'SNAPSHOT')
-    dockerTags << vNum && dockerTags << resolvedVersion
-else if (dockerTags.size() == 0)
-    dockerTags << vTag
+if(vTag == 'GA'){
+    //only GA tagged with simple number
+    dockerTags << vNum //x.y.z
+}
+if (vTag != 'SNAPSHOT'){
+    //GA or other tags use resolved version
+    dockerTags << resolvedVersion // x.y.z-rc1-DATE OR x.y.z-DATE for GA
+}else if (dockerTags.size() == 0){
+    //SNAPSHOT tag used only if nothing else is specified
+    dockerTags << vTag //SNAPSHOT
+}
 
 task ensureWar {
     def rundeckapp = project(":rundeckapp")

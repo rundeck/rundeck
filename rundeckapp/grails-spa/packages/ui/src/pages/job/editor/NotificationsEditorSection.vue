@@ -1,7 +1,7 @@
 <template>
   <div >
     <notifications-editor :notification-data="notificationData" :event-bus="eventBus" v-if="notificationData" @changed="changed"/>
-    <json-embed :output-data="updatedData" field-name="jobNotificationsJson"/>
+    <json-embed :output-data="updatedData.notifications" field-name="jobNotificationsJson"/>
   </div>
 </template>
 
@@ -23,28 +23,27 @@ export default {
   },
   data () {
     return {
-      project: null,
-      rdBase: null,
       notificationData: null,
-      updatedData:null
+      updatedData: {
+          notifications:[],
+          notifyAvgDurationThreshold:null
+      }
     }
   },
   methods:{
     changed(data){
-      this.updatedData=data
-      //nb: hook to indicate job was editted, defined in jobedit.js
-      window.jobWasEdited()
+        if (!_.isEqual(data, this.updatedData.notifications)) {
+            this.updatedData.notifications = data
+            //nb: hook to indicate job was editted, defined in jobedit.js
+            window.jobWasEdited()
+        }
     }
   },
   async mounted () {
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-      this.rdBase = window._rundeck.rdBase
-      this.project = window._rundeck.projectName
-      if(window._rundeck && window._rundeck.data){
+     if(window._rundeck && window._rundeck.data){
         this.notificationData = window._rundeck.data.notificationData
         this.updatedData=this.notificationData
       }
-    }
   }
 }
 </script>

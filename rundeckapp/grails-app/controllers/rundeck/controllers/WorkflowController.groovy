@@ -37,7 +37,6 @@ import javax.servlet.http.HttpServletResponse
 
 class WorkflowController extends ControllerBase {
     def frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     PluginService pluginService
     StorageService storageService
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider

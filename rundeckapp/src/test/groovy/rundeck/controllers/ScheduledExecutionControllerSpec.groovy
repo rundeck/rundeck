@@ -36,6 +36,8 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -48,6 +50,7 @@ import com.dtolabs.rundeck.core.authentication.Username
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
+import java.lang.annotation.Annotation
 
 /**
  * Created by greg on 7/14/15.
@@ -61,6 +64,9 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         mockCodec(URLCodec)
     }
 
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
+    }
     public static final String TEST_UUID1 = UUID.randomUUID().toString()
 
     private Map createJobParams(Map overrides=[:]){
@@ -74,6 +80,16 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 serverNodeUUID: null,
                 scheduled: true
         ]+overrides
+    }
+
+    def "RdAuthorizeJob required for #endpoint access #access"() {
+        given:
+            def annotation = getControllerMethodAnnotation(endpoint, RdAuthorizeJob)
+        expect:
+            annotation.value() == access
+        where:
+            endpoint             | access
+            'actionMenuFragment' | RundeckAccess.Job.AUTH_APP_READ_OR_VIEW
     }
 
     def "workflow json"() {

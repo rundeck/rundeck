@@ -779,7 +779,7 @@
           bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',
           optionType:"${option?.optionType}",
           enforceType:currentEnforceType,
-          defaultValue:"${enc(attr:option?.defaultValue)}",
+          defaultValue:"${option?.defaultValue}",
           showDefaultValue:"${!option?.secureInput && !option?.isDate}",
           valuesList:"${listvalue ? listvalue : listjoin ? listjoin.join(',') : ''}",
           valuesUrl:"${option?.getRealValuesUrl()?.toString()}"});

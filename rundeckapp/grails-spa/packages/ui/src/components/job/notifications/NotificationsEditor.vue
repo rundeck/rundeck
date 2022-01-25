@@ -250,8 +250,6 @@ export default {
   components: {PluginInfo,PluginConfig,ExtendedDescription,UndoRedo},
   data () {
     return {
-      project: null,
-      rdBase: null,
       notifyAvgDurationThreshold:null,
       pluginProviders: [],
       pluginLabels: {},
@@ -469,12 +467,8 @@ export default {
     }
   },
   async mounted () {
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-      this.rdBase = window._rundeck.rdBase
-      this.project = window._rundeck.projectName
-      this.notifications = [].concat(this.notificationData.notifications || [])
-      this.notifyAvgDurationThreshold = this.notificationData.notifyAvgDurationThreshold
-    }
+    this.notifications = [].concat(this.notificationData.notifications || [])
+    this.notifyAvgDurationThreshold = this.notificationData.notifyAvgDurationThreshold
     this.$on("undo",this.doUndo)
     this.$on("redo",this.doRedo)
     pluginService

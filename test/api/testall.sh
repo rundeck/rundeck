@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
 cd $SRC_DIR
@@ -29,10 +30,30 @@ test_ok(){
 test_fail(){
     echo -e "${TEST_FAIL} $1"
 }
+
+run_test(){
+  i=$1
+  tname=$(basename $i)
+  $SHELL ${i} ${URL} &>$DIR/${tname}.output
+  if [ $? != 0 ] ; then
+      if [ -f $DIR/curl.out ] ; then
+          cat $DIR/curl.out >>  $DIR/${tname}.output
+      fi
+      let myexit=2
+      test_fail "$i"
+      echo "*****************" >> $DIR/testall.output
+      echo "${i}: FAILED" >> $DIR/testall.output
+      echo "*****************" >> $DIR/testall.output
+      cat $DIR/${tname}.output >> $DIR/testall.output
+  else
+      test_ok "$i"
+      rm $DIR/${tname}.output
+  fi
+}
 myexit=0
 
 
-for i in $(ls ./unauthorized-test*.sh)  ; do
+for i in ./unauthorized-test*.sh  ; do
     tname=$(basename $i)
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
@@ -50,31 +71,19 @@ done
 rm $DIR/cookies
 $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" || die "Login: ${TEST_FAIL}"
 
-# prepare a new project
-#$SHELL $SRC_DIR/prepare.sh ${URL} 'test'
+echo dir is "$(pwd)"
 
-TESTS=$(ls test-*.sh)
+set +e
 if [ -n "$TEST_NAME" ] ; then
     TESTS=$(ls $TEST_NAME)
+    for i in $TESTS ; do
+      run_test $i
+    done
+else
+  for i in test-*.sh ; do
+    run_test $i
+  done
 fi
-for i in $TESTS ; do
-    tname=$(basename $i)
-    $SHELL ${i} ${URL} &>$DIR/${tname}.output
-    if [ $? != 0 ] ; then
-        if [ -f $DIR/curl.out ] ; then
-            cat $DIR/curl.out >>  $DIR/${tname}.output
-        fi
-        let myexit=2
-        test_fail "$i"
-        echo "*****************" >> $DIR/testall.output
-        echo "${i}: FAILED" >> $DIR/testall.output
-        echo "*****************" >> $DIR/testall.output
-        cat $DIR/${tname}.output >> $DIR/testall.output
-    else
-        test_ok "$i"
-        rm $DIR/${tname}.output
-    fi
-done
 
 if [ $myexit -ne 0 ] ; then
     cat $DIR/*.output

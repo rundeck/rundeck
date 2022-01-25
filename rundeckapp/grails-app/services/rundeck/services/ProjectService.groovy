@@ -15,21 +15,22 @@
  */
 
 package rundeck.services
+
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFilesystemFramework
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.net.api.Client
+import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
@@ -37,6 +38,7 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
 import grails.async.Promises
+import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
@@ -46,18 +48,19 @@ import org.apache.commons.io.FileUtils
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextEvaluator
-import org.rundeck.app.components.project.BuiltinExportComponents
-import org.rundeck.app.components.project.BuiltinImportComponents
-import org.rundeck.app.components.project.ProjectComponent
-import org.rundeck.core.auth.AuthConstants
-import org.rundeck.util.Toposort
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
+import org.rundeck.app.components.project.BuiltinExportComponents
+import org.rundeck.app.components.project.BuiltinImportComponents
+import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.services.ExecutionFile
+import org.rundeck.app.services.ExecutionFileProducer
+import org.rundeck.core.auth.AuthConstants
+import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
-import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
@@ -66,14 +69,10 @@ import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
-import org.rundeck.app.services.ExecutionFile
-
-import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.function.Function
 import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
@@ -89,14 +88,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
     def grailsApplication
-    def scheduledExecutionService
-    def executionService
-    def fileUploadService
+    ScheduledExecutionService scheduledExecutionService
+    ExecutionService executionService
+    FileUploadService fileUploadService
     def loggingService
     def logFileStorageService
     def workflowService
     ContextACLManager<AppACLContext> aclFileManagerService
-    def scmService
+    ScmService scmService
     def executionUtilService
     def AppAuthContextEvaluator rundeckAuthContextEvaluator
 
@@ -505,7 +504,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     def exportProjectToInstanceAsync(
             IRundeckProject project,
-            Framework framework,
+            IFramework framework,
             String ident,
             ProjectArchiveExportRequest options,
             String iProject,
@@ -625,11 +624,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return
      * @throws ProjectServiceException
      */
-    def exportProjectToFile(
+    @CompileStatic
+    File exportProjectToFile(
         IRundeckProject project, IFramework framework, ProgressListener listener,
         ProjectArchiveExportRequest options, AuthContext authContext
     ) throws ProjectServiceException {
-        def outfile
+        File outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
         } catch (IOException exc) {
@@ -641,7 +641,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         outfile.deleteOnExit()
         outfile
     }
-    def exportProjectToInstance(IRundeckProject project, Framework framework, ProgressListener listener,
+    def exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
                                 ProjectArchiveExportRequest options,String iProject,
                                 String apiToken, String instanceUrl,boolean preserveUUID,
                                 AuthContext authContext
@@ -1510,7 +1510,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 return
             }
             report.ctxProject = projectName
-            if (!report.save()) {
+            if (!report.save(flush: true)) {
                 log.error("[${reportxmlnames[rxml]}] Unable to save report: ${report.errors}")
                 return
             }
@@ -1614,7 +1614,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     log.error("[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}")
                     return
                 }
-                if (!e.save()) {
+                if (!e.save(flush: true)) {
                     execerrors<<"[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}"
                     log.error("[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}")
                     return
@@ -1686,14 +1686,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         execidmap
     }
 
+    static class DeleteResponse{
+        boolean success
+        String error
+    }
     /**
      * Delete a project completely
      * @param project framework project
      * @param framework frameowkr
      * @return map [success:true/false, error: (String errorMessage)]
      */
-    def deleteProject(IRundeckProject project, Framework framework, AuthContext authContext, String username){
-        def result = [success: false]
+    @GrailsCompileStatic
+    DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username){
+        def result = new DeleteResponse(success: false)
         notify('projectWillBeDeleted', project.name)
 
         //disable scm
@@ -1707,14 +1712,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 ExecReport.deleteByCtxProject(project.name)
 
                 //delete all jobs with their executions
-                ScheduledExecution.findAllByProject(project.name).each{ se->
-                    def sedresult=scheduledExecutionService.deleteScheduledExecution(se, true, authContext,username)
+
+                List<ScheduledExecution> jobs = ScheduledExecution.findAllByProject(project.name)
+                for (ScheduledExecution se : jobs) {
+                    ScheduledExecutionService.DeleteJobResult sedresult = scheduledExecutionService.deleteScheduledExecution(se, true, authContext, username)
                     if(!sedresult.success){
                         throw new Exception(sedresult.error)
                     }
                 }
                 //delete all remaining executions
-                def allexecs= Execution.findAllByProject(project.name)
+                List<Execution> allexecs= Execution.findAllByProject(project.name)
                 def other=allexecs.size()
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
                 log.debug("${other} other executions deleted")
@@ -1735,11 +1742,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     throw new Exception("Some components had an error: " + compErrors.join("; "))
                 }
 
-                result = [success: true]
+                result.success= true
             } catch (Exception e) {
                 status.setRollbackOnly()
                 log.error("Failed to delete project ${project.name}", e)
-                result = [error: "Failed to delete project ${project.name}: ${e.message}", success: false]
+                result.error= "Failed to delete project ${project.name}: ${e.message}"
+                result.success=false
             }
         }
         //if success, delete framework dir

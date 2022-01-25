@@ -30,8 +30,13 @@
                 </RecycleScroller>
             </Skeleton>
         </div>
-        <div class="widget-section" style="height: 40px; flex-grow: 0; flex-shrink: 0;border-top: solid 1px grey; padding-left: 10px">
-            <a class="text-info" :href="allProjectsLink" @click@keypress.enter="handleSelect">View All Projects</a>
+             <div class="btn-group btn-group-justified" style="height: 40px; flex-grow: 0; flex-shrink: 0; border-top: solid 1px grey;">
+                <a href="allProjectsLink" @click.prevent="allClicked" @keypress.enter.prevent="allClicked" class="btn text-info">
+                <i class="far fa-eye"></i>
+                View All</a>
+                <a href="/resources/createProject" class="btn text-info">
+                <i class="fas fa-plus-circle"></i>
+                Create Project</a>
         </div>
     </div>
 </template>
@@ -108,7 +113,7 @@ export default class ProjectSelect extends Vue {
         this.$emit('project:selected', project)
     }
 
-    allClickekd() {
+    allClicked() {
         this.$emit('project:select-all')
     }
 }

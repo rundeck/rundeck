@@ -21,10 +21,11 @@ import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import grails.web.mapping.LinkGenerator
+import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 
@@ -40,8 +41,6 @@ class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
     def frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
-    def userService
     def configurationService
     LinkGenerator grailsLinkGenerator
 
@@ -92,27 +91,17 @@ class ApiController extends ControllerBase{
      * @param name
      * @return
      */
+
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
+        description = 'Read System Metrics'
+    )
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
         }
 
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-            authContext,
-            AuthConstants.RESOURCE_TYPE_SYSTEM,
-            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-        )) {
-            return apiService.renderErrorFormat(
-                response,
-                [
-                    status: HttpServletResponse.SC_FORBIDDEN,
-                    code  : 'api.error.item.unauthorized',
-                    args  : ['Read System Metrics', 'Rundeck', ""],
-                    format: 'json'
-                ]
-            )
-        }
+
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
         def globalEnabled=configurationService.getBoolean("metrics.enabled", true) &&
                           configurationService.getBoolean("metrics.api.enabled", true)
@@ -469,24 +458,15 @@ class ApiController extends ControllerBase{
     /**
      * /api/1/system/info: display stats and info about the server
      */
+    @RdAuthorizeSystem(
+        value = RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,
+        description = 'Read System Info'
+    )
     def apiSystemInfo(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-            authContext,
-            AuthConstants.RESOURCE_TYPE_SYSTEM,
-            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-        )) {
-            return apiService.renderErrorFormat(
-                response,
-                [
-                    status: HttpServletResponse.SC_FORBIDDEN,
-                    code  : 'api.error.item.unauthorized', args: ['Read System Info', 'Rundeck', ""]
-                ]
-            )
-        }
+
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")
         String appVersion= grailsApplication.metadata['info.app.version']

@@ -309,6 +309,10 @@ $black:                      $grey-900;
     --text-muted-color:           var(--medium-grey);
     --text-secondary-color:       var(--text-muted-color);
 
+    // List Items
+    --list-item-background-color: var(--white);
+    --list-item-border-color: var(--grey-400);
+
     // Panels
     --panel-background-color: var(--background-color-lvl2);
 

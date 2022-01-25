@@ -54,6 +54,28 @@ class ApplicationTest extends Specification {
         propertiesLoaded.contains("rundeck.config.location")
         propertiesLoaded.contains("rundeck-config-groovy")
 
+        cleanup:
+        System.clearProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)
+    }
+
+    def "setEnvironment adds liquibase migration prop with migration cli option"() {
+
+        when:
+        Application.rundeckConfig = new RundeckInitConfig()
+        Application.rundeckConfig.cliOptions.migrate = true
+        Properties runtimeProps = new Properties()
+        runtimeProps.setProperty(RundeckInitializer.PROP_REALM_LOCATION,"fake")
+        runtimeProps.setProperty(RundeckInitializer.PROP_LOGINMODULE_NAME,"fake")
+        Application.rundeckConfig.runtimeConfiguration = runtimeProps
+        Application app = new Application()
+        TestEnvironment env = new TestEnvironment()
+
+        app.setEnvironment(env)
+        List<String> propertiesLoaded = env.propertySources.iterator().collect { it.name }
+
+        then:
+        propertiesLoaded.contains("ensure-migration-flag")
+
     }
 
     def "load default rundeck-config.groovy if file exist and RDECK_CONFIG_LOCATION not set"() {

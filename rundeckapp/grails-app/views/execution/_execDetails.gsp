@@ -358,7 +358,7 @@
         </tr>
     </g:if>
     <g:if test="${execdata.orchestrator}">
-        <tr>
+        <tr id="exec_detail_orchestrator">
             <td class="displabel"><g:message code="scheduledExecution.property.orchestrator.prompt" /></td>
             <td class="container">
                 <g:render template="/execution/execDetailsOrchestrator" model="${[orchestrator: execdata.orchestrator]}"/>

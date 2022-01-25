@@ -117,6 +117,10 @@ class CommandLineSetup {
                 .withDescription("Down migrate or rollback to previous db versions.")
                 .create('r');
 
+        Option migrate =   OptionBuilder.withLongOpt("migrate-only")
+                .withDescription("Run database migrations then exit.")
+                .create('m');
+
         options.addOption(baseDir);
         options.addOption(dataDir);
         options.addOption(serverDir);
@@ -131,6 +135,7 @@ class CommandLineSetup {
         options.addOption(projectDir);
         options.addOption(encryptpwd);
         options.addOption(rollback);
+        options.addOption(migrate);
     }
 
     RundeckCliOptions runSetup(String[] args) {
@@ -191,6 +196,7 @@ class CommandLineSetup {
         }
         if(!StringUtils.isEmpty(cliOptions.tag))
             cliOptions.rollback = true
+        cliOptions.migrate = cl.hasOption('m')
         return cliOptions
 
     }

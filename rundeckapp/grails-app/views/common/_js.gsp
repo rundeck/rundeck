@@ -34,7 +34,7 @@
         executionMarkExecutionIncomplete: '${createLink(controller:"execution",action:"incompleteExecution",params:[format:'json'])}',
         tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput",params:[format:'json'])}',
         reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment',params:projParams)}",
-        executionAjaxExecState: "${createLink(action: 'ajaxExecState', controller: 'execution')}",
+        executionAjaxExecState: "${createLink(action: 'ajaxExecState', controller: 'execution',params:projParams)}",
         executionAjaxExecNodeState: "${createLink(action: 'ajaxExecNodeState', controller: 'execution')}",
         frameworkViewResourceModelConfig: "${createLink(action: 'viewResourceModelConfig', controller: 'framework')}",
         frameworkCheckResourceModelConfig: "${createLink(action: 'checkResourceModelConfig', controller: 'framework')}",

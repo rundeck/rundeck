@@ -724,9 +724,9 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
 
     def "duplicate options"(){
         given:
-        Option opt1 = new Option(name: 'abc')
-        Option opt2 = new Option(name: 'def')
-        Option opt3 = new Option(name: 'ghi')
+        Option opt2 = new Option(name: 'def', sortIndex: 1)
+        Option opt1 = new Option(name: 'abc', sortIndex: 2)
+        Option opt3 = new Option(name: 'ghi', sortIndex: 3)
         def opts = [opt1, opt2, opt3]
         def editopts = opts.collectEntries { [it.name, it] }
         controller.fileUploadService = Mock(FileUploadService)
@@ -747,9 +747,11 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
         result1.actions.undo.action == "remove"
         result1.actions.undo.name == "abc_2"
 
+        editopts[opt1.name].sortIndex == 2
+        editopts[opt2.name].sortIndex == 1
+        editopts[opt3.name].sortIndex == 5
+
         editopts.size() == 5
-
-
     }
     def "duplicate options secure"(){
         given:

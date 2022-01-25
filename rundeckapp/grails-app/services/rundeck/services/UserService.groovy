@@ -22,12 +22,9 @@ import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import groovy.transform.CompileStatic
-import groovy.transform.PackageScope
 import org.hibernate.StaleStateException
 import org.springframework.dao.OptimisticLockingFailureException
-import org.springframework.orm.hibernate5.HibernateOptimisticLockingFailureException
 import rundeck.User
-
 
 @Transactional
 class UserService {

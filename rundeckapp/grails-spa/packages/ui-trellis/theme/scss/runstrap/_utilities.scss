@@ -16,6 +16,17 @@
 .flex{
     display: flex;
 }
+.md\:flex{
+  @media (min-width: $screen-md) {
+    display: flex;
+  }
+}
+.lg\:flex{
+  @media (min-width: $screen-lg) {
+    display: flex;
+  }
+}
+
 .flex--justify-start {
     justify-content: flex-start;
 }
@@ -27,6 +38,10 @@
 }
 .flex--items-center{
     align-items: center;
+}
+
+.flex--direction-col{
+  flex-direction: column;
 }
 
 .flex--grow{
@@ -102,11 +117,39 @@
 }
 
 // -------------------------------------
-//   1. Spacing
+//   3. Spacing
 // -------------------------------------
 .mx-auto{
   margin: 0 auto;
 }
+.mt-6{
+  margin-top: var(--spacing-6);
+}
+
+// -------------------------------------
+//   4. Max-Width
+// -------------------------------------
+  @each $key_name, $value in $max-width {
+    .#{$key_name} {
+      max-width: #{$value};
+    }
+  }
+
+// -------------------------------------
+//   5. Height
+// -------------------------------------
+  .h-full{
+    height: 100%;
+  }
+
+// -------------------------------------
+//   6. Width
+// -------------------------------------
+  .w-full{
+    width: 100%;
+  }
+  
+  
 
 //
 // Utility classes (-Legacy Bootstrap 3)

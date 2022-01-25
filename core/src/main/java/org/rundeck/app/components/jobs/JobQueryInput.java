@@ -48,4 +48,6 @@ public interface JobQueryInput extends BaseQueryInput {
     Integer getDaysAhead();
 
     Boolean getRunJobLaterFilter();
+
+    default Boolean getPaginatedRequired(){return false;};
 }

@@ -18,6 +18,7 @@ package org.rundeck.security
 import com.dtolabs.rundeck.jetty.jaas.LdapEmailPrincipal
 import com.dtolabs.rundeck.jetty.jaas.LdapFirstNamePrincipal
 import com.dtolabs.rundeck.jetty.jaas.LdapLastNamePrincipal
+import grails.core.GrailsApplication
 import grails.events.bus.EventBus
 import org.grails.testing.GrailsUnitTest
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -36,8 +37,9 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
     def "OnApplicationEvent - syncLdap disabled"() {
         setup:
         RundeckJaasAuthenticationSuccessEventListener listener = new RundeckJaasAuthenticationSuccessEventListener()
-        listener.configurationService = Mock(ConfigurationService){
-            1 * getBoolean('rundeck.security.syncLdapUser', false) >> false
+        listener.configurationService = Mock(ConfigurationService) {
+            getGrailsApplication() >> grailsApplication
+            1 * getBoolean('security.syncLdapUser', _) >> false
         }
         listener.targetEventBus = Mock(EventBus)
 
@@ -52,8 +54,9 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
     def "OnApplicationEvent - syncLdap enabled"() {
         setup:
         RundeckJaasAuthenticationSuccessEventListener listener = new RundeckJaasAuthenticationSuccessEventListener()
-        listener.configurationService = Mock(ConfigurationService){
-            1 * getBoolean('rundeck.security.syncLdapUser', false) >> true
+        listener.configurationService = Mock(ConfigurationService) {
+            getGrailsApplication() >> grailsApplication
+            1 * getBoolean('security.syncLdapUser', _) >> true
         }
         listener.targetEventBus = Mock(EventBus)
         Subject subject = new Subject(true, [new LdapEmailPrincipal(email),
@@ -85,9 +88,11 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
 
     def "OnApplicationEvent - syncLdap enabled with non ldap login"() {
         setup:
+        grailsApplication.config.rundeck.security.syncLdapUser = 'true'
         RundeckJaasAuthenticationSuccessEventListener listener = new RundeckJaasAuthenticationSuccessEventListener()
-        listener.configurationService = Mock(ConfigurationService){
-            1 * getBoolean('rundeck.security.syncLdapUser', false) >> true
+        listener.configurationService = Mock(ConfigurationService) {
+            getGrailsApplication() >> grailsApplication
+            1 * getBoolean('security.syncLdapUser', _) >> true
         }
         listener.targetEventBus = Mock(EventBus)
 
@@ -97,7 +102,5 @@ class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification im
         then:
         0 * listener.eventBus.notify(*_)
         noExceptionThrown()
-
-
     }
 }

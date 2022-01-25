@@ -141,6 +141,7 @@ nav {
 }
 
 .nav-bar__list-group--bottom {
+    width: 100%;
     border-top-style: solid;
     border-top-width: 1px;
     border-top-color: #414141;

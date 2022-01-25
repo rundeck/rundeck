@@ -1,33 +1,29 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.GroovyPageUnitTestMixin
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
-import rundeck.AuthToken
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.ScheduledExecution
-import rundeck.User
-import rundeck.UtilityTagLib
-import rundeck.Workflow
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.app.type.AuthorizingAppType
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import rundeck.*
 import rundeck.services.ApiService
-import rundeck.services.FrameworkService
 import rundeck.services.UserService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.lang.annotation.Annotation
 
 class UserControllerSpec extends Specification implements ControllerUnitTest<UserController>, DataTest {
 
@@ -39,12 +35,34 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         mockDomain CommandExec
         mockDomain Workflow
     }
+    def setup(){
+        controller.apiService = Stub(ApiService)
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer)
+        session.subject = new Subject()
+    }
 
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
+    }
+
+    @Unroll
+    def "RdAuthorizeApplicationType required for endpoint #endpoint access #access type #type"() {
+        given:
+            def auth = getControllerMethodAnnotation(endpoint, RdAuthorizeApplicationType)
+        expect:
+            auth.type() == type
+            auth.access() == access
+        where:
+            endpoint  | access                               | type
+            'list'    | RundeckAccess.General.AUTH_APP_ADMIN | AuthConstants.TYPE_USER
+
+    }
+
 
     @Unroll
     def "generate service token unauthorized"() {
@@ -493,6 +511,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         response.status==200
     }
 
+    @Unroll
     def "profile"() {
         setup:
         User user = new User(login: "admin")
@@ -500,25 +519,57 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         createAuthToken(user:user,type:null)
         createAuthToken(user:user,type: AuthTokenType.USER)
         createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
+        createAuthToken(user:user,creator:'admin',type: AuthTokenType.USER)
         def authCtx = Mock(UserAndRolesAuthContext)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                _ * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-
-                1 * getAuthContextForSubject(_) >> authCtx
+        session.user='admin'
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+                1 * applicationType(_,AuthConstants.TYPE_USER)>>Mock(AuthorizingAppType){
+                    1 * isAuthorized(RundeckAccess.General.APP_ADMIN) >> isAdmin
+                    1 * getAuthContext()>>authCtx
+                    0 * _(*_)
+                }
             }
-        controller.apiService = Stub(ApiService)
-
-        controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }
-        controller.metaClass.notFoundResponse = { Object tst, String action, Object name, boolean fg -> false }
-
         when:
         params.login = "admin"
         def result = controller.profile()
 
         then:
-        AuthToken.count() == 3
-        result.tokenTotal == 2
-        result.tokenList.size() == 2
+        AuthToken.count() == 4
+        result.tokenTotal == total
+        result.tokenList.size() == total
+        where:
+            isAdmin | total
+            true    | 3
+            false   | 1
+    }
+
+    def "profile unauthorized"() {
+        setup:
+        User user = new User(login: "admin")
+        user.save()
+        createAuthToken(user:user,type:null)
+        createAuthToken(user:user,type: AuthTokenType.USER)
+        createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
+        controller.apiService = Stub(ApiService)
+
+        controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }
+        controller.metaClass.notFoundResponse = { Object tst, String action, Object name, boolean fg -> false }
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+            1 * applicationType(_,AuthConstants.TYPE_USER)>>Mock(AuthorizingAppType){
+                1 * authorize(RundeckAccess.General.APP_ADMIN)>>{
+                    throw new UnauthorizedAccess('admin','system','resource')
+                }
+            }
+        }
+        controller.rundeckExceptionHandler=Mock(WebExceptionHandler)
+
+        when:
+            session.user='notadmin'
+            params.login = "admin"
+            def result = controller.profile()
+
+        then:
+            1 * controller.rundeckExceptionHandler.handleException(_,_,_ as UnauthorizedAccess)
     }
 
 

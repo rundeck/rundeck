@@ -30,8 +30,8 @@ export class ProjectImporter {
 
         const projectDir = Path.join(this.repoPath, this.projectName)
 
-        console.log('Creating project archive...')
-        console.log(chalk.blue(this.projectName))
+        // console.log('Creating project archive...')
+        // console.log(chalk.blue(this.projectName))
         await exec(`cd ${projectDir} && zip -r ${importFileName} *`)
        
         const projectList = await this.client.projectList()
@@ -39,25 +39,25 @@ export class ProjectImporter {
 
         /* Create project in instance if it does not exist. */
         if (projectList.filter(p => p.name == this.projectName).length == 0) {
-            console.log('Creating project...')
+            // console.log('Creating project...')
             await this.client.projectCreate({name: this.projectName})
         }
 
         /**
          * Project import
          */
-        console.log('Importing project...')
+        // console.log('Importing project...')
         await this.client.projectArchiveImport(this.projectName, await FS.readFile(importFileName), {importConfig: true, importACL: true, jobUuidOption: JobUuidOption.Preserve})
 
 
-        console.log('Importing readme...')
+        // console.log('Importing readme...')
         const readmePath = Path.join(projectDir, `rundeck-${this.projectName}/files/readme.md`)
         if (await FS.exists(readmePath)) {
             const readme = await FS.readFile(readmePath)
             await this.client.projectReadmePut(this.projectName, {contents: readme.toString()})
         }
         
-        console.log('Importing mod...')
+        // console.log('Importing mod...')
         const motdPath = Path.join(projectDir, `rundeck-${this.projectName}/files/motd.md`)
         if (await FS.exists(motdPath)) {
             const motd = await FS.readFile(motdPath)
@@ -69,7 +69,7 @@ export class ProjectImporter {
          */
         const keyRepoPath = Path.join(projectDir, 'system/keys')
         if (await FS.exists(keyRepoPath)) {
-            console.log('Importing keys...')
+            // console.log('Importing keys...')
             const keyFiles = (await exec(`find ${keyRepoPath} -type f`)).stdout.toString().trim().split('\n')
 
             const keys = [] as Key[]
@@ -80,7 +80,7 @@ export class ProjectImporter {
             }
 
             for (const key of keys) {
-                console.log(chalk.blue(key.path))
+                // console.log(chalk.blue(key.path))
 
                 let contentType = 'application/pgp-keys'
                 
@@ -101,7 +101,7 @@ export class ProjectImporter {
          */
         const aclRepoPath = Path.join('projects', this.projectName, 'system/acls')
         if (await FS.exists(aclRepoPath)) {
-            console.log('Importing system ACLs...')
+            // console.log('Importing system ACLs...')
             const aclFiles = (await exec(`find ${aclRepoPath} -type f`)).stdout.toString().trim().split('\n')
             
             const aclList = await this.client.systemAclPolicyList()
@@ -111,7 +111,7 @@ export class ProjectImporter {
             for (const file of aclFiles) {
                 const aclName = Path.basename(file).split('.').slice(0, -1).join('.')
                 const aclContents = await FS.readFile(file)
-                console.log(chalk.blue(aclName))
+                // console.log(chalk.blue(aclName))
                 if (aclNames.indexOf(aclName) < 0)
                     await this.client.systemAclPolicyCreate(aclName, {systemAclPolicyCreateRequest: {contents: aclContents.toString()}})
                 else
@@ -119,6 +119,6 @@ export class ProjectImporter {
             }
         }
 
-        console.log('\n\n       Fin        ')
+        // console.log('\n\n       Fin        ')
     }
 }

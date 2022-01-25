@@ -2,56 +2,80 @@
 html,body{
     background-color: var(--background-color);
 }
-.view {
-    height: 100vh;
-    width: 100vw;
+//.view {
+//    height: 100vh;
+//    width: 100vw;
+//
+//    overflow: hidden;
+//
+//    display: grid;
+//    grid-template-areas:
+//        "header"
+//        "main"
+//        "utility";
+//
+//    grid-template-rows: min-content 1fr 22px;
+//    grid-template-columns: 1fr;
+//}
 
-    overflow: hidden;
-
-    display: grid;
-    grid-template-areas:
-        "header"
-        "main"
-        "utility";
-
-    grid-template-rows: min-content 1fr 22px;
-    grid-template-columns: 1fr;
+body.view{
+    position: relative;
 }
+#section-main{
+    margin-top: 45px;
+    height: calc(100vh - 69px);
+    #section-navbar{
+
+    }
+    #section-navbar{
+
+    }
+}
+#section-header{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+#section-utility{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%; 
+}
+
 
 .view > section {
     overflow: hidden;
 }
 
 #section-header {
-    position: relative;
+    //position: relative;
     z-index: 3;
     overflow: visible;
 }
 
 #section-navbar {
+    display: flex;
+    flex: none;
+    width: 65px;
+    align-items: center;
     overflow: hidden;
     background-color: var(--sidebar-background-color);
 }
 
 #section-content {
     display: flex;
+    flex: 1;
     flex-direction: column;
-    overflow: hidden;
+    overflow: auto;
 }
 
 #section-main {
-    display: grid;
+    display: flex;
     z-index: 1;
-    grid-template-areas: "content";
-    grid-template-rows: 1fr;
-    grid-auto-columns: 1fr;
     overflow: hidden;
     position: relative;
-
-    &.with-project {
-        grid-template-areas: "nav content";
-        grid-auto-columns: 65px 1fr;
-    }
 }
 
 #section-utility {

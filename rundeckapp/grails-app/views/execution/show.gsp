@@ -969,6 +969,7 @@ search
           </div>
           <div class="modal-footer">
             <g:form controller="execution" action="delete" method="post" useToken="true">
+              <g:hiddenField name="project" value="${execution.project}"/>
               <g:hiddenField name="id" value="${execution.id}"/>
               <button type="submit" class="btn btn-default btn-xs " data-dismiss="modal">
                 <g:message code="cancel" />
@@ -1160,7 +1161,7 @@ search
         );
         flowState = new FlowState('${enc(js: execution?.id)}','flowstate',{
         workflow:workflow,
-        loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
+        loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id,params:[project:execution.project]))}",
         outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
         selectedOutputStatusId:'selectedoutputview',
         reloadInterval:1500,

@@ -2,10 +2,11 @@
 .content {
   // border-top: 1px solid #dadada;
   background-color: var(--background-color);
-  overflow: auto;
+  // overflow: auto;
   padding: 15px 15px 0 15px;
+  //overflow: scroll;
   // min-height: calc(100% - 135px);
-  height: 100%;
+  //height: 100%;
   // min-height: calc(100% - 120px);
   // min-height: calc(100% - 150px);
 

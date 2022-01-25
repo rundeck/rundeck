@@ -37,7 +37,6 @@ import javax.servlet.http.HttpServletResponse
 class ScmController extends ControllerBase {
     def scmService
     def frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     def scheduledExecutionService
 
     def static allowedMethods = [

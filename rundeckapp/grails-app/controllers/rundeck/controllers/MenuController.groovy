@@ -40,11 +40,14 @@ import groovy.transform.PackageScope
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeProject
+import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -75,7 +78,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
-    AppAuthContextProcessor rundeckAuthContextProcessor
     FeatureService featureService
 
     def configurationService
@@ -212,7 +214,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def map = it.toMap()
             def data = [
                     status: it.executionState,
-                    executionHref: createLink(controller: 'execution', action: 'show', absolute: true, id: it.id),
+                    executionHref: createLink(controller: 'execution', action: 'show', absolute: true, id: it.id, params:[project:it.project]),
                     executionId: it.id,
                     duration: (it.dateCompleted?:new Date()).time - it.dateStarted.time
             ]
@@ -300,6 +302,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return redirect(jobListLinkHandler.generateRedirectMap([project:params.project]))
             }
         }
+
+        if(configurationService.getBoolean('gui.paginatejobs.enabled',false)) {
+            query.paginatedRequired = true
+            query.max = configurationService.getInteger('gui.paginatejobs.max.per.page', 10)
+        }else{
+            query.max = null
+            query.offset = null
+        }
+
         def results = jobsFragment(query, JobsScmInfo.MINIMAL)
         results.execQueryParams=query.asExecQueryParams()
         results.reportQueryParams=query.asReportQueryParams()
@@ -349,6 +360,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                                                         code: 'api.error.parameter.required', args: ['project']])
         }
+
+        if(configurationService.getBoolean('gui.paginatejobs.enabled',false)){
+            query.paginatedRequired = true
+            query.max = configurationService.getInteger('gui.paginatejobs.max.per.page', 10)
+        }else{
+            query.max = null
+            query.offset = null
+        }
+
         query.projFilter = params.project
         //test valid project
 
@@ -575,11 +595,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 formatted
         )
     }
+
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
         if(null!=query){
             query.configureFilter()
         }
+
         def qres = scheduledExecutionService.listWorkflows(query, params)
         log.debug("service.listWorkflows: "+(System.currentTimeMillis()-start));
         long rest=System.currentTimeMillis()
@@ -619,7 +641,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_CREATE, query.projFilter)
 
 
-        def Map jobauthorizations=[:]
+        Map jobauthorizations=[:]
 
         //produce map: [actionName:[id1,id2,...],actionName2:[...]] for all allowed actions for jobs
         decisions=decisions.findAll { it.authorized}
@@ -870,92 +892,36 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def executionMode(){
         def executionModeActive=configurationService.executionModeActive
-
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        def authAction=executionModeActive?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS
-
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                authAction, 'for', 'Rundeck')) {
-            return
-        }
-
-
+        authorizingSystem.authorize(
+            executionModeActive?
+                RundeckAccess.System.OPS_DISABLE_EXECUTION:
+                RundeckAccess.System.OPS_ENABLE_EXECUTION
+        )
     }
     def storage(){
         boolean showProjects = params.project ? false : true
         [showProjects: showProjects]
     }
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_EXPORT)
     def projectExport() {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!params.project) {
-            return renderErrorView('Project parameter is required')
-        }
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        rundeckAuthContextProcessor.authResourceForProject(params.project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT]
-                ),
-                AuthConstants.ACTION_EXPORT, 'Project', params.project
-        )) {
-            return
-        }
         [projectComponentMap: projectService.getProjectComponents()]
-    }
-    def projectImport() {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!params.project) {
-            return renderErrorView('Project parameter is required')
-        }
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        rundeckAuthContextProcessor.authResourceForProject(params.project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT]
-                ),
-                AuthConstants.ACTION_IMPORT, 'Project', params.project
-        )) {
-            return
-        }
-        [projectComponentMap: projectService.getProjectComponents()]
-    }
-    def projectDelete() {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!params.project) {
-            return renderErrorView('Project parameter is required')
-        }
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        rundeckAuthContextProcessor.authResourceForProject(params.project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_DELETE]
-                ),
-                AuthConstants.ACTION_DELETE, 'Project', params.project
-        )) {
-            return
-        }
     }
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_IMPORT)
+    def projectImport() {
+        [projectComponentMap: projectService.getProjectComponents()]
+    }
+
+    @RdAuthorizeProject(RundeckAccess.General.AUTH_APP_DELETE)
+    def projectDelete() {
+
+    }
+
+    @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
     public def resumeIncompleteLogStorage(Long id){
         withForm{
 
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-            if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                            authContext,
-                            AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                    ),
-                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
-                return
-            }
             logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID,id)
 //            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
             flash.message="Resumed log storage requests"
@@ -967,23 +933,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             renderErrorView([:])
         }
     }
+    @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
     public def resumeIncompleteLogStorageAjax(Long id){
         withForm{
 
             g.refreshFormTokensHeader()
 
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-            if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                            authContext,
-                            AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                    ),
-                    response,
-                    [AuthConstants.ACTION_ADMIN, 'for', 'Rundeck'].toArray())) {
-                return
-            }
             logFileStorageService.resumeIncompleteLogStorageAsync(frameworkService.serverUUID,id)
 //            logFileStorageService.resumeCancelledLogStorageAsync(frameworkService.serverUUID)
             def message="Resumed log storage requests"
@@ -1011,37 +966,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ])
         }
     }
+    @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN)
     def logStorage() {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                AuthConstants.ACTION_READ, 'System configuration'
-        )) {
-            return
-        }
     }
+
     /**
      * Remove outstanding queued requests
      * @return
      */
+    @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
     def haltIncompleteLogStorage(){
         withForm{
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-            if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                            authContext,
-                            AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                    ),
-                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
-                return
-            }
             logFileStorageService.haltIncompleteLogStorage(frameworkService.serverUUID)
             flash.message="Unqueued incomplete log storage requests"
             return redirect(action: 'logStorage', params: [project: params.project])
@@ -1052,19 +989,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         }
     }
+
+    @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
     def cleanupIncompleteLogStorage(Long id){
         withForm{
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-            if (unauthorizedResponse(
-                    rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                            authContext,
-                            AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                    ),
-                    AuthConstants.ACTION_ADMIN, 'for', 'Rundeck')) {
-                return
-            }
             def count=logFileStorageService.cleanupIncompleteLogStorage(frameworkService.serverUUID,id)
             flash.message="Removed $count log storage requests"
             return redirect(action: 'logStorage', params: [project: params.project])
@@ -1075,23 +1004,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         }
     }
+
+    @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
     public def cleanupIncompleteLogStorageAjax(Long id){
         withForm{
 
             g.refreshFormTokensHeader()
 
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-            if (!apiService.requireAuthorized(
-                    rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                            authContext,
-                            AuthConstants.RESOURCE_TYPE_SYSTEM,
-                            [ AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                    ),
-                    response,
-                    [AuthConstants.ACTION_ADMIN, 'for', 'Rundeck'].toArray())) {
-                return
-            }
             def count=logFileStorageService.cleanupIncompleteLogStorage(frameworkService.serverUUID,id)
             def message="Removed $count log storage requests"
             withFormat{
@@ -1111,22 +1031,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ])
         }
     }
+
+    @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN)
     def logStorageIncompleteAjax(BaseQuery query){
         if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            ),
-                AuthConstants.ACTION_READ, 'Log Storage'
-        )) {
-            return
-        }
         def total=logFileStorageService.countIncompleteLogStorageRequests()
         def list = logFileStorageService.listIncompleteRequests(
                 frameworkService.serverUUID,
@@ -1174,22 +1085,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
+    @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN)
     def logStorageMissingAjax(BaseQuery query){
         if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                AuthConstants.ACTION_READ, 'Log Storage'
-        )) {
-            return
-        }
         def totalc=logFileStorageService.countExecutionsWithoutStorageRequests(frameworkService.serverUUID)
         def list = logFileStorageService.listExecutionsWithoutStorageRequests(
                 frameworkService.serverUUID,
@@ -1219,39 +1120,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
     }
+    @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN)
     def logStorageAjax(){
         if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN,AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                AuthConstants.ACTION_READ, 'Log Storage'
-        )) {
-            return
-        }
         def data = logFileStorageService.getStorageStats()
         data.retryDelay=logFileStorageService.getConfiguredStorageRetryDelay()
         return render(contentType: 'application/json', text: data + [enabled: data.pluginName ? true : false] as JSON)
     }
 
+    @RdAuthorizeSystem(value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN, description = 'Read System Configuration')
     def systemConfig(){
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                AuthConstants.ACTION_READ, 'System configuration')) {
-            return
-        }
         if(!grailsApplication.config.dataSource.jndiName &&
                 grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
             flash.error=message(code: "development.mode.warning")
@@ -1649,18 +1531,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
 
+    @RdAuthorizeApplicationType(
+        type = AuthConstants.TYPE_SYSTEM_ACL,
+        access = RundeckAccess.General.AUTH_APP_READ
+    )
     def acls() {
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
-                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-                ),
-                AuthConstants.ACTION_READ, 'System configuration')) {
-            return
-        }
         systemAclsModel()
     }
 
@@ -1999,18 +1874,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(controller: 'menu', action: 'acls')
     }
 
+    @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN)
     def systemInfo (){
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                    authContext,
-                    AuthConstants.RESOURCE_TYPE_SYSTEM,
-                    [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                AuthConstants.ACTION_READ, 'System information')) {
-            return
-        }
         if(!grailsApplication.config.dataSource.jndiName &&
                 grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
             flash.error=message(code: "development.mode.warning")
@@ -2572,23 +2437,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     * API Actions
      */
 
+    @RdAuthorizeSystem(value=RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,description='Read Logstorage Info')
     def apiLogstorageInfo() {
         if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                response,
-                [AuthConstants.ACTION_READ, 'System','Logstorage Info'].toArray()
-        )) {
-            return
-        }
 
         def data = logFileStorageService.getStorageStats()
         def propnames = [
@@ -2626,6 +2480,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
 
+    @RdAuthorizeSystem(value=RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,description='Read Logstorage Info')
     def apiLogstorageListIncompleteExecutions(BaseQuery query) {
         if (!apiService.requireApi(request, response, ApiVersions.V17)) {
             return
@@ -2640,20 +2495,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
                     ]
             )
-        }
-
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-        if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                response,
-                [AuthConstants.ACTION_READ, 'System','Logstorage Info'].toArray()
-        )) {
-            return
         }
 
 
@@ -2732,21 +2573,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
 
+    @RdAuthorizeSystem(RundeckAccess.General.AUTH_OPS_ADMIN)
     def apiResumeIncompleteLogstorage() {
         if (!apiService.requireApi(request, response, ApiVersions.V17)) {
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
-        if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-                ),
-                response,
-                [AuthConstants.ACTION_ADMIN, 'System','Logstorage'].toArray()
-        )) {
             return
         }
 
@@ -3103,6 +2932,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
+
+        if (!configurationService.getBoolean('api.paginatejobs.enabled',true)){
+            query.max = null
+            query.offset = null
+        }
+
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -3365,18 +3200,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def projectToggleSCM(){
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        rundeckAuthContextProcessor.authResourceForProject(params.project),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-                ),
-                AuthConstants.ACTION_CONFIGURE, 'Project', params.project
-        )) {
-            return
-        }
         def ePluginConfig = scmService.loadScmConfig(params.project, 'export')
         def iPluginConfig = scmService.loadScmConfig(params.project, 'import')
         def eConfiguredPlugin = null
@@ -3400,10 +3225,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }else{
             if(eConfiguredPlugin){
-                scmService.enablePlugin(authContext, 'export', params.project, eConfiguredPlugin.name)
+                scmService.enablePlugin(projectAuthContext, 'export', params.project, eConfiguredPlugin.name)
             }
             if(iConfiguredPlugin){
-                scmService.enablePlugin(authContext, 'import', params.project, iConfiguredPlugin.name)
+                scmService.enablePlugin(projectAuthContext, 'import', params.project, iConfiguredPlugin.name)
             }
         }
         return redirect(controller:'menu',action:'jobs', params: [project: params.project])

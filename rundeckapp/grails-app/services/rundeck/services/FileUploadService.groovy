@@ -306,7 +306,7 @@ class FileUploadService {
         if ((!isJobRef && jfr.jobId != jobid) || jfr.recordName != option) {
             return [valid: false, error: 'invalid', args: [jfr.uuid, jobid, option]]
         }
-        if (!isJobRef && jfr.execution != null && execution?.id != jfr.execution.id) {
+        if (!isJobRef && jfr.execution != null && !jfr.execution.willRetry && execution?.id != jfr.execution.id ) {
             return [valid: false, error: 'inuse', args: [jfr.uuid, jfr.execution.id]]
         }
         if (!jfr.canBecomeRetained()) {
@@ -566,7 +566,13 @@ class FileUploadService {
     def executionComplete(ExecutionCompleteEvent e) {
         JobFileRecord.withNewSession {
             findRecords(e.execution, RECORD_TYPE_OPTION_INPUT)?.each {
-                changeFileState(it, FileUploadPlugin.ExternalState.Used)
+                if(e.execution.willRetry){
+                    def expirationDate = (new Date().time + tempfileExpirationDelay)
+                    it.setExpirationDate(new Date(expirationDate))
+                    it.save(flush: true)
+                } else {
+                    changeFileState(it, FileUploadPlugin.ExternalState.Used)
+                }
             }
         }
     }

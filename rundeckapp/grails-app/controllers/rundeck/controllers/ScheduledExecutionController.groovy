@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import org.apache.commons.collections.list.TreeList
 import org.apache.http.HttpHost
@@ -58,11 +59,15 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler
 import org.apache.http.impl.cookie.DateParseException
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
+import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.IdParameter
+import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -143,7 +148,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
     def ExecutionService executionService
     def FrameworkService frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     def ScheduledExecutionService scheduledExecutionService
     def OrchestratorPluginService orchestratorPluginService
 	def NotificationService notificationService
@@ -268,53 +272,35 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * used by jobs page, displays actions for the job as li's
      */
+
+    @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
+    @GrailsCompileStatic
     def actionMenuFragment(){
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext,
-                scheduledExecution,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-                ),
-            AuthConstants.ACTION_VIEW,
-            'Job',
-            params.id
-            )
-        ) {
+        ScheduledExecution scheduledExecution = authorizingJob.resource
+        String project = scheduledExecution.project
+        AuthorizingProject authorizingProject = authorizingProject(project)
 
-            def model=[
-                    scheduledExecution  : scheduledExecution,
-                    hideJobDelete       : params.hideJobDelete,
-                    jobDeleteSingle     : params.jobDeleteSingle,
-                    isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution)
-            ]
+        def model=[
+                scheduledExecution  : scheduledExecution,
+                hideJobDelete       : params.hideJobDelete,
+                jobDeleteSingle     : params.jobDeleteSingle,
+                isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution)
+        ]
 
-            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                 rundeckAuthContextProcessor.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
-                                                                  AuthConstants.ACTION_SCM_EXPORT])) {
-                if(scmService.projectHasConfiguredExportPlugin(params.project)) {
-                    model.scmExportEnabled = true
-                    model.scmExportStatus = scmService.exportStatusForJobs(params.project, authContext, [scheduledExecution])
-                    model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
-                }
+        if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_EXPORT)) {
+            if(scmService.projectHasConfiguredExportPlugin(project)) {
+                model.scmExportEnabled = true
+                model.scmExportStatus = scmService.exportStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
+                model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid)
             }
-            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                 rundeckAuthContextProcessor.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
-                                                                  AuthConstants.ACTION_SCM_IMPORT])) {
-                if(scmService.projectHasConfiguredPlugin('import',params.project)) {
-                    model.scmImportEnabled = true
-                    model.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
-                }
-            }
-            render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
         }
+        if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_IMPORT)) {
+            if(scmService.projectHasConfiguredPlugin('import',project)) {
+                model.scmImportEnabled = true
+                model.scmImportStatus = scmService.importStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
+            }
+        }
+        render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
     }
 
     private def jobDetailData(keys = []) {

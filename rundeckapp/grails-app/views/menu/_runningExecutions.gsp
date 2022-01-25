@@ -24,7 +24,7 @@
             <g:set var="scheduledExecution" value="${jobs[execution.scheduledExecution?.id.toString()]}"/>
             <g:set var="execstatus" value="${execution.dateCompleted?(execution.status=='true'?'succeeded':execution.cancelled?'killed':'failed'):'alive'}"/>
 
-            <g:set var="execLink" value="${createLink(controller:'execution',action:'show', id:execution.id)}"/>
+            <g:set var="execLink" value="${createLink(controller:'execution',action:'show', id:execution.id,params:[project:execution.project])}"/>
 
             <tr class=" ${j % 2 == 1 ? 'alternateRow' : ''}  ${!execution.dateCompleted ? 'nowrunning' : ''} execution ${enc(attr:execstatus)} link"
                 id="${enc(attr:upref)}exec-${enc(attr:execution.id)}-row" onclick="document.location='${execLink}';">
