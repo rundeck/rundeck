@@ -51,7 +51,7 @@ export interface OptionDataShort {
 export interface ScheduledExecution {
   id?: number,
   uuid?: string,
-  options: OptionData[],
+  options?: OptionData[],
   workflow?: Workflow,
   groupPath?: string,
   userRoleList?: string,

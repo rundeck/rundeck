@@ -18,7 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import groovy.transform.PackageScope
-import org.rundeck.app.authorization.AppAuthContextProcessor
+import grails.converters.JSON
 import org.rundeck.core.auth.AuthConstants
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -117,7 +117,7 @@ class EditOptsController extends ControllerBase{
                 fileUploadPluginDescription: fileUploadService.pluginDescription,
                 optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()?.sort{a,b->a.key<=>b.key}
         ]
-        return render(template: "/scheduledExecution/optEdit", model: model + outparams)
+        render(contentType: 'application/json',text: model + outparams as JSON)
     }
 
     /**
