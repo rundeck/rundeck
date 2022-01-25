@@ -74,10 +74,11 @@
                       {{$t('message.webhookRolesHelp')}}
                     </div>
                   </div>
-                  <div class="form-group"><label>{{ $t('message.webhookSecretLabel') }}</label><input v-model="curHook.secret" class="form-control">
-                    <key-storage-selector :value="secretInput"
-                                          :allow-upload="true"
-                                          v-on:input="handleKeyStorage($event)"/>
+                  <div class="form-group"><label>{{ $t('message.webhookSecretLabel') }}</label>
+                    <span class="form-control readonly fc-span-adj" style="max-width: 800px" v-if="!canCopyAuthString">{{curHook.authString}}</span>
+                    <CopyBox style="max-width: 800px" v-if="canCopyAuthString" :content="curHook.authString"/>
+                    <button class="btn btn-sm btn-default" @click="generateSecret">Generate</button>
+                    <button class="btn btn-sm btn-default" @click="clearSecret" v-if="curHook.authString">Clear</button>
                     <div class="help-block">
                       {{$t('message.webhookSecretHelp')}}
                     </div>
@@ -217,6 +218,7 @@ export default observer(Vue.extend({
       webhooks: [],
       webhookPlugins: [],
       curHook: null,
+      hkSecret: null,
       config: null,
       errors: {},
       validation:{valid:true,errors:{}},
@@ -229,13 +231,19 @@ export default observer(Vue.extend({
     }
   },
   computed: {
-    secretInput() {
-      return this.curHook.secret ? this.curHook.secret : ''
+    canCopyAuthString() {
+      return this.curHook.authString && !this.curHook.authString.startsWith("***")
     }
   },
   methods: {
-    handleKeyStorage(val) {
-      Vue.set(this.curHook, "secret", val)
+    generateSecret() {
+      this.curHook.authString = Array.apply(null, Array(32)).map(function() {
+        var c = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        return c.charAt(Math.random() * c.length);
+      }).join('');
+    },
+    clearSecret() {
+      this.curHook.authString = ""
     },
     input() {
       this.dirty = true
@@ -330,6 +338,9 @@ export default observer(Vue.extend({
         return
       }
       webhook.config = this.selectedPlugin.config
+      if(this.hkSecret) {
+        webhook.authConfig = {secret:this.hkSecret}
+      }
 
       let resp
       if (webhook.new)

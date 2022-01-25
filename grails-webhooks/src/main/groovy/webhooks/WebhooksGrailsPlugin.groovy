@@ -2,6 +2,7 @@ package webhooks
 
 import grails.plugins.*
 import grails.util.Environment
+import webhooks.authenticator.AuthorizationHeaderAuthenticator
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
