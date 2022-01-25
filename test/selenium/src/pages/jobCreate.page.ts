@@ -21,6 +21,7 @@ export const Elems = {
     tagsInputArea  : By.css('div.tag-input-wrapper > input.form-control'),
     tagsPillsArea : By.css('ul.tags-list'),
     groupChooseButton: By.css('span.btn[data-target="#groupChooseModal"]'),
+    groupChooseInput : By.css('input#schedJobGroup'),
     groupChooseModal : By.css('div#groupChooseModal_content'),
     modalGroupEntry : By.css('span.groupname.jobgroupexpand'),
     modalCancel : By.css('button.btn[data-dismiss="modal"]'),
@@ -126,6 +127,15 @@ export class JobCreatePage extends Page {
     }
     async tagsPillsArea() {
         return await this.ctx.driver.findElement(Elems.tagsPillsArea)
+    }
+    async groupChooseButton() {
+        return await this.ctx.driver.findElement(Elems.groupChooseButton)
+    }
+    async groupChooseInput() {
+        return await this.ctx.driver.findElement(Elems.groupChooseInput)
+    }
+    async groupChooseModal() {
+        return await this.ctx.driver.findElement(Elems.groupChooseModal)
     }
     async saveButton() {
         return this.ctx.driver.findElement(Elems.saveButton)
