@@ -69,7 +69,7 @@ sourceSets {
     }
 }
 dependencies {
-    agent "org.springframework:springloaded:1.2.8.RELEASE"
+//    agent "org.springframework:springloaded:1.2.8.RELEASE"
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
 
