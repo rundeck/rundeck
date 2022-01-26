@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "lib",
+        "outDir": "dist",
         "baseUrl": ".",
         "sourceMap": true,
         "strict": true,

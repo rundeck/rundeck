@@ -276,7 +276,7 @@ export default Vue.extend({
         if (data.props) {
           this.loadPluginData(data)
         }
-      }catch(e){
+      }catch(e: any){
         this.error=e.message
       }
     },

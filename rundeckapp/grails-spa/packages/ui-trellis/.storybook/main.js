@@ -27,7 +27,8 @@ module.exports = {
         },
         '@storybook/addon-knobs',
         'storybook-dark-mode',
-        '@storybook/addon-backgrounds'
+        '@storybook/addon-backgrounds',
+        '@storybook/addon-postcss'
     ],
     stories: [`${process.cwd()}/src/**/*.stories.(ts|js|tsx|jsx)`],
 
@@ -37,8 +38,8 @@ module.exports = {
             preserveWhitespace: false
         }
 
-        const cssLoader = config.module.rules.find(r => String(r.test) == String(/\.css$/))
-        cssLoader.use[1].options.sourceMap = true
+        //const cssLoader = config.module.rules.find(r => String(r.test) == String(/\.css$/))
+        //cssLoader.use[1].options.sourceMap = true
 
         config.optimization.splitChunks = false
 
