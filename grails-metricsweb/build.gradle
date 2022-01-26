@@ -87,6 +87,10 @@ tasks.withType(GroovyCompile) {
     }
 }
 
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
 // enable if you wish to package this plugin as a standalone application
 bootJar.enabled = false
 bootRun.enabled = false
