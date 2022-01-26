@@ -42,12 +42,12 @@
     <g:embedJSON data="${[loaded:statsLoaded,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
 
     <g:embedJSON data="${[
-            detailBatchMax        : params.getInt('detailBatchMax')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchMax', default: 15).toInteger(),
-            summaryRefresh        : 'true'==cfg.getBoolean(config: 'gui.home.projectList.summaryRefresh', default: true),
-            refreshDelay          : cfg.getInteger(config: 'gui.home.projectList.summaryRefreshDelay', default: 30000).toInteger(),
+            detailBatchMax        : params.getInt('detailBatchMax')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchMax', default: 15),
+            summaryRefresh        : cfg.getBoolean(config: 'gui.home.projectList.summaryRefresh', default: true),
+            refreshDelay          : cfg.getInteger(config: 'gui.home.projectList.summaryRefreshDelay', default: 30000),
             detailBatchDelay      : params.getInt('detailBatchDelay')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchDelay', default: 1000).toInteger(),
-            pagingEnabled         : params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.home.projectList.pagingEnabled',default: true)),
-            pagingMax             : params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.home.projectList.pagingMax', default: 30).toInteger(),
+            pagingEnabled         : params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.home.projectList.pagingEnabled',default: true)),
+            pagingMax             : params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.home.projectList.pagingMax', default: 30),
     ]}" id="homeDataPagingParams"/>
 
     <!-- VUE JS REQUIREMENTS -->

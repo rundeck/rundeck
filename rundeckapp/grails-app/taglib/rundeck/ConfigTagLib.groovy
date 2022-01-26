@@ -6,7 +6,6 @@ class ConfigTagLib {
     static returnObjectForTags = ['getString', 'getInteger', 'getBoolean',]
     ConfigurationService configurationService
     def static namespace="cfg"
-    static defaultEncodeAs = [taglib:'html']
 
     def val={attrs,body ->
         out << configurationService.getString(attrs.key.toString(),"")
