@@ -53,12 +53,12 @@ export default class PluginSelect extends Vue {
 </script>
 
 <style scoped lang="scss">
-::v-deep .plugin-icon {
+ .plugin-icon {
     height: 20px !important;
     width: 20px !important;
 }
 
-::v-deep .scroller__item {
+ .scroller__item {
     border-radius: 5px;
     padding-left: 10px;
 
