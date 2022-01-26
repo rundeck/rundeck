@@ -35,6 +35,7 @@ describe('editing a job', () => {
     beforeAll(async () => {
         await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
         await ctx.driver.wait(until.urlContains('/job/edit'), 30000)
+        await ctx.driver.wait(until.elementLocated(By.css('div#schedJobNameLabel')), 10000)
     })
     afterAll(async () => {
         const save = await jobCreatePage.editSaveButton()
@@ -42,7 +43,7 @@ describe('editing a job', () => {
     })
     it('adds tags correctly', async () => {
         const tagsField = await jobCreatePage.tagsInputArea()
-        await ctx.driver.wait(until.elementIsVisible(tagsField))
+        await ctx.driver.wait(until.elementIsVisible(tagsField), 10000)
         expect(tagsField).toBeDefined()
         tagsField.clear()
         tagsField.sendKeys(testVars.tags)
