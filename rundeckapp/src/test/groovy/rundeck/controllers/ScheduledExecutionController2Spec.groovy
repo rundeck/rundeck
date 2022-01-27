@@ -71,6 +71,14 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     def setup(){
 
         mockCodec(URIComponentCodec)
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
     }
 
     private void assertMap(key, map, value) {

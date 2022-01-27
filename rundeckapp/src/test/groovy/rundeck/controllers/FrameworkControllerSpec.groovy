@@ -48,6 +48,7 @@ import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
 import rundeck.UtilityTagLib
+import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import spock.lang.Unroll
@@ -60,6 +61,17 @@ import static org.rundeck.core.auth.AuthConstants.*
 class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
 
     List<Class> getDomainClasses() { [NodeFilter, User] }
+
+    def setup() {
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+    }
 
     def "system acls require api_version 14"(){
         setup:

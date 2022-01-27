@@ -16,6 +16,7 @@ import org.rundeck.core.auth.app.type.AuthorizingAppType
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import rundeck.*
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.UserService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -34,6 +35,15 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         mockDomain ScheduledExecution
         mockDomain CommandExec
         mockDomain Workflow
+
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
     }
     def setup(){
         controller.apiService = Stub(ApiService)

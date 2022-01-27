@@ -62,6 +62,15 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
     def setup() {
         mockCodec(URIComponentCodec)
         mockCodec(URLCodec)
+
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
