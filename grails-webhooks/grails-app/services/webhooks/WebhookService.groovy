@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
+import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
@@ -160,11 +161,14 @@ class WebhookService {
         hook.uuid = hookData.uuid ?: hook.uuid
         hook.name = hookData.name ?: hook.name
         hook.project = hookData.project ?: hook.project
-        if(hookData.authString != null && !hookData.authString.isEmpty()) {
-            hook.authConfigJson = mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:hookData.authString.toString().sha256()))
-        } else if(hookData.authString == '') {
+        String generatedSecureString = null
+        if(hookData.useAuth == true && hookData.regenAuth == true) {
+            generatedSecureString = RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+            hook.authConfigJson = mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256()))
+        } else if(hookData.useAuth == false) {
             hook.authConfigJson = null
         }
+
         if(hookData.enabled != null) hook.enabled = hookData.enabled
         if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}){
             hook.discard()
@@ -213,7 +217,9 @@ class WebhookService {
 
         if(hook.validate()) {
             hook.save(failOnError:true, flush:true)
-            return [msg: "Saved webhook"]
+            def responsePayload = [msg: "Saved webhook"]
+            if(generatedSecureString) responsePayload.generatedSecurityString = generatedSecureString
+            return responsePayload
         } else {
             if(!hook.id && hook.authToken){
                 //delete the created token
@@ -306,7 +312,7 @@ class WebhookService {
 
     private Map getWebhookWithAuthAsMap(Webhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
-        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, authString: hook.authConfigJson ? "***********" : null, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
+        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, useAuth: hook.authConfigJson != null, regenAuth: false, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
 
     Webhook getWebhook(Long id) {
