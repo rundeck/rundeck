@@ -60,7 +60,7 @@ setTimeout(() => {
 }, 0)
 
 /** Stop page from jumping to log anchor */
-const mainPanel = document.getElementById('main-panel')
+const mainPanel = document.getElementById('section-main')
 if (location.hash) {
   setTimeout(function() {
     mainPanel.scrollTo(0, 0)
@@ -129,7 +129,7 @@ function mount(e) {
   vue.$on('line-deselect', (e) => {
     const newHash = `${window.location.hash.split('L')[0]}`
 
-    const panel = document.getElementById('main-panel')
+    const panel = document.getElementById('section-main')
     const scrollPos = panel.scrollTop
     window.location.hash = newHash
     panel.scrollTop = scrollPos

@@ -767,7 +767,7 @@ var FollowControl = function (eid, elem, params) {
     },
     isAtBottom: function()
     {
-        var elem = document.querySelector( '#main-panel' );
+        var elem = document.querySelector( '#section-main' );
         var a = elem.scrollHeight;
         var b = elem.scrollTop;
         var c = elem.clientHeight;
@@ -775,7 +775,7 @@ var FollowControl = function (eid, elem, params) {
     },
     scrollToBottom: function()
     {
-        var elem = document.querySelector( '#main-panel' );
+        var elem = document.querySelector( '#section-main' );
         elem.scrollTop = elem.scrollHeight;
     },
     genDataRowNodes: function(data, tbl) {
