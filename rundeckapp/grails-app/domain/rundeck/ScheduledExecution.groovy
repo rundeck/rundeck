@@ -373,31 +373,25 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             map.notification=[:]
             notifications.each{
                 if(!map.notification[it.eventTrigger]){
-                    map.notification[it.eventTrigger]=[:]
+                    map.notification[it.eventTrigger]=[]
                 }
                 def trigger= map.notification[it.eventTrigger]
                 def map1 = it.toMap()
                 if(map1.type){
-                    //plugin notification with a type
-                    if(!trigger['plugin']){
-                        trigger['plugin']=map1
-                    }else if(trigger['plugin'] instanceof Map){
-                        trigger['plugin']=[trigger.remove('plugin'),map1]
-                    }else if(trigger['plugin'] instanceof Collection){
-                        trigger['plugin'] << map1
+                    Map pluginMap = trigger.find({ notif -> notif.plugin })
+                    if(pluginMap){
+                        pluginMap.plugin.add(map1)
                     }
+                    else
+                        trigger.add(['plugin':[map1]])
                 }else{
                     //built-in notification, urls or recipients subelements
-                    trigger.putAll(map1) //TODO: WE ARE OVERRIDING PREVIOUS NOTIFICATIONS OF THE SAME TYPE
+                    trigger.add(map1)
                 }
             }
-            notifications.each {
-                if (map.notification[it.eventTrigger].plugin instanceof Collection) {
-                    map.notification[it.eventTrigger].plugin =
-                            map.notification[it.eventTrigger].plugin.sort { a, b -> a.type <=> b.type }
-                }
+            map.keySet().findAll{it.startsWith('on')}.each { trigger ->
+                map.notification[trigger].find({ notif -> notif.plugin }).plugin.sort{ a, b -> a.type <=> b.type }
             }
-
             map.notifyAvgDurationThreshold = notifyAvgDurationThreshold
         }
         def config = pluginConfigMap
