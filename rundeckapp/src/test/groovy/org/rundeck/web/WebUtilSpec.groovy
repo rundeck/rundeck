@@ -125,7 +125,7 @@ class WebUtilSpec extends Specification implements GrailsWebUnitTest{
         then:
             def result = assertXmlErrorText(response.text)
             !check
-            response.contentType == "application/xml"
+            response.contentType == "application/xml;charset=UTF-8"
             response.characterEncoding == "UTF-8"
             response.status == 400
             response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
@@ -154,7 +154,7 @@ class WebUtilSpec extends Specification implements GrailsWebUnitTest{
 
         then:
             !check
-            response.contentType == "application/json"
+            response.contentType == "application/json;charset=UTF-8"
             response.characterEncoding == "UTF-8"
             response.status == 400
             response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
