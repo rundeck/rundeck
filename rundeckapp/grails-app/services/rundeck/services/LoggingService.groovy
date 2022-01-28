@@ -64,7 +64,7 @@ class LoggingService implements ExecutionFileProducer {
     def grailsLinkGenerator
 
     public boolean isLocalFileStorageEnabled() {
-        boolean fileDisabled = configurationService.getBoolean("execution.logs.localFileStorageEnabled",false)
+        boolean fileDisabled = configurationService.getString("execution.logs.localFileStorageEnabled") in ['false', false]
         boolean readerPluginConfigured = getConfiguredStreamingReaderPluginName()
         return !(fileDisabled && readerPluginConfigured)
     }

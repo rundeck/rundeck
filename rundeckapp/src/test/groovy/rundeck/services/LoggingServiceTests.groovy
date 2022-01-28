@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.utils.ThreadBoundLogOutputStream
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
-import org.hibernate.Hibernate
 
 import static org.junit.Assert.*
 
@@ -33,8 +32,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import grails.web.mapping.LinkGenerator
 import rundeck.Execution
@@ -50,55 +47,112 @@ import rundeck.services.logging.MultiLogWriter
 import rundeck.services.logging.NodeCountingLogWriter
 import rundeck.services.logging.StepLabellingStreamingLogWriter
 import rundeck.services.logging.ThresholdLogWriter
-import org.junit.Ignore
 
 class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<LoggingService> {
 
     List<Class> getDomainClasses() { [Execution, LogFileStorageService, Workflow, CommandExec] }
+
+    /**
+     * utility method to mock a class
+     */
+    private mockWith(Class clazz, Closure clos) {
+        def mock = new MockFor(clazz)
+        mock.demand.with(clos)
+        return mock.proxyInstance()
+    }
 
     void testLocalFileStorageEnabled() {
         when:
         LoggingService svc = new LoggingService()
         svc.grailsApplication=grailsApplication
 
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(2..2) { String key ->
+            if(key == "execution.logs.localFileStorageEnabled"){
+                return null
+            }
+            if(key == "execution.logs.streamingReaderPlugin"){
+                return null
+            }
+            return ""
+        }
+        ///
+        csmock.demand.getString(3..3) { String key ->
+            if(key == "execution.logs.localFileStorageEnabled"){
+                return null
+            }
+            if(key == "execution.logs.streamingReaderPlugin"){
+                return "test"
+            }
+            return ""
+        }
+        ///
+        csmock.demand.getString(2..2) { String key ->
+            if(key == "execution.logs.localFileStorageEnabled"){
+                return "false"
+            }
+            if(key == "execution.logs.streamingReaderPlugin"){
+                return null
+            }
+            return ""
+        }
+
+        //
+        csmock.demand.getString(3..3) { String key ->
+            if(key == "execution.logs.localFileStorageEnabled"){
+                return "false"
+            }
+            if(key == "execution.logs.streamingReaderPlugin"){
+                return "test"
+            }
+            return ""
+        }
+        svc.configurationService=csmock.proxyInstance()
+
         assertTrue(svc.isLocalFileStorageEnabled())
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin= "test"
         assertTrue(svc.isLocalFileStorageEnabled())
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.localFileStorageEnabled= "false"
         assertTrue(svc.isLocalFileStorageEnabled())
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.localFileStorageEnabled= "false"
-        grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin="test"
         then:
         assertFalse(svc.isLocalFileStorageEnabled())
     }
     void testLoggingReaderPluginConfiguration() {
         when:
         grailsApplication.config.clear()
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(1..1) { x ->
+            ""
+        }
+        csmock.demand.getString(4..4) { x ->
+            "test"
+        }
+        service.configurationService=csmock.proxyInstance()
         assertNull(service.getConfiguredStreamingReaderPluginName())
-
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin= "test"
         then:
         assertEquals("test", service.getConfiguredStreamingReaderPluginName())
     }
     void testLoggingWriterPluginsConfiguration() {
         when:
         grailsApplication.config.clear()
-        assertEquals(0,service.listConfiguredStreamingWriterPluginNames().size())
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.streamingWriterPlugins= "test"
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(1..1) { x ->
+            null
+        }
+        csmock.demand.getString(4..4) { x ->
+            "test"
+        }
+        csmock.demand.getString(4..4) { x ->
+            "test,test2"
+        }
+        service.configurationService=csmock.proxyInstance()
+
+        assertEquals(0,service.listConfiguredStreamingWriterPluginNames().size())
         assertEquals(1, service.listConfiguredStreamingWriterPluginNames().size())
         assertEquals(["test"], service.listConfiguredStreamingWriterPluginNames())
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.streamingWriterPlugins= "test,test2"
         then:
         assertEquals(2, service.listConfiguredStreamingWriterPluginNames().size())
         assertEquals(["test","test2"], service.listConfiguredStreamingWriterPluginNames())
@@ -134,9 +188,6 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
         when:
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
-
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.streamingWriterPlugins = "plugin1,plugin2"
 
         def writer = new testWriter()
         writer.name = "filewritertest1"
@@ -189,6 +240,18 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
         service.pluginService=pmock.proxyInstance()
         service.frameworkService=fmock.proxyInstance()
 
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(2..2) { x ->
+            "plugin1,plugin2"
+        }
+        csmock.demand.getBoolean(1..1) { String value, boolean defVal->
+            true
+        }
+        csmock.demand.getString(2..2) { x ->
+            null
+        }
+        service.configurationService=csmock.proxyInstance()
+
         def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"])
         assertNotNull(execwriter)
         assertEquals(new File("/test/file/path"), execwriter.filepath)
@@ -218,10 +281,18 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.streamingWriterPlugins = "plugin1,plugin2"
-        grailsApplication.config.rundeck.execution.logs.plugins.streamingWriterStepLabelsEnabled = "false"
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(2..2) { String value ->
+            "plugin1,plugin2"
+        }
+        csmock.demand.getBoolean(1..1) { String value, boolean defVal ->
+            false
+        }
+        csmock.demand.getString(2..2) { String value ->
+            null
+        }
 
+        service.configurationService=csmock.proxyInstance()
         def writer = new testWriter()
         writer.name = "filewritertest1"
 
@@ -318,6 +389,13 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
             new File("/test/file/path")
         }
         service.logFileStorageService=lfmock.proxyInstance()
+
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(1..1) { x ->
+            ""
+        }
+        service.configurationService=csmock.proxyInstance()
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -361,6 +439,13 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
             new File("/test/file/path")
         }
         service.logFileStorageService=lfmock.proxyInstance()
+
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(1..1) { x ->
+            ""
+        }
+        service.configurationService=csmock.proxyInstance()
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -400,6 +485,13 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
             new File("/test/file/path")
         }
         service.logFileStorageService=lfmock.proxyInstance()
+
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(1..1) { x ->
+            ""
+        }
+        service.configurationService=csmock.proxyInstance()
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -445,6 +537,14 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
             new File("/test/file/path")
         }
         service.logFileStorageService=lfmock.proxyInstance()
+
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(1..1) { x ->
+            ""
+        }
+        service.configurationService=csmock.proxyInstance()
+
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -535,6 +635,13 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
             test
         }
         service.logFileStorageService=lfsvcmock.proxyInstance()
+
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(1..1) { x ->
+            ""
+        }
+        service.configurationService=csmock.proxyInstance()
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -552,6 +659,13 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
         grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin = "plugin1"
         def test=new testReaderPlugin()
         test.canInitialize=true
+
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(4..4) { x ->
+            "plugin1"
+        }
+        service.configurationService=csmock.proxyInstance()
+
 
         assertEquals("plugin1", service.getConfiguredStreamingReaderPluginName())
 
@@ -600,6 +714,12 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
         grailsApplication.config.rundeck.execution.logs.streamingReaderPlugin = "plugin1"
         def test=new testReaderPlugin()
         test.canInitialize=false
+
+        def csmock = new MockFor(ConfigurationService)
+        csmock.demand.getString(4..4) { String value ->
+            "plugin1"
+        }
+        service.configurationService=csmock.proxyInstance()
 
         assertEquals("plugin1", service.getConfiguredStreamingReaderPluginName())
 
