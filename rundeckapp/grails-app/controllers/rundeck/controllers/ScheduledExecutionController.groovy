@@ -2269,7 +2269,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 //error
                 model.nodesetempty=true
             }
-            else if(configurationService.getBoolean("gui.execution.summarizedNodes", false)) {
+            else if(grailsApplication.config.getProperty("gui.execution.summarizedNodes", String.class) != 'false') {
                 model.nodes=nodes
                 model.nodemap=[:]
                 model.tagsummary=[:]

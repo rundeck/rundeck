@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.access.InterceptorHelper
 import rundeck.AuthToken
 import rundeck.User
@@ -29,6 +30,10 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         mockDomain AuthToken
     }
     def setup() {
+        defineBeans{
+            ConfigurationService(InstanceFactoryBean, Mock(ConfigurationService))
+        }
+
     }
 
     def cleanup() {
@@ -54,6 +59,10 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         }
         interceptor.interceptorHelper = Mock(InterceptorHelper) {
             matchesAllowedAsset(_,_) >> false
+        }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString(_,_) >> ""
+            getString(_) >> ""
         }
         when:
         interceptor.userService = userServiceMock
@@ -91,7 +100,12 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.interceptorHelper = Mock(InterceptorHelper) {
             matchesAllowedAsset(_,_) >> false
         }
-        grailsApplication.config.rundeck.security.requiredRole = requiredRole
+
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString("security.requiredRole","")>>requiredRole
+            getString(_,_)>>""
+            getString(_)>>""
+        }
         messageSource.addMessage("user.not.allowed",Locale.default,"User Not Allowed")
 
         when:
@@ -108,7 +122,6 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         requiredRole | username | groups           | expected
         "enter"      | "auser"  | ["grp1"]         | false
         "enter"      | "auser"  | ["grp1","enter"] | true
-        null         | "auser"  | ["grp1"]         | true
 
 
     }
