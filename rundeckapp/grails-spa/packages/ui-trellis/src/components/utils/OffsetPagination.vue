@@ -31,7 +31,7 @@ Vue.component('pagination', Pagination)
 
 @Component
 export default class OffsetPagination extends Vue {
-  currentPage!: number
+  currentPage: number=0
 
   @Prop({required: true})
   pagination: any
