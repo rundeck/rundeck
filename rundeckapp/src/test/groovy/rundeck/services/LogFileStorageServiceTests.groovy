@@ -498,6 +498,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
 
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true]
 
@@ -522,6 +528,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
     void testRunStorageRequestMultiSuccessMultiType(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
 
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true,'state.json':true]
@@ -548,6 +560,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
 
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true,'state.json':true,'execution.xml':true]
 
@@ -573,6 +591,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
         grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
 
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:false]
@@ -613,6 +637,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
         grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true,'state.json':false]
 
@@ -652,6 +682,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
         grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:false,'state.json':false]
 
@@ -690,6 +726,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
         grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
 
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true,'state.json':true,'execution.xml':false]
@@ -731,6 +773,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test2"
         grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         def test = new testMultiStoragePlugin()
         test.storeMultipleResponseSet=[rdlog:true,'state.json':false,'execution.xml':false]
 
@@ -767,6 +815,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
     void testRunStorageRequestSuccess(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
 
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=true
@@ -805,6 +859,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
         grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = false
 
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=false
         LogFileStorageService svc
@@ -831,6 +891,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
         grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = true
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
 
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=false
@@ -874,6 +940,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
         grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
         grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryCount = 2
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
 
 
         def test = new testStoragePlugin()
