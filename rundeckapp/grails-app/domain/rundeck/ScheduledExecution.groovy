@@ -388,7 +388,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                     }
                 }else{
                     //built-in notification, urls or recipients subelements
-                    trigger.putAll(map1)
+                    trigger.putAll(map1) //TODO: WE ARE OVERRIDING PREVIOUS NOTIFICATIONS OF THE SAME TYPE
                 }
             }
             notifications.each {
@@ -564,33 +564,65 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if(data.notification){
             def nots=[]
             data.notification.keySet().findAll{it.startsWith('on')}.each{ name->
-                if(data.notification[name]){
+                def notifications = data.notification[name]
+                if(notifications){
                         //support for built-in notification types
-                    ['urls','email'].each{ subkey->
-                        if(data.notification[name][subkey]){
-                            Map notificationData = [
-                                    format    : data.notification[name]["format"],
-                                    httpMethod: data.notification[name]["httpMethod"],
-                                    (subkey)  : data.notification[name][subkey]
-                            ]
-
-                            nots << Notification.fromMap(name, notificationData)
+                    if(notifications instanceof ArrayList){
+                        //TODO: iterate through every notification
+                        notifications.each { notifMap ->
+                            ['urls','email'].each{ subkey->
+                                if(notifMap[subkey]){
+                                    Map notificationData = [
+                                            format    : notifMap["format"],
+                                            httpMethod: notifMap["httpMethod"],
+                                            (subkey)  : notifMap[subkey]
+                                    ]
+                                    nots << Notification.fromMap(name, notificationData)
+                                }
+                            }
+                            if(notifMap['plugin']){
+                                def pluginElement=notifMap['plugin']
+                                def plugins=[]
+                                if(pluginElement instanceof Map){
+                                    plugins=[pluginElement]
+                                }else if(pluginElement instanceof Collection){
+                                    plugins= pluginElement
+                                }
+                                plugins.each{ plugin->
+                                    def n=Notification.fromMap(name, plugin)
+                                    if(n){
+                                        nots << n
+                                    }
+                                }
+                            }
                         }
-                    }
-                    if(data.notification[name]['plugin']){
-                        def pluginElement=data.notification[name]['plugin']
-                        def plugins=[]
-                        if(pluginElement instanceof Map){
-                            plugins=[pluginElement]
-                        }else if(pluginElement instanceof Collection){
-                            plugins= pluginElement
-                        }else{
+                    }else {
+                        ['urls','email'].each{ subkey->
+                            if(notifications[subkey]){//
+                                Map notificationData = [
+                                        format    : notifications["format"],
+                                        httpMethod: notifications["httpMethod"],
+                                        (subkey)  : notifications[subkey]
+                                ]
 
+                                nots << Notification.fromMap(name, notificationData)
+                            }
                         }
-                        plugins.each{ plugin->
-                            def n=Notification.fromMap(name, plugin)
-                            if(n){
-                                nots << n
+                        if(notifications['plugin']){
+                            def pluginElement=notifications['plugin']
+                            def plugins=[]
+                            if(pluginElement instanceof Map){
+                                plugins=[pluginElement]
+                            }else if(pluginElement instanceof Collection){
+                                plugins= pluginElement
+                            }else{
+
+                            }
+                            plugins.each{ plugin->
+                                def n=Notification.fromMap(name, plugin)
+                                if(n){
+                                    nots << n
+                                }
                             }
                         }
                     }
