@@ -81,7 +81,7 @@
                       >Search...</btn>
                       <btn
                               v-if="search"
-                              style="margin-right:1em;"
+                              style="margin-right:1em; margin-bottom:1em;"
                               class="btn btn-secondary btn-sm "
                               @click="clearSearchParams()"
                       >Clear</btn>

@@ -214,7 +214,7 @@
         <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default  btn-sm"/>
         <button type="submit" class="btn btn-cta btn-sm"><g:message code="export.archive"/> <g:icon name="download"/></button>
         <auth:resourceAllowed action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}">
-          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-info  btn-sm pull-right"><g:message code="export.another.instance"/></button>
+          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-default  btn-sm pull-right"><g:message code="export.another.instance"/></button>
         </auth:resourceAllowed>
       </div>
     </div>

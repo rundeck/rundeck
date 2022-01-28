@@ -111,7 +111,7 @@
         <g:if test="${!params.instance}">
         <g:link controller="project" action="exportWait"
                 params="[project: params.project ?: request.project, token: params.token, download: true]"
-                class="btn btn-success"
+                class="btn btn-cta"
                 elementId="export-download-btn">
             <i class="glyphicon glyphicon-download-alt"></i>
             <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar

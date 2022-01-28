@@ -170,8 +170,8 @@
       </div>
       <template slot="footer">
         <btn @click="filterOpen=false">{{$t('cancel')}}</btn>
-        <btn @click="search" class="btn btn-cta">{{$t('search')}}</btn>
-        <btn @click="saveFilter" type="success" class="pull-right">
+        <btn @click="search" type="cta" class="btn btn-cta">{{$t('search')}}</btn>
+        <btn @click="saveFilter" type="primary" class="btn-primary pull-right">
           <i class="glyphicon glyphicon-plus"></i>
           {{$t('Save as a Filter...')}}
         </btn>
@@ -412,5 +412,13 @@ export default {
 }
 .btn-queried {
   border-style: dotted;
+}
+.btn-primary {
+  color: var(--font-fill-color);
+  background-color: var(--primary-color);
+  &:hover {
+  color: var(--font-fill-color);
+  background-color: var(--primary-states-color);
+  }
 }
 </style>

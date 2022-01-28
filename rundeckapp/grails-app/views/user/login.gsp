@@ -165,7 +165,7 @@
                         <input type="password" name="j_password" id="password" class="form-control input-no-border" autocomplete="off"/>
                     </div>
                         <div class="card-footer text-center">
-                            <button type="submit" id="btn-login" class="btn btn-fill btn-wd btn-cta"><g:message code="user.login.login.button"/></button>
+                            <button type="submit" id="btn-login" class="btn btn-fill btn-wd btn-primary"><g:message code="user.login.login.button"/></button>
                             <span id="login-spinner" style="display: none;"><i class="fas fa-spinner fa-pulse"></i></span>
                         </div>
                     </g:showLocalLogin>

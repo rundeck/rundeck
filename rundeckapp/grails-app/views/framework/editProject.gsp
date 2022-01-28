@@ -119,7 +119,7 @@
               <g:message code="domain.Project.edit.message" default="Configure Project"/>: <g:enc>${projectName}</g:enc>
             <g:link controller="framework" action="editProjectConfig"
                     params="[project: projectName]"
-                    class="has_tooltip pull-right btn btn-success btn-sm"
+                    class="has_tooltip pull-right btn btn-default btn-sm"
                     data-placement="bottom"
                     title="${message(
                       code: 'page.admin.EditProjectConfigFile.title',

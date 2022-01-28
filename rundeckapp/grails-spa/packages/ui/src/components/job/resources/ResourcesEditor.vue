@@ -81,7 +81,7 @@
                                filter-field-name="filterExclude"
                                filter-field-id="schedJobNodeFilterExclude"
                                :help-button="false"
-                               search-btn-type="warning"
+                               search-btn-type="default"
                                @filters-updated="loadNodeSummary"
                                @filter="handleFilterExcludeClick"/>
 

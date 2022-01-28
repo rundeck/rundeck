@@ -84,21 +84,9 @@ a.btn {
   &.btn-simple:not(:focus) { box-shadow: unset; }
 }
 .btn-primary {
-  @include button-variant(--font-color, --font-fill-color, --default-color, --default-states-color, --default-states-color, --default-states-color);
-  box-shadow: 
-    inset 1px 1px 0px var(--default-states-color),
-    inset 1px -1px 0px var(--default-states-color),
-    inset -1px 1px 0px var(--default-states-color),
-    inset -1px -1px var(--default-states-color),
-    var(--button-box-shadow);
-  &.btn-simple { 
-    box-shadow:
-      inset 1px 1px 0px var(--default-states-color),
-      inset 1px -1px 0px var(--default-states-color),
-      inset -1px 1px 0px var(--default-states-color),
-      inset -1px -1px var(--default-states-color);
-  }
-  font-weight: 700;
+  @include button-variant(--font-fill-color, --font-fill-color, --primary-color, --primary-states-color, $btn-danger-border, --primary-light-color);
+  box-shadow: var(--button-box-shadow);
+  &.btn-simple { box-shadow: unset; }
 }
 // Success appears as green
 .btn-success {

@@ -210,7 +210,7 @@ export default class NodeFilterInput extends Vue {
   autofocus!: boolean
   @Prop({required: false, default: true})
   helpButton!: boolean
-  @Prop({required: false, default: 'primary'})
+  @Prop({required: false, default: 'default'})
   searchBtnType!: string
   @Prop({required: false, default: ''})
   filterName!: string

@@ -19,7 +19,7 @@
 
       <div class="col-sm-6">
 
-        <btn type="info btn-sm refresh_nodes pull-right"
+        <btn type="default btn-sm refresh_nodes pull-right"
              data-loading-text="${g.message(code: 'loading')}"
              @click="update"
              :disabled="loading"
