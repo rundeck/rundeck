@@ -580,11 +580,6 @@ export default class LogViewer extends Vue {
 @import './theme-light.scss';
 @import './theme-dark.scss';
 
-/** Causing z-index issues with modals */
-// .main-panel {
-//   transform: translate3d(0,0,0)
-// }
-
 .anticon {
   display: inline-block;
   color: inherit;

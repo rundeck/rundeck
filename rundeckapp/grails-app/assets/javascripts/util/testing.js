@@ -130,7 +130,7 @@ var TestHarness = function (name,data) {
 
     self.testAll = function () {
         self.prepare();
-        jQuery('body > div.wrapper > div.main-panel').append(jQuery('<div id="'+ident+'" class="collapse in"></div>'));
+        jQuery('#section-main').append(jQuery('<div id="'+ident+'" class="collapse in"></div>'));
         var jQuery2 = jQuery('#'+ident);
         self.log("Start: "+self.name);
         for (var i in self) {
@@ -149,7 +149,7 @@ var TestHarness = function (name,data) {
             jQuery2.prepend(jQuery('<div></div>').append(jQuery('<span class="text-danger"></span>').text("FAIL: " + failed+"/"+total+" assertions failed")));
         }else{
             jQuery2.collapse('hide');
-            jQuery('body > div.wrapper > div.main-panel').append('<div></div>')
+            jQuery('#section-main').append('<div></div>')
                 .append('<span class="btn btn-link text-success test-elem" data-toggle="collapse" data-target="#'+ident+'">OK: '+total+' Tests Passed</span>')
         }
         self.restore();

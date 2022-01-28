@@ -245,7 +245,7 @@ var StepFiltersTest = function () {
     };
 
     self.testAll = function () {
-        jQuery('#main-panel').append(jQuery('<div id="step-filters-tests" class="test-elem"></div>'))
+        jQuery('#section-main').append(jQuery('<div id="step-filters-tests" class="test-elem"></div>'))
         assert("Start: filterStepKOTest.js", 1, 1);
         for (var i in self) {
             if (i.endsWith('Test')) {
@@ -257,7 +257,7 @@ var StepFiltersTest = function () {
             }
         }
         if(failed>0){
-            jQuery('#main-panel').prepend(jQuery('<div></div>').append(jQuery('<span class="text-danger"></span>').text("FAIL: " + failed + "/" + total + " assertions failed")))
+            jQuery('#section-main').prepend(jQuery('<div></div>').append(jQuery('<span class="text-danger"></span>').text("FAIL: " + failed + "/" + total + " assertions failed")))
         }
     };
 };
