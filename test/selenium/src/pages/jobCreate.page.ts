@@ -72,23 +72,36 @@ export const Elems = {
     notifySuccessRecipients: By.css('#notifySuccessRecipients'),
     // Nodes tab
     tabNodes  : By.css('#job_edit_tabs > li > a[href=\'#tab_nodes\']'),
-    doNodedispatchTrue  : By.xpath('//*[@id="doNodedispatchTrue"]'),
-    nodeFilter  : By.xpath('//*[@id="schedJobNodeFilter"]'),
-    nodeFilterButton  : By.css('#job_edit__node_filter_include button.node_filter__dosearch'),
-    nodeFilterSelectAllLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_all'),
+    doNodedispatchTrue  : By.css('input#doNodedispatchTrue'),
+    doNodedispatchFalse  : By.css('input#doNodedispatchFalse'),
     nodeFilterMenuLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown'),
+    nodeFilterSelectAllLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_all'),
+    nodeFilterInput  : By.css('input#schedJobNodeFilter'),
+    nodeFilterHelp : By.css('button#filterSearchHelpBtn'),
+    nodeFilterSearch  : By.css('#job_edit__node_filter_include button.node_filter__dosearch'),
+    excludeFilterMenuLink  : By.css('#job_edit__node_filter_exclude .job_edit__node_filter__filter_select_dropdown'),
+    excludeFilterSelectAllLink  : By.css('#job_edit__node_filter_exclude .job_edit__node_filter__filter_select_all'),
+    excludeFilterInput: By.css('input#schedJobNodeFilterExclude'),
+    excludeFilterSearch : By.css('#job_edit__node_filter_exclude button.node_filter__dosearch'),
     matchedNodesText  : By.css('#nodegroupitem .node_filter_results__matched_nodes .node_filter_results__matched_nodes_count'),
+    matchedNodesRefresh : By.css('button.refresh_nodes'),
     showExcludedNodesRadioYes  : By.css('#nodegroupitem #excludeFilterTrue'),
+    showExcludedNodesRadioNo  : By.css('#nodegroupitem #excludeFilterFalse'),
     editableFilterYes  : By.css('#nodegroupitem #editableTrue'),
+    editableFilterNo  : By.css('#nodegroupitem #editableFalse'),
+    schedJobnodeThreadcount: By.css('#nodegroupitem #schedJobnodeThreadcount'),
+    schedJobnodeRankAttribute: By.css('#nodegroupitem #schedJobnodeRankAttribute'),
+    nodeRankOrderAscending: By.css('#nodegroupitem #nodeRankOrderAscending'),
     nodeRankOrderDescending: By.css('#nodegroupitem #nodeRankOrderDescending'),
-    nodeKeepgoingTrue: By.css('#nodegroupitem #nodeKeepgoingTrue'),
-    successOnEmptyNodeFilterTrue: By.css('#nodegroupitem #successOnEmptyNodeFilterTrue'),
+    nodeFailsKeepgoingTrue: By.css('#nodegroupitem #nodeKeepgoingTrue'),
+    nodeFailsKeepgoingFalse: By.css('#nodegroupitem #nodeKeepgoingFalse'),
+    emptyNodeSetFailTrue: By.css('#nodegroupitem #successOnEmptyNodeFilterTrue'),
+    emptyNodeSetFailFalse: By.css('#nodegroupitem #successOnEmptyNodeFilterFalse'),
+    nodesSelectedByDefaultTrue: By.css('#nodegroupitem #nodesSelectedByDefaultTrue'),
     nodesSelectedByDefaultFalse: By.css('#nodegroupitem #nodesSelectedByDefaultFalse'),
     orchestratorDropdown: By.css('#orchestrator-edit-type-dropdown'),
     orchestratorDropdownButton: By.css('#orchestrator-edit-type-dropdown > button'),
     // Schedule tab
-    schedJobnodeThreadcount: By.css('#nodegroupitem #schedJobnodeThreadcount'),
-    schedJobnodeRankAttribute: By.css('#nodegroupitem #schedJobnodeRankAttribute')
     // Execution Plugins tab
     // Other tab
     // Job Queue tab
@@ -264,39 +277,48 @@ export class JobCreatePage extends Page {
         return this.ctx.driver.wait(until.elementLocated(Elems.doNodedispatchTrue),15000)
     }
     async nodeFilter(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilter),15000)
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterInput),15000)
     }
     async nodeFilterButton(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterButton),15000)
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSearch),15000)
+    }
+    async excludeFilterSearch() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.excludeFilterSearch),15000)
     }
     async nodeFilterMenuLink(){
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterMenuLink),15000)
     }
-    async showExcludedNodesRadioYes(){
+    async showExcludedNodesRadioYes() {
         return this.ctx.driver.wait(until.elementLocated(Elems.showExcludedNodesRadioYes),15000)
     }
-    async editableFilterYes(){
+    async editableFilterYes() {
         return this.ctx.driver.wait(until.elementLocated(Elems.editableFilterYes),15000)
     }
-    async schedJobnodeThreadcount(){
+    async schedJobnodeThreadcount() {
         return this.ctx.driver.wait(until.elementLocated(Elems.schedJobnodeThreadcount),15000)
     }
-    async schedJobnodeRankAttribute(){
+    async schedJobnodeRankAttribute() {
         return this.ctx.driver.wait(until.elementLocated(Elems.schedJobnodeRankAttribute),15000)
     }
-    async nodeRankOrderDescending(){
+    async nodeRankOrderDescending() {
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeRankOrderDescending),15000)
     }
-    async nodeKeepgoingTrue(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.nodeKeepgoingTrue),15000)
+    async nodeKeepgoingTrue() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFailsKeepgoingTrue),15000)
     }
-    async successOnEmptyNodeFilterTrue(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.successOnEmptyNodeFilterTrue),15000)
+    async nodeKeepgoingFalse() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFailsKeepgoingFalse),15000)
     }
-    async nodesSelectedByDefaultFalse(){
+    async successOnEmptyNodeFilterTrue() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.emptyNodeSetFailTrue),15000)
+    }
+    async successOnEmptyNodeFilterFalse() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.emptyNodeSetFailFalse),15000)
+    }
+    async nodesSelectedByDefaultFalse() {
         return this.ctx.driver.wait(until.elementLocated(Elems.nodesSelectedByDefaultFalse),15000)
     }
-    async nodeFilterSelectAllLink(){
+    async nodeFilterSelectAllLink() {
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSelectAllLink),15000)
     }
     async matchedNodes(){
@@ -307,6 +329,9 @@ export class JobCreatePage extends Page {
         await matchedNodeElem.isDisplayed()
         return await matchedNodeElem.getText()
     }
+    async orchestratorDropdown() {
+        return this.ctx.driver.findElement(Elems.orchestratorDropdown)
+    }
     async orchestratorDropdownButton() {
         return this.ctx.driver.wait(until.elementLocated(Elems.orchestratorDropdownButton),15000)
     }
@@ -315,6 +340,10 @@ export class JobCreatePage extends Page {
           '#orchestrator-edit-type-dropdown > ul > li > a[role=button][data-plugin-type=' + val + ']'
         )
         return this.ctx.driver.findElement(orchChoiceLink)
+    }
+    async orchestratorOptions() {
+        const dropdown = await this.orchestratorDropdown()
+        return dropdown.findElements(By.css('ul.dropdown-menu li'));
     }
     async workflowStrategy(){
         return this.ctx.driver.wait(until.elementLocated(Elems.workflowStrategy),15000)
