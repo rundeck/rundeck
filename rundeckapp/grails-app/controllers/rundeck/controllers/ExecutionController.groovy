@@ -92,13 +92,10 @@ class ExecutionController extends ControllerBase{
         redirect(controller:'menu',action:'index')
     }
 
-    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def follow() {
-        def m = show()
-        if(response.status != 302) {
-            render(view:'show',model:m)
-        }
+        return redirect(action: 'show', controller: 'execution', params: params)
     }
+
     @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def followFragment() {
         return render(view:'showFragment',model:show())
