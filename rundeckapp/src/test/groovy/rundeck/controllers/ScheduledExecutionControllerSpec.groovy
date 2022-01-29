@@ -910,7 +910,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         response.status == 200
         response.contentType.contains 'application/json'
         response.json == [
-                href   : "/execution/follow/${exec.id}",
+                href   : "/execution/show/${exec.id}",
                 success: true,
                 id     : exec.id,
                 follow : false
@@ -976,7 +976,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         response.status == 200
         response.contentType.contains 'application/json'
         response.json == [
-                href   : "/execution/follow/${exec.id}",
+                href   : "/execution/show/${exec.id}",
                 success: true,
                 id     : exec.id,
                 follow : false
@@ -1049,7 +1049,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         response.status == 200
         response.contentType.contains 'application/json'
         response.json == [
-                href   : "/execution/follow/${exec.id}",
+                href   : "/execution/show/${exec.id}",
                 success: true,
                 id     : exec.id,
                 follow : false
@@ -1120,7 +1120,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         response.contentType.contains 'application/json'
         if(follow != 'html'){
             response.json == [
-                    href   : "/execution/follow/${exec.id}#"+follow,
+                    href   : "/execution/show/${exec.id}#"+follow,
                     success: true,
                     id     : exec.id,
                     follow : false
@@ -1206,7 +1206,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         response.status == 200
         response.contentType.contains 'application/json'
         response.json == [
-                href   : "/execution/follow/${exec.id}",
+                href   : "/execution/show/${exec.id}",
                 success: true,
                 id     : exec.id,
                 follow : false
@@ -1279,7 +1279,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         response.contentType.contains 'application/json'
         if(follow != 'html') {
             response.json == [
-                    href   : "/execution/follow/${exec.id}#" + follow,
+                    href   : "/execution/show/${exec.id}#" + follow,
                     success: true,
                     id     : exec.id,
                     follow : false
