@@ -609,7 +609,7 @@ public class NotificationService implements ApplicationContextAware{
         apiService.renderExecutionsXml(execlist.collect{ Execution e->
             [
                 execution:e,
-                href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
+                href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                         params: [project: e.project]),
                 status: e.executionState,
                 summary: executionService.summarizeJob(e.scheduledExecution, e)
@@ -623,7 +623,7 @@ public class NotificationService implements ApplicationContextAware{
         apiService.renderExecutionsJson(execlist.collect{ Execution e->
             [
                     execution:e,
-                    href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
+                    href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                                                    params: [project: e.project]),
                     status: e.executionState,
                     summary: executionService.summarizeJob(e.scheduledExecution, e)
@@ -688,7 +688,7 @@ public class NotificationService implements ApplicationContextAware{
         def modifiedSuccessNodeList = executionService.getEffectiveSuccessNodeList(e)
         def emap = [
             id: e.id,
-            href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
+            href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                     params: [project: e.project]),
             status: e.executionState,
             user: e.user,

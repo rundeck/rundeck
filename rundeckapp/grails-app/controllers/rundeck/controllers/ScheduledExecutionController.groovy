@@ -2525,10 +2525,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 link =createLink(controller: "execution", action: "renderOutput", id: results.id,
                         params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
             }else{
-                link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+                link =createLink(controller: "execution",action: "show",id: results.id, fragment: params.followdetail)
             }
         } else {
-            link = createLink(controller: "execution", action: "follow", id: results.id)
+            link = createLink(controller: "execution", action: "show", id: results.id)
         }
         boolean follow_ = params.follow == 'true'
         return render(contentType:'application/json'){
@@ -2572,10 +2572,10 @@ class ScheduledExecutionController  extends ControllerBase{
             if(params.followdetail=='html'){
                 link =createLink(controller: "execution", action: "renderOutput", id: results.id, params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
             }else{
-                link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+                link =createLink(controller: "execution",action: "show",id: results.id, fragment: params.followdetail)
             }
         }else {
-            link = createLink(controller: "execution", action: "follow", id: results.id)
+            link = createLink(controller: "execution", action: "show", id: results.id)
         }
         boolean follow_ = params.follow == 'true'
 
@@ -2633,7 +2633,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if(params.followdetail=='html'){
                 redirect(controller: "execution", action: "renderOutput", id: results.id, params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
             }else{
-                redirect(controller: "execution", action: "follow", id: results.id, params:[outdetails: params.followdetail])
+                redirect(controller: "execution", action: "show", id: results.id, params:[outdetails: params.followdetail])
             }
         } else {
             redirect(controller: "scheduledExecution", action: "show", id: params.id)
