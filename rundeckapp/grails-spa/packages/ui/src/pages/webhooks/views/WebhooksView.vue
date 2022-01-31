@@ -223,7 +223,6 @@ export default observer(Vue.extend({
       webhookPlugins: [],
       curHook: null,
       hkSecret: null,
-      inSaveCall: false,
       origUseAuthVal: false,
       config: null,
       errors: {},
@@ -311,7 +310,9 @@ export default observer(Vue.extend({
       this.cleanAction(() => this.select(selected))
     },
     select(selected) {
-      if(!this.inSaveCall) this.hkSecret = null
+      if (!this.curHook || this.curHook.uuid !== selected.uuid) {
+          this.hkSecret = null
+      }
       this.curHook = this.rootStore.webhooks.clone(selected)
       this.origUseAuthVal = this.curHook.useAuth
 
@@ -356,7 +357,6 @@ export default observer(Vue.extend({
         return
       }
       webhook.config = this.selectedPlugin.config
-      this.inSaveCall = true
       let resp
       if (webhook.new)
         resp = await this.rootStore.webhooks.create(webhook)
@@ -378,7 +378,6 @@ export default observer(Vue.extend({
         await this.rootStore.webhooks.refresh(this.projectName)
         this.select(this.rootStore.webhooks.webhooksByUuid.get(webhook.uuid))
       }
-      this.inSaveCall = false
     },
     handleCancel() {
       this.cleanAction(this.cancel)
