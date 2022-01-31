@@ -60,7 +60,7 @@
                   <div class="card-content">
                     <label>{{ $t('message.webhookAuthLabel') }}</label>
                     <div class="help-block"> {{$t('message.webhookGenerateSecretCheckboxHelp')}}</div>
-                    <div class="checkbox"><input type="checkbox" v-model="curHook.useAuth" @click="confirmAuthToggle" class="form-control"><label>{{ $t('message.webhookGenerateSecurityLabel') }}</label></div>
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.useAuth" @click="confirmAuthToggle" class="form-control" id="wh-authtoggle"><label for="wh-authtoggle">{{ $t('message.webhookGenerateSecurityLabel') }}</label></div>
                     <div v-if="showRegenButton">
                       <button class="btn btn-sm btn-default" @click="setRegenerate">Regenerate</button>
                       <span v-if="curHook.regenAuth" style="color: var(--color-red); margin-left: 5px"> {{$t('message.webhookRegenClicked')}}</span>
@@ -88,7 +88,7 @@
                     </div>
                   </div>
                   <div class="form-group">
-                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control" id="wh-enabled"><label for="wh-enabled">{{ $t('message.webhookEnabledLabel') }}</label></div>
                   </div>
                 </div>
                 </div>
@@ -168,7 +168,6 @@ import {observer} from 'mobx-vue'
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue"
 import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue"
 
-import HelpIcon from '@rundeck/ui-trellis/lib/components/help/HelpIcon.vue'
 import CopyBox from '@rundeck/ui-trellis/lib/components/containers/copybox/CopyBox.vue'
 import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
 import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
@@ -208,7 +207,6 @@ var i18nInstance = new VueI18n({
 export default observer(Vue.extend({
   name: "WebhooksView",
   components: {
-    HelpIcon,
     CopyBox,
     PluginConfig,
     PluginInfo,
@@ -225,6 +223,7 @@ export default observer(Vue.extend({
       webhookPlugins: [],
       curHook: null,
       hkSecret: null,
+      inSaveCall: false,
       origUseAuthVal: false,
       config: null,
       errors: {},
@@ -312,7 +311,7 @@ export default observer(Vue.extend({
       this.cleanAction(() => this.select(selected))
     },
     select(selected) {
-      this.hkSecret = null
+      if(!this.inSaveCall) this.hkSecret = null
       this.curHook = this.rootStore.webhooks.clone(selected)
       this.origUseAuthVal = this.curHook.useAuth
 
@@ -357,7 +356,7 @@ export default observer(Vue.extend({
         return
       }
       webhook.config = this.selectedPlugin.config
-
+      this.inSaveCall = true
       let resp
       if (webhook.new)
         resp = await this.rootStore.webhooks.create(webhook)
@@ -371,14 +370,15 @@ export default observer(Vue.extend({
         this.setValidation(false, data.errors)
       } else {
         this.setMessage("Saved!")
+        if(data.generatedSecurityString) {
+          this.hkSecret = data.generatedSecurityString
+        }
         this.setValidation(true)
         this.dirty = false
         await this.rootStore.webhooks.refresh(this.projectName)
         this.select(this.rootStore.webhooks.webhooksByUuid.get(webhook.uuid))
-        if(data.generatedSecurityString) {
-          this.hkSecret = data.generatedSecurityString
-        }
       }
+      this.inSaveCall = false
     },
     handleCancel() {
       this.cleanAction(this.cancel)
@@ -387,15 +387,6 @@ export default observer(Vue.extend({
       this.curHook = null
       this.config = null
       this.dirty = false
-    },
-    confirmRemoveAuth() {
-      var self = this
-      self.$confirm({
-        title:"Confirm",
-        content:"Are you sure you want to remove this webhook authorization string?"
-      }).then(() => {
-        this.handleSave()
-        }).catch(() => {})
     },
     handleDelete() {
       var self = this
