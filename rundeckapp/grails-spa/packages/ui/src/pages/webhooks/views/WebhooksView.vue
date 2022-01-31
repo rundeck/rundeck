@@ -10,7 +10,7 @@
         @click="handleAddNew"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
     </div>
   </div>
-  
+
   <div style="display: flex; height: 100%;overflow: hidden;">
     <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 20px;overflow-x: hidden;overflow-y: auto;">
       <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
@@ -57,6 +57,19 @@
                     <CopyBox style="max-width: 800px" v-if="!curHook.new" :content="postUrl()"/>
                     <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.new">{{$t('message.webhookPostUrlPlaceholder')}}</span>
                   </div>
+                  <div class="card-content">
+                    <label>{{ $t('message.webhookAuthLabel') }}</label>
+                    <div class="help-block"> {{$t('message.webhookGenerateSecretCheckboxHelp')}}</div>
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.useAuth" @click="confirmAuthToggle" class="form-control" id="wh-authtoggle"><label for="wh-authtoggle">{{ $t('message.webhookGenerateSecurityLabel') }}</label></div>
+                    <div v-if="showRegenButton">
+                      <button class="btn btn-sm btn-default" @click="setRegenerate">Regenerate</button>
+                      <span v-if="curHook.regenAuth" style="color: var(--color-red); margin-left: 5px"> {{$t('message.webhookRegenClicked')}}</span>
+                    </div>
+                    <div v-if="hkSecret" >
+                      <label style="color: var(--color-red); margin-top: 5px">{{$t('message.webhookSecretMessageHelp')}}</label>
+                      <CopyBox style="max-width: 800px" :content="hkSecret"/>
+                    </div>
+                  </div>
                   </div>
                 </div>
                 <div class="card">
@@ -75,7 +88,7 @@
                     </div>
                   </div>
                   <div class="form-group">
-                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control" id="wh-enabled"><label for="wh-enabled">{{ $t('message.webhookEnabledLabel') }}</label></div>
                   </div>
                 </div>
                 </div>
@@ -159,6 +172,7 @@ import CopyBox from '@rundeck/ui-trellis/lib/components/containers/copybox/CopyB
 import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
 import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
 import WebhookPicker from '@rundeck/ui-trellis/lib/components/widgets/webhook-select/WebhookSelect.vue'
+import KeyStorageSelector from '@rundeck/ui-trellis/lib/components/plugins/KeyStorageSelector.vue'
 
 import {getServiceProviderDescription,
   getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
@@ -199,7 +213,8 @@ export default observer(Vue.extend({
     Tabs,
     Tab,
     WebhookPicker,
-    WebhookTitle
+    WebhookTitle,
+    KeyStorageSelector
   },
   inject: ["rootStore"],
   data() {
@@ -207,6 +222,8 @@ export default observer(Vue.extend({
       webhooks: [],
       webhookPlugins: [],
       curHook: null,
+      hkSecret: null,
+      origUseAuthVal: false,
       config: null,
       errors: {},
       validation:{valid:true,errors:{}},
@@ -218,7 +235,29 @@ export default observer(Vue.extend({
       dirty: false
     }
   },
+  computed: {
+    showRegenButton() {
+      return !this.hkSecret && this.curHook.useAuth && !this.curHook.new && this.origUseAuthVal
+    }
+  },
   methods: {
+    confirmAuthToggle() {
+      if(this.curHook.useAuth) {
+        var self = this
+        self.$confirm({
+          title:"Confirm",
+          content:"Are you sure you want to remove this webhook authorization string?"
+        }).then(() => {
+          //do nothing
+        }).catch(() => {
+          this.curHook.useAuth = true
+        })
+      }
+
+    },
+    setRegenerate() {
+      this.curHook.regenAuth = true
+    },
     input() {
       this.dirty = true
     },
@@ -271,7 +310,11 @@ export default observer(Vue.extend({
       this.cleanAction(() => this.select(selected))
     },
     select(selected) {
+      if (!this.curHook || this.curHook.uuid !== selected.uuid) {
+          this.hkSecret = null
+      }
       this.curHook = this.rootStore.webhooks.clone(selected)
+      this.origUseAuthVal = this.curHook.useAuth
 
       this.dirty = false
 
@@ -280,7 +323,7 @@ export default observer(Vue.extend({
       }, (data) => {
         this.dirty = true
       })
-      
+
       this.setValidation(true)
       this.setSelectedPlugin(true)
     },
@@ -306,13 +349,14 @@ export default observer(Vue.extend({
     },
     async handleSave() {
       const webhook = this.curHook
-
+      if(this.curHook.useAuth && this.origUseAuthVal === false) {
+        this.curHook.regenAuth = true
+      }
       if(!webhook.eventPlugin) {
         this.setError("You must select a Webhook plugin before saving")
         return
       }
       webhook.config = this.selectedPlugin.config
-
       let resp
       if (webhook.new)
         resp = await this.rootStore.webhooks.create(webhook)
@@ -326,6 +370,9 @@ export default observer(Vue.extend({
         this.setValidation(false, data.errors)
       } else {
         this.setMessage("Saved!")
+        if(data.generatedSecurityString) {
+          this.hkSecret = data.generatedSecurityString
+        }
         this.setValidation(true)
         this.dirty = false
         await this.rootStore.webhooks.refresh(this.projectName)
@@ -393,8 +440,10 @@ export default observer(Vue.extend({
       this.cleanAction(() => this.addNewHook())
     },
     addNewHook() {
+      this.hkSecret = null
       this.showPluginConfig = false
-      this.curHook = this.rootStore.webhooks.newFromApi({name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, new: true, config: {}})
+      this.origUseAuthVal = false
+      this.curHook = this.rootStore.webhooks.newFromApi({name: "New Hook", user: curUser, roles: curUserRoles, useAuth: false, enabled: true, project: projectName, new: true, config: {}})
       this.config = this.curHook.config
       this.dirty = true
     },
