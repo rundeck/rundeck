@@ -18,11 +18,13 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.junit.Ignore
 import org.springframework.core.task.TaskExecutor
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
@@ -59,11 +61,11 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.ProducedExecutionFile
 
-class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTest<LogFileStorageService>  {
+class LogFileStorageServiceTests extends Specification implements DataTest, ServiceUnitTest<LogFileStorageService>  {
     File testLogFile1
     File testLogFileDNE
 
-    List<Class> getDomainClasses() { [LogFileStorageRequest,Execution,ScheduledExecution,Workflow]}
+    //List<Class> getDomainClasses() { [LogFileStorageRequest,Execution,ScheduledExecution,Workflow]}
 
     /**
      * utility method to mock a class
@@ -72,6 +74,13 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         def mock = new MockFor(clazz)
         mock.demand.with(clos)
         return mock.proxyInstance()
+    }
+
+    def setupSpec(){
+        mockDomain LogFileStorageRequest
+        mockDomain Execution
+        mockDomain ScheduledExecution
+        mockDomain Workflow
     }
 
     def setup() {
@@ -828,6 +837,7 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         1 == 1
     }
     void testRunStorageRequestFailureCancel(){
+        given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
         grailsApplication.config.rundeck.execution.logs.fileStorage.cancelOnStorageFailure = true
@@ -835,46 +845,36 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=false
         LogFileStorageService svc
-        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
+        when:
+        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1){ LogFileStorageService service ->
             //default to true fo cancelOnStorageFailure
-            service.configurationService=mockWith(ConfigurationService){
-                getInteger(2..2){String prop,int defval->defval}
-                getBoolean{String prop,boolean defval->true}
-                getString{String prop,String defval->'test1'}
+            service.configurationService=Mock(ConfigurationService){
+                getBoolean(_,_)>>true
+                getString(_)>>'test1'
             }
             svc = service
-            assertFalse(test.storeLogFileCalled)
-            assertNull( test.storeFiletype)
         }
 
-        assertTrue(test.storeLogFileCalled)
-        assertEquals("rdlog", test.storeFiletype)
-        assertEquals(testLogFile1.length(),test.storeLength)
-        assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
-
-        assertEquals(1,task.count)
-        assertTrue(svc.executorService.executeCalled)
-
         def request
-        LogFileStorageRequest.withSession { session ->
+        LogFileStorageRequest.withNewSession { session ->
             session.flush()
             request=LogFileStorageRequest.get(task.requestId)
             request?.refresh()
         }
 
-        assertNull(request)
+        then:
+        test.storeLogFileCalled
+        test.storeFiletype == "rdlog"
+        test.storeLength == testLogFile1.length()
+        test.storeLastModified == new Date(testLogFile1.lastModified())
+        task.count == 1
+        svc.executorService.executeCalled == true
 
-        expect:
-        // asserts validate test
-        1 == 1
+        request == null
 
     }
     void testRunStorageRequestFailureWithRetry(){
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
-        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryCount = 2
-
+        given:
 
         def test = new testStoragePlugin()
         test.storeLogFileSuccess=false
@@ -887,26 +887,35 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         }
 
         service.logFileStorageTaskScheduler = sched.proxyInstance()
+        when:
         Map task = performRunStorage(test, "rdlog", createExecution(), testLogFile1, ['execution.logs.fileStorage.storageRetryDelay': 30, 'execution.logs.fileStorage.storageRetryCount': 2]) { LogFileStorageService service ->
+            service.configurationService = Mock(ConfigurationService) {
+                getInteger(_,_)>>{String value, Integer defVal->
+                    if(value == "execution.logs.fileStorage.storageRetryDelay"){
+                        return 30
+                    }
+                    if(value == "execution.logs.fileStorage.storageRetryCount"){
+                        return 2
+                    }
+                    null
+                }
+                getString(_)>>"test1"
+            }
 
             svc = service
-            assertFalse(test.storeLogFileCalled)
-            assertNull(test.storeFiletype)
         }
 
-        assertTrue(test.storeLogFileCalled)
-        assertEquals("rdlog", test.storeFiletype)
-        assertEquals(testLogFile1.length(),test.storeLength)
-        assertEquals(new Date(testLogFile1.lastModified()),test.storeLastModified)
 
-        assertEquals(1,task.count)
-        assertFalse(svc.executorService.executeCalled)
-        assertEquals(0, svc.getCurrentRequests().size())
-        assertTrue(queued)
+        then:
+        test.storeLogFileCalled
+        test.storeFiletype == "rdlog"
+        test.storeLength == testLogFile1.length()
+        test.storeLastModified == new Date(testLogFile1.lastModified())
+        task.count == 1
+        !svc.executorService.executeCalled
+        svc.getCurrentRequests().size() == 0
+        queued
 
-        expect:
-        // asserts validate test
-        1 == 1
     }
     class testProducer implements ExecutionFileProducer{
         String executionFileType
@@ -929,17 +938,18 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
     }
 
     private Map performRunStorage(testStoragePlugin test, String filetype, Execution e, File testfile, Map<String, Integer> intvals, Closure clos = null) {
-        assertNotNull(e.save())
-        def fmock = new MockFor(FrameworkService)
-        fmock.demand.getFrameworkPropertyResolver() { project ->
-            assert project == "testprojz"
+        e.save(flush:true)
+
+        def fmock = Mock(FrameworkService){
+            //getFrameworkPropertyResolver()>>"testprojz"
         }
-        def pmock = new MockFor(PluginService)
-        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
-            assertEquals("test1", pname)
-            assert scope == PropertyScope.Instance
-            [instance: test, configuration: [:]]
+        //fmock.demand.getFrameworkPropertyResolver() { project ->
+        //    assert project == "testprojz"
+        //}
+        def pmock = Mock(PluginService){
+            configurePlugin("test1", _,_,PropertyScope.Instance)>>[instance: test, configuration: [:]]
         }
+
         def emock = new Expando()
         emock.executeCalled=false
         emock.execute={Closure cls->
@@ -947,8 +957,8 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
             assertNotNull(cls)
             cls.call()
         }
-        service.frameworkService = fmock.proxyInstance()
-        service.pluginService = pmock.proxyInstance()
+        service.frameworkService = fmock
+        service.pluginService = pmock
         service.executorService=emock
         def filetypes = filetype.split(',')
         if(filetype=='*'){
@@ -960,21 +970,21 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         }
 
 
-        def appmock = new MockFor(ApplicationContext)
-        appmock.demand.getBeansOfType(1..1){Class clazz->
-            loggingBeans
+        def appmock = Mock(ApplicationContext){
+            getBeansOfType(_)>>loggingBeans
         }
-        service.applicationContext=appmock.proxyInstance()
-        service.configurationService=mockWith(ConfigurationService){
-            getInteger(1..3) { String prop, int defval -> intvals[prop] ?: defval }
-            getBoolean{String prop,boolean defval->false}
-            getString{String prop,String defval->'test1'}
+        service.applicationContext=appmock
+        service.configurationService=Mock(ConfigurationService){
+            //getInteger(1..3) { String prop, int defval -> intvals[prop] ?: defval }
+            getBoolean(_)>>false //{String prop,boolean defval->false}
+            getString(_)>>'test1' //{String prop,String defval->'test1'}
         }
 
-        assertEquals(0, LogFileStorageRequest.list().size())
+        //assertEquals(0, LogFileStorageRequest.list().size())
         LogFileStorageRequest request = new LogFileStorageRequest(filetype: filetype,execution: e,pluginName:'test1',completed: false)
         request.validate()
-        assertNotNull((request.errors.allErrors*.toString()).join(';'),request.save(flush:true))
+        request.save(flush:true)
+        //assertNotNull((request.errors.allErrors*.toString()).join(';'),request.save(flush:true))
         if (null != clos) {
             service.with(clos)
         }
@@ -1511,12 +1521,12 @@ class LogFileStorageServiceTests extends HibernateSpec implements ServiceUnitTes
         int useStoredNdx=0
         service.metaClass.getFileForExecutionFiletype = {
             Execution e2, String filetype, boolean useStored, boolean partial ->
-            assert e == e2
-            assert "rdlog"==filetype
-            assert useStored==useStoredValues[useStoredNdx]
+                assert e == e2
+                assert "rdlog"==filetype
+                assert useStored==useStoredValues[useStoredNdx]
                 assert partial == partialValues[useStoredNdx]
-            useStoredNdx++
-            logfile
+                useStoredNdx++
+                logfile
         }
 
         service.configurationService=mockWith(ConfigurationService){
