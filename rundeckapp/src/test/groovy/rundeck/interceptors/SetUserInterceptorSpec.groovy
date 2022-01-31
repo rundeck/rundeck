@@ -11,6 +11,7 @@ import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.access.InterceptorHelper
 import rundeck.AuthToken
+import rundeck.ConfigTagLib
 import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.codecs.HTMLAttributeCodec
@@ -30,10 +31,6 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         mockDomain AuthToken
     }
     def setup() {
-        defineBeans{
-            ConfigurationService(InstanceFactoryBean, Mock(ConfigurationService))
-        }
-
     }
 
     def cleanup() {
@@ -88,11 +85,15 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }
+
         }
+        GroovyMock(ConfigurationService, global: true)
+
         mockCodec(URIComponentCodec)
         mockCodec(HTMLContentCodec)
         mockCodec(HTMLAttributeCodec)
         mockTagLib(UtilityTagLib)
+        mockTagLib(ConfigTagLib)
 
         def userServiceMock = Mock(UserService) {
             getUserGroupSourcePluginRoles(username) >> { groups }
