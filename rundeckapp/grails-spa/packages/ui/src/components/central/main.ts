@@ -1,7 +1,7 @@
 import moment from 'moment'
 import Vue from 'vue'
 import * as uiv from 'uiv'
-import VueCookies from 'vue-cookies'
+import VueCookies from 'vue-cookies-ts'
 import VueI18n from 'vue-i18n'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 import VueMoment from 'vue-moment'
