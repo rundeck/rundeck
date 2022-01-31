@@ -21,10 +21,10 @@ const translationStrings = {
       webhookRolesLabel:'Roles',
       webhookRolesHelp:'The authorization roles assumed when running this webhook (comma separated). All ACL policies matching these roles will apply.',
       webhookAuthLabel: 'HTTP Authorization String',
-      webhookGenerateSecurityLabel: "Use Authorization String",
-      webhookGenerateSecretCheckboxHelp: "[Optional] A Webhook Authentication string can be generated to increase security of this webhook. All posts will need to include the generated string in the Authorization header.",
+      webhookGenerateSecurityLabel: "Use Authorization Header",
+      webhookGenerateSecretCheckboxHelp: "[Optional] A Webhook authorization string can be generated to increase security of this webhook. All posts will need to include the generated string in the Authorization header.",
       webhookSecretMessageHelp: "Copy this authorization string now. After you navigate away from this webhook you will no longer be able to see the string.",
-      webhookRegenClicked:'A new Authorization string will be generated and displayed when the webhook is saved.',
+      webhookRegenClicked:'A new authorization string will be generated and displayed when the webhook is saved.',
       webhookPluginLabel:'Choose Webhook Plugin'
     }
   }
