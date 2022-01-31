@@ -601,27 +601,37 @@ class JobsXMLCodec {
                 }
             }
             map.notification.keySet().sort().findAll { it.startsWith('on') }.each { trigger ->
-                if(map.notification[trigger]){
-                    if(map.notification[trigger]?.email){
-                        def mail= map.notification[trigger].remove('email')
-                        map.notification[trigger].email=[:]
-                        mail.each{k,v->
-                            BuilderUtil.addAttribute(map.notification[trigger].email,k,v)
+                ArrayList triggerNotifs = map.notification[trigger]
+                map.notification[trigger] = [:]
+                triggerNotifs?.each {notif ->
+                    def xmlNotif = [:]
+                    def xmlNotifType
+                    if(!notif.plugin){
+                        if(notif.email){
+                            notif = notif.email
+                            xmlNotifType = 'email'
+                        }else if(notif.urls){
+                            xmlNotifType = 'webhook'
+                        }else{
+                            throw new JobXMLException("unknown notification xmlNotifType")
                         }
-                    }
-                    if(map.notification[trigger]?.urls){
-                        map.notification[trigger].webhook=BuilderUtil.toAttrMap('urls',map.notification[trigger].remove('urls'))
-                    }
-                    if(map.notification[trigger]?.plugin){
-                        if(map.notification[trigger]?.plugin instanceof Map){
-                            convertNotificationPlugin(map.notification[trigger]?.plugin)
-                        }else if(map.notification[trigger]?.plugin instanceof Collection){
-                            //list of plugins,
-                            map.notification[trigger].plugin.each{Map plugin->
-                                convertNotificationPlugin(plugin)
-                            }
+                        //for notifications translated to inline tags
+                        notif.each{k,v->
+                            BuilderUtil.addAttribute(xmlNotif,k,v)
                         }
+                    }else{
+                        notif.plugin.each{Map plugin->
+                            convertNotificationPlugin(plugin)
+                        }
+                        xmlNotifType = 'plugin'
+                        xmlNotif = notif.plugin
                     }
+                    if(!map.notification[trigger][xmlNotifType]) map.notification[trigger][xmlNotifType] = []
+                    if(notif.xmlNotif instanceof Collection)
+                        map.notification[trigger][xmlNotifType].addAll(xmlNotif)
+                    else
+                        map.notification[trigger][xmlNotifType].add(xmlNotif)
+
                 }
             }
         }
