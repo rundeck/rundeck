@@ -103,10 +103,17 @@ class ConfigurationService implements InitializingBean {
         def cval = appConfig
         if(strings.length>1) {
             strings[0..-2].each {
-                cval = cval.getAt(it)
+                if(cval){
+                    cval = cval.getAt(it)
+                }
+
             }
         }
-        cval.putAt(strings[-1],val)
+        if(cval){
+            cval.putAt(strings[-1],val)
+        }else{
+            appConfig.put(property, val)
+        }
     }
     /**
      * Lookup boolean config value, rundeck.service.component.property, evaluate true/false.
