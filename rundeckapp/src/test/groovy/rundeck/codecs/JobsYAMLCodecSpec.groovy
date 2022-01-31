@@ -78,13 +78,15 @@ class JobsYAMLCodecSpec extends Specification {
         doc.size() == 1
         doc[0].name == 'test job 1'
         doc[0].notification.onsuccess.size() == 1
-        doc[0].notification.onsuccess.plugin.size() == 3
+        doc[0].notification.onsuccess.plugin[0].size() == 3
         def expectorder = ['aplugin', 'bplugin', 'zplugin']
         def conforder = ['a', 'c', 'z']
-        doc[0].notification.onsuccess.plugin.collect { it.type } == expectorder
+        doc[0].notification.onsuccess.plugin.collect { it.type }[0] == expectorder
+
+        doc[0].notification.onsuccess.plugin
         (0..2).each { i ->
-            doc[0].notification.onsuccess.plugin[i].type == expectorder[i]
-            doc[0].notification.onsuccess.plugin[i].configuration.keySet().toList() == conforder
+            doc[0].notification.onsuccess.plugin[0][i].type == expectorder[i]
+            doc[0].notification.onsuccess.plugin[0][i].configuration.keySet().toList() == conforder
         }
 
         where:
