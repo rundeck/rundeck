@@ -11,7 +11,7 @@ export const Elems= {
     updateButton  : By.css('#jobUpdateSaveButton'),
     cancelButton  : By.css('#createFormCancelButton'),
     editCancelButton  : By.css('#editFormCancelButton'),
-    editSaveButton: By.css('#editForm div.card-footer input.btn.btn-primary[type=submit][value=Save]'),
+    editSaveButton: By.css('#editForm div.card-footer input.btn.btn-cta[type=submit][value=Save]'),
     errorAlert  : By.css('#error'),
     formValidationAlert: By.css('#page_job_edit > div.list-group-item > div.alert.alert-danger'),
 
@@ -19,7 +19,7 @@ export const Elems= {
     addNewWfStepButton: By.xpath('//*[@id="wfnewbutton"]/span'),
     addNewWfStepCommand: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[data-node-step-type=command]'),
     wfStepCommandRemoteText: By.css('#adhocRemoteStringField'),
-    wfStep0SaveButton: By.css('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-primary.btn-sm'),
+    wfStep0SaveButton: By.css('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm'),
     wfstep0vis: By.css('#wfivis_0'),
     optionNewButton: By.css('#optnewbutton > span'),
     option0EditForm: By.css('#optvis_0 > div.optEditForm'),
@@ -412,7 +412,7 @@ export class JobCreatePage extends Page {
     }
 
     async wfStepSaveButton(position: string){
-        let wfStep0SaveButton = By.css('#wfli_'+position+' div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-primary.btn-sm')
+        let wfStep0SaveButton = By.css('#wfli_'+position+' div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm')
         return await this.ctx.driver.findElement(wfStep0SaveButton)
     }
     async waitWfstepvis(position: string){
