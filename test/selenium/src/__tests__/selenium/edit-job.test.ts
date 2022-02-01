@@ -41,17 +41,6 @@ describe('editing a job', () => {
         const save = await jobCreatePage.editSaveButton()
         await save.click()
     })
-    it('adds tags correctly', async () => {
-        const tagsField = await jobCreatePage.tagsInputArea()
-        await ctx.driver.wait(until.elementIsVisible(tagsField), 10000)
-        expect(tagsField).toBeDefined()
-        tagsField.clear()
-        tagsField.sendKeys(testVars.tags)
-
-        //ensure they were tag-ified
-        const pilledTagsField = await jobCreatePage.tagsPillsArea()
-        expect(pilledTagsField).toBeDefined()
-    })
     it('edits and saves job description correctly', async () => {
         const descriptionTextField = await jobCreatePage.descriptionTextarea()
         expect(descriptionTextField).toBeDefined()
@@ -78,10 +67,6 @@ describe('showing the edited job', () => {
     it('verifies job group', async () => {
         const groupLabel = await jobShowPage.jobGroupText()
         expect(groupLabel).toEqual(testVars.group)
-    })
-    it('verifies job tags', async () => {
-        const showTags = await jobShowPage.jobTags()
-        expect(showTags).toHaveLength(testVars.tagsCount)
     })
     it('verifies job description', async () => {
         const foundText = await jobShowPage.jobDescriptionText()
