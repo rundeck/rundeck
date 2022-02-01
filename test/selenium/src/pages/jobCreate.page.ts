@@ -355,7 +355,7 @@ export class JobCreatePage extends Page {
     }
 
     async optionFormSave(position: string){
-        let  optionEditForm = By.css('#optvis_'+position+' > div.optEditForm  div.floatr > span.btn.btn-primary.btn-sm')
+        let  optionEditForm = By.css('#optvis_'+position+' > div.optEditForm  div.floatr > span.btn.btn-cta.btn-sm')
         return await this.ctx.driver.findElement(optionEditForm)
     }
 
