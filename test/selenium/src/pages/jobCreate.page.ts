@@ -18,8 +18,6 @@ export const Elems = {
     jobNameInput  : By.css('form input[name="jobName"]'),
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
-    tagsInputArea  : By.css('div.tag-input-wrapper > input.form-control'),
-    tagsPillsArea : By.css('ul.tags-list'),
     groupChooseButton: By.css('span.btn[data-target="#groupChooseModal"]'),
     groupChooseInput : By.css('input#schedJobGroup'),
     groupChooseModal : By.css('div#groupChooseModal_content'),
@@ -121,12 +119,6 @@ export class JobCreatePage extends Page {
     }
     async descriptionTextarea() {
         return await this.ctx.driver.findElement(Elems.descriptionTextarea)
-    }
-    async tagsInputArea() {
-        return await this.ctx.driver.findElement(Elems.tagsInputArea)
-    }
-    async tagsPillsArea() {
-        return await this.ctx.driver.findElement(Elems.tagsPillsArea)
     }
     async groupChooseButton() {
         return await this.ctx.driver.findElement(Elems.groupChooseButton)
