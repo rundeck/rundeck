@@ -20,7 +20,7 @@ export const Elems= {
     optionNewButton: By.css('#optnewbutton > span'),
     option0EditForm: By.css('#optvis_0 > div.optEditForm'),
     option0NameInput: By.css('#optvis_0 > div.optEditForm input[type=text][name=name]'),
-    optionFormSaveButton: By.css('#optvis_0 > div.optEditForm  div.floatr > span.btn.btn-primary.btn-sm'),
+    optionFormSaveButton: By.css('#optvis_0 > div.optEditForm  div.floatr > span.btn.btn-cta.btn-sm'),
     option0li: By.css('#optli_0')
  }
  
