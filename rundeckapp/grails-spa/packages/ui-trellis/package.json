@@ -9,13 +9,13 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev:build": "npm install && npx mix",
-    "ci:build": "npm ci && npx mix",
-    "dev": "npx mix",
+    "dev:build": "npm install && npx mix --production",
+    "ci:build": "npm ci && npx mix --production",
+    "dev": "npx mix watch",
     "build": "run-script-os",
-    "build:darwin:linux": "./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.build.json",
-    "build:win32": "vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.build.json",
-    "storybook": "start-storybook -p 6006",
+    "build:darwin:linux": "npx mix --production",
+    "build:win32": "npx mix --production",
+    "storybook": "start-storybook -s public,theme,tests/data",
     "build-storybook": "build-storybook"
   },
   "repository": {
@@ -32,6 +32,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "resolutions": {
+    "@storybook/{app}/webpack": "^5"
+  },
   "devDependencies": {
     "@babel/core": "^7.16.12",
     "@rundeck/client": "^0.2.3",
@@ -40,7 +43,7 @@
     "@storybook/addon-links": "^6.4.14",
     "@storybook/builder-webpack5": "^6.4.14",
     "@storybook/manager-webpack5": "^6.4.14",
-    "@storybook/preset-scss": "^1.0.3",
+    "@storybook/vue": "^6.4.14",
     "@types/mocha": "^9.1.0",
     "@types/node": "^14.0.13",
     "@types/uuid": "^8.3.0",
@@ -64,6 +67,7 @@
     "postcss-flexbugs-fixes": "^5.0.2",
     "prex": "^0.4.7",
     "resolve-url-loader": "^5.0.0",
+    "run-script-os": "^1.1.6",
     "sass": "^1.49.0",
     "sass-loader": "^12.4.0",
     "stream": "^0.0.2",
@@ -73,23 +77,20 @@
     "vue-loader": "^15.9.8",
     "vue-moment": "^4.1.0",
     "vue-template-compiler": "^2.6.14",
-    "walk": "^2.3.15"
+    "vue-tsx-loader": "^0.1.4",
+    "walk": "^2.3.15",
+    "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
     "@azure/ms-rest-js": "^2.0.7",
     "@popperjs/core": "^2.8.4",
-    "@storybook/addon-backgrounds": "^6.2.9",
-    "@storybook/addon-docs": "^6.2.9",
-    "@storybook/addon-knobs": "^6.2.9",
-    "@storybook/preset-typescript": "^3.0.0",
-    "@storybook/vue": "^6.2.9",
+    "@storybook/addon-knobs": "^6.4.0",
     "deep-object-diff": "^1.1.0",
     "html-webpack-plugin": "^5.5.0",
     "mobx-utils": "^5.6.1",
     "mobx-vue": "^2.0.11",
     "perfect-scrollbar": "^1.5.5",
     "postcss": "^8.4.5",
-    "storybook-addon-sass-postcss": "^0.1.0",
     "storybook-dark-mode": "^1.0.8",
     "uuid": "^8.3.2",
     "vue": "^2.6.14",

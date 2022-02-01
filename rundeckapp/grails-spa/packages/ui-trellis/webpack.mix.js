@@ -2,13 +2,7 @@ let path = require('path')
 const walk = require('walk')
 
 let mix = require('laravel-mix');
-const MixGlob = require('laravel-mix-glob');
-const mixGlob = new MixGlob({
-  mix,
-});
-
-const ChunkRenameWebpackPlugin = require("chunk-rename-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
+const nodeExternals = require('webpack-node-externals');
 
 mix
   .sass('./theme/scss/app.scss', 'style')
@@ -117,10 +111,67 @@ mix
 
   .ts('./src/index.ts', './dist/src')
   .ts('./src/rundeckService.ts', './dist/src')
+  .options({
+    processCssUrls: false,
+    terser: {
+      extractComments: false,
+    }
+  })
   .copyDirectory('./dist/src', './lib')
   .vue()
-  .setPublicPath('lib')
+  .setPublicPath('./dist')
   .webpackConfig({
+    externals: [
+      nodeExternals(),
+      function (context, request, callback) {
+       
+        if (/^\..*\.vue$/.test(request)) // Components requiring other components
+          return callback(null, request)
+
+        /** Inline CSS */
+        if (context.startsWith(process.cwd())
+          && request.includes('.scss')) {
+          return callback()
+        }
+
+        /** Bundle javascript code inside components */
+        if (request.startsWith('./')
+          && !context.endsWith('.scss')
+          && !context.includes('node_modules')
+          && !request.includes('.vue')) {
+          return callback(null, request)
+        }
+
+        if (request.startsWith('.')
+            && !request.includes('?') // These are typically compile time generated files in flight
+            && !context.includes('node_modules') // Runtime stuff still getting required from node_modules
+            && !request.includes('node_modules')) {
+          return callback(null, request)
+        }
+
+        callback()
+      }
+    ],
+    optimization: {
+      minimize: false,
+      splitChunks: false
+    },
+    module: {
+      rules: [
+          {
+              test: /\.ts$/,
+              loader: 'ts-loader',
+              options: {
+                transpileOnly: false,
+                onlyCompileBundledFiles: false,
+                configFile : 'tsconfig.webpack.json',
+                compilerOptions : {
+                  declarationDir: './dist',
+                }
+              }
+          }
+      ]
+    },
     output: {
       library: 'rundeckUiTrellis',
       libraryTarget: 'commonjs2',
@@ -128,7 +179,6 @@ mix
       //   return '[name].js'
       // },
     },
-    
   })
 
 // mixGlob

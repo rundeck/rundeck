@@ -1,28 +1,32 @@
 {
     "compilerOptions": {
-        "outDir": "dist",
         "baseUrl": ".",
-        "sourceMap": true,
-        "strict": false,
+        "strict": true,
         "moduleResolution": "node",
         "target": "esnext",
         "experimentalDecorators": true,
-        "skipLibCheck": true,
         "esModuleInterop": true,
         "declaration": true,
+        "sourceMap": true,
         "jsx": "preserve",
         "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
         "types": [
-            "webpack-env",
-            "jest"
+            "webpack-env"
         ],
         "paths": {
             "react": [".sink.d.ts"]
         }
     },
     "include": [
-        "./src/**/*",
-        "tests/**/*.ts",
-        "tests/**/*.tsx"
+        "src/**/*.js",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.vue",
+    ],
+    "exclude": [
+        "**/*.stories.ts",
+        "**/*.stories.tsx",
+        "node_modules/**/*"
     ]
 }

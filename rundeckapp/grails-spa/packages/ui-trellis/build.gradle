@@ -25,7 +25,7 @@ def sources = sourceDirs + sourceFiles
 def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
     it.inputs.file 'package.json'
     it.inputs.file 'package-lock.json'
-    it.inputs.file 'vue.config.js'
+    it.inputs.file 'webpack.mix.js'
     it.inputs.file 'tsconfig.json'
 
     it.inputs.dir 'src'

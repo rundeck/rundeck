@@ -1,3 +1,4 @@
 {
-    "/grails-app/assets/provided/static/components/copybox/main.js": "/grails-app/assets/provided/static/components/copybox/main.js"
+    "/grails-app/assets/provided/static/components/copybox/main.js": "/grails-app/assets/provided/static/components/copybox/main.js",
+    "/grails-app/assets/provided/static/components/navbar/main.js": "/grails-app/assets/provided/static/components/navbar/main.js"
 }

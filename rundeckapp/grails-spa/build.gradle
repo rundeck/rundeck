@@ -37,7 +37,7 @@ task runNpmBuild(type: NpmTask, group: 'build') {
     inputs.file 'packages/ui/package.json'
     inputs.file 'packages/ui/package-lock.json'
     inputs.file 'packages/ui/babel.config.js'
-    inputs.file 'packages/ui/vue.config.js'
+    inputs.file 'packages/ui/webpack.mix.js'
     inputs.file 'packages/ui/tsconfig.json'
     inputs.file 'packages/ui/.env.development'
     inputs.file 'packages/ui/.env.production'
