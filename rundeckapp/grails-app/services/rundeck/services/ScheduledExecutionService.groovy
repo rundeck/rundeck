@@ -2952,7 +2952,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 n.scheduledExecution = scheduledExecution
                 scheduledExecution.addToNotifications(n)
             }
-
             addedNotifications << n
         }
         //delete notifications that are not part of the modified set
