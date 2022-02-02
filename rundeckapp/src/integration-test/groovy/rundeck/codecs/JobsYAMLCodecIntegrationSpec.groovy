@@ -17,7 +17,6 @@
 package rundeck.codecs
 
 import grails.testing.mixin.integration.Integration
-import org.junit.Test
 import org.yaml.snakeyaml.Yaml
 import rundeck.CommandExec
 import rundeck.JobExec
