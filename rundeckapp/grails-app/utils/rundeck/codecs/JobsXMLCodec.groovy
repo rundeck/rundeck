@@ -283,17 +283,17 @@ class JobsXMLCodec {
                 plugin['configuration']=confMap
             }
 
-            def setValidNotifData = { Map notifData, String notifType, String trigger ->
+            def setValidNotifData = { notifData, String notifType, String trigger ->
                 if(!notifType.equals('plugin')){
                     Map notifItem = [:]
                     if(notifType.equals('webhook')){
-                        if(!notifData.urls){
+                        if(notifData.urls==null){
                             throw new JobXMLException("${trigger} webhook had blank or missing 'urls' attribute")
                         }
                         notifItem = notifData
                     }
                     else if(notifType.equals('email')){
-                        if(!notifData.recipients){
+                        if(notifData.size() < 1 || notifData.recipients==null || notifData.recipients.size() < 1){
                             throw new JobXMLException("${trigger} email had blank or missing 'recipients' attribute")
                         }
                         notifItem[notifType] = notifData
@@ -303,10 +303,10 @@ class JobsXMLCodec {
                     if (notifData.size() < 1) {
                         throw new JobXMLException("${trigger} plugin element was empty")
                     }
-                    if (!notifData.type) {
+                    if (notifData.type==null) {
                         throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
                     }
-                    if (!notifData.configuration) {
+                    if (notifData.configuration==null) {
                         throw new JobXMLException("${trigger} plugin had blank or missing 'configuration' element")
                     }
                     convertPluginToMap(notifData)
@@ -317,7 +317,7 @@ class JobsXMLCodec {
             }
 
             triggers.each{trigger->
-                if(!map.notification[trigger].email && !map.notification[trigger].webhook && !map.notification[trigger].plugin){
+                if((map.notification[trigger].size() < 1) || (map.notification[trigger].email==null && map.notification[trigger].webhook==null && map.notification[trigger].plugin==null)){
                     throw new JobXMLException("notification '${trigger}' element had missing 'email' or 'webhook' or 'plugin' element")
                 }
                 final def xmlNotif = map.notification[trigger]

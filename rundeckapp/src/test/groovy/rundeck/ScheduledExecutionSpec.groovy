@@ -19,7 +19,6 @@ package rundeck
 import grails.test.hibernate.HibernateSpec
 import org.eclipse.jetty.util.ajax.JSON
 import testhelper.RundeckHibernateSpec
-
 import static org.junit.Assert.*
 
 /**
