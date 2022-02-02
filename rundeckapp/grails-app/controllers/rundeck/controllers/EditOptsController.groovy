@@ -17,8 +17,10 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import groovy.transform.PackageScope
 import grails.converters.JSON
+import grails.gsp.PageRenderer
+import groovy.transform.PackageScope
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,6 +28,7 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
 import rundeck.utils.OptionsUtil
+import grails.gsp.PageRenderer
 
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -37,6 +40,8 @@ class EditOptsController extends ControllerBase{
     def FrameworkService frameworkService
     def fileUploadService
     def optionValuesService
+    PageRenderer groovyPageRenderer
+
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -117,7 +122,9 @@ class EditOptsController extends ControllerBase{
                 fileUploadPluginDescription: fileUploadService.pluginDescription,
                 optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()?.sort{a,b->a.key<=>b.key}
         ]
+        
         render(contentType: 'application/json',text: model + outparams as JSON)
+
     }
 
     /**
@@ -140,19 +147,17 @@ class EditOptsController extends ControllerBase{
             return error()
         }
         def optIndex=editopts.values()*.name.indexOf(name)
+        def model = [
+                optCount            : editopts.size(),
+                optIndex            : optIndex,
+                options             : editopts,
+                option              : editopts[name],
+                name                : name,
+                scheduledExecutionId: params.scheduledExecutionId,
+                edit                : params.edit
+        ]
+        render(contentType: 'application/json',text: model)
 
-        return render(
-                template: "/scheduledExecution/optlistitemContent",
-                model: [
-                        optCount            : editopts.size(),
-                        optIndex            : optIndex,
-                        options             : editopts,
-                        option              : editopts[name],
-                        name                : name,
-                        scheduledExecutionId: params.scheduledExecutionId,
-                        edit                : params.edit
-                ]
-        )
     }
 
     /**
@@ -166,7 +171,9 @@ class EditOptsController extends ControllerBase{
         //configure sorted list
         def options = new TreeSet()
         options.addAll(editopts.values())
-        return render(template: "/scheduledExecution/optlistContent", model: [options: options, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit])
+        def model = [options: options, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit]
+        render(contentType: 'application/json',text: model )
+
     }
 
 

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="form-group">
     <div class="optslist" id="optionContent">
     <div class="col-sm-2 control-label text-form-label">
       <span id="optsload"></span>Options
@@ -40,20 +40,18 @@
       {{ $t('label.noOptions') }}
     </div>
 
-      <div v-if=editMode id="optnewbutton" style="margin:10px 0; ">
-        <span
-          class="btn btn-default btn-sm ready"
-          :title="$t('label.addNewOption')"
-          @click="jQueryAddNew"
-        >
-          <span class="glyphicon glyphicon-plus" />
-            {{ $t('label.addOption') }}
-        </span>
-      </div>
+        <div v-if=editMode id="optnewbutton" style="margin:10px 0; ">
+          <span class="btn btn-default btn-sm ready"  title="Add a new Option"  @click="jQueryAddNew">
+                <b class="glyphicon glyphicon-plus"></b>
+                Add an option
+          </span>
+        </div>
     </div>
 
-    <div id="optnewitem"></div>
-      </div>
+    <div id="optnewitem" v-if="modelData.option.newOption">
+        <options-edit v-model="modelData.option" :event-bus="eventBus"/>
+    </div>
+    </div>
     </div>
   </div>
 </template>
@@ -61,9 +59,16 @@
 <script lang="ts">
   import Vue from 'vue';
   import 'vue-i18n';
+  import {
+    getRundeckContext,
+    getAppLinks
+  } from '@rundeck/ui-trellis'
   import { OptionData, OptionDataShort } from "@/components/job/workflow/Workflow";
   import UndoRedo from '../../util/UndoRedo.vue';
   import OptionsListContent from './OptionsListContent.vue';
+  import OptionsEdit from './OptionsEdit.vue';
+  import axios from "axios";
+  import {_genUrl} from "@/utilities/genUrl";
 
   const w = window as any;
 
@@ -71,7 +76,8 @@
     name: 'Options',
     components: {
       OptionsListContent,
-      UndoRedo
+      UndoRedo,
+      OptionsEdit
     },
     props: {
       options: Array,
@@ -99,12 +105,20 @@
     },
     methods: {
       jQueryAddNew() {
-        w._optaddnew();
+        this.modelData.option.newOption = true;
+      },
+      async loadOptions() {
+        let result = await axios.get(_genUrl(getAppLinks().editOptsRenderAll, { }))
+        if (result.status >= 200 && result.status < 300) {
+          this.optDataList = JSON.parse(JSON.stringify(result.data.optionValuesPlugins))
+        }
       }
     },
     data() {
       return {
-        optDataList: [] as OptionDataShort[]
+        optDataList: [] as OptionDataShort[],
+        modelData: {option: {newOption: false}}
+
       }
     }
   })

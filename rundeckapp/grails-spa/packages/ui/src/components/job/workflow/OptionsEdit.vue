@@ -42,7 +42,7 @@
         <label for="optlabel_281fcef2" class="col-sm-2 control-label    ">Option Label</label>
 
         <div class="col-sm-10">
-          <input type="text" class="form-control" name="label" id="opt_label" value="" size="40" placeholder="Option Label">
+          <input type="text" class="form-control" v-model="modelData.label" name="label" id="opt_label" value="" size="40" placeholder="Option Label">
         </div>
       </div>
       <div class="form-group ">
@@ -51,7 +51,7 @@
         <div class="col-sm-10">
           <rd-ace-editor
             :name="editor"
-            v-model="content"
+            v-model="modelData.description"
             lang="markdown"
             :id="editor"
             height="160"
@@ -66,13 +66,13 @@
           </div>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" v-if="!isFileType()">
         <label class="col-sm-2 control-label">Default Value</label>
         <div class="col-sm-10">
           <input type="text" class="form-control" name="defaultValue" id="opt_defaultValue" size="40" placeholder="Default value" v-model="defaultValue">
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" v-if="!isFileType()">
         <label>Allowed Values</label>
         <label class="col-sm-2 control-label">Allowed Values</label>
         <div class="col-sm-10">
@@ -84,7 +84,7 @@
           </div>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" v-if="!isFileType()">
         <div class="col-sm-2 control-label text-form-label">
           <span>Restrictions</span>
         </div>
@@ -117,7 +117,7 @@
 
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" v-if="!isFileType()">
         <div class="col-sm-2 control-label text-form-label">
           <span>Input Type</span>
         </div>
@@ -163,17 +163,6 @@
 
         <div class="col-sm-10">
           <div class="radio radio-inline">
-            <input type="radio"
-                   name="required"
-                   :value="true"
-                   v-model="modelData.required"
-                   id="requiredTrue"/>
-            <label for="requiredTrue">
-              Yes
-            </label>
-          </div>
-
-          <div class="radio radio-inline">
             <input type=radio
                    :value="false"
                    name="required"
@@ -183,7 +172,16 @@
               No
             </label>
           </div>
-
+          <div class="radio radio-inline">
+            <input type="radio"
+                   name="required"
+                   :value="true"
+                   v-model="modelData.required"
+                   id="requiredTrue"/>
+            <label for="requiredTrue">
+              Yes
+            </label>
+          </div>
           <span class="help-block">
                 Require this option to have a non-blank value when running the Job
 
@@ -197,17 +195,6 @@
 
         <div class="col-sm-10">
           <div class="radio radio-inline">
-            <input type="radio"
-                   name="hidden"
-                   :value="true"
-                   v-model="modelData.hidden"
-                   id="hiddenTrue"/>
-            <label for="hiddenTrue">
-              Yes
-            </label>
-          </div>
-
-          <div class="radio radio-inline">
             <input type=radio
                    :value="false"
                    name="hidden"
@@ -217,13 +204,22 @@
               No
             </label>
           </div>
-
+          <div class="radio radio-inline">
+            <input type="radio"
+                   name="hidden"
+                   :value="true"
+                   v-model="modelData.hidden"
+                   id="hiddenTrue"/>
+            <label for="hiddenTrue">
+              Yes
+            </label>
+          </div>
           <span class="help-block">
                 Should be hidden from job run page
           </span>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group" v-if="!isFileType()">
         <div class="col-sm-2 control-label text-form-label">
           Multi-valued
         </div>
@@ -321,6 +317,24 @@
 
       </div>
     </section>
+    <div class="floatr" style="margin:10px 0;">
+
+      <input type="hidden" name="newoption" value="true" id="newoption">
+      <span class="btn btn-default btn-sm" @click="cancelNewOption" title="Cancel adding new option">Cancel</span>
+      <span class="btn btn-primary btn-sm" @click="saveOption" title="Save the new option">Save</span>
+      <script type="text/javascript">
+
+        fireWhenReady('optname_46fae357',function(){
+          jQuery('#optname_46fae357').focus();
+        });
+
+      </script>
+
+
+      <span class="text-warning cancelsavemsg" style="display:none;">
+                Discard or save changes to this option before completing changes to the job
+            </span>
+    </div>
   </div>
   <!-- </div>-->
 </template>
@@ -337,7 +351,10 @@ import {
   getRundeckContext,
   getAppLinks
 } from '@rundeck/ui-trellis'
+import {RundeckBrowser} from "@rundeck/client";
 Vue.component('rd-ace-editor', AceEditor)
+const client: RundeckBrowser = getRundeckContext().rundeckClient
+const rdBase = getRundeckContext().rdBase
 
 @Component({components: {InlineValidationErrors}})
 export default class OptionsEdit extends Vue {
@@ -349,14 +366,13 @@ export default class OptionsEdit extends Vue {
 
   labelColClass = 'col-sm-2 control-label'
   fieldColSize = 'col-sm-10'
-  modalOpen: boolean = false
   modelData: any = {optionType: "file", name: null}
   optionsList: any = [{key:"Text", value:""}, {key:"File", value:"file"}]
   optionsSummary: any = {}
 
 
   async mounted() {
-    this.modelData = Object.assign({name: null, optionType:""}, this.value)
+    this.modelData = Object.assign({name: null, optionType:"", hidden: false, required: false}, this.value)
     this.loadOptionsSummary()
   }
 
@@ -368,8 +384,22 @@ export default class OptionsEdit extends Vue {
     }
   }
 
+  async saveOption() {
+    let result = await client.sendRequest({
+      method: 'POST',
+      url: _genUrl(
+        getAppLinks().editOptsSave,
+        this.modelData)
+    })
+    if (result.status != 200) {
+      console.log('Error saving option: ' + result.status + ': ' + (result.parsedBody?.msg || 'Unknown error'));
+    }
+  }
   setOptionType(type:string){
     Vue.set(this.modelData, 'optionType', type)
+  }
+  cancelNewOption(){
+    Vue.set(this.modelData, 'newOption', false)
   }
 
   isFileType() {

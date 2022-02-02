@@ -53,9 +53,9 @@
       },
       createOptions(): OptionData[] {
         let options = [] as OptionData[]
-        if (options === null || options[0].name === null) {
+       // if (options === null || options[0] === null || options[0].name === null) {
           options = this.scheduledExecutionData.options as OptionData[];
-        }
+        //}
         return options;
       },
       fetchSchedEx(): object {
