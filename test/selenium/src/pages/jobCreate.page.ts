@@ -102,6 +102,22 @@ export const Elems = {
     orchestratorDropdown: By.css('#orchestrator-edit-type-dropdown'),
     orchestratorDropdownButton: By.css('#orchestrator-edit-type-dropdown > button'),
     // Schedule tab
+    scheduleRunNo: By.css('input#scheduledFalse'),
+    scheduleRunYes: By.css('input#scheduledTrue'),
+    simpleTab: By.css('a[href="#cronsimple"]'),
+    crontabTab: By.css('a[href="#cronstrtab"]'),
+    scheduleHourDropdown: By.css('select#hour'),
+    scheduleMinuteDropdown: By.css('select#minute'),
+    scheduleEveryDayCheckbox: By.css('input#everyDayOfWeek'),
+    scheduleEveryMonthCheckbox: By.css('input#everyMonth'),
+    scheduleDaysCheckboxDiv: By.css('div#DayOfWeekDialog'),
+    scheduleMonthCheckboxDiv: By.css('div#MonthDialog'),
+    crontabString: By.css('input#crontabString'),
+    timeZoneInput: By.css('input#timeZone'),
+    enableSchedulingYes: By.css('input#scheduleEnabledTrue'),
+    enableSchedulingNo: By.css('input#scheduleEnabledFalse'),
+    enableExecutionYes: By.css('input#executionEnabledTrue'),
+    enableExecutionNo: By.css('input#executionEnabledFalse'),
     // Execution Plugins tab
     // Other tab
     // Job Queue tab
@@ -519,6 +535,55 @@ export class JobCreatePage extends Page {
 
     formValidationAlert():WebElementPromise{
         return this.ctx.driver.findElement(Elems.formValidationAlert)
+    }
+    // Schedule tab elements
+    async scheduleRunYes() {
+        return this.ctx.driver.findElement(Elems.scheduleRunYes)
+    }
+    async scheduleRunNo() {
+        return this.ctx.driver.findElement(Elems.scheduleRunNo)
+    }
+    async simpleTab() {
+        return this.ctx.driver.findElement(Elems.simpleTab)
+    }
+    async crontabTab() {
+        return this.ctx.driver.findElement(Elems.crontabTab)
+    }
+    async scheduleHourDropdown() {
+        return this.ctx.driver.findElement(Elems.scheduleHourDropdown)
+    }
+    async scheduleMinuteDropdown() {
+        return this.ctx.driver.findElement(Elems.scheduleMinuteDropdown)
+    }
+    async scheduleEveryDayCheckbox() {
+        return this.ctx.driver.findElement(Elems.scheduleEveryDayCheckbox)
+    }
+    async scheduleEveryMonthCheckbox() {
+        return this.ctx.driver.findElement(Elems.scheduleEveryMonthCheckbox)
+    }
+    async scheduleDaysCheckboxDiv() {
+        return this.ctx.driver.findElement(Elems.scheduleDaysCheckboxDiv)
+    }
+    async scheduleMonthCheckboxDiv() {
+        return this.ctx.driver.findElement(Elems.scheduleMonthCheckboxDiv)
+    }
+    async crontabString() {
+        return this.ctx.driver.findElement(Elems.crontabString)
+    }
+    async timeZoneInput() {
+        return this.ctx.driver.findElement(Elems.timeZoneInput)
+    }
+    async enableSchedulingYes() {
+        return this.ctx.driver.findElement(Elems.enableSchedulingYes)
+    }
+    async enableSchedulingNo() {
+        return this.ctx.driver.findElement(Elems.enableSchedulingNo)
+    }
+    async enableExecutionYes() {
+        return this.ctx.driver.findElement(Elems.enableExecutionYes)
+    }
+    async enableExecutionNo() {
+        return this.ctx.driver.findElement(Elems.enableExecutionNo)
     }
 
 }
