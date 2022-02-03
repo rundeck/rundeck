@@ -41,28 +41,57 @@ describe('editing a job', () => {
         const save = await jobCreatePage.editSaveButton()
         await save.click()
     })
-    it('edits and saves job description correctly', async () => {
-        const descriptionTextField = await jobCreatePage.descriptionTextarea()
-        expect(descriptionTextField).toBeDefined()
+    describe('details tab', () => {
+        it('edits and saves job description correctly', async () => {
+            const descriptionTextField = await jobCreatePage.descriptionTextarea()
+            expect(descriptionTextField).toBeDefined()
 
-        // NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
-        // make textarea visible
-        await ctx.driver.executeScript('jQuery(\'form textarea[name="description"]\').show()')
-        await ctx.driver.wait(until.elementIsVisible(descriptionTextField))
-        descriptionTextField.clear()
-        descriptionTextField.sendKeys(testVars.newDescriptionText)
+            // NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
+            // make textarea visible
+            await ctx.driver.executeScript('jQuery(\'form textarea[name="description"]\').show()')
+            await ctx.driver.wait(until.elementIsVisible(descriptionTextField))
+            descriptionTextField.clear()
+            descriptionTextField.sendKeys(testVars.newDescriptionText)
+        })
+        it('correctly sets the group', async () => {
+            const chooseGroupInput = await jobCreatePage.groupChooseInput()
+            await ctx.driver.wait(until.elementIsVisible(chooseGroupInput))
+            expect(chooseGroupInput).toBeDefined()
+            chooseGroupInput.sendKeys(testVars.group)
+        })
     })
-    it('correctly sets the group', async () => {
-        const chooseGroupInput = await jobCreatePage.groupChooseInput()
-        await ctx.driver.wait(until.elementIsVisible(chooseGroupInput))
-        expect(chooseGroupInput).toBeDefined()
-        chooseGroupInput.sendKeys(testVars.group)
+    describe('schedules tab', () => {
+        beforeAll(async () => {
+            const scheduleTab = await jobCreatePage.scheduleTab()
+            const scheduleRunYes = await jobCreatePage.scheduleRunYes()
+            await scheduleTab.click()
+            await ctx.driver.wait(until.urlContains('#schedule'), 15000)
+            await scheduleRunYes.click()
+        })
+        it('shows month checkboxes when "Every Month" is unchecked', async () => {
+            const everyMonthCheckbox = await jobCreatePage.scheduleEveryMonthCheckbox()
+            const scheduleMonthCheckboxDiv = await jobCreatePage.scheduleMonthCheckboxDiv()
+            if (await everyMonthCheckbox.isSelected()) {
+                await everyMonthCheckbox.click()
+            }
+
+            expect(await scheduleMonthCheckboxDiv.isDisplayed()).toEqual(true)
+        })
+        it('shows day checkboxes when "Every Day" is unchecked', async () => {
+            const everyDayOfWeekCheckbox = await jobCreatePage.scheduleEveryDayCheckbox()
+            const scheduleDaysCheckboxDiv = await jobCreatePage.scheduleDaysCheckboxDiv()
+            if (await everyDayOfWeekCheckbox.isSelected()) {
+                await everyDayOfWeekCheckbox.click()
+            }
+
+            expect(await scheduleDaysCheckboxDiv.isDisplayed()).toEqual(true)
+        })
     })
 })
 
 describe('showing the edited job', () => {
     beforeAll(async () => {
-        await ctx.driver.wait(until.urlContains('/job/show'), 15000)
+
     })
     it('verifies job group', async () => {
         const groupLabel = await jobShowPage.jobGroupText()
