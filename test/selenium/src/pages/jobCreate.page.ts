@@ -102,6 +102,7 @@ export const Elems = {
     orchestratorDropdown: By.css('#orchestrator-edit-type-dropdown'),
     orchestratorDropdownButton: By.css('#orchestrator-edit-type-dropdown > button'),
     // Schedule tab
+    scheduleTab: By.css('#job_edit_tabs > li > a[href=\'#tab_schedule\']'),
     scheduleRunNo: By.css('input#scheduledFalse'),
     scheduleRunYes: By.css('input#scheduledTrue'),
     simpleTab: By.css('a[href="#cronsimple"]'),
@@ -537,6 +538,9 @@ export class JobCreatePage extends Page {
         return this.ctx.driver.findElement(Elems.formValidationAlert)
     }
     // Schedule tab elements
+    async scheduleTab() {
+        return this.ctx.driver.findElement(Elems.scheduleTab)
+    }
     async scheduleRunYes() {
         return this.ctx.driver.findElement(Elems.scheduleRunYes)
     }
