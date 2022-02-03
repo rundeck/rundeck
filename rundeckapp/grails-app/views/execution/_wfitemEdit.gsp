@@ -767,20 +767,20 @@
                     <g:hiddenField name="num" value="${num}"/>
                     <span class="btn btn-default btn-sm" onclick="_wficancelnewEH(this);"
                           title="${message(code:"Workflow.stepErrorHandler.cancel.title")}"><g:message code="button.action.Cancel" /></span>
-                    <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',true);" title="${message(code:"Workflow.stepErrorHandler.savenew.title")}"><g:message code="button.action.Save" /></span>
+                    <span class="btn btn-cta btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',true);" title="${message(code:"Workflow.stepErrorHandler.savenew.title")}"><g:message code="button.action.Save" /></span>
                 </g:if>
                 <g:else>
 
                     <span class="btn btn-default btn-sm" onclick="_wficancelnew(${num});"
                           title="${message(code:"Workflow.step.cancel.title")}"><g:message code="button.action.Cancel" /></span>
-                    <span class="btn btn-primary btn-sm" onclick="_wfisavenew('wfiedit_${rkey}');" title="${message(code:"Workflow.step.savenew.title")}"><g:message code="button.action.Save" /></span>
+                    <span class="btn btn-cta btn-sm" onclick="_wfisavenew('wfiedit_${rkey}');" title="${message(code:"Workflow.step.savenew.title")}"><g:message code="button.action.Save" /></span>
                 </g:else>
             </g:if>
             <g:else>
                 <g:hiddenField name="num" value="${num}"/>
                 <g:hiddenField name="origitemtype" value="${origitemtype}"/>
                 <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="${message(code:"Workflow."+msgItem+".discard.title")}" ><g:message code="button.action.Cancel" /></span>
-                <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
+                <span class="btn btn-cta btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
                       title="${message(code:"Workflow."+msgItem+".save.title")}"><g:message code="button.action.Save" /></span>
             </g:else>
             <span class="text-warning cancelsavemsg" style="display:none;">

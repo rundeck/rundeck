@@ -37,7 +37,7 @@
           </li>
         </template>
       </dropdown>
-      <btn size="xs" type="warning" @click="remove" v-if="updatedValue.type">
+      <btn size="xs" type="danger" @click="remove" v-if="updatedValue.type">
         <i class="fas fa-times"></i>
         Remove Orchestrator
       </btn>

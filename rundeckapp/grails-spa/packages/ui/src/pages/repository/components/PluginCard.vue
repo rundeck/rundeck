@@ -66,7 +66,7 @@
             <a
               href="https://www.rundeck.com/test-drive"
               target="_blank"
-              class="btn btn-success btn-md"
+              class="btn btn-default btn-md"
             >Learn More</a>
           </div>
         </div>

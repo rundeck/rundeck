@@ -63,7 +63,7 @@
               <g:message code="project.config.edit.message" default="Edit Project Configuration File"/>: <g:enc>${params.project ?: request.project}</g:enc>
               <g:link controller="framework" action="editProject"
                       params="[project: params.project ?: request.project]"
-                      class="pull-right btn btn-success btn-sm"
+                      class="pull-right btn btn-default btn-sm"
                       >
                   <!-- <g:icon name="edit"/> -->
                   <g:message code="page.admin.EditProjectSimple.button" default="Simple Configuration"/>

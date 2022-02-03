@@ -4,7 +4,7 @@
 
     <span class="text-h3">{{ $t('message.webhookPageTitle') }}</span>
     <div style="margin-left: auto;">
-      <a class="btn"
+      <a class="btn btn-primary"
         :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
         style="font-weight: 800"
         @click="handleAddNew"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
@@ -26,13 +26,13 @@
                           style="font-weight: 800;"
                           v-if="curHook.id"
                           @click="handleDelete"
-                          class="btn btn-transparent">{{ $t('message.webhookDeleteBtn') }}</a>
+                          class="btn btn-danger">{{ $t('message.webhookDeleteBtn') }}</a>
                   </div>
                   <div>
                     <a
                             v-if="!curHook.id"
                             @click="handleCancel"
-                            class="btn btn-md "
+                            class="btn btn-md btn-default"
                     >{{ $t('message.cancel') }}</a>
                     <btn
                             :disabled="!(dirty || curHook.new)"
@@ -99,7 +99,7 @@
                 <div class="card" style="padding: 1em;">
                   <div class="form-group">
                     <div class="btn-group">
-                      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
+                      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-default':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
                         aria-expanded="false" >
 
                         <plugin-info
@@ -391,7 +391,8 @@ export default observer(Vue.extend({
       var self = this
       self.$confirm({
         title:"Confirm",
-        content:"Are you sure you want to delete this webhook?"
+        content:"Are you sure you want to delete this webhook?",
+        okType:"danger"
       }).then(() => {
 
         this.rootStore.webhooks.delete(this.curHook).then(response => {

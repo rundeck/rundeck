@@ -52,7 +52,7 @@
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default reset_page_confirm"/>
                 <g:submitButton name="Create" value="${g.message(code: 'button.action.Create')}"
-                                    class="btn btn-primary reset_page_confirm" />
+                                    class="btn btn-cta reset_page_confirm" />
 
                 <span data-bind="if: errorTabs().length" class="text-warning">
                     <g:message code="job.editor.workflow.unsavedchanges.warning" />

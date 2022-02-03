@@ -17,7 +17,7 @@
         </span>
 
         <span class="input-group-btn">
-          <button class="btn btn-default" v-on:click="submitFiles()">Install</button>
+          <button class="btn btn-cta" v-on:click="submitFiles()">Install</button>
         </span>
       </div>
       <!-- /input-group -->
