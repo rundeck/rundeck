@@ -170,8 +170,8 @@
       </div>
       <template slot="footer">
         <btn @click="filterOpen=false">{{$t('cancel')}}</btn>
-        <btn @click="search" type="cta" class="btn btn-cta">{{$t('search')}}</btn>
-        <btn @click="saveFilter" type="primary" class="btn-primary pull-right">
+        <btn @click="search" type="primary" class="btn btn-primary">{{$t('search')}}</btn>
+        <btn @click="saveFilter" type="default" class="btn-default pull-right">
           <i class="glyphicon glyphicon-plus"></i>
           {{$t('Save as a Filter...')}}
         </btn>
