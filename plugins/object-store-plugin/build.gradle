@@ -51,52 +51,6 @@ jar {
 
 //set jar task to depend on copyToLib
 jar.dependsOn(copyToLib)
-
-// apply plugin: 'maven'
-/* task('createPom').doLast {
-    pom {
-        project {
-            artifactId 'rundeck-object-store-plugin'
-            groupId "org.rundeck.plugins"
-            inceptionYear '2018'
-            packaging 'jar'
-            version version
-            name( 'Rundeck '+pluginName)
-            url 'http://rundeck.org'
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-            parent{
-                groupId 'com.dtolabs.rundeck'
-                artifactId "rundeck-bundled-plugins"
-                version(version)
-            }
-            build{
-                plugins{
-                    plugin{
-                        groupId 'org.apache.maven.plugins'
-                        artifactId 'maven-jar-plugin'
-                        version '2.3.2'
-                        configuration{
-                            archive{
-                                manifestEntries{
-                                    'Rundeck-Plugin-Classnames'(pluginClassNames)
-                                    'Rundeck-Plugin-File-Version' version
-                                    'Rundeck-Plugin-Version' rundeckPluginVersion
-                                    'Rundeck-Plugin-Archive' 'true'
-                                    'Rundeck-Plugin-Name' pluginName
-                                    'Rundeck-Plugin-Description' pluginDescription
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }.writeTo("pom.xml")
+tasks.withType(Test) {
+    useJUnitPlatform()
 }
- */

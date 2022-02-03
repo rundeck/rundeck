@@ -37,6 +37,10 @@ dependencies{
     testImplementation "cglib:cglib-nodep:2.2.2"
 }
 
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
 task('createPom').doLast {
     pom {
         project {

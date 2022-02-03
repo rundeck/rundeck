@@ -33,6 +33,8 @@ subprojects {
     dependencies {
         testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
         testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
+        testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+
     }
 
     jar {
@@ -41,8 +43,15 @@ subprojects {
     ext.description= "Rundeck project ${project.name}"
     ext.publishName = project.name
 
+
+    tasks.withType(Test) {
+        useJUnitPlatform()
+    }
+
     //apply from: "${rootDir}/gradle/exported-project.gradle"
 }
+
+
 
 project(':rundeck-storage:rundeck-storage-api') {
 
@@ -66,3 +75,4 @@ project(':rundeck-storage:rundeck-storage-filesys') {
         implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     }
 }
+

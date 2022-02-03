@@ -47,6 +47,10 @@ task copyToLib(type: Copy) {
     from configurations.pluginLibs
 }
 
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
 jar {
     from "$buildDir/output"
     manifest {

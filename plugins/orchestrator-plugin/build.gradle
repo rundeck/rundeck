@@ -29,6 +29,9 @@ repositories {
 dependencies {
     implementation project(":core")
     testImplementation('junit:junit:4.8.1')
+    testImplementation group: 'org.junit-pioneer', name: 'junit-pioneer', version: '1.5.0'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+
 }
 
 
@@ -42,3 +45,6 @@ jar {
     }
 }
 
+tasks.withType(Test) {
+    useJUnitPlatform()
+}

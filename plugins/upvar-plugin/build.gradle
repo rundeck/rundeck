@@ -36,6 +36,10 @@ jar {
     }
 }
 
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
 task('createPom').doLast {
     pom {
         project {

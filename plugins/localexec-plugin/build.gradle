@@ -39,48 +39,6 @@ dependencies {
     testImplementation "cglib:cglib-nodep:2.2.2"
 }
 
-/* task('createPom').doLast {
-    pom {
-        project {
-            artifactId 'rundeck-localexec-plugin'
-            groupId project.group
-            inceptionYear '2011'
-            packaging 'jar'
-            version version
-            name "RunDeck LocalExec Node Step Plugin"
-            url 'http://rundeck.org'
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-            parent{
-                groupId project.group
-                artifactId "rundeck-bundled-plugins"
-                version(version)
-            }
-            build{
-                plugins{
-                    plugin{
-                        groupId 'org.apache.maven.plugins'
-                        artifactId 'maven-jar-plugin'
-                        version '2.3.2'
-                        configuration{
-                            archive{
-                              manifestEntries{
-                                'Rundeck-Plugin-Classnames'(pluginClassNames)
-                                  'Rundeck-Plugin-Version'(rundeckPluginVersion)
-                                  'Rundeck-Plugin-Archive'('true')
-                                  'Rundeck-Plugin-File-Version'(version)
-                              }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }.writeTo("pom.xml")
+tasks.withType(Test) {
+    useJUnitPlatform()
 }
- */
