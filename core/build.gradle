@@ -110,6 +110,10 @@ dependencies {
     testImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
     testImplementation "cglib:cglib-nodep:2.2.2"
 
+
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+    testImplementation group: 'org.junit-pioneer', name: 'junit-pioneer', version: '1.5.0'
+
 }
 
 
