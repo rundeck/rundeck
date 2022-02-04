@@ -52,14 +52,7 @@ class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<Logg
 
     List<Class> getDomainClasses() { [Execution, LogFileStorageService, Workflow, CommandExec] }
 
-    /**
-     * utility method to mock a class
-     */
-    private mockWith(Class clazz, Closure clos) {
-        def mock = new MockFor(clazz)
-        mock.demand.with(clos)
-        return mock.proxyInstance()
-    }
+    //TODO: cleanup test code
 
     void testLocalFileStorageEnabled() {
         when:
