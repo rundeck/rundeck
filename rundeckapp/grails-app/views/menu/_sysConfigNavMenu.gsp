@@ -47,8 +47,8 @@
         context: AuthConstants.CTX_APPLICATION
 )}"/>
 
-<g:set var="repoEnabled" value="${cfg.getString(config: "feature.repository.enabled") in [true,'true']}"/>
-<g:set var="pluginSecurityEnabled" value="${cfg.getString(config: "feature.pluginSecurity.enabled") in ['true',true]}"/>
+<g:set var="repoEnabled" value="${cfg.getBoolean(config: "feature.repository.enabled", default: false)}"/>
+<g:set var="pluginSecurityEnabled" value="${cfg.getBoolean(config: "feature.pluginSecurity.enabled", default: false)}"/>
 
 
 <style>
