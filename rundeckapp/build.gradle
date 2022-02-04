@@ -7,8 +7,7 @@ buildscript {
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
-        classpath "gradle.plugin.com.energizedwork.webdriver-binaries:webdriver-binaries-gradle-plugin:1.1"
+        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:7.0.0"
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
@@ -21,6 +20,8 @@ buildscript {
 plugins {
     id "org.dvaske.gradle.git-build-info"
     id "com.github.node-gradle.node" version "3.1.1"
+    id "java-library"
+    id "war"
 }
 
 apply plugin:"com.jfrog.bintray"
@@ -28,8 +29,7 @@ apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"war"
 apply plugin:"org.grails.grails-web"
-apply plugin:"com.energizedwork.webdriver-binaries"
-apply plugin:"com.energizedwork.idea-project-components"
+apply plugin: "com.energizedwork.idea-base"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 apply plugin: "maven-publish"
@@ -99,10 +99,8 @@ dependencies {
     // https://github.com/gpc/greenmail
     //compile 'org.grails.plugins:greenmail:2.0.0.RC2'
 
-    //implementation 'com.atlassian.commonmark:commonmark:0.11.0'
-    implementation group: 'org.commonmark', name: 'commonmark', version: '0.18.1'
-    //implementation 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
-    implementation group: 'org.commonmark', name: 'commonmark-ext-gfm-tables', version: '0.18.1'
+    implementation 'com.atlassian.commonmark:commonmark:0.11.0'
+    implementation 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
     implementation ('com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20211018.2'){
         exclude(group:'com.google.guava',module:'guava')
     }
@@ -134,7 +132,6 @@ dependencies {
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
-    implementation (group: 'org.springframework.cloud', name: 'spring-cloud-starter-bootstrap', version: '3.0.0')
 
     implementation "org.grails:grails-core"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
@@ -191,20 +188,22 @@ dependencies {
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
-    runtime "com.h2database:h2:1.4.199"
-    // Database drivers
-    runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
-    runtime 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtime 'org.postgresql:postgresql:42.2.13'
-    runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
+    runtimeOnly "com.h2database:h2:1.4.199"
 
-    runtime "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
-    runtime "org.apache.tomcat:tomcat-jdbc:9.0.44"
-    runtime "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    assets ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
+    // Database drivers
+    runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
+    runtimeOnly 'org.postgresql:postgresql:42.2.13'
+    runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
+
+    runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
+    runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
+    api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
+    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    api ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
-    assets ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
+    api ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
     testImplementation "org.grails:grails-gorm-testing-support"
@@ -216,13 +215,13 @@ dependencies {
     testImplementation "com.squareup.okhttp3:okhttp:4.9.2"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
-    testRuntime "org.seleniumhq.selenium:selenium-chrome-driver"
-    testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
-    testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
-    testRuntime "org.seleniumhq.selenium:selenium-api"
-    testRuntime 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
-    testRuntime 'org.aspectj:aspectjweaver:1.9.7'
-
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-remote-driver"
+    testRuntimeOnly "org.seleniumhq.selenium:selenium-api"
+    testRuntimeOnly 'org.jetbrains.kotlin:kotlin-stdlib:1.3.70'
+    testRuntimeOnly 'org.aspectj:aspectjweaver:1.9.7'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
     // transitive dependencies constraints.
     constraints {
         implementation("com.mchange:c3p0:0.9.5.4") {
@@ -299,12 +298,8 @@ tasks.withType(GroovyCompile) {
     }
 }
 
-webdriverBinaries {
-    chromedriver '2.32'
-    geckodriver '0.18.0'
-}
-
 tasks.withType(Test) {
+    useJUnitPlatform()
     systemProperty "geb.env", System.getProperty('geb.env')
     systemProperty "webdriver.chrome.driver", System.getProperty('webdriver.chrome.driver')
     systemProperty "webdriver.gecko.driver", System.getProperty('webdriver.gecko.driver')
@@ -450,7 +445,7 @@ artifacts {
     war war
     bootWar bootWar
 }
-install.dependsOn assemble
+//install.dependsOn assemble
 def signArchives = project.tasks.findByName('signArchives')
 if (signArchives) {
     bootWar.dependsOn(war)
@@ -534,10 +529,12 @@ publishing {
      }
 }
 
+apply from: "${rootDir}/gradle/java.gradle"
+
+
 if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password')) {
     signing {
         sign(publishing.publications)
     }
 }
 
-//apply from: "${rootDir}/gradle/java.gradle"
