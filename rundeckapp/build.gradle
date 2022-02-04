@@ -69,7 +69,6 @@ sourceSets {
     }
 }
 dependencies {
-//    agent "org.springframework:springloaded:1.2.8.RELEASE"
     //Rundeck plugin dependencies
     pluginFiles project.findProperty('bundledPlugins')?:[]
 
@@ -110,11 +109,6 @@ dependencies {
     implementation 'commons-beanutils:commons-beanutils:1.9.4'
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
-    // Grails Plugins.
-    //compile 'org.grails:grails-plugin-filters:3.0.17'
-
-//    compile "org.grails:grails-test-mixins:3.3.0"
-//    compile "org.grails:grails-plugin-testing:3.2.11"
 
     // Defined by create-app
     implementation "org.grails.plugins:hibernate5"
@@ -185,7 +179,6 @@ dependencies {
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
     }
-//    runtime "org.springframework:spring-test:5.0.3.RELEASE"
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     runtimeOnly "com.h2database:h2:1.4.199"
