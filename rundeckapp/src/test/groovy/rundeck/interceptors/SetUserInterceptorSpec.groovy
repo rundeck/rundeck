@@ -123,6 +123,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         requiredRole | username | groups           | expected
         "enter"      | "auser"  | ["grp1"]         | false
         "enter"      | "auser"  | ["grp1","enter"] | true
+        ""           | "auser"  | ["grp1"]         | true
 
 
     }
