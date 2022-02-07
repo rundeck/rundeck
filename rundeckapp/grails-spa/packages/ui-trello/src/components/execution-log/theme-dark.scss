@@ -1,0 +1,68 @@
+.execution-log--dark .execution-log__gutter {
+  background-color: rgb(32, 56, 56);
+  color: bisque;
+  box-sizing: border-box;
+  border-style: none none dotted none;
+  border-width: 1px;
+  border-color: rgb(22, 36, 36);
+}
+
+.execution-log--dark .execution-log__content {
+  background-color: darkslategrey;
+  color: cornsilk;
+  box-sizing: border-box;
+  border-style: none none dotted none;
+  border-width: 1px;
+  border-color: rgb(39, 66, 66);
+
+  &.execution-log__content--level-warn{
+    color: #aa8800;
+  }
+  &.execution-log__content--level-error{
+    color: #ff3300;
+  }
+  &.execution-log__content--level-debug, &.execution-log__content--level-verbose{
+    color: darkgray;
+  }
+}
+
+.execution-log--dark .execution-log__scroller {
+  background-color: rgb(32, 56, 56);
+}
+
+// .execution-log--dark .execution-log__scroller > :nth-child(2) {
+//   border-style: solid none none none;
+//   border-width: 1px;
+//   border-color: darkolivegreen;
+// }
+
+.execution-log--dark .execution-log__settings * {
+  color: cornsilk;
+  border-color: cornsilk;
+  background-color: darkslategrey;
+}
+
+.execution-log--dark .execution-log__warning {
+  background-color: slategray;
+  color: whitesmoke
+}
+
+.execution-log--dark .execution-log__line--selected .execution-log__gutter {
+  background-color: cadetblue;
+}
+
+.execution-log--dark .execution-log__line--selected .execution-log__content {
+  background-color: darkseagreen;
+}
+
+.execution-log--dark .execution-log__node-chunk {
+  border-style: none none solid none;
+  border-width: 1px;
+  border-color: darkolivegreen;
+}
+
+.execution-log--dark .execution-log__node-badge {
+  background-color: rgb(32, 56, 56);
+  padding-left: 4px;
+  border-bottom-left-radius: 5px;
+}

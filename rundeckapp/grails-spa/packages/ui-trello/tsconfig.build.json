@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "outDir": "lib",
+        "baseUrl": ".",
+        "sourceMap": true,
+        "strict": true,
+        "moduleResolution": "node",
+        "target": "esnext",
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "declaration": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "typeRoots": [
+            "webpack-env",
+            "src/types"
+        ]
+    },
+    "include": [
+        "./src/**/*"
+    ],
+    "exclude": [
+        "./src/components/**/*",
+        "./src/stories/**/*"
+    ]
+}

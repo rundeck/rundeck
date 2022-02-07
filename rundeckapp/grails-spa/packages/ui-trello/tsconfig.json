@@ -1,0 +1,69 @@
+// {
+//   "compilerOptions": {
+//     "target": "esnext",
+//     "module": "esnext",
+//     "strict": true,
+//     "jsx": "preserve",
+//     "importHelpers": true,
+//     "moduleResolution": "node",
+//     "skipLibCheck": true,
+//     "esModuleInterop": true,
+//     "allowSyntheticDefaultImports": true,
+//     "sourceMap": true,
+//     "baseUrl": ".",
+//     "types": [
+//       "webpack-env",
+//       "jest"
+//     ],
+//     "paths": {
+//       "@/*": [
+//         "src/*"
+//       ]
+//     },
+//     "lib": [
+//       "esnext",
+//       "dom",
+//       "dom.iterable",
+//       "scripthost"
+//     ]
+//   },
+//   "include": [
+//     "src/**/*.ts",
+//     "src/**/*.tsx",
+//     "src/**/*.vue",
+//     "tests/**/*.ts",
+//     "tests/**/*.tsx"
+//   ],
+//   "exclude": [
+//     "node_modules"
+//   ]
+// }
+
+{
+  "compilerOptions": {
+      "outDir": "lib",
+      "baseUrl": ".",
+      "sourceMap": true,
+      "strict": true,
+      "moduleResolution": "node",
+      "target": "esnext",
+      "experimentalDecorators": true,
+      "skipLibCheck": true,
+      "esModuleInterop": true,
+      "declaration": true,
+      "jsx": "preserve",
+      "allowSyntheticDefaultImports": true,
+      "types": [
+          "webpack-env",
+          "jest"
+      ],
+      "paths": {
+          "react": [".sink.d.ts"]
+      }
+  },
+  "include": [
+      "./src/**/*",
+      "tests/**/*.ts",
+      "tests/**/*.tsx"
+  ]
+}
