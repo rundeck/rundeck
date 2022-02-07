@@ -169,7 +169,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def SessionBinderJobListener sessionBinderListener
     ApplicationContext applicationContext
 
-    def grailsApplication
     def MessageSource messageSource
     PluginService pluginService
     def executionUtilService
@@ -181,6 +180,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     private def triggerComponents
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
+    ConfigurationService configurationService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -237,7 +237,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def getMatchedNodesMaxCount() {
-        !grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.isEmpty() ? grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.toInteger() : null
+        configurationService.getInteger("gui.matchedNodesMaxCount",null)
     }
 
     Map finishquery ( query,params,model){
@@ -2611,10 +2611,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return true if not valid
      */
     @CompileStatic
-    boolean validateDefinitionComponents(ImportedJob<ScheduledExecution> importedJob, Map params, Map validation) {
+    boolean validateDefinitionComponents(ImportedJob<ScheduledExecution> importedJob, Map params, Map<String, Map<String, String>> validation) {
         def reports = rundeckJobDefinitionManager.validateImportedJob(importedJob)
         params?.put('jobComponentValidation', reports.validations)
-        validation?.putAll(reports.validations.collectEntries { [it.key, it.value.errors] })
+        validation?.putAll(reports.validations.collectEntries { [it.key, it.value.errors] } as Map<? extends String, ? extends Map<String, String>>)
         return !reports.valid
     }
 
@@ -3857,11 +3857,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         int timeout = 10
         int contimeout = 0
         int retryCount = 5
-        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlTimeout) {
+        if (configurationService.getString("jobs.options.remoteUrlTimeout")) {
             try {
-                timeout = Integer.parseInt(
-                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlTimeout?.toString()
-                )
+                timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout")
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlTimeout is not a valid integer: "
@@ -3869,11 +3867,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
             }
         }
-        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlConnectionTimeout) {
+        if (configurationService.getString("jobs.options.remoteUrlConnectionTimeout")) {
             try {
-                contimeout = Integer.parseInt(
-                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlConnectionTimeout?.toString()
-                )
+                contimeout = configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout")
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlConnectionTimeout is not a valid integer: "
@@ -3881,11 +3877,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
             }
         }
-        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlRetry) {
+        if (configurationService.getString("jobs.options.remoteUrlRetry")) {
             try {
-                retryCount = Integer.parseInt(
-                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlRetry?.toString()
-                )
+                retryCount = configurationService.getInteger("jobs.options.remoteUrlRetry")
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "

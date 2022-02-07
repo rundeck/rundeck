@@ -17,7 +17,6 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.config.RundeckConfigBase
-import org.grails.config.NavigableMap
 import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 
@@ -26,21 +25,21 @@ import java.util.concurrent.TimeUnit
 class ConfigurationService implements InitializingBean {
     static transactional = false
     def grailsApplication
-    private org.grails.config.NavigableMap appCfg = new org.grails.config.NavigableMap()
+    private Map<String, Object> appCfg = new HashMap<>()
 
     boolean isExecutionModeActive() {
         getAppConfig()?.executionMode == 'active'
     }
 
-    public org.grails.config.NavigableMap getAppConfig() {
+    public Map<String, Object> getAppConfig() {
         return appCfg
     }
 
-    public void setAppConfig(org.grails.config.NavigableMap configMap) {
+    public void setAppConfig(Map<String, Object> configMap) {
         this.appCfg = configMap
     }
 
-    public org.grails.config.NavigableMap getConfig(String path){
+    public Map<String, Object> getConfig(String path){
         return getValue(path);
     }
 
@@ -66,8 +65,12 @@ class ConfigurationService implements InitializingBean {
      * @param defval default value
      * @return
      */
-    int getInteger(String property, int defval) {
+    int getInteger(String property, Integer defval) {
         def val = getValue(property)
+        if(!val && !defval){
+            return 0
+        }
+
         intValue(defval, val)
     }
     /**
@@ -76,7 +79,7 @@ class ConfigurationService implements InitializingBean {
      * @param defval default value
      * @return
      */
-    long getLong(String property, long defval) {
+    long getLong(String property, Long defval) {
         def val = getValue(property)
         longValue(defval, val)
     }
@@ -100,10 +103,17 @@ class ConfigurationService implements InitializingBean {
         def cval = appConfig
         if(strings.length>1) {
             strings[0..-2].each {
-                cval = cval.getAt(it)
+                if(cval){
+                    cval = cval.getAt(it)
+                }
+
             }
         }
-        cval.putAt(strings[-1],val)
+        if(cval){
+            cval.putAt(strings[-1],val)
+        }else{
+            appConfig.put(property, val)
+        }
     }
     /**
      * Lookup boolean config value, rundeck.service.component.property, evaluate true/false.
@@ -114,8 +124,7 @@ class ConfigurationService implements InitializingBean {
      * @return
      */
     boolean getBoolean(String service, String name, String property, boolean defval) {
-        def val = appConfig."${service}"?."${name}"?."${property}"
-        return booleanValue(defval, val)
+        return grailsApplication.config.getProperty("rundeck.${service}.${name}.${property}",Boolean.class, defval)
     }
 
     /**
@@ -139,10 +148,16 @@ class ConfigurationService implements InitializingBean {
     }
 
     protected boolean isEmptyNavigableMap(def val) {
-        return val instanceof NavigableMap.NullSafeNavigator && val.isEmpty()
+        //return val instanceof NavigableMap.NullSafeNavigator && val.isEmpty()
+        return val instanceof Map && val.isEmpty()
     }
 
     protected def getValueFromRoot(String property, def root) {
+
+        if(root && root.get(property)){
+            return root.get(property)
+        }
+
         try {
             def strings = property.split('\\.')
             def val = root
@@ -157,7 +172,7 @@ class ConfigurationService implements InitializingBean {
     }
 
     protected def getDeprecatedPropertyValue(property) {
-        return getValueFromRoot(RundeckConfigBase.DEPRECATED_PROPS[property], grailsApplication.config.rundeck)
+        return getValueFromRoot(RundeckConfigBase.DEPRECATED_PROPS[property], grailsApplication.config.getProperty("rundeck", Map.class)?.toFlatConfig())
     }
     /**
      * Lookup a string property and interpret it as a time duration in the form "1d2h3m15s"
@@ -188,7 +203,7 @@ class ConfigurationService implements InitializingBean {
         confStr ? (Sizes.parseFileSize(confStr) ?: defval) : defval
     }
 
-    private int intValue(int defval, val) {
+    private int intValue(Integer defval, val) {
         if (val instanceof Integer) {
             return val
         } else if (val instanceof Number) {
@@ -199,7 +214,7 @@ class ConfigurationService implements InitializingBean {
         return defval
     }
 
-    private long longValue(long defval, val) {
+    private long longValue(Long defval, val) {
         if (val instanceof Long) {
             return val
         } else if (val instanceof Number) {
@@ -210,7 +225,7 @@ class ConfigurationService implements InitializingBean {
         return defval
     }
 
-    private boolean booleanValue(boolean defval, val) {
+    private boolean booleanValue(Boolean defval, val) {
         if (defval) {
             //not found implies true
             return !(val in [false, 'false'])
@@ -231,21 +246,16 @@ class ConfigurationService implements InitializingBean {
     }
 
     String getCacheSpecFor(String service, String cache, String defval) {
-        getAppConfig()?."${service}"?."${cache}"?.spec ?: defval
+        grailsApplication.config.getProperty("rundeck.${service}.${cache}.spec", String.class, defval)
     }
 
     boolean getCacheEnabledFor(String service, String cache, boolean defval) {
-        def val = getAppConfig()?."${service}"?."${cache}"?.enabled
-        if (null != val) {
-            return val in [true, 'true']
-        } else {
-            return defval
-        }
+        grailsApplication.config.getProperty("rundeck.${service}.${cache}.enabled", Boolean.class, defval)
     }
 
     @Override
     void afterPropertiesSet() throws Exception {
-        appCfg = grailsApplication?.config?.rundeck
+        appCfg = grailsApplication.config.getProperty("rundeck", Map.class)?.toFlatConfig()
     }
 
 }

@@ -142,8 +142,6 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         def properties = new Properties()
         properties.setProperty("fwkprop","fwkvalue")
 
-        service.grailsApplication = grailsApplication
-
         def frameworkService  = Mock(FrameworkService){
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
@@ -187,6 +185,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             authorizeProjectJobAll(_, _, ['update'], _) >> true
         }
+        service.configurationService=Mock(ConfigurationService)
         when: "get plugins with dynamic props"
 
         Map params = [id: job.id, project: project]

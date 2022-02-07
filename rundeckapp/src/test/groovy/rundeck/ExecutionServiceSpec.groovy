@@ -2231,6 +2231,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 user: 'user',
                 project: 'BProject'
         ).save()
+        service.configurationService = Mock(ConfigurationService)
         when:
         def result = service.queryQueue(query)
 
@@ -2274,6 +2275,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project: 'AProject',
                 status: 'queued'
         ).save()
+        service.configurationService = Mock(ConfigurationService)
+
         when:
         def result = service.queryQueue(query)
 
@@ -2303,6 +2306,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 user: 'userB',
                 project: 'AProject'
         ).save()
+        service.configurationService = Mock(ConfigurationService)
+
         when:
         def result = service.queryQueue(query)
 
@@ -2329,6 +2334,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 user: 'user',
                 project: 'BProject'
         ).save()
+        service.configurationService = Mock(ConfigurationService)
+
         when:
         def result = service.queryQueue(query)
 
@@ -2360,6 +2367,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     user: 'user',
                     project: 'CProject'
             ).save(flush: true)
+            service.configurationService = Mock(ConfigurationService)
+
         when:
             def result = service.queryQueue(query)
 

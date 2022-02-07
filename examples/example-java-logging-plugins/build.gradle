@@ -12,8 +12,8 @@ repositories {
 }
 
 dependencies {
-    compile( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
-    testCompile(
+    implementation( [group: 'org.rundeck', name: 'rundeck-core', version: version,ext:'jar'])
+    testImplementation(
         //[group: 'junit', name: 'junit', version: '3.8.1',ext:'jar']
     )
 }
@@ -30,52 +30,4 @@ jar {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '1.0'
-}
-
-
-
-apply plugin: 'maven'
-task createPom << {
-    pom {
-        project {
-            artifactId 'rundeck-example-streaming-log-plugin'
-            groupId "com.dtolabs.rundeck"
-            inceptionYear '2012'
-            packaging 'jar'
-            version version
-            name "RunDeck Example Streaming Log Plugin"
-            url 'http://rundeck.org'
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-            parent{
-                groupId 'com.dtolabs.rundeck'
-                artifactId "rundeck-bundled-plugins"
-                version(version)
-            }
-            build{
-                plugins{
-                    plugin{
-                        groupId 'org.apache.maven.plugins'
-                        artifactId 'maven-jar-plugin'
-                        version '2.3.2'
-                        configuration{
-                            archive{
-                              manifestEntries{
-                                'Rundeck-Plugin-Classnames'(pluginClassNames)
-                                'Rundeck-Plugin-File-Version' version
-                                'Rundeck-Plugin-Version' rundeckPluginVersion
-                                'Rundeck-Plugin-Archive' 'true'
-                              }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }.writeTo("pom.xml")
 }

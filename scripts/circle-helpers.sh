@@ -121,13 +121,19 @@ copy_artifacts() {
     (
         # find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
         cp -r --parents core/build/libs artifacts/
-        cp -r --parents core/build/poms artifacts/
+        cp -r --parents core/build/publications/rundeck-core artifacts/
         cp -r --parents rundeckapp/**/build/libs artifacts/
-        cp -r --parents rundeckapp/**/build/poms artifacts/
+        cp -r --parents rundeckapp/**/build/publications/rundeck artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
-        cp -r --parents rundeck-storage/**/build/poms artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-api artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-data artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-filesys artifacts/
+        cp -r --parents rundeck-storage/**/build/publications/rundeck-storage-conf artifacts/
+        
         cp -r --parents rundeck-authz/**/build/libs artifacts/
-        cp -r --parents rundeck-authz/**/build/poms artifacts/
+        cp -r --parents rundeck-authz/**/build/publications/rundeck-authz-api artifacts/
+        cp -r --parents rundeck-authz/**/build/publications/rundeck-authz-core artifacts/
+        cp -r --parents rundeck-authz/**/build/publications/rundeck-authz-yaml artifacts/
         tar -czf artifacts/m2.tgz -C ~/.m2/repository/ org/rundeck
     )
 }

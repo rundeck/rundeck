@@ -26,6 +26,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.storage.api.*
 import rundeck.UtilityTagLib
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
 import spock.lang.Ignore
@@ -171,6 +172,13 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         def assetTaglib = mockTagLib(UtilityTagLib)
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)

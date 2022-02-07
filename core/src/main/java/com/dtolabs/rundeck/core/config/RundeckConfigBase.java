@@ -102,8 +102,16 @@ public class RundeckConfigBase {
             String fileStoragePlugin;
             LogFileStorage fileStorage;
             LogOutput output;
+            boolean localFileStorageEnabled;
+            String streamingReaderPlugin;
+            String streamingWriterPlugins;
+            ExecutionLogsPlugins plugins;
         }
 
+        @Data
+        public static class ExecutionLogsPlugins {
+            boolean streamingWriterStepLabelsEnabled;
+        }
         @Data
         public static class LogOutput {
             String limit;
@@ -496,6 +504,17 @@ public class RundeckConfigBase {
         Job job;
         Home home;
         GuiSystemConfig system;
+        String title;
+        String sidebarColor;
+        String sidebarTextColor;
+        String sidebarTextActiveColor;
+        String instanceNameLabelColor;
+        String instanceNameLabelTextColor;
+        String titleLink;
+        String helpLink;
+        Boolean realJobTree;
+        String logoSmall;
+        Integer matchedNodesMaxCount;
 
         @Data
         public static class GuiSystemConfig{

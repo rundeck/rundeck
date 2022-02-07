@@ -26,6 +26,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
+import rundeck.services.ConfigurationService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.optionvalues.OptionValuesService
@@ -41,6 +42,15 @@ class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest
     def setup() {
         mockCodec(URIComponentCodec)
 //        mockCodec(URLCodec)
+
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
     }
 
     @Unroll

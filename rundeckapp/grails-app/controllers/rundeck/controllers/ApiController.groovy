@@ -28,6 +28,7 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
+import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
@@ -41,7 +42,7 @@ class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
     def frameworkService
-    def configurationService
+    ConfigurationService configurationService
     LinkGenerator grailsLinkGenerator
 
     static allowedMethods = [
@@ -155,8 +156,10 @@ class ApiController extends ControllerBase{
      * @return
      */
     private boolean featurePresent(def name){
-        def splat=grailsApplication.config.feature?.incubator?.getAt('*') in ['true',true]
-        return splat || (grailsApplication.config.feature?.incubator?.getAt(name) in ['true',true])
+        boolean featureStatus = configurationService.getBoolean("feature.incubator.${name}", false)
+
+        def splat=configurationService.getBoolean("feature.incubator.*", false)
+        return splat || featureStatus
     }
     /**
      * Set an incubator feature toggle on or off

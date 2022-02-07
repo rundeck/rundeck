@@ -46,7 +46,7 @@ class PluginResourceReqSpec extends Specification {
     }
 
     @Unroll
-    def "name validation rejection for #name"() {
+    def "name validation rejection for name"() {
         def resrequest = new PluginResourceReq(service: 'UI', name: plugin, path: path)
 
         when:

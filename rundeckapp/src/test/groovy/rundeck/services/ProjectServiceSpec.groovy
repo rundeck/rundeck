@@ -33,6 +33,7 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -74,6 +75,14 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         mockDomain Execution
         mockDomain CommandExec
         mockCodec JobsXMLCodec
+
+        def configService = Stub(ConfigurationService) {
+            getString('projectService.projectExgitportCache.spec', _) >> 'refreshAfterWrite=2m'
+        }
+
+        defineBeans {
+            configurationService(InstanceFactoryBean, configService)
+        }
     }
 
     def "loadJobFileRecord"() {
@@ -131,6 +140,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <serverNodeUUID>3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
   <recordType>option</recordType>
 </jobFileRecord>"""
+        service.configurationService = Mock(ConfigurationService)
 
         when:
         def result = service.loadJobFileRecord(xml.toString(), [123: exec.id], [(ojobid): se.extid])

@@ -8,8 +8,10 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.access.InterceptorHelper
 import rundeck.AuthToken
+import rundeck.ConfigTagLib
 import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.codecs.HTMLAttributeCodec
@@ -55,6 +57,10 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.interceptorHelper = Mock(InterceptorHelper) {
             matchesAllowedAsset(_,_) >> false
         }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString(_,_) >> ""
+            getString(_) >> ""
+        }
         when:
         interceptor.userService = userServiceMock
         request.remoteUser = username
@@ -79,11 +85,15 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }
+
         }
+        GroovyMock(ConfigurationService, global: true)
+
         mockCodec(URIComponentCodec)
         mockCodec(HTMLContentCodec)
         mockCodec(HTMLAttributeCodec)
         mockTagLib(UtilityTagLib)
+        mockTagLib(ConfigTagLib)
 
         def userServiceMock = Mock(UserService) {
             getUserGroupSourcePluginRoles(username) >> { groups }
@@ -91,7 +101,12 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.interceptorHelper = Mock(InterceptorHelper) {
             matchesAllowedAsset(_,_) >> false
         }
-        grailsApplication.config.rundeck.security.requiredRole = requiredRole
+
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString("security.requiredRole","")>>requiredRole
+            getString(_,_)>>""
+            getString(_)>>""
+        }
         messageSource.addMessage("user.not.allowed",Locale.default,"User Not Allowed")
 
         when:
@@ -108,7 +123,7 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         requiredRole | username | groups           | expected
         "enter"      | "auser"  | ["grp1"]         | false
         "enter"      | "auser"  | ["grp1","enter"] | true
-        null         | "auser"  | ["grp1"]         | true
+        ""           | "auser"  | ["grp1"]         | true
 
 
     }

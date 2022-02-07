@@ -24,11 +24,11 @@ ext.pluginDescription = 'Evaluate state of another Job'
 apply plugin: 'groovy'
 dependencies{
 
-    testCompile 'junit:junit:4.8.1',
+    testImplementation 'junit:junit:4.8.1',
                 'org.mockito:mockito-all:1.10.19'
 
-    testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testCompile "org.spockframework:spock-core:1.3-groovy-2.5"
+    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
 }
 jar {
     manifest {
@@ -36,6 +36,10 @@ jar {
         attributes 'Rundeck-Plugin-Name': pluginName
         attributes 'Rundeck-Plugin-Description': pluginDescription
     }
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
 }
 
 task('createPom').doLast  {

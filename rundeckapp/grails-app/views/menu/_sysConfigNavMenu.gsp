@@ -46,9 +46,10 @@
         any: true,
         context: AuthConstants.CTX_APPLICATION
 )}"/>
-<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled in [true,'true']}"/>
 
-<g:set var="pluginSecurityEnabled" value="${grailsApplication.config.rundeck?.feature?.pluginSecurity?.enabled in [true,'true']}"/>
+<g:set var="repoEnabled" value="${cfg.getBoolean(config: "feature.repository.enabled", default: false)}"/>
+<g:set var="pluginSecurityEnabled" value="${cfg.getBoolean(config: "feature.pluginSecurity.enabled", default: false)}"/>
+
 
 <style>
 .dropdown-submenu {

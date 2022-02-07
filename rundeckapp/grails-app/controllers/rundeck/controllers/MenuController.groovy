@@ -134,7 +134,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return false
     }
 
-    def list = {
+    def list() {
         def results = index(params)
         render(view:"index",model:results)
     }
@@ -281,7 +281,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
 
-    def clearJobsFilter = { ScheduledExecutionQuery query ->
+    def clearJobsFilter(ScheduledExecutionQuery query){
         return redirect(action: 'jobs', params: [project: params.project])
     }
     def jobs (ScheduledExecutionQuery query ){
@@ -2051,7 +2051,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             if(configurationService.getBoolean("startup.detectFirstRun",true) &&
                     frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
                 def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
-                String buildIdent = grailsApplication.metadata.getProperty('build.ident', String)
+                String buildIdent = grailsApplication.metadata.getProperty('build.ident', String).get()
                 def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
                 def file = new File(vardir, ".first-run-${vers}")
                 if(!file.exists()){
@@ -2097,6 +2097,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def welcome(){
+
+        def buildDataKeys = []
+        def buildMap = [:]
+
+        def properties = grailsApplication.metadata.getProperties("build")
+
+        properties.each {key, value->
+            buildDataKeys.add("build."+key)
+            buildMap.put("build."+key, value)
+        }
+
+        render(view:'welcome',model: [buildData: buildMap, buildDataKeys: buildDataKeys])
+
+
+
+
+
     }
 
     private def cachedSummaryProjectStats(final List projectNames) {

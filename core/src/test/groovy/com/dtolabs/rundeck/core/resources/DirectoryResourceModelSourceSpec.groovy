@@ -78,7 +78,7 @@ class DirectoryResourceModelSourceSpec extends Specification {
         then:
         nodes.nodes.size()==0
         directoryNodesProvider.modelSourceErrors != null
-        directoryNodesProvider.modelSourceErrors == ["Error loading file: "+(path)+": java.lang.NullPointerException: test npe"]
+        directoryNodesProvider.modelSourceErrors == ["Error loading file: "+path+": java.lang.NullPointerException: test npe"]
     }
     def "multiple files with one causing npe"(){
         given:
@@ -94,6 +94,7 @@ class DirectoryResourceModelSourceSpec extends Specification {
             getFileExtensions() >> new HashSet<String>(['nodes'])
             parseDocument(_ as InputStream) >> { args ->
                 ByteArrayOutputStream baos = new ByteArrayOutputStream()
+
                 Streams.copyStream(args[0], baos)
                 def string = new String(baos.toByteArray())
                 if (string == 'nodes') {
@@ -118,6 +119,6 @@ class DirectoryResourceModelSourceSpec extends Specification {
         nodes.nodes.size()==1
         nodes.getNode('anode1')!=null
         directoryNodesProvider.modelSourceErrors != null
-        directoryNodesProvider.modelSourceErrors == ["Error loading file: "+(path)+": java.lang.NullPointerException: test npe"]
+        directoryNodesProvider.modelSourceErrors == ["Error loading file: "+path+": java.lang.NullPointerException: test npe"]
     }
 }
