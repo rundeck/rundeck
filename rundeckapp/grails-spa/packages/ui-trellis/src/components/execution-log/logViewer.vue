@@ -154,7 +154,7 @@ export default class LogViewer extends Vue {
     @Prop({default: 'dark'})
     theme?: string
 
-    @Prop({default: 1048576})
+    @Prop({default: 3145728})
     maxLogSize!: number
 
     @Prop()

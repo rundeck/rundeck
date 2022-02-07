@@ -102,6 +102,7 @@ function mount(e) {
     executionId="${e.dataset.executionId}"
     jumpToLine="${jumpToLine || null}"
     ref="viewer"
+    maxLogSize="${e.dataset.maxLogSize}"
   />
   `
 
