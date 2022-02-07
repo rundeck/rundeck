@@ -76,5 +76,5 @@
 </div>
 
 
-
-<div id="optnewitem"></div>
+<div class="job-editor-options-vue" id="job-editor-options-vue">
+</div>

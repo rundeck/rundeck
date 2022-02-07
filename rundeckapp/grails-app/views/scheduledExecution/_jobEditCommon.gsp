@@ -148,13 +148,17 @@
                      useCrontabString:scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false,
                      timeZones:timeZones ?: []
              ]}"/>
-
+<g:embedJSON id="optionsDataJSON"
+             data="${ [
+                     name:null
+             ]}"/>
 <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
             notificationData: loadJsonData('jobNotificationsJSON'),
             resourcesData: loadJsonData('jobResourcesJSON'),
-            schedulesData: loadJsonData('jobSchedulesJSON')
+            schedulesData: loadJsonData('jobSchedulesJSON'),
+            optionsData: loadJsonData('optionsDataJSON')
         }
     })
     var workflowEditor = new WorkflowEditor();

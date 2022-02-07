@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
@@ -117,7 +118,9 @@ class EditOptsController extends ControllerBase{
                 fileUploadPluginDescription: fileUploadService.pluginDescription,
                 optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()?.sort{a,b->a.key<=>b.key}
         ]
-        return render(template: "/scheduledExecution/optEdit", model: model + outparams)
+        //return render(template: "/scheduledExecution/optEdit", model: model + outparams)
+        render(contentType: 'application/json',text: model +outparams as JSON)
+
     }
 
     /**
@@ -189,58 +192,59 @@ class EditOptsController extends ControllerBase{
      */
     def save() {
         withForm{
-        if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
-            return
-        }
-        if (!params.name && !params.newoption) {
-            log.error("name parameter is required")
-            flash.error = "name parameter is required"
-            return error()
-        }
-        def editopts = _getSessionOptions()
-        def name = params.name
-        def origName = params.origName
+            g.refreshFormTokensHeader()
+            if(!allowedJobAuthorization(params.scheduledExecutionId, [AuthConstants.ACTION_UPDATE])){
+                return
+            }
+            if (!params.name && !params.newoption) {
+                log.error("name parameter is required")
+                flash.error = "name parameter is required"
+                return error()
+            }
+            def editopts = _getSessionOptions()
+            def name = params.name
+            def origName = params.origName
 
-        def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params])
-        if (result.error) {
-            log.error(result.error)
+            def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params])
+            if (result.error) {
+                log.error(result.error)
 
-            def model = [
-                    option                     : result.option,
-                    name                       : params.num,
-                    scheduledExecutionId       : params.scheduledExecutionId,
-                    origName                   : params.origName,
-                    newoption                  : params['newoption'],
-                    edit                       : true,
-                    regexError                 : result.regexError,
-                    configMapValidate          : result.configMapValidate,
-                    fileUploadPluginDescription: fileUploadService.pluginDescription,
-                    optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()?.sort{a,b->a.key<=>b.key}
-            ]
-            return render(template: "/scheduledExecution/optEdit", model: model
-            )
-        }
-        _pushUndoAction(params.scheduledExecutionId, result.undo)
-        if (result.undo) {
-            _clearRedoStack(params.scheduledExecutionId)
-        }
-        def optIndex=editopts.values()*.name.indexOf(name)
-        return render(
-                template: "/scheduledExecution/optlistitemContent",
-                model: [
-                        optCount: editopts.size(),
-                        optIndex:optIndex,
-                        option: editopts [ name ],
-                        name : name,
-                        scheduledExecutionId: params.scheduledExecutionId,
-                        edit: true
+                def model = [
+                        option                     : result.option,
+                        name                       : params.num,
+                        scheduledExecutionId       : params.scheduledExecutionId,
+                        origName                   : params.origName,
+                        newoption                  : params['newoption'],
+                        edit                       : true,
+                        regexError                 : result.regexError,
+                        configMapValidate          : result.configMapValidate,
+                        fileUploadPluginDescription: fileUploadService.pluginDescription,
+                        optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()?.sort{a,b->a.key<=>b.key}
                 ]
-        )
-        }.invalidToken{
-            request.error = g.message(code: 'request.error.invalidtoken.message')
-            response.status=400
-            return error()
-        }
+                return render(template: "/scheduledExecution/optEdit", model: model
+                )
+            }
+            _pushUndoAction(params.scheduledExecutionId, result.undo)
+            if (result.undo) {
+                _clearRedoStack(params.scheduledExecutionId)
+            }
+            def optIndex=editopts.values()*.name.indexOf(name)
+            return render(
+                    template: "/scheduledExecution/optlistitemContent",
+                    model: [
+                            optCount: editopts.size(),
+                            optIndex:optIndex,
+                            option: editopts [ name ],
+                            name : name,
+                            scheduledExecutionId: params.scheduledExecutionId,
+                            edit: true
+                    ]
+            )
+            }.invalidToken{
+                request.error = g.message(code: 'request.error.invalidtoken.message')
+                response.status=400
+                return error()
+            }
     }
 
     /**
