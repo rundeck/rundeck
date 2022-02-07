@@ -244,6 +244,8 @@ class UrlMappings {
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 
+        "/editOpts/save"(controller: 'editOpts', action: 'save')
+
         //simplified url mappings for link generation
         "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')

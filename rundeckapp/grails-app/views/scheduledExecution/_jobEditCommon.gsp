@@ -184,6 +184,10 @@
                      defaultTab:scheduledExecution.defaultTab,
                      uuid:scheduledExecution?.uuid
              ]}"/>
+<g:embedJSON id="optionsDataJSON"
+             data="${ [
+                     name:null
+             ]}"/>
 
 <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
@@ -191,6 +195,7 @@
             notificationData: loadJsonData('jobNotificationsJSON'),
             resourcesData: loadJsonData('jobResourcesJSON'),
             schedulesData: loadJsonData('jobSchedulesJSON'),
+            optionsData: loadJsonData('optionsDataJSON'),
             otherData: loadJsonData('jobOtherJSON')
         }
     })

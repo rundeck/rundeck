@@ -6,6 +6,7 @@ import VueCookies from 'vue-cookies'
 import NotificationsEditorSection from './NotificationsEditorSection'
 import ResourcesEditorSection from './ResourcesEditorSection'
 import SchedulesEditorSection from './SchedulesEditorSection'
+import OptionsEditorSection from './OptionsEditorSection.vue'
 import OtherEditorSection from './OtherEditorSection'
 import * as uiv from 'uiv'
 import international from './i18n'
@@ -15,6 +16,7 @@ import {
     EventBus
 } from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+import {autorun} from "mobx";
 
 Vue.config.productionTip = false
 
@@ -96,3 +98,30 @@ for (var i = 0; i < scsels.length; i++) {
     })
   }
 }
+
+window._rundeck.eventBus.$on('job-options-edit', () => {
+  const optels = document.body.getElementsByClassName('job-editor-options-vue')
+  for (var i = 0; i < optels.length; i++) {
+    const e = optels[i]
+
+    /* eslint-disable no-new */
+    var vm = new Vue({
+      el: e,
+      data() {
+        return {EventBus,}
+      },
+      components: {OptionsEditorSection},
+      i18n,
+      render(h) {
+        return h(OptionsEditorSection, {
+          props: {
+            eventBus: window._rundeck.eventBus
+          }
+        })
+      }
+    })
+
+    window._rundeck.eventBus.$emit("job-section-edit")
+  }
+})
+

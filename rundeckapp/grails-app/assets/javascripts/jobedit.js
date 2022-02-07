@@ -1248,6 +1248,11 @@ function _isjobScheduled() {
 
 function _optedit(name, elem) {
   jobWasEdited();
+  window._rundeck.data.optionsData.name = name;
+
+  window._rundeck.eventBus.$emit('job-options-edit',name);
+  _hideOptControls();
+  _configureInputRestrictions(elem);
   var params = {
     name: name
   };
@@ -1259,7 +1264,7 @@ function _optedit(name, elem) {
     type: 'GET',
     url: _genUrl(appLinks.editOptsEdit, params),
     success: function (data, status, jqxhr) {
-      jQuery(elem).html(data);
+      //jQuery(elem).html(data);
       _hideOptControls();
       _configureInputRestrictions(elem);
     },
@@ -1374,6 +1379,8 @@ function createOptionElement(classList){
 }
 
 function _optaddnew() {
+  window._rundeck.eventBus.$emit('job-options-edit');
+
   jobWasEdited();
   var params = {
     newoption: true
@@ -1382,14 +1389,9 @@ function _optaddnew() {
     params['scheduledExecutionId'] = getCurSEID();
   }
   _hideOptControls();
-
-  var createElement = createOptionElement()
-  jQuery(createElement).load(_genUrl(appLinks.editOptsEdit, params), null, function (resp, status, jqxhr) {
-    if (status == 'success') {
-      _configureInputRestrictions(createElement);
-      _hideOptControls();
-    }
-  });
+  var createElement = createOptionElement();
+  _configureInputRestrictions(createElement);
+  _hideOptControls();
 }
 
 function _optcancelnew() {
@@ -1412,42 +1414,28 @@ function _reloadOpts() {
   });
 }
 
-function _optsavenew(formelem, tokendataid) {
+function _optsavenew(data, params) {
   jobWasEdited();
-  var params = jQuery('#' + formelem + ' :input').serialize();
-  var optname = jQuery('#' + formelem + ' :input[name=name]').val();
-  var opttype = jQuery('#' + formelem + ' :input[name=type]').val();
-  var multivalued = jQuery('#' + formelem + ' :input[name=multivalued]:checked').val() == "true" ? true : false
-  jQuery.ajax({
-    type: "POST",
-    url: _genUrl(appLinks.editOptsSave, {
-      jobWasScheduled: _isjobScheduled()
-    }),
-    data: params,
-    beforeSend: _createAjaxSendTokensHandler(tokendataid),
-    success: function (data, status, xhr) {
-      jQuery(newoptli).html(data);
-      _addOption({
-        name: optname,
-        type: opttype,
-        multivalued: multivalued
-      });
-      var optEditForm = jQuery(newoptli).find('.optEditForm');
-
-      if (optEditForm.length != 0) {
-        _configureInputRestrictions(newoptli);
-        _hideOptControls();
-
-      } else {
-        jQuery(newoptli).effect( "highlight" );
-        newoptli = null;
-        _showOptControls();
-        _reloadOpts();
-      }
-
-      _vueEmitJobEdited()
-    }
+  jQuery(newoptli).html(data);
+  _addOption({
+    name: params.name,
+    type: params.type,
+    multivalued: params.multivalued
   });
+  var optEditForm = jQuery(newoptli).find('.optEditForm');
+
+  if (optEditForm.length != 0) {
+    _configureInputRestrictions(newoptli);
+    _hideOptControls();
+
+  } else {
+    jQuery(newoptli).effect( "highlight" );
+    newoptli = null;
+    _showOptControls();
+    _reloadOpts();
+  }
+
+  _vueEmitJobEdited()
 
 }
 
