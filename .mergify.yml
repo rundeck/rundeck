@@ -32,6 +32,14 @@ pull_request_rules:
       backport:
         branches:
           - maint-3.3.x
+  - name: backport patches to 3.4 maint branch
+    conditions:
+      - base=main
+      - label=backport-to-3.4
+    actions:
+      backport:
+        branches:
+          - maint-3.4.x
   - name: backport patches to main
     conditions:
       - label=backport-to-main
@@ -48,13 +56,20 @@ pull_request_rules:
         branches:
           - release-2.11
   # Add version labels to open PRs
-  - name: label PRs main with 3.4.x
+  - name: label PRs main with 4.x
     conditions:
       - base=main
       - -closed
     actions:
       label:
-        add: [3.4.x]
+        add: [4.x]
+  - name: label PRs to 3.4 maint branch
+    conditions:
+      - base=maint-3.4.x
+      - -closed
+    actions:
+      label:
+        add: [ 3.4.x ]
   - name: label PRs to 3.3 maint branch
     conditions:
       - base=maint-3.3.x
