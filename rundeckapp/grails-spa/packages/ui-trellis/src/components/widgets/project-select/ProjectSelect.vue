@@ -31,10 +31,10 @@
             </Skeleton>
         </div>
              <div class="btn-group btn-group-justified" style="height: 40px; flex-grow: 0; flex-shrink: 0; border-top: solid 1px grey;">
-                <a href="allProjectsLink" @click.prevent="allClicked" @keypress.enter.prevent="allClicked" class="btn text-info">
+                <a href="allProjectsLink" @click.prevent="allClicked" @keypress.enter.prevent="allClicked" class="btn btn-default" style="border-radius: 0px; border: 0px; border-right: solid 1px grey;">
                 <i class="far fa-eye"></i>
                 View All</a>
-                <a href="/resources/createProject" class="btn text-info">
+                <a href="/resources/createProject" class="btn btn-default" style="border-radius: 0px; border: 0px;">
                 <i class="fas fa-plus-circle"></i>
                 Create Project</a>
         </div>

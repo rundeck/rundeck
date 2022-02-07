@@ -118,7 +118,7 @@
                             <g:message code="no"/>
                         </button>
                         <g:actionSubmit action="enable" value="${message(code: 'yes')}" formmethod="POST"
-                                        class="btn btn-success"/>
+                                        class="btn btn-cta"/>
                     </div>
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
@@ -266,7 +266,7 @@
                           hideTitle  : true
                   ]}"/>
         <g:if test="${isConfiguredButDisabled}">
-          <span class="btn  btn-success"
+          <span class="btn  btn-cta"
                 data-toggle="modal"
                 data-target="#enablePlugin${integration}"
                 style="margin-top:1em;">
@@ -274,7 +274,7 @@
           </span>
         </g:if>
         <g:elseif test="${isConfiguredAndEnabled}">
-          <span class="btn btn-warning"
+          <span class="btn btn-danger"
                 data-toggle="modal"
                 data-target="#disablePlugin${integration}"
                 style="margin-top:1em;">
@@ -283,7 +283,7 @@
         </g:elseif>
         <g:if test="${!isConfiguredAndEnabled}">
           <g:link action="setup"
-                  class="btn  ${isConfiguredButDisabled ? 'btn-default' : 'btn-success'}"
+                  class="btn  btn-default"
                   params="[type: plugins[pluginName].name, project: params.project,integration:integration]"
                   style="margin-top:1em;">
             <g:icon name="cog"/>
@@ -296,7 +296,7 @@
           </g:link>
         </g:if>
         <g:if test="${isConfiguredButDisabled}">
-          <span class="btn btn-warning"
+          <span class="btn btn-default"
                 data-toggle="modal"
                 data-target="#cleanPlugin${integration}"
                 style="margin-top:1em;">

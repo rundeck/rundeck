@@ -82,11 +82,11 @@
 
 
             <div slot="footer">
-                <button type="button" class="btn btn-primary reset_page_confirm" @click="modalAddField=false">
+                <button type="button" class="btn btn-default reset_page_confirm" @click="modalAddField=false">
                     {{ $t('message.cancel') }}
                 </button>
 
-                <button type="button" class="btn btn-primary reset_page_confirm" @click="addField()">
+                <button type="button" class="btn btn-cta reset_page_confirm" @click="addField()">
                     {{ $t('message.add') }}
                 </button>
             </div>

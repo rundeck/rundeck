@@ -11,9 +11,11 @@
 import Vue from 'vue'
 
 export default Vue.extend({
-    data: {
-        display: false,
-        opening: false
+    data(){
+        return  {
+            display: false,
+            opening: false
+        }
     },
     mounted() {
         const drawer = this.$refs['drawer'] as HTMLElement

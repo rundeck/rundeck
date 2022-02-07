@@ -1,6 +1,6 @@
 <template>
   <span>
-    <btn v-if="hasQuery && (!query || !query.ftilerName)" @click="saveFilterPrompt" size="xs" type="success">
+    <btn v-if="hasQuery && (!query || !query.ftilerName)" @click="saveFilterPrompt" size="xs" type="default">
       {{$t('filter.save.button')}}
     </btn>
     <span v-if="query && query.filterName">{{query.filterName}}</span>
@@ -159,3 +159,13 @@ export default {
   }
 };
 </script>
+<style lang="scss">
+.modal-footer .btn-primary{
+    color: var(--font-fill-color);
+    background-color: var(--cta-color);
+    &:hover {
+    color: var(--font-fill-color);
+    background-color: var(--cta-states-color);
+  }
+}
+</style>

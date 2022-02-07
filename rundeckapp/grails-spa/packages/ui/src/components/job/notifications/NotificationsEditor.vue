@@ -18,7 +18,7 @@
               <i class="fas" :class="triggerIcons[trigger]"></i>
               {{$t('notification.event.'+trigger)}}
               </span>
-              <btn type="secondary"
+              <btn type="default"
                    class="  flex-item"
                    size="sm" @click="addNotification(trigger)">
                 <i class="fas fa-plus"></i>
@@ -89,7 +89,7 @@
                 />
               </div>
 
-              <btn type="secondary" size="sm" @click="doEditNotification(notif)">Edit</btn>
+              <btn type="default" size="sm" @click="doEditNotification(notif)">Edit</btn>
 
             </div>
           </div>

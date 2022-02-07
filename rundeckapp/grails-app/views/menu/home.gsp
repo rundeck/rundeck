@@ -112,7 +112,7 @@
                 <g:message code="page.home.loading.projects" />
             </span>
             <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
-              <g:link controller="framework" action="createProject" class="btn  btn-cta pull-right">
+              <g:link controller="framework" action="createProject" class="btn  btn-primary pull-right">
                 <g:message code="page.home.new.project.button.label" />
                 <b class="glyphicon glyphicon-plus"></b>
               </g:link>

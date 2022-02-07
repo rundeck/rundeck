@@ -260,7 +260,7 @@ search
                           <i class="glyphicon glyphicon-cog"></i>
                         </button>
 
-                        <a class="btn btn-success btn-fill runbutton "
+                        <a class="btn btn-cta btn-fill runbutton "
                            data-bind="attr: { disabled: nodefilter.total()<1 || nodefilter.error() || running || !canRun() } "
                            onclick="runFormSubmit('runbox');">
                           <span data-bind="if: !running()">

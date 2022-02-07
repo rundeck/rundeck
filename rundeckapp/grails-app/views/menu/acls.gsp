@@ -187,7 +187,7 @@
                               <g:link controller="menu"
                                       action="createSystemAclFile"
                                       params="${[fileType: 'fs']}"
-                                      class="btn btn-sm btn-cta">
+                                      class="btn btn-sm btn-primary">
                                   <g:icon name="plus"/>
                                   <g:message code="access.control.action.create.acl.policy.button.title"/>
                               </g:link>
@@ -248,7 +248,7 @@
                                   id="storage_acl_create_btn"
                                   action="createSystemAclFile"
                                   params="${[fileType: 'storage']}"
-                                  class="btn btn-sm btn-cta">
+                                  class="btn btn-sm btn-primary">
                               <g:icon name="plus"/>
                               <g:message code="access.control.action.create.acl.policy.button.title"/>
                           </g:link>

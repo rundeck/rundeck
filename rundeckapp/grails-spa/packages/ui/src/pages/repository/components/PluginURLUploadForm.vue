@@ -10,7 +10,7 @@
           v-model="pluginURL"
         >
         <span class="input-group-btn">
-          <a @click="submitUrl" class="btn btn-default" type="button">Install</a>
+          <a @click="submitUrl" class="btn btn-cta" type="button">Install</a>
         </span>
       </div>
     </div>

@@ -91,12 +91,12 @@
         <g:jsonToken id="reqtoken_duplicate_${ukey}" url="${request.requestURI}"/>
 
         <span class="optctrl opteditcontrols controls " id="optctrls_${enc(attr:option.name)}" style="position:absolute; right:0;">
-            <span class="btn btn-xs btn-info" onclick="_optedit('${enc(js:option.name)}',jQuery(this).closest('li.optEntry'));"
+            <span class="btn btn-xs btn-default" onclick="_optedit('${enc(js:option.name)}',jQuery(this).closest('li.optEntry'));"
                   title="${message(code:"edit.this.option")}">
                 <i class="glyphicon glyphicon-edit"></i>
                 <g:message code="edit" />
             </span>
-            <span class="btn btn-xs btn-info" onclick="_optcopy('${enc(js:option.name)}','reqtoken_duplicate_${ukey}');"
+            <span class="btn btn-xs btn-default" onclick="_optcopy('${enc(js:option.name)}','reqtoken_duplicate_${ukey}');"
                   title="${message(code:"duplicate.this.option")}">
                 <i class="glyphicon glyphicon-duplicate"></i>
                 <g:message code="duplicate" />
