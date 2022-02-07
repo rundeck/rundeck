@@ -60,9 +60,9 @@ export const MultiInput = () => (Vue.extend({
                     </ul>
                 </div>
 
-                <input type="search" name="filter" class="schedJobNodeFilter form-control" autofocus="" data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText" placeholder="Enter a node filter, or .* for all nodes" value="" id="schedJobNodeFilter" />
+                <input type="search" name="filter" class="schedJobNodeFilter form-control" data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText" placeholder="Enter a node filter, or .* for all nodes" value="" id="schedJobNodeFilter" />
                 <div class ="input-group-btn input-btn-toggle">
-                <a class ="btn btn-default dropdown-toggle" tabindex="0" role="button" data-toggle="popover" data-popover-content-ref="#queryFilterHelp" data-placement="bottom" data-trigger="focus" data-container="body" data-popover-template-class ="popover-wide" data-original-title="" title="">
+                <a class ="btn btn-default dropdown-toggle" role="button" data-toggle="popover" data-popover-content-ref="#queryFilterHelp" data-placement="bottom" data-trigger="focus" data-container="body" data-popover-template-class ="popover-wide">
                 <i class ="glyphicon glyphicon-question-sign"></i>
                 </a>
                 </div>
