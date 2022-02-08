@@ -10,7 +10,8 @@
     "dev": "concurrently -n vue,tsc \"vue-cli-service build --mode development --watch\" \"tsc -W -p ./tsconfig.build.json\"",
     "build": "run-script-os",
     "build:darwin:linux": "./node_modules/.bin/vue-cli-service build --mode production && tsc -p ./tsconfig.build.json",
-    "build:win32": "vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.build.json"
+    "build:win32": "vue-cli-service.cmd build --mode production && tsc -p ./tsconfig.build.json",
+    "storybook": "start-storybook -s public,theme,tests/data"
   },
   "repository": {
     "type": "git",
@@ -44,7 +45,10 @@
     "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {
+    "@storybook/addon-backgrounds": "^6.2.9",
+    "@storybook/addon-docs": "^6.2.9",
     "@storybook/addon-knobs": "^6.2.9",
+    "@storybook/preset-typescript": "^3.0.0",
     "@storybook/vue": "^6.2.9",
     "@types/jest": "^24.0.19",
     "@types/node": "^14.0.13",
@@ -61,6 +65,7 @@
     "run-script-os": "^1.1.6",
     "sass": "^1.26.5",
     "sass-loader": "^8.0.2",
+    "storybook-dark-mode": "^1.0.8",
     "typescript": "^4.2.3",
     "uuid": "^8.3.2",
     "vue-class-component": "^7.2.3",
