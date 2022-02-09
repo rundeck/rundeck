@@ -100,6 +100,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def AppAuthContextEvaluator rundeckAuthContextEvaluator
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    ConfigurationService configurationService
+
     static transactional = false
 
     static Logger projectLogger = LoggerFactory.getLogger("org.rundeck.project.events")
@@ -441,7 +443,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         asyncExportRequests= Collections.synchronizedMap(new HashMap<String,ArchiveRequest>())
 
-        def spec=grailsApplication.config.rundeck?.projectService?.projectExportCache?.spec?: "expireAfterAccess=30m"
+        def spec= configurationService.getString("projectService.projectExportCache.spec", "expireAfterAccess=30m")
 
         asyncExportResults=
                 CacheBuilder.

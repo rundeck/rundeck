@@ -21,7 +21,7 @@ executors:
         default: medium
       RUNDECK_GRADLE_OPTS:
         type: string
-        default: --no-daemon --max-workers 2 -x check install --stacktrace --info --parallel
+        default: --no-daemon --max-workers 2 -x check publishToMavenLocal --stacktrace --info --parallel
 
     docker:
       - image: rundeck/ci@sha256:ef1db4074daaea2882aaaea390604cb92488289549207211d3ef7cbbaedcdf65
@@ -112,7 +112,7 @@ jobs:
 
     executor:
       name: gradle-docker
-      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info --parallel --build-cache
+      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check publishToMavenLocal --stacktrace --info --parallel --build-cache
       resourceClass: xlarge
 
     steps:
@@ -158,7 +158,7 @@ jobs:
                   seal_artifacts
             - run:
                 name: Publish snapshot
-                command: ./gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+                command: ./gradlew publish -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
       - when:
           condition:
             matches: { pattern: "/^v.*/", value: <<pipeline.git.tag>> }
@@ -285,7 +285,9 @@ jobs:
           pipeline-number: '<<pipeline.number>>'
   maven-publish:
     <<: *defaults
-    executor: gradle-docker
+    executor:
+      name: gradle-docker
+      resourceClass: xlarge
     steps:
       - checkout
       - restore-gradle-cache
@@ -297,6 +299,8 @@ jobs:
           command: |
             source .circleci/circle-shim.sh
             DRY_RUN=false bash scripts/circle-build.sh publish
+          env:
+            SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY_B64 }}
 
 stages:
   test: &stage-test

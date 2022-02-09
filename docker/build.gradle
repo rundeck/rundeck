@@ -1,6 +1,13 @@
 plugins{
     id 'base'
 }
+configurations{
+    docker
+}
+dependencies{
+    docker project(path: ":rundeckapp", configuration: 'bootWar')
+}
+
 project.evaluationDependsOn(":rundeckapp")
 
 def providedTags = findProperty('dockerTags')?: ''
@@ -23,7 +30,7 @@ task ensureWar {
     def rundeckapp = project(":rundeckapp")
 
     /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
-    def warFile = file(rundeckapp.war.archivePath)
+    def warFile = file(rundeckapp.war.archiveFile)
     if (! warFile.exists()) {
         dependsOn rundeckapp.bootWar
     }
@@ -49,11 +56,13 @@ task officialBuild {
         file(outputDir).mkdir()
 
         def rundeckapp = project(":rundeckapp")
+        def archiveFile = rundeckapp.war.archiveFile.get().toString().replace("-plain","")
+        def archiveFileName = rundeckapp.war.archiveFileName.get().replace("-plain","")
 
         copy {
-            from rundeckapp.war.archivePath
+            from archiveFile
             into "$projectDir/official/.build"
-            rename "$rundeckapp.war.archiveName", "rundeck.war"
+            rename "${archiveFileName}", "rundeck.war"
         }
 
         def args = [
@@ -64,9 +73,9 @@ task officialBuild {
         ]
 
         for (tag in dockerTags)
-            args << "-t=rundeck/rundeck:$tag"
+            args.add("-t=rundeck/rundeck:$tag")
         
-        args << "."
+        args.add( "." )
 
         exec {
             workingDir "./official"

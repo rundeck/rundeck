@@ -55,7 +55,7 @@ public class HostnameVerifyingTrustManagerTest {
         trustManager.checkClientTrusted(chain, authType);
 
         Mockito.verify(realTrustManager, Mockito.times(1)).checkClientTrusted(Mockito.same(chain),
-                                                                              Mockito.same(authType));
+                Mockito.same(authType));
     }
 
     @Test
@@ -71,7 +71,7 @@ public class HostnameVerifyingTrustManagerTest {
         trustManager.checkServerTrusted(chain, authType);
 
         Mockito.verify(realTrustManager, Mockito.times(1)).checkServerTrusted(Mockito.same(chain),
-                                                                              Mockito.same(authType));
+                Mockito.same(authType));
     }
 
     @Test
@@ -82,7 +82,7 @@ public class HostnameVerifyingTrustManagerTest {
         trustManager.checkServerTrusted(chain, authType);
 
         Mockito.verify(realTrustManager, Mockito.times(1)).checkServerTrusted(Mockito.same(chain),
-                                                                              Mockito.same(authType));
+                Mockito.same(authType));
     }
 
     @Test
@@ -104,7 +104,7 @@ public class HostnameVerifyingTrustManagerTest {
             Assert.assertSame("Expected validation exception to be thrown as root cause.", root, e.getCause());
         }
 
-        Mockito.verifyZeroInteractions(realTrustManager);
+        Mockito.verifyNoInteractions(realTrustManager);
     }
 
     @Test
@@ -114,6 +114,6 @@ public class HostnameVerifyingTrustManagerTest {
         Mockito.when(realTrustManager.getAcceptedIssuers()).thenReturn(chain);
 
         Assert.assertSame("Expected accepted issuers call to be delegated to actual trust manager", chain,
-                          trustManager.getAcceptedIssuers());
+                trustManager.getAcceptedIssuers());
     }
 }

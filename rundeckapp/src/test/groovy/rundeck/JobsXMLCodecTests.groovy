@@ -6060,7 +6060,7 @@ void testDecodeBasic__no_group(){
                 nodeThreadcount: 1,
                 nodeKeepgoing: true,
                 options: [
-                    new Option(name: 'test1', defaultValue: 'monkey', multivalued: true, required: true,delimiter: ' '),
+                    new Option(name: 'test1', defaultValue: 'monkey', multivalued: true, required: true,delimiter: ';'),
                     new Option(name: 'delay', defaultValue: '12')
                 ] as TreeSet,
             )
@@ -6095,7 +6095,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect context options option 2 value", 'monkey', doc.job[0].context[0].options[0].option[1]['@value'].text()
         assertEquals "incorrect context options option 2 regex", 'true', doc.job[0].context[0].options[0].option[1]['@required'].text()
         assertEquals "incorrect context options option 2 regex", 'true', doc.job[0].context[0].options[0].option[1]['@multivalued'].text()
-        assertEquals "incorrect context options option 2 regex", ',', doc.job[0].context[0].options[0].option[1]['@delimiter'].text()
+        assertEquals "incorrect context options option 2 regex", ';', doc.job[0].context[0].options[0].option[1]['@delimiter'].text()
 
         def jobs2 = [
             new ScheduledExecution(
@@ -6780,6 +6780,6 @@ void testDecodeBasic__no_group(){
         assertEquals "wrong number of jobs",1,doc.job.size()
         assertEquals "wrong timeout value","10",doc.job[0].dispatch[0].threadcount.text()
     }
-  
-  
+
+
 }

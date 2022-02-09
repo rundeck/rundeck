@@ -87,6 +87,15 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
     def setup(){
         session.subject=new Subject()
+
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
     }
     def "home without sidebar feature"(){
         given:

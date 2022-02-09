@@ -852,13 +852,13 @@ class UtilityTagLib{
                 fragment='#'+split[1]
             }
         }
-        def rdversion = grailsApplication.metadata.getProperty('info.app.version', String)
+        def rdversion = grailsApplication.metadata.getProperty('info.app.version', String).get()
         def rdversionShort = rdversion.split('-')[0]
 
         def helpBase
         def helpUrl
-        if(grailsApplication.config.rundeck?.gui?.helpLink){
-            helpBase= grailsApplication.config.rundeck?.gui?.helpLink
+        if(configurationService.getString("gui.helpLink")){
+            helpBase= configurationService.getString("gui.helpLink")
             helpUrl=helpBase + path + fragment
         }else{
             def docVersion = rdversion?.contains('SNAPSHOT')?'docs':rdversionShort
@@ -1102,7 +1102,7 @@ class UtilityTagLib{
 
     protected SynchronizerTokensHolder tokensHolder() {
         SynchronizerTokensHolder tokensHolder
-        if (grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true, 'true']) {
+        if (configurationService.getBoolean("security.useHMacRequestTokens", false)) {
             //enable hmac request tokens which expire instead of Grails' default UUID based tokens
             tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user,
                     request.remoteAddr])
@@ -1131,7 +1131,7 @@ class UtilityTagLib{
         if (attrs.containsKey('useToken')) {
             useToken = attrs.boolean('useToken')
         }
-        if(useToken && grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true,'true']){
+        if(useToken && configurationService.getBoolean("security.useHMacRequestTokens",false)){
             //enable hmac request tokens which expire instead of Grails' default UUID based tokens
             def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
         }
@@ -1141,7 +1141,7 @@ class UtilityTagLib{
     }
 
     def appTitle={attrs,body->
-        grailsApplication.config.rundeck.gui.title ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
+        configurationService.getString("gui.title") ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
     }
 
     def executionMode={attrs,body->

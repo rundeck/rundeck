@@ -6,7 +6,6 @@ import groovy.mock.interceptor.MockFor
 import groovy.util.slurpersupport.GPathResult
 import org.grails.plugins.codecs.JSONCodec
 import org.grails.web.util.WebUtils
-import org.junit.Test
 import org.springframework.context.MessageSource
 import rundeck.services.ApiService
 import spock.lang.Specification
@@ -14,11 +13,6 @@ import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertTrue
 
 class WebUtilSpec extends Specification implements GrailsWebUnitTest{
     WebUtil service
@@ -28,7 +22,6 @@ class WebUtilSpec extends Specification implements GrailsWebUnitTest{
         service = new WebUtil()
     }
 
-    @Test
     void "require version success"() {
         given:
         def resp = Mock(HttpServletResponse)
@@ -132,7 +125,7 @@ class WebUtilSpec extends Specification implements GrailsWebUnitTest{
         then:
             def result = assertXmlErrorText(response.text)
             !check
-            response.contentType == "application/xml"
+            response.contentType == "application/xml;charset=UTF-8"
             response.characterEncoding == "UTF-8"
             response.status == 400
             response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
@@ -161,7 +154,7 @@ class WebUtilSpec extends Specification implements GrailsWebUnitTest{
 
         then:
             !check
-            response.contentType == "application/json"
+            response.contentType == "application/json;charset=UTF-8"
             response.characterEncoding == "UTF-8"
             response.status == 400
             response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()

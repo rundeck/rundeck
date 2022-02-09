@@ -283,7 +283,7 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
     }
 
     @Unroll
-    def "get nodes with first load asynch #defAsynch project value #projAsynch"() {
+    def "get nodes with first load asynch defAsynch project value projAsynch"() {
         given:
         service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
         service.frameworkService = Mock(FrameworkService)

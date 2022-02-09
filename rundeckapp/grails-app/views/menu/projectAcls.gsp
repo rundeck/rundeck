@@ -77,9 +77,9 @@
         jQuery(function () {
             var data = loadJsonData('aclPolicyList');
             jQuery.extend(data,{
-                pagingEnabled: ${params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
                 paging:{
-                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
+                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30)}
                 }
             })
             window.policies = new PolicyFiles(data,_genUrl(_rundeck.rdBase+'/menu/ajaxProjectAclMeta',{project:project}));

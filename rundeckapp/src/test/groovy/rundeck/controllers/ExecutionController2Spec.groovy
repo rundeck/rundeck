@@ -68,6 +68,15 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.executionService=Mock(ExecutionService)
         controller.apiService=Mock(ApiService)
         session.subject = new Subject()
+
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
     }
 
     @Unroll
@@ -822,7 +831,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
      * Test execution mode status api
      */
     @Unroll
-    public void "testApiExecutionsStatusWhenPassive api v#apiversion"() {
+    public void "testApiExecutionsStatusWhenPassive api"() {
 
         given:
         controller.request.api_version = apiVersion

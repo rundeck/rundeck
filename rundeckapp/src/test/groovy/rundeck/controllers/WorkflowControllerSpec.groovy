@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import org.grails.plugins.codecs.URLCodec
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -36,6 +37,8 @@ import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.codecs.URIComponentCodec
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 import spock.lang.Unroll
@@ -49,6 +52,17 @@ import static org.junit.Assert.assertNull
 class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
 
     List<Class> getDomainClasses() { [Workflow, CommandExec, JobExec, ScheduledExecution, PluginStep]}
+
+    def setup() {
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+    }
 
     def "modify commandexec type empty validation"() {
         given:

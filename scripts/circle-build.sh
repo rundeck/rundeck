@@ -20,13 +20,15 @@ main() {
 }
 
 build() {
-    ./gradlew -Penvironment="${ENV}" -x check install ${RUNDECK_GRADLE_OPTS:-}
+    ./gradlew -Penvironment="${ENV}" -x check publishToMavenLocal ${RUNDECK_GRADLE_OPTS:-}
+    ./gradlew -Penvironment="${ENV}" -x check bootWar ${RUNDECK_GRADLE_OPTS:-}
     groovy testbuild.groovy --buildType="${ENV}"
     # make ENV="${ENV}" rpm deb
 }
 
 buildFork() {
-    ./gradlew -Penvironment="${ENV}" install
+    ./gradlew -Penvironment="${ENV}" publishToMavenLocal
+    ./gradlew -Penvironment="${ENV}" -x check bootWar ${RUNDECK_GRADLE_OPTS:-}
     groovy testbuild.groovy --buildType="${ENV}"
     # make ENV="${ENV}" rpm deb
 }
@@ -75,14 +77,16 @@ publish() {
         -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
         -PsonatypeUsername="${SONATYPE_USERNAME}" \
         -PsonatypePassword="${SONATYPE_PASSWORD}" \
-        uploadExisting --info
+        publishToSonatype
 }
 
-publish_oss() {
-    ./gradlew \
-        -PsonatypeUsername="${SONATYPE_USERNAME}" \
-        -PsonatypePassword="${SONATYPE_PASSWORD}" \
-        uploadExisting --info
-}
+# publish() {
+#     ./gradlew \
+#        -PsigningKey="${SIGNING_KEY_B64}" \
+#        -PsigningPassword="${RUNDECK_SIGNING_PASSWORD}" \
+#        -PsonatypeUsername="${SONATYPE_USERNAME}" \
+#        -PsonatypePassword="${SONATYPE_PASSWORD}" \
+#        publishToSonatype
+# }
 
 main "${@}"

@@ -24,9 +24,9 @@ import javax.servlet.http.HttpServletResponse
 class FeedController  extends ControllerBase{
     ReportService reportService
 
-    def index = {ExecQuery query ->
+    def index(ExecQuery query){
         if(!checkEnabled()){
-            return 
+            return
         }
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             //no default filter

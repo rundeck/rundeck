@@ -620,7 +620,9 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         given:
         service.pluginConfigService = Mock(PluginConfigService)
         service.frameworkService = Mock(FrameworkService)
-        grailsApplication.config.rundeck.scm.startup.initDeferred=false
+        service.configurationService = Mock(ConfigurationService){
+            getBoolean("scm.startup.initDeferred")>>false
+        }
         when:
         service.initialize()
         then:
@@ -653,7 +655,9 @@ class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService
         service.jobEventsService = Mock(JobEventsService)
         service.rundeckAuthContextProvider=Mock(AuthContextProvider)
         def validated = new ValidatedPlugin(valid: true)
-        grailsApplication.config.rundeck.scm.startup.initDeferred=false
+        service.configurationService = Mock(ConfigurationService){
+            getBoolean("scm.startup.initDeferred")>>false
+        }
 
         when:
         service.initialize()

@@ -45,7 +45,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
 //versions of dependency we want to verify
 def versions=[
-        jetty:'9.4.39.v20210325',
+        jetty:'9.4.44.v20210927',
         servlet:'api-3.1.0',
         log4j:'2.17.1'
 ]
@@ -120,7 +120,7 @@ def manifest=[
         "WEB-INF/lib/log4j-api-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
-        "WEB-INF/lib/slf4j-api-1.7.30.jar",
+        "WEB-INF/lib/slf4j-api-1.7.32.jar",
         "WEB-INF/lib/libpam4j-1.11.jar"
     ],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],

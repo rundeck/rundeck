@@ -81,7 +81,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         if(!executionService){
             executionService=applicationContext.executionService
         }
-        def spec=grailsApplication.config.rundeck?.workflowService?.stateCache?.spec?: "maximumSize=5,expireAfterAccess=60s"
+        def spec= configurationService.getString("workflowService.stateCache.spec", "maximumSize=5,expireAfterAccess=60s")
         stateCache= CacheBuilder.from(spec).build()
     }
 

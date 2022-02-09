@@ -1,9 +1,18 @@
 apply plugin: "groovy"
 
 dependencies {
-    testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
 
-    compileOnly "org.projectlombok:lombok:1.18.16"
-    annotationProcessor "org.projectlombok:lombok:1.18.16"
+    compileOnly "org.projectlombok:lombok:1.18.20"
+    annotationProcessor "org.projectlombok:lombok:1.18.20"
+
+}
+
+ext.description= "Rundeck project ${project.name}"
+ext.publishName = project.name
+//apply from: "${rootDir}/gradle/exported-project.gradle"
+
+tasks.withType(Test) {
+    useJUnitPlatform()
 }

@@ -153,7 +153,7 @@
                   <i class="glyphicon glyphicon-warning-sign text-warning"></i>
               </g:hasErrors>
               <g:set var="allowHTML"
-                     value="${!(grailsApplication.config.rundeck?.gui?.job?.description?.disableHTML in [true, 'true'])}"/>
+                     value="${!(cfg.getBoolean(config: 'gui.job.description.disableHTML', default: false))}"/>
               <div class="help-block">
                   <g:if test="${allowHTML}">
                       <g:render template="/scheduledExecution/description"

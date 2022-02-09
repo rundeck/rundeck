@@ -57,6 +57,8 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.services.scm.ContextJobImporter
@@ -82,7 +84,7 @@ class ScmService {
 
     def JobEventsService jobEventsService
     def ContextJobImporter scmJobImporter
-    def grailsApplication
+    ConfigurationService configurationService
     def frameworkService
     AuthContextProvider rundeckAuthContextProvider
     ScmExportPluginProviderService scmExportPluginProviderService
@@ -108,10 +110,7 @@ class ScmService {
     }
 
     boolean isScmInitDeferred(){
-        if(grailsApplication.config.rundeck?.scm?.startup?.containsKey('initDeferred')) {
-            return grailsApplication.config.rundeck?.scm?.startup?.initDeferred in [true, 'true']
-        }
-        return true
+        return configurationService.getBoolean("scm.startup.initDeferred", false)
     }
 
     /**

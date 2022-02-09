@@ -6,7 +6,6 @@ class ConfigTagLib {
     static returnObjectForTags = ['getString', 'getInteger', 'getBoolean',]
     ConfigurationService configurationService
     def static namespace="cfg"
-    static defaultEncodeAs = [taglib:'html']
 
     def val={attrs,body ->
         out << configurationService.getString(attrs.key.toString(),"")
@@ -25,7 +24,11 @@ class ConfigTagLib {
         String key = attrs.key
         if (!key) throw new IllegalArgumentException("[key] attribute for tag <cfg:setVar>!")
 
-        this."$scope"."$var" = configurationService.getValue(key,attrs.defaultValue)
+        if(attrs.defaultValue){
+            this."$scope"."$var" = configurationService.getString(key,"${attrs.defaultValue}")
+        }else{
+            this."$scope"."$var" = configurationService.getString(key)
+        }
 
         null
     }
