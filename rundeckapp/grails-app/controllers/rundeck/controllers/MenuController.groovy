@@ -254,7 +254,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!params.project) {
             return redirect(controller: 'menu', action: 'home')
         }
-        def startpage = params.page?: grailsApplication.config.rundeck.gui.startpage ?: 'jobs'
+        def startpage = params.page?: configurationService.getString("gui.startpage", "jobs")
         switch (startpage){
             case 'home':
                 return redirect(controller: 'menu', action: 'home')
@@ -681,7 +681,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         readauthcount= newschedlist.size()
 
-        if(grailsApplication.config.rundeck?.gui?.realJobTree != "false") {
+        if(configurationService.getBoolean("gui.realJobTree", false)) {
             //Adding group entries for empty hierachies to have a "real" tree
             def missinggroups = [:]
             jobgroups.each { k, v ->

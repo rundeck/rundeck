@@ -18,6 +18,7 @@ apply plugin:"org.grails.grails-gsp"
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
+    maven { url "https://jitpack.io" }
 }
 
 configurations {
@@ -51,7 +52,8 @@ dependencies {
     profile ("org.grails.profiles:web-plugin"){
         exclude(group:"org.grails.profiles",module:"web")
     }
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    //runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    runtimeOnly "com.github.bertramdev.asset-pipeline:asset-pipeline-grails:$assetPluginVersion"
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"

@@ -2,10 +2,12 @@ buildscript {
     repositories {
         mavenLocal()
         maven { url "https://repo.grails.org/grails/core" }
+        maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:${assetPluginVersion}"
+        //classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
+        classpath "com.github.bertramdev.asset-pipeline:asset-pipeline-gradle:$assetPluginVersion"
     }
 }
 
@@ -20,6 +22,7 @@ apply plugin:"org.grails.grails-gsp"
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
+    maven { url "https://jitpack.io" }
 }
 
 configurations {
@@ -53,7 +56,8 @@ dependencies {
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
     compileOnly "org.grails:grails-plugin-domain-class"
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    //runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    runtimeOnly "com.github.bertramdev.asset-pipeline:asset-pipeline-grails:$assetPluginVersion"
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"

@@ -4,13 +4,15 @@ import java.util.regex.Matcher
 buildscript {
     repositories {
         mavenLocal()
+        maven { url "https://jitpack.io" }
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:7.0.0"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
+        //classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
+        classpath "com.github.bertramdev.asset-pipeline:asset-pipeline-gradle:$assetPluginVersion"
         classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
             exclude group: 'org.spockframework', module: 'spock-core'
         }
@@ -191,12 +193,15 @@ dependencies {
 
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
-    api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
-    runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    api ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
+    //api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
+    //runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+    api "com.github.bertramdev.asset-pipeline:asset-pipeline-grails:$assetPluginVersion"
+    //api ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
+    api ("com.github.bertramdev.asset-pipeline:less-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
-    api ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
+    //api ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
+    api ("com.github.bertramdev.asset-pipeline:sass-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
     testImplementation "org.grails:grails-gorm-testing-support"
