@@ -105,6 +105,7 @@
 <div class="content">
 <div id="layoutBody">
 <div class="container-fluid">
+<span class="badge-page-title"><i class="fas fa-cog"></i> Edit Configuration</span>
   <div class="row">
       <div class="col-sm-12">
           <g:render template="/common/messages"/>

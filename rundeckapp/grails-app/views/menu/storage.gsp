@@ -28,6 +28,9 @@ implied. - See the License for the specific language governing permissions and -
       <body>
       <div class="content">
       <div id="layoutBody">
+      <g:if test="${params.project}">
+      <span class="badge-page-title"><i class="fas fa-key"></i> ${message(code: 'gui.menu.KeyStorage')}</span>
+      </g:if>
         <div id="page_storage" class="container-fluid">
           <div class="row">
             <div class="col-sm-12">

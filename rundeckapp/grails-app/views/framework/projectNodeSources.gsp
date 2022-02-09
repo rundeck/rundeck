@@ -59,6 +59,7 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+<span class="badge-page-title"><i class="fas fa-sitemap"></i> ${message(code: 'edit.nodes.title')}</span>
   <div class="container-fluid">
     <div class="row">
       <div class="col-xs-12">

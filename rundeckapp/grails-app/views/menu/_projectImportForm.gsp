@@ -18,6 +18,7 @@
 
 <div class="row">
 <div class="col-xs-12">
+<span class="badge-page-title"><i class="fas fa-upload"></i> ${message(code: 'import.archive')}</span>
   <g:form controller="project" action="importArchive" params="[project: params.project ?: request.project]" useToken="true" enctype="multipart/form-data" class="form">
     <div class="card" id="importform">
       <div class="card-content">

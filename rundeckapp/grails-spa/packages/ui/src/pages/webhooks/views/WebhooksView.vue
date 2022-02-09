@@ -1,11 +1,11 @@
 <template>
-<div id="wh-view" style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
+<div id="wh-view" style="display: flex;flex-direction: column; height: 90%; overflow: hidden;">
   <div id="wh-title" class="screen-title" style="display: flex;">
 
     <span class="text-h3">{{ $t('message.webhookPageTitle') }}</span>
     <div style="margin-left: auto;">
       <a class="btn btn-primary"
-        :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
+        :class="{'btn-primary': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
         style="font-weight: 800"
         @click="handleAddNew"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
     </div>

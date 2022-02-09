@@ -118,6 +118,7 @@ search
 
 <div class="content">
 <div id="layoutBody">
+<span class="badge-page-title"><i class="fas fa-terminal"></i> ${message(code: 'gui.menu.Adhoc')}</span>
 <div>
     <div>
       <div class="row">

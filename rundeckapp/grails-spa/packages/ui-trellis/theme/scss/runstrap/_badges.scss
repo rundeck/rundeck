@@ -84,6 +84,21 @@
   }
 }
 
+.badge-page-title {
+  display: inline-block;
+  min-width: 10px;
+  padding: 7px;
+  font-size: $font-size-small;
+  font-weight: $badge-font-weight;
+  line-height: $badge-line-height;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  background-color: var(--badge-background-color);
+  color: var(--badge-font-color);
+  margin-bottom: 20px;
+}
+
 // Hover state, but only for links
 a.badge {
   &:hover,

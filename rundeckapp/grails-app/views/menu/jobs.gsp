@@ -416,6 +416,7 @@ search
 
 <div class="content">
 <div id="layoutBody">
+<span class="badge-page-title"><i class="fas fa-tasks"></i> ${message(code: 'gui.menu.Workflows')}</span>
 <div style="margin-bottom: 20px;">
         <div class="subtitle-head-item flex-container flex-align-items-baseline">
             <div class="flex-item-auto text-h3">

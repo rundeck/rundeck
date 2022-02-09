@@ -49,6 +49,7 @@
     });
 </script>
 <div>
+<span class="badge-page-title"><i class="fas fa-download"></i> ${message(code: 'export.archive')}</span>
   <g:form style="display: inline;" controller="project" action="exportPrepare" class="form-horizontal" params="[project: (params.project ?: request.project)]" useToken="true">
     <div class="card" id="exportform">
       <div class="card-content">
