@@ -5,7 +5,7 @@
 version: 2.1
 orbs:
   docker-publish: circleci/docker-publish@0.1.6
-  node: circleci/node@1.1.6
+  node: circleci/node@5.0.0
   trigger: rundeck/trigger-pipeline@0.0.5
 
 defaults: &defaults
@@ -104,6 +104,22 @@ commands:
           command: |
             source .circleci/circle-shim.sh
             fetch_common_resources
+  install-node:
+    description: Install Node via NVM
+    parameters:
+      version:
+        type: string
+        default: 'v16.13.0'
+    steps:
+      - run:
+          name: Install Node
+          command: |
+            test -f ~/.circlerc && source ~/.circlerc || true
+            export NODE_VERSION=<< parameters.version >>
+            export BASH_ENV=$HOME/.bash_profile
+            nvm install $NODE_VERSION
+            nvm alias default $NODE_VERSION
+            echo 'nvm use default &>/dev/null' >> "$BASH_ENV"
 
 jobs:
   build:
@@ -117,8 +133,7 @@ jobs:
 
     steps:
       - checkout
-      # - node/install-node:
-      #     version: '8.13.0'
+      - install-node
       - restore-gradle-cache
       - run:
           name: Build
@@ -178,8 +193,7 @@ jobs:
     machine: true
     steps:
       - checkout
-      - node/install-node:
-          version: '12.16.3'
+      - install-node
       - restore-gradle-cache
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
@@ -236,8 +250,8 @@ jobs:
     machine: true
     steps:
       - checkout
-      - node/install-node:
-          version: '12.16.3'
+      - install-node:
+          version: v12.16.3
       - run:
           name: Fetch Artifacts
           command: |
