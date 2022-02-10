@@ -46,6 +46,11 @@
     <div class="row">
       <div class="col-xs-12">
         <div class="card card-default">
+          <div class="card-header">
+            <h3 class="card-title">
+              <g:message code="gui.menu.Scm" default="Setup SCM"/>
+            </h3>
+          </div>
           <div class="card-content">
             <p class="text-info">
               <g:message code="scmController.page.index.description" default="Enable or configure SCM integration."/>
