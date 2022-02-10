@@ -110,7 +110,6 @@
 <div class="content">
 <div id="layoutBody">
 <div class="container-fluid">
-<span class="badge-page-title"><i class="fas fa-unlock-alt"></i> ${message(code: 'gui.menu.AccessControl')}</span>
   <div class="row">
     <div class="col-sm-12">
       <g:render template="/common/messages"/>

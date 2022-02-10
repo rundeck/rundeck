@@ -44,7 +44,6 @@
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
 <div class="content">
 <div id="layoutBody">
-<span class="badge-page-title"><i class="fas fa-sitemap"></i> ${message(code: 'gui.menu.Nodes')}</span>
 <div class="row" style="margin-bottom: 20px;">
     <div class="col-xs-12 subtitle-head">
         <div class="subtitle-head-item input-group multiple-control-input-group" style="margin-bottom:0;">

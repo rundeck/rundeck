@@ -16,7 +16,6 @@
 
 <div class="row">
   <div class="col-xs-12">
-  <span class="badge-page-title"><i class="fas fa-trash"></i> ${message(code: 'delete.project')}</span>
     <div class="card">
       <div class="card-header">
         <h3 class="card-title"><g:message code="delete.project" /></h3>

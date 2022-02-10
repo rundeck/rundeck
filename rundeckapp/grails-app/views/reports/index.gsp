@@ -103,7 +103,6 @@ search
 <body>
 <div class="content">
 <div id="layoutBody">
-    <span class="badge-page-title"><i class="fas fa-history"></i> ${message(code: 'gui.menu.Events')}</span>
     <div class="pageBody container-fluid">
         <g:render template="/common/messages"/>
 

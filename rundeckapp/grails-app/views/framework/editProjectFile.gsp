@@ -49,12 +49,6 @@
 <body>
 <div class="content">
 <div id="layoutBody">
-<g:if test="${filename.equals('readme.md')}">
-<span class="badge-page-title"><i class="fas fa-file-alt"></i> ${message(code: 'edit.readme')}</span>
-</g:if>
-<g:if test="${filename.equals('motd.md')}">
-<span class="badge-page-title"><i class="fas fa-comment-alt"></i> Edit Message of the Day</span>
-</g:if>
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">

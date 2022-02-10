@@ -37,7 +37,6 @@
 <body>
 <div class="content">
 <div id="layoutBody">
-<span class="badge-page-title"><i class="fas fa-exchange-alt"></i> ${message(code: 'gui.menu.Scm')}</span>
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">

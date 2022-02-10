@@ -242,7 +242,6 @@
         </g:ifPageProperty>
         <g:ifPageProperty name="page.subtitlesection">
             <nav id="subtitlebar" class="has-content ${pageProperty(name: 'page.subtitlecss')}">
-            <span class="badge-page-title"><i class="fas fa-clipboard-list"></i> ${message(code: 'gui.menu.Dashboard')}</span>
 
                 <g:pageProperty name="page.subtitlesection"/>
 

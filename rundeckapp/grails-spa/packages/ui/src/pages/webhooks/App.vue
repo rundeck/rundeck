@@ -1,6 +1,5 @@
 <template>
   <div id="webhooks-app" style="height: 100%">
-    <span class="badge-page-title"><i class="fas fa-plug"></i> Webhooks</span>
     <webhooks-view />
   </div>
 </template>
