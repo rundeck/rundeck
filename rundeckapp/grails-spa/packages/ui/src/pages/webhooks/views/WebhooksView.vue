@@ -1,5 +1,5 @@
 <template>
-<div id="wh-view" style="display: flex;flex-direction: column; height: 90%; overflow: hidden;">
+<div id="wh-view" style="display: flex;flex-direction: column; height: calc(100vh - 69px); overflow: hidden; margin: -2rem">
   <div id="wh-title" class="screen-title" style="display: flex;">
 
     <span class="text-h3">{{ $t('message.webhookPageTitle') }}</span>
