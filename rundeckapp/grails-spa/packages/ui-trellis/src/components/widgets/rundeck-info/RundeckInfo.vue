@@ -3,7 +3,8 @@
         <div class="rundeck-info-widget__group">
             <div class="rundeck-info-widget__more-link">
                 <a :href="welcomeUrl()">
-                    <RundeckLogo/>
+                    <PagerdutyLogo v-if="version.edition === 'Enterprise'"/>
+                    <RundeckLogo v-else/>
                 </a>
             </div>
             <div class="rundeck-info-widget__header">
@@ -45,6 +46,7 @@ import { Release } from '../../../stores/Releases'
 import {url} from '../../../rundeckService'
 
 import RundeckLogo from '../../svg/RundeckLogo.vue'
+import PagerdutyLogo from '../../svg/PagerdutyLogo.vue'
 
 import Copyright from '../../version/Copyright.vue'
 import RundeckVersion from '../../version/RundeckVersionDisplay.vue'
@@ -57,6 +59,7 @@ import ServerDisplay from '../../version/ServerDisplay.vue'
     VersionDisplay,
     RundeckVersion,
     RundeckLogo,
+    PagerdutyLogo,
     Copyright
 }})
 export default class RundeckInfoWidget extends Vue {
