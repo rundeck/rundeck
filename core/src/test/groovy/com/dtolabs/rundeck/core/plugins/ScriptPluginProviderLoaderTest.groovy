@@ -233,7 +233,7 @@ providers:
         true        |VALID| [name:"Test script",rundeckPluginVersion: "1.2", version:"1.0", pluginDefs: []] | []
         false       |INVALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", pluginDefs: []] | ["No targetHostCompatibility property specified in metadata","rundeckCompatibilityVersion cannot be null in metadata"]
         false       |INVALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", pluginDefs: []] | ["rundeckCompatibilityVersion cannot be null in metadata"]
-        false       |INCOMPATIBLE| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"4.0", pluginDefs: []] | ["Plugin is not compatible with this version of Rundeck"]
+        false       |INCOMPATIBLE| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"4.0", pluginDefs: []] | ["Plugin is not compatible with this version of Rundeck. Compatibility: 4.0"]
         true        |VALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"3.x", pluginDefs: []] | []
         true        |VALID| [name:"test-script",display:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"3.x", pluginDefs: []] | []
 

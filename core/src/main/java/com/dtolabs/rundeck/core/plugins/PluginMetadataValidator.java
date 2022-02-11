@@ -23,7 +23,7 @@ import java.util.List;
 public class PluginMetadataValidator {
 
     private static List<String> HOST_TYPES = Arrays.asList("all","unix","windows");
-    private static String INCOMPATIBLE_PLUGIN_VER_MSG = "Plugin is not compatible with this version of Rundeck";
+    private static final String INCOMPATIBLE_PLUGIN_VER_MSG = "Plugin is not compatible with this version of Rundeck. Compatibility: %s";
     public final static String OS_TYPE = System.getProperty("os.name").toLowerCase();
 
     public static PluginValidation.State validateTargetHostCompatibility(
@@ -69,19 +69,19 @@ public class PluginMetadataValidator {
         VersionCompare compatVer = VersionCompare.forString(rundeckCompatibilityVersion);
         String majString = compatVer.majString+"+";
         if (!checkVer(rundeckVer.maj, majString)) {
-            errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
+            errors.add(String.format(INCOMPATIBLE_PLUGIN_VER_MSG, rundeckCompatibilityVersion));
             return PluginValidation.State.INCOMPATIBLE;
         }
         if(compatVer.minString.equals("x")) return PluginValidation.State.VALID;
         Integer cmin = new Integer(compatVer.minString.replaceAll("\\+",""));
         if(rundeckVer.min > cmin) return PluginValidation.State.VALID;
         if(!checkVer(rundeckVer.min,compatVer.minString)) {
-            errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
+            errors.add(String.format(INCOMPATIBLE_PLUGIN_VER_MSG, rundeckCompatibilityVersion));
             return PluginValidation.State.INCOMPATIBLE;
         }
         if(compatVer.patchString == null) return PluginValidation.State.VALID;
         if(!checkVer(rundeckVer.patch,compatVer.patchString)) {
-            errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
+            errors.add(String.format(INCOMPATIBLE_PLUGIN_VER_MSG, rundeckCompatibilityVersion));
             return PluginValidation.State.INCOMPATIBLE;
         }
         return PluginValidation.State.VALID;
