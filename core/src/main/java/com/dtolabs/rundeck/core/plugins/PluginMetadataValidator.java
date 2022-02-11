@@ -53,13 +53,22 @@ public class PluginMetadataValidator {
             final List<String> errors,
             final String rundeckCompatibilityVersion
     ) {
+        return validateRundeckCompatibility(errors, VersionConstants.VERSION, rundeckCompatibilityVersion);
+    }
+
+    public static PluginValidation.State validateRundeckCompatibility(
+            final List<String> errors,
+            final String rundeckVersion,
+            final String rundeckCompatibilityVersion
+    ) {
         if(rundeckCompatibilityVersion == null) {
             errors.add("rundeckCompatibilityVersion cannot be null in metadata");
             return PluginValidation.State.INVALID;
         }
-        VersionCompare rundeckVer = VersionCompare.forString(VersionConstants.VERSION);
+        VersionCompare rundeckVer = VersionCompare.forString(rundeckVersion);
         VersionCompare compatVer = VersionCompare.forString(rundeckCompatibilityVersion);
-        if(!compatVer.majString.equals(rundeckVer.majString)) {
+        String majString = compatVer.majString+"+";
+        if (!checkVer(rundeckVer.maj, majString)) {
             errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
             return PluginValidation.State.INCOMPATIBLE;
         }
