@@ -158,11 +158,11 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     implementation "com.fasterxml.jackson.core:jackson-core"
     implementation "com.fasterxml.jackson.core:jackson-annotations"
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.5"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDatabindVersion}"
     implementation "org.eclipse.jetty:jetty-jaas"
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"
-    implementation ('org.grails.plugins:spring-security-core:4.0.2'){
+    implementation ('org.grails.plugins:spring-security-core:5.0.0-RC1'){
         exclude(group:'net.sf.ehcache',module:'ehcache')
     }
     implementation 'org.kohsuke:libpam4j:1.11'

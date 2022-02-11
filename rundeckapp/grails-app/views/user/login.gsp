@@ -134,7 +134,7 @@
                       </div>
                     </g:if>
                     <!--SSO Login Feature-->
-                    <g:set var="loginButtonEnabled" value="${cfg.getString(config: "sso.loginButton.image.enabled") in [true,'true']}"/>
+                    <g:set var="loginButtonEnabled" value="${cfg.getString(config: "sso.loginButton.enabled") in [true,'true']}"/>
                     <g:if test="${request.getAttribute("showSSOButton") && loginButtonEnabled}">
                           <div class="sso-login">
                               <div class='form-group'>
