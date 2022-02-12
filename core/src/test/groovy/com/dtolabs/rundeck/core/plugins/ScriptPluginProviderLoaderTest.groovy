@@ -242,7 +242,16 @@ providers:
     def "ValidatePluginMeta version 4"() {
         setup:
         File fakeFile = new File("/tmp/fake-plugin.yaml")
-        String rundeckVersion="4.0.0-SNAPSHOT"
+
+        def pluginMeta = [
+            name: "Test script",
+            rundeckPluginVersion: "2.0",
+            version: "1.0",
+            targetHostCompatibility: "all",
+            pluginDefs: [],
+            rundeckCompatibilityVersion: compat
+        ]
+
         when:
 
         def validation = ScriptPluginProviderLoader.validatePluginMeta(new PluginMeta(pluginMeta),fakeFile,rundeckVersion)
@@ -253,8 +262,8 @@ providers:
         validation.state == state
 
         where:
-        expectation |state                                                                             | pluginMeta | logResult
-        false       |VALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"3.0.14+", pluginDefs: []] | []
+        expectation | state | rundeckVersion   | compat    | logResult
+        true        | VALID | "4.0.0-SNAPSHOT" | "3.0.14+" | []
 
     }
 
