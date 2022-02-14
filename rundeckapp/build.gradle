@@ -117,12 +117,8 @@ dependencies {
     implementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
     implementation('org.ehcache:ehcache:3.8.1')
 
-    implementation ('org.hibernate:hibernate-validator:6.0.19.Final'){
-        because 'https://snyk.io/vuln/SNYK-JAVA-ORGHIBERNATE-568162'
-    }
-    implementation ('org.hibernate.validator:hibernate-validator:6.0.19.Final'){
-        because 'https://snyk.io/vuln/SNYK-JAVA-ORGHIBERNATE-568162'
-    }
+    implementation ('org.hibernate:hibernate-validator:6.2.0.Final')
+    implementation ('org.hibernate.validator:hibernate-validator:6.2.0.Final')
 
     implementation "org.springframework.boot:spring-boot-starter-log4j2"
     implementation "org.springframework.boot:spring-boot-autoconfigure"
@@ -158,11 +154,11 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     implementation "com.fasterxml.jackson.core:jackson-core"
     implementation "com.fasterxml.jackson.core:jackson-annotations"
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.5"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonDatabindVersion}"
     implementation "org.eclipse.jetty:jetty-jaas"
     implementation "org.eclipse.jetty:jetty-util"
     implementation "org.eclipse.jetty:jetty-security"
-    implementation ('org.grails.plugins:spring-security-core:4.0.2'){
+    implementation ('org.grails.plugins:spring-security-core:5.0.0-RC1'){
         exclude(group:'net.sf.ehcache',module:'ehcache')
     }
     implementation 'org.kohsuke:libpam4j:1.11'
@@ -189,6 +185,7 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql:42.2.13'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
+    runtimeOnly "org.springframework:spring-jcl:${project.'spring-jcl'}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
@@ -229,7 +226,6 @@ dependencies {
         implementation ("org.yaml:snakeyaml:${snakeyamlVersion}") {
             because "required by rundeck:repository"
         }
-
     }
 
 

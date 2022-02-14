@@ -48,6 +48,7 @@ public class RundeckConfigBase {
     RundeckLogConfig log;
     RundeckGuiConfig gui;
     RundeckLoginConfig login;
+    RundeckSsoConfig sso;
     RundeckFeatureConfig feature;
     RundeckWebConfig web;
     RundeckAjaxConfig ajax;
@@ -480,6 +481,24 @@ public class RundeckConfigBase {
     public static class RundeckLoginConfig {
         LocalLogin localLogin;
         String redirectUri;
+    }
+
+    @Data
+    public static class RundeckSsoConfig {
+        LoginButton loginButton;
+    }
+
+    @Data
+    public static class LoginButton {
+        LoginButtonImage image;
+        Boolean enabled;
+        String title;
+        String url;
+    }
+
+    @Data
+    public static class LoginButtonImage {
+        Boolean enabled;
     }
 
     @Data
