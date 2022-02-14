@@ -201,14 +201,15 @@ tasks.register('runNpmPublish', NpmTask) {t ->
 
     def dryRun = (findProperty('dryRun') as String ?: 'true').toBoolean()
 
-    args = ['publish', '--dry-run']
+    def myargs = ['publish', '--dry-run']
 
     if (!dryRun)
-        args = args - '--dry-run'
+        myargs = myargs - '--dry-run'
 
-    if (project.environment != 'release') {
-        args += ['--tag', 'snapshot']
+    if (project.findProperty('environment') != 'release') {
+        myargs += ['--tag', 'snapshot']
     }
+    args=myargs
 
     t.execOverrides {
         it.workingDir = 'build/pack'
