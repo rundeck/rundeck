@@ -22,12 +22,13 @@
   --}%
 
     <g:appTitle/> - Logged Out</title>
+    <g:set var="enterprise" value="${grailsApplication.metadata['rundeckpro.edition']}"/>
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
+    <link rel="shortcut icon" href="${enterprise? g.resource(dir: 'images', file: 'pdfavicon.ico') : g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
@@ -61,7 +62,7 @@
                 <div class="card-header">
                   <h4 class="card-title">
                     <div class="logo">
-                        <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'logos/rundeck-logo-black.png'}"/>
+                        <g:set var="logoImage" value="${enterprise? 'static/img/pagerduty-full-logo.svg' : g.message(code: 'app.login.logo', default: '')?:'static/img/rundeck-combination.svg'}"/>
                         <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
                         <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}" title="Home">
                             <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;" onload="SVGInject(this)"/>
