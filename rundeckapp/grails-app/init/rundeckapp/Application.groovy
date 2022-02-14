@@ -26,9 +26,9 @@ import java.nio.file.Paths
 @OpenAPIDefinition(
         info = @Info(
                 title = "Rundeck",
-                version = "39",
+                version = "40",
                 description = "Rundeck provides a Web API for use with your applications.",
-                license = @License(name = "MIT", url = "")
+                license = @License(name = "Apache 2.0", url = "")
         )
 )
 
