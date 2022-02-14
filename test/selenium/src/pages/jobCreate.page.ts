@@ -109,10 +109,12 @@ export const Elems = {
     crontabTab: By.css('a[href="#cronstrtab"]'),
     scheduleHourDropdown: By.css('select#hour'),
     scheduleMinuteDropdown: By.css('select#minute'),
-    scheduleEveryDayCheckbox: By.css('input#everyDayOfWeek'),
+    scheduleEveryDayCheckbox: By.css('input#everyDay'),
     scheduleEveryMonthCheckbox: By.css('input#everyMonth'),
     scheduleDaysCheckboxDiv: By.css('div#DayOfWeekDialog'),
     scheduleMonthCheckboxDiv: By.css('div#MonthDialog'),
+    scheduleDayCheckboxes: By.css('input[class="crontab.dayOfWeek"]'),
+    scheduleMonthCheckboxes: By.css('input[class="crontab.month"]'),
     crontabString: By.css('input#crontabString'),
     timeZoneInput: By.css('input#timeZone'),
     enableSchedulingYes: By.css('input#scheduleEnabledTrue'),
@@ -570,6 +572,14 @@ export class JobCreatePage extends Page {
     }
     async scheduleMonthCheckboxDiv() {
         return this.ctx.driver.findElement(Elems.scheduleMonthCheckboxDiv)
+    }
+    async scheduleDayCheckboxes() {
+        const parentDiv = await this.scheduleDaysCheckboxDiv();
+        return parentDiv.findElements(Elems.scheduleDayCheckboxes);
+    }
+    async scheduleMonthCheckboxes() {
+        const parentDiv = await this.scheduleMonthCheckboxDiv();
+        return parentDiv.findElements(Elems.scheduleMonthCheckboxes);
     }
     async crontabString() {
         return this.ctx.driver.findElement(Elems.crontabString)

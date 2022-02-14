@@ -10,8 +10,11 @@ export const Elems = {
   jobUuidText: By.css('#subtitlebar.job-page > div > div > section > small.uuid'),
   jobDescription: By.css('#subtitlebar.job-page > div > div > div.jobInfoSection > section > span.h5'),
   optionInput: By.css('#8f95c8d5_seleniumOption1'),
-  jobDefinition  : By.css('a[href=\'#job-definition-modal\']'),
-  jobDefinitionModal  : By.css('#job-definition-modal'),
+  jobDefinition  : By.css('a[href="#job-definition-modal"]'),
+  jobDefinitionModal  : By.css('div#job-definition-modal div.modal-content'),
+  jobDefModalScheduledDaysDiv: By.css('div#DayOfWeekDialog'),
+  jobDefModalScheduledMonthsDiv: By.css('div#MonthDialog'),
+  jobDefModalScheduleEveryDaySelected: By.xpath('//div[contains(@class, \'cronselected\') and text() = \'every day\']'),
   jobDefinitionModalCloseBtn  : By.css('#job-definition-modal .modal-footer button[data-dismiss="modal"]'),
   notificationDefinition: By.css('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx'),
   nodeFilterSection: By.css('#detailtable.tab-pane  tr#exec_detail_nodes '),
@@ -72,10 +75,21 @@ export class JobShowPage extends Page {
   async jobDefinition(){
     return await this.ctx.driver.findElement(Elems.jobDefinition)
   }
+  async jobDefinitionModal() {
+    return await this.ctx.driver.findElement(Elems.jobDefinitionModal);
+  }
   async waitJobDefinition(){
     await this.ctx.driver.wait(until.elementLocated(Elems.jobDefinition), 25000)
   }
-
+  async jobDefModalScheduledDaysDiv() {
+    return await this.ctx.driver.findElement(Elems.jobDefModalScheduledDaysDiv)
+  }
+  async jobDefModalScheduledMonthsDiv() {
+    return await this.ctx.driver.findElement(Elems.jobDefModalScheduledMonthsDiv)
+  }
+  async jobDefModalScheduleEveryDaySelected() {
+    return await this.ctx.driver.findElement(Elems.jobDefModalScheduleEveryDaySelected);
+  }
   async waitDefinitionNotificationText(){
     await this.ctx.driver.wait(until.elementLocated(Elems.notificationDefinition), 25000)
   }

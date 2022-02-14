@@ -25,6 +25,7 @@ const testVars = {
     optionInputText: ['seleniumOption1', 'xyz'],
     tags: 'test1,test2,test3,',
     tagsCount: 3,
+    scheduledDay: {name: 'every day', index: 0},
 }
 
 beforeAll(async () => {
@@ -68,19 +69,10 @@ describe('editing a job', () => {
             await ctx.driver.wait(until.urlContains('#schedule'), 15000)
             await scheduleRunYes.click()
         })
-        it('shows month checkboxes when "Every Month" is unchecked', async () => {
-            const everyMonthCheckbox = await jobCreatePage.scheduleEveryMonthCheckbox()
-            const scheduleMonthCheckboxDiv = await jobCreatePage.scheduleMonthCheckboxDiv()
-            if (await everyMonthCheckbox.isSelected()) {
-                await everyMonthCheckbox.click()
-            }
-
-            expect(await scheduleMonthCheckboxDiv.isDisplayed()).toEqual(true)
-        })
-        it('shows day checkboxes when "Every Day" is unchecked', async () => {
-            const everyDayOfWeekCheckbox = await jobCreatePage.scheduleEveryDayCheckbox()
-            const scheduleDaysCheckboxDiv = await jobCreatePage.scheduleDaysCheckboxDiv()
-            if (await everyDayOfWeekCheckbox.isSelected()) {
+        it(`sets the job to run on ${testVars.scheduledDay.name}`, async () => {
+            const everyDayOfWeekCheckbox = await jobCreatePage.scheduleEveryDayCheckbox();
+            const scheduleDaysCheckboxDiv = await jobCreatePage.scheduleDaysCheckboxDiv();
+            if (!await everyDayOfWeekCheckbox.isSelected()) {
                 await everyDayOfWeekCheckbox.click()
             }
 
@@ -109,5 +101,15 @@ describe('showing the edited job', () => {
 
         const optionRunInput2 = await jobShowPage.optionInputText(testVars.optionInputText[1])
         expect(optionRunInput2).toBeDefined()
+    })
+    it(`verifies scheduled day (${testVars.scheduledDay.name})`, async () => {
+        const jobDefButton = await jobShowPage.jobDefinition();
+        const jobDefModal = await jobShowPage.jobDefinitionModal();
+        const everyDaySelected = await jobShowPage.jobDefModalScheduleEveryDaySelected();
+
+        await jobDefButton.click();
+        await ctx.driver.wait(until.elementIsVisible(jobDefModal));
+
+        expect(await everyDaySelected.getText()).toEqual(testVars.scheduledDay.name);
     })
 })
