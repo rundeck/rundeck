@@ -123,6 +123,10 @@ export const Elems = {
     enableExecutionNo: By.css('input#executionEnabledFalse'),
     // Execution Plugins tab
     // Other tab
+    otherTab  : By.css('#job_edit_tabs > li > a[href=\'#tab_other\']'),
+    multiExecFalse: By.css('input#multipleFalse'),
+    multiExecTrue: By.css('input#multipleTrue'),
+    retryInput: By.css('input#schedJobRetry')
     // Job Queue tab
 }
 
@@ -599,5 +603,17 @@ export class JobCreatePage extends Page {
     async enableExecutionNo() {
         return this.ctx.driver.findElement(Elems.enableExecutionNo)
     }
-
+    // Other tab elements
+    async otherTab() {
+        return this.ctx.driver.findElement(Elems.otherTab)
+    }
+    async multiExecFalse() {
+        return this.ctx.driver.findElement(Elems.multiExecFalse)
+    }
+    async multiExecTrue() {
+        return this.ctx.driver.findElement(Elems.multiExecTrue)
+    }
+    async retryInput() {
+        return this.ctx.driver.findElement(Elems.retryInput)
+    }
 }
