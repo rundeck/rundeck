@@ -17,6 +17,7 @@ package com.dtolabs.rundeck.core.plugins
 
 import com.dtolabs.rundeck.core.VersionConstants
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
@@ -54,17 +55,11 @@ class PluginMetadataValidatorTest extends Specification {
 
     }
 
+    @Unroll
     def "ValidateRundeckCompatibility"() {
         when:
         def errors = []
-        Field field = VersionConstants.getDeclaredField("VERSION")
-        field.setAccessible(true);
-
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.set(null,rundeckVersion)
-        PluginMetadataValidator.validateRundeckCompatibility(errors, compatVersion)
+        PluginMetadataValidator.validateRundeckCompatibility(errors, rundeckVersion, compatVersion)
         String validation = errors.isEmpty() ? "compatible" : "incompatible"
 
         then:
@@ -72,14 +67,22 @@ class PluginMetadataValidatorTest extends Specification {
 
         where:
         rundeckVersion  |   compatVersion   | expected
-        "3.0.0"         |    null          | "incompatible"
-        "3.0.0"         |    "2.0"          | "incompatible"
-        "3.0.0"         |    "2.11.x"       | "incompatible"
+        "3.0.0"         |    null           | "incompatible"
+        "3.0.0"         |    "2.0"          | "compatible"
+        "3.0.0"         |    "2.11.x"       | "compatible"
         "2.11.0"        |    "3.0.x"        | "incompatible"
         "3.1.0"         |    "3.0.0+"       | "compatible"
         "3.0.5"         |    "3.1.0+"       | "incompatible"
         "3.0.0"         |    "3.0.5+"       | "incompatible"
-        "4.0.0"         |    "3.0+"         | "incompatible"
+        "4.0.0"         |    "3.0+"         | "compatible"
+        "4.0.0"         |    "3.0"          | "compatible"
+        "4.0.0"         |    "3.4.12+"      | "compatible"
+        "5.0.0"         |    "3.0+"         | "compatible"
+        "5.0.0"         |    "3.2+"         | "compatible"
+        "5.0.0"         |    "4.0+"         | "compatible"
+        "5.0.0"         |    "4.1+"         | "compatible"
+        "5.0.0"         |    "4.0"          | "compatible"
+        "5.0.0"         |    "4.4"          | "compatible"
         "3.0.0"         |    "3.0.0"        | "compatible"
         "3.0.0"         |    "3.0.x"        | "compatible"
         "3.0.5"         |    "3.0.x"        | "compatible"
