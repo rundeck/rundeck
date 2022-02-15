@@ -55,7 +55,7 @@ import java.lang.annotation.Annotation
 /**
  * Created by greg on 7/14/15.
  */
-class ScheduledExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+class ScheduledExecuadmitionControllerSpec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
     List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
 
@@ -108,6 +108,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         controller.frameworkService = Mock(FrameworkService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.response.format = "json"
 
         when:
         request.api_version = 34
@@ -3559,6 +3560,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
             request.method = 'POST'
             request.contentType = type
+            request.format = format
             params.project = 'aproj'
             def job = new ScheduledExecution()
             def jobset = [
@@ -3658,6 +3660,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
             params.validateJobref = validateJobref
             params.format = format
             params.fileformat = fformat
+            request.format = 'multipartForm'
             request.addFile('xmlBatch','datacontent'.bytes)
         when:
             controller.apiJobsImportv14()

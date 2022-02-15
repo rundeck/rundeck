@@ -295,6 +295,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         when:
         params.path=''
         params.project="test"
+        controller.response.format = "json"
+
         def result=controller.apiSystemAcls()
 
         then:
@@ -363,6 +365,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.path='test.aclpolicy'
         params.project="test"
         response.format='json'
+        request.format='yaml'
         request.method='POST'
         request.contentType='application/yaml'
         request.content=('{ description: \'\', \n' +
@@ -477,12 +480,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.path='test.aclpolicy'
         params.project="test"
         response.format='json'
+        request.format='yaml'
         request.method='PUT'
         request.contentType='application/yaml'
         request.content=('{ description: \'\', \n' +
                 'context: { project: \'test\' }, \n' +
                 'by: { username: \'test\' }, \n' +
                 'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        controller.response.format = "json"
         def result=controller.apiSystemAcls()
 
         then:
@@ -575,12 +580,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.path='test.aclpolicy'
         params.project="test"
         response.format='json'
+        request.format='yaml'
         request.method='POST'
         request.contentType='application/yaml'
         request.content=('{ description: \'\', \n' +
                 'context: { project: \'test\' }, \n' +
                 'by: { username: \'test\' }, \n' +
                 'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        controller.response.format = "json"
         def result=controller.apiSystemAcls()
 
         then:
@@ -620,12 +627,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.path='test.aclpolicy'
         params.project="test"
         response.format='xml'
+        request.format='yaml'
         request.method='POST'
         request.contentType='application/yaml'
         request.content=('{ description: \'\', \n' +
                 'context: { project: \'test\' }, \n' +
                 'by: { username: \'test\' }, \n' +
                 'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        controller.response.format = "xml"
         def result=controller.apiSystemAcls()
 
         then:
