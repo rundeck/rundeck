@@ -30,14 +30,14 @@
     <title>
       <g:layoutTitle default="${g.appTitle()}"/>
     </title>
-    <g:set var="enterprise" value="${grailsApplication.metadata['rundeckpro.edition']}"/>
+    <g:set var="processAutomation" value="${grailsApplication.metadata['rundeckpro.edition']}"/>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="locale" content="${response.locale.toString()}"/>
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <link rel="shortcut icon" href="${enterprise? g.resource(dir: 'images', file: 'pdfavicon.ico') : g.resource(dir: 'images', file: 'favicon.ico')}"/>
+    <link rel="shortcut icon" href="${processAutomation? g.resource(dir: 'images', file: 'pdfavicon.ico') : g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
     <g:render template="/common/navData"/>

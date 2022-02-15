@@ -7,8 +7,8 @@
     <div id="nav-rd-home">
       <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
       <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}">
-        <g:set var="enterprise" value="${grailsApplication.metadata['rundeckpro.edition']}"/>
-        <i class="${enterprise? 'pdicon app-logo' : 'rdicon app-logo'}" style="display:block"></i>
+        <g:set var="processAutomation" value="${grailsApplication.metadata['rundeckpro.edition']}"/>
+        <i class="${processAutomation? 'pdicon app-logo' : 'rdicon app-logo'}" style="display:block"></i>
       </a>
     </div>
     <!-- <div class="navbar-minimize">

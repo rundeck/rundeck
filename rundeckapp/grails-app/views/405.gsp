@@ -22,11 +22,11 @@
     <g:appTitle /> -
     <g:message code="request.error.notallowed.title" />
   </title>
-  <g:set var="enterprise" value="${grailsApplication.metadata['rundeckpro.edition']}"/>
+  <g:set var="processAutomation" value="${grailsApplication.metadata['rundeckpro.edition']}"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
   <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
-  <link rel="shortcut icon" href="${enterprise? g.resource(dir: 'images', file: 'pdfavicon.ico') : g.resource(dir: 'images', file: 'favicon.ico')}"/>
+  <link rel="shortcut icon" href="${processAutomation? g.resource(dir: 'images', file: 'pdfavicon.ico') : g.resource(dir: 'images', file: 'favicon.ico')}"/>
   <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
   %{-- Core theme styles from ui-trellis --}%
   <asset:stylesheet href="static/css/components/theme.css"/>

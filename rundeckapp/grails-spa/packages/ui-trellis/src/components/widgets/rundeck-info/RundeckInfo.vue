@@ -3,7 +3,7 @@
         <div class="rundeck-info-widget__group">
             <div class="rundeck-info-widget__more-link">
                 <a :href="welcomeUrl()">
-                    <PagerdutyLogo v-if="version.edition === 'Enterprise'"/>
+                    <PagerdutyLogo v-if="version.edition === 'Process Automation'"/>
                     <RundeckLogo v-else/>
                 </a>
             </div>
