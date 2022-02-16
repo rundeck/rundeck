@@ -23,21 +23,29 @@
                 padding-left: var(--spacing-12);
             }
             .btn{
-                margin: 0 var(--spacing-2);
+                margin: var(--spacing-12);
             }
         }
         .layout-base--action.p-0{
             padding: 0;
         }
+        .layout-base--content{
+            @extend .rs-container;
+            padding: var(--spacing-12) 0 var(--spacing-12) 0;
+            .flex--grow{
+                padding: 0 0 var(--spacing-12) var(--spacing-12);
+            }
+        }
     }
     .layout-base--body{
         background-color: var(--background-color);
-    }
-    .layout-base--content{
-        @extend .rs-container;
-        padding: var(--spacing-12);
-        .card{
-            padding: var(--spacing-6);
+        .layout-base--content{
+            padding: var(--spacing-12) 0 0 0;
+            .card{
+                padding: var(--spacing-6);
+                display: grid;
+                overflow-x: scroll;
+            }
         }
     }
 }
