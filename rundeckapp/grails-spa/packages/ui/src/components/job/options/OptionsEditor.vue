@@ -76,8 +76,8 @@
         <label>Allowed Values</label>
         <label class="col-sm-2 control-label">Allowed Values</label>
         <div class="col-sm-10">
-          <div v-for="(type,n) in optionValuesPlugins" :key="type.name" class="radio">
-            <input type="radio" v-model="modelData.type" :value="type.name" :id="'ctype_'+n">
+          <div v-for="(type,n) in modelData.optionValuesPlugins" :key="type.name" class="radio">
+            <input type="radio" v-model="modelData.optionValuesPluginType" :value="type.name" :id="'ctype_'+n">
             <label class="radio-inline" :for="'ctype_'+n">
               {{type.description.title}}
             </label>
@@ -365,32 +365,42 @@ export default class OptionsEditor extends Vue {
 
 
   async mounted() {
-    this.loadOptionData(null, true)
+    this.initModelData()
+    this.loadOptionData(this.value.name)
     this.initModelData()
 
     this.eventBus.$on('job-options-edit',(name: any)=>{
       Vue.set(this.modelData, 'active', true)
       if(name != null && name != "")
-        this.loadOptionData(name, false)
+        this.loadOptionData(name)
     })
   }
 
 
-  async loadOptionData(name: any, newoption: boolean) {
-    let params = {}
-    if(newoption)
-      params = { newoption: newoption}
-    else
-      params = { name: name, newoption: newoption}
+  async loadOptionData(name: any) {
+    let params :any= { newoption: true}
+    if(name != null && name != "")
+      params = { name: name, newoption: false}
+
     let result = await axios.get(_genUrl(getAppLinks().editOptsEdit, params))
     if (result.status >= 200 && result.status < 300) {
-      this.modelData = Object.assign({}, result.data)
-      Vue.set(this.modelData, 'newoption', newoption)
+        if(!params.newoption && result.data.option)
+          this.modelData = Object.assign({}, result.data.option)
+        else{
+          Vue.set(this.modelData, 'optionValuesPlugins', result.data.optionValuesPlugins)
+        }
+
     }
     this.setActive()
   }
 
   async saveOption() {
+    let scheduledExecutionId = ""
+    if (w.getCurSEID()) {
+      scheduledExecutionId = w.getCurSEID();
+    }
+    Vue.set(this.modelData, 'scheduledExecutionId', scheduledExecutionId)
+
     let result = await client.sendRequest({
       method: 'POST',
       url: _genUrl(
@@ -406,7 +416,8 @@ export default class OptionsEditor extends Vue {
     }
   }
   initModelData(){
-    this.modelData={name: null, optionType:"", hidden: false, required: false, newoption: true, active: true}
+    this.modelData={name: null, optionType:"", hidden: false, required: false, newoption: true, scheduledExecutionId: "",
+      active: true}
   }
   setOptionType(type:string){
     Vue.set(this.modelData, 'optionType', type)
