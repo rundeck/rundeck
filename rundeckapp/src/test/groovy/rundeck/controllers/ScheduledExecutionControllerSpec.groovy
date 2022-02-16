@@ -55,7 +55,7 @@ import java.lang.annotation.Annotation
 /**
  * Created by greg on 7/14/15.
  */
-class ScheduledExecuadmitionControllerSpec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+class ScheduledExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
     List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
 
