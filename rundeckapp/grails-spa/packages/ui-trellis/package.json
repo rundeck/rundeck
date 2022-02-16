@@ -88,7 +88,10 @@
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
     "vue-property-decorator": "^9.1.2",
-    "vue-router": "^3.3.2"
+    "vue-router": "^3.3.2",
+    "@storybook/addon-backgrounds": "^6.2.9",
+    "@storybook/addon-docs": "^6.2.9",
+    "@storybook/addon-knobs": "^6.2.9"
   },
   "publishConfig": {
     "access": "public"
