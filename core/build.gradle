@@ -95,7 +95,7 @@ dependencies {
       exclude group:'org.apache.httpcomponents', module: 'httpcore'
     }
     
-    implementation ("org.apache.httpcomponents:httpcore:4.4.13")
+    implementation ("org.apache.httpcomponents:httpcore:4.4.14")
 
     compileOnly "org.projectlombok:lombok:1.18.20"
     annotationProcessor "org.projectlombok:lombok:1.18.20"
