@@ -1260,18 +1260,18 @@ function _optedit(name, elem) {
     params['scheduledExecutionId'] = getCurSEID();
   }
   params['jobWasScheduled'] = _isjobScheduled();
-  jQuery.ajax({
-    type: 'GET',
-    url: _genUrl(appLinks.editOptsEdit, params),
-    success: function (data, status, jqxhr) {
-      //jQuery(elem).html(data);
-      _hideOptControls();
-      _configureInputRestrictions(elem);
-    },
-    failure: function (data, status, jqxhr) {
-      alert("error: " + status);
-    }
-  });
+  // jQuery.ajax({
+  //   type: 'GET',
+  //   url: _genUrl(appLinks.editOptsEdit, params),
+  //   success: function (data, status, jqxhr) {
+  //     //jQuery(elem).html(data);
+  //     _hideOptControls();
+  //     _configureInputRestrictions(elem);
+  //   },
+  //   failure: function (data, status, jqxhr) {
+  //     alert("error: " + status);
+  //   }
+  // });
 }
 
 function _optcopy(name, tokendataid) {
