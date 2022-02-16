@@ -52,6 +52,7 @@
   "devDependencies": {
     "@babel/core": "^7.9.6",
     "@rundeck/ui-trellis": "file:../ui-trellis",
+    "@storybook/addon-knobs": "^6.2.9",
     "@types/jest": "^25.2.3",
     "@types/lodash": "^4.14.117",
     "@vue/cli-plugin-babel": "4.5.8",
