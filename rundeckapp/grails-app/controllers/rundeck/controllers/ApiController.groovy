@@ -526,6 +526,7 @@ class ApiController extends ControllerBase{
             extMeta[it.name] = it.infoMetadata
         }
         SystemInfoModel systemInfoModel = new SystemInfoModel(
+            system:[
                 timestamp: [ epoch:nowDate.getTime(), unit:'ms', datetime:g.w3cDateValue(date:nowDate)],
                 rundeck: [ version: appVersion,
                            build: grailsApplication.metadata['build.ident'],
@@ -550,11 +551,10 @@ class ApiController extends ControllerBase{
                 metrics: [href:metricsJsonUrl,contentType:'application/json'],
                 threadDump: [href:metricsThreadDumpUrl,contentType:'text/plain'],
                 healthcheck: [href:metricsHealthcheckUrl,contentType:'application/json'],
-                ping: [href:metricsPingUrl, contentType:'text/plain']
-
+                ping: [href:metricsPingUrl, contentType:'text/plain'],
+                extended:extMeta?:null
+            ]
         )
-        if (extMeta)
-            systemInfoModel.extended = extMeta
         withFormat{
             xml{
                 return apiService.renderSuccessXml(request,response){
