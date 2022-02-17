@@ -294,8 +294,12 @@ bootRun {
 }
 
 tasks.withType(GroovyCompile) {
+    def additionalSpecDir = new File(project.buildDir, 'openapi')
+    doFirst {
+        additionalSpecDir.mkdirs()
+    }
     configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m']
+        forkOptions.jvmArgs = ['-Xmx1024m',"-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()]
     }
 }
 
