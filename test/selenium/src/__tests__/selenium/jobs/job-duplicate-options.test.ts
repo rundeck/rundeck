@@ -59,7 +59,7 @@ describe('job', () => {
         await jobCreatePage.waitoption0EditForm()
 
         const optionName = 'test'
-        const optionNameInput = await jobCreatePage.optionNameInput('0')
+        const optionNameInput = await jobCreatePage.optionNameInput()
         await optionNameInput.sendKeys(optionName)
 
         const optionUsageSection = await jobCreatePage.option0UsageSession()

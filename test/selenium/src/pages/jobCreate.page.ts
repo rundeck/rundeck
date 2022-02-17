@@ -4,7 +4,7 @@ import {Page} from '@rundeck/testdeck/page'
 import {Context} from '@rundeck/testdeck/context'
 
 export const Elems= {
-    jobNameInput  : By.css('form input[name="jobName"]'),
+    jobNameInput  : By.css('div#schedJobNameLabel input[name="jobName"]'),
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
     saveButton  : By.css('#Create'),
@@ -17,15 +17,17 @@ export const Elems= {
 
     tabWorkflow  : By.css('#job_edit_tabs > li > a[href=\'#tab_workflow\']'),
     addNewWfStepButton: By.xpath('//*[@id="wfnewbutton"]/span'),
-    addNewWfStepCommand: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[data-node-step-type=command]'),
+    addNewWfStepCommand: By.css('div#wfnewtypes div#addnodestep a.add_node_step_type[data-node-step-type=command] span.text-strong'),
     wfStepCommandRemoteText: By.css('#adhocRemoteStringField'),
     wfStep0SaveButton: By.css('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm'),
     wfstep0vis: By.css('#wfivis_0'),
     optionNewButton: By.css('#optnewbutton > span'),
+    newOptionEditForm: By.css('div.optEditForm'),
     option0EditForm: By.css('#optvis_0 > div.optEditForm'),
+    newOptionNameInput: By.css('div.optEditForm input[type=text][name=name]'),
     option0NameInput: By.css('#optvis_0 > div.optEditForm input[type=text][name=name]'),
-    optionFormSaveButton: By.css('#optvis_0 > div.optEditForm  div.floatr > span.btn.btn-cta.btn-sm'),
-    option0UsageSession: By.css('#optvis_0 > div.optEditForm > div > section.section-separator-solo'),
+    optionFormSaveButton: By.css('div.optEditForm  div.floatr > span.btn.btn-sm'),
+    option0UsageSession: By.css('div.optEditForm > div > div.row'),
     option0Type: By.xpath('//*[starts-with(@id,"sectrue")]'),
     option0KeySelector: By.xpath('//*[starts-with(@id,"defaultStoragePath")]'),
     option0OpenKeyStorage: By.css('.btn.btn-default.obs-select-storage-path'),
@@ -153,11 +155,23 @@ export class JobCreatePage extends Page {
     async optionNewButton(){
         return await this.ctx.driver.findElement(Elems.optionNewButton)
     }
-    async waitoption0EditForm(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.option0EditForm),15000)
+    async waitoption0EditForm(optionName?: string){
+        let editFormLocator;
+        if (!optionName) {
+            editFormLocator = Elems.newOptionEditForm
+        } else {
+            editFormLocator = Elems.option0EditForm
+        }
+        return this.ctx.driver.wait(until.elementLocated(editFormLocator),15000)
     }
-    async option0NameInput(){
-        return await this.ctx.driver.findElement(Elems.option0NameInput)
+    async option0NameInput(optionName?: string){
+        let editFormLocator;
+        if (!optionName) {
+            editFormLocator = Elems.newOptionNameInput
+        } else {
+            editFormLocator = Elems.option0NameInput
+        }
+        return this.ctx.driver.findElement(editFormLocator)
     }
     async optionFormSaveButton(){
         return await this.ctx.driver.findElement(Elems.optionFormSaveButton)
@@ -348,19 +362,32 @@ export class JobCreatePage extends Page {
     async storagebrowseClose(){
         return this.ctx.driver.wait(until.elementLocated(Elems.storagebrowseClose),25000)
     }
-
-    async optionNameInput(position: string){
-        let  optionNameInput = By.css('#optvis_'+position+' > div.optEditForm input[type=text][name=name]')
+    async optionNameInput(optionName?: string){
+        let optionNameInput
+        if (optionName) {
+            optionNameInput = By.css('#optvis_' + optionName + ' > div.optEditForm input[type=text][name=name]')
+        } else {
+            optionNameInput = Elems.newOptionNameInput
+        }
         return await this.ctx.driver.findElement(optionNameInput)
     }
 
-    async optionFormSave(position: string){
-        let  optionEditForm = By.css('#optvis_'+position+' > div.optEditForm  div.floatr > span.btn.btn-cta.btn-sm')
-        return await this.ctx.driver.findElement(optionEditForm)
+    async optionFormSave(optionName?: string){
+        if (optionName) {
+            const optionEditForm = By.css('#optvis_' + optionName + ' > div.optEditForm  div.floatr > span.btn.btn-cta.btn-sm')
+            return this.ctx.driver.findElement(optionEditForm)
+        } else {
+            return this.optionFormSaveButton()
+        }
     }
 
-    async waitoptionEditForm(position: string){
-        let  optionEditForm = By.css('#optvis_'+position+' > div.optEditForm')
+    async waitoptionEditForm(optionName?: string){
+        let optionEditForm
+        if (optionName) {
+            optionEditForm = By.css('#optvis_'+optionName+' > div.optEditForm')
+        } else {
+            optionEditForm = By.css('div.optEditForm')
+        }
         return this.ctx.driver.wait(until.elementLocated(optionEditForm),15000)
     }
 
@@ -473,5 +500,4 @@ export class JobCreatePage extends Page {
     formValidationAlert():WebElementPromise{
         return this.ctx.driver.findElement(Elems.formValidationAlert)
     }
-
 }
