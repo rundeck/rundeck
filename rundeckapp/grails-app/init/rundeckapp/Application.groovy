@@ -38,7 +38,7 @@ import java.nio.file.Paths
         variables = [
             @ServerVariable(
                 name = 'apiversion',
-                defaultValue = '40' //NB: spec generation doesn't seem to accept a constant string :(
+                defaultValue = '41' //NB: spec generation doesn't seem to accept a constant string :(
             ),
             @ServerVariable(
                 name = 'host',
