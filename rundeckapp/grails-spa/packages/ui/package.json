@@ -72,7 +72,7 @@
     "pnp-webpack-plugin": "^1.6.4",
     "portfinder": "^1.0.13",
     "rimraf": "^2.6.0",
-    "run-script-os": "^1.1.1",
+    "run-script-os": "^1.1.6",
     "sass-loader": "^8.0.2",
     "semver": "^5.3.0",
     "shelljs": "^0.7.6",
