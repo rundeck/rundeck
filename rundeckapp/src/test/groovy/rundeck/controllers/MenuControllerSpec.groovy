@@ -132,6 +132,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
 
         when:
         params.id=testUUID
+        controller.response.format = "xml"
         def result = controller.apiJobDetail()
 
         then:
@@ -2077,6 +2078,7 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
         controller.scheduledExecutionService.jobSchedulesService = jobSchedulesService
 
         when:
+        controller.response.format = "xml"
         params.id=testUUID
         def result = controller.apiJobForecast()
 
