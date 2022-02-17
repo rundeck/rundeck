@@ -67,13 +67,52 @@
         </div>
       </div>
       <div class="form-group" v-if="!isFileType()">
+        <div class="col-sm-2 control-label text-form-label">
+          <span>Input Type</span>
+        </div>
+        <div class="col-sm-10">
+          <div class="radio">
+            <input type="radio" name="inputType" @click="setInputType('plain')"
+                   :checked="modelData.inputType === 'plain'"
+                   id="secureInputFalse"/>
+            <label for="secureInputFalse">
+              <span>Plain text</span>
+            </label>
+          </div>
+          <div class="radio">
+            <input type="radio" name="inputType" @click="setInputType('date')"
+                   :checked="modelData.inputType==='date'"
+                   id="secureInputTrue"/>
+            <label for="secureInputTrue">
+              <span>Date The date will pass to your job as a string formatted this way: mm/dd/yy HH:MM</span>
+            </label>
+          </div>
+          <div class="radio">
+            <input type="radio" name="secureExposedFalse" @click=""
+                   :checked="modelData.secureExposedFalse"
+                   id="secureExposedFalse"/>
+            <label for="secureExposedFalse">
+              <span>Secure † Password input, value exposed in scripts and commands.</span>
+            </label>
+          </div>
+          <div class="radio">
+            <input type="radio" name="secureExposedTrue" @click=""
+                   :checked="modelData.secureExposedTrue"
+                   id="secureExposedTrue"/>
+            <label for="secureExposedTrue">
+              <span>Secure Remote Authentication † Password input, value not exposed in scripts or commands, used only by Node Executors for authentication.</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" v-if="!isFileType()">
         <label class="col-sm-2 control-label">Default Value</label>
         <div class="col-sm-10">
           <input type="text" class="form-control" name="defaultValue" id="opt_defaultValue" size="40" placeholder="Default value" v-model="modelData.defaultValue">
         </div>
       </div>
       <div class="form-group" v-if="!isFileType()">
-        <label>Allowed Values</label>
         <label class="col-sm-2 control-label">Allowed Values</label>
         <div class="col-sm-10">
           <div v-for="(type,n) in modelData.optionValuesPlugins" :key="type.name" class="radio">
@@ -90,9 +129,10 @@
         </div>
         <div class="col-sm-10">
           <div class="radio">
-            <input type="radio" name="enforcedType" @click=""
-                   :checked="!schedulesEnabled"
-                   id="enforcedType_none"/>
+            <input type="radio" :value="none"
+                   v-model="modelData.enforcedType"
+                   id="enforcedType_none"
+                   name="enforcedType"/>
             <label for="enforcedType_none">
               None
             </label>
@@ -115,45 +155,6 @@
             </label>
           </div>
 
-        </div>
-      </div>
-      <div class="form-group" v-if="!isFileType()">
-        <div class="col-sm-2 control-label text-form-label">
-          <span>Input Type</span>
-        </div>
-        <div class="col-sm-10">
-          <div class="radio">
-            <input type="radio" name="secureInputTrue" @click=""
-                   :checked="modelData.secureInput"
-                   id="secureInputFalse"/>
-            <label for="secureInputFalse">
-              <span>Plain text</span>
-            </label>
-          </div>
-          <div class="radio">
-            <input type="radio" name="secureInputTrue" @click=""
-                   :checked="modelData.secureInputTrue"
-                   id="secureInputTrue"/>
-            <label for="secureInputTrue">
-              <span>Date The date will pass to your job as a string formatted this way: mm/dd/yy HH:MM</span>
-            </label>
-          </div>
-          <div class="radio">
-            <input type="radio" name="secureExposedFalse" @click=""
-                   :checked="modelData.secureExposedFalse"
-                   id="secureExposedFalse"/>
-            <label for="secureExposedFalse">
-              <span>Secure † Password input, value exposed in scripts and commands.</span>
-            </label>
-          </div>
-          <div class="radio">
-            <input type="radio" name="secureExposedTrue" @click=""
-                   :checked="modelData.secureExposedTrue"
-                   id="secureExposedTrue"/>
-            <label for="secureExposedTrue">
-              <span>Secure Remote Authentication † Password input, value not exposed in scripts or commands, used only by Node Executors for authentication.</span>
-            </label>
-          </div>
         </div>
       </div>
       <div class="form-group">
@@ -226,24 +227,23 @@
 
         <div class="col-sm-10">
           <div class="radio radio-inline">
-            <input type="radio"
-                   name="excludeFilterUncheck"
-                   :value="true"
-                   v-model="modelData.excludeFilterUncheck"
-                   id="excludeFilterTrue"/>
-            <label for="excludeFilterTrue">
-              Yes
-            </label>
-          </div>
-
-          <div class="radio radio-inline">
             <input type=radio
                    :value="false"
-                   name="excludeFilterUncheck"
-                   v-model="modelData.excludeFilterUncheck"
-                   id="excludeFilterFalse"/>
-            <label for="excludeFilterFalse">
+                   name="multivalued"
+                   v-model="modelData.multivalued"
+                   id="multivaluedFalse"/>
+            <label for="multivaluedFalse">
               No
+            </label>
+          </div>
+          <div class="radio radio-inline">
+            <input type="radio"
+                   name="multivalued"
+                   :value="true"
+                   v-model="modelData.multivalued"
+                   id="multivaluedTrue"/>
+            <label for="multivaluedTrue">
+              Yes
             </label>
           </div>
 
@@ -384,8 +384,11 @@ export default class OptionsEditor extends Vue {
 
     let result = await axios.get(_genUrl(getAppLinks().editOptsEdit, params))
     if (result.status >= 200 && result.status < 300) {
-        if(!params.newoption && result.data.option)
+        if(!params.newoption && result.data.option) {
           this.modelData = Object.assign({}, result.data.option)
+          if (!this.modelData.optionType)
+            this.modelData.optionType = ""
+        }
         else{
           Vue.set(this.modelData, 'optionValuesPlugins', result.data.optionValuesPlugins)
         }
@@ -417,10 +420,13 @@ export default class OptionsEditor extends Vue {
   }
   initModelData(){
     this.modelData={name: null, optionType:"", hidden: false, required: false, newoption: true, scheduledExecutionId: "",
-      active: true}
+      active: true, inputType: "plain", multivalued: false,enforcedType: "none" }
   }
   setOptionType(type:string){
     Vue.set(this.modelData, 'optionType', type)
+  }
+  setInputType(type:string){
+    Vue.set(this.modelData, 'inputType', type)
   }
   cancelNewOption(){
     Vue.set(this.modelData, 'active', false)
