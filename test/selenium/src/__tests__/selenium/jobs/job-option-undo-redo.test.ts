@@ -28,6 +28,7 @@ describe('job', () => {
             ctx.driver.switchTo().alert().accept();
         });
         await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+        await jobCreatePage.waitJobNameInput()
     })
     it('job option simple redo', async () => {
         let jobNameText='a job with options undo-redo test'
@@ -58,32 +59,32 @@ describe('job', () => {
         let optionNewButton = await jobCreatePage.optionNewButton()
         await optionNewButton.click()
         //2. wait for edit form to load
-        await jobCreatePage.waitoptionEditForm("0")
+        await jobCreatePage.waitoptionEditForm(jobNameText)
 
         let optionName='seleniumOption1'
-        let optionNameInput=await jobCreatePage.optionNameInput("0")
+        let optionNameInput=await jobCreatePage.optionNameInput(jobNameText)
         await optionNameInput.sendKeys(optionName)
 
         //save option
-        let optionFormSaveButton = await jobCreatePage.optionFormSave("0")
+        let optionFormSaveButton = await jobCreatePage.optionFormSave(jobNameText)
         await optionFormSaveButton.click()
 
         //wait for option to save
-        await jobCreatePage.waitOptionli("0")
+        await jobCreatePage.waitOptionli(jobNameText)
 
         // NEW OPTION
         //1. click new option button
         optionNewButton = await jobCreatePage.optionNewButton()
         await optionNewButton.click()
         //2. wait for edit form to load
-        await jobCreatePage.waitoptionEditForm("1")
+        await jobCreatePage.waitoptionEditForm()
 
         optionName='seleniumOption2'
-        optionNameInput=await jobCreatePage.optionNameInput("1")
+        optionNameInput=await jobCreatePage.optionNameInput()
         await optionNameInput.sendKeys(optionName)
 
         //save option
-        optionFormSaveButton = await jobCreatePage.optionFormSave("1")
+        optionFormSaveButton = await jobCreatePage.optionFormSave()
         await optionFormSaveButton.click()
 
         //wait for option to save
@@ -118,18 +119,13 @@ describe('job', () => {
 
     it('job option revert all', async () => {
         let jobNameText='a job with options revert all test'
-        let jobName=await jobCreatePage.jobNameInput()
+        let jobName = await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
 
         //add workflow step
         let wfTab=await jobCreatePage.tabWorkflow()
         await wfTab.click()
-        let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
-
-        //click add Command step, and wait until input fields are loaded
-        await addWfStepCommand.click()
         await jobCreatePage.waitWfStepCommandRemoteText()
-
 
         let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test')
@@ -148,11 +144,11 @@ describe('job', () => {
         await jobCreatePage.waitoptionEditForm()
 
         let optionName='seleniumOption1'
-        let optionNameInput=await jobCreatePage.optionNameInput(optionName)
+        let optionNameInput = await jobCreatePage.optionNameInput()
         await optionNameInput.sendKeys(optionName)
 
         //save option
-        let optionFormSaveButton = await jobCreatePage.optionFormSave("0")
+        let optionFormSaveButton = await jobCreatePage.optionFormSave()
         await optionFormSaveButton.click()
 
         //wait for option to save
@@ -163,14 +159,14 @@ describe('job', () => {
         optionNewButton = await jobCreatePage.optionNewButton()
         await optionNewButton.click()
         //2. wait for edit form to load
-        await jobCreatePage.waitoptionEditForm("1")
+        await jobCreatePage.waitoptionEditForm()
 
         optionName='seleniumOption2'
-        optionNameInput=await jobCreatePage.optionNameInput("1")
+        optionNameInput=await jobCreatePage.optionNameInput()
         await optionNameInput.sendKeys(optionName)
 
         //save option
-        optionFormSaveButton = await jobCreatePage.optionFormSave("1")
+        optionFormSaveButton = await jobCreatePage.optionFormSave()
         await optionFormSaveButton.click()
 
         //wait for option to save
@@ -213,16 +209,12 @@ describe('job', () => {
 
     it('job option undo redo', async () => {
         let jobNameText='a job with options undo redo test'
-        let jobName=await jobCreatePage.jobNameInput()
+        let jobName = await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
 
         //add workflow step
         let wfTab=await jobCreatePage.tabWorkflow()
         await wfTab.click()
-        let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
-
-        //click add Command step, and wait until input fields are loaded
-        await addWfStepCommand.click()
         await jobCreatePage.waitWfStepCommandRemoteText()
 
 
@@ -240,14 +232,14 @@ describe('job', () => {
         let optionNewButton = await jobCreatePage.optionNewButton()
         await optionNewButton.click()
         //2. wait for edit form to load
-        await jobCreatePage.waitoptionEditForm("0")
+        await jobCreatePage.waitoptionEditForm()
 
         let optionName='seleniumOption1'
-        let optionNameInput=await jobCreatePage.optionNameInput("0")
+        let optionNameInput=await jobCreatePage.optionNameInput()
         await optionNameInput.sendKeys(optionName)
 
         //save option
-        let optionFormSaveButton = await jobCreatePage.optionFormSave("0")
+        let optionFormSaveButton = await jobCreatePage.optionFormSave()
         await optionFormSaveButton.click()
 
         //wait for option to save
@@ -258,14 +250,14 @@ describe('job', () => {
         optionNewButton = await jobCreatePage.optionNewButton()
         await optionNewButton.click()
         //2. wait for edit form to load
-        await jobCreatePage.waitoptionEditForm("1")
+        await jobCreatePage.waitoptionEditForm()
 
         optionName='seleniumOption2'
-        optionNameInput=await jobCreatePage.optionNameInput("1")
+        optionNameInput=await jobCreatePage.optionNameInput()
         await optionNameInput.sendKeys(optionName)
 
         //save option
-        optionFormSaveButton = await jobCreatePage.optionFormSave("1")
+        optionFormSaveButton = await jobCreatePage.optionFormSave()
         await optionFormSaveButton.click()
 
         //wait for option to save

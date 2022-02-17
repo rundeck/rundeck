@@ -131,4 +131,4 @@ describe('showing the edited job', () => {
 
         expect(await everyDaySelected.getText()).toEqual(testVars.scheduledDay.name);
     })
-})
+});

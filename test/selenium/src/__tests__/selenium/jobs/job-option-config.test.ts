@@ -32,6 +32,7 @@ describe('job', () => {
             ctx.driver.switchTo().alert().accept();
         });
         await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+        await jobCreatePage.waitJobNameInput()
     })
     it('check usage session', async () => {
         let jobNameText='a job with options'
@@ -86,7 +87,7 @@ describe('job', () => {
 
     it('check storage session', async () => {
         let jobNameText='a job with option secure'
-        let jobName=await jobCreatePage.jobNameInput()
+        let jobName = await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
 
         //add workflow step
