@@ -57,4 +57,4 @@ describe('job', () => {
         expect(optionRunInput2).toBeDefined()
 
     })
-})
+});

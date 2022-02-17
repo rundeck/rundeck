@@ -4,7 +4,7 @@ import {Page} from '@rundeck/testdeck/page'
 import {Context} from '@rundeck/testdeck/context'
 
 export const Elems= {
-    jobNameInput  : By.css('div#schedJobNameLabel input[name="jobName"]'),
+    jobNameInput  : By.css('div#schedJobNameLabel input#schedJobName'),
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
     saveButton  : By.css('#Create'),
@@ -17,7 +17,7 @@ export const Elems= {
 
     tabWorkflow  : By.css('#job_edit_tabs > li > a[href=\'#tab_workflow\']'),
     addNewWfStepButton: By.xpath('//*[@id="wfnewbutton"]/span'),
-    addNewWfStepCommand: By.css('div#wfnewtypes div#addnodestep a.add_node_step_type[data-node-step-type=command] span.text-strong'),
+    addNewWfStepCommand: By.css('div#wfnewtypes div#addnodestep a.add_node_step_type[data-node-step-type=command]'),
     wfStepCommandRemoteText: By.css('#adhocRemoteStringField'),
     wfStep0SaveButton: By.css('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm'),
     wfstep0vis: By.css('#wfivis_0'),
@@ -104,6 +104,9 @@ export class JobCreatePage extends Page {
         await driver.get(this.ctx.urlFor(this.editPagePath(jobId)))
     }
 
+    async waitJobNameInput(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.jobNameInput), 15000)
+    }
     async jobNameInput(){
         return await this.ctx.driver.findElement(Elems.jobNameInput)
     }
@@ -154,6 +157,9 @@ export class JobCreatePage extends Page {
     }
     async optionNewButton(){
         return await this.ctx.driver.findElement(Elems.optionNewButton)
+    }
+    async waitOptionNewButton(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.optionNewButton), 15000)
     }
     async waitoption0EditForm(optionName?: string){
         let editFormLocator;
