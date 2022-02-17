@@ -139,6 +139,7 @@
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
         activeTourStep: '${session.filterPref?.activeTourStep}',
+        appName: '${g.appTitle()}',
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
             eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}},

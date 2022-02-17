@@ -1954,8 +1954,8 @@ ansi-bg-default'''))
                         data << [
                             (groupvar): [
                                 id   : group,
-                                title: GroupedMenuItem.groupTitle(item),
-                                titleCode : GroupedMenuItem.groupTitleCode(item)
+                                // title: GroupedMenuItem.groupTitle(item),
+                                // titleCode : GroupedMenuItem.groupTitleCode(item)
                             ]
                         ]
                     }
