@@ -51,7 +51,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 /**
  * Contains utility actions for API access and responses
  */
-@Controller("/api/{apiversion}")
+@Controller()
 class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
