@@ -176,11 +176,15 @@ dependencies {
         exclude(group:"org.grails.profiles",module:"web")
     }
 
-    //openapi dependencies
-    annotationProcessor "io.micronaut.configuration:micronaut-openapi:1.4.0"
-    compile "io.swagger.core.v3:swagger-annotations:2.1.1"
-    compileOnly "io.micronaut.configuration:micronaut-openapi:1.4.0"
-    compile 'io.micronaut:micronaut-http-client'
+    // OpenApi Dependencies
+    annotationProcessor "io.micronaut.openapi:micronaut-openapi:4.0.0"
+    implementation "io.swagger.core.v3:swagger-annotations:2.1.1"
+    compileOnly    "io.micronaut.openapi:micronaut-openapi:4.0.0"
+    implementation "io.micronaut:micronaut-http-server:${micronautVersion}"
+    implementation "io.micronaut:micronaut-inject:${micronautVersion}"
+    implementation "io.micronaut:micronaut-inject-java:${micronautVersion}"
+    implementation "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
+    implementation "io.micronaut:micronaut-core:${micronautVersion}"
 
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
