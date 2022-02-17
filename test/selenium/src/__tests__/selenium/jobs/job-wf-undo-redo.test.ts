@@ -22,10 +22,15 @@ beforeAll(async () => {
 })
 
 describe('job', () => {
+    beforeAll(async () => {
+        await jobCreatePage.get()
+        ctx.driver.wait(until.alertIsPresent()).then(() => {
+            ctx.driver.switchTo().alert().accept();
+        });
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+    })
 
     it('job workflow simple undo', async () => {
-        await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobNameText='a job with workflow undo test'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
@@ -33,7 +38,8 @@ describe('job', () => {
         //add workflow step
         let wfTab=await jobCreatePage.tabWorkflow()
         await wfTab.click()
-        let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+        let addWfStepCommand = await jobCreatePage.addNewWfStepCommand()
+        await ctx.driver.wait(until.elementIsEnabled(addWfStepCommand), 15000)
 
         //click add Command step, and wait until input fields are loaded
         await addWfStepCommand.click()
@@ -95,8 +101,6 @@ describe('job', () => {
     })
 
     it('job workflow undo redo', async () => {
-        await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobNameText='a job with workflow undo-redo test'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
@@ -175,8 +179,6 @@ describe('job', () => {
     })
 
     it('job workflow revert all', async () => {
-        await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobNameText='a job with workflow revert all test'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)

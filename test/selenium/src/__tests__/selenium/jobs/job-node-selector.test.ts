@@ -37,6 +37,7 @@ const createBasicJob = async function(name: string){
     let wfTab=await jobCreatePage.tabWorkflow()
     await wfTab.click()
     let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+    await ctx.driver.wait(until.elementIsEnabled(addWfStepCommand), 15000)
 
     //click add Command step, and wait until input fields are loaded
     await addWfStepCommand.click()

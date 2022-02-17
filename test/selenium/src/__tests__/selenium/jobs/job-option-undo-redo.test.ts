@@ -22,9 +22,14 @@ beforeAll(async () => {
 })
 
 describe('job', () => {
-    it('job option simple redo', async () => {
+    beforeAll(async () => {
         await jobCreatePage.get()
+        ctx.driver.wait(until.alertIsPresent()).then(() => {
+            ctx.driver.switchTo().alert().accept();
+        });
         await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+    })
+    it('job option simple redo', async () => {
         let jobNameText='a job with options undo-redo test'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
@@ -112,8 +117,6 @@ describe('job', () => {
 
 
     it('job option revert all', async () => {
-        await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobNameText='a job with options revert all test'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
@@ -142,10 +145,10 @@ describe('job', () => {
         let optionNewButton = await jobCreatePage.optionNewButton()
         await optionNewButton.click()
         //2. wait for edit form to load
-        await jobCreatePage.waitoptionEditForm("0")
+        await jobCreatePage.waitoptionEditForm()
 
         let optionName='seleniumOption1'
-        let optionNameInput=await jobCreatePage.optionNameInput("0")
+        let optionNameInput=await jobCreatePage.optionNameInput(optionName)
         await optionNameInput.sendKeys(optionName)
 
         //save option
@@ -209,8 +212,6 @@ describe('job', () => {
     })
 
     it('job option undo redo', async () => {
-        await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobNameText='a job with options undo redo test'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
@@ -300,8 +301,4 @@ describe('job', () => {
         expect(jobTitleText).toContain(jobNameText)
 
     })
-
-    
-
-    
 })

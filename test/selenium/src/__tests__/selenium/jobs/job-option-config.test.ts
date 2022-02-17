@@ -26,10 +26,14 @@ beforeAll(async () => {
 
 
 describe('job', () => {
-
-    it('check usage session', async () => {
+    beforeAll(async () => {
         await jobCreatePage.get()
+        ctx.driver.wait(until.alertIsPresent()).then(() => {
+            ctx.driver.switchTo().alert().accept();
+        });
         await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+    })
+    it('check usage session', async () => {
         let jobNameText='a job with options'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
@@ -81,8 +85,6 @@ describe('job', () => {
     })
 
     it('check storage session', async () => {
-        await jobCreatePage.get()
-        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
         let jobNameText='a job with option secure'
         let jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys(jobNameText)
