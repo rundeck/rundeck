@@ -77,6 +77,10 @@ export default {
 //   }
 // }
 
+.artifact-grid {
+  padding: 0 0.5em 0 0.5em;
+}
+
 .repo-header {
   background: #e5e2de;
   color: #5d5d5d;
