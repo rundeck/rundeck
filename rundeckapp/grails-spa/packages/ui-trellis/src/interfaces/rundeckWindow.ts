@@ -10,6 +10,7 @@ export interface RundeckContext {
     projectName: string
     activeTour: string
     activeTourStep: string
+    appName: string
     token: RundeckToken
     tokens: {
         [key:string]: RundeckToken
