@@ -418,6 +418,11 @@ export default class LogViewer extends Vue {
     }
 
     private handleExecutionLogResp() {
+      const defaultMaxLogSize = 3145728
+      if (this.maxLogSize == defaultMaxLogSize) {
+        return
+      }
+
       if (this.overSize && this.viewer.offset > this.maxLogSize) {
         const removeSize = this.logBuilder.dropChunk()
         for (let x = 0; x < removeSize; x++) {
