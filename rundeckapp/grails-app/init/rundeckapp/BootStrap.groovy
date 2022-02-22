@@ -88,7 +88,7 @@ class BootStrap {
             grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
         }
         long bstart=System.currentTimeMillis()
-        apiMarshallerRegistrar.registerApiMarshallers()
+//        apiMarshallerRegistrar.registerApiMarshallers()
         //version info
         servletContext.setAttribute("version.build",VersionConstants.BUILD)
         servletContext.setAttribute("version.date",VersionConstants.DATE)

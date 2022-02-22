@@ -55,6 +55,8 @@ class ApiMarshallerRegistrar {
      * if called via {@code @PostConstruct}
      * <a href="https://github.com/grails/grails-core/issues/9140#issuecomment-143678429">grails issue ref</a>
      */
+
+    @PostConstruct
     void registerApiMarshallers(){
         def curVersion = ApiVersions.API_CURRENT_VERSION
         def api = new ApiMarshaller('com.dtolabs.rundeck.app.api')
