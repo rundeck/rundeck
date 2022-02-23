@@ -4,7 +4,6 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:${assetPluginVersion}"
     }
 }
 
@@ -13,7 +12,6 @@ group "apimarshall"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
 repositories {
@@ -82,8 +80,3 @@ tasks.withType(Test) {
 // enable if you wish to package this plugin as a standalone application
 bootJar.enabled = false
 bootRun.enabled = false
-
-
-assets {
-    packagePlugin = true
-}
