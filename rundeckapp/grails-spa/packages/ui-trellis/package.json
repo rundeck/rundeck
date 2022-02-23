@@ -60,6 +60,7 @@
     "@vue/test-utils": "^1.0.3",
     "concurrently": "^7.0.0",
     "fetch-mock": "^9.10.1",
+    "follow-redirects": "^1.14.8",
     "markdown-it-vue": "^1.1.6",
     "mobx-utils": "^5.6.1",
     "mobx-vue": "^2.0.11",
