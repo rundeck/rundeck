@@ -21,7 +21,6 @@ import com.dtolabs.launcher.Setup
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.config.Features
@@ -64,7 +63,6 @@ class BootStrap {
     def scmService
     HealthCheckRegistry healthCheckRegistry
     def dataSource
-    ApiMarshallerRegistrar apiMarshallerRegistrar
     def authenticationManager
     def EventBus grailsEventBus
     def configStorageService
@@ -79,8 +77,6 @@ class BootStrap {
     }
 
     def init = { ServletContext servletContext ->
-        // Marshal enums to "STRING" instead of {"enumType":"com.package.MyEnum", "name":"OBJECT"}
-        JSON.registerObjectMarshaller(Enum, { Enum e -> e.toString() })
 
         //setup profiler logging
         if(!(grailsApplication.config.getProperty("grails.profiler.disable", Boolean.class, false)) && grailsApplication.mainContext.profilerLog) {
@@ -88,7 +84,6 @@ class BootStrap {
             grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
         }
         long bstart=System.currentTimeMillis()
-//        apiMarshallerRegistrar.registerApiMarshallers()
         //version info
         servletContext.setAttribute("version.build",VersionConstants.BUILD)
         servletContext.setAttribute("version.date",VersionConstants.DATE)

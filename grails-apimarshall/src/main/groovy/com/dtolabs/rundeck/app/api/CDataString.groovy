@@ -16,11 +16,15 @@
 
 package com.dtolabs.rundeck.app.api
 
+import groovy.transform.CompileStatic
+
 /**
  * Wrapper for a string that is marshalled wrappedin CDATA to preserve whitespace
  */
+@CompileStatic
 class CDataString {
     String value
+
     static CDataString from(String value) {
         return new CDataString(value: value)
     }

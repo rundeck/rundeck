@@ -18,6 +18,10 @@ import spock.lang.Specification
 class ApiVersionInterceptorSpec extends Specification implements InterceptorUnitTest<ApiVersionInterceptor> {
 
     def setup() {
+        defineBeans{
+            rundeckApiVersionSupplier(ApiVersions)
+            apiMarshallerRegistrar(ApiMarshallerRegistrar)
+        }
     }
 
     def cleanup() {

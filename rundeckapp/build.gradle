@@ -233,6 +233,7 @@ dependencies {
 }
 grails{
     plugins{
+        implementation project(':grails-apimarshall')
         implementation project(':grails-metricsweb')
         implementation project(':grails-persistlocale')
         implementation project(':grails-securityheaders')
@@ -257,6 +258,7 @@ task copyRuntimeLibs(type: Copy) {
 
 bootRun {
     dependencies{
+        implementation project(':grails-apimarshall')
         implementation project(':grails-metricsweb')
         implementation project(':grails-persistlocale')
         implementation project(':grails-securityheaders')

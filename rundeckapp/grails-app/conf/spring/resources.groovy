@@ -15,7 +15,7 @@
  */
 
 
-import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.gui.GroupedJobListLinkHandler
 import com.dtolabs.rundeck.app.gui.JobListLinkHandlerRegistry
 import com.dtolabs.rundeck.app.gui.SystemConfigMenuItem
@@ -650,10 +650,7 @@ beans={
     fcopyPasswordFieldsService(PasswordFieldsService)
 
 
-    /// XML/JSON custom marshaller support
-
-    apiMarshallerRegistrar(ApiMarshallerRegistrar)
-
+    rundeckApiVersionSupplier(ApiVersions)
     rundeckWebUtil(WebUtil)
     rundeckExceptionHandler(ExceptionHandler)
 

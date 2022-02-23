@@ -45,9 +45,11 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     def setup() {
         mockDomain User
         mockDomain AuthToken
-        def apiMarshallerRegistrar = new ApiMarshallerRegistrar()
-        apiMarshallerRegistrar.registerMarshallers()
-        apiMarshallerRegistrar.registerApiMarshallers()
+
+        defineBeans{
+            rundeckApiVersionSupplier(ApiVersions)
+            apiMarshallerRegistrar(ApiMarshallerRegistrar)
+        }
     }
 
     def "api token list does not include webhook tokens"() {

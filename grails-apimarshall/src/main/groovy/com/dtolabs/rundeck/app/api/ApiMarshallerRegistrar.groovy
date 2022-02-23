@@ -17,20 +17,26 @@
 package com.dtolabs.rundeck.app.api
 
 import com.dtolabs.rundeck.app.api.marshall.ApiMarshaller
+import com.dtolabs.rundeck.app.api.marshall.ApiVersionSupplier
 import com.dtolabs.rundeck.app.api.marshall.CustomJsonMarshaller
 import com.dtolabs.rundeck.app.api.marshall.CustomXmlMarshaller
 import grails.converters.JSON
 import grails.converters.XML
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 
 import javax.annotation.PostConstruct
 
 /**
  * Created by greg on 10/28/15.
  */
-class ApiMarshallerRegistrar {
+class ApiMarshallerRegistrar implements ApplicationContextAware{
+    ApplicationContext applicationContext
     @PostConstruct
     void registerMarshallers() {
-        XML.registerObjectMarshaller(CDataString) { data,XML xml->
+        // Marshal enums to "STRING" instead of {"enumType":"com.package.MyEnum", "name":"OBJECT"}
+        JSON.registerObjectMarshaller(Enum, { Enum e -> e.toString() })
+        XML.registerObjectMarshaller(CDataString.class) { data, XML xml->
             if(data.value?.contains('\r') || data.value?.contains('\n')  ) {
                 xml.chars('')//forces current tag completion
                 xml.stream.append('<![CDATA['+data.value.replaceAll(']]>',']]]]><![CDATA[>')+']]>')
@@ -39,7 +45,7 @@ class ApiMarshallerRegistrar {
                 return data.value
             }
         }
-        JSON.registerObjectMarshaller(CDataString) { data, JSON json->
+        JSON.registerObjectMarshaller(CDataString.class) { data, JSON json->
             if(data.value !=null){
                 return data.value
             } else{
@@ -47,6 +53,7 @@ class ApiMarshallerRegistrar {
                 return null
             }
         }
+        registerApiMarshallers()
     }
     /**
      *
@@ -55,10 +62,19 @@ class ApiMarshallerRegistrar {
      * if called via {@code @PostConstruct}
      * <a href="https://github.com/grails/grails-core/issues/9140#issuecomment-143678429">grails issue ref</a>
      */
-
-    @PostConstruct
+    ApiVersionSupplier getApiVersionSupplier(){
+        try {
+            applicationContext.getBean(ApiVersionSupplier)
+        } catch (Exception e) {
+            return null
+        }
+    }
     void registerApiMarshallers(){
-        def curVersion = ApiVersions.API_CURRENT_VERSION
+        ApiVersionSupplier versions = getApiVersionSupplier()
+        if(!versions){
+            return
+        }
+        def curVersion = versions.currentVersion
         def api = new ApiMarshaller('com.dtolabs.rundeck.app.api')
 
         //default marshaller configuration implementation
@@ -66,11 +82,11 @@ class ApiMarshallerRegistrar {
         JSON.registerObjectMarshaller(new CustomJsonMarshaller(api, curVersion))
 
         //use custom configuration for specific API versions
-        (1..ApiVersions.API_CURRENT_VERSION).each { apivers ->
-            XML.createNamedConfig("v${apivers}") { cfg ->
+        versions.apiVersionNames.each { String name, int apivers ->
+            XML.createNamedConfig(name) { cfg ->
                 cfg.registerObjectMarshaller(new CustomXmlMarshaller(api, apivers))
             }
-            JSON.createNamedConfig("v${apivers}") { cfg ->
+            JSON.createNamedConfig(name) { cfg ->
                 cfg.registerObjectMarshaller(new CustomJsonMarshaller(api, apivers))
             }
         }
