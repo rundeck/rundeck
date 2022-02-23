@@ -57,7 +57,7 @@ Time: 12:54 PM
             <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
             <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
             <div style="margin-top:2em;">
-              <g:link controller="menu" action="index" class="btn btn-lg btn-success">
+              <g:link controller="menu" action="index" class="btn btn-lg btn-primary">
               <g:message code="welcome.button.use.rundeck" args="${[g.appTitle()]}"/>
             </g:link>
           </div>
