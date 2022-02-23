@@ -241,8 +241,8 @@ class ExecutionController extends ControllerBase{
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
-        String max = getGrailsApplication().config.get("rundeck.logviewer.maxsize")
-        Long maxLogSize = Sizes.parseFileSize(max)
+        String max = getGrailsApplication().config.get("rundeck.logviewer.trimOutput")
+        Long trimOutput = Sizes.parseFileSize(max)
 
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
@@ -257,7 +257,7 @@ class ExecutionController extends ControllerBase{
                 eprev                 : eprev,
                 inputFilesMap         : inputFilesMap,
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled(),
-                maxLogSize            : maxLogSize ?: 3145728
+                trimOutput            : trimOutput
         ]
     }
 

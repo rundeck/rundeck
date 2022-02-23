@@ -95,14 +95,14 @@ function mount(e) {
    * Ant accesses the root Vue instance constructor.
    * Since the viewer is a class component that would make its
    * constructor the root constructor and chaos ensues...
-   * */  
+   * */
   const template = `\
   <LogViewer
     v-if="this.$el.parentNode.display != 'none'"
     executionId="${e.dataset.executionId}"
     jumpToLine="${jumpToLine || null}"
     ref="viewer"
-    maxLogSize="${e.dataset.maxLogSize}"
+    trimOutput="${e.dataset.trimOutput}"
   />
   `
 
