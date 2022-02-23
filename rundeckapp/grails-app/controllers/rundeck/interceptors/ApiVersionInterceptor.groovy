@@ -3,6 +3,7 @@ package rundeck.interceptors
 import com.codahale.metrics.MetricRegistry
 import grails.converters.JSON
 import grails.converters.XML
+import org.grails.web.converters.exceptions.ConverterException
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.web.util.WebUtils
 import org.slf4j.Logger
@@ -131,8 +132,14 @@ class ApiVersionInterceptor {
         }
         request.api_version = VersionMap[params.api_version]
         request['ApiRequestFilters.request.parameters.project']=params.project?:request.project?:''
-        XML.use('v' + request.api_version)
-        JSON.use('v' + request.api_version)
+        try {
+            XML.use('v' + request.api_version)
+            JSON.use('v' + request.api_version)
+        } catch (ConverterException e) {
+            //API request may have happened before named converter configs have been registered at startup, send service unavailable
+            response.status = HttpServletResponse.SC_SERVICE_UNAVAILABLE
+            return false
+        }
         return true
     }
 

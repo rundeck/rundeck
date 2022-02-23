@@ -69,6 +69,21 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
 
     }
 
+    void "api access before marshallers registered causes 503"() {
+        given:
+            ConvertersConfigurationHolder.clear()
+
+        when:
+            request.method = "GET"
+            params.api_version = ApiVersions.API_CURRENT_VERSION.toString()
+            boolean allowed = interceptor.before()
+
+        then:
+            !allowed
+            response.status==503
+
+    }
+
     void "Invalid sync tokens do not allow api access"() {
         given:
 
