@@ -51,6 +51,7 @@ import org.rundeck.core.auth.web.RdAuthorizeAdhoc
 import org.rundeck.core.auth.web.RdAuthorizeExecution
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.RdAuthorizeSystem
+import org.rundeck.util.Sizes
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
@@ -240,6 +241,9 @@ class ExecutionController extends ControllerBase{
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
+        String max = getGrailsApplication().config.get("rundeck.logviewer.trimOutput")
+        Long trimOutput = Sizes.parseFileSize(max)
+
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
@@ -252,7 +256,8 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 inputFilesMap         : inputFilesMap,
-                clusterModeEnabled    : frameworkService.isClusterModeEnabled()
+                clusterModeEnabled    : frameworkService.isClusterModeEnabled(),
+                trimOutput            : trimOutput
         ]
     }
 
