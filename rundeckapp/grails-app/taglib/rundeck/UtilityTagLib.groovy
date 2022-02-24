@@ -51,6 +51,9 @@ class UtilityTagLib{
             'executionMode',
             'scheduleMode',
             'appTitle',
+            'appFavicon',
+            'appLogo',
+            'appLogocss',
             'rkey',
             'w3cDateValue',
             'sortGroupKeys',
@@ -1142,6 +1145,15 @@ class UtilityTagLib{
 
     def appTitle={attrs,body->
         configurationService.getString("gui.title") ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
+    }
+    def appFavicon={attrs,body->
+        configurationService.getString("gui.favicon") ?:g.message(code:'main.app.favicon',default:'')?:g.message(code:'main.app.default.favicon')
+    }
+    def appLogo={attrs,body->
+        configurationService.getString("gui.svglogo") ?:g.message(code:'main.app.svglogo',default:'')?:g.message(code:'main.app.default.svglogo')
+    }
+    def appLogocss={attrs,body->
+        configurationService.getString("gui.logocss") ?:g.message(code:'main.app.logocss',default:'')?:g.message(code:'main.app.default.logocss')
     }
 
     def executionMode={attrs,body->

@@ -511,6 +511,9 @@ public class RundeckConfigBase {
         String instanceName;
         String startpage;
         String logo;
+        String svglogo;
+        String favicon;
+        String logocss;
         String logoHires;
         Boolean clusterIdentityInHeader;
         Boolean clusterIdentityInFooter;
