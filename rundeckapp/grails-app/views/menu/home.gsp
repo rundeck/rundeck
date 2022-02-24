@@ -165,7 +165,7 @@
         </div>
       </div>
 
-      <div class="container-fluid" data-bind="if: projectCount() == 5">
+      <div class="container-fluid" data-bind="if: projectCount() == 0">
         <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}" has="true">
           <div id="firstRun"></div>
         </auth:resourceAllowed>
