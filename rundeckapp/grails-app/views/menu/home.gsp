@@ -87,8 +87,7 @@
               </h2>
             </div>
             <div class="card-content">
-              <g:set var="processAutomation" value="${g.appTitle().equals('Process Automation')}"/>
-              <g:set var="logoImage" value="${processAutomation? 'static/img/pagerduty-full-logo.svg' : 'static/img/rundeck-combination.svg'}"/>
+              <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
               <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
               <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
               <p class="h6 text-strong" style="margin-top:1em;">
@@ -166,7 +165,7 @@
         </div>
       </div>
 
-      <div class="container-fluid" data-bind="if: projectCount() == 0">
+      <div class="container-fluid" data-bind="if: projectCount() == 5">
         <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}" has="true">
           <div id="firstRun"></div>
         </auth:resourceAllowed>

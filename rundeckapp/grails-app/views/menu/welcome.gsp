@@ -52,8 +52,7 @@ Time: 12:54 PM
             <div class="ui-common-platform enterprise-hide" style="margin:0 0 2em;">
               <h3 >UNSUPPORTED SOFTWARE. NO WARRANTY.</h3>
             </div>
-            <g:set var="processAutomation" value="${g.appTitle().equals('Process Automation')}"/>
-            <g:set var="logoImage" value="${processAutomation? 'static/img/pagerduty-full-logo.svg' : 'static/img/rundeck-combination.svg'}"/>
+            <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
             <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
             <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
             <div style="margin-top:2em;">
