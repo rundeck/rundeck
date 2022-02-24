@@ -1,6 +1,6 @@
 <template>
     <div class="rundeck-version-display">
-        <i v-if="logo" class="rdicon app-logo"/>
+        <i v-if="logo" :class="cssclass"/>
         <span >{{text}}</span>
     </div>
 </template>
@@ -10,18 +10,20 @@ import Vue, {PropType} from 'vue'
 
 export default Vue.extend({
     props: {
-        edition: {type: String},
+        title: {type: String},
         number: {type: String},
         tag: {type: String},
         logo: {default: true},
-        app: {default: true}
+        logocss: {default: 'rdicon'},
     },
     computed: {
+        cssclass(): string {
+            return `${this.logocss} app-logo`
+        },
         text(): string {
-            let {edition, number, tag} = this
+            let {title, number, tag} = this
             let text = ''
-            text += `${this.app ? 'Rundeck ' : ''}`
-            text += `${edition ? edition + ' ' : ''}` 
+            text += `${title ? title + ' ' : ''}`
             text += `${number}`
             return text
         }
@@ -38,7 +40,7 @@ export default Vue.extend({
     align-items: center;
 
     >i {
-        background-size: 20px;
+        background-size: 20px 20px;
         padding: 0;
         height: 20px;
         width: 20px;

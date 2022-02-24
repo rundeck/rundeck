@@ -3,10 +3,10 @@
     <div class="row">
       <div class="col-md-9 mb-6">
           <div v-if="system.loaded" class="splash-screen--title">
-            <RundeckVersion :edition="system.versionInfo.edition" :number="system.versionInfo.number" :tag="system.versionInfo.tag"/>
+            <RundeckVersion :title="system.appInfo.title" :number="system.versionInfo.number" :tag="system.versionInfo.tag" :logocss="system.appInfo.logocss"/>
           </div>
           <div class="splash-screen--linkitems">
-            <div v-if="system.versionInfo.edition != 'Community' ">
+            <div v-if="system.appInfo.title != 'Rundeck' ">
               <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>  
             </div>
             <div v-else>

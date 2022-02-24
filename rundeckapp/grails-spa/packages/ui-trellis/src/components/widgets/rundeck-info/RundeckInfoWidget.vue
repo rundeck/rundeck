@@ -3,6 +3,7 @@
         :version="system.versionInfo"
         :latest="releases.releases[0]"
         :server="system.serverInfo"
+        :app-info="system.appInfo"
     />
 </template>
 

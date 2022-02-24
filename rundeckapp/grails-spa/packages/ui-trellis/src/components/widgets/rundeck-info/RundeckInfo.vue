@@ -3,12 +3,12 @@
         <div class="rundeck-info-widget__group">
             <div class="rundeck-info-widget__more-link">
                 <a :href="welcomeUrl()">
-                    <PagerdutyLogo v-if="version.edition === 'Process Automation'"/>
-                    <RundeckLogo v-else/>
+                    <RundeckLogo v-if="appInfo.title === 'Rundeck'"/>
+                    <PagerdutyLogo v-else/>
                 </a>
             </div>
             <div class="rundeck-info-widget__header">
-                <RundeckVersion :app="false" :logo="false" :edition="version.edition" :number="version.number" :tag="version.tag"/>
+                <RundeckVersion :app="false" :logo="false" :title="appInfo.title" :logocss="appInfo.logocss" :number="version.number" :tag="version.tag"/>
             </div>
             <div>
                 <VersionDisplay :text="`${version.name} ${version.color} ${version.icon}`" :icon="version.icon" :color="version.color" />
@@ -40,10 +40,10 @@ import Vue from 'vue'
 import { Observer } from 'mobx-vue'
 import {Component, Prop} from 'vue-property-decorator'
 
-import { VersionInfo, ServerInfo } from '../../../stores/System'
+import {VersionInfo, ServerInfo, AppInfo} from '../../../stores/System'
 import { Release } from '../../../stores/Releases'
 
-import {url} from '../../../rundeckService'
+import {getRundeckContext, url} from '../../../rundeckService'
 
 import RundeckLogo from '../../svg/RundeckLogo.vue'
 import PagerdutyLogo from '../../svg/PagerdutyLogo.vue'
@@ -72,7 +72,11 @@ export default class RundeckInfoWidget extends Vue {
     @Prop()
     server!: ServerInfo
 
+    @Prop()
+    appInfo!: AppInfo
+
     async mounted() {
+        const context = getRundeckContext()
     }
 
     welcomeUrl() {
