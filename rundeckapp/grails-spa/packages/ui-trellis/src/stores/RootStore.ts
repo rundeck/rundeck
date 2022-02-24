@@ -24,12 +24,13 @@ export class RootStore {
     webhooks: WebhookStore
     theme: ThemeStore
 
-    constructor(readonly client: RundeckClient) {
+    constructor(readonly client: RundeckClient, appMeta: any = {}) {
         this.executionOutputStore = new ExecutionOutputStore(this, client)
         this.workflowStore = new WorkflowStore(this, client)
         this.navBar = new NavBar(this, client)
         this.utilityBar = new UtilityBar(this, client)
         this.system = new SystemStore(this, client)
+        this.system.loadMeta(appMeta)
         this.releases = new Releases(this, client)
         this.projects = new ProjectStore(this, client)
         this.news = new NewsStore(this, client)

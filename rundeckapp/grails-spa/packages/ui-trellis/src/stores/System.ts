@@ -10,11 +10,22 @@ import {RootStore} from './RootStore'
 export class SystemStore {
     @observable versionInfo: VersionInfo
     @observable serverInfo?: ServerInfo
+    @observable appInfo: AppInfo
 
     @observable loaded = false
 
     constructor(readonly root: RootStore, readonly client: RundeckClient) {
         this.versionInfo = new VersionInfo()
+        this.appInfo = new AppInfo()
+    }
+
+    loadMeta(meta: any) {
+        if (meta.title) {
+            this.appInfo.title = meta.title
+        }
+        if (meta.logocss) {
+            this.appInfo.logocss = meta.logocss
+        }
     }
 
     @Serial
@@ -35,6 +46,12 @@ export class SystemStore {
         this.loaded = true
     }
 }
+
+export class AppInfo {
+    title = 'Rundeck'
+    logocss = 'rdicon'
+}
+
 export class VersionInfo {
     @observable full!: string
     @observable number!: string
