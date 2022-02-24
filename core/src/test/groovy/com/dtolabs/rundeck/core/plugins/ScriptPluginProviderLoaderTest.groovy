@@ -216,9 +216,10 @@ providers:
     def "ValidatePluginMeta"() {
         setup:
         File fakeFile = new File("/tmp/fake-plugin.yaml")
+        String rundeckVersion="3.4.10"
         when:
 
-        def validation = ScriptPluginProviderLoader.validatePluginMeta(new PluginMeta(pluginMeta),fakeFile)
+        def validation = ScriptPluginProviderLoader.validatePluginMeta(new PluginMeta(pluginMeta),fakeFile,rundeckVersion)
 
         then:
         logResult == validation.messages
@@ -232,9 +233,37 @@ providers:
         true        |VALID| [name:"Test script",rundeckPluginVersion: "1.2", version:"1.0", pluginDefs: []] | []
         false       |INVALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", pluginDefs: []] | ["No targetHostCompatibility property specified in metadata","rundeckCompatibilityVersion cannot be null in metadata"]
         false       |INVALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", pluginDefs: []] | ["rundeckCompatibilityVersion cannot be null in metadata"]
-        false       |INCOMPATIBLE| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"1.0", pluginDefs: []] | ["Plugin is not compatible with this version of Rundeck"]
+        false       |INCOMPATIBLE| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"4.0", pluginDefs: []] | ["Plugin is not compatible with this version of Rundeck. (Current: 3.4.10, Plugin Compatibility: 4.0)"]
         true        |VALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"3.x", pluginDefs: []] | []
         true        |VALID| [name:"test-script",display:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"3.x", pluginDefs: []] | []
+
+    }
+    @Unroll
+    def "ValidatePluginMeta version 4"() {
+        setup:
+        File fakeFile = new File("/tmp/fake-plugin.yaml")
+
+        def pluginMeta = [
+            name: "Test script",
+            rundeckPluginVersion: "2.0",
+            version: "1.0",
+            targetHostCompatibility: "all",
+            pluginDefs: [],
+            rundeckCompatibilityVersion: compat
+        ]
+
+        when:
+
+        def validation = ScriptPluginProviderLoader.validatePluginMeta(new PluginMeta(pluginMeta),fakeFile,rundeckVersion)
+
+        then:
+        logResult == validation.messages
+        validation.state.valid == expectation
+        validation.state == state
+
+        where:
+        expectation | state | rundeckVersion   | compat    | logResult
+        true        | VALID | "4.0.0-SNAPSHOT" | "3.0.14+" | []
 
     }
 

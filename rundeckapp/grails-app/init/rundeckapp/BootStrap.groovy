@@ -232,23 +232,11 @@ class BootStrap {
                 } catch (IOException e) {
                     log.error("Unable to load static tokens file: "+e.getMessage())
                 }
-                Properties tokens = new Properties()
-                def splitRegex = " *, *"
-                userTokens.each { k, v ->
-                    def roles='api_token_group'
-                    def tokenTmp=v
-                    def split = v.toString().split(splitRegex)
-                    if (split.length > 1) {
-                        tokenTmp = split[0]
-                        def groupList = split.drop(1)
-                        roles = groupList.join(',')
-                    }
-                    tokens[tokenTmp]=k+','+roles
-                }
+                Properties tokenMap = convertToTokenMap(userTokens)
                 servletContext.setAttribute("TOKENS_FILE_PATH", new File(tokensfile).absolutePath)
-                servletContext.setAttribute("TOKENS_FILE_PROPS", tokens)
-                if (tokens) {
-                    log.debug("Loaded ${tokens.size()} tokens from tokens file: ${tokensfile}...")
+                servletContext.setAttribute("TOKENS_FILE_PROPS", tokenMap)
+                if (tokenMap) {
+                    log.debug("Loaded ${tokenMap.size()} tokens from tokens file: ${tokensfile}...")
                 }
             }
             //begin import at bootstrap time
@@ -572,6 +560,34 @@ class BootStrap {
          metricRegistry?.removeMatching(MetricFilter.ALL)
          log.info("Rundeck Shutdown detected")
      }
+
+    /**
+     * Convert to a map whose keys are tokens.
+     * @param userMap a map "user" -> "token[;...][role,...]"
+     * @return a map "token" -> "user,role[,...]"
+     */
+    static Properties convertToTokenMap(Properties userMap) {
+        def tokenMap = new Properties()
+        def splitTokensAndRolesRegex = " *, *"
+        def splitTokensRegex = " *; *"
+        userMap.each { k, v ->
+            def user = k.toString()
+            def tokensAndRoles = v.toString()
+            def split = tokensAndRoles.split(splitTokensAndRolesRegex)
+            def tokens = split[0]
+            def roles
+            if (split.length > 1) {
+                def groupList = split.drop(1)
+                roles = groupList.join(',')
+            } else {
+                roles = 'api_token_group'
+            }
+            tokens.split(splitTokensRegex).each { token ->
+                tokenMap[token] = user + ',' + roles
+            }
+        }
+        return tokenMap
+    }
 }
 
 

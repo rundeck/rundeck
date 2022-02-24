@@ -998,7 +998,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     static String generateExecutionURL(Execution execution,LinkGenerator grailsLinkGenerator) {
-        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: execution.id, absolute: true,
+        grailsLinkGenerator.link(controller: 'execution', action: 'show', id: execution.id, absolute: true,
                 params: [project: execution.project])
     }
     static String generateServerURL(LinkGenerator grailsLinkGenerator) {

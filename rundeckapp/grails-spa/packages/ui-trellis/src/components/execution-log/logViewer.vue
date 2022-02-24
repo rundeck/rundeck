@@ -158,6 +158,9 @@ export default class LogViewer extends Vue {
     maxLogSize!: number
 
     @Prop()
+    trimOutput!: number
+
+    @Prop()
     config?: IEventViewerSettings
 
     @Prop({default: true})
@@ -417,17 +420,10 @@ export default class LogViewer extends Vue {
         }, {passive: false})
     }
 
-    private handleExecutionLogResp(res: EnrichedExecutionOutput) {
-      this.execCompleted = res.execCompleted
-      this.completed = res.completed
-      this.nextProgress = res.completed ?
-        100:
-        Math.round((parseInt(res.offset) / res.totalSize) * 100)
+    private handleExecutionLogResp() {
+      if (!this.trimOutput) return
 
-      if (res.entries.length == 0)
-        return
-
-      if (this.overSize && this.viewer.offset > this.maxLogSize) {
+      if (this.viewer.offset > this.trimOutput) {
         const removeSize = this.logBuilder.dropChunk()
         for (let x = 0; x < removeSize; x++) {
           const scapeGoat = this.$options.vues.shift()
@@ -556,7 +552,7 @@ export default class LogViewer extends Vue {
 
             this.logSize = this.viewer.offset
             this.logLines = this.viewer.entries.length
-            // this.handleExecutionLogResp(res)
+            this.handleExecutionLogResp()
 
             if (this.viewer.completed)
                 break
