@@ -34,7 +34,7 @@ export class SystemStore {
             return
 
         const resp = await this.client.systemInfoGet()
-        
+
         const verString = resp.system!.rundeckProperty!.version
         const ver = new RundeckVersion({versionString: verString})
 
@@ -70,9 +70,9 @@ export class VersionInfo {
     }
 
     fromRundeckVersion(ver: RundeckVersion): VersionInfo {
-        this.number = ver.versionSemantic(),
-        this.name = ver.versionName(),
-        this.icon = ver.versionIcon(),
+        this.number = ver.versionSemantic()
+        this.name = ver.versionName()
+        this.icon = ver.versionIcon()
         this.color = ver.versionColor()
         this.tag = ver.data().tag
 
