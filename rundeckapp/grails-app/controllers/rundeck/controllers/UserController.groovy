@@ -59,8 +59,18 @@ class UserController extends ControllerBase{
         redirect(action:"login")
     }
 
+    /**
+     * Error action can accept an URL query parameter: message
+     * If there is a NonEmpty message then this message instead of the default `invalid.username.and.password`
+     * message will be displayed in the login form.
+     *
+     * If there is no message parameter provided in URL, then the default `invalid.username.and.password` will be displayed
+     */
     def error = {
-        flash.loginerror = message(code: "invalid.username.and.password")
+        flash.loginerror = request.getParameter("message")?.trim() ?
+                request.getParameter("message").trim() :
+                message(code:  "invalid.username.and.password")
+
         return render(view:'login')
     }
 
