@@ -7,7 +7,7 @@
     <div id="nav-rd-home">
       <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
       <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}">
-        <i class="rdicon app-logo" style="display:block"></i>
+        <i class="${enc(attr:g.appLogocss()+' app-logo')}" style="display:block"></i>
       </a>
     </div>
     <!-- <div class="navbar-minimize">

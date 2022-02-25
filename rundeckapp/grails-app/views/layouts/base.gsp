@@ -36,7 +36,7 @@
     <meta name="locale" content="${response.locale.toString()}"/>
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
+    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: g.appFavicon())}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
     <g:render template="/common/navData"/>
@@ -138,6 +138,11 @@
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
         activeTourStep: '${session.filterPref?.activeTourStep}',
+        appMeta: {
+            title: '${g.appTitle()}',
+            logo:'${g.appLogo()}',
+            logocss:'${g.appLogocss()}'
+        },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
             eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}},
