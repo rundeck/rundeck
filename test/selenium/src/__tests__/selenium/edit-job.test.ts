@@ -11,50 +11,74 @@ import '@rundeck/testdeck/test/rundeck'
 let ctx = CreateContext({projects: ['SeleniumBasic']})
 let loginPage: LoginPage
 let jobCreatePage: JobCreatePage
+let jobShowPage: JobShowPage
 
 beforeAll( async () => {
     loginPage = new LoginPage(ctx)
     jobCreatePage = new JobCreatePage(ctx, 'SeleniumBasic')
+    jobShowPage = new JobShowPage(ctx, 'SeleniumBasic', '')
 })
+
+const testVars = {
+    group: 'testGroup',
+    newDescriptionText: 'a new job description',
+    optionInputText: ['seleniumOption1', 'xyz'],
+    tags: 'test1,test2,test3,',
+    tagsCount: 3,
+}
 
 beforeAll(async () => {
     await loginPage.login('admin', 'admin')
 })
 
-describe('job', () => {
-    it('edit job description', async () => {
+describe('editing a job', () => {
+    beforeAll(async () => {
         await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
         await ctx.driver.wait(until.urlContains('/job/edit'), 30000)
-        let descriptionTextField= await jobCreatePage.descriptionTextarea()
+        await ctx.driver.wait(until.elementLocated(By.css('div#schedJobNameLabel')), 10000)
+    })
+    afterAll(async () => {
+        const save = await jobCreatePage.editSaveButton()
+        await save.click()
+    })
+    it('edits and saves job description correctly', async () => {
+        const descriptionTextField = await jobCreatePage.descriptionTextarea()
         expect(descriptionTextField).toBeDefined()
 
-        //NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
-        //make textarea visible
+        // NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
+        // make textarea visible
         await ctx.driver.executeScript('jQuery(\'form textarea[name="description"]\').show()')
         await ctx.driver.wait(until.elementIsVisible(descriptionTextField))
-        let newDescriptionText='a new job description'
         descriptionTextField.clear()
-        descriptionTextField.sendKeys(newDescriptionText)
+        descriptionTextField.sendKeys(testVars.newDescriptionText)
+    })
+    it('correctly sets the group', async () => {
+        const chooseGroupInput = await jobCreatePage.groupChooseInput()
+        await ctx.driver.wait(until.elementIsVisible(chooseGroupInput))
+        expect(chooseGroupInput).toBeDefined()
+        chooseGroupInput.sendKeys(testVars.group)
+    })
+})
 
-        //save the job
-        let save = await jobCreatePage.editSaveButton()
-        await save.click()
-
+describe('showing the edited job', () => {
+    beforeAll(async () => {
         await ctx.driver.wait(until.urlContains('/job/show'), 15000)
-        let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
-
-        //verfiy job description
-        let foundText=await jobShowPage.jobDescriptionText()
-        expect(foundText).toEqual(newDescriptionText)
-
-        //verify options exist
+    })
+    it('verifies job group', async () => {
+        const groupLabel = await jobShowPage.jobGroupText()
+        expect(groupLabel).toEqual(testVars.group)
+    })
+    it('verifies job description', async () => {
+        const foundText = await jobShowPage.jobDescriptionText()
+        expect(foundText).toEqual(testVars.newDescriptionText)
+    })
+    it('verifies options exist', async () => {
         await ctx.driver.wait(until.elementLocated(By.css('#optionSelect')), 10000)
-        //get option input field
-        let optionRunInput1 = await jobShowPage.optionInputText('seleniumOption1')
+
+        const optionRunInput1 = await jobShowPage.optionInputText(testVars.optionInputText[0])
         expect(optionRunInput1).toBeDefined()
 
-        let optionRunInput2 = await jobShowPage.optionInputText('xyz')
+        const optionRunInput2 = await jobShowPage.optionInputText(testVars.optionInputText[1])
         expect(optionRunInput2).toBeDefined()
-
     })
 })

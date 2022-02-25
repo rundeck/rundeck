@@ -3,10 +3,8 @@ import {By, until, WebElementPromise} from 'selenium-webdriver'
 import {Page} from '@rundeck/testdeck/page'
 import {Context} from '@rundeck/testdeck/context'
 
-export const Elems= {
-    jobNameInput  : By.css('form input[name="jobName"]'),
-    groupPathInput  : By.css('form input[name="groupPath"]'),
-    descriptionTextarea  : By.css('form textarea[name="description"]'),
+export const Elems = {
+    // Common elements
     saveButton  : By.css('#Create'),
     updateButton  : By.css('#jobUpdateSaveButton'),
     cancelButton  : By.css('#createFormCancelButton'),
@@ -14,7 +12,18 @@ export const Elems= {
     editSaveButton: By.css('#editForm div.card-footer input.btn.btn-cta[type=submit][value=Save]'),
     errorAlert  : By.css('#error'),
     formValidationAlert: By.css('#page_job_edit > div.list-group-item > div.alert.alert-danger'),
-
+    storagebrowse: By.xpath('//*[starts-with(@id,"storagebrowse")]'),
+    storagebrowseClose: By.xpath('//*[@id="storagebrowse"]/div/div/div[3]/button[1]'),
+    // Details tab
+    jobNameInput  : By.css('form input[name="jobName"]'),
+    groupPathInput  : By.css('form input[name="groupPath"]'),
+    descriptionTextarea  : By.css('form textarea[name="description"]'),
+    groupChooseButton: By.css('span.btn[data-target="#groupChooseModal"]'),
+    groupChooseInput : By.css('input#schedJobGroup'),
+    groupChooseModal : By.css('div#groupChooseModal_content'),
+    modalGroupEntry : By.css('span.groupname.jobgroupexpand'),
+    modalCancel : By.css('button.btn[data-dismiss="modal"]'),
+    // Workflow tab
     tabWorkflow  : By.css('#job_edit_tabs > li > a[href=\'#tab_workflow\']'),
     addNewWfStepButton: By.xpath('//*[@id="wfnewbutton"]/span'),
     addNewWfStepCommand: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[data-node-step-type=command]'),
@@ -30,40 +39,6 @@ export const Elems= {
     option0KeySelector: By.xpath('//*[starts-with(@id,"defaultStoragePath")]'),
     option0OpenKeyStorage: By.css('.btn.btn-default.obs-select-storage-path'),
     option0li: By.css('#optli_0'),
-
-    storagebrowse: By.xpath('//*[starts-with(@id,"storagebrowse")]'),
-    storagebrowseClose: By.xpath('//*[@id="storagebrowse"]/div/div/div[3]/button[1]'),
-
-    notificationsTab: By.css("#job_edit_tabs > li > a[href=\'#tab_notifications\']"),
-    notificationsTabContent: By.css("#tab_notifications"),
-    enableNotifications: By.css('#notifiedTrue'),
-    notifyOnsuccessEmail: By.css('#notifyOnsuccessEmail'),
-    vueNotificationEditSection: By.css('#job-editor-notifications-vue'),
-    vueAddSuccessButton: By.css('#job-notifications-onstart > .list-group-item:first-child > button'),
-    vueEditNotificationModal: By.css('#job-notifications-edit-modal'),
-    vueEditNotificationModalSaveBtn: By.css('#job-notifications-edit-modal-btn-save'),
-    vueEditNotificationModalCancelBtn: By.css('#job-notifications-edit-modal-btn-cancel'),
-    vueEditNotificationPluginTypeDropdownButton: By.css('#notification-edit-type-dropdown > button'),
-    vueEditNotificationPluginTypeDropdownMenu: By.css('#notification-edit-type-dropdown > ul'),
-    vueNotificationConfig: By.css('#notification-edit-config'),
-    notifySuccessRecipients: By.css('#notifySuccessRecipients'),
-    tabNodes  : By.css('#job_edit_tabs > li > a[href=\'#tab_nodes\']'),
-    doNodedispatchTrue  : By.xpath('//*[@id="doNodedispatchTrue"]'),
-    nodeFilter  : By.xpath('//*[@id="schedJobNodeFilter"]'),
-    nodeFilterButton  : By.css('#job_edit__node_filter_include button.node_filter__dosearch'),
-    nodeFilterSelectAllLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_all'),
-    nodeFilterMenuLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown'),
-    matchedNodesText  : By.css('#nodegroupitem .node_filter_results__matched_nodes .node_filter_results__matched_nodes_count'),
-    showExcludedNodesRadioYes  : By.css('#nodegroupitem #excludeFilterTrue'),
-    editableFilterYes  : By.css('#nodegroupitem #editableTrue'),
-    schedJobnodeThreadcount: By.css('#nodegroupitem #schedJobnodeThreadcount'),
-    schedJobnodeRankAttribute: By.css('#nodegroupitem #schedJobnodeRankAttribute'),
-    nodeRankOrderDescending: By.css('#nodegroupitem #nodeRankOrderDescending'),
-    nodeKeepgoingTrue: By.css('#nodegroupitem #nodeKeepgoingTrue'),
-    successOnEmptyNodeFilterTrue: By.css('#nodegroupitem #successOnEmptyNodeFilterTrue'),
-    nodesSelectedByDefaultFalse: By.css('#nodegroupitem #nodesSelectedByDefaultFalse'),
-    orchestratorDropdown: By.css('#orchestrator-edit-type-dropdown'),
-    orchestratorDropdownButton: By.css('#orchestrator-edit-type-dropdown > button'),
     workflowStrategy  : By.xpath('//*[@id="workflow.strategy"]'),
     strategyPluginparallel: By.xpath('//*[@id="strategyPluginparallel"]'),
     strategyPluginparallelMsg: By.xpath('//*[@id="strategyPluginparallel"]/span/span'),
@@ -76,22 +51,69 @@ export const Elems= {
     revertOptionsConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]'),
 
     wfUndoButton: By.xpath('//*[@id="wfundoredo"]/div/span[1]'),
-    //wfUndoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_undo.flash_undo'),
+    // wfUndoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_undo.flash_undo'),
     wfRedoButton: By.xpath('//*[@id="wfundoredo"]/div/span[2]'),
-    //wfRedoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_redo.flash_undo'),
+    // wfRedoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_redo.flash_undo'),
     revertWfButton: By.xpath('//*[@id="wfundoredo"]/div/span[3]'),
-    revertWfConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
-
+    revertWfConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]'),
+    // Notifications Tab
+    notificationsTab: By.css('#job_edit_tabs > li > a[href=\'#tab_notifications\']'),
+    notificationsTabContent: By.css('#tab_notifications'),
+    enableNotifications: By.css('#notifiedTrue'),
+    notifyOnsuccessEmail: By.css('#notifyOnsuccessEmail'),
+    vueNotificationEditSection: By.css('#job-editor-notifications-vue'),
+    vueAddSuccessButton: By.css('#job-notifications-onstart > .list-group-item:first-child > button'),
+    vueEditNotificationModal: By.css('#job-notifications-edit-modal'),
+    vueEditNotificationModalSaveBtn: By.css('#job-notifications-edit-modal-btn-save'),
+    vueEditNotificationModalCancelBtn: By.css('#job-notifications-edit-modal-btn-cancel'),
+    vueEditNotificationPluginTypeDropdownButton: By.css('#notification-edit-type-dropdown > button'),
+    vueEditNotificationPluginTypeDropdownMenu: By.css('#notification-edit-type-dropdown > ul'),
+    vueNotificationConfig: By.css('#notification-edit-config'),
+    notifySuccessRecipients: By.css('#notifySuccessRecipients'),
+    // Nodes tab
+    tabNodes  : By.css('#job_edit_tabs > li > a[href=\'#tab_nodes\']'),
+    doNodedispatchTrue  : By.css('input#doNodedispatchTrue'),
+    doNodedispatchFalse  : By.css('input#doNodedispatchFalse'),
+    nodeFilterMenuLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown'),
+    nodeFilterSelectAllLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_all'),
+    nodeFilterInput  : By.css('input#schedJobNodeFilter'),
+    nodeFilterHelp : By.css('button#filterSearchHelpBtn'),
+    nodeFilterSearch  : By.css('#job_edit__node_filter_include button.node_filter__dosearch'),
+    excludeFilterMenuLink  : By.css('#job_edit__node_filter_exclude .job_edit__node_filter__filter_select_dropdown'),
+    excludeFilterSelectAllLink  : By.css('#job_edit__node_filter_exclude .job_edit__node_filter__filter_select_all'),
+    excludeFilterInput: By.css('input#schedJobNodeFilterExclude'),
+    excludeFilterSearch : By.css('#job_edit__node_filter_exclude button.node_filter__dosearch'),
+    matchedNodesText  : By.css('#nodegroupitem .node_filter_results__matched_nodes .node_filter_results__matched_nodes_count'),
+    matchedNodesRefresh : By.css('button.refresh_nodes'),
+    showExcludedNodesRadioYes  : By.css('#nodegroupitem #excludeFilterTrue'),
+    showExcludedNodesRadioNo  : By.css('#nodegroupitem #excludeFilterFalse'),
+    editableFilterYes  : By.css('#nodegroupitem #editableTrue'),
+    editableFilterNo  : By.css('#nodegroupitem #editableFalse'),
+    schedJobnodeThreadcount: By.css('#nodegroupitem #schedJobnodeThreadcount'),
+    schedJobnodeRankAttribute: By.css('#nodegroupitem #schedJobnodeRankAttribute'),
+    nodeRankOrderAscending: By.css('#nodegroupitem #nodeRankOrderAscending'),
+    nodeRankOrderDescending: By.css('#nodegroupitem #nodeRankOrderDescending'),
+    nodeFailsKeepgoingTrue: By.css('#nodegroupitem #nodeKeepgoingTrue'),
+    nodeFailsKeepgoingFalse: By.css('#nodegroupitem #nodeKeepgoingFalse'),
+    emptyNodeSetFailTrue: By.css('#nodegroupitem #successOnEmptyNodeFilterTrue'),
+    emptyNodeSetFailFalse: By.css('#nodegroupitem #successOnEmptyNodeFilterFalse'),
+    nodesSelectedByDefaultTrue: By.css('#nodegroupitem #nodesSelectedByDefaultTrue'),
+    nodesSelectedByDefaultFalse: By.css('#nodegroupitem #nodesSelectedByDefaultFalse'),
+    orchestratorDropdown: By.css('#orchestrator-edit-type-dropdown'),
+    orchestratorDropdownButton: By.css('#orchestrator-edit-type-dropdown > button'),
+    // Schedule tab
+    // Execution Plugins tab
+    // Other tab
+    // Job Queue tab
 }
-
 
 export class JobCreatePage extends Page {
     path = '/resources/createProject'
-    projectName=''
+    projectName = ''
 
     constructor(readonly ctx: Context, readonly project: string) {
         super(ctx)
-        this.projectName=project
+        this.projectName = project
         this.path = `/project/${project}/job/create`
     }
     editPagePath(jobId: string){
@@ -102,14 +124,23 @@ export class JobCreatePage extends Page {
         await driver.get(this.ctx.urlFor(this.editPagePath(jobId)))
     }
 
-    async jobNameInput(){
+    async jobNameInput() {
         return await this.ctx.driver.findElement(Elems.jobNameInput)
     }
-    async groupPathInput(){
+    async groupPathInput() {
         return await this.ctx.driver.findElement(Elems.groupPathInput)
     }
-    async descriptionTextarea(){
+    async descriptionTextarea() {
         return await this.ctx.driver.findElement(Elems.descriptionTextarea)
+    }
+    async groupChooseButton() {
+        return await this.ctx.driver.findElement(Elems.groupChooseButton)
+    }
+    async groupChooseInput() {
+        return await this.ctx.driver.findElement(Elems.groupChooseInput)
+    }
+    async groupChooseModal() {
+        return await this.ctx.driver.findElement(Elems.groupChooseModal)
     }
     async saveButton() {
         return this.ctx.driver.findElement(Elems.saveButton)
@@ -246,39 +277,48 @@ export class JobCreatePage extends Page {
         return this.ctx.driver.wait(until.elementLocated(Elems.doNodedispatchTrue),15000)
     }
     async nodeFilter(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilter),15000)
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterInput),15000)
     }
     async nodeFilterButton(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterButton),15000)
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSearch),15000)
+    }
+    async excludeFilterSearch() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.excludeFilterSearch),15000)
     }
     async nodeFilterMenuLink(){
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterMenuLink),15000)
     }
-    async showExcludedNodesRadioYes(){
+    async showExcludedNodesRadioYes() {
         return this.ctx.driver.wait(until.elementLocated(Elems.showExcludedNodesRadioYes),15000)
     }
-    async editableFilterYes(){
+    async editableFilterYes() {
         return this.ctx.driver.wait(until.elementLocated(Elems.editableFilterYes),15000)
     }
-    async schedJobnodeThreadcount(){
+    async schedJobnodeThreadcount() {
         return this.ctx.driver.wait(until.elementLocated(Elems.schedJobnodeThreadcount),15000)
     }
-    async schedJobnodeRankAttribute(){
+    async schedJobnodeRankAttribute() {
         return this.ctx.driver.wait(until.elementLocated(Elems.schedJobnodeRankAttribute),15000)
     }
-    async nodeRankOrderDescending(){
+    async nodeRankOrderDescending() {
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeRankOrderDescending),15000)
     }
-    async nodeKeepgoingTrue(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.nodeKeepgoingTrue),15000)
+    async nodeKeepgoingTrue() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFailsKeepgoingTrue),15000)
     }
-    async successOnEmptyNodeFilterTrue(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.successOnEmptyNodeFilterTrue),15000)
+    async nodeKeepgoingFalse() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFailsKeepgoingFalse),15000)
     }
-    async nodesSelectedByDefaultFalse(){
+    async successOnEmptyNodeFilterTrue() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.emptyNodeSetFailTrue),15000)
+    }
+    async successOnEmptyNodeFilterFalse() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.emptyNodeSetFailFalse),15000)
+    }
+    async nodesSelectedByDefaultFalse() {
         return this.ctx.driver.wait(until.elementLocated(Elems.nodesSelectedByDefaultFalse),15000)
     }
-    async nodeFilterSelectAllLink(){
+    async nodeFilterSelectAllLink() {
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSelectAllLink),15000)
     }
     async matchedNodes(){
@@ -289,6 +329,9 @@ export class JobCreatePage extends Page {
         await matchedNodeElem.isDisplayed()
         return await matchedNodeElem.getText()
     }
+    async orchestratorDropdown() {
+        return this.ctx.driver.findElement(Elems.orchestratorDropdown)
+    }
     async orchestratorDropdownButton() {
         return this.ctx.driver.wait(until.elementLocated(Elems.orchestratorDropdownButton),15000)
     }
@@ -297,6 +340,10 @@ export class JobCreatePage extends Page {
           '#orchestrator-edit-type-dropdown > ul > li > a[role=button][data-plugin-type=' + val + ']'
         )
         return this.ctx.driver.findElement(orchChoiceLink)
+    }
+    async orchestratorOptions() {
+        const dropdown = await this.orchestratorDropdown()
+        return dropdown.findElements(By.css('ul.dropdown-menu li'));
     }
     async workflowStrategy(){
         return this.ctx.driver.wait(until.elementLocated(Elems.workflowStrategy),15000)
