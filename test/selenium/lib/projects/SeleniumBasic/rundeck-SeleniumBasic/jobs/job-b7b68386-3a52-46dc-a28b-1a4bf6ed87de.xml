@@ -2,8 +2,8 @@
   <job>
     <context>
       <options preserveOrder='true'>
-        <option name='seleniumOption1' />
-        <option name='xyz' required='true'>
+        <option name='seleniumOption1' value='Option1' />
+        <option name='xyz' required='true' value='abc'>
           <label>required</label>
         </option>
       </options>
