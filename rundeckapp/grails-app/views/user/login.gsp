@@ -179,9 +179,9 @@
                     </g:showLocalLogin>
                   </div>
                   <div class="card-footer text-center">
-                    <g:if test="${flash.loginerror}">
+                    <g:if test="${flash.loginErrorCode}">
                       <div class="alert alert-danger">
-                          <span><g:enc>${flash.loginerror}</g:enc></span>
+                          <span><g:message code="${flash.loginErrorCode}" default="Login failed."/></span>
                       </div>
                     </g:if>
                   <div class="alert alert-danger" style="display:none;" id="empty-username-msg">

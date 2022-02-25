@@ -107,7 +107,6 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
             getString(_,_)>>""
             getString(_)>>""
         }
-        messageSource.addMessage("user.not.allowed",Locale.default,"User Not Allowed")
 
         when:
         interceptor.userService = userServiceMock
@@ -118,12 +117,13 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
         then:
         allowed == expected
+        flash.loginErrorCode==code
 
         where:
-        requiredRole | username | groups           | expected
-        "enter"      | "auser"  | ["grp1"]         | false
-        "enter"      | "auser"  | ["grp1","enter"] | true
-        ""           | "auser"  | ["grp1"]         | true
+        requiredRole | username | groups            | expected | code
+        "enter"      | "auser"  | ["grp1"]          | false    | 'user.not.allowed'
+        "enter"      | "auser"  | ["grp1", "enter"] | true     | null
+        ""           | "auser"  | ["grp1"]          | true     | null
 
 
     }
