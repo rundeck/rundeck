@@ -4,7 +4,9 @@ import {Page} from '@rundeck/testdeck/page'
 import { Context } from '@rundeck/testdeck/context'
 
 export const Elems = {
+  jobGroup : By.css('div.jobInfoSection a.text-secondary'),
   jobTitleLink: By.css('#jobInfo_ > span > a.job-header-link'),
+  jobTags: By.css('ul#tagsList > li.tag-pill-li'),
   jobUuidText: By.css('#subtitlebar.job-page > div > div > section > small.uuid'),
   jobDescription: By.css('#subtitlebar.job-page > div > div > div.jobInfoSection > section > span.h5'),
   optionInput: By.css('#8f95c8d5_seleniumOption1'),
@@ -32,11 +34,21 @@ export class JobShowPage extends Page {
   }
 
 
+  async jobGroup() {
+    return await this.ctx.driver.findElement(Elems.jobGroup)
+  }
+  async jobGroupText() {
+    const jobGroup = await this.jobGroup()
+    return await jobGroup.getText()
+  }
   async jobTitleLink(){
     return await this.ctx.driver.findElement(Elems.jobTitleLink)
   }
   async jobEditButton(){
     return await this.ctx.driver.findElement(Elems.jobEditButton)
+  }
+  async jobTags(){
+    return await this.ctx.driver.findElements(Elems.jobTags)
   }
   async jobActionDropdown(){
     return await this.ctx.driver.findElement(Elems.jobActionDropdown)
