@@ -25,6 +25,7 @@ const testVars = {
     optionInputText: ['seleniumOption1', 'xyz'],
     tags: 'test1,test2,test3,',
     tagsCount: 3,
+    scheduledDay: {name: 'every day', index: 0},
 }
 
 beforeAll(async () => {
@@ -41,22 +42,42 @@ describe('editing a job', () => {
         const save = await jobCreatePage.editSaveButton()
         await save.click()
     })
-    it('edits and saves job description correctly', async () => {
-        const descriptionTextField = await jobCreatePage.descriptionTextarea()
-        expect(descriptionTextField).toBeDefined()
+    describe('details tab', () => {
+        it('edits and saves job description correctly', async () => {
+            const descriptionTextField = await jobCreatePage.descriptionTextarea()
+            expect(descriptionTextField).toBeDefined()
 
-        // NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
-        // make textarea visible
-        await ctx.driver.executeScript('jQuery(\'form textarea[name="description"]\').show()')
-        await ctx.driver.wait(until.elementIsVisible(descriptionTextField))
-        descriptionTextField.clear()
-        descriptionTextField.sendKeys(testVars.newDescriptionText)
+            // NB: in order to edit the description, we seem to have to bypass the Ace JS text editor
+            // make textarea visible
+            await ctx.driver.executeScript('jQuery(\'form textarea[name="description"]\').show()')
+            await ctx.driver.wait(until.elementIsVisible(descriptionTextField))
+            descriptionTextField.clear()
+            descriptionTextField.sendKeys(testVars.newDescriptionText)
+        })
+        it('correctly sets the group', async () => {
+            const chooseGroupInput = await jobCreatePage.groupChooseInput()
+            await ctx.driver.wait(until.elementIsVisible(chooseGroupInput))
+            expect(chooseGroupInput).toBeDefined()
+            chooseGroupInput.sendKeys(testVars.group)
+        })
     })
-    it('correctly sets the group', async () => {
-        const chooseGroupInput = await jobCreatePage.groupChooseInput()
-        await ctx.driver.wait(until.elementIsVisible(chooseGroupInput))
-        expect(chooseGroupInput).toBeDefined()
-        chooseGroupInput.sendKeys(testVars.group)
+    describe('schedules tab', () => {
+        beforeAll(async () => {
+            const scheduleTab = await jobCreatePage.scheduleTab()
+            const scheduleRunYes = await jobCreatePage.scheduleRunYes()
+            await scheduleTab.click()
+            await ctx.driver.wait(until.urlContains('#schedule'), 15000)
+            await scheduleRunYes.click()
+        })
+        it(`sets the job to run on ${testVars.scheduledDay.name}`, async () => {
+            const everyDayOfWeekCheckbox = await jobCreatePage.scheduleEveryDayCheckbox();
+            const scheduleDaysCheckboxDiv = await jobCreatePage.scheduleDaysCheckboxDiv();
+            if (!await everyDayOfWeekCheckbox.isSelected()) {
+                await everyDayOfWeekCheckbox.click()
+            }
+
+            expect(await scheduleDaysCheckboxDiv.isDisplayed()).toEqual(true)
+        })
     })
 })
 
@@ -80,5 +101,15 @@ describe('showing the edited job', () => {
 
         const optionRunInput2 = await jobShowPage.optionInputText(testVars.optionInputText[1])
         expect(optionRunInput2).toBeDefined()
+    })
+    it(`verifies scheduled day (${testVars.scheduledDay.name})`, async () => {
+        const jobDefButton = await jobShowPage.jobDefinition();
+        const jobDefModal = await jobShowPage.jobDefinitionModal();
+        const everyDaySelected = await jobShowPage.jobDefModalScheduleEveryDaySelected();
+
+        await jobDefButton.click();
+        await ctx.driver.wait(until.elementIsVisible(jobDefModal));
+
+        expect(await everyDaySelected.getText()).toEqual(testVars.scheduledDay.name);
     })
 })
