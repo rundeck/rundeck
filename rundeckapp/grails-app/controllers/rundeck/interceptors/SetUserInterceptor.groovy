@@ -32,7 +32,6 @@ class SetUserInterceptor {
     ApiService apiService
     ConfigurationService configurationService
 
-    def messageSource
     int order = HIGHEST_PRECEDENCE + 30
 
     SetUserInterceptor() {
@@ -128,7 +127,7 @@ class SetUserInterceptor {
                 SecurityContextHolder.clearContext()
                 request.logout()
                 response.status = 403
-                flash.loginerror = messageSource.getMessage("user.not.allowed",null,null)
+                flash.loginErrorCode = 'user.not.allowed'
                 render view: '/user/login.gsp'
                 return false
             }

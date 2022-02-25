@@ -839,4 +839,20 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         then:
             response.status == 403
     }
+
+    def "error sets loginErrorCode flash "(){
+        given:
+            if(code){
+                flash.loginErrorCode=code
+            }
+        when:
+            controller.error()
+        then:
+            flash.loginErrorCode!=null
+            flash.loginErrorCode==expected
+        where:
+            code              | expected
+            null              | 'invalid.username.and.password'
+            'some.other.code' | 'some.other.code'
+    }
 }

@@ -59,8 +59,10 @@ class UserController extends ControllerBase{
         redirect(action:"login")
     }
 
-    def error = {
-        flash.loginerror = message(code: "invalid.username.and.password")
+    def error() {
+        if(!flash.loginErrorCode){
+            flash.loginErrorCode = 'invalid.username.and.password'
+        }
         return render(view:'login')
     }
 
