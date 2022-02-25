@@ -241,7 +241,7 @@
             </nav>
         </g:ifPageProperty>
         <g:ifPageProperty name="page.subtitlesection">
-            <nav id="subtitlebar" class=" subtitlebar has-content ${pageProperty(name: 'page.subtitlecss')}">
+            <nav id="subtitlebar" class="has-content ${pageProperty(name: 'page.subtitlecss')}">
 
                 <g:pageProperty name="page.subtitlesection"/>
 

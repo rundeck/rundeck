@@ -380,6 +380,8 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.executionService = execControl
         controller.request.api_version = 11
         controller.params.project = "Test"
+        controller.response.format = "xml"
+
         def svcMock = Mock(ApiService)
         svcMock.requireApi(*_)>>{ request, response, version ->
             version=14
@@ -494,6 +496,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.frameworkService = fwkControl
         controller.request.api_version = 11
         controller.params.project = "WRONG"
+        controller.response.format = "xml"
         def execControl = Mock(ExecutionService)
         execControl.queryExecutions(*_)>>{ ExecutionQuery query, int offset, int max ->
             assert null!=query
@@ -608,6 +611,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
+        controller.response.format = "xml"
 
             controller.apiService = Mock(ApiService) {
             1 * requireApi(_,_) >> true
@@ -730,6 +734,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.executionService.applicationContext = Mock(ApplicationContext){
             getBeansOfType ()>> []
         }
+        controller.response.format = "json"
 
         def listOnMemory = {
             Date now = new Date()
@@ -807,7 +812,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
 
         params.api_version = 32
         request.contentType = "application/json"
-
+        controller.response.format = "json"
 
         controller.apiService = Mock(ApiService)
         1 * controller.apiService.requireApi(_,_,32)>>true
@@ -837,6 +842,7 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
         controller.request.api_version = apiVersion
         controller.request.contentType = "application/json"
         params.passiveAs503 = passiveAs503
+        controller.response.format = "json"
 
         def apiMock = Mock(ApiService)
         apiMock.requireApi(*_)>>{ request, response, int min ->

@@ -73,7 +73,7 @@
 <div class="row">
 <div class="col-xs-12">
 <div data-ko-bind="projectHome">
-  <h3> <span data-bind="text: project().label"></span></h3>
+  <h3 style="margin-top: 0"> <span data-bind="text: project().label"></span></h3>
   <span class="text-project-description" >
       <p data-bind="text: project().description"></p>
   </span>

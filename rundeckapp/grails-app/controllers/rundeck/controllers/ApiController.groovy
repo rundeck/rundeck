@@ -21,6 +21,10 @@ import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
+
+import org.rundeck.app.api.model.SystemInfoModel
+import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import grails.web.mapping.LinkGenerator
 import org.rundeck.core.auth.AuthConstants
@@ -34,10 +38,19 @@ import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 
 /**
  * Contains utility actions for API access and responses
  */
+@Controller()
 class ApiController extends ControllerBase{
     def defaultAction = "invalid"
     def quartzScheduler
@@ -465,6 +478,13 @@ class ApiController extends ControllerBase{
         value = RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,
         description = 'Read System Info'
     )
+    @Get(uri="/system/info", produces = MediaType.APPLICATION_JSON)
+    @Operation(method = "GET", summary = "Get Rundeck server information and stats",
+            description = "Display stats and info about the rundeck server"
+    )
+    @ApiResponse(responseCode = "200", description = "System info response", content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation= SystemInfoModel.class)))
+    @Tag(name = "system")
     def apiSystemInfo(){
         if (!apiService.requireApi(request, response)) {
             return
@@ -505,6 +525,36 @@ class ApiController extends ControllerBase{
         ServiceLoader.load(ApplicationExtension).each {
             extMeta[it.name] = it.infoMetadata
         }
+        SystemInfoModel systemInfoModel = new SystemInfoModel(
+            system:[
+                timestamp: [ epoch:nowDate.getTime(), unit:'ms', datetime:g.w3cDateValue(date:nowDate)],
+                rundeck: [ version: appVersion,
+                           build: grailsApplication.metadata['build.ident'],
+                           buildGit:grailsApplication.metadata['build.core.git.description'],
+                           node: nodeName, base: servletContext.getAttribute("RDECK_BASE"),
+                           apiversion: ApiVersions.API_CURRENT_VERSION,
+                           serverUUID:sUUID ],
+                executions: [active:executionModeActive, executionMode:executionModeActive?'active':'passive'],
+                os: [arch:osArch, name:osName, version:osVersion],
+                jvm:[name:vmName, vendor:javaVendor,version:javaVersion,implementationVersion:vmVersion],
+                stats: [uptime:
+                               [ duration:durationTime, unit: 'ms', since: [epoch: startupDate.getTime(), unit:'ms',
+                                                                           datetime:(g.w3cDateValue(date: startupDate))]
+                               ],
+                       cpu: [loadAverage:[unit:'percent',average:load], processors:(processorsCount)],
+                       memory:[unit:'byte', max:(Runtime.getRuntime().maxMemory()),
+                               free:(Runtime.getRuntime().freeMemory()), total:(Runtime.getRuntime().totalMemory())],
+                       scheduler: [running:quartzScheduler.getCurrentlyExecutingJobs().size(),
+                                   threadPoolSize:quartzScheduler.getMetaData().threadPoolSize],
+                       threads: [active: threadActiveCount]
+                  ],
+                metrics: [href:metricsJsonUrl,contentType:'application/json'],
+                threadDump: [href:metricsThreadDumpUrl,contentType:'text/plain'],
+                healthcheck: [href:metricsHealthcheckUrl,contentType:'application/json'],
+                ping: [href:metricsPingUrl, contentType:'text/plain'],
+                extended:extMeta?:null
+            ]
+        )
         withFormat{
             xml{
                 return apiService.renderSuccessXml(request,response){
@@ -539,8 +589,8 @@ class ApiController extends ControllerBase{
                                     datetime(g.w3cDateValue(date: startupDate))
                                 }
                             }
-            //                errorCount('12')
-        //                    requestCount('12')
+                            //                errorCount('12')
+                            //                    requestCount('12')
                             cpu{
                                 loadAverage(unit:'percent',load)
                                 processors(processorsCount)
@@ -580,80 +630,8 @@ class ApiController extends ControllerBase{
             json{
 
                 return apiService.renderSuccessJson(response){
-                    delegate.'system'={
-                        timestamp={
-                            epoch=nowDate.getTime()
-                            unit='ms'
-                            datetime=g.w3cDateValue(date:nowDate)
-                        }
-                        rundeck={
-                            version=(appVersion)
-                            build=(grailsApplication.metadata['build.ident'])
-                            buildGit=(grailsApplication.metadata['build.core.git.description'])
-                            node=(nodeName)
-                            base=(servletContext.getAttribute("RDECK_BASE"))
-                            apiversion=(ApiVersions.API_CURRENT_VERSION)
-                            serverUUID=(sUUID)
-                        }
-                        executions={
-                            active=executionModeActive
-                            executionMode=executionModeActive?'active':'passive'
-                        }
-                        os= {
-                            arch=(osArch)
-                            name=(osName)
-                            version=(osVersion)
-                        }
-                        jvm= {
-                            name=(vmName)
-                            vendor=(javaVendor)
-                            version=(javaVersion)
-                            implementationVersion=(vmVersion)
-                        }
-                        stats={
-                            uptime={
-                                duration=durationTime
-                                unit= 'ms'
-                                since={
-                                    epoch= startupDate.getTime()
-                                    unit='ms'
-                                    datetime=(g.w3cDateValue(date: startupDate))
-                                }
-                            }
-                            cpu={
-                                loadAverage=[unit:'percent',average:load]
-                                processors=(processorsCount)
-                            }
-                            memory={
-                                unit='byte'
-                                max=(Runtime.getRuntime().maxMemory())
-                                free=(Runtime.getRuntime().freeMemory())
-                                total=(Runtime.getRuntime().totalMemory())
-                            }
-                            scheduler={
-                                running=(quartzScheduler.getCurrentlyExecutingJobs().size())
-                                threadPoolSize=(quartzScheduler.getMetaData().threadPoolSize)
-                            }
-                            threads={
-                                active=(threadActiveCount)
-                            }
-                        }
-                        metrics=[href:metricsJsonUrl,contentType:'application/json']
-                        threadDump=[href:metricsThreadDumpUrl,contentType:'text/plain']
-                        healthcheck=[href:metricsHealthcheckUrl,contentType:'application/json']
-                        ping=[href:metricsPingUrl,contentType:'text/plain']
+                    systemInfoModel
 
-                        if (extMeta) {
-                            extended = {
-
-                                def dl = delegate
-                                extMeta.each { k, v ->
-                                    dl."$k" = v
-                                }
-
-                            }
-                        }
-                    }
                 }
             }
         }
