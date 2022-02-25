@@ -67,9 +67,10 @@ class UserController extends ControllerBase{
      * If there is no message parameter provided in URL, then the default `invalid.username.and.password` will be displayed
      */
     def error = {
-        flash.loginerror = request.getParameter("message")?.trim() ?
-                request.getParameter("message").trim() :
-                message(code:  "invalid.username.and.password")
+        def errorCode = request.getParameter("code")?.trim() ?
+                request.getParameter("code").trim() : "invalid.username.and.password"
+
+        flash.loginerror = message(code:  errorCode)
 
         return render(view:'login')
     }
