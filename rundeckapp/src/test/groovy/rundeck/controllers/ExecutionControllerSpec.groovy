@@ -1074,7 +1074,6 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             'downloadOutput'         | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
             'renderOutput'           | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
             'show'                   | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
-            'follow'                 | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
             'followFragment'         | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
             'ajaxExecNodeState'      | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW
             'apiExecution'           | RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW

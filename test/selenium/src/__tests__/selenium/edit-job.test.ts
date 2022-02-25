@@ -83,7 +83,7 @@ describe('editing a job', () => {
 
 describe('showing the edited job', () => {
     beforeAll(async () => {
-
+        await ctx.driver.wait(until.urlContains('/job/show'), 15000)
     })
     it('verifies job group', async () => {
         const groupLabel = await jobShowPage.jobGroupText()

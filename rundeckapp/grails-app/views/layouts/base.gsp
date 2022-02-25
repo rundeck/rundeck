@@ -131,7 +131,7 @@
 
         window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        context: '${grailsApplication.config.server.servlet.'context-path'}',
+        context: '${grailsApplication.config.getProperty("server.servlet.context-path", String.class)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         language: '${response.locale?.language ?: request.locale?.language}',
         locale: '${response.locale?.toString() ?: request.locale?.toString()}',
@@ -241,7 +241,7 @@
             </nav>
         </g:ifPageProperty>
         <g:ifPageProperty name="page.subtitlesection">
-            <nav id="subtitlebar" class=" subtitlebar has-content ${pageProperty(name: 'page.subtitlecss')}">
+            <nav id="subtitlebar" class="has-content ${pageProperty(name: 'page.subtitlecss')}">
 
                 <g:pageProperty name="page.subtitlesection"/>
 
