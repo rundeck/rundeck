@@ -136,9 +136,9 @@ class ApiVersionInterceptor {
             XML.use('v' + request.api_version)
             JSON.use('v' + request.api_version)
         } catch (ConverterException e) {
-            //API request may have happened before named converter configs have been registered at startup, send service unavailable
-            response.status = HttpServletResponse.SC_SERVICE_UNAVAILABLE
-            return false
+            //API request may have happened before named converter configs have been registered at startup
+            //the response will be handled in AuthorizationInterceptor after the SetUserInterceptor completes
+            request.apiVersionStatusNotReady=true
         }
         return true
     }

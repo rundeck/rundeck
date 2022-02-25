@@ -79,8 +79,8 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
             boolean allowed = interceptor.before()
 
         then:
-            !allowed
-            response.status==503
+            allowed
+            request.apiVersionStatusNotReady
 
     }
 
