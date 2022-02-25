@@ -45,7 +45,6 @@ class ApiVersions {
     public final static int API_EARLIEST_VERSION = V11
     public final static int API_DEPRECATION_VERSION = V14
     public final static int API_CURRENT_VERSION = V41
-    public final static String API_CURRENT_VERSION_STR = '41'
     public final static int API_MIN_VERSION = API_EARLIEST_VERSION
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 }
