@@ -1,6 +1,7 @@
 package rundeck.interceptors
 
 import grails.testing.web.interceptor.InterceptorUnitTest
+import org.rundeck.app.access.InterceptorHelper
 import spock.lang.Specification
 
 class AuthorizationInterceptorSpec extends Specification implements InterceptorUnitTest<AuthorizationInterceptor> {
@@ -18,5 +19,15 @@ class AuthorizationInterceptorSpec extends Specification implements InterceptorU
 
         then:"The interceptor does match"
             interceptor.doesMatch()
+    }
+    def "apiVersionStatusNotReady causes 503 response"(){
+        given:
+            request.apiVersionStatusNotReady=true
+            interceptor.interceptorHelper=Mock(InterceptorHelper)
+        when:
+            def result=interceptor.before()
+        then:
+            !result
+            response.status==503
     }
 }
