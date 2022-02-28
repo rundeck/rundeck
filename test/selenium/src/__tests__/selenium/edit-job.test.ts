@@ -79,6 +79,25 @@ describe('editing a job', () => {
             expect(await scheduleDaysCheckboxDiv.isDisplayed()).toEqual(true)
         })
     })
+    describe('other tab', () => {
+        beforeAll(async () => {
+            const otherTab = await jobCreatePage.otherTab()
+            await otherTab.click()
+            await ctx.driver.wait(until.urlContains('#other'), 15000)
+        })
+        it('ensures visibility of key user inputs', async () => {
+            const multiExecFalseButton = await jobCreatePage.multiExecFalse();
+            const multiExecTrueButton = await jobCreatePage.multiExecTrue();
+
+            if (await multiExecFalseButton.isSelected()) {
+                await multiExecTrueButton.click()
+                expect(await multiExecTrueButton.isSelected()).toBeTruthy()
+            } else {
+                await multiExecFalseButton.click()
+                expect(await multiExecFalseButton.isSelected()).toBeTruthy()
+            }
+        })
+    })
 })
 
 describe('showing the edited job', () => {

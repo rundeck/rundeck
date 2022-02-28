@@ -4,6 +4,8 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
 import org.rundeck.app.access.InterceptorHelper
 
+import javax.servlet.http.HttpServletResponse
+
 class AuthorizationInterceptor {
 
     int order = HIGHEST_PRECEDENCE + 50
@@ -45,6 +47,9 @@ class AuthorizationInterceptor {
             response.setHeader(Constants.X_RUNDECK_ACTION_UNAUTHORIZED_HEADER, flash.error)
             redirect(controller: 'user', action: actionName ==~ /^.*(Fragment|Inline)$/ ? 'deniedFragment' : 'denied', params: params.xmlreq ? params.subMap(['xmlreq']) : null)
             return false;
+        }else if(request.apiVersionStatusNotReady){
+            response.status = HttpServletResponse.SC_SERVICE_UNAVAILABLE
+            return false
         }
         return true
     }

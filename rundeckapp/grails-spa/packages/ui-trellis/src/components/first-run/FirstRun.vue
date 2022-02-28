@@ -3,10 +3,10 @@
     <div class="row">
       <div class="col-md-9 mb-6">
           <div v-if="system.loaded" class="splash-screen--title">
-            <RundeckVersion :edition="system.versionInfo.edition" :number="system.versionInfo.number" :tag="system.versionInfo.tag"/>
+            <RundeckVersion :title="system.appInfo.title" :number="system.versionInfo.number" :tag="system.versionInfo.tag" :logocss="system.appInfo.logocss"/>
           </div>
           <div class="splash-screen--linkitems">
-            <div v-if="system.versionInfo.edition != 'Community' ">
+            <div v-if="system.appInfo.title != 'Rundeck' ">
               <a href="https://support.rundeck.com/" target="_blank" class="item"><i class="fas fa-first-aid"></i> Support</a>  
             </div>
             <div v-else>
@@ -28,13 +28,12 @@
       </div>
       <div class="col-md-3 bg-white rounded p-6 shadow">
         <div class="stickers-section">
-          <div class="l1">Get Your</div>
-          <div class="l2">FREE</div>
-          <div class="l3">Rundeck Stickers</div>
+          <div class="l1">First Steps</div>
+          <div class="l2">to Learn</div>
+          <div class="l3">Automation</div>
         </div>
         <div style="margin-top:12px;text-align:center;">
-          <a href="https://www.rundeck.com/free-stuff" target="_blank" class="btn  btn-success btn-lg">Sign Up Now</a>
-          <img src="https://www.rundeck.com/hubfs/Assets/website/rundeck-stickers.png" class="mt-6" style="max-width: 70%;">
+          <a href="https://docs.rundeck.com/docs/learning/" target="_blank" class="btn  btn-success btn-lg">Learn Here</a>
         </div>
       </div>
     </div>

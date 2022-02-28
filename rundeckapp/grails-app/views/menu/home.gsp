@@ -59,7 +59,7 @@
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/version-notification.css"/>
     <!-- /VUE CSS MODULES -->
-
+    <asset:javascript src="static/pages/login.js"/>
     <style type="text/css">
     .project_list_item_link{
         display:inline-block;
@@ -87,6 +87,8 @@
               </h2>
             </div>
             <div class="card-content">
+              <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
+              <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
               <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
               <p class="h6 text-strong" style="margin-top:1em;">
                 <g:message code="you.can.see.this.message.again.by.clicking.the" />

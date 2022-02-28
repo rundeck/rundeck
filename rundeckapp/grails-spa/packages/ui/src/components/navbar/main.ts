@@ -21,8 +21,8 @@ rootStore.utilityBar.addItems([
       "id": "utility-edition",
       "container": "root",
       "group": "left",
-      "class": "rdicon app-logo",
-      "label": "COMMUNITY",
+      "class": rootStore.system.appInfo.logocss+" app-logo",
+      "label": rootStore.system.appInfo.title.toUpperCase(),
       "visible": true,
       widget: Vue.extend({
         components: {RundeckInfoWidget},
