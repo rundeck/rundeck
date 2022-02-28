@@ -277,7 +277,7 @@ bootRun {
     systemProperty "build.ident", project.version
     sourceResources sourceSets.main
     //    addResources = true
-    System.setProperty("logRoot",System.getProperty("rdeck.base",System.getProperty("user.dir")+"/rundeck-runtime"))
+    System.setProperty("logRoot",System.getProperty("rdeck.base",System.getProperty("user.dir")+"rundeckapp/rundeck-runtime"))
     systemProperty "rundeck.server.logDir", System.getProperty("logRoot")+"/server/logs"
 }
 
