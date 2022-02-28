@@ -17,6 +17,8 @@
 package rundeck.controllers
 
 import grails.testing.gorm.DataTest
+import grails.artefact.Artefact
+import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -105,6 +107,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         when:
             request.method = 'POST'
             setupFormTokens(session)
+            def assetTaglib = mockTagLib(FakeTagLib)
             controller."$action"()
         then:
             flash.error == 'name parameter is required'
@@ -424,11 +427,12 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         result.error == 'Invalid'
         result.option != null
     }
-    
+
     def "invalid save returns fields in map"() {
         given:
         request.method = 'POST'
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        def assetTaglib = mockTagLib(FakeTagLib)
         setupFormTokens(session)
 
         params.scheduledExecutionId = null
@@ -707,6 +711,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
 
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+            def assetTaglib = mockTagLib(FakeTagLib)
             setupFormTokens(session)
             request.method = 'POST'
         when:
@@ -783,5 +788,11 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         map2.remove('name')
         map1==map2
 
+    }
+}
+@Artefact("TagLib")
+class FakeTagLib {
+    def refreshFormTokensHeader = { attrs, body ->
+        response.addHeader('x-test', 'refreshFormTokensHeader')
     }
 }
