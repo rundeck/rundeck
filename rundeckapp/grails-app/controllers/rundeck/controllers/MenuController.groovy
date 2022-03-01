@@ -681,7 +681,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         readauthcount= newschedlist.size()
 
-        if(configurationService.getBoolean("gui.realJobTree", false)) {
+        if(configurationService.getBoolean("gui.realJobTree", true)) {
             //Adding group entries for empty hierachies to have a "real" tree
             def missinggroups = [:]
             jobgroups.each { k, v ->
