@@ -2668,6 +2668,61 @@ class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<Men
             method << MenuController.declaredMethods.findAll { it.getAnnotation(Action) != null }
     }
 
+    def "jobs group"() {
+        given:
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+        def testUUID = UUID.randomUUID().toString()
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        controller.configurationService = Mock(ConfigurationService){
+            getBoolean("gui.realJobTree",true)>>jobTree
+        }
+
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', groupPath: 'demo/level1', uuid:testUUID))
+        ScheduledExecution job2 = new ScheduledExecution(createJobParams(jobName: 'job2', groupPath: 'demo/level2', uuid:testUUID))
+        ScheduledExecution job3 = new ScheduledExecution(createJobParams(jobName: 'job3', groupPath: 'acme', uuid:testUUID))
+
+        when:
+        def model = controller.jobs(query)
+        then:
+        1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ, resource: job2]
+        1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ, resource: job3]
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                              action    : AuthConstants.ACTION_READ,
+                                                                                              resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1, job2,job3]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        model.jobListIds.size() == 3
+        model.jobgroups.size() == groupsSize
+        model.jobgroups.keySet().sort() == group
+        where:
+        jobTree | groupsSize    | group
+        true    | 4             | ["acme","demo","demo/level1","demo/level2"]
+        false   | 3             | ["acme","demo/level1","demo/level2"]
+    }
+
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
         artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
