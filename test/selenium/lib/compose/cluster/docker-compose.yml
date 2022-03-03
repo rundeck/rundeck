@@ -23,7 +23,7 @@ services:
         deploy:
           resources:
             limits:
-              memory: 1500m
+              memory: 2500m
     rundeck-2:
         build:
           context: ./
@@ -46,7 +46,7 @@ services:
         deploy:
           resources:
             limits:
-              memory: 1500m
+              memory: 2500m
     nginx:
         image: nginx
         links:
