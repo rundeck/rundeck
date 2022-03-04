@@ -20,10 +20,6 @@ services:
           - logs:/home/rundeck/var/logs
         expose:
           - 4440
-        deploy:
-          resources:
-            limits:
-              memory: 1500m
     rundeck-2:
         build:
           context: ./
@@ -43,10 +39,6 @@ services:
           - logs:/home/rundeck/var/logs
         expose:
           - 4440
-        deploy:
-          resources:
-            limits:
-              memory: 1500m
     nginx:
         image: nginx
         links:

@@ -304,6 +304,7 @@ jobs:
       resourceClass: xlarge
     steps:
       - checkout
+      - install-node
       - restore-gradle-cache
       - setup_remote_docker
       - fetch-common-artifacts
