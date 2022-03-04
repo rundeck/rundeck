@@ -119,7 +119,6 @@ function StorageUpload(storage){
     self.fileName=ko.observable('');
 
     //computed
-    // TODO: Refactor this method. It's purpose is just to get the filename which can be implemented by File object
     self.fileInputName = ko.computed(function(){
         var file = self.file();
         if(file){
@@ -139,9 +138,6 @@ function StorageUpload(storage){
 
     const reader = new FileReader();
     reader.addEventListener("load", () => {
-        // this will then display a text file
-        console.log(reader.result)
-        // document.querySelector('#storageuploadtext').value = reader.result
         self.textArea(reader.result)
     }, false);
 
@@ -150,10 +146,16 @@ function StorageUpload(storage){
      * @type {*}
      */
     self.inputFullpath = ko.computed(function () {
-        const [fileObj] = document.querySelector('#storageuploadfile').files;
-        if (fileObj) {
-            reader.readAsText(fileObj);
-            self.fileName(fileObj.name)
+        if(self.inputType() === 'file') {
+            const [fileObj] = document.querySelector('#storageuploadfile').files;
+            if (fileObj) {
+                reader.readAsText(fileObj)
+                if(!self.modifyMode()) {
+                    self.fileName(fileObj.name)
+                }
+            } else {
+                self.textArea("")
+            }
         }
 
         var name = self.fileName();
