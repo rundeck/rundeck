@@ -410,9 +410,6 @@ public class RundeckConfigBase {
         Authorization authorization;
         Csrf csrf;
         Ldap ldap;
-
-
-
         HttpHeaders headers;
         InterceptorHelperConfig interceptor;
 
