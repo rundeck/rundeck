@@ -26,8 +26,14 @@
 <div class="row" data-bind="if: option">
     <!-- ko if: isFileType -->
         <div class="col-sm-12">
-            <input type="file" name="" id="" data-bind="attr: {name: fieldName, id: fieldId}" class="optionvaluesfield  form-control">
+            <feature:enabled name="fileUploadPlugin">
+                <input type="file" name="" id="" data-bind="attr: {name: fieldName, id: fieldId}" class="optionvaluesfield  form-control">
+            </feature:enabled>
+            <feature:disabled name="fileUploadPlugin">
+                <i class="glyphicon glyphicon-warning-sign"></i> <g:message code="option.file.config.disabled.message" />
+            </feature:disabled>
         </div>
+
     <!-- /ko -->
     <!-- ko if: !isFileType() -->
     <%-- Print out the input box for random input --%>

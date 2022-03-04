@@ -379,6 +379,7 @@ public class RundeckConfigBase {
         Enabled projectKeyStorage = new Enabled(true);
         Enabled pluginSecurity = new Enabled(false);
         Enabled healthEndpoint = new Enabled(true);
+        Enabled fileUploadPlugin = new Enabled(true);
 
 
 
@@ -409,6 +410,9 @@ public class RundeckConfigBase {
         Authorization authorization;
         Csrf csrf;
         Ldap ldap;
+
+
+
         HttpHeaders headers;
         InterceptorHelperConfig interceptor;
 
