@@ -849,11 +849,12 @@ class ScheduledExecutionController  extends ControllerBase{
             URL urlo
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
+                url = replaceSpecialChars(url)
                 urlo = new URL(url)
                 client.setUri(urlo.toURI())
                 if(urlo.userInfo){
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    client.setBasicAuthCredentials(cred.userName,cred.password)
+                    client.setBasicAuthCredentials(cred.userName, revertReplaceSpecialChars(cred.password))
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
@@ -948,6 +949,14 @@ class ScheduledExecutionController  extends ControllerBase{
         } else {
             throw new Exception("Unsupported protocol: " + url)
         }
+    }
+
+    static String replaceSpecialChars(String url) {
+        return url.replaceAll("\\^", "SPECIAL_CHAR_CARET")
+    }
+
+    static String revertReplaceSpecialChars(String url) {
+        return url.replaceAll("SPECIAL_CHAR_CARET", "^")
     }
 
     static int copyToWriter(Reader read, Writer writer){
