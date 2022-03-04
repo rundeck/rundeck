@@ -6,13 +6,35 @@ import {combineCookies} from 'ts-rundeck/dist/util'
 import {sleep} from '../async/util'
 
 export async function waitForRundeckReady(client: Rundeck, timeout = 500000) {
+    await createWaitForRundeckReady(() => client, timeout)
+}
+export async function createWaitForRundeckReady(factory: ()=>Rundeck, timeout = 500000) {
     const start = Date.now()
+    const unauthMax=10
+    const sleepTime=2000
+    let unauthCount=0
+    console.info(`Waiting for server to accept requests...`)
     while (Date.now() - start < timeout) {
         try {
-            await client.systemInfoGet()
+            const reqstart=Date.now()
+            let resp = await factory().systemInfoGet()
+            console.info(`Client connected: ${resp.system?.rundeckProperty?.version} (${Date.now() - reqstart}ms)`)
             return
         } catch  (e) {
-            await sleep(5000)
+            if (e.statusCode === 403) {
+                unauthCount++
+            }
+            // if (e.statusCode) {
+            //     console.debug(`Received status... ${e.statusCode}: ${e}`)
+            // } else if(e.code){
+            //     console.debug(`Waiting... ${e.code}: ${e}`)
+            // } else {
+            //     console.debug(`Waiting... ${Date.now() - start}`)
+            // }
+            if (unauthCount > unauthMax) {
+                throw new Error(`Rundeck authentication failure: ${e}`)
+            }
+            await sleep(sleepTime)
         }
     }
     throw new Error('Timeout exceeded waiting for Rundeck to be ready.')

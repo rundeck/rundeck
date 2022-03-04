@@ -4,7 +4,7 @@ import { Rundeck, PasswordCredentialProvider } from 'ts-rundeck'
 
 import {spawn} from '../async/child-process'
 import { ProjectImporter } from '../projectImporter'
-import { waitForRundeckReady } from '../util/RundeckAPI'
+import { createWaitForRundeckReady } from '../util/RundeckAPI'
 import { ClusterFactory, IClusterManager } from '../ClusterManager'
 import { Config } from '../Config';
 
@@ -149,9 +149,10 @@ class TestCommand {
 
         console.log(cmdString)
 
-        const client = new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {baseUri: opts.url})
-
-        await waitForRundeckReady(client,5*60*1000)
+        await createWaitForRundeckReady(
+          () => new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {noRetryPolicy: true, baseUri: opts.url}),
+          5 * 60 * 1000
+        )
 
         const ret = await spawn('/bin/sh', ['-c', cmdString], {
             stdio: 'inherit',
