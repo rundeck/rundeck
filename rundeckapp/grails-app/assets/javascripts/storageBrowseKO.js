@@ -119,7 +119,8 @@ function StorageUpload(storage){
     self.fileName=ko.observable('');
 
     //computed
-    self.fileInputName=ko.computed(function(){
+    // TODO: Refactor this method. It's purpose is just to get the filename which can be implemented by File object
+    self.fileInputName = ko.computed(function(){
         var file = self.file();
         if(file){
             return file.lastIndexOf('/')>=0 ? file.substring(file.lastIndexOf('/')+1)
@@ -131,21 +132,30 @@ function StorageUpload(storage){
         }
     });
     self.validInput = ko.computed(function(){
-        var intype = self.inputType();
-        var file = self.file();
         var textarea=self.textArea();
         var pass=self.password();
-        if(intype=='text'){
-            return (textarea || pass )? true:false;
-        }else{
-            return file?true:false;
-        }
+        return (textarea || pass ) ? true : false
     });
+
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+        // this will then display a text file
+        console.log(reader.result)
+        // document.querySelector('#storageuploadtext').value = reader.result
+        self.textArea(reader.result)
+    }, false);
+
     /**
      * Returns the full path for the inputPath (dir) and inputFilename
      * @type {*}
      */
     self.inputFullpath = ko.computed(function () {
+        const [fileObj] = document.querySelector('#storageuploadfile').files;
+        if (fileObj) {
+            reader.readAsText(fileObj);
+            self.fileName(fileObj.name)
+        }
+
         var name = self.fileName();
         var file = self.fileInputName();
         var path = self.storage.absolutePath(self.storage.inputBasePath());
@@ -154,10 +164,10 @@ function StorageUpload(storage){
 
     //subscriptions to clear values when one input type is selected
     self.inputType.subscribe(function(newvalue){
-       if(newvalue=='text'){
+       if(newvalue=='text' || newvalue=='file'){
            self.file('');
-       } else{
            self.textArea('');
+       } else{
            self.password('');
        }
     });
@@ -516,6 +526,5 @@ function StorageBrowser(baseUrl, rootPath) {
     });
 
     //upload link
-
     self.upload = new StorageUpload(self);
 }

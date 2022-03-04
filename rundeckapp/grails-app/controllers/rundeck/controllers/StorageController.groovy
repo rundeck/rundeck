@@ -257,8 +257,10 @@ class StorageController extends ControllerBase{
     }
     /**
      * non-api action wrapper for apiKeys method
+     *
+     * TODO: handle public key client side upload
      */
-    public def keyStorageUpload(StorageParams storageParams){
+    def keyStorageUpload(StorageParams storageParams){
         if (storageParams.hasErrors()) {
             flash.errors=storageParams.errors
             return redirect(controller: 'menu',action: 'storage',params: [project:params.project])
@@ -268,169 +270,122 @@ class StorageController extends ControllerBase{
         }
         AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         def resourcePath = storageParams.resourcePath
-        def valid=false
+
         withForm {
-            valid=true
+            def contentType= null
+
+            if (storageParams.uploadKeyType == 'public') {
+                contentType = KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
+            } else if (storageParams.uploadKeyType == 'private') {
+                contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
+            } else if (storageParams.uploadKeyType == 'password') {
+                contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
+            } else {
+                //invalid
+                flash.errorCode = 'api.error.parameter.invalid'
+                flash.errorArgs = [storageParams.uploadKeyType, 'uploadKeyType']
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
+            }
+            if( !(storageParams.inputType in ['file', 'text'])){
+                flash.errorCode = 'api.error.parameter.not.inList'
+                flash.errorArgs = [storageParams.inputType, 'inputType']
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
+            }
+
+            def filename = storageParams.fileName
+
+            if (!filename) {
+                flash.errorCode = 'api.error.upload.missing'
+                flash.errorArgs = ['fileName']
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
+            }
+
+            def uploadText = params.uploadText
+            if(storageParams.uploadKeyType in ['public', 'private'] && !uploadText){
+                if(!uploadText){
+                    flash.errorCode = 'api.error.parameter.required'
+                    flash.errorArgs = ['uploadText']
+
+                    return redirect(controller: 'menu', action: 'storage',
+                            params: [project: params.project])
+                }
+            } else if(storageParams.uploadKeyType == 'password' ){  // Password input type is always text
+                //store a password
+                if (!params.uploadPassword) {
+                    //invalid
+                    flash.errorCode = 'api.error.parameter.required'
+                    flash.errorArgs = ['uploadPassword']
+
+                    return redirect(controller: 'menu', action: 'storage',
+                            params: [project: params.project])
+                }
+                uploadText = params.uploadPassword
+            }
+
+            resourcePath = PathUtil.cleanPath(resourcePath + '/' + filename)
+
+            def newparams = new StorageParams(resourcePath: resourcePath)
+            newparams.validate()
+
+            if(newparams.hasErrors()){
+                flash.errors=newparams.errors
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
+            }
+
+            boolean dontOverwrite = params.dontOverwrite in [true, 'true']
+
+            def hasResource = storageService.hasResource(authContext, resourcePath)
+
+            if (dontOverwrite && hasResource) {
+                flash.error = g.message(code: 'api.error.item.alreadyexists',
+                        args: ['Storage file', resourcePath])
+
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
+            } else if (!hasResource && storageService.hasPath(authContext, resourcePath)) {
+                flash.error = g.message(code: 'api.error.item.alreadyexists',
+                        args: ['Storage directory path', resourcePath])
+
+                return redirect(controller: 'menu', action: 'storage',
+                        params: [project: params.project])
+            }
+
+            def inputBytes = uploadText.bytes
+
+            Map<String, String> map = [
+                    (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): contentType,
+                    (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): inputBytes.length.toString() //if the value of content length is not cast to a string here,
+                    // Groovy allows the value into the map as an int or long
+                    // which will cause a type cast exception later if the contentLength
+                    // is accessed later in the storage chain
+            ]
+            try {
+                def inputStream = new ByteArrayInputStream(inputBytes)
+
+                if(hasResource){
+                    def resource = storageService.updateResource(authContext, resourcePath, map, inputStream)
+                }else{
+                    def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
+                }
+                return redirect(controller: 'menu', action: 'storage', params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
+            } catch (StorageAuthorizationException e) {
+                log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
+                flash.errorCode = 'api.error.item.unauthorized'
+                flash.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
+                return redirect(controller: 'menu', action: 'storage',params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
+            } catch (StorageException e) {
+                log.error("Error creating resource ${resourcePath}: ${e.message}")
+                log.debug("Error creating resource ${resourcePath}", e)
+                flash.error= e.message
+                return redirect(controller: 'menu', action: 'storage',params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
+            }
         }.invalidToken{
             flash.errorCode= 'request.error.invalidtoken.message'
             return redirect(controller: 'menu', action: 'storage', params: [project: params.project])
-        }
-        if(!valid){
-            return
-        }
-        def contentType= null
-        def contentLength = -1
-        def inputStream = null
-
-        if (storageParams.uploadKeyType == 'public') {
-            contentType = KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
-        } else if (storageParams.uploadKeyType == 'private') {
-            contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
-        } else if (storageParams.uploadKeyType == 'password') {
-            contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
-        } else {
-            //invalid
-            flash.errorCode = 'api.error.parameter.invalid'
-            flash.errorArgs = [storageParams.uploadKeyType, 'uploadKeyType']
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        }
-        if( !(storageParams.inputType in ['file','text'])){
-            flash.errorCode = 'api.error.parameter.not.inList'
-            flash.errorArgs = [storageParams.inputType, 'inputType']
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        }
-
-        def hasUploadedFile = request instanceof MultipartHttpServletRequest &&
-                storageParams.inputType == 'file' &&
-                request.getFile('storagefile') &&
-                !request.getFile('storagefile').empty
-
-        if (storageParams.inputType == 'file' && !hasUploadedFile) {
-            //mising file upload
-            flash.errorCode = 'api.error.upload.missing'
-            flash.errorArgs = ['storagefile']
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        }
-
-        if (storageParams.inputType == 'text' && !storageParams.fileName) {
-            //invalid
-            flash.errorCode = 'api.error.parameter.required'
-            flash.errorArgs = ['fileName']
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        }
-
-        def filename = storageParams.fileName
-
-        if(storageParams.inputType == 'text' && storageParams.uploadKeyType in ['public','private'] ){
-            //store a public/private key
-            if(!params.uploadText){
-                //invalid
-                flash.errorCode = 'api.error.parameter.required'
-                flash.errorArgs = ['uploadText']
-
-                return redirect(controller: 'menu', action: 'storage',
-                        params: [project: params.project])
-            }
-
-            def inputBytes = params.uploadText.bytes
-            inputStream = new ByteArrayInputStream(inputBytes)
-            contentLength= inputBytes.length
-        }else if(storageParams.inputType == 'text' && storageParams.uploadKeyType == 'password' ){
-            //store a password
-            if (!params.uploadPassword) {
-                //invalid
-                flash.errorCode = 'api.error.parameter.required'
-                flash.errorArgs = ['uploadPassword']
-
-                return redirect(controller: 'menu', action: 'storage',
-                        params: [project: params.project])
-            }
-            def inputBytes = params.uploadPassword.bytes
-            inputStream = new ByteArrayInputStream(inputBytes)
-            contentLength= inputBytes.length
-        }else if (hasUploadedFile) {
-            //nb: don't allow arbitrary content type
-//            contentType = request.getFile('storagefile').getContentType()
-            contentLength = request.getFile('storagefile').getSize()
-            inputStream = request.getFile('storagefile').inputStream
-            if(!filename){
-                filename = request.getFile('storagefile').originalFilename
-            }
-        }else{
-            //no file uploaded
-            flash.errorCode = 'api.error.upload.missing'
-            flash.errorArgs = ['storagefile']
-
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        }
-
-        if(!filename){
-
-            flash.errorCode = 'api.error.upload.missing'
-            flash.errorArgs = ['fileName']
-
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        }
-
-        resourcePath = PathUtil.cleanPath(resourcePath + '/' + filename)
-
-        def newparams=new StorageParams()
-        newparams.resourcePath=resourcePath
-        newparams.validate()
-        if(newparams.hasErrors()){
-            flash.errors=newparams.errors
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        }
-
-        boolean overwrite=true
-        if(params.dontOverwrite in [true,'true']){
-            overwrite=false
-        }
-        def hasResource = storageService.hasResource(authContext, resourcePath)
-        if (!overwrite && hasResource) {
-            flash.error = g.message(code: 'api.error.item.alreadyexists',
-                    args: ['Storage file', resourcePath])
-
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        } else if (!hasResource && storageService.hasPath(authContext, resourcePath)) {
-            flash.error = g.message(code: 'api.error.item.alreadyexists',
-                    args: ['Storage directory path', resourcePath])
-
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
-        }
-        Map<String, String> map = [
-                (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): contentType,
-                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): contentLength.toString() //if the value of content length is not cast to a string here,
-                                                                                        // Groovy allows the value into the map as an int or long
-                                                                                        // which will cause a type cast exception later if the contentLength
-                                                                                        // is accessed later in the storage chain
-        ]
-        try {
-            if(hasResource){
-                def resource = storageService.updateResource(authContext, resourcePath, map, inputStream)
-            }else{
-                def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
-            }
-            return redirect(controller: 'menu', action: 'storage', params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
-        } catch (StorageAuthorizationException e) {
-            log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
-            flash.errorCode = 'api.error.item.unauthorized'
-            flash.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
-            return redirect(controller: 'menu', action: 'storage',params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
-        } catch (StorageException e) {
-            log.error("Error creating resource ${resourcePath}: ${e.message}")
-            log.debug("Error creating resource ${resourcePath}", e)
-            flash.error= e.message
-            return redirect(controller: 'menu', action: 'storage',params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
         }
     }
     /**
