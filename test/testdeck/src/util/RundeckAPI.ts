@@ -13,12 +13,10 @@ export async function createWaitForRundeckReady(factory: ()=>Rundeck, timeout = 
     const unauthMax=10
     const sleepTime=2000
     let unauthCount=0
-    console.info(`Waiting for server to accept requests...`)
     while (Date.now() - start < timeout) {
         try {
             const reqstart=Date.now()
             let resp = await factory().systemInfoGet()
-            console.info(`Client connected: ${resp.system?.rundeckProperty?.version} (${Date.now() - reqstart}ms)`)
             return
         } catch  (e) {
             if (e.statusCode === 403) {

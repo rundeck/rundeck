@@ -147,12 +147,15 @@ class TestCommand {
         /** Drop the null entries and construct command string */
         const cmdString = cmdArgs.filter(a => a != null).join(' ')
 
-        console.log(cmdString)
-
+        console.info(`Waiting for server to accept requests...`)
+        const reqstart = Date.now()
         await createWaitForRundeckReady(
           () => new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {noRetryPolicy: true, baseUri: opts.url}),
           5 * 60 * 1000
         )
+        console.info(`Client connected. (${Date.now() - reqstart}ms)`)
+
+        console.log(cmdString)
 
         const ret = await spawn('/bin/sh', ['-c', cmdString], {
             stdio: 'inherit',
