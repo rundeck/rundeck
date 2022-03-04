@@ -106,4 +106,22 @@ class PluginApiServiceIntegrationSpec extends Specification {
         pluginList.uiPluginProfiles != null
 
     }
+
+    void "file upload plugins disabled"() {
+        setup:
+        pluginApiService.featureService.toggleFeature(Features.FILE_UPLOAD_PLUGIN, false)
+
+        when:
+        def pluginList = pluginApiService.listPluginsDetailed()
+
+        then:
+        pluginList.descriptions.size() == 27
+        pluginList.serviceDefaultScopes.size() == 2
+        pluginList.bundledPlugins.size() == 7
+        pluginList.embeddedFilenames != null
+        pluginList.specialConfiguration.size() == 7
+        pluginList.specialScoping.size() == 2
+        pluginList.uiPluginProfiles != null
+
+    }
 }
