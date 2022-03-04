@@ -151,7 +151,7 @@ class TestCommand {
 
         const client = new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {baseUri: opts.url})
 
-        await waitForRundeckReady(client)
+        await waitForRundeckReady(client,5*60*1000)
 
         const ret = await spawn('/bin/sh', ['-c', cmdString], {
             stdio: 'inherit',
