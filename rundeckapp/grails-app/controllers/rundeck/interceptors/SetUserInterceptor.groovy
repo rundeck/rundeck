@@ -116,10 +116,15 @@ class SetUserInterceptor {
             }
         } else if (!request.remoteUser) {
             //unauthenticated request to an action
-            response.status = 403
-            request.errorCode = 'request.authentication.required'
-            render view: '/common/error.gsp'
-            return false
+            if(request.api_version) {
+                //api unauth response handled by AuthorizationInterceptor
+                request.invalidApiAuthentication = true
+            }else{
+                response.status = 403
+                request.errorCode = 'request.authentication.required'
+                render view: '/common/error.gsp'
+                return false
+            }
         }
         def requiredRole = configurationService.getString("security.requiredRole","")
         if(!requiredRole.isEmpty()) {
