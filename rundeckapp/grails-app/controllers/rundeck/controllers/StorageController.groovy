@@ -366,9 +366,9 @@ class StorageController extends ControllerBase{
                 def inputStream = new ByteArrayInputStream(inputBytes)
 
                 if(hasResource){
-                    def resource = storageService.updateResource(authContext, resourcePath, map, inputStream)
+                    storageService.updateResource(authContext, resourcePath, map, inputStream)
                 }else{
-                    def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
+                    storageService.createResource(authContext, resourcePath, map, inputStream)
                 }
                 return redirect(controller: 'menu', action: 'storage', params: [resourcePath:resourcePath]+(params.project?[project:params.project]:[:]))
             } catch (StorageAuthorizationException e) {
