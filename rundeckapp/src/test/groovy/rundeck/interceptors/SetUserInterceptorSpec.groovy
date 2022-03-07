@@ -175,4 +175,15 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         "RN1" | false        | true     | "admin"
     }
 
+    def "request without remote auth info will be invalid"(){
+        given:
+            request.api_version=12
+            interceptor.interceptorHelper=Mock(InterceptorHelper)
+        when:
+            def result=interceptor.before()
+        then:
+            result
+            request.invalidApiAuthentication
+    }
+
 }

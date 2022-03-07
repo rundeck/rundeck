@@ -56,6 +56,8 @@ class SetUserInterceptor {
             request.invalidApiAuthentication=true
             return false
         }
+        def authtoken = params.authtoken? Webhook.cleanAuthToken(params.authtoken) : request.getHeader('X-RunDeck-Auth-Token')
+
         if (request.userPrincipal && session.user!=request.userPrincipal.name) {
             session.user = request.userPrincipal.name
 
@@ -72,9 +74,8 @@ class SetUserInterceptor {
         } else if(request.remoteUser && session.subject &&
                 !configurationService.getBoolean("security.authorization.preauthenticated.enabled",false)) {
             request.subject = session.subject
-        } else if (request.api_version && !session.user ) {
+        } else if (request.api_version && !session.user && authtoken) {
             //allow authentication token to be used
-            def authtoken = params.authtoken? Webhook.cleanAuthToken(params.authtoken) : request.getHeader('X-RunDeck-Auth-Token')
             boolean webhookType = controllerName == "webhook" && actionName == "post"
 
             AuthenticationToken foundToken = lookupToken(authtoken, servletContext, webhookType)
@@ -115,10 +116,15 @@ class SetUserInterceptor {
             }
         } else if (!request.remoteUser) {
             //unauthenticated request to an action
-            response.status = 403
-            request.errorCode = 'request.authentication.required'
-            render view: '/common/error.gsp'
-            return false
+            if(request.api_version) {
+                //api unauth response handled by AuthorizationInterceptor
+                request.invalidApiAuthentication = true
+            }else{
+                response.status = 403
+                request.errorCode = 'request.authentication.required'
+                render view: '/common/error.gsp'
+                return false
+            }
         }
         def requiredRole = configurationService.getString("security.requiredRole","")
         if(!requiredRole.isEmpty()) {
