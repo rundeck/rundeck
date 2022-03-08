@@ -330,6 +330,8 @@ stages:
   - LDAP Test
   - LDAP Bind Test
   - PAM Test
+  build: &stage-build
+    - Build
 
 filters:
   all: &filter-default
@@ -337,6 +339,9 @@ filters:
       branches:
         ignore: /pull\/[0-9]+/
       tags: {only: '/^v.*/'}
+  ignore-tags: &filter-no-tags
+    filters:
+      tags: { ignore: '/^v.*/' }
 
 workflows:
   version: 2
@@ -344,8 +349,9 @@ workflows:
     jobs:
       - build:
           <<: *filter-default
+          name: Build
       - test-gradle:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Gradle Test
           requires: [build]
       ## Optimistically build snapshot
@@ -355,70 +361,73 @@ workflows:
           filters:
             branches: {only: main}
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Docker Test
           requires: [build]
           command: bash test/run-docker-tests.sh
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Tomcat 8 API Test
           requires: [build]
           command: bash test/run-docker-tomcat-tests.sh
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Tomcat 9 API Test
           requires: [build]
           command: bash test/run-docker-tomcat-tests.sh 9
       - test-docker-machine:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: API Test
           requires: [build]
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: SSL Test
           requires: [build]
           command: bash test/run-docker-ssl-tests.sh
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Ansible Test
           requires: [build]
           command: bash test/run-docker-ansible-tests.sh
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Blocklist Test
           requires: [ build ]
           command: bash test/run-docker-plugin-blocklist-test.sh
       - test-docker-machine:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: LDAP Test
           requires: [build]
           command: bash test/run-docker-ldap-tests.sh
       - test-docker-machine:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: LDAP Bind Test
           requires: [build]
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
       - test-docker:
+          <<: *filter-no-tags
           name: PAM Test
           requires: [build]
           command: bash test/run-docker-pam-tests.sh
       - test-selenium:
+          <<: *filter-no-tags
           name: Selenium Test
           requires: [build]
       - test-deps:
+          <<: *filter-no-tags
           name: OWASP Dependency Checks
           requires: [build]
           continue: 'true'
       - trigger-packaging:
           name: Trigger packaging-core
-          requires: *stage-test
+          requires: *stage-build
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
       - maven-publish:
           name: Maven Publish
-          requires: *stage-test
+          requires: *stage-build
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
