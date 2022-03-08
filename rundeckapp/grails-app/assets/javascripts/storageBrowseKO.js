@@ -118,18 +118,28 @@ function StorageUpload(storage){
     self.password=ko.observable('');
     self.fileName=ko.observable('');
 
-    //computed
+    //Observer triggerred when select a file
     self.fileInputName = ko.computed(function(){
-        var file = self.file();
+        const [fileObj] = document.querySelector('#storageuploadfile').files;
+        if (fileObj) {
+            reader.readAsText(fileObj)
+            if(!self.modifyMode()) {
+                self.fileName(fileObj.name)
+            }
+        } else {
+            self.textArea("")
+        }
+
+        const file = self.file();
         if(file){
             return file.lastIndexOf('/')>=0 ? file.substring(file.lastIndexOf('/')+1)
                 : file.lastIndexOf('\\')>=0 ? file.substring(file.lastIndexOf('\\')+1)
                 : file;
-
         }else{
             return '';
         }
     });
+
     self.validInput = ko.computed(function(){
         var textarea=self.textArea();
         var pass=self.password();
@@ -146,22 +156,10 @@ function StorageUpload(storage){
      * @type {*}
      */
     self.inputFullpath = ko.computed(function () {
-        if(self.inputType() === 'file') {
-            const [fileObj] = document.querySelector('#storageuploadfile').files;
-            if (fileObj) {
-                reader.readAsText(fileObj)
-                if(!self.modifyMode()) {
-                    self.fileName(fileObj.name)
-                }
-            } else {
-                self.textArea("")
-            }
-        }
-
-        var name = self.fileName();
-        var file = self.fileInputName();
-        var path = self.storage.absolutePath(self.storage.inputBasePath());
-        return (path ? (path.lastIndexOf('/') == path.length - 1 ? path : path + '/') : '') + (name?name: file);
+        const fileInputName = self.fileInputName();
+        const name = self.fileName();
+        const path = self.storage.absolutePath(self.storage.inputBasePath());
+        return (path ? (path.lastIndexOf('/') == path.length - 1 ? path : path + '/') : '') + (name ? name : fileInputName);
     });
 
     //subscriptions to clear values when one input type is selected
