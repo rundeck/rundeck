@@ -472,7 +472,7 @@ workflows:
       - test-docker-machine:
           <<: *filter-default
           name: API Test
-          requires: [build]
+          requires: *stage-build
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
           <<: *filter-default
