@@ -80,7 +80,7 @@ implied. - See the License for the specific language governing permissions and -
           <div class="modal-dialog">
               %{--modal storage key upload/input form--}%
               <div class="modal-content">
-                <g:form controller="storage" action="keyStorageUpload" id="uploadKeyForm" useToken="true" class="form-horizontal" role="form"
+                <g:uploadForm controller="storage" action="keyStorageUpload" id="uploadKeyForm" useToken="true" class="form-horizontal" role="form"
                 params="[project:params.project]">
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -123,8 +123,8 @@ implied. - See the License for the specific language governing permissions and -
                       <div data-bind="visible: upload.inputType()=='file' ">
                         <input type="file" name="storagefile" id="storageuploadfile" data-bind="value: upload.file"/>
                       </div>
-                      <div data-bind="if: (upload.inputType()=='text' || upload.inputType()=='file') && upload.keyType()!='password' ">
-                        <textarea class="form-control" rows="5" id="storageuploadtext" data-bind="value: upload.textArea" name="uploadText"></textarea>
+                      <div data-bind="if: (upload.inputType()=='text' || upload.inputType()=='file') && upload.keyType() != 'password'" >
+                        <textarea class="form-control" rows="5" id="storageuploadtext" data-bind="value: upload.textArea, visible: upload.inputType() != 'file'" name="uploadText"></textarea>
                       </div>
                       <div data-bind="if: upload.inputType()=='text' && upload.keyType()=='password' ">
                         <input name="uploadPassword" type="password" placeholder="Enter a password" autocomplete="new-password" data-bind="value: upload.password" id="uploadpasswordfield" class="form-control"/>
@@ -190,7 +190,7 @@ implied. - See the License for the specific language governing permissions and -
                   <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel"/></button>
                   <input type="submit" class="btn btn-sm btn-cta obs-storageupload-select" data-bind="attr: { disabled: !upload.validInput() }" value="Save"/>
                 </div>
-              </g:form>
+              </g:uploadForm>
               </div>
           </div>
         </div>

@@ -118,10 +118,10 @@ function StorageUpload(storage){
     self.password=ko.observable('');
     self.fileName=ko.observable('');
 
-    //Observer triggerred when select a file
-    self.fileInputName = ko.computed(function(){
+
+    self.file.subscribe(() => {
         const [fileObj] = document.querySelector('#storageuploadfile').files;
-        if (fileObj) {
+        if (fileObj && self.inputType() === 'file') {
             reader.readAsText(fileObj)
             if(!self.modifyMode()) {
                 self.fileName(fileObj.name)
@@ -129,7 +129,10 @@ function StorageUpload(storage){
         } else {
             self.textArea("")
         }
+    })
 
+    //Observer triggerred when select a file
+    self.fileInputName = ko.computed(function(){
         const file = self.file();
         if(file){
             return file.lastIndexOf('/')>=0 ? file.substring(file.lastIndexOf('/')+1)
@@ -164,7 +167,7 @@ function StorageUpload(storage){
 
     //subscriptions to clear values when one input type is selected
     self.inputType.subscribe(function(newvalue){
-       if(newvalue=='text' || newvalue=='file'){
+       if(newvalue == 'text' || newvalue== 'file'){
            self.file('');
            self.textArea('');
        } else{
@@ -173,7 +176,7 @@ function StorageUpload(storage){
     });
     //subscriptions to clear values when one input type is selected
     self.keyType.subscribe(function(newvalue){
-       if(newvalue=='password'){
+       if(newvalue == 'password'){
            self.textArea('');
            self.inputType('text');
        } else{
