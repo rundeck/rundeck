@@ -443,6 +443,7 @@ workflows:
     jobs:
       - build:
           <<: *filter-default
+          name: Build
       - test-gradle:
           <<: *filter-default
           name: Gradle Test
