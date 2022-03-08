@@ -42,7 +42,6 @@ import org.rundeck.core.auth.access.NotFound
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeAdhoc
 import org.rundeck.core.auth.web.RdAuthorizeExecution
@@ -1114,8 +1113,8 @@ class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTes
             result.value() == access
         where:
             endpoint                  | access
-            'apiExecutionModeActive'  | RundeckAccess.System.AUTH_OPS_ENABLE_EXECUTION
-            'apiExecutionModePassive' | RundeckAccess.System.AUTH_OPS_DISABLE_EXECUTION
+            'apiExecutionModeActive'  | RundeckAccess.System.AUTH_ADMIN_ENABLE_EXECUTION
+            'apiExecutionModePassive' | RundeckAccess.System.AUTH_ADMIN_DISABLE_EXECUTION
             'apiExecutionModeStatus'  | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
     }
 

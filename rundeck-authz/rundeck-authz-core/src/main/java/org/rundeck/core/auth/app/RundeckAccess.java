@@ -92,21 +92,21 @@ public class RundeckAccess {
                 APP_CONFIGURE =
                 action(AuthConstants.ACTION_CONFIGURE).or(RundeckAccess.General.ALL_ADMIN);
 
-        public static final String AUTH_OPS_ENABLE_EXECUTION = "opsEnableExecution";
+        public static final String AUTH_ADMIN_ENABLE_EXECUTION = "adminEnableExecution";
         /**
-         * Enable executions or ops admin
+         * Enable executions or any admin
          */
         public static final AuthActions
-                OPS_ENABLE_EXECUTION =
-                action(AuthConstants.ACTION_ENABLE_EXECUTIONS).or(RundeckAccess.General.OPS_ADMIN);
+                ADMIN_ENABLE_EXECUTION =
+                action(AuthConstants.ACTION_ENABLE_EXECUTIONS).or(General.ALL_ADMIN);
 
-        public static final String AUTH_OPS_DISABLE_EXECUTION = "opsDisableExecution";
+        public static final String AUTH_ADMIN_DISABLE_EXECUTION = "adminDisableExecution";
         /**
-         * Disable execution or ops admin
+         * Disable execution or any admin
          */
         public static final AuthActions
-                OPS_DISABLE_EXECUTION =
-                action(AuthConstants.ACTION_DISABLE_EXECUTIONS).or(RundeckAccess.General.OPS_ADMIN);
+                ADMIN_DISABLE_EXECUTION =
+                action(AuthConstants.ACTION_DISABLE_EXECUTIONS).or(General.ALL_ADMIN);
 
         public static final String AUTH_READ_OR_ANY_ADMIN = "readOrAnyAdmin";
         /**
@@ -129,8 +129,8 @@ public class RundeckAccess {
         static {
             NAMED_AUTH_ACTIONS = Collections.unmodifiableMap(new HashMap<String, AuthActions>() {{
                 put(AUTH_CONFIGURE, APP_CONFIGURE);
-                put(AUTH_OPS_DISABLE_EXECUTION, OPS_DISABLE_EXECUTION);
-                put(AUTH_OPS_ENABLE_EXECUTION, OPS_ENABLE_EXECUTION);
+                put(AUTH_ADMIN_DISABLE_EXECUTION, ADMIN_DISABLE_EXECUTION);
+                put(AUTH_ADMIN_ENABLE_EXECUTION, ADMIN_ENABLE_EXECUTION);
                 put(AUTH_READ_OR_ANY_ADMIN, READ_OR_ANY_ADMIN);
                 put(AUTH_READ_OR_OPS_ADMIN, READ_OR_OPS_ADMIN);
                 putAll(General.NAMED_AUTH_ACTIONS);

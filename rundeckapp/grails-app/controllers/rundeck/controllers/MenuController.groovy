@@ -893,9 +893,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def executionMode(){
         def executionModeActive=configurationService.executionModeActive
         authorizingSystem.authorize(
-            executionModeActive?
-                RundeckAccess.System.OPS_DISABLE_EXECUTION:
-                RundeckAccess.System.OPS_ENABLE_EXECUTION
+            executionModeActive ?
+                RundeckAccess.System.ADMIN_DISABLE_EXECUTION :
+                RundeckAccess.System.ADMIN_ENABLE_EXECUTION
         )
     }
     def storage(){
