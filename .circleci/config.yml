@@ -417,7 +417,7 @@ workflows:
       - test-deps:
           <<: *filter-no-tags
           name: OWASP Dependency Checks
-          requires: [build]
+          requires: *stage-build
           continue: 'true'
       - trigger-packaging:
           name: Trigger packaging-core
