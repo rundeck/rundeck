@@ -485,8 +485,8 @@ class ExecutionController extends ControllerBase{
             def requestActive=params.mode == 'active'
 
             authorizingSystem.authorize(
-                requestActive ? RundeckAccess.System.OPS_ENABLE_EXECUTION :
-                RundeckAccess.System.OPS_DISABLE_EXECUTION
+                requestActive ? RundeckAccess.System.ADMIN_ENABLE_EXECUTION :
+                RundeckAccess.System.ADMIN_DISABLE_EXECUTION
             )
 
             if(requestActive == executionService.executionsAreActive){
@@ -2150,7 +2150,7 @@ setTimeout(function(){
      */
 
     @RdAuthorizeSystem(
-        RundeckAccess.System.AUTH_OPS_ENABLE_EXECUTION
+        RundeckAccess.System.AUTH_ADMIN_ENABLE_EXECUTION
     )
     def apiExecutionModeActive() {
         apiExecutionMode(true)
@@ -2160,7 +2160,7 @@ setTimeout(function(){
      * @return
      */
     @RdAuthorizeSystem(
-        RundeckAccess.System.AUTH_OPS_DISABLE_EXECUTION
+        RundeckAccess.System.AUTH_ADMIN_DISABLE_EXECUTION
     )
     def apiExecutionModePassive() {
         apiExecutionMode(false)
