@@ -260,6 +260,8 @@ class StorageController extends ControllerBase{
      *
      */
     def keyStorageUpload(StorageParams storageParams){
+        if(!requestHasValidToken()) return
+
         if (storageParams.hasErrors()) {
             flash.errors=storageParams.errors
             return redirect(controller: 'menu',action: 'storage',params: [project:params.project])
@@ -269,11 +271,6 @@ class StorageController extends ControllerBase{
         }
         AuthContext authContext = getAuthContextForPath(session.subject, storageParams.resourcePath)
         def resourcePath = storageParams.resourcePath
-
-        withForm { }.invalidToken{
-            flash.errorCode= 'request.error.invalidtoken.message'
-            return redirect(controller: 'menu', action: 'storage', params: [project: params.project])
-        }
 
         def contentType= null
 
@@ -307,23 +304,21 @@ class StorageController extends ControllerBase{
         }
 
         def uploadText = params.uploadText
-        if(storageParams.uploadKeyType in ['public', 'private'] && !uploadText){
-            if(!uploadText){
+        if(storageParams.uploadKeyType in ['public', 'private']){
+            if(!uploadText) {
                 flash.errorCode = 'api.error.parameter.required'
                 flash.errorArgs = ['uploadText']
 
-                return redirect(controller: 'menu', action: 'storage',
-                        params: [project: params.project])
+                return redirect(controller: 'menu', action: 'storage', params: [project: params.project])
             }
-        } else if(storageParams.uploadKeyType == 'password' ){  // Password input type is always text
+        } else if(storageParams.uploadKeyType == 'password'){  // Password input type is always text
             //store a password
             if (!params.uploadPassword) {
                 //invalid
                 flash.errorCode = 'api.error.parameter.required'
                 flash.errorArgs = ['uploadPassword']
 
-                return redirect(controller: 'menu', action: 'storage',
-                        params: [project: params.project])
+                return redirect(controller: 'menu', action: 'storage', params: [project: params.project])
             }
             uploadText = params.uploadPassword
         }
