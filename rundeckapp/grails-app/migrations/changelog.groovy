@@ -3,10 +3,9 @@ databaseChangeLog = {
         property name: "boolean.type", value: "BOOLEAN", dbms: "postgresql,h2"
         property name: "boolean.type", value: "NUMBER(1, 0)", dbms: "oracle"
 
-        property name: "bytearray.type", value: "blob", dbms: "mysql,oracle,mariadb"
+        property name: "bytearray.type", value: "blob", dbms: "mysql,oracle,mariadb,h2"
         property name: "bytearray.type", value: "bytea", dbms: "postgresql"
         property name: "bytearray.type", value: "varbinary(max)", dbms: "mssql"
-        property name: "bytearray.type", value: "binary(1048576)", dbms: "h2"
 
         property name: "int.type", value: "INT", dbms: "mysql, mssql,h2,mariadb"
         property name: "int.type", value: "INTEGER", dbms: "postgresql"
