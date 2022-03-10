@@ -27,10 +27,16 @@ export default Vue.extend({
             return this.nameClass||''
         },
         color(): string {
+            if(!this.uuid){
+              return ''
+            }
             const ver = new RundeckVersion({})
             return `#${ver.splitUUID(this.uuid)['sixes'][0]}`
         },
         uuidShort(): string {
+            if(!this.uuid){
+              return ''
+            }
             return this.uuid.substr(0, 2)
         },
         title(): string {
