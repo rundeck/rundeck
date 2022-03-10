@@ -5,7 +5,7 @@ import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import VueCookies from 'vue-cookies'
 import { EventBus } from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
-import VersionDisplay from '@/components/version/VersionDisplay'
+import VersionDisplay from '@rundeck/ui-trellis/lib/components/version/VersionDisplay'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 
 let locale = window._rundeck.locale || 'en_US'
