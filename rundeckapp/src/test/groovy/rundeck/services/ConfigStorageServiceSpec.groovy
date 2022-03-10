@@ -27,6 +27,7 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import spock.lang.Specification
+import testhelper.RundeckHibernateSpec
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -34,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
 
-class ConfigStorageServiceSpec extends HibernateSpec implements ServiceUnitTest<ConfigStorageService> {
+class ConfigStorageServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ConfigStorageService> {
 
     def setup() {
     }

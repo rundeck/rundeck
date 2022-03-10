@@ -18,11 +18,12 @@ package rundeck
 
 import grails.test.hibernate.HibernateSpec
 import grails.validation.ValidationException
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 9/27/16.
  */
-class ExecutionSpec extends HibernateSpec {
+class ExecutionSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [Execution, ScheduledExecution, Workflow, LogFileStorageRequest, Orchestrator] }
 

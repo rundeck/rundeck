@@ -49,6 +49,7 @@ import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -64,7 +65,7 @@ import static org.rundeck.core.auth.AuthConstants.ACTION_UPDATE
 /**
  * Created by greg on 2/26/15.
  */
-class ProjectControllerSpec extends HibernateSpec implements ControllerUnitTest<ProjectController> {
+class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ProjectController> {
 
     def setup(){
         session.subject = new Subject()

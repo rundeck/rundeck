@@ -38,6 +38,7 @@ import rundeck.*
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
@@ -47,7 +48,7 @@ import static org.junit.Assert.*
  * Date: 1/30/14
  * Time: 5:19 PM
  */
-class FrameworkController2Spec extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
+class FrameworkController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<FrameworkController> {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project]}
 

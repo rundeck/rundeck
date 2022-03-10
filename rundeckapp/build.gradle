@@ -177,7 +177,7 @@ dependencies {
     }
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
-    runtimeOnly "com.h2database:h2:1.4.199"
+    runtimeOnly "com.h2database:h2:2.0.202"
 
     // Database drivers
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'

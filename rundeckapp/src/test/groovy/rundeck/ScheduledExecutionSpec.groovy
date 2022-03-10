@@ -18,13 +18,14 @@ package rundeck
 
 import grails.test.hibernate.HibernateSpec
 import org.eclipse.jetty.util.ajax.JSON
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
 /**
  * Created by greg on 10/21/15.
  */
-class ScheduledExecutionSpec extends HibernateSpec
+class ScheduledExecutionSpec extends RundeckHibernateSpec
 {
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec]}
     def "has nodes selected by default"() {

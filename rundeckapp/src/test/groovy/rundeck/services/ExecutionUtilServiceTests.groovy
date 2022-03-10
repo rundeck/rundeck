@@ -39,13 +39,14 @@ import rundeck.JobExec
 import rundeck.Workflow
 import rundeck.Execution
 import rundeck.services.logging.ExecutionLogWriter
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-class ExecutionUtilServiceTests extends HibernateSpec implements ServiceUnitTest<ExecutionUtilService>{
+class ExecutionUtilServiceTests extends RundeckHibernateSpec implements ServiceUnitTest<ExecutionUtilService>{
 
     List<Class> getDomainClasses() { [Execution, CommandExec, JobExec, Workflow] }
 

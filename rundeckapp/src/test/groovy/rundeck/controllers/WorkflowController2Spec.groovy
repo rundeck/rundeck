@@ -24,10 +24,11 @@ import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.*
 import rundeck.services.FrameworkService
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
-class WorkflowController2Spec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
+class WorkflowController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<WorkflowController> {
 
     List<Class> getDomainClasses() { [Workflow, WorkflowStep, JobExec, CommandExec, PluginStep] }
 

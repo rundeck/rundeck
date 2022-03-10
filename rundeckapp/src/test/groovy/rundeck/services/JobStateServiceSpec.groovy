@@ -33,13 +33,14 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.assertNotNull
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobStateService> {
+class JobStateServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<JobStateService> {
 
     List<Class> getDomainClasses() { [Execution,ScheduledExecution,Workflow,CommandExec] }
 

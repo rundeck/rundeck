@@ -17,10 +17,11 @@
 package rundeck
 
 import grails.test.hibernate.HibernateSpec
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
-class ScheduledExecutionFilterTests extends HibernateSpec {
+class ScheduledExecutionFilterTests extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [ScheduledExecutionFilter ]}
 

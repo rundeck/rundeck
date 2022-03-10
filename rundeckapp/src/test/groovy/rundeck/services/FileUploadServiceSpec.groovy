@@ -21,12 +21,13 @@ import rundeck.Workflow
 import rundeck.services.events.ExecutionCompleteEvent
 import spock.lang.Specification
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
 
-class FileUploadServiceSpec extends HibernateSpec implements ServiceUnitTest<FileUploadService> {
+class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<FileUploadService> {
 
     List<Class> getDomainClasses() { [JobFileRecord, Execution, ScheduledExecution, Workflow, Option, CommandExec] }
     def setup() {

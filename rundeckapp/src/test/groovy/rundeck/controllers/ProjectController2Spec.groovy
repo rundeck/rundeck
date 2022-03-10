@@ -46,6 +46,7 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
@@ -54,7 +55,7 @@ import java.lang.annotation.Annotation
 
 import static org.junit.Assert.*
 
-class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest<ProjectController> {
+class ProjectController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<ProjectController> {
 
     List<Class> getDomainClasses() { [Project] }
 

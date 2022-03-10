@@ -38,6 +38,7 @@ import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import spock.lang.Specification
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -54,7 +55,7 @@ import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.W
 /**
  * Created by greg on 3/28/16.
  */
-class LogFileStorageServiceSpec extends HibernateSpec implements ServiceUnitTest<LogFileStorageService> {
+class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<LogFileStorageService> {
     File tempDir
 
     List<Class> getDomainClasses() { [LogFileStorageRequest, Execution] }

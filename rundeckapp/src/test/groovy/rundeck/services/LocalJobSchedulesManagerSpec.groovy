@@ -6,11 +6,12 @@ import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by ronaveva on 2/17/20.
  */
-class LocalJobSchedulesManagerSpec extends HibernateSpec {
+class LocalJobSchedulesManagerSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [ScheduledExecution, CommandExec] }
 

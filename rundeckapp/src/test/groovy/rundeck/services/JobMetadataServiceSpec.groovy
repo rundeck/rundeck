@@ -20,11 +20,12 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import rundeck.LogFileStorageRequest
 import rundeck.PluginMeta
+import testhelper.RundeckHibernateSpec
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-class JobMetadataServiceSpec extends HibernateSpec implements ServiceUnitTest<JobMetadataService> {
+class JobMetadataServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<JobMetadataService> {
 
     List<Class> getDomainClasses() {
         [PluginMeta]

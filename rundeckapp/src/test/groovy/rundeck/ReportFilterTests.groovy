@@ -23,6 +23,7 @@ import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 import org.springframework.transaction.PlatformTransactionManager
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertTrue
@@ -30,7 +31,7 @@ import static org.junit.Assert.assertTrue
 /**
  * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
  */
-class ReportFilterSpec extends HibernateSpec {
+class ReportFilterSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [ReportFilter] }
 

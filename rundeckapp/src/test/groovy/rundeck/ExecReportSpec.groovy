@@ -17,11 +17,12 @@
 package rundeck
 
 import grails.test.hibernate.HibernateSpec
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 6/13/15.
  */
-class ExecReportSpec extends HibernateSpec {
+class ExecReportSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [Execution,Workflow,CommandExec,JobExec] }
 

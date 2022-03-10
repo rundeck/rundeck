@@ -21,10 +21,11 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.storage.api.StorageException
 import rundeck.Storage
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
-class DbStorageServiceTests extends HibernateSpec implements ServiceUnitTest<DbStorageService> {
+class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitTest<DbStorageService> {
 
     List<Class> getDomainClasses() { [Storage] }
 

@@ -42,6 +42,7 @@ import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
+import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
@@ -57,7 +58,7 @@ import static org.junit.Assert.*
 * $Id$
 */
 
-class ScheduledExecutionController2Spec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
     List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats] }
     /**

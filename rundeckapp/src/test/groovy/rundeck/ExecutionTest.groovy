@@ -18,6 +18,7 @@ package rundeck
 
 import grails.test.hibernate.HibernateSpec
 import rundeck.services.ExecutionService
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
@@ -29,7 +30,7 @@ import static org.junit.Assert.*
  * Time: 11:25 AM
  */
 
-class ExecutionTest extends HibernateSpec  {
+class ExecutionTest extends RundeckHibernateSpec  {
 
     List<Class> getDomainClasses() { [Execution, Workflow, CommandExec]}
 

@@ -37,13 +37,14 @@ import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import spock.lang.Specification
+import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 
-class ReportServiceSpec extends HibernateSpec implements ServiceUnitTest<ReportService> {
+class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ReportService> {
     List<Class> getDomainClasses() { [ScheduledExecution, ReferencedExecution, CommandExec, ExecReport] }
 
     def "executions history authorizations"(){

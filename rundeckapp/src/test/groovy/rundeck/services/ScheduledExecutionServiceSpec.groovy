@@ -43,6 +43,7 @@ import org.springframework.context.ConfigurableApplicationContext
 import rundeck.Orchestrator
 import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
@@ -78,7 +79,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 6/24/15.
  */
-class ScheduledExecutionServiceSpec extends HibernateSpec implements ServiceUnitTest<ScheduledExecutionService> {
+class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ScheduledExecutionService> {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
 

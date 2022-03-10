@@ -18,8 +18,9 @@ import rundeck.services.JobRevReferenceImpl
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
-class  ScmLoaderServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmLoaderService> {
+class  ScmLoaderServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ScmLoaderService> {
 
     def "loaded export plugin not configured"(){
 

@@ -44,7 +44,7 @@ class RundeckDbMigrationTest extends Specification {
         setup:
         sql.execute('DELETE FROM DATABASECHANGELOG')
         tableList.each{table->
-            String statement =  "DROP TABLE ${table}"
+            String statement =  "DROP TABLE ${table} CASCADE"
             sql.execute(statement)
         }
 

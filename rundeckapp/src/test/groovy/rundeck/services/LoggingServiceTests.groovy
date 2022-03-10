@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.utils.ThreadBoundLogOutputStream
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import groovy.mock.interceptor.MockFor
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
@@ -48,7 +49,7 @@ import rundeck.services.logging.NodeCountingLogWriter
 import rundeck.services.logging.StepLabellingStreamingLogWriter
 import rundeck.services.logging.ThresholdLogWriter
 
-class LoggingServiceTests  extends HibernateSpec implements ServiceUnitTest<LoggingService> {
+class LoggingServiceTests  extends RundeckHibernateSpec implements ServiceUnitTest<LoggingService> {
 
     List<Class> getDomainClasses() { [Execution, LogFileStorageService, Workflow, CommandExec] }
 

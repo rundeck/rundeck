@@ -22,8 +22,9 @@ import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import rundeck.services.scm.ScmPluginConfig
 import spock.lang.Specification
+import testhelper.RundeckHibernateSpec
 
-class PluginConfigServiceSpec extends HibernateSpec implements ServiceUnitTest<PluginConfigService> {
+class PluginConfigServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<PluginConfigService> {
 
 
     def "loadScmConfig dne"() {

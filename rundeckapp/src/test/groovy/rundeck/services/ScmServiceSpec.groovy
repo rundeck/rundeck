@@ -54,11 +54,12 @@ import rundeck.User
 import rundeck.Storage
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 10/15/15.
  */
-class ScmServiceSpec extends HibernateSpec implements ServiceUnitTest<ScmService> {
+class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ScmService> {
 
     List<Class> getDomainClasses() { [ScheduledExecution, User, Storage ] }
 

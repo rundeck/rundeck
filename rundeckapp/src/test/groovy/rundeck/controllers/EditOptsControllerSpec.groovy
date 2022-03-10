@@ -31,11 +31,12 @@ import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 2/11/16.
  */
-class EditOptsControllerSpec extends HibernateSpec implements ControllerUnitTest<EditOptsController>{
+class EditOptsControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<EditOptsController>{
 
     List<Class> getDomainClasses() { [Option, ScheduledExecution, CommandExec, Workflow] }
 

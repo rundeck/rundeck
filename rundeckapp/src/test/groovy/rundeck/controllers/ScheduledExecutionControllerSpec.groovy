@@ -47,6 +47,7 @@ import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Unroll
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -55,7 +56,7 @@ import java.lang.annotation.Annotation
 /**
  * Created by greg on 7/14/15.
  */
-class ScheduledExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
     List<Class> getDomainClasses() { [ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution, ScheduledExecutionStats] }
 

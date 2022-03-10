@@ -31,11 +31,12 @@ import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 4/12/16.
  */
-class ExecutionJobSpec extends HibernateSpec {
+class ExecutionJobSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats] }
 

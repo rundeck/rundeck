@@ -42,6 +42,7 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
@@ -49,7 +50,7 @@ import static org.junit.Assert.assertNull
 /**
  * Created by greg on 2/16/16.
  */
-class WorkflowControllerSpec extends HibernateSpec implements ControllerUnitTest<WorkflowController> {
+class WorkflowControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<WorkflowController> {
 
     List<Class> getDomainClasses() { [Workflow, CommandExec, JobExec, ScheduledExecution, PluginStep]}
 

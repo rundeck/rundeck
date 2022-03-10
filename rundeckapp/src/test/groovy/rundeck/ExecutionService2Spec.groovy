@@ -37,12 +37,13 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.springframework.context.MessageSource
 import rundeck.services.*
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
 //import grails.test.GrailsMock
 
-class ExecutionService2Spec extends HibernateSpec implements ServiceUnitTest<ExecutionService> {
+class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitTest<ExecutionService> {
 
     List<Class> getDomainClasses() { [ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User] }
 

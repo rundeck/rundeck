@@ -1,8 +1,9 @@
 package rundeck
 
 import grails.test.hibernate.HibernateSpec
+import testhelper.RundeckHibernateSpec
 
-class ReferencedExecutionSpec extends HibernateSpec
+class ReferencedExecutionSpec extends RundeckHibernateSpec
 {
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, ReferencedExecution]}
     def "execution id list"(){
