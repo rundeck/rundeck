@@ -54,8 +54,7 @@
     <g:render template="/common/css"/>
 </head>
 <body id="loginpage">
-    <div class="full-page login-page">
-    <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
+    <div class="login-page">
       <div class="content">
         <div class="container">
           <div class="row">
