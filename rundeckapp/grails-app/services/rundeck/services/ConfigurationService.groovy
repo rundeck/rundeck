@@ -255,7 +255,7 @@ class ConfigurationService implements InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
-        appCfg = grailsApplication.config.getProperty("rundeck", Map.class)?.toFlatConfig()
+        appCfg = grailsApplication.config.getProperty("rundeck", Map.class)
     }
 
 }
