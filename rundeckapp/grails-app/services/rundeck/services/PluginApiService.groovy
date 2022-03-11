@@ -139,9 +139,11 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
-        pluginDescs['FileUpload']=pluginService.listPlugins(FileUploadPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        if(featureService.featurePresent(Features.FILE_UPLOAD_PLUGIN)) {
+            pluginDescs['FileUpload'] = pluginService.listPlugins(FileUploadPlugin).collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
         pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }

@@ -4,7 +4,9 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -19,6 +21,7 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.events.ExecutionCompleteEvent
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -617,5 +620,28 @@ class FileUploadServiceSpec extends HibernateSpec implements ServiceUnitTest<Fil
         then:
         result
         result.fileName==origName
+    }
+
+    def "validate option with plugin disabled"(){
+
+        given:
+        def option = new Option(optionType: 'file', name: 'myopt', required: false, enforced: false).save()
+        service.featureService = Mock(FeatureService){
+            featurePresent("fileUploadPlugin")>>false
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+            getLong('fileUploadService.tempfile.expiration', _) >> 30000L
+        }
+        service.pluginService = Mock(PluginService){
+            validatePluginConfig(_, _,_) >> new ValidatedPlugin(valid: true, report: Validator.buildReport().build())
+        }
+
+        when:
+        def result = service.validateFileOptConfig(option)
+
+        then:
+        option.errors.hasErrors() == true
+
     }
 }
