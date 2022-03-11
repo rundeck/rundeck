@@ -205,6 +205,7 @@
                       </div>
                     </g:if>
                   </div>
+                </div>
               </form>
             </div>
           </div>
