@@ -16,7 +16,6 @@
 
 //= require noconflict
 //= require_self
-//= require versionIdentity
 //= require actionHandlers
 
 const KEYS = {

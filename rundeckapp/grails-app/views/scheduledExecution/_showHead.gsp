@@ -102,12 +102,11 @@
               </span>
               <g:if test="${remoteClusterNodeUUID}">
                   on
-                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}"
-                        data-name-truncated="8"
-                        data-uuid-label-none="true"
+                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID.substring(0,8)}"
+                        data-show-id="false"
                         class="rundeck-server-uuid">
-                      <i class="fas fa-dot-circle cluster-status-icon"></i>
                   </span>
+                  <i class="fas fa-dot-circle cluster-status-icon"></i>
               </g:if>
           </span>
       </g:if>

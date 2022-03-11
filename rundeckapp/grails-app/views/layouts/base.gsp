@@ -76,6 +76,7 @@
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/version.css"/>
+    <asset:stylesheet href="static/css/components/server-identity.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
     <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
 
@@ -293,11 +294,12 @@
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/version.js"/>
+<asset:javascript src="static/components/server-identity.js"/>
 <asset:javascript src="static/components/tour.js"/>
 <g:if test="${!communityNewsDisabled}">
     <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
-
+<asset:deferredScripts/>
 <!-- /VUE JS MODULES -->
 </body>
 

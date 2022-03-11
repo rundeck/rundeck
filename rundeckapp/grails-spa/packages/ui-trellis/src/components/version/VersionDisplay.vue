@@ -120,8 +120,18 @@ export default Vue.extend({
       } : {}
     }
   },
+  watch:{
+    version(){
+        this.loadversion()
+    },
+  },
+  methods:{
+    loadversion(){
+        this.rdversion = new RundeckVersion({versionString: this.version, versionDate: this.date, appId: this.appName})
+    }
+  },
   mounted() {
-    this.rdversion = new RundeckVersion({versionString: this.version, versionDate: this.date, appId: this.appName})
+    this.loadversion()
   }
 })
 </script>
