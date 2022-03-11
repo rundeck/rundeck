@@ -98,7 +98,6 @@
 </head>
 <body id="loginpage">
     <div class="login-page">
-    <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
       <div class="content">
         <div class="container">
           <div class="row">
@@ -241,6 +240,5 @@
       </script>
 <g:render template="/common/footer"/>
 <asset:deferredScripts/>
-  </div>
 </body>
 </html>
