@@ -14,7 +14,7 @@
 - limitations under the License.
 --}%
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="grails.util.Environment" contentType="text/html;charset=UTF-8" %>
 <html>
 
 <head>
@@ -29,12 +29,21 @@
   <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
   %{-- Core theme styles from ui-trellis --}%
   <asset:stylesheet href="static/css/components/theme.css"/>
+  <asset:stylesheet href="static/css/components/server-identity.css"/>
 
+  <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
+    <asset:javascript src="vendor/vue.js"/>
+  </g:if>
+  <g:else>
+    <asset:javascript src="vendor/vue.min.js"/>
+  </g:else>
+  <asset:javascript src="static/js/chunk-common.js"/>
+  <asset:javascript src="static/js/chunk-vendors.js"/>
+  <asset:javascript src="static/components/server-identity.js" asset-defer="true" />
   <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
   <asset:javascript src="vendor/jquery.js" />
-  <asset:javascript src="versionIdentity.js"/>
   <g:render template="/common/css"/>
   <asset:javascript src="bootstrap.js" />
 </head>
@@ -82,6 +91,7 @@
       </div>
       <g:render template="/common/footer" />
     </div>
+<asset:deferredScripts/>
 </body>
 
 </html>

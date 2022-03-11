@@ -309,7 +309,7 @@ $black:                      $grey-900;
     --text-muted-color:           var(--medium-grey);
     --text-secondary-color:       var(--text-muted-color);
 
-    // link color
+    --link-color: var(--primary-color);
 
     // List Items
     --list-item-background-color: var(--white);
@@ -449,6 +449,8 @@ $black:                      $grey-900;
     --text-primary-color: var(--primary-color);
     --text-muted-color:           var(--grey-100);
     --text-secondary-color:       var(--text-muted-color);
+
+    --link-color: #AEC8F4;
 
     --text-code-color:       var(--green-500);
 
