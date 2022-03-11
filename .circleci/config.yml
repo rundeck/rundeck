@@ -67,12 +67,12 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v3-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - restore_cache:
           keys:
-            - v3-gradle-cache-{{ .Branch }}-<<pipeline.number>>
-            - v3-gradle-cache-{{ .Branch }}-
-            - v3-gradle-cache-
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-
 
   save-gradle-cache:
     description: Save Gradle cache
@@ -80,11 +80,11 @@ commands:
       - save_cache:
           paths:
             - ~/.gradle/wrapper
-          key: v3-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+          key: cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - save_cache:
           paths:
             - ~/.gradle/caches
-          key: v3-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+          key: cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
 
   fetch-common-artifacts:
     description: Fetch common build artifacts
