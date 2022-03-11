@@ -69,24 +69,25 @@ node{
 }
 
 def sourceDirs = [
-        '.storybook',
-        'lib',
-        'src',
-        'theme'
+    'src',
+    'theme'
 ]
-def sourceFiles = ['package.json', 'README.md']
-def sources = sourceDirs + sourceFiles
+def sourceFiles = [
+    'package.json',
+    'package-lock.json',
+    'babel.config.js',
+    'tsconfig.build.json',
+    'tsconfig.json',
+    'tsconfig.webpackage.json',
+    'vue.config.js'
+]
 
-def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
-    it.inputs.file 'package.json'
-    it.inputs.file 'package-lock.json'
-    it.inputs.file 'vue.config.js'
-    it.inputs.file 'tsconfig.json'
+def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {t->
+    t.inputs.files sourceFiles
+    sourceDirs.each {t.inputs.dir it }
 
-    it.inputs.dir 'src'
-
-    it.outputs.dir(file("$buildDir"))
-    it.outputs.cacheIf { false }
+    t.outputs.dir(file("$buildDir"))
+    t.outputs.cacheIf { true }
 
     def npmCommand = System.env.CI ?
       'ci:build' :
