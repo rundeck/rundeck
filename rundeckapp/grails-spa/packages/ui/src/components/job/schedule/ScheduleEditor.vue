@@ -145,6 +145,7 @@
                                       @blur="validateCronExpression"
                                       v-model="modelData.crontabString"
                                     >
+                                    <input type="hidden" name="useCrontabString" v-model="modelData.useCrontabString">
                                   </div>
                                 </div>
                                 <div class="col-sm-6">
@@ -272,7 +273,6 @@
 </div>
 </template>
 <script lang="ts">
-import {_genUrl} from '@/utilities/genUrl'
 import axios from 'axios'
 import InlineValidationErrors from '../../form/InlineValidationErrors.vue'
 import Vue from 'vue'
@@ -284,10 +284,7 @@ import {
   getMonths,
   getSimpleDecomposition,
 } from "./services/scheduleDefinition"
-import {
-  getRundeckContext,
-  getAppLinks
-} from '@rundeck/ui-trellis'
+
 
 @Component({components: {InlineValidationErrors}})
 export default class ScheduleEditor extends Vue {
@@ -364,7 +361,7 @@ export default class ScheduleEditor extends Vue {
         project: window._rundeck.projectName,
         crontabString: this.modelData.crontabString
       },
-      url: `/scheduledExecution/checkCrontab`,
+      url: new URL(`scheduledExecution/checkCrontab`, window._rundeck.rdBase).toString(),
       withCredentials: true
     }).then(response => {
       this.errors = response.request.response
