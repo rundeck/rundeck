@@ -11,7 +11,6 @@ Vue.config.productionTip = false
 /* eslint-disable no-new */
 
 const serveruuid = document.body.getElementsByClassName('rundeck-server-uuid')
-console.log("count serveruuid: "+serveruuid.length)
 for (var i = 0; i < serveruuid.length; i++) {
     const e = serveruuid[i]
 
