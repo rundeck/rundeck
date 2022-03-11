@@ -86,7 +86,7 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
     it.inputs.dir 'src'
 
     it.outputs.dir(file("$buildDir"))
-    it.outputs.cacheIf { true }
+    it.outputs.cacheIf { false }
 
     def npmCommand = System.env.CI ?
       'ci:build' :
