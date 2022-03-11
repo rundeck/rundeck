@@ -1,3 +1,4 @@
+<%@ page import="grails.util.Environment" %>
 <!DOCTYPE html>
 <!--[if lt IE 7 ]> <html class="ie6"> <![endif]-->
 <!--[if IE 7 ]>    <html class="ie7"> <![endif]-->
@@ -32,7 +33,17 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
+    <asset:stylesheet href="static/css/components/server-identity.css"/>
 
+    <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
+        <asset:javascript src="vendor/vue.js"/>
+    </g:if>
+    <g:else>
+        <asset:javascript src="vendor/vue.min.js"/>
+    </g:else>
+    <asset:javascript src="static/components/server-identity.js" asset-defer="true" />
+
+    <asset:javascript src="static/js/chunk-common.js"/>
     <asset:javascript src="static/js/chunk-vendors.js"/>
     <asset:javascript src="static/pages/login.js"/>
 
@@ -40,7 +51,6 @@
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="vendor/jquery.js"/>
-    <asset:javascript src="versionIdentity.js"/>
     <g:render template="/common/css"/>
 </head>
 <body id="loginpage">
@@ -96,5 +106,6 @@
     </div>
     <g:render template="/common/footer"/>
   </div>
+<asset:deferredScripts/>
 </body>
 </html>
