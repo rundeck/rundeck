@@ -67,12 +67,12 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - {{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - restore_cache:
           keys:
-            - {{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
-            - {{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-
-            - {{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-
 
   save-gradle-cache:
     description: Save Gradle cache
@@ -80,11 +80,11 @@ commands:
       - save_cache:
           paths:
             - ~/.gradle/wrapper
-          key: {{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+          key: cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - save_cache:
           paths:
             - ~/.gradle/caches
-          key: {{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+          key: cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
 
   fetch-common-artifacts:
     description: Fetch common build artifacts
