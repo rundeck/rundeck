@@ -1,7 +1,9 @@
-import 'isomorphic-fetch'
-
+/**
+ * @jest-environment jsdom
+ */
 console.log(global.fetch)
 
+import {RundeckContext} from '../../src'
 import {ExecutionOutput, ExecutionOutputStore} from '../../src/stores/ExecutionOutput'
 import {ExecutionLog} from '../../src/utilities/ExecutionLogConsumer'
 
@@ -13,6 +15,9 @@ import { RootStore } from '../../src/stores/RootStore'
 import fetchMock from 'fetch-mock'
 
 jest.setTimeout(60000)
+beforeAll(()=>{
+    window._rundeck={} as RundeckContext
+})
 
 describe('ExecutionOutput Store', () => {
     it('Loads Output', async () => {
