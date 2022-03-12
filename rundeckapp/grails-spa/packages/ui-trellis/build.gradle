@@ -107,7 +107,7 @@ def runNpmTest = tasks.register('runNpmTest', NpmTask) {t->
 
     args = ['run', 'test']
 }
-check.dependsOn runNpmTest
+//check.dependsOn runNpmTest
 
 /** Takes package.json and sets the version in it */
 def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
