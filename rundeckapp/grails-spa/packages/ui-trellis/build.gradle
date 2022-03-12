@@ -72,6 +72,9 @@ def sourceDirs = [
     'src',
     'theme'
 ]
+def testDirs = [
+    'tests'
+]
 def sourceFiles = [
     'package.json',
     'package-lock.json',
@@ -95,6 +98,16 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {t->
 
     args = ['run', npmCommand]
 }
+def runNpmTest = tasks.register('runNpmTest', NpmTask) {t->
+    t.inputs.files sourceFiles
+    sourceDirs.each {t.inputs.dir it }
+    testDirs.each {t.inputs.dir it }
+
+    t.outputs.cacheIf { true }
+
+    args = ['run', 'test']
+}
+check.dependsOn runNpmTest
 
 /** Takes package.json and sets the version in it */
 def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->

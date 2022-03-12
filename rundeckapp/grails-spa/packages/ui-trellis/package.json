@@ -4,7 +4,7 @@
   "description": "A collection of utilities used across various javascript applications and components.",
   "main": "./lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "dev:build": "npm install && npm run build",
     "ci:build": "npm ci && npm run build",
     "dev": "concurrently -n vue,tsc \"vue-cli-service build --mode development --watch\" \"tsc -W -p ./tsconfig.build.json\"",
