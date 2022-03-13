@@ -118,52 +118,65 @@ function StorageUpload(storage){
     self.password=ko.observable('');
     self.fileName=ko.observable('');
 
-    //computed
-    self.fileInputName=ko.computed(function(){
-        var file = self.file();
+
+    self.file.subscribe(() => {
+        const [fileObj] = document.querySelector('#storageuploadfile').files;
+        if (fileObj && self.inputType() === 'file') {
+            reader.readAsText(fileObj)
+            if(!self.modifyMode()) {
+                self.fileName(fileObj.name)
+            }
+        } else {
+            self.textArea("")
+        }
+    })
+
+    //Observer triggerred when select a file
+    self.fileInputName = ko.computed(function(){
+        const file = self.file();
         if(file){
             return file.lastIndexOf('/')>=0 ? file.substring(file.lastIndexOf('/')+1)
                 : file.lastIndexOf('\\')>=0 ? file.substring(file.lastIndexOf('\\')+1)
                 : file;
-
         }else{
             return '';
         }
     });
+
     self.validInput = ko.computed(function(){
-        var intype = self.inputType();
-        var file = self.file();
         var textarea=self.textArea();
         var pass=self.password();
-        if(intype=='text'){
-            return (textarea || pass )? true:false;
-        }else{
-            return file?true:false;
-        }
+        return (textarea || pass ) ? true : false
     });
+
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+        self.textArea(reader.result)
+    }, false);
+
     /**
      * Returns the full path for the inputPath (dir) and inputFilename
      * @type {*}
      */
     self.inputFullpath = ko.computed(function () {
-        var name = self.fileName();
-        var file = self.fileInputName();
-        var path = self.storage.absolutePath(self.storage.inputBasePath());
-        return (path ? (path.lastIndexOf('/') == path.length - 1 ? path : path + '/') : '') + (name?name: file);
+        const fileInputName = self.fileInputName();
+        const name = self.fileName();
+        const path = self.storage.absolutePath(self.storage.inputBasePath());
+        return (path ? (path.lastIndexOf('/') == path.length - 1 ? path : path + '/') : '') + (name ? name : fileInputName);
     });
 
     //subscriptions to clear values when one input type is selected
     self.inputType.subscribe(function(newvalue){
-       if(newvalue=='text'){
+       if(newvalue == 'text' || newvalue== 'file'){
            self.file('');
-       } else{
            self.textArea('');
+       } else{
            self.password('');
        }
     });
     //subscriptions to clear values when one input type is selected
     self.keyType.subscribe(function(newvalue){
-       if(newvalue=='password'){
+       if(newvalue == 'password'){
            self.textArea('');
            self.inputType('text');
        } else{
@@ -516,6 +529,5 @@ function StorageBrowser(baseUrl, rootPath) {
     });
 
     //upload link
-
     self.upload = new StorageUpload(self);
 }

@@ -7,6 +7,7 @@ export class RundeckVersion {
   private iconIdentity: string
   private appId: string
   private serverName?: string
+  private nameTilt = 21
 
   constructor(data: any) {
     this.versionString = data['versionString']
@@ -21,45 +22,45 @@ export class RundeckVersion {
   }
 
   static csscolors = [
-    "aquamarine",
-    "blue",
+    // "aquamarine",
+    // "blue",
     "brown",
-    "burlywood",
-    "chartreuse",
+    // "burlywood",
+    // "chartreuse",
     "coral",
     "deeppink",
-    "deepskyblue",
+    // "deepskyblue",
     "fuchsia",
-    "gold",
+    // "gold",
     "green",
-    "greenyellow",
-    "indigo",
-    "khaki",
-    "lime",
+    // "greenyellow",
+    // "indigo",
+    // "khaki",
+    // "lime",
     "olivedrab",
     "orange",
     "orchid",
     "palevioletred",
-    "peachpuff",
+    // "peachpuff",
     "peru",
-    "pink",
-    "plum",
-    "powderblue",
+    // "pink",
+    // "plum",
+    // "powderblue",
     "rebeccapurple",
     "red",
-    "rosybrown",
+    // "rosybrown",
     "salmon",
     "sandybrown",
-    "silver",
-    "skyblue",
+    // "silver",
+    // "skyblue",
     "slategray",
-    "springgreen",
-    "tan",
-    "thistle",
+    // "springgreen",
+    // "tan",
+    // "thistle",
     "turquoise",
     "violet",
-    "wheat",
-    "yellow",
+    // "wheat",
+    // "yellow",
     "yellowgreen"
   ]
 
@@ -122,56 +123,41 @@ export class RundeckVersion {
     'tower'
   ]
 
-  static names = [
-    'Americano',
-    'Cafe Au Lait',
-    'Cafe Bonbon',
-    'Cafecito',
-    'Cafe Cubano',
-    'Caffe Latte',
-    'Cafe Mocha',
-    'Cappuccino',
-    'Caramel Latte',
-    'Coconut Latte',
-    'Con Panna',
-    'Doppio Espresso',
-    'Dry Cappuccino',
-    'Espresso Breve',
-    'Eye Opener',
-    'Hammerhead',
-    'Macchiato',
-    'Pumpkin Spice Latte',
-    'Ristretto',
-    'Solo Espresso',
-    'Toffee Latte',
-    'Turkish Coffee',
-    'Vanilla Latte',
-    'Viennese Espresso'
-  ]
-  static names3 = [
-    'Antipasto',
-    'Bruschetta',
-    'Calamari',
-    'Deviled egg',
-    'Egg roll',
-    'Fattoush',
-    'Gougère',
-    'Hors d\'oeuvre',
+  static names4 = [
+    'Alicorn',
+    'Banshee',
+    'Big Foot',
+    'Basilisk',
+    'Chimera',
+    'Chupacabra',
+    'Demigorgon',
+    'Eloi',
+    'Firedrake',
+    'Griffin',
+    // 'Gorgon',
+    'Gremlin',
+    'Hobgoblin',
+    'Hippogriff',
+    'Imp',
+    'Jörmungandr',
+    'Kraken',
+    'Kaiju',
+    'Liger',
+    'Manticore',
+    'Murloc',
+    'Nessie',
+    'Ogre',
+    'Orc',
+    'Phoenix',
+    'Quintaped',
+    // 'R',
+    'Sphinx',
+    'Satyr',
+    // 'T',
+    'Unicorn',
+    // 'V',
+    'Wyvern',
 
-    'Jalapeño popper',
-    'Mozzarella stick',
-    'Nacho',
-    'Onion ring',
-    'Papadum',
-    'Poke',
-    'Queso flameado',
-    'Rumaki',
-    'Saganaki',
-    'Spanakopita',
-    'Tapas',
-    'Vol-au-vent',
-    'Xiaolongbao',
-    'Zakuski'
   ]
 
   splitVersion(versionString: string): { [p: string]: any } {
@@ -190,13 +176,13 @@ export class RundeckVersion {
     } else {
       data['minor'] = 0
     }
-    data['majorMinor'] = (data.major * 10) + data.minor
+    data['majorMinor'] = (data.major * 100) + data.minor
     if (vparts.length > 2) {
       data['point'] = parseInt(vparts[2])
     } else {
       data['point'] = 0
     }
-    data['minorPoint'] = (data.minor * 20) + data.point
+    data['minorPoint'] = (data.minor * 5) + data.point
     let release = 1
     let tag = ''
     if (parts.length > 1 && /^\d+$/.test(parts[1])) {
@@ -257,7 +243,7 @@ export class RundeckVersion {
   }
 
   nameForVersion(val: number) {
-    return this.inList(RundeckVersion.names3, val)
+    return this.inList(RundeckVersion.names4, val)
   }
 
 
@@ -283,7 +269,7 @@ export class RundeckVersion {
   }
 
   versionName() {
-    return this.nameForVersion(this.versionData[this.nameIdentity])
+    return this.nameForVersion(this.versionData[this.nameIdentity] + this.nameTilt)
   }
 
   versionIcon() {

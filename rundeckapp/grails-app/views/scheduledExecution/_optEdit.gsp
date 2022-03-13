@@ -57,6 +57,7 @@
             </label>
 
             <div class="col-sm-10">
+                <feature:enabled name="fileUploadPlugin">
                 <g:select
                         data-bind="value: optionType"
                         name="optionType"
@@ -71,49 +72,67 @@
                     }"
                         id="opttype_${rkey}">
                 </g:select>
+                </feature:enabled>
+                <feature:disabled name="fileUploadPlugin">
+                    <g:select
+                            data-bind="value: optionType"
+                            name="optionType"
+                            class="form-control "
+                            value="${option?.optionType}"
+                            optionKey="key"
+                            optionValue="value"
+                            from="${[
+                                    [key:'',value:message(code:'form.option.optionType.text.label')],
+                            ]
+                            }"
+                            id="opttype_${rkey}">
+                    </g:select>
+                </feature:disabled>
             </div>
         </div>
 
         <div class="form-group" data-bind="visible: isFileType()">
             <div class="col-sm-10 col-sm-offset-2">
-                <g:if test="${fileUploadPluginDescription}">
-                    <stepplugin:pluginIcon service="FileUpload"
-                                           name="${fileUploadPluginDescription.name}"
-                                           width="16px"
-                                           height="16px">
-                        <i class="rdicon icon-small plugin"></i>
-                    </stepplugin:pluginIcon>
-                    <stepplugin:message
-                            service="FileUpload"
-                            name="${fileUploadPluginDescription.name}"
-                            code="plugin.title"
-                            default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
-                    <span class="text-strong"><g:render template="/scheduledExecution/description"
-                                                       model="[description:
-                                                                       stepplugin.messageText(
-                                                                               service: 'FileUpload',
-                                                                               name: fileUploadPluginDescription.name,
-                                                                               code: 'plugin.description',
-                                                                               default: fileUploadPluginDescription.description
-                                                                       ),
-                                                               textCss    : '',
-                                                               mode       : 'hidden', rkey: g.rkey()]"/></span>
+                <feature:enabled name="fileUploadPlugin">
+                    <g:if test="${fileUploadPluginDescription}">
+                        <stepplugin:pluginIcon service="FileUpload"
+                                               name="${fileUploadPluginDescription.name}"
+                                               width="16px"
+                                               height="16px">
+                            <i class="rdicon icon-small plugin"></i>
+                        </stepplugin:pluginIcon>
+                        <stepplugin:message
+                                service="FileUpload"
+                                name="${fileUploadPluginDescription.name}"
+                                code="plugin.title"
+                                default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
+                        <span class="text-strong"><g:render template="/scheduledExecution/description"
+                                                           model="[description:
+                                                                           stepplugin.messageText(
+                                                                                   service: 'FileUpload',
+                                                                                   name: fileUploadPluginDescription.name,
+                                                                                   code: 'plugin.description',
+                                                                                   default: fileUploadPluginDescription.description
+                                                                           ),
+                                                                   textCss    : '',
+                                                                   mode       : 'hidden', rkey: g.rkey()]"/></span>
 
-                    <g:if test="${fileUploadPluginDescription?.properties}">
-                        <g:set var="prefix" value="${'configMap.'}"/>
-                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                service:'FileUpload',
-                                provider:fileUploadPluginDescription.name,
-                                properties:fileUploadPluginDescription?.properties,
-                                report: configMapValidate,
-                                prefix:prefix,
-                                values:option?.configMap,
-                                fieldnamePrefix:prefix,
-                                origfieldnamePrefix:'orig.' + prefix,
-                                allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
-                        ]}"/>
+                        <g:if test="${fileUploadPluginDescription?.properties}">
+                            <g:set var="prefix" value="${'configMap.'}"/>
+                            <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    service:'FileUpload',
+                                    provider:fileUploadPluginDescription.name,
+                                    properties:fileUploadPluginDescription?.properties,
+                                    report: configMapValidate,
+                                    prefix:prefix,
+                                    values:option?.configMap,
+                                    fieldnamePrefix:prefix,
+                                    origfieldnamePrefix:'orig.' + prefix,
+                                    allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                            ]}"/>
+                        </g:if>
                     </g:if>
-                </g:if>
+                </feature:enabled>
             </div>
         </div>
 

@@ -299,6 +299,8 @@ rundeck:
             enabled: true
         notificationsOwnThread:
             enabled: false #FYI FALSE
+        fileUploadPlugin:
+            enabled: true
 ---
 
 beans:

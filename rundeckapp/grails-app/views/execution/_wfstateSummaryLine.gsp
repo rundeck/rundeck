@@ -128,12 +128,12 @@
       <span id="execRemoteServerUUID" class="execution-cluster-id">
 
           <span data-server-uuid="${execution.serverNodeUUID}"
-                data-server-name="${execution.serverNodeUUID}"
-                data-name-truncated="8"
-                data-uuid-label-none="true"
-                class="rundeck-server-uuid text-secondary">
-                <i class="fas fa-dot-circle text-muted cluster-status-icon"></i>
+                data-server-name="${execution.serverNodeUUID.substring(0,8)}"
+                data-show-id="false"
+                data-name-class="text-secondary"
+                class="rundeck-server-uuid">
           </span>
+          <i class="fas fa-dot-circle text-muted cluster-status-icon"></i>
       </span>
   </g:if>
 </span>
