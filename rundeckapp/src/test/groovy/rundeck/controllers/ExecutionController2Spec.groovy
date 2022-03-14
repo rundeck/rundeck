@@ -713,91 +713,44 @@ class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTe
     /**
      * Test metrics calculations.
      */
-    public void testApiExecutionsMetrics() {
-        when:
-        def controller = controller
+    public void "api metrics response json"() {
+        given:
 
-        controller.request.api_version = 29
-        controller.request.contentType = "application/json"
-        controller.params.project = "Test"
+        request.api_version = 29
+        request.contentType = "application/json"
+        params.project = "Test"
 
         def apiMock = Mock(ApiService)
 
-        apiMock.requireApi(*_)>>{ request, response, int min ->
-            assertEquals(29, min)
-            return true
-        }
         controller.apiService = apiMock
 
         // mock exec service
-        controller.executionService = new ExecutionService()
-        controller.executionService.applicationContext = Mock(ApplicationContext){
-            getBeansOfType ()>> []
-        }
-        controller.response.format = "json"
+        controller.executionService = Mock(ExecutionService)
+        response.format = "json"
 
-        def listOnMemory = {
-            Date now = new Date()
-            Date dateStarted1 = now
-            Date dateStarted2 = now
-            Date dateStarted3 = now
-            Date dateCompleted = now
-            use (TimeCategory) {
-                dateStarted1 = new Date() - 10.minute
-                dateStarted2 = new Date() - 3.minute
-                dateStarted3 = new Date() - 5.minute
-            }
-            [
-                    [dateStarted: dateStarted1, dateCompleted: dateCompleted],
-                    [dateStarted: dateStarted2, dateCompleted: dateCompleted],
-                    [dateStarted: dateStarted3, dateCompleted: dateCompleted]
+
+        1 * controller.executionService.queryExecutionMetrics(_)>>[
+            total:3,
+            duration:[
+                average: 5 * 60 * 1000,
+                min    : 2 * 60 * 1000,
+                max    : 9 * 60 * 1000,
             ]
-        }
+        ]
+        when:
+            controller.apiExecutionMetrics(new ExecutionQuery())
+            def json = response.json
 
-
-        def metricCriteria = new Expando()
-        metricCriteria.get = { Closure c -> [
-                count      : 3,
-                durationMax: new Time(0, 9, 0),
-                durationMin: new Time(0, 2, 0),
-                durationSum: new Time(0, 15, 0)
-            ]
-        }
-        metricCriteria.list = {Map maxResult=null, Closure c ->
-            println(maxResult)
-            if(!maxResult){
-                return listOnMemory()
-            }
-
-            if(isCompatible) {
-                return [1]
-            } else {
-                throw new JDBCException("some sql exception", null, "")
-            }
-        }
-
-        Execution.metaClass.static.createCriteria = { metricCriteria }
-
-        // Call controller
-        controller.apiExecutionMetrics(new ExecutionQuery())
-
-        // Parse response.
-        def resp = new JsonSlurper().parseText(response.text)
 
         then:
-        // Check respose.
-        assert 200 == controller.response.status
-        assert resp.total == 3
-//        assert resp.status.succeeded == 3
-        assert resp.duration.average == "5m"
-        assert resp.duration.min == "2m"
-        assert resp.duration.max == "9m"
+            1 * apiMock.requireApi(_, _, 29) >> true
 
-        where:
-        isCompatible |_
-        true         |_
-        false        |_
+            assert 200 == response.status
+            assert json.total == 3
 
+            assert json.duration.average == "5m"
+            assert json.duration.min == "2m"
+            assert json.duration.max == "9m"
     }
 
 
