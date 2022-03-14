@@ -375,7 +375,7 @@ stages:
   - Tomcat 8 API Test
   - Tomcat 9 API Test
   - API Test
-  #- Selenium Test
+  - Selenium Test
   - SSL Test
   - Ansible Test
   - LDAP Test
