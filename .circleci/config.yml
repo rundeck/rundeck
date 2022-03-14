@@ -7,7 +7,6 @@ version: 2.1
 slack-fail-post-step: &slack-fail-post-step
   post-steps:
     - slack/notify:
-          branch_pattern: main
           channel: C01D89KV4JX
           event: fail
           custom: |
@@ -507,12 +506,18 @@ workflows:
                 - main
     jobs:
       - build:
+          context:
+            - slack-secrets
           <<: *filter-default
           name: Build
+          <<: *slack-fail-post-step
       - test-gradle:
           <<: *filter-default
           name: Gradle Test
           requires: *stage-build
+          context:
+            - slack-secrets
+            <<: *slack-fail-post-step
       ## Optimistically build snapshot
       - trigger-enterprise:
           name: Enterprise Snapshot
@@ -538,6 +543,9 @@ workflows:
           <<: *filter-default
           name: API Test
           requires: *stage-build
+          context:
+            - slack-secrets
+            <<: *slack-fail-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
           <<: *filter-default
@@ -571,6 +579,9 @@ workflows:
       - test-selenium:
             name: Selenium Test
             requires: *stage-build
+            context:
+              - slack-secrets
+              <<: *slack-fail-post-step
       - test-deps:
             name: OWASP Dependency Checks
             requires: *stage-build
