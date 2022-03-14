@@ -8,6 +8,7 @@ slack-fail-post-step: &slack-fail-post-step
   post-steps:
     - slack/notify:
           channel: C01D89KV4JX
+          branch_pattern: main
           event: fail
           custom: |
             {
@@ -494,7 +495,7 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-            
+
 
 
   nightly:
