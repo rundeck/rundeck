@@ -53,55 +53,6 @@ slack-fail-post-step: &slack-fail-post-step
             		}
             	]
             }
-slack-success-post-step: &slack-success-post-step
-  post-steps:
-    - slack/notify:
-          channel: C01D89KV4JX
-          event: pass
-          custom: |
-            {
-            	"blocks": [
-            		{
-            			"type": "section",
-            			"fields": [
-            				{
-            					"type": "mrkdwn",
-            					"text": ":white_check_mark: *Job Success*: ${CIRCLE_JOB}"
-            				}
-            			]
-            		},
-            		{
-            			"type": "context",
-            			"elements": [
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
-            				},
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Branch*: $CIRCLE_BRANCH"
-            				},
-            				{
-            					"type": "mrkdwn",
-            					"text": "*Author*: $CIRCLE_USERNAME"
-            				}
-            			]
-            		},
-            		{
-            			"type": "actions",
-            			"elements": [
-            				{
-            					"type": "button",
-            					"text": {
-            						"type": "plain_text",
-            						"text": "View Job"
-            					},
-            					"url": "${CIRCLE_BUILD_URL}"
-            				}
-            			]
-            		}
-            	]
-            }
 
 orbs:
   docker-publish: circleci/docker-publish@0.1.6
@@ -453,7 +404,6 @@ workflows:
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
-          <<: *slack-success-post-step
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
@@ -461,7 +411,6 @@ workflows:
           context:
             - slack-secrets
           <<: *slack-fail-post-step
-          <<: *slack-success-post-step
       ## Optimistically build snapshot
       - trigger-enterprise:
           name: Enterprise Snapshot
@@ -490,7 +439,6 @@ workflows:
           context:
             - slack-secrets
           <<: *slack-fail-post-step
-          <<: *slack-success-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
           <<: *filter-no-tags
@@ -529,7 +477,6 @@ workflows:
           context:
             - slack-secrets
           <<: *slack-fail-post-step
-          <<: *slack-success-post-step
       - test-deps:
           <<: *filter-no-tags
           name: OWASP Dependency Checks
