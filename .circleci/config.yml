@@ -567,16 +567,9 @@ workflows:
           name: PAM Test
           requires: *stage-build
           command: bash test/run-docker-pam-tests.sh
-
-<<<<<<< HEAD
       - test-selenium:
             name: Selenium Test
             requires: *stage-build
-=======
-      # - test-selenium:
-      #       name: Selenium Test
-      #       requires: [build]
->>>>>>> e5ddcf576 (comment out selenium to test what happens when all jobs succeed)
       - test-deps:
             name: OWASP Dependency Checks
             requires: *stage-build
