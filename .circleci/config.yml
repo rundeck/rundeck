@@ -517,7 +517,7 @@ workflows:
           requires: *stage-build
           context:
             - slack-secrets
-            <<: *slack-fail-post-step
+          <<: *slack-fail-post-step
       ## Optimistically build snapshot
       - trigger-enterprise:
           name: Enterprise Snapshot
@@ -545,7 +545,7 @@ workflows:
           requires: *stage-build
           context:
             - slack-secrets
-            <<: *slack-fail-post-step
+          <<: *slack-fail-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
           <<: *filter-default
@@ -581,7 +581,7 @@ workflows:
             requires: *stage-build
             context:
               - slack-secrets
-              <<: *slack-fail-post-step
+            <<: *slack-fail-post-step
       - test-deps:
             name: OWASP Dependency Checks
             requires: *stage-build
