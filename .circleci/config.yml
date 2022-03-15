@@ -423,16 +423,25 @@ workflows:
           name: Docker Test
           requires: *stage-build
           command: bash test/run-docker-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: Tomcat 8 API Test
           requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: Tomcat 9 API Test
           requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh 9
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-no-tags
           name: API Test
@@ -446,31 +455,49 @@ workflows:
           name: SSL Test
           requires: *stage-build
           command: bash test/run-docker-ssl-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: Ansible Test
           requires: *stage-build
           command: bash test/run-docker-ansible-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: Blocklist Test
           requires: *stage-build
           command: bash test/run-docker-plugin-blocklist-test.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-no-tags
           name: LDAP Test
           requires: *stage-build
           command: bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-no-tags
           name: LDAP Bind Test
           requires: *stage-build
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: PAM Test
           requires: *stage-build
           command: bash test/run-docker-pam-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-selenium:
           <<: *filter-no-tags
           name: Selenium Test
@@ -483,6 +510,9 @@ workflows:
           name: OWASP Dependency Checks
           requires: *stage-build
           continue: 'true'
+          context:
+            - slack-secrets
+            <<: *slack-fail-post-step
       - trigger-packaging:
           name: Trigger packaging-core
           requires: *stage-build
@@ -531,16 +561,25 @@ workflows:
           name: Docker Test
           requires: *stage-build
           command: bash test/run-docker-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Tomcat 8 API Test
           requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Tomcat 9 API Test
           requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh 9
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: API Test
@@ -554,30 +593,48 @@ workflows:
           name: SSL Test
           requires: *stage-build
           command: bash test/run-docker-ssl-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Ansible Test
           requires: *stage-build
           command: bash test/run-docker-ansible-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Blocklist Test
           requires: *stage-build
           command: bash test/run-docker-plugin-blocklist-test.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: LDAP Test
           requires: *stage-build
           command: bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: LDAP Bind Test
           requires: *stage-build
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           name: PAM Test
           requires: *stage-build
           command: bash test/run-docker-pam-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-selenium:
             name: Selenium Test
             requires: *stage-build
@@ -588,3 +645,6 @@ workflows:
             name: OWASP Dependency Checks
             requires: *stage-build
             continue: 'false'
+            context:
+              - slack-secrets
+            <<: *slack-fail-post-step
