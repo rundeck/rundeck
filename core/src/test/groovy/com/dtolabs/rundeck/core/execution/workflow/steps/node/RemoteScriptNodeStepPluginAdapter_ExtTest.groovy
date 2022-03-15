@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IFrameworkServices
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.data.DataContext
@@ -32,6 +33,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.step.FileExtensionGeneratedScript
@@ -56,9 +58,14 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
 
     def "basic command"() {
         given:
+            def fwkProps = ['rundeck.feature.quoting': 'false']
+            def iFrameworkMock = Mock(IFramework){
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
             framework.frameworkServices = Mock(IFrameworkServices)
             StepExecutionContext context = Mock(StepExecutionContext) {
                 getFramework() >> framework
+                getIFramework() >> iFrameworkMock
             }
             def node = new NodeEntryImpl('node')
             def script = Mock(FileExtensionGeneratedScript)
