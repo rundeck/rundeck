@@ -74,7 +74,7 @@
                               <label for="minuteNumber" aria-hidden="false" style="display: none;">Minute</label>
                               <select
                                 id="minuteNumber"
-                                name="minutes"
+                                name="minute"
                                 v-model="modelData.minuteSelected"
                                 class="form-control"
                                 style="width:auto;"
