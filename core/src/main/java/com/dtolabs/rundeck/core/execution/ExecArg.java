@@ -33,6 +33,8 @@ public abstract class ExecArg {
 
     private boolean quoted = true;
 
+    private boolean featureQuoting = false;
+
     /**
      * @return the sublist of args, if {@link #isList()} returns true, null otherwise
      */
@@ -67,6 +69,22 @@ public abstract class ExecArg {
     }
 
     /**
+     * @return true if should use old quoting behavior < 3.4.1
+     */
+    public boolean isFeatureQuoting() {
+        return featureQuoting;
+    }
+
+    /**
+     * Set whether this arg should be quoted using old quoting behavior < 3.4.1
+     *
+     * @param featureQuoting featureQuoting
+     */
+    void setFeatureQuoting(boolean featureQuoting) {
+        this.featureQuoting = featureQuoting;
+    }
+
+    /**
      * Visitor to visit args
      */
     public static interface Visitor {
@@ -80,8 +98,9 @@ public abstract class ExecArg {
 
         final String arg;
 
-        public StringArg(String arg, boolean quoted) {
+        public StringArg(String arg, boolean quoted, boolean featureQuoting) {
             this.arg = arg;
+            this.setFeatureQuoting(featureQuoting);
             if(SharedDataContextUtils.UNQUOTEDPROPERTY_REF_PATTERN.matcher(arg).matches()) {
                 setQuoted(false);
             } else {
@@ -164,7 +183,7 @@ public abstract class ExecArg {
         }
     }
 
-    public static ExecArg fromString(String arg, boolean quoted) {
-        return new StringArg(arg, quoted);
+    public static ExecArg fromString(String arg, boolean quoted, boolean featureQuoting) {
+        return new StringArg(arg, quoted, featureQuoting);
     }
 }

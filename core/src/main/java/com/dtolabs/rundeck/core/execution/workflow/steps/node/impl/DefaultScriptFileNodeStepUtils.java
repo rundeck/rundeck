@@ -315,9 +315,9 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         boolean retryExecuteCommand = false; //retry if chmod command continues to lock the file the moment it is executed
         if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
             //perform chmod+x for the file
-
+            boolean featureQuoting = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting"));
             final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
-                    context, ExecArgList.fromStrings(false, "chmod", "+x", filepath), node);
+                    context, ExecArgList.fromStrings(featureQuoting, false, "chmod", "+x", filepath), node);
 
             if (!nodeExecutorResult.isSuccess()) {
                 return nodeExecutorResult;
@@ -327,7 +327,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             if(BooleanUtils.toBoolean(nodeAttribute.get(NODE_ATTR_ENABLE_SYNC_COMMAND))) {
                 //perform sync to prevent the file from being busy when running
                 final NodeExecutorResult nodeExecutorSyncResult = framework.getExecutionService().executeCommand(
-                        context, ExecArgList.fromStrings(false, "sync"), node);
+                        context, ExecArgList.fromStrings(featureQuoting , false, "sync"), node);
 
                 if (!nodeExecutorSyncResult.isSuccess()) {
                     return nodeExecutorSyncResult;
@@ -417,9 +417,9 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
     @Override
     public ExecArgList removeArgsForOsFamily(String filepath, String osFamily) {
         if ("windows".equalsIgnoreCase(osFamily)) {
-            return ExecArgList.fromStrings(false, "del", filepath);
+            return ExecArgList.fromStrings(false, false, "del", filepath);
         } else {
-            return ExecArgList.fromStrings(false, "rm", "-f", filepath);
+            return ExecArgList.fromStrings(false, false, "rm", "-f", filepath);
         }
     }
 

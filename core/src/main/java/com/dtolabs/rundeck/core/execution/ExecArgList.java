@@ -42,39 +42,41 @@ public class ExecArgList {
         args.add(arg);
     }
 
-    private void addArg(String arg, boolean quoted) {
-        args.add(ExecArg.fromString(arg, quoted));
+    private void addArg(String arg, boolean quoted, boolean featureQuoting) {
+        args.add(ExecArg.fromString(arg, quoted, featureQuoting));
     }
 
-    private void addArgs(List<String> arg, boolean quoted) {
+    private void addArgs(List<String> arg, boolean quoted, boolean featureQuoting) {
         for (String s : arg) {
-            addArg(s, quoted);
+            addArg(s, quoted, featureQuoting);
         }
     }
 
-    public static ExecArgList fromStrings(boolean quoted, String... args) {
-        return fromStrings(Arrays.asList(args), quoted);
+    public static ExecArgList fromStrings(boolean featureQuoting, boolean quoted, String... args) {
+        return fromStrings(featureQuoting, Arrays.asList(args), quoted);
     }
 
     /**
      * @return an ExecArgList from a list of strings, and a predicate to determine whether the argument needs to be
      * quoted
      *
+     * @param featureQuoting indicates whether to use old quoting behavior < 3.4.1
      * @param quoteDetect predicate
      * @param args args
      */
-    public static ExecArgList fromStrings(Predicate quoteDetect, String... args) {
-        return builder().args(args, quoteDetect).build();
+    public static ExecArgList fromStrings(boolean featureQuoting, Predicate quoteDetect, String... args) {
+        return builder().args(args, quoteDetect, featureQuoting).build();
     }
 
     /**
      * @return Create an ExecArgList from a list of strings
      *
+     * @param featureQuoting indicates whether to use old quoting behavior < 3.4.1
      * @param strings the strings
      * @param quoted  whether they are each quoted
      */
-    public static ExecArgList fromStrings(List<String> strings, boolean quoted) {
-        return builder().args(strings, quoted).build();
+    public static ExecArgList fromStrings(boolean featureQuoting, List<String> strings, boolean quoted) {
+        return builder().args(strings, quoted, featureQuoting).build();
     }
 
     /**
@@ -211,9 +213,9 @@ public class ExecArgList {
             this.expand = expand;
         }
 
-        public String convertAndQuote(String s, boolean quoted) {
+        public String convertAndQuote(String s, boolean quoted, boolean featureQuoting) {
             String replaced = expand.convert(s);
-            if (quote != null && quoted) {
+            if (quote != null && quoted || featureQuoting && !replaced.equals(s)) {
                 replaced = quote.convert(replaced);
             }
             return replaced;
@@ -229,7 +231,7 @@ public class ExecArgList {
                 String join = joinAndQuote(commandVisitor.getCommandList(), arg.isQuoted() ? quote : null);
                 getCommandList().add(join);
             } else {
-                getCommandList().add(convertAndQuote(arg.getString(), arg.isQuoted()));
+                getCommandList().add(convertAndQuote(arg.getString(), arg.isQuoted(), arg.isFeatureQuoting()));
             }
         }
 
@@ -296,13 +298,14 @@ public class ExecArgList {
         /**
          * Add a string arg
          *
+         * @param featureQuoting indicates whether to use old quoting behavior < 3.4.1
          * @param arg    argument
          * @param quoted true if it needs to be quoted
          *
          * @return builder
          */
-        public Builder arg(String arg, boolean quoted) {
-            argList.addArg(arg, quoted);
+        public Builder arg(String arg, boolean quoted, boolean featureQuoting) {
+            argList.addArg(arg, quoted, featureQuoting);
             return this;
         }
 
@@ -311,11 +314,12 @@ public class ExecArgList {
          *
          * @param args   args
          * @param quoted true if all should be quoted
+         * @param featureQuoting indicates whether to use old quoting behavior < 3.4.1
          *
          * @return builder
          */
-        public Builder args(List<String> args, boolean quoted) {
-            argList.addArgs(args, quoted);
+        public Builder args(List<String> args, boolean quoted, boolean featureQuoting) {
+            argList.addArgs(args, quoted, featureQuoting);
             return this;
         }
         /**
@@ -323,12 +327,13 @@ public class ExecArgList {
          *
          * @param args   args
          * @param quoted true if all should be quoted
+         * @param featureQuoting indicates whether to use old quoting behavior < 3.4.1
          *
          * @return builder
          */
-        public Builder args(List<String> args, Predicate quoted) {
+        public Builder args(List<String> args, Predicate quoted, boolean featureQuoting) {
             for (String arg : args) {
-                argList.addArg(arg, quoted.test(arg));
+                argList.addArg(arg, quoted.test(arg), featureQuoting);
             }
             return this;
         }
@@ -338,11 +343,12 @@ public class ExecArgList {
          *
          * @param args   args
          * @param quoted true if all should be quoted
+         * @param featureQuoting indicates whether to use old quoting behavior < 3.4.1
          *
          * @return builder
          */
-        public Builder args(String[] args, Predicate quoted) {
-            return args(Arrays.asList(args), quoted);
+        public Builder args(String[] args, Predicate quoted, boolean featureQuoting) {
+            return args(Arrays.asList(args), quoted, featureQuoting);
         }
 
         /**
@@ -350,11 +356,12 @@ public class ExecArgList {
          *
          * @param args   args
          * @param quoted true if all should be quoted
+         * @param featureQuoting indicates whether to use old quoting behavior < 3.4.1
          *
          * @return builder
          */
-        public Builder args(String[] args, boolean quoted) {
-            argList.addArgs(Arrays.asList(args), quoted);
+        public Builder args(String[] args, boolean quoted, boolean featureQuoting) {
+            argList.addArgs(Arrays.asList(args), quoted, featureQuoting);
             return this;
         }
 
