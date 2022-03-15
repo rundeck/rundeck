@@ -512,7 +512,7 @@ workflows:
           continue: 'true'
           context:
             - slack-secrets
-            <<: *slack-fail-post-step
+          <<: *slack-fail-post-step
       - trigger-packaging:
           name: Trigger packaging-core
           requires: *stage-build
