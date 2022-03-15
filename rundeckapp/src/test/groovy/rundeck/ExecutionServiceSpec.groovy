@@ -1,4 +1,7 @@
 package rundeck
+
+import com.dtolabs.rundeck.app.support.ExecutionQuery
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -26,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import groovy.time.TimeCategory
+import org.hibernate.JDBCException
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -66,6 +70,8 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.sql.Time
+import java.sql.Timestamp
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -6022,4 +6028,48 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         val != null
         val.getNodeService() != null
       }
+
+    def "metrics data from criteria result"(){
+        given:
+            def critresult=[
+                count:3,
+                durationMax: new Time(0,9,0),
+                durationMin: new Time(0,2,0),
+                durationSum: new Time(0,15,0),
+            ]
+        when:
+            def result = service.metricsDataFromCriteriaResult(critresult)
+        then:
+            result.total == 3
+            result.duration.average == 5L * 60L * 1000L
+            result.duration.min == 2L * 60L * 1000L
+            result.duration.max == 9L * 60L * 1000L
+
+
+    }
+    def "metrics data from projection result"(){
+        given:
+            Date now = new Date()
+            Date dateStarted1 = now
+            Date dateStarted2 = now
+            Date dateStarted3 = now
+            Date dateCompleted = now
+            use (TimeCategory) {
+                dateStarted1 = now - 9.minute
+                dateStarted2 = now - 4.minute
+                dateStarted3 = now - 2.minute
+            }
+            def projresult = [
+                [dateStarted: new Timestamp(dateStarted1.time), dateCompleted: new Timestamp(dateCompleted.time)],
+                [dateStarted: new Timestamp(dateStarted2.time), dateCompleted: new Timestamp(dateCompleted.time)],
+                [dateStarted: new Timestamp(dateStarted3.time), dateCompleted: new Timestamp(dateCompleted.time)]
+            ]
+        when:
+            def result = service.metricsDataFromProjectionResult(projresult)
+        then:
+            result.total == 3
+            result.duration.average == 5L * 60L * 1000L
+            result.duration.min == 2L * 60L * 1000L
+            result.duration.max == 9L * 60L * 1000L
+    }
 }
