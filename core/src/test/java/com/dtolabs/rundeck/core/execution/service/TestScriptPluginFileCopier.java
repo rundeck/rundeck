@@ -392,7 +392,7 @@ public class TestScriptPluginFileCopier {
                         Assert.assertEquals(null, scriptargsarr);
                         Assert.assertEquals(null, scriptinterpreter);
                         Assert.assertEquals(false, interpreterargsquoted);
-                        return ExecArgList.builder().arg(filepath, false).build();
+                        return ExecArgList.builder().arg(filepath, false, false).build();
                     }
                     public int runLocalCommand(
                             final String osFamily,
@@ -471,7 +471,7 @@ public class TestScriptPluginFileCopier {
                         Assert.assertEquals(null, scriptargsarr);
                         Assert.assertEquals(null, scriptinterpreter);
                         Assert.assertEquals(false, interpreterargsquoted);
-                        return ExecArgList.builder().arg(filepath, false).build();
+                        return ExecArgList.builder().arg(filepath, false, false).build();
                     }
                     public int runLocalCommand(
                             final String osFamily,
@@ -553,7 +553,7 @@ public class TestScriptPluginFileCopier {
                         Assert.assertEquals(null, scriptargsarr);
                         Assert.assertEquals(null, scriptinterpreter);
                         Assert.assertEquals(false, interpreterargsquoted);
-                        return ExecArgList.builder().arg(filepath, false).build();
+                        return ExecArgList.builder().arg(filepath, false, false).build();
                     }
                     public int runLocalCommand(
                             final String osFamily,

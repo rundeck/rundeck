@@ -18,7 +18,7 @@ class DirectNodeExecutionServiceSpec extends Specification {
             def sut = new DirectNodeExecutionService()
             def authContext = Mock(UserAndRolesAuthContext)
             def ctx = Mock(ExecutionContext)
-            def command = ExecArgList.fromStrings(['asdf'], false)
+            def command = ExecArgList.fromStrings(false, ['asdf'], false)
             def node = Stub(INodeEntry) {
                 getNodename() >> 'aNode'
             }

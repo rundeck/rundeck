@@ -160,9 +160,11 @@ public class RemoteScriptNodeStepPluginAdapter_Ext
 
         if (null != script.getCommand()) {
             //execute the command
+            boolean featureQuoting = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting"));
             return executionService.executeCommand(
                     context,
                     ExecArgList.fromStrings(
+                            featureQuoting,
                             DataContextUtils.stringContainsPropertyReferencePredicate,
                             script.getCommand()
                     ),
