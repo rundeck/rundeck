@@ -83,7 +83,7 @@
                               </select>
                             </div>
                             <div class="col-sm-4">
-                              <div class="checklist checkbox">
+                              <div class="checklist checkbox" id="DayOfWeekDialog">
                                 <input
                                   id="everyDay"
                                   name="everyDay"
