@@ -822,7 +822,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         def daysOfWeek
         def daysOfMonth = params.dayOfMonth ?: '?'   // In simple crontab mode, there is no specific day-of-month defined. It's always '?'
 
-        def everyDay = params['everyDayOfWeek']
+        def everyDay = params['everyDay']   // Every day of the week
         if((everyDay instanceof Boolean && everyDay ) || (everyDay instanceof String && (everyDay=="true" || everyDay=="on" || everyDay=="all"))){
             daysOfWeek="*"
         }else{

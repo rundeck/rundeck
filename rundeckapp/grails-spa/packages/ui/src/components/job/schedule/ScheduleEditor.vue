@@ -86,13 +86,13 @@
                             <div class="col-sm-4">
                               <div class="checklist checkbox" id="DayOfWeekDialog">
                                 <input
-                                  id="everyDayOfWeek"
-                                  name="everyDayOfWeek"
+                                  id="everyDay"
+                                  name="everyDay"
                                   type="checkbox"
                                   value="all"
                                   v-model="modelData.everyDayOfWeek"
                                 >
-                                <label for="everyDayOfWeek">Every Day</label>
+                                <label for="everyDay">Every Day</label>
                                 <div v-if="!modelData.everyDayOfWeek" class="_defaultInput checkbox" v-for="(day,n) in days">
                                   <input
                                     :id="'dayCheckbox_'+n"
