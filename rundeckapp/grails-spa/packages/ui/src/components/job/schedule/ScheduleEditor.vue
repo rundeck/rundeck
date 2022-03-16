@@ -86,14 +86,14 @@
                             <div class="col-sm-4">
                               <div class="checklist checkbox" id="DayOfWeekDialog">
                                 <input
-                                  id="everyDay"
+                                  id="everyDayOfWeek"
+                                  name="everyDayOfWeek"
                                   type="checkbox"
                                   value="all"
                                   v-model="modelData.everyDayOfWeek"
                                 >
-                                <label for="everyDay">Every Day</label>
+                                <label for="everyDayOfWeek">Every Day</label>
                                 <div v-if="!modelData.everyDayOfWeek" class="_defaultInput checkbox" v-for="(day,n) in days">
-
                                   <input
                                     :id="'dayCheckbox_'+n"
                                     type="checkbox"
@@ -102,12 +102,14 @@
                                   >
                                   <label :for="'dayCheckbox_'+n">{{day.name}}</label>
                                 </div>
+                                <input type="hidden" name="selectedDaysOfWeek" :value="modelData.selectedDays.join(',')" >
                               </div>
                             </div>
                             <div class="col-sm-4">
                               <div class="checklist checkbox" id="MonthDialog">
                                 <input
                                   id="everyMonth"
+                                  name="everyMonth"
                                   type="checkbox"
                                   value="all"
                                   v-model="modelData.allMonths"
@@ -123,6 +125,7 @@
                                   <label :for="'monthCheckbox_'+n">{{month.name}}</label>
                                 </div>
                               </div>
+                              <input type="hidden" name="selectedMonths" :value="modelData.selectedMonths.join(',')" >
                             </div>
                           </div>
                         </div>
@@ -322,14 +325,19 @@ export default class ScheduleEditor extends Vue {
     this.months = getMonths();
   }
   async mounted() {
-    this.modelData = Object.assign({}, this.value)
+    this.modelData = Object.assign({
+      selectedDays: [],
+      selectedMonths: []
+    }, this.value)
+
+    this.showSimpleCron()
   }
 
   loadScheduleIntoSimpleTab (decomposedSchedule:any){
     this.modelData.hourSelected = decomposedSchedule.hour;
     this.modelData.minuteSelected = decomposedSchedule.minute;
-    this.modelData.selectedDays = decomposedSchedule.days.length < 7 ? decomposedSchedule.days : [];
-    this.modelData.selectedMonths = decomposedSchedule.months.length < 12 ? decomposedSchedule.months : [];
+    this.modelData.selectedDays = decomposedSchedule.days.length <= 7 ? decomposedSchedule.days : [];
+    this.modelData.selectedMonths = decomposedSchedule.months.length <= 12 ? decomposedSchedule.months : [];
     this.modelData.allDays = decomposedSchedule.days.length == 7;
     this.modelData.allMonths = decomposedSchedule.months.length == 12;
   }
