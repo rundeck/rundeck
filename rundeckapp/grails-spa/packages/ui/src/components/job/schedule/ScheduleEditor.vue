@@ -163,7 +163,7 @@
                                   <div>
                                     Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".
                                   </div>
-                                  See: <a href="{{ $t('documentation.reference.cron.url')}}" class="external" target="_blank">Cron reference</a> for formatting help
+                                  See: <a :href="$t('documentation.reference.cron.url')" class="external" target="_blank">Cron reference</a> for formatting help
                                 </div>
                               </div>
                             </div>
