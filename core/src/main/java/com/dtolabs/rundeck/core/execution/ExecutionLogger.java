@@ -27,7 +27,7 @@ public interface ExecutionLogger {
     /**
      * Log a message at a given level
      *
-     * @param level   the log level, from 0 to 5, where 0 is "error" and 5 is "debug"
+     * @param level   the log level, from 0 to 4, where 0 is "error" and 4 is "debug"
      * @param message Message being logged. <code>null</code> messages are not logged, however, zero-length strings
      *                are.
      */
@@ -36,7 +36,7 @@ public interface ExecutionLogger {
     /**
      * Log a message at a given level, with additional metadata
      *
-     * @param level     the log level, from 0 to 5, where 0 is "error" and 5 is "debug"
+     * @param level     the log level, from 0 to 4, where 0 is "error" and 4 is "debug"
      * @param message   Message being logged. <code>null</code> messages are not logged, however, zero-length strings
      *                  are.
      * @param eventMeta metadata
