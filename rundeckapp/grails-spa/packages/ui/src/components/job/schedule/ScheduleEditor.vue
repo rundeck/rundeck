@@ -82,9 +82,8 @@
                                 <option v-for="minute in this.minutes" :key="minute" v-bind:value="minute">{{minute}}</option>
                               </select>
                             </div>
-
                             <div class="col-sm-4">
-                              <div class="checklist checkbox" id="DayOfWeekDialog">
+                              <div class="checklist checkbox">
                                 <input
                                   id="everyDay"
                                   name="everyDay"
@@ -164,9 +163,11 @@
                               <div class="row">
                                 <div class="text-strong col-sm-12">
                                   <div>
-                                    Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".
+                                    <p>Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".</p>
+                                    <p>Valid values of Day of Week: 1-7 or SUN-SAT</p>
+                                    <p>Valid values of Month: 1-12 or JAN-DEC</p>
                                   </div>
-                                  See: <a href="{{ $t('documentation.reference.cron.url')}}" class="external" target="_blank">Cron reference</a> for formatting help
+                                  See: <a :href="$t('documentation.reference.cron.url')" class="external" target="_blank">Cron reference</a> for formatting help
                                 </div>
                               </div>
                             </div>
@@ -338,8 +339,8 @@ export default class ScheduleEditor extends Vue {
     this.modelData.minuteSelected = decomposedSchedule.minute;
     this.modelData.selectedDays = decomposedSchedule.days.length <= 7 ? decomposedSchedule.days : [];
     this.modelData.selectedMonths = decomposedSchedule.months.length <= 12 ? decomposedSchedule.months : [];
-    this.modelData.allDays = decomposedSchedule.days.length == 7;
-    this.modelData.allMonths = decomposedSchedule.months.length == 12;
+    this.modelData.everyDayOfWeek = decomposedSchedule.days.length === 7;
+    this.modelData.allMonths = decomposedSchedule.months.length === 12;
   }
 
   showSimpleCron(){
