@@ -67,6 +67,19 @@ function padLeft(value: string, filler: string, targetLength: number) {
 }
 
 export function getSimpleDecomposition(hour : string, minute : string, dayOfWeek : string, month : string) {
+  /**
+   *
+   *  ┌───────────── second (0-59)
+   *  │ ┌───────────── minute (0 - 59)
+   *  │ │ ┌───────────── hour (0 - 23)
+   *  │ │ │ ┌───────────── day of the month (1 - 31)
+   *  │ │ │ │ ┌───────────── month (1 - 12) (or JAN-DEC)
+   *  │ │ │ │ │ ┌───────────── day of the week (0 - 7)
+   *  │ │ │ │ │ │          (or MON-SUN -- 0 or 7 is Sunday)
+   *  │ │ │ │ │ │
+   *  * * * * * *
+   *  Day-of-week value can be 0-7 or MON-SUN. 0 or 7 both are Sunday.
+   */
   var daysofweeklist = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
   var monthsofyearlist = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
