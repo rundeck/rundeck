@@ -27,6 +27,8 @@ import com.fasterxml.jackson.core.JsonParseException
 import org.rundeck.util.Sizes
 import rundeck.services.JobReferenceImpl
 
+import java.util.stream.Collectors
+
 class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
     Long id
@@ -809,35 +811,56 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      *
      */
     def populateTimeDateFields(Map params) {
-        def months ;
-        def daysOfWeek;
-        def daysOfMonth=params.dayOfMonth?:'?'
-
-        if(params.crontabString && 'true'==params.useCrontabString){
+        if(params.crontabString && 'true' == params.useCrontabString) {
             //parse the crontabString
             crontabString = params.crontabString
             parseCrontabString(crontabString)
             return
         }
-        def everyDay = params['everyDayOfWeek']
-        if((everyDay instanceof Boolean && everyDay ) || (everyDay instanceof String && (everyDay=="true" || everyDay=="on"))){
+
+        def months
+        def daysOfWeek
+        def daysOfMonth = params.dayOfMonth ?: '?'   // In simple crontab mode, there is no specific day-of-month defined. It's always '?'
+
+        def everyDay = params['everyDay']   // Every day of the week
+        if((everyDay instanceof Boolean && everyDay ) || (everyDay instanceof String && (everyDay=="true" || everyDay=="on" || everyDay=="all"))){
             daysOfWeek="*"
         }else{
-            daysOfWeek= parseCheckboxFieldFromParams("dayOfWeek",params,daysOfMonth=='?',daysofweeklist)
+            daysOfWeek= params.selectedDaysOfWeek?.trim() ? valueStringToIndexString(params.selectedDaysOfWeek, daysofweeklist) : parseCheckboxFieldFromParams("dayOfWeek",params, daysOfMonth=='?', daysofweeklist)
         }
         def everyMonth = params['everyMonth']
-        if((everyMonth instanceof Boolean && everyMonth ) || (everyMonth instanceof String && (everyMonth=="true" || everyMonth=="on"))){
+        if((everyMonth instanceof Boolean && everyMonth ) || (everyMonth instanceof String && (everyMonth=="true" || everyMonth=="on" || everyMonth=="all"))){
             months="*"
         }else{
-            months= parseCheckboxFieldFromParams("month",params,true,monthsofyearlist)
+            months = params.selectedMonths?.trim() ? valueStringToIndexString(params.selectedMonths, monthsofyearlist) : parseCheckboxFieldFromParams("month", params,true, monthsofyearlist)
         }
         this.month = months
-        this.dayOfWeek = daysOfWeek?daysOfWeek:'?'
+        this.dayOfWeek = daysOfWeek ?: '?'
         this.dayOfMonth = daysOfMonth
         this.seconds = params.seconds?params.seconds:"0"
         this.year = params.year?params.year:"*"
         this.crontabString=null
     }
+
+    String valueStringToIndexString(inputString, valuesArray) {
+        if(!inputString) return ""
+
+        List<String> indexArray = Arrays.asList(inputString.split(",")).stream()
+                        .reduce(new ArrayList<Integer>(), (result, val) -> {
+                            Integer idx = valuesArray.indexOf(val)
+                            if(idx >= 0) {
+                                result.add(idx + 1)
+                            }
+                            return result
+                        })
+                        .stream()
+                        .sorted()
+                        .map(Object::toString)
+                        .collect(Collectors.toList())
+
+        return String.join(",", indexArray)
+    }
+
     /**
      * parse the parameters from checkbox fields, and return a crontab field expression.
      * @param field the name of the crontab field

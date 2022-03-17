@@ -3,10 +3,63 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 #
 version: 2.1
+
+slack-fail-post-step: &slack-fail-post-step
+  post-steps:
+    - slack/notify:
+          channel: C01D89KV4JX
+          branch_pattern: main
+          event: fail
+          custom: |
+            {
+            	"blocks": [
+            		{
+            			"type": "section",
+            			"fields": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":red_circle: *Job Failed*: ${CIRCLE_JOB}"
+            				}
+            			]
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Branch*: $CIRCLE_BRANCH"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Author*: $CIRCLE_USERNAME"
+            				}
+            			]
+            		},
+            		{
+            			"type": "actions",
+            			"elements": [
+            				{
+            					"type": "button",
+            					"text": {
+            						"type": "plain_text",
+            						"text": "View Job"
+            					},
+            					"url": "${CIRCLE_BUILD_URL}"
+            				}
+            			]
+            		}
+            	]
+            }
+
 orbs:
   docker-publish: circleci/docker-publish@0.1.6
   node: circleci/node@5.0.0
   trigger: rundeck/trigger-pipeline@0.0.5
+  slack: circleci/slack@4.4.0
 
 defaults: &defaults
   working_directory: ~/repo
@@ -198,7 +251,6 @@ jobs:
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
 
-
   test-docker:
     <<: *defaults
     executor: gradle-docker
@@ -348,12 +400,18 @@ workflows:
   build_and_test:
     jobs:
       - build:
+          context:
+            - slack-secrets
           <<: *filter-default
           name: Build
+          <<: *slack-fail-post-step
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
           requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       ## Optimistically build snapshot
       - trigger-enterprise:
           name: Enterprise Snapshot
@@ -365,60 +423,96 @@ workflows:
           name: Docker Test
           requires: *stage-build
           command: bash test/run-docker-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: Tomcat 8 API Test
           requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: Tomcat 9 API Test
           requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh 9
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-no-tags
           name: API Test
           requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
           <<: *filter-no-tags
           name: SSL Test
           requires: *stage-build
           command: bash test/run-docker-ssl-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: Ansible Test
           requires: *stage-build
           command: bash test/run-docker-ansible-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: Blocklist Test
           requires: *stage-build
           command: bash test/run-docker-plugin-blocklist-test.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-no-tags
           name: LDAP Test
           requires: *stage-build
           command: bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-no-tags
           name: LDAP Bind Test
           requires: *stage-build
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-no-tags
           name: PAM Test
           requires: *stage-build
           command: bash test/run-docker-pam-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-selenium:
           <<: *filter-no-tags
           name: Selenium Test
           requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-deps:
           <<: *filter-no-tags
           name: OWASP Dependency Checks
           requires: *stage-build
           continue: 'true'
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - trigger-packaging:
           name: Trigger packaging-core
           requires: *stage-build
@@ -432,6 +526,8 @@ workflows:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
 
+
+
   nightly:
     triggers:
       - schedule:
@@ -442,12 +538,18 @@ workflows:
                 - main
     jobs:
       - build:
+          context:
+            - slack-secrets
           <<: *filter-default
           name: Build
+          <<: *slack-fail-post-step
       - test-gradle:
           <<: *filter-default
           name: Gradle Test
           requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       ## Optimistically build snapshot
       - trigger-enterprise:
           name: Enterprise Snapshot
@@ -459,55 +561,90 @@ workflows:
           name: Docker Test
           requires: *stage-build
           command: bash test/run-docker-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Tomcat 8 API Test
           requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Tomcat 9 API Test
           requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh 9
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: API Test
           requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
           <<: *filter-default
           name: SSL Test
           requires: *stage-build
           command: bash test/run-docker-ssl-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Ansible Test
           requires: *stage-build
           command: bash test/run-docker-ansible-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Blocklist Test
           requires: *stage-build
           command: bash test/run-docker-plugin-blocklist-test.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: LDAP Test
           requires: *stage-build
           command: bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: LDAP Bind Test
           requires: *stage-build
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           name: PAM Test
           requires: *stage-build
           command: bash test/run-docker-pam-tests.sh
-
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-selenium:
             name: Selenium Test
             requires: *stage-build
+            context:
+              - slack-secrets
+            <<: *slack-fail-post-step
       - test-deps:
             name: OWASP Dependency Checks
             requires: *stage-build
             continue: 'false'
+            context:
+              - slack-secrets
+            <<: *slack-fail-post-step
