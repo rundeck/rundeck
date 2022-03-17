@@ -8,8 +8,10 @@ import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.access.InterceptorHelper
 import rundeck.AuthToken
+import rundeck.ConfigTagLib
 import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.codecs.HTMLAttributeCodec
@@ -55,6 +57,10 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.interceptorHelper = Mock(InterceptorHelper) {
             matchesAllowedAsset(_,_) >> false
         }
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString(_,_) >> ""
+            getString(_) >> ""
+        }
         when:
         interceptor.userService = userServiceMock
         request.remoteUser = username
@@ -79,11 +85,15 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
             configurationService(ConfigurationService) {
                 grailsApplication = grailsApplication
             }
+
         }
+        GroovyMock(ConfigurationService, global: true)
+
         mockCodec(URIComponentCodec)
         mockCodec(HTMLContentCodec)
         mockCodec(HTMLAttributeCodec)
         mockTagLib(UtilityTagLib)
+        mockTagLib(ConfigTagLib)
 
         def userServiceMock = Mock(UserService) {
             getUserGroupSourcePluginRoles(username) >> { groups }
@@ -91,8 +101,12 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         interceptor.interceptorHelper = Mock(InterceptorHelper) {
             matchesAllowedAsset(_,_) >> false
         }
-        grailsApplication.config.rundeck.security.requiredRole = requiredRole
-        messageSource.addMessage("user.not.allowed",Locale.default,"User Not Allowed")
+
+        interceptor.configurationService = Mock(ConfigurationService) {
+            getString("security.requiredRole","")>>requiredRole
+            getString(_,_)>>""
+            getString(_)>>""
+        }
 
         when:
         interceptor.userService = userServiceMock
@@ -103,12 +117,13 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
 
         then:
         allowed == expected
+        flash.loginErrorCode==code
 
         where:
-        requiredRole | username | groups           | expected
-        "enter"      | "auser"  | ["grp1"]         | false
-        "enter"      | "auser"  | ["grp1","enter"] | true
-        null         | "auser"  | ["grp1"]         | true
+        requiredRole | username | groups            | expected | code
+        "enter"      | "auser"  | ["grp1"]          | false    | 'user.not.allowed'
+        "enter"      | "auser"  | ["grp1", "enter"] | true     | null
+        ""           | "auser"  | ["grp1"]          | true     | null
 
 
     }
@@ -158,6 +173,17 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         "RN1" | false        | false    | null
         "RN1" | false        | null     | null
         "RN1" | false        | true     | "admin"
+    }
+
+    def "request without remote auth info will be invalid"(){
+        given:
+            request.api_version=12
+            interceptor.interceptorHelper=Mock(InterceptorHelper)
+        when:
+            def result=interceptor.before()
+        then:
+            result
+            request.invalidApiAuthentication
     }
 
 }

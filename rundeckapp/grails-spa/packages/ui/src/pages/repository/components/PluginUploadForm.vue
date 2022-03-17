@@ -7,7 +7,7 @@
         <span class="control-fileupload">
           <span class="label">{{fileName}}</span>
           <input
-            class
+            class="form-control"
             type="file"
             id="files"
             ref="files"
@@ -17,7 +17,7 @@
         </span>
 
         <span class="input-group-btn">
-          <button class="btn btn-default" v-on:click="submitFiles()">Install</button>
+          <button class="btn btn-cta" v-on:click="submitFiles()">Install</button>
         </span>
       </div>
       <!-- /input-group -->
@@ -112,7 +112,7 @@ input[type="file"] {
   display: block !important;
   right: 1px;
   top: 1px;
-  height: 46px;
+  height: 55px;
   opacity: 0;
   width: 100%;
   background: none;
@@ -123,11 +123,11 @@ input[type="file"] {
 
 .control-fileupload {
   display: block;
-  border: 1px solid #d6d7d6;
-  background: #fff;
+  background-color: var(--input-bg-color);
+  border: 1px solid var(--input-outline-color);
   // border-radius: 4px;
   width: 100%;
-  height: 46px;
+  height: 55px;
   line-height: 36px;
   padding: 0px 10px 2px 10px;
   overflow: hidden;
@@ -146,7 +146,7 @@ input[type="file"] {
     padding: 4px 12px;
     margin-bottom: 0;
     margin-right: 10px;
-    margin-top: 4px;
+    margin-top: 9px;
     font-size: 14px;
     line-height: 20px;
     color: #333333;
@@ -186,7 +186,7 @@ input[type="file"] {
   }
 
   .label {
-    line-height: 35px;
+    line-height: 41px;
     color: #999999;
     font-size: 20px;
     font-weight: normal;

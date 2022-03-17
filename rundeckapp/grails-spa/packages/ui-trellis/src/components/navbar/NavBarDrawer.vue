@@ -11,9 +11,11 @@
 import Vue from 'vue'
 
 export default Vue.extend({
-    data: {
-        display: false,
-        opening: false
+    data(){
+        return  {
+            display: false,
+            opening: false
+        }
     },
     mounted() {
         const drawer = this.$refs['drawer'] as HTMLElement
@@ -75,7 +77,7 @@ export default Vue.extend({
     border-style: solid;
     border-color: #414141;
     border-width: 1px;
-    background-color: #303030;
+    background-color: var(--sidebar-drawer-bg-color);
     width: 250px;
     padding: 10px;
     z-index: 100;

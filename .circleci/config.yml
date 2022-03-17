@@ -3,10 +3,63 @@
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 #
 version: 2.1
+
+slack-fail-post-step: &slack-fail-post-step
+  post-steps:
+    - slack/notify:
+          channel: C01D89KV4JX
+          branch_pattern: main
+          event: fail
+          custom: |
+            {
+            	"blocks": [
+            		{
+            			"type": "section",
+            			"fields": [
+            				{
+            					"type": "mrkdwn",
+            					"text": ":red_circle: *Job Failed*: ${CIRCLE_JOB}"
+            				}
+            			]
+            		},
+            		{
+            			"type": "context",
+            			"elements": [
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Project*: $CIRCLE_PROJECT_REPONAME"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Branch*: $CIRCLE_BRANCH"
+            				},
+            				{
+            					"type": "mrkdwn",
+            					"text": "*Author*: $CIRCLE_USERNAME"
+            				}
+            			]
+            		},
+            		{
+            			"type": "actions",
+            			"elements": [
+            				{
+            					"type": "button",
+            					"text": {
+            						"type": "plain_text",
+            						"text": "View Job"
+            					},
+            					"url": "${CIRCLE_BUILD_URL}"
+            				}
+            			]
+            		}
+            	]
+            }
+
 orbs:
   docker-publish: circleci/docker-publish@0.1.6
-  node: circleci/node@1.1.6
+  node: circleci/node@5.0.0
   trigger: rundeck/trigger-pipeline@0.0.5
+  slack: circleci/slack@4.4.0
 
 defaults: &defaults
   working_directory: ~/repo
@@ -21,7 +74,7 @@ executors:
         default: medium
       RUNDECK_GRADLE_OPTS:
         type: string
-        default: --no-daemon --max-workers 2 -x check install --stacktrace --info --parallel
+        default: --no-daemon --max-workers 2 -x check publishToMavenLocal --stacktrace --info --parallel
 
     docker:
       - image: rundeck/ci@sha256:ef1db4074daaea2882aaaea390604cb92488289549207211d3ef7cbbaedcdf65
@@ -51,18 +104,28 @@ commands:
           path: ~/test-results
       - store_artifacts:
           path: ~/test-results/junit
+  setup-environment:
+    steps:
+      - run:
+          name: Install packages
+          command: |
+            sudo apt-get update -qq
+            sudo apt-get install -y jq xmlstarlet
+      - run:
+          name: Install aws cli
+          command: pip install awscli --upgrade --user
 
   restore-gradle-cache:
     description: Restore Gradle cache
     steps:
       - restore_cache:
           keys:
-            - v3-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - restore_cache:
           keys:
-            - v3-gradle-cache-{{ .Branch }}-<<pipeline.number>>
-            - v3-gradle-cache-{{ .Branch }}-
-            - v3-gradle-cache-
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-
+            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-
 
   save-gradle-cache:
     description: Save Gradle cache
@@ -70,11 +133,11 @@ commands:
       - save_cache:
           paths:
             - ~/.gradle/wrapper
-          key: v3-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+          key: cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - save_cache:
           paths:
             - ~/.gradle/caches
-          key: v3-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+          key: cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
 
   fetch-common-artifacts:
     description: Fetch common build artifacts
@@ -82,7 +145,7 @@ commands:
       - run:
           name: Fetch Artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             fetch_common_artifacts
             pull_rdtest
 
@@ -92,8 +155,24 @@ commands:
       - run:
           name: Fetch CI Resources
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             fetch_common_resources
+  install-node:
+    description: Install Node via NVM
+    parameters:
+      version:
+        type: string
+        default: 'v16.13.0'
+    steps:
+      - run:
+          name: Install Node
+          command: |
+            test -f ~/.circlerc && source ~/.circlerc || true
+            export NODE_VERSION=<< parameters.version >>
+            export BASH_ENV=$HOME/.bash_profile
+            nvm install $NODE_VERSION
+            nvm alias default $NODE_VERSION
+            echo 'nvm use default &>/dev/null' >> "$BASH_ENV"
 
 jobs:
   build:
@@ -102,46 +181,75 @@ jobs:
 
     executor:
       name: gradle-docker
-      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info --parallel --build-cache
+      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check publishToMavenLocal --stacktrace --info --parallel --build-cache
       resourceClass: xlarge
 
     steps:
       - checkout
-      # - node/install-node:
-      #     version: '8.13.0'
+      - install-node
       - restore-gradle-cache
       - run:
           name: Build
           command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh build
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh build
       - setup_remote_docker
       - run:
           name: Build Docker Images
           command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh buildDocker
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh buildDocker
             build_rdtest
       - run:
           name: Upload artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             copy_artifacts
             sync_to_s3
+            sync_to_latest_s3
             seal_artifacts
       - save-gradle-cache
+      - when:
+          condition:
+            matches: { pattern: "^main$", value: <<pipeline.git.branch>> }
+          steps:
+            - setup-environment
+            - run:
+                name: Gather artifacts
+                command: |
+                  source .circleci/circle-shim.sh
+                  source scripts/circle-helpers.sh
+                  fetch_common_artifacts
+                  fetch_common_resources
+                  sync_commit_to_s3
+                  export VCS_URL=https://github.com/rundeck/rundeck.git
+                  seal_artifacts
+            - run:
+                name: Publish snapshot
+                command: ./gradlew publish -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+      - when:
+          condition:
+            matches: { pattern: "/^v.*/", value: <<pipeline.git.tag>> }
+          steps:
+            - setup-environment
+            - run:
+                name: Docker publish
+                command: |
+                  source .circleci/circle-shim.sh
+                  source scripts/circle-helpers.sh
+                  fetch_common_artifacts
+                  fetch_common_resources
+                  DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
   test-gradle:
     <<: *defaults
     machine: true
     steps:
       - checkout
-      - node/install-node:
-          version: '12.16.3'
+      - install-node
       - restore-gradle-cache
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
-
 
   test-docker:
     <<: *defaults
@@ -158,12 +266,12 @@ jobs:
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             << parameters.command >>
 
   trigger-enterprise:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:lts
     resource_class: small
     steps:
       - trigger/trigger:
@@ -186,7 +294,7 @@ jobs:
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             << parameters.command >>
 
   test-selenium:
@@ -194,17 +302,17 @@ jobs:
     machine: true
     steps:
       - checkout
-      - node/install-node:
-          version: '12.16.3'
+      - install-node:
+          version: v12.16.3
       - run:
           name: Fetch Artifacts
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             pull_rundeck
       - run:
           name: Test
           command: |
-            source .circleci/travis-shim.sh
+            source .circleci/circle-shim.sh
             bash test/ci-test-docker-selenium.sh
       - store_artifacts:
           path: test/selenium/test_out/images
@@ -230,23 +338,25 @@ jobs:
           path: build/owasp-reports
           prefix: owasp-reports
 
-  snapshot-publish:
+  trigger-packaging:
     <<: *defaults
-    executor: gradle-docker
-
+    machine: true
+    resource_class: small
     steps:
-      - checkout
-      - run:
-          name: Publish
-          command: |
-            source .circleci/travis-shim.sh
-            bash scripts/travis-build.sh publish_oss
-
+      - trigger/trigger:
+          debug: true
+          branch: 'main'
+          token: '${CIRCLECI_API_TOKEN}'
+          project-slug: 'gh/rundeck/packaging-core'
+          pipeline-number: '<<pipeline.number>>'
   maven-publish:
     <<: *defaults
-    executor: gradle-docker
+    executor:
+      name: gradle-docker
+      resourceClass: xlarge
     steps:
       - checkout
+      - install-node
       - restore-gradle-cache
       - setup_remote_docker
       - fetch-common-artifacts
@@ -254,8 +364,10 @@ jobs:
       - run:
           name: Publish
           command: |
-            source .circleci/travis-shim.sh
-            DRY_RUN=false bash scripts/travis-build.sh publish
+            source .circleci/circle-shim.sh
+            DRY_RUN=false bash scripts/circle-build.sh publish
+          env:
+            SIGNING_KEY_B64: ${{ secrets.SIGNING_KEY_B64 }}
 
 stages:
   test: &stage-test
@@ -270,6 +382,8 @@ stages:
   - LDAP Test
   - LDAP Bind Test
   - PAM Test
+  build: &stage-build
+    - Build
 
 filters:
   all: &filter-default
@@ -277,91 +391,142 @@ filters:
       branches:
         ignore: /pull\/[0-9]+/
       tags: {only: '/^v.*/'}
+  ignore-tags: &filter-no-tags
+    filters:
+      tags: { ignore: '/^v.*/' }
 
 workflows:
   version: 2
   build_and_test:
     jobs:
       - build:
+          context:
+            - slack-secrets
           <<: *filter-default
+          name: Build
+          <<: *slack-fail-post-step
       - test-gradle:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Gradle Test
-          requires: [build]
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       ## Optimistically build snapshot
       - trigger-enterprise:
           name: Enterprise Snapshot
-          requires: [build]
+          requires: *stage-build
           filters:
             branches: {only: main}
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Docker Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Tomcat 8 API Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Tomcat 9 API Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh 9
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: API Test
-          requires: [build]
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: SSL Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-ssl-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Ansible Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-ansible-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: Blocklist Test
-          requires: [ build ]
+          requires: *stage-build
           command: bash test/run-docker-plugin-blocklist-test.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: LDAP Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
-          <<: *filter-default
+          <<: *filter-no-tags
           name: LDAP Bind Test
-          requires: [build]
+          requires: *stage-build
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
+          <<: *filter-no-tags
           name: PAM Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-pam-tests.sh
-
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-selenium:
-            name: Selenium Test
-            requires: [build]
+          <<: *filter-no-tags
+          name: Selenium Test
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-deps:
-            name: OWASP Dependency Checks
-            requires: [build]
-            continue: 'true'
-
-      # - snapshot-publish:
-      #     name: Publish Snapshots
-      #     requires: *stage-test
-      #     filters: {branches: {only: main}}
-      - maven-publish:
-          name: Maven Publish
-          requires: *stage-test
+          <<: *filter-no-tags
+          name: OWASP Dependency Checks
+          requires: *stage-build
+          continue: 'true'
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
+      - trigger-packaging:
+          name: Trigger packaging-core
+          requires: *stage-build
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
+      - maven-publish:
+          name: Maven Publish
+          requires: *stage-build
+          filters:
+            branches: {ignore: /.*/}
+            tags: {only: /^v.*$/}
+
+
 
   nightly:
     triggers:
@@ -373,71 +538,113 @@ workflows:
                 - main
     jobs:
       - build:
+          context:
+            - slack-secrets
           <<: *filter-default
+          name: Build
+          <<: *slack-fail-post-step
       - test-gradle:
           <<: *filter-default
           name: Gradle Test
-          requires: [build]
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       ## Optimistically build snapshot
       - trigger-enterprise:
           name: Enterprise Snapshot
-          requires: [build]
+          requires: *stage-build
           filters:
             branches: {only: main}
       - test-docker:
           <<: *filter-default
           name: Docker Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Tomcat 8 API Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Tomcat 9 API Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-tomcat-tests.sh 9
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: API Test
-          requires: [build]
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
           command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
       - test-docker:
           <<: *filter-default
           name: SSL Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-ssl-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Ansible Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-ansible-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           <<: *filter-default
           name: Blocklist Test
-          requires: [ build ]
+          requires: *stage-build
           command: bash test/run-docker-plugin-blocklist-test.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: LDAP Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker-machine:
           <<: *filter-default
           name: LDAP Bind Test
-          requires: [build]
+          requires: *stage-build
           command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-docker:
           name: PAM Test
-          requires: [build]
+          requires: *stage-build
           command: bash test/run-docker-pam-tests.sh
-
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - test-selenium:
             name: Selenium Test
-            requires: [build]
+            requires: *stage-build
+            context:
+              - slack-secrets
+            <<: *slack-fail-post-step
       - test-deps:
             name: OWASP Dependency Checks
-            requires: [build]
+            requires: *stage-build
             continue: 'false'
+            context:
+              - slack-secrets
+            <<: *slack-fail-post-step

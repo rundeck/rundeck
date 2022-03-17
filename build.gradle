@@ -35,7 +35,6 @@ buildscript {
             }
         }
         mavenCentral()
-        jcenter()
     }
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
@@ -46,15 +45,14 @@ buildscript {
 }
 
 plugins {
-    id 'com.gradle.build-scan' version '3.2.1'
     id "org.dvaske.gradle.git-build-info" version "0.8"
     id "com.dorongold.task-tree" version "1.5"
     id "org.ajoberstar.grgit" version "2.2.1"
     id "signing"
+    id 'io.github.gradle-nexus.publish-plugin' version "1.1.0"
 }
 
 apply plugin: 'java'
-apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
@@ -87,8 +85,7 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-api",
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
-        ":rundeck-storage:rundeck-storage-conf",
-        ":rundeckapp"
+        ":rundeck-storage:rundeck-storage-conf"
 ]
 
 project.ext.environment = project.hasProperty('environment') ? environment : 'development'
@@ -154,6 +151,7 @@ project(':rundeckapp') {
         project(':plugins:flow-control-plugin'),
         project(':plugins:jasypt-encryption-plugin'),
         project(':plugins:object-store-plugin'),
+        project(':plugins:azure-object-store-plugin'),
         project(':plugins:orchestrator-plugin'),
         project(':plugins:git-plugin'),
         project(':plugins:source-refresh-plugin'),
@@ -187,6 +185,16 @@ exportedProjects.each {
     }
 }
 
+nexusPublishing {
+    packageGroup = 'org.rundeck'
+    repositories {
+        sonatype{
+            stagingProfileId = '67d196ce5bae'
+        }
+    }
+}
+
+
 task bashVersionInfo {
     doLast {
         println """\
@@ -199,13 +207,13 @@ task bashVersionInfo {
 }
 
 task alljavadoc(type: Javadoc) {
-    source exportedProjects.collect { project(it).sourceSets.main.allJava }
-    classpath = files(exportedProjects.collect { project(it).sourceSets.main.compileClasspath })
-    destinationDir = file("${buildDir}/docs/javadoc")
+     source exportedProjects.collect { project(it).sourceSets.main.allJava }
+     classpath = files(exportedProjects.collect { project(it).sourceSets.main.compileClasspath })
+     destinationDir = file("${buildDir}/docs/javadoc")
 
-    if (JavaVersion.current().isJava8Compatible()) {
-        options.addStringOption('Xdoclint:none', '-quiet')
-    }
+     if (JavaVersion.current().isJava8Compatible()) {
+         options.addStringOption('Xdoclint:none', '-quiet')
+     }
 }
 
 buildScan {

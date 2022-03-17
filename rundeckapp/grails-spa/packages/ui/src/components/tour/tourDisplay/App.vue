@@ -33,7 +33,7 @@
         <progress-bar v-model="progress" label :labelText="progressText" />
       </div>
       <section>
-        <modal v-model="modal.show" size="lg" :title="tour.steps[stepIndex].title" :footer="false">
+        <modal v-model="modal.show" size="lg" :title="tour.steps[stepIndex].title" :footer="false" append-to-body>
           <img :src="modal.image" :alt="modal.alt" class="img-responsive" />
           <p class="modal-image-caption">{{modal.alt}}</p>
         </modal>

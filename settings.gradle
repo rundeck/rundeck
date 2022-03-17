@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+ plugins {
+    id "com.gradle.enterprise" version "3.7.1"
+}
+
 include	'rundeck-storage',
     'rundeck-storage:rundeck-storage-api',
     'rundeck-storage:rundeck-storage-data',
@@ -33,6 +37,7 @@ include	'rundeck-storage',
     'plugins:flow-control-plugin',
     'plugins:jasypt-encryption-plugin',
     'plugins:object-store-plugin',
+        'plugins:azure-object-store-plugin',
     'plugins:orchestrator-plugin',
     'plugins:git-plugin',
     'plugins:upvar-plugin',

@@ -21,7 +21,7 @@
 
 <g:if test="${pluginConfig && pluginConfig.type && enabled && configuredPlugin && enabled}">
 %{--Disable plugin modal--}%
-    <g:form useToken="true">
+    <g:form class="modal-container" useToken="true">
         <div class="modal fade" id="disablePlugin${integration}" role="dialog" aria-labelledby="disablePlugin${integration}ModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
@@ -74,7 +74,7 @@
 </g:if>
 <g:if test="${pluginConfig && pluginConfig.type && !enabled && configuredPlugin}">
 %{--Enable plugin modal--}%
-    <g:form useToken="true">
+    <g:form class="modal-container" useToken="true">
         <div class="modal fade" id="enablePlugin${integration}" role="dialog" aria-labelledby="enablePlugin${integration}ModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
@@ -118,14 +118,14 @@
                             <g:message code="no"/>
                         </button>
                         <g:actionSubmit action="enable" value="${message(code: 'yes')}" formmethod="POST"
-                                        class="btn btn-success"/>
+                                        class="btn btn-cta"/>
                     </div>
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
     </g:form>
 
-<g:form useToken="true">
+<g:form class="modal-container" useToken="true">
     <div class="modal fade" id="cleanPlugin${integration}" role="dialog" aria-labelledby="cleanPlugin${integration}ModalLabel"
          aria-hidden="true">
         <div class="modal-dialog">
@@ -161,7 +161,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <span class="text-danger"><g:message code="plugin.disable.confirm.text"/></span>
+                    <span class="text-danger"><g:message code="plugin.clean.confirm.text"/></span>
                 </div>
 
                 <div class="modal-footer">
@@ -175,7 +175,7 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 </g:form>
-    <g:form useToken="true">
+    <g:form class="modal-container" useToken="true">
         <div class="modal fade" id="deletePlugin${integration}" role="dialog" aria-labelledby="deletePlugin${integration}ModalLabel"
              aria-hidden="true">
             <div class="modal-dialog">
@@ -266,7 +266,7 @@
                           hideTitle  : true
                   ]}"/>
         <g:if test="${isConfiguredButDisabled}">
-          <span class="btn  btn-success"
+          <span class="btn  btn-cta"
                 data-toggle="modal"
                 data-target="#enablePlugin${integration}"
                 style="margin-top:1em;">
@@ -274,7 +274,7 @@
           </span>
         </g:if>
         <g:elseif test="${isConfiguredAndEnabled}">
-          <span class="btn btn-warning"
+          <span class="btn btn-danger"
                 data-toggle="modal"
                 data-target="#disablePlugin${integration}"
                 style="margin-top:1em;">
@@ -283,7 +283,7 @@
         </g:elseif>
         <g:if test="${!isConfiguredAndEnabled}">
           <g:link action="setup"
-                  class="btn  ${isConfiguredButDisabled ? 'btn-default' : 'btn-success'}"
+                  class="btn  btn-default"
                   params="[type: plugins[pluginName].name, project: params.project,integration:integration]"
                   style="margin-top:1em;">
             <g:icon name="cog"/>
@@ -296,7 +296,7 @@
           </g:link>
         </g:if>
         <g:if test="${isConfiguredButDisabled}">
-          <span class="btn btn-warning"
+          <span class="btn btn-default"
                 data-toggle="modal"
                 data-target="#cleanPlugin${integration}"
                 style="margin-top:1em;">

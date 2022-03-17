@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- -->
-    <modal v-model="openModal" ref="modal">
+    <modal v-model="openModal" ref="modal" append-to-body>
         <span slot="title">Search</span>
         <div class="row">
           <div class="col-xs-12">
@@ -81,7 +81,7 @@
                       >Search...</btn>
                       <btn
                               v-if="search"
-                              style="margin-right:1em;"
+                              style="margin-right:1em; margin-bottom:1em;"
                               class="btn btn-secondary btn-sm "
                               @click="clearSearchParams()"
                       >Clear</btn>

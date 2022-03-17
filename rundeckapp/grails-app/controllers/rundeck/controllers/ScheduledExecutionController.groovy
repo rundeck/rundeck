@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import org.apache.commons.collections.list.TreeList
 import org.apache.http.HttpHost
@@ -58,11 +59,15 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler
 import org.apache.http.impl.cookie.DateParseException
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
+import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.IdParameter
+import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -143,7 +148,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
     def ExecutionService executionService
     def FrameworkService frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     def ScheduledExecutionService scheduledExecutionService
     def OrchestratorPluginService orchestratorPluginService
 	def NotificationService notificationService
@@ -157,6 +161,7 @@ class ScheduledExecutionController  extends ControllerBase{
     ExecutionLifecyclePluginService executionLifecyclePluginService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
+    ConfigurationService configurationService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -268,53 +273,35 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * used by jobs page, displays actions for the job as li's
      */
+
+    @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
+    @GrailsCompileStatic
     def actionMenuFragment(){
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectJobAny(
-                authContext,
-                scheduledExecution,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
-                scheduledExecution.project
-                ),
-            AuthConstants.ACTION_VIEW,
-            'Job',
-            params.id
-            )
-        ) {
+        ScheduledExecution scheduledExecution = authorizingJob.resource
+        String project = scheduledExecution.project
+        AuthorizingProject authorizingProject = authorizingProject(project)
 
-            def model=[
-                    scheduledExecution  : scheduledExecution,
-                    hideJobDelete       : params.hideJobDelete,
-                    jobDeleteSingle     : params.jobDeleteSingle,
-                    isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution)
-            ]
+        def model=[
+                scheduledExecution  : scheduledExecution,
+                hideJobDelete       : params.hideJobDelete,
+                jobDeleteSingle     : params.jobDeleteSingle,
+                isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution)
+        ]
 
-            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                 rundeckAuthContextProcessor.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_EXPORT,
-                                                                  AuthConstants.ACTION_SCM_EXPORT])) {
-                if(scmService.projectHasConfiguredExportPlugin(params.project)) {
-                    model.scmExportEnabled = true
-                    model.scmExportStatus = scmService.exportStatusForJobs(params.project, authContext, [scheduledExecution])
-                    model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
-                }
+        if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_EXPORT)) {
+            if(scmService.projectHasConfiguredExportPlugin(project)) {
+                model.scmExportEnabled = true
+                model.scmExportStatus = scmService.exportStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
+                model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid)
             }
-            if (rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                 rundeckAuthContextProcessor.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_IMPORT,
-                                                                  AuthConstants.ACTION_SCM_IMPORT])) {
-                if(scmService.projectHasConfiguredPlugin('import',params.project)) {
-                    model.scmImportEnabled = true
-                    model.scmImportStatus = scmService.importStatusForJobs(params.project, authContext, [scheduledExecution])
-                }
-            }
-            render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
         }
+        if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_IMPORT)) {
+            if(scmService.projectHasConfiguredPlugin('import',project)) {
+                model.scmImportEnabled = true
+                model.scmImportStatus = scmService.importStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
+            }
+        }
+        render(template: '/scheduledExecution/jobActionButtonMenuContent', model: model)
     }
 
     private def jobDetailData(keys = []) {
@@ -324,7 +311,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+            def minLevel = configurationService.getString("min.isolation.level")
             def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
             total = Execution.withTransaction([isolationLevel: isolationLevel]) {
                 Execution.countByScheduledExecution(scheduledExecution)
@@ -438,6 +425,7 @@ class ScheduledExecutionController  extends ControllerBase{
     }
     def show () {
         log.debug("ScheduledExecutionController: show : params: " + params)
+        def infoMessage = flash.info
         def crontab = [:]
         def framework = frameworkService.getRundeckFramework()
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
@@ -461,6 +449,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         if (!params.project || params.project != scheduledExecution.project) {
+            flash.info = infoMessage
             return redirect(controller: 'scheduledExecution', action: 'show',
                     params: [id: params.id, project: scheduledExecution.project])
         }
@@ -468,7 +457,7 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def minLevel = configurationService.getString("min.isolation.level")
         def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
         def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
@@ -602,7 +591,7 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def minLevel = configurationService.getString("min.isolation.level")
         def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
         def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
@@ -1736,6 +1725,10 @@ class ScheduledExecutionController  extends ControllerBase{
             clearEditSession(scheduledExecution.id.toString())
             flash.savedJob=scheduledExecution
             flash.savedJobMessage="Saved changes to Job"
+
+            if(result.remoteSchedulingChanged){
+                flash.info = "INFO: Any scheduling changes will take effect after a few seconds."
+            }
             scheduledExecutionService.logJobChange(changeinfo,scheduledExecution.properties)
             redirect(controller: 'scheduledExecution', action: 'show', params: [id: scheduledExecution.extid])
         }
@@ -2276,7 +2269,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 //error
                 model.nodesetempty=true
             }
-            else if(grailsApplication.config.gui.execution.summarizedNodes != 'false') {
+            else if(grailsApplication.config.getProperty("gui.execution.summarizedNodes", String.class) != 'false') {
                 model.nodes=nodes
                 model.nodemap=[:]
                 model.tagsummary=[:]
@@ -2533,10 +2526,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 link =createLink(controller: "execution", action: "renderOutput", id: results.id,
                         params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
             }else{
-                link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+                link =createLink(controller: "execution",action: "show",id: results.id, fragment: params.followdetail)
             }
         } else {
-            link = createLink(controller: "execution", action: "follow", id: results.id)
+            link = createLink(controller: "execution", action: "show", id: results.id)
         }
         boolean follow_ = params.follow == 'true'
         return render(contentType:'application/json'){
@@ -2580,10 +2573,10 @@ class ScheduledExecutionController  extends ControllerBase{
             if(params.followdetail=='html'){
                 link =createLink(controller: "execution", action: "renderOutput", id: results.id, params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
             }else{
-                link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+                link =createLink(controller: "execution",action: "show",id: results.id, fragment: params.followdetail)
             }
         }else {
-            link = createLink(controller: "execution", action: "follow", id: results.id)
+            link = createLink(controller: "execution", action: "show", id: results.id)
         }
         boolean follow_ = params.follow == 'true'
 
@@ -2641,7 +2634,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if(params.followdetail=='html'){
                 redirect(controller: "execution", action: "renderOutput", id: results.id, params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
             }else{
-                redirect(controller: "execution", action: "follow", id: results.id, params:[outdetails: params.followdetail])
+                redirect(controller: "execution", action: "show", id: results.id, params:[outdetails: params.followdetail])
             }
         } else {
             redirect(controller: "scheduledExecution", action: "show", id: params.id)
@@ -3975,9 +3968,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ?
                 params.int('max') :
-                grailsApplication.config.rundeck?.pagination?.default?.max ?
-                        grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-                        20
+                configurationService.getInteger("pagination.default.max", 20)
         def total=result.total
         withFormat{
             xml{

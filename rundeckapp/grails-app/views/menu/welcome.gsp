@@ -25,10 +25,10 @@ Time: 12:54 PM
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-
   <meta name="layout" content="base"/>
   <meta name="tabpage" content="home"/>
   <title><g:appTitle/><g:message code="page.welcome.title.suffix"/></title>
+  <asset:javascript src="static/pages/login.js"/>
   <style media="screen">
     .card-footer .table{
       margin-bottom: 0;
@@ -52,17 +52,17 @@ Time: 12:54 PM
             <div class="ui-common-platform enterprise-hide" style="margin:0 0 2em;">
               <h3 >UNSUPPORTED SOFTWARE. NO WARRANTY.</h3>
             </div>
+            <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
+            <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
             <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
             <div style="margin-top:2em;">
-              <g:link controller="menu" action="index" class="btn btn-lg btn-success">
-              <g:message code="welcome.button.use.rundeck"/>
+              <g:link controller="menu" action="index" class="btn btn-lg btn-primary">
+              <g:message code="welcome.button.use.rundeck" args="${[g.appTitle()]}"/>
             </g:link>
           </div>
         </div>
         <div class="card-footer" style="margin-top:1em;">
-          <g:set var="buildDataKeys" value="${grailsApplication.metadata.keySet().
-            findAll { it.startsWith('build.') && (grailsApplication.metadata[it] instanceof String) }}"/>
-            <g:basicData data="${grailsApplication.metadata.subMap(buildDataKeys)}" fields="${buildDataKeys.sort()}"/>
+            <g:basicData data="${buildData}" fields="${buildDataKeys.sort()}"/>
             <g:render template="/common/versionDisplay"/>
           </div>
         </div>

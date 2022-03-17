@@ -18,9 +18,11 @@ export default Vue.extend({
         }
     },
 
-    data: {
-        parent: null as HTMLElement | null,
-        instance: null as Instance | null
+    data(){
+        return {
+            parent: null as HTMLElement | null,
+            instance: null as Instance | null
+        }
     },
 
     mounted() {

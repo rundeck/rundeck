@@ -10,7 +10,7 @@
 //     vertical-align: middle;
 //   }
 // }
-@import "../paper/variables";
+@import "../runstrap/variables";
 
 .arrow-button{
   color: #66615b;
@@ -22,9 +22,6 @@
 .buttons .btn + .btn{
   margin-left: 1em;
 }
-
-.btn, .btn.btn-simple {
-  &.btn-hover:hover {
-    background-color: lighten($bg-primary, 20%)
-  }
-}
+// .dropdown-toggle{
+//   background-color: var(--default-color);
+// }

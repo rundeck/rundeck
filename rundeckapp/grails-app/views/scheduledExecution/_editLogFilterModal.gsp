@@ -149,7 +149,7 @@
                 <button type="submit" class="btn btn-default  " data-dismiss="modal">
                     <g:message code="button.action.Cancel" />
                 </button>
-                <button type="submit" class="btn btn-success  " data-bind="click: $root.saveFilterPopup">
+                <button type="submit" class="btn btn-cta  " data-bind="click: $root.saveFilterPopup">
                     <g:message code="button.action.Save" />
                 </button>
             </div>

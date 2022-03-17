@@ -49,9 +49,9 @@ END
     NDATES=$(( $NDATES + 10 ))
     osname=$(uname)
     if [ "Darwin" = "$osname" ] ; then
-        NDATE=$(date -r "$NDATES" '+%Y %m %d %H %M %S')
+        NDATE=$(env TZ=GMT date -r "$NDATES" '+%Y %m %d %H %M %S')
     else
-        NDATE=$(date -u --date="@$NDATES" '+%Y %m %d %H %M %S')
+        NDATE=$(env TZ=GMT date -u --date="@$NDATES" '+%Y %m %d %H %M %S')
     fi
     NY=$(echo $NDATE | cut -f 1 -d ' ')
     NMO=$(echo $NDATE | cut -f 2 -d ' ')
@@ -79,6 +79,7 @@ END
         <month month='$NMO'  day='$ND' />
         <year year='$NY' />
       </schedule>
+      <timeZone>GMT</timeZone>
       <sequence>
         <command>
         <exec>echo hello there</exec>

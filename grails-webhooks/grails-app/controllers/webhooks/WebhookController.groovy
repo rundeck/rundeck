@@ -3,22 +3,22 @@ package webhooks
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
-import com.fasterxml.jackson.databind.ObjectMapper
 import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.rundeck.core.auth.AuthConstants
+import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 class WebhookController {
+    static final String AUTH_HEADER = "Authorization"
     static allowedMethods = [post:'POST']
 
     def webhookService
-    def frameworkService
     AuthContextEvaluator rundeckAuthContextEvaluator
     AuthContextProvider rundeckAuthContextProvider
     def apiService
@@ -62,7 +62,7 @@ class WebhookController {
         }
 
         UserAndRolesAuthContext authContext = rundeckAuthContextProvider.getAuthContextForSubjectAndProject(session.subject, params.project)
-        if (!authorized(authContext, webhook.project, ACTION_DELETE)) {
+        if (!authorized(authContext, webhook.project, AuthConstants.ACTION_DELETE)) {
             sendJsonError("You are not authorized to perform this action")
             return
         }
@@ -146,6 +146,11 @@ class WebhookController {
             return
         }
 
+        if(hook.authConfigJson && !authorizeWebhook(hook, request)) {
+            sendJsonError("Failed webhook authorization")
+            return
+        }
+
         WebhookDataImpl whkdata = new WebhookDataImpl()
         whkdata.webhookUUID = hook.uuid
         whkdata.webhook = hook.name
@@ -174,5 +179,11 @@ class WebhookController {
         List authorizedActions = [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         if(action != AuthConstants.ACTION_ADMIN) authorizedActions.add(action)
         rundeckAuthContextEvaluator.authorizeProjectResourceAny(authContext,AuthConstants.RESOURCE_TYPE_WEBHOOK,authorizedActions,project)
+    }
+
+    @PackageScope
+    boolean authorizeWebhook(Webhook hook, HttpServletRequest request) {
+        return new AuthorizationHeaderAuthenticator().authenticate(hook, request)
+
     }
 }

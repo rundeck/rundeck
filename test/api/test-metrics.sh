@@ -41,7 +41,7 @@ test_metrics_metrics(){
     VAL=$(jq -r '.counters | length'  "${file}" )
     [ "$VAL" -gt 0 ] || fail "Expected > 0 for .counters in $file but was $VAL"
     assert_json_value '8' '.meters | length'  "${file}"
-    assert_json_value '28' '.timers | length'  "${file}"
+    assert_json_value '26' '.timers | length'  "${file}"
 
     test_succeed
 

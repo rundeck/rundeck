@@ -45,9 +45,9 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
 //versions of dependency we want to verify
 def versions=[
-        jetty:'9.4.39.v20210325',
+        jetty:'9.4.44.v20210927',
         servlet:'api-3.1.0',
-        log4j:'2.13.2'
+        log4j:'2.17.1'
 ]
 
 def warFile= "rundeckapp/${target}/rundeck-${version}.war"
@@ -55,7 +55,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 //def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','orchestrator', 'source-refresh','upvar']
+def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','azure-object-store','orchestrator', 'source-refresh','upvar']
 def externalPlugins=['rundeck-ansible-plugin','aws-s3-model-source','py-winrm-plugin','openssh-node-execution','multiline-regex-datacapture-filter', 'attribute-match-node-enhancer','sshj-plugin']
 
 //manifest describing expected build results
@@ -120,7 +120,7 @@ def manifest=[
         "WEB-INF/lib/log4j-api-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-core-${versions.log4j}.jar",
         "WEB-INF/lib/log4j-slf4j-impl-${versions.log4j}.jar",
-        "WEB-INF/lib/slf4j-api-1.7.30.jar",
+        "WEB-INF/lib/slf4j-api-1.7.32.jar",
         "WEB-INF/lib/libpam4j-1.11.jar"
     ],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
@@ -132,6 +132,7 @@ def manifest=[
     "plugins/source-refresh-plugin/${target}/rundeck-source-refresh-plugin-${version}.jar":[:],
     "plugins/upvar-plugin/${target}/rundeck-upvar-plugin-${version}.jar":[:],
     "plugins/object-store-plugin/${target}/rundeck-object-store-plugin-${version}.jar":[:],
+    "plugins/azure-object-store-plugin/${target}/rundeck-azure-object-store-plugin-${version}.jar":[:]
 ]
 def pluginsum=1
 //generate list of plugin files in the jar to validate

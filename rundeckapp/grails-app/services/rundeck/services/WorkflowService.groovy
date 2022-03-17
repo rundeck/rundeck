@@ -81,7 +81,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         if(!executionService){
             executionService=applicationContext.executionService
         }
-        def spec=grailsApplication.config.rundeck?.workflowService?.stateCache?.spec?: "maximumSize=5,expireAfterAccess=60s"
+        def spec= configurationService.getString("workflowService.stateCache.spec", "maximumSize=5,expireAfterAccess=60s")
         stateCache= CacheBuilder.from(spec).build()
     }
 
@@ -253,8 +253,8 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
             log.error(name + ": " + e.message, e)
             if (Environment.getCurrent() == Environment.DEVELOPMENT) {
                 //print state change list in dev mode
-                log.error(logstate.stateChanges.encodeAsJSON())
-                log.error(stateMapping.mapOf(id, state).encodeAsJSON())
+                log.error(logstate.stateChanges.encodeAsJSON().toString())
+                log.error(stateMapping.mapOf(id, state).encodeAsJSON().toString())
             }
         }
 
@@ -273,7 +273,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
             chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
                 ExecutionState executionState, Date timestamp, List<String> nodeSet ->
                     if (executionState.completedState) {
-                        log.debug(logstate.stateChanges.encodeAsJSON())
+                        log.debug(logstate.stateChanges.encodeAsJSON().toString())
                     }
             })
         }

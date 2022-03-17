@@ -33,4 +33,4 @@ const token = getSynchronizerToken()
 
 context.rundeckClient = new RundeckBrowser(token.TOKEN, token.URI, context.rdBase)
 context.eventBus = EventBus
-context.rootStore = new RootStore(context.rundeckClient)
+context.rootStore = new RootStore(context.rundeckClient, context.appMeta)

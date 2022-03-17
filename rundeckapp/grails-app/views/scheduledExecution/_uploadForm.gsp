@@ -240,7 +240,7 @@
               <g:submitButton name="Upload" id="uploadFormUpload"
                               value="${g.message(code:'button.action.Upload',default:'Upload')}"
                               onclick="['uploadFormButtons','schedUploadSpinner'].each(Element.toggle)"
-                              class="btn btn-primary"/>
+                              class="btn btn-cta"/>
             </div>
             <div id="schedUploadSpinner" class="spinner block" style="display:none;">
               <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>

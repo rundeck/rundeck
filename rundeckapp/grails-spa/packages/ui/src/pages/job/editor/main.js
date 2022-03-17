@@ -3,7 +3,9 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import App from './App'
+import NotificationsEditorSection from './NotificationsEditorSection'
+import ResourcesEditorSection from './ResourcesEditorSection'
+import SchedulesEditorSection from './SchedulesEditorSection'
 import * as uiv from 'uiv'
 import international from './i18n'
 import VueI18n from 'vue-i18n'
@@ -35,29 +37,46 @@ messages =
             messages[locale] || messages[lang] || messages['en_US'] || {}
         )
     }
-const els = document.body.getElementsByClassName('job-editor-vue')
+
+// Create VueI18n instance with options
+const i18n = new VueI18n({
+    silentTranslationWarn: true,
+    locale: locale, // set locale
+    messages // set locale messages,
+})
+const els = document.body.getElementsByClassName('job-editor-notifications-vue')
 
 for (var i = 0; i < els.length; i++) {
     const e = els[i]
-
-    // Create VueI18n instance with options
-    const i18n = new VueI18n({
-        silentTranslationWarn: true,
-        locale: locale, // set locale
-        messages // set locale messages,
-
-    })
     /* eslint-disable no-new */
     new Vue({
         el: e,
-        data(){
-            return{
-                EventBus,
-            }
-        },
-        components: { App },
+        data(){return{EventBus,}},
+        components: { NotificationsEditorSection },
         i18n
     })
+}
+const resels = document.body.getElementsByClassName('job-editor-resources-vue')
 
+for (var i = 0; i < resels.length; i++) {
+    const e = resels[i]
+    /* eslint-disable no-new */
+    new Vue({
+        el: e,
+        data(){return{EventBus,}},
+        components: { ResourcesEditorSection },
+        i18n
+    })
+}
+const scsels = document.body.getElementsByClassName('job-editor-schedules-vue')
 
+for (var i = 0; i < scsels.length; i++) {
+  const e = scsels[i]
+  /* eslint-disable no-new */
+  new Vue({
+    el: e,
+    data(){return{EventBus,}},
+    components: { SchedulesEditorSection },
+    i18n
+  })
 }

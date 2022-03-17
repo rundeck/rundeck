@@ -64,10 +64,10 @@ class ConfigTagLibSpec extends Specification implements TagLibUnitTest<ConfigTag
 
         where:
             bconfVal | bdefVal | bexpected
-            true     | false   | 'true'
-            false    | true    | 'false'
-            null     | true    | 'true'
-            null     | false   | 'false'
+            true     | false   | true
+            false    | true    | false
+            null     | true    | true
+            null     | false   | false
     }
     @Unroll
     def "get integer"() {
@@ -84,8 +84,8 @@ class ConfigTagLibSpec extends Specification implements TagLibUnitTest<ConfigTag
 
         where:
             iconfVal | idefVal | iexpected
-            1        | 2       | '1'
-            null     | 2       | '2'
+            1        | 2       | 1
+            null     | 2       | 2
     }
 
     def "get integer numberformat exception"() {
@@ -102,6 +102,6 @@ class ConfigTagLibSpec extends Specification implements TagLibUnitTest<ConfigTag
 
         where:
             idefVal | iexpected
-            2       | '2'
+            2       | 2
     }
 }

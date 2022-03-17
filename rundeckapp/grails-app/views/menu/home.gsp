@@ -42,12 +42,12 @@
     <g:embedJSON data="${[loaded:statsLoaded,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
 
     <g:embedJSON data="${[
-            detailBatchMax        : params.getInt('detailBatchMax')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchMax', default: 15).toInteger(),
-            summaryRefresh        : 'true'==cfg.getBoolean(config: 'gui.home.projectList.summaryRefresh', default: true),
-            refreshDelay          : cfg.getInteger(config: 'gui.home.projectList.summaryRefreshDelay', default: 30000).toInteger(),
+            detailBatchMax        : params.getInt('detailBatchMax')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchMax', default: 15),
+            summaryRefresh        : cfg.getBoolean(config: 'gui.home.projectList.summaryRefresh', default: true),
+            refreshDelay          : cfg.getInteger(config: 'gui.home.projectList.summaryRefreshDelay', default: 30000),
             detailBatchDelay      : params.getInt('detailBatchDelay')?:cfg.getInteger(config: 'gui.home.projectList.detailBatchDelay', default: 1000).toInteger(),
-            pagingEnabled         : params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.home.projectList.pagingEnabled',default: true)),
-            pagingMax             : params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.home.projectList.pagingMax', default: 30).toInteger(),
+            pagingEnabled         : params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.home.projectList.pagingEnabled',default: true)),
+            pagingMax             : params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.home.projectList.pagingMax', default: 30),
     ]}" id="homeDataPagingParams"/>
 
     <!-- VUE JS REQUIREMENTS -->
@@ -59,7 +59,7 @@
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/version-notification.css"/>
     <!-- /VUE CSS MODULES -->
-
+    <asset:javascript src="static/pages/login.js"/>
     <style type="text/css">
     .project_list_item_link{
         display:inline-block;
@@ -87,6 +87,8 @@
               </h2>
             </div>
             <div class="card-content">
+              <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
+              <asset:image src="${logoImage}" alt="${[g.appTitle()]}" style="width: 400px; padding-bottom: 10px" onload="SVGInject(this)"/>
               <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
               <p class="h6 text-strong" style="margin-top:1em;">
                 <g:message code="you.can.see.this.message.again.by.clicking.the" />
@@ -97,9 +99,11 @@
           </div>
         </div>
       </g:if>
-      <div class="col-sm-12 col-md-5">
-        <div class="card">
-          <div class="card-content" style="padding-bottom: 15px;">
+    </div>
+    <div class="row">
+      <div class="flex justify-between">
+        <div style="margin-left:15px;margin-right:15px;" class="col-sm-12 col-md-5 card">
+          <div class="card-content">
             <span class="text-h3" data-bind="if: loadedProjectNames()">
               <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
                 <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
@@ -110,32 +114,15 @@
                 <g:message code="page.home.loading.projects" />
             </span>
             <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
-              <g:link controller="framework" action="createProject" class="btn  btn-success pull-right">
+              <g:link controller="framework" action="createProject" class="btn  btn-primary pull-right">
                 <g:message code="page.home.new.project.button.label" />
                 <b class="glyphicon glyphicon-plus"></b>
               </g:link>
             </auth:resourceAllowed>
           </div>
-          <!--
-            <div class="card-footer">
-              <hr>
-              <div class="row">
-                <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}">
-                    <div class="col-sm-4">
-                        <g:link controller="framework" action="createProject" class="btn  btn-cta pull-right">
-                            <g:message code="page.home.new.project.button.label" />
-                            <b class="glyphicon glyphicon-plus"></b>
-                        </g:link>
-                    </div>
-                </auth:resourceAllowed>
-              </div>
-            </div>
-          -->
         </div>
-      </div>
-      <div class="col-sm-12 col-md-7">
-        <div class="card">
-          <div class="card-content">
+        <div style="margin-left:15px;margin-right:15px;" class="col-sm-12 col-md-7 card">
+          <div class="card-content flex flex--direction-col flex--justify-center h-full">
             <span data-bind="if: !loaded()" class="text-muted">
               ...
             </span>
@@ -177,6 +164,7 @@
           </div>
         </div>
       </div>
+
       <div class="container-fluid" data-bind="if: projectCount() == 0">
         <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}" kind="${AuthConstants.TYPE_PROJECT}" context="${AuthConstants.CTX_APPLICATION}" has="true">
           <div id="firstRun"></div>
@@ -249,21 +237,21 @@
                     <div class="row row-hover row-border-top">
                       <div class="col-sm-6 col-md-8">
                         <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: project"
-                          class="text-h4 link-hover  text-inverse project_list_item_link link-quiet">
+                          class="link-hover  text-inverse project_list_item_link link-quiet">
 
-                          <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
+                          <span class="h5" data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
                             <div data-bind="text: $root.projectForName(project).label"></div>
                           </span>
-                          <span data-bind="ifnot: $root.projectForName(project) && $root.projectForName(project).label">
+                          <span class="h5" data-bind="ifnot: $root.projectForName(project) && $root.projectForName(project).label">
                             <span data-bind="text: project"></span>
                           </span>
 
-                          <span data-bind="if: !$root.projectForName(project).executionEnabled()">
+                          <span class="h5" data-bind="if: !$root.projectForName(project).executionEnabled()">
                             <span class="text-base text-warning  has_tooltip" data-placement="right" data-bind="bootstrapTooltip: true" title="${message(code:'project.execution.disabled')}">
                               <i class="glyphicon glyphicon-pause"></i>
                             </span>
                           </span>
-                          <span data-bind="if: !$root.projectForName(project).scheduleEnabled()">
+                          <span class="h5" data-bind="if: !$root.projectForName(project).scheduleEnabled()">
                             <span class="text-base text-warning has_tooltip"  data-placement="right"  data-bind="bootstrapTooltip: true" title="${message(code:'project.schedule.disabled')}">
                               <i class="glyphicon glyphicon-ban-circle"></i>
                             </span>

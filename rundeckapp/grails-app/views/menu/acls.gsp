@@ -78,9 +78,9 @@
         jQuery(function () {
             var filepolicies = loadJsonData('aclFileList');
             jQuery.extend(filepolicies,{
-                pagingEnabled: ${params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
                 paging:{
-                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
+                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30)}
                 }
             })
             window.fspolicies = new PolicyFiles(filepolicies);
@@ -95,9 +95,9 @@
             </g:else>
             let storedpolicies = loadJsonData('aclStoredList');
             jQuery.extend(storedpolicies,{
-                pagingEnabled: ${params.getBoolean('pagingEnabled','true'==cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
                 paging:{
-                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30).toInteger()}
+                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30)}
                 }
             })
             window.stpolicies = new PolicyFiles(storedpolicies,_rundeck.rdBase+'/menu/ajaxSystemAclMeta');
@@ -190,7 +190,7 @@
                               <g:link controller="menu"
                                       action="createSystemAclFile"
                                       params="${[fileType: 'fs']}"
-                                      class="btn btn-sm btn-cta">
+                                      class="btn btn-sm btn-primary">
                                   <g:icon name="plus"/>
                                   <g:message code="access.control.action.create.acl.policy.button.title"/>
                               </g:link>
@@ -251,7 +251,7 @@
                                   id="storage_acl_create_btn"
                                   action="createSystemAclFile"
                                   params="${[fileType: 'storage']}"
-                                  class="btn btn-sm btn-cta">
+                                  class="btn btn-sm btn-primary">
                               <g:icon name="plus"/>
                               <g:message code="access.control.action.create.acl.policy.button.title"/>
                           </g:link>

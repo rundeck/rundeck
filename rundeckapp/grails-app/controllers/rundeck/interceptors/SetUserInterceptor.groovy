@@ -1,6 +1,7 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
+import com.dtolabs.rundeck.core.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
@@ -14,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.UserService
 import webhooks.Webhook
 
@@ -28,7 +30,8 @@ class SetUserInterceptor {
     InterceptorHelper interceptorHelper
     UserService userService
     ApiService apiService
-    def messageSource
+    ConfigurationService configurationService
+
     int order = HIGHEST_PRECEDENCE + 30
 
     SetUserInterceptor() {
@@ -46,11 +49,15 @@ class SetUserInterceptor {
         if (request.pathInfo?.startsWith("/error")) {
             return true
         }
-        if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
+        if (request.api_version &&
+            request.remoteUser &&
+            !(configurationService.getBoolean("security.apiCookieAccess.enabled",false))){
             //disallow api access via normal login
             request.invalidApiAuthentication=true
             return false
         }
+        def authtoken = params.authtoken? Webhook.cleanAuthToken(params.authtoken) : request.getHeader('X-RunDeck-Auth-Token')
+
         if (request.userPrincipal && session.user!=request.userPrincipal.name) {
             session.user = request.userPrincipal.name
 
@@ -58,16 +65,17 @@ class SetUserInterceptor {
 
             request.subject = subject
             session.subject = subject
-        } else if(request.remoteUser && session.subject && grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in ['true',true]){
+        } else if(request.remoteUser && session.subject &&
+                configurationService.getBoolean("security.authorization.preauthenticated.enabled",false)){
             // Preauthenticated mode is enabled, handle upstream role changes
             Subject subject = createAuthSubject(request)
             request.subject = subject
             session.subject = subject
-        } else if(request.remoteUser && session.subject && grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in ['false',false]) {
+        } else if(request.remoteUser && session.subject &&
+                !configurationService.getBoolean("security.authorization.preauthenticated.enabled",false)) {
             request.subject = session.subject
-        } else if (request.api_version && !session.user ) {
+        } else if (request.api_version && !session.user && authtoken) {
             //allow authentication token to be used
-            def authtoken = params.authtoken? Webhook.cleanAuthToken(params.authtoken) : request.getHeader('X-RunDeck-Auth-Token')
             boolean webhookType = controllerName == "webhook" && actionName == "post"
 
             AuthenticationToken foundToken = lookupToken(authtoken, servletContext, webhookType)
@@ -83,6 +91,9 @@ class SetUserInterceptor {
 
                 roles.each{role->
                     subject.principals << new Group(role.trim());
+                }
+                if(foundToken){
+                    subject.principals.add(new Token(foundToken.uuid, foundToken.type))
                 }
 
                 request.subject = subject
@@ -105,19 +116,24 @@ class SetUserInterceptor {
             }
         } else if (!request.remoteUser) {
             //unauthenticated request to an action
-            response.status = 403
-            request.errorCode = 'request.authentication.required'
-            render view: '/common/error.gsp'
-            return false
+            if(request.api_version) {
+                //api unauth response handled by AuthorizationInterceptor
+                request.invalidApiAuthentication = true
+            }else{
+                response.status = 403
+                request.errorCode = 'request.authentication.required'
+                render view: '/common/error.gsp'
+                return false
+            }
         }
-        def requiredRole = grailsApplication.config.rundeck.security.requiredRole
+        def requiredRole = configurationService.getString("security.requiredRole","")
         if(!requiredRole.isEmpty()) {
             if(!request?.subject?.principals?.findAll { it instanceof Group }?.any { it.name == requiredRole }) {
                 log.error("User ${request.remoteUser} must have role: ${requiredRole} to log in.")
                 SecurityContextHolder.clearContext()
                 request.logout()
                 response.status = 403
-                flash.loginerror = messageSource.getMessage("user.not.allowed",null,null)
+                flash.loginErrorCode = 'user.not.allowed'
                 render view: '/user/login.gsp'
                 return false
             }

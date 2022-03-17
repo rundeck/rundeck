@@ -1,13 +1,12 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.annotation.Subscriber
-import grails.events.annotation.gorm.Listener
 import grails.gorm.transactions.Transactional
 import org.rundeck.util.SHAInputStream
 import org.rundeck.util.SHAOutputStream
@@ -19,6 +18,7 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
+import rundeck.services.feature.FeatureService
 
 import java.nio.file.Files
 
@@ -36,6 +36,7 @@ class FileUploadService {
     TaskService taskService
     FrameworkService frameworkService
     def executorService
+    FeatureService featureService
 
     long getTempfileExpirationDelay() {
         configurationService.getLong "fileUploadService.tempfile.expiration", DEFAULT_TEMP_EXPIRATION
@@ -67,6 +68,13 @@ class FileUploadService {
     }
     Validator.Report validateFileOptConfig(Option opt) {
         if (opt.typeFile) {
+            if(!featureService.featurePresent(Features.FILE_UPLOAD_PLUGIN)) {
+                opt.errors.rejectValue(
+                        'configMap',
+                        'option.file.config.disabled.message',
+                        "option file plugin disabled: {0}"
+                )
+            }
             def result = validatePluginConfig(opt.configMap)
             if (!result.valid) {
 
@@ -306,7 +314,7 @@ class FileUploadService {
         if ((!isJobRef && jfr.jobId != jobid) || jfr.recordName != option) {
             return [valid: false, error: 'invalid', args: [jfr.uuid, jobid, option]]
         }
-        if (!isJobRef && jfr.execution != null && execution?.id != jfr.execution.id) {
+        if (!isJobRef && jfr.execution != null && !jfr.execution.willRetry && execution?.id != jfr.execution.id ) {
             return [valid: false, error: 'inuse', args: [jfr.uuid, jfr.execution.id]]
         }
         if (!jfr.canBecomeRetained()) {
@@ -566,7 +574,13 @@ class FileUploadService {
     def executionComplete(ExecutionCompleteEvent e) {
         JobFileRecord.withNewSession {
             findRecords(e.execution, RECORD_TYPE_OPTION_INPUT)?.each {
-                changeFileState(it, FileUploadPlugin.ExternalState.Used)
+                if(e.execution.willRetry){
+                    def expirationDate = (new Date().time + tempfileExpirationDelay)
+                    it.setExpirationDate(new Date(expirationDate))
+                    it.save(flush: true)
+                } else {
+                    changeFileState(it, FileUploadPlugin.ExternalState.Used)
+                }
             }
         }
     }

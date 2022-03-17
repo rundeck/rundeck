@@ -1,8 +1,8 @@
 .multiple-control-input-group {
   .input-group-addon-title{
-    border-top: 1px solid #cfcfca;
-    border-bottom: 1px solid #cfcfca;
-    border-left: 1px solid #cfcfca;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
     cursor: default;
     width: 100px;
   }

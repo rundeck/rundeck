@@ -1,7 +1,7 @@
 <template>
-  <span :class="clsStyle" class="label"  @click=activate v-if="hasMessage && display"  v-tooltip.bottom="!hasNewMessage &&showTitle?motdTitle:''" >
+  <span :class="clsStyle" class="btn btn-simple btn-xs"  @click=activate v-if="hasMessage && display"  v-tooltip.bottom="!hasNewMessage &&showTitle?motdTitle:''" >
     <i class=" fas " :class=iconStyle></i>
-    <span v-if="hasNewMessage && showTitle" v-html=motdTitle></span>
+    <span class="motd__title" v-if="hasNewMessage && showTitle" v-html=motdTitle></span>
   </span>
 </template>
 <script>
@@ -30,7 +30,7 @@ export default {
 
   computed:{
     clsStyle(){
-      return this.hasNewMessage?`label-${this.style}`:'label-muted'
+      return this.hasNewMessage?`btn-${this.style}`:'btn-default'
     },
     iconStyle(){
       return this.styleIcons[this.style]||this.styleIcons.default
@@ -59,5 +59,9 @@ export default {
 <style lang="scss" scoped>
 .label{
   cursor: pointer
+}
+
+.motd__title {
+  margin-left: 5px;
 }
 </style>

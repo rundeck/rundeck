@@ -649,7 +649,7 @@ class RuleEvaluatorSpec extends Specification {
             getGroups() >> testgroups
             getUrn()    >> testurn
         }
-        def env = projenv ? [new Attribute(AuthorizationUtil.PROJECT_BASE_URI, projenv)] as Set :
+        def env = projenv as String ? [new Attribute(AuthorizationUtil.PROJECT_BASE_URI, projenv)] as Set :
                 AuthorizationUtil.RUNDECK_APP_ENV
         when:
         def result = RuleEvaluator.narrowContext(ruleset, subject, env)
@@ -698,7 +698,7 @@ class RuleEvaluatorSpec extends Specification {
                 getUrn() >> testurn
             }
             def rule = basicRule([username: null, group: null, urn: null, by:isby] + detail)
-            def env = projenv ? [new Attribute(AuthorizationUtil.PROJECT_BASE_URI, projenv)] as Set :
+            def env = projenv as String ? [new Attribute(AuthorizationUtil.PROJECT_BASE_URI, projenv)] as Set :
                       AuthorizationUtil.RUNDECK_APP_ENV
 
         expect:

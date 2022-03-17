@@ -16,23 +16,30 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
-import org.grails.plugins.web.servlet.mvc.InvalidResponseHandler
-import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
-import org.grails.web.servlet.mvc.GrailsWebRequest
-import org.grails.web.servlet.mvc.TokenResponseHandler
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.authorization.UnauthorizedAccess
-import org.rundeck.util.Toposort
-import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
-import org.springframework.web.context.request.RequestContextHolder
+import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.authorization.domain.job.AuthorizingJob
+import org.rundeck.core.auth.app.type.AuthorizingAppType
+import org.rundeck.core.auth.app.type.AuthorizingProjectType
+import org.rundeck.core.auth.web.WebParamsIdResolver
+import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.core.auth.app.type.AuthorizingProjectAdhoc
+import org.rundeck.app.web.WebExceptionHandler
+import org.rundeck.core.auth.access.MissingParameter
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.core.auth.app.type.AuthorizingSystem
+import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.services.ApiService
 import rundeck.services.UiPluginService
 
+import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.zip.GZIPOutputStream
-
 /**
  * Mixin utility for controllers
  * @author greg
@@ -41,57 +48,108 @@ import java.util.zip.GZIPOutputStream
 class ControllerBase {
     UiPluginService uiPluginService
     ApiService apiService
-    AppAuthContextProcessor rundeckWebAuthContextProcessor
+    AppAuthContextProcessor rundeckAuthContextProcessor
+    AppAuthorizer rundeckAppAuthorizer
+    WebExceptionHandler rundeckExceptionHandler
+    WebDefaultParameterNamesMapper rundeckWebDefaultParameterNamesMapper
+    def grailsApplication
 
-    protected def withHmacToken(Closure valid){
-        GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
-        TokenResponseHandler handler
-        if(isTokenValid(request)){
-            resetToken(request)
-            handler = new ValidResponseHandler(valid?.call())
-        } else {
-            handler = new InvalidResponseHandler()
-        }
-
-        request.request.setAttribute(TokenResponseHandler.KEY, handler)
-        return handler
+    protected UserAndRolesAuthContext getSystemAuthContext(){
+        rundeckAuthContextProcessor.getAuthContextForSubject(getSubject())
     }
 
-    def resetToken(GrailsWebRequest request) {
-        HMacSynchronizerTokensHolder holder = request.currentRequest.getSession(false)?.getAttribute(HMacSynchronizerTokensHolder.HOLDER)
-        String tokenInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_KEY]
-        if (!tokenInRequest) return
-
-        holder.resetToken(tokenInRequest)
+    protected UserAndRolesAuthContext getProjectAuthContext(){
+        requireParams('project')
+        rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(getSubject(),params.project.toString())
     }
 
-    boolean isTokenValid(GrailsWebRequest request) {
-        HMacSynchronizerTokensHolder holder = request.currentRequest.getSession(false)?.getAttribute(HMacSynchronizerTokensHolder.HOLDER)
-        if (!holder) return false
-
-        String tokenInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_KEY]
-        if (!tokenInRequest) return false
-
-        String timestampInRequest = request.params[HMacSynchronizerTokensHolder.TOKEN_TIMESTAMP]
-        if (!timestampInRequest) return false
-
-        long timestamp=0
-        try{
-            timestamp=Long.parseLong(timestampInRequest)
-        }catch (NumberFormatException e){
-            return false
-        }
-
-        try {
-            return holder.isValid(timestamp, tokenInRequest)
-        }
-        catch (IllegalArgumentException) {
-            return false
-        }
+    private WebParamsIdResolver createParamsIdResolver() {
+        new WebParamsIdResolver(rundeckWebDefaultParameterNamesMapper.webDefaultParameterNames, params)
     }
+    /**
+     *
+     * @return authorized access to project, requires request parameter 'project'
+     */
+    protected AuthorizingProject getAuthorizingProject() {
+        requireParams('project')
+        rundeckAppAuthorizer.project(subject, createParamsIdResolver())
+    }
+
+    /**
+     *
+     * @return authorized access to project, requires request parameter 'project'
+     */
+    protected AuthorizingProject authorizingProject(String project) {
+        rundeckAppAuthorizer.project(subject, project)
+    }
+
+    /**
+     *
+     * @return authorized access to project adhoc resource, requires request parameter 'project'
+     */
+    protected AuthorizingProjectAdhoc getAuthorizingProjectAdhoc() {
+        requireParams('project')
+        rundeckAppAuthorizer.adhoc(subject, createParamsIdResolver())
+    }
+    /**
+     *
+     * @return authorized access to execution, requires request parameter 'id'
+     */
+    protected AuthorizingExecution getAuthorizingExecution() {
+        requireParams('id')
+        rundeckAppAuthorizer.execution(subject, createParamsIdResolver())
+    }
+    /**
+     *
+     * @return authorized access to job, requires request parameter 'id'
+     */
+    protected AuthorizingJob getAuthorizingJob() {
+        requireParams('id')
+        rundeckAppAuthorizer.job(subject, createParamsIdResolver())
+    }
+
+    /**
+     * @return authorized job, requires request parameter 'id'
+     * @param project project name
+     * @param id job UUID
+     */
+    protected AuthorizingJob getAuthorizingJob(String project, String id) {
+        rundeckAppAuthorizer.job(subject, project, id)
+    }
+
+    /**
+     *
+     * @return authorized access to system
+     */
+    protected AuthorizingSystem getAuthorizingSystem() {
+        rundeckAppAuthorizer.system(subject)
+    }
+
+    /**
+     * @return authorizing application type, requires type name
+     * @param type type name
+     */
+    protected AuthorizingAppType getAuthorizingApplicationType(String type) {
+        rundeckAppAuthorizer.applicationType(subject, type)
+    }
+    /**
+     * @return authorizing application type, requires type name
+     * @param type type name
+     */
+    protected AuthorizingProjectType getAuthorizingProjectType(String project, String type) {
+        rundeckAppAuthorizer.projectType(subject,project, type)
+    }
+
+    protected Subject getSubject(){
+        if(session.subject instanceof Subject){
+            return session.subject
+        }
+        throw new IllegalStateException("no subject found in session")
+    }
+
     def renderCompressed(HttpServletRequest request,HttpServletResponse response,String contentType, data){
-        if(grailsApplication.config.rundeck?.ajax?.compression=='gzip'
-                && request.getHeader("Accept-Encoding")?.contains("gzip")){
+        String compression = grailsApplication.config.getProperty("rundeck.ajax.compression", String.class)
+        if(compression=='gzip' && request.getHeader("Accept-Encoding")?.contains("gzip")){
             response.setHeader("Content-Encoding","gzip")
             response.setHeader("Content-Type",contentType)
             def stream = new GZIPOutputStream(response.outputStream)
@@ -156,15 +214,21 @@ class ControllerBase {
      * @param access exception
      */
     def handleUnauthorized(UnauthorizedAccess access){
-        if(request.api_version){
-            apiService.renderErrorFormat(response, [
-                status: HttpServletResponse.SC_FORBIDDEN,
-                code: 'api.error.item.unauthorized',
-                args: [access.action, access.type, access.name]
-            ])
-        }else{
-            renderUnauthorized(access.action, access.type, access.name)
-        }
+        rundeckExceptionHandler.handleException(request, response, access)
+    }
+    /**
+     * Handle unauthorized exception
+     * @param notFound exception
+     */
+    def handleNotFound(NotFound notFound){
+        rundeckExceptionHandler.handleException(request, response, notFound)
+    }
+    /**
+     * Handle unauthorized exception
+     * @param notFound exception
+     */
+    def handleMissingParameter(MissingParameter notFound){
+        rundeckExceptionHandler.handleException(request, response, notFound)
     }
 
     /**
@@ -271,10 +335,17 @@ class ControllerBase {
      */
     protected boolean requireParam(String name) {
         if (!params[name]) {
-            renderErrorView("parameter $name is required")
-            return true
+            throw new MissingParameter([name])
         }
         return false
+    }
+    /**
+     * Require the params to contain an entry
+     * @param name name of parameter
+     * @return true if response was sent
+     */
+    protected boolean requireParams(String... names) {
+        requireParams(names.toList())
     }
     /**
      * Require the params to contain an entry
@@ -284,8 +355,7 @@ class ControllerBase {
     protected boolean requireParams(List<String> names) {
         def missing=names.findAll{!params[it]}
         if (missing) {
-            renderErrorView("parameters required: $missing")
-            return true
+            throw new MissingParameter(missing)
         }
         return false
     }

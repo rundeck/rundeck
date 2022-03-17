@@ -39,13 +39,20 @@
                 select_all();
             }
         });
+        jQuery(document).ready(function(){
+            jQuery('#exportModal').on('show.bs.modal', function () {
+                let form = jQuery('#userTokenGenerateForm');
+                form.find('#exportInputs').remove();
+                form.append(jQuery('#exportInputs').clone().css('display','none'));
+            });
+        });
     });
 </script>
 <div>
   <g:form style="display: inline;" controller="project" action="exportPrepare" class="form-horizontal" params="[project: (params.project ?: request.project)]" useToken="true">
     <div class="card" id="exportform">
       <div class="card-content">
-        <div class="list-group">
+        <div class="list-group" id="exportInputs">
           <div class="list-group-item">
             <div class="form-group">
               <label class="control-label col-sm-2"><g:message code="project.prompt"/></label>
@@ -207,77 +214,79 @@
         <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default  btn-sm"/>
         <button type="submit" class="btn btn-cta btn-sm"><g:message code="export.archive"/> <g:icon name="download"/></button>
         <auth:resourceAllowed action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT}" name="${params.project}">
-          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-info  btn-sm pull-right"><g:message code="export.another.instance"/></button>
+          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-default  btn-sm pull-right"><g:message code="export.another.instance"/></button>
         </auth:resourceAllowed>
       </div>
     </div>
-    <!-- Generate Modal -->
-    <div class="modal fade clearconfirm" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="gentokenLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-            <h4 class="modal-title" id="exportLabel">
-              <g:message code="export.another.instance"/>
-            </h4>
-          </div>
-          <div class="modal-body" id="userTokenGenerateForm">
-            <div class="row">
-              <div class="col-sm-12">
-                <div class="form">
-                  <div class="form-group">
-                    <div class="col-sm-2 control-label">
-                      <label for="url"><g:message code="export.another.instance.url"/></label>
-                    </div>
-                    <div class="col-sm-10">
-                      <input type='text' name="url" value="" id="url" class="form-control"/>
-                      <span class="help-block">
-                          <g:message code="export.another.instance.url.help"/>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <div class="col-sm-2 control-label">
-                      <label for="apitoken"><g:message code="export.another.instance.token"/></label>
-                    </div>
-                    <div class="col-sm-10">
-                      <input type='password' name="apitoken" value="" id="apitoken" class="form-control"/>
-                      <span class="help-block">
-                        <g:message code="export.another.instance.token.help"/>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <div class="col-sm-2 control-label">
-                      <label for="targetproject"><g:message code="export.another.instance.project"/></label>
-                    </div>
-                    <div class="col-sm-10">
-                      <input type='text' name="targetproject" value="" id="targetproject" class="form-control"/>
-                      <span class="help-block">
-                        <g:message code="export.another.instance.project.help"/>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <div class="col-sm-2 control-label">
-                      <label for="preserveuuid"><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
-                    </div>
-                    <div class="col-sm-10">
-                      <input type='checkbox' name="preserveuuid" value="preserveuuid" id="preserveuuid" class="form-control"/>
-                      <span class="help-block">
-                        <g:message code="project.archive.import.jobUuidOption.preserve.description"/>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-              <g:actionSubmit action="exportInstancePrepare" class="btn btn-cta" value="${message(code:'export.another.instance.go')}" />
-          </div>
-        </div><!-- /.modal-content -->
-      </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->
   </g:form>
 </div>
+<!-- Generate Modal -->
+<div class="modal fade clearconfirm" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="gentokenLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="exportLabel">
+                    <g:message code="export.another.instance"/>
+                </h4>
+            </div>
+            <g:form style="display: inline;" controller="project" action="exportInstancePrepare" class="form-horizontal" params="[project: (params.project ?: request.project)]" useToken="true">
+                <div class="modal-body" id="userTokenGenerateForm">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form">
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">
+                                    <label for="url"><g:message code="export.another.instance.url"/></label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <input type='text' name="url" value="" id="url" class="form-control"/>
+                                    <span class="help-block">
+                                        <g:message code="export.another.instance.url.help"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">
+                                    <label for="apitoken"><g:message code="export.another.instance.token"/></label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <input type='password' name="apitoken" value="" id="apitoken" class="form-control"/>
+                                    <span class="help-block">
+                                        <g:message code="export.another.instance.token.help"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">
+                                    <label for="targetproject"><g:message code="export.another.instance.project"/></label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <input type='text' name="targetproject" value="" id="targetproject" class="form-control"/>
+                                    <span class="help-block">
+                                        <g:message code="export.another.instance.project.help"/>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-2 control-label">
+                                    <label for="preserveuuid"><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
+                                </div>
+                                <div class="col-sm-10">
+                                    <input type='checkbox' name="preserveuuid" value="preserveuuid" id="preserveuuid" class="form-control"/>
+                                    <span class="help-block">
+                                        <g:message code="project.archive.import.jobUuidOption.preserve.description"/>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-cta"><g:message code="export.another.instance.go"/></button>
+                </div>
+            </g:form>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

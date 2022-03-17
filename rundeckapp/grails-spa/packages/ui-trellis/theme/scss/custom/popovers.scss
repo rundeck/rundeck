@@ -1,4 +1,4 @@
-@import "../paper/variables";
+@import "../runstrap/variables";
 .popover {
   max-width: 100%;
 
@@ -14,7 +14,7 @@
   .popover-title {
     font-size: $font-paragraph;
     color: var(--primary-color);
-    background-color: $bg-subheader;
+    background-color: var(--background-color-accent-lvl2);
   }
 
   &.popover-default-inverse {

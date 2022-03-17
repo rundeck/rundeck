@@ -26,6 +26,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.storage.api.*
 import rundeck.UtilityTagLib
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
 import spock.lang.Ignore
@@ -171,6 +172,13 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         def assetTaglib = mockTagLib(UtilityTagLib)
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
@@ -191,18 +199,17 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         0 * controller.apiService._(*_)
     }
 
-    def "key storage upload without relativePath"() {
+    def "add new key storage without relativePath"() {
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
-        def assetTaglib = mockTagLib(UtilityTagLib)
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
         controller.apiService = Mock(ApiService)
         when:
-        params.uploadKeyType = 'public'
-        params.inputType = 'text'
+        params.uploadKeyType = uploadKeyType
+        params.inputType = inputType
         params.fileName = 'monkey'
         params.uploadText = 'abc'
         params.project = project
@@ -216,13 +223,58 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
         1 * controller.storageService.hasResource(_, 'keys/monkey') >> false
         1 * controller.storageService.hasPath(_, 'keys/monkey') >> false
-        1 * controller.storageService.createResource(_, 'keys/monkey',_,_) >> true
+        1 * controller.storageService.createResource(_, 'keys/monkey',_,_)
         1 * controller.storageService._(*_)
         0 * controller.apiService._(*_)
         where:
-            project | expect
-            null    | '/menu/storage/keys/monkey'
-            'disco' | '/menu/storage/keys/monkey?project=disco'
+            project | uploadKeyType | inputType     | expect
+            null    | 'public'      | 'text'        | '/menu/storage/keys/monkey'
+            null    | 'public'      | 'file'        | '/menu/storage/keys/monkey'
+            'disco' | 'public'      | 'text'        | '/menu/storage/keys/monkey?project=disco'
+            'disco' | 'public'      | 'file'        |'/menu/storage/keys/monkey?project=disco'
+            null    | 'private'     | 'text'        | '/menu/storage/keys/monkey'
+            null    | 'private'     | 'file'        | '/menu/storage/keys/monkey'
+            'disco' | 'private'     | 'text'        | '/menu/storage/keys/monkey?project=disco'
+            'disco' | 'private'     | 'file'        |'/menu/storage/keys/monkey?project=disco'
+    }
+
+    def "override existing key storage without relativePath"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
+        controller.apiService = Mock(ApiService)
+        when:
+        params.dontOverwrite = false
+        params.uploadKeyType = uploadKeyType
+        params.inputType = inputType
+        params.fileName = 'monkey'
+        params.uploadText = 'abc'
+        params.project = project
+        setupFormTokens(controller)
+        request.method = 'POST'
+        def result = controller.keyStorageUpload()
+
+        then:
+        response.status == 302
+        response.redirectedUrl==expect
+        1 * controller.rundeckAuthContextProvider.getAuthContextForSubject(_)
+        1 * controller.storageService.hasResource(_, 'keys/monkey') >> true
+        1 * controller.storageService.updateResource(_, 'keys/monkey',_,_)
+        1 * controller.storageService._(*_)
+        0 * controller.apiService._(*_)
+        where:
+        project | uploadKeyType | inputType     | expect
+        null    | 'public'      | 'text'        | '/menu/storage/keys/monkey'
+        null    | 'public'      | 'file'        | '/menu/storage/keys/monkey'
+        'disco' | 'public'      | 'text'        | '/menu/storage/keys/monkey?project=disco'
+        'disco' | 'public'      | 'file'        |'/menu/storage/keys/monkey?project=disco'
+        null    | 'private'     | 'text'        | '/menu/storage/keys/monkey'
+        null    | 'private'     | 'file'        | '/menu/storage/keys/monkey'
+        'disco' | 'private'     | 'text'        | '/menu/storage/keys/monkey?project=disco'
+        'disco' | 'private'     | 'file'        |'/menu/storage/keys/monkey?project=disco'
     }
 
     @Unroll

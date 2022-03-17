@@ -1,0 +1,214 @@
+//
+// Modals
+// --------------------------------------------------
+
+// .modal-open      - body class for killing the scroll
+// .modal           - container to scroll within
+// .modal-dialog    - positioning shell for the actual modal
+// .modal-content   - actual modal w/ bg and corners and shit
+
+// Kill the scroll on the body
+.modal-open {
+  overflow: hidden;
+}
+
+// Container that the modal scrolls within
+.modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: $zindex-modal;
+  display: none;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+
+  // Prevent Chrome on Windows from adding a focus outline. For details, see
+  // https://github.com/twbs/bootstrap/pull/10951.
+  outline: 0;
+
+  // When fading in the modal, animate it to slide down
+  &.fade .modal-dialog {
+    @include translate(0, -25%);
+    @include transition-transform(0.3s ease-out);
+  }
+  &.in .modal-dialog { @include translate(0, 0); }
+}
+.modal-open .modal {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+// Shell div to position the modal with bottom padding
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 10px;
+  padding-top: 60px;
+}
+
+// Actual modal
+.modal-content {
+  position: relative;
+  background-color: var(--background-color-lvl2);
+  background-clip: padding-box;
+  border: 0 none;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.15), 0 0 1px 1px rgba(0, 0, 0, 0.1);  
+  // Remove focus outline from opened modal
+  outline: 0;
+}
+
+// Modal background
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: $zindex-modal-background;
+  background-color: $modal-backdrop-bg;
+  // Fade for backdrop
+  &.fade { @include opacity(0); }
+  &.in { @include opacity($modal-backdrop-opacity); }
+}
+
+// Modal header
+// Top section of the modal w/ title and dismiss
+.modal-header {
+  padding: $modal-title-padding;
+  border: 0 none;
+  @include clearfix;
+}
+// Close icon
+.modal-header .close {
+  margin-top: -2px;
+}
+
+// Title text within header
+.modal-title {
+  margin: 0;
+  line-height: $modal-title-line-height;
+}
+
+// Modal body
+// Where all modal content resides (sibling of .modal-header and .modal-footer)
+.modal-body {
+  position: relative;
+  padding: $modal-inner-padding;
+}
+
+// Footer (for actions)
+.modal-footer {
+  text-align: right; // right align buttons
+  border-top: 0 none;
+  padding: 10px 10px; 
+  @include clearfix; // clear it in case folks use .pull-* classes on buttons
+
+  // Properly space out buttons
+  .btn + .btn {
+    margin-bottom: 0; // account for input[type="submit"] which gets the bottom margin like all other inputs
+    margin-left: 5px;
+  }
+  // but override that for button groups
+  .btn-group .btn + .btn {
+    margin-left: -1px;
+  }
+  // and override it for block buttons as well
+  .btn-block + .btn-block {
+    margin-left: 0;
+  }
+}
+
+// Measure scrollbar width for padding body during modal show/hide
+.modal-scrollbar-measure {
+  position: absolute;
+  top: -9999px;
+  width: 50px;
+  height: 50px;
+  overflow: scroll;
+}
+
+.modal-footer .modal-footer .btn-default.btn-simple{
+    font-weight: 400;
+}
+
+.modal.fade .modal-dialog {
+    transform: none;
+    -webkit-transform: none;
+    -moz-transform: none;
+}
+.modal.in .modal-dialog {
+    transform: none;
+    -webkit-transform: none;
+    -moz-transform: none;
+}
+.modal-small{
+    .modal-dialog{
+        max-width: 350px;
+    }
+}
+.modal-small{
+    .divider{
+        margin: 0 auto;
+        display: block;
+        width: 14px;
+        position: relative;
+        margin-top: 40px;
+        margin-bottom: 30px;
+        font-size: $font-paragraph;
+    }
+    .divider:after{
+        position: absolute;
+        content: "";
+        right: -140px;
+        top: 12px;
+        height: 1px;
+        width: 115px;
+        background-color: var(--light-gray);
+    }
+    .divider:before{
+        position: absolute;
+        content: "";
+        left: -140px;
+        top: 12px;
+        height: 1px;
+        width: 115px;
+        background-color: var(--light-gray);
+    }
+    .modal-footer{
+        text-align: center;
+    }
+}
+.social-area{
+    text-align: center;
+    
+    .btn-social{
+        margin: 0 10px;
+    }
+}
+.modal-backdrop.in {
+    opacity: 0.25;
+}
+
+
+// Scale up the modal
+@media (min-width: $screen-sm-min) {
+  // Automatically set modal's width for larger viewports
+  .modal-dialog {
+    width: $modal-md;
+    margin: 30px auto;
+  }
+  .modal-content {
+    @include box-shadow(0 5px 15px rgba(0, 0, 0, .5));
+  }
+
+  // Modal sizes
+  .modal-sm { width: $modal-sm; }
+}
+
+@media (min-width: $screen-md-min) {
+  .modal-lg { width: $modal-lg; }
+}
+

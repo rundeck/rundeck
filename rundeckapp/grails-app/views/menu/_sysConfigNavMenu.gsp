@@ -24,6 +24,14 @@
         context: AuthConstants.CTX_APPLICATION
 )}"/>
 
+<g:set var="opsAdminRead" value="${auth.resourceAllowedTest(
+        type: AuthConstants.TYPE_RESOURCE,
+        kind: AuthConstants.TYPE_SYSTEM,
+        action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN],
+        any: true,
+        context: AuthConstants.CTX_APPLICATION
+)}"/>
+
 <g:set var="pluginRead" value="${auth.resourceAllowedTest(
         type: AuthConstants.TYPE_RESOURCE,
         kind: AuthConstants.TYPE_PLUGIN,
@@ -38,9 +46,10 @@
         any: true,
         context: AuthConstants.CTX_APPLICATION
 )}"/>
-<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled in [true,'true']}"/>
 
-<g:set var="pluginSecurityEnabled" value="${grailsApplication.config.rundeck?.feature?.pluginSecurity?.enabled in [true,'true']}"/>
+<g:set var="repoEnabled" value="${cfg.getBoolean(config: "feature.repository.enabled", default: false)}"/>
+<g:set var="pluginSecurityEnabled" value="${cfg.getBoolean(config: "feature.pluginSecurity.enabled", default: false)}"/>
+
 
 <style>
 .dropdown-submenu {
@@ -68,6 +77,8 @@
         <g:message code="gui.menu.AccessControl"/>
       </g:link>
     </li>
+  </g:if>
+  <g:if test="${opsAdminRead}">
     <li>
       <g:link shown="${g.logStorageEnabled()}" controller="menu" action="logStorage">
         <g:message code="gui.menu.LogStorage"/>
@@ -120,7 +131,16 @@
     <g:ifMenuItems type="SYSTEM_CONFIG">
         <li role="separator" class="divider"></li>
     </g:ifMenuItems>
-    <g:forMenuItems type="SYSTEM_CONFIG" var="item">
+    <g:forMenuItems type="SYSTEM_CONFIG" var="item" groupvar="group">
+      <g:if test="${group}">
+        <li id="${enc(attr:group.id)}" role="separator" class="divider"></li>
+        <g:if test="${group.titleCode}">
+          <li class="dropdown-header"><g:message code="${group.titleCode}" default="${group.title?:group.id}"/></li>
+        </g:if>
+        <g:elseif test="${group.title}">
+          <li class="dropdown-header">${group.title}</li>
+        </g:elseif>
+      </g:if>
         <li>
             <a href="${enc(attr:item.href)}"
                title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">

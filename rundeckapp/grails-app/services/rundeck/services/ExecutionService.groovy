@@ -67,8 +67,13 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
@@ -391,9 +396,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(query?.max){
                 maxResults(query.max.toInteger())
             }else{
-                maxResults(grailsApplication.config.rundeck?.pagination?.default?.max ?
-                                   grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-                                   20 )
+                maxResults(configurationService.getInteger("pagination.default.max",20))
             }
             if(query?.offset){
                 firstResult(query.offset.toInteger())
@@ -621,12 +624,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     def public finishQueueQuery(query,params,model){
-
-       if(!params.max){
-           params.max=20
+       if(!query.max){
+           query.max = configurationService.getInteger('pagination.default.max', 20)
        }
-       if(!params.offset){
-           params.offset=0
+       if(!query.offset){
+           query.offset=0
        }
 
        def paginateParams=[:]
@@ -996,7 +998,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     static String generateExecutionURL(Execution execution,LinkGenerator grailsLinkGenerator) {
-        grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: execution.id, absolute: true,
+        grailsLinkGenerator.link(controller: 'execution', action: 'show', id: execution.id, absolute: true,
                 params: [project: execution.project])
     }
     static String generateServerURL(LinkGenerator grailsLinkGenerator) {
@@ -1609,7 +1611,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     @ToString(includeNames = true)
-    class AbortResult {
+    static class AbortResult {
         String abortstate
         String jobstate
         String status
@@ -1655,6 +1657,28 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
         }
         abortExecutionDirect(se, e, user, killAsUser, forceIncomplete)
+    }
+    /**
+     * Abort execution if authorized
+     * @param se job
+     * @param e execution
+     * @param user username
+     * @param authContext auth context
+     * @param killAsUser as username
+     * @return AbortResult
+     */
+    @CompileStatic
+    def abortExecution(
+        AuthorizingExecution execution,
+        String killAsUser = null,
+        boolean forceIncomplete = false
+    ) throws UnauthorizedAccess, NotFound
+    {
+        Execution e = execution.access(RundeckAccess.Execution.APP_KILL)
+        if(killAsUser){
+            execution.authorize(RundeckAccess.Execution.APP_KILLAS)
+        }
+        abortExecutionDirect(e.scheduledExecution, e, execution.authContext.username, killAsUser, forceIncomplete)
     }
 
     /**
@@ -1819,6 +1843,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return [success:!failed, failures:failures, successTotal:count]
     }
+
     /**
      * Delete an execution and associated log files
      * @param e execution
@@ -1826,13 +1851,39 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext
      * @return
      */
-    Map deleteExecution(Execution e, AuthContext authContext, String username){
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                 rundeckAuthContextProcessor.authResourceForProject(e.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])) {
+    Map deleteExecution(Execution e, AuthContext authContext, String username) {
+        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
+            authContext,
+            rundeckAuthContextProcessor.authResourceForProject(e.project),
+            [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+        )) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Delete execution in project ${e.project}"]
         }
+        return deleteExecutionAuthorized(e, username)
+    }
 
+    /**
+     * Delete an execution and associated log files
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return
+     */
+    @CompileStatic
+    Map deleteExecution(AuthorizingProject authorizingProject, AuthorizingExecution authorizingExecution) throws UnauthorizedAccess, NotFound{
+        authorizingProject.authorize(RundeckAccess.Project.APP_DELETE_EXECUTION)
+        Execution e = authorizingExecution.resource
+        return deleteExecutionAuthorized(e, authorizingProject.authContext.username)
+    }
+
+    /**
+     * Delete an execution and associated log files
+     * @param e execution
+     * @param user
+     * @param authContext
+     * @return
+     */
+    private Map deleteExecutionAuthorized(Execution e, String username) {
         Map result
         try {
             if (e.dateCompleted == null && e.dateStarted != null) {

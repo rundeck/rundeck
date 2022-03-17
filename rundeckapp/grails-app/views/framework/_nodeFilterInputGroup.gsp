@@ -18,7 +18,7 @@
 <g:if test="${showInputTitle}">
     <span class="input-group-addon input-group-addon-title"><g:message code="nodes" /></span>
 </g:if>
-<div class="input-group-btn">
+<div class="input-group-btn input-btn-toggle">
     <button type="button" class="btn btn-default dropdown-toggle" data-bind="css: { 'btn-success': filterName(), 'btn-default': !filterName() }" data-toggle="dropdown">
         <span data-bind="text: filterNameDisplay() || ''"><g:message code="filter.title" /></span> <span class="caret"></span>
     </button>
@@ -98,8 +98,8 @@
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        value="${enc(attr:filtvalue)}"
        id="${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}"/>
-<div class="input-group-btn">
-    <a class="btn btn-default"
+<div class="input-group-btn input-btn-toggle">
+    <a class="btn btn-default dropdown-toggle"
        tabindex="0"
        role="button"
        data-toggle="popover"
@@ -111,7 +111,9 @@
        >
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
-    <a class="btn btn-primary btn-fill" data-bind="click: $data.newFilterText, css: {disabled: !filter()}" href="#">
+</div>
+<div class="input-group-btn">
+    <a class="btn btn-cta btn-fill" data-bind="click: $data.newFilterText, css: {disabled: !filter()}" href="#">
         <g:message code="search" />
     </a>
 </div>

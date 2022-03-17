@@ -11,7 +11,7 @@ ARG CLI_VERS
 
 #Add PAM test user
 
-RUN curl https://raw.githubusercontent.com/rundeck/packaging/main/scripts/deb-setup.sh 2> /dev/null | bash -s rundeck \
+RUN curl -s https://packagecloud.io/install/repositories/pagerduty/rundeck/script.deb.sh | os=any dist=any bash \
     && apt-get -y install rundeck-cli=${CLI_VERS}
 
 RUN useradd -p $(echo "pampwd123" | openssl passwd -1 -stdin) -m --shell /bin/bash pamlogintest

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../paper/variables";
+@import "../runstrap/variables";
 .link-hover:hover, .btn-group.open .dropdown-toggle.link-hover {
   background-color: $bg-default;
 
   &.text-inverse {
-    background-color: $bg-default-inverse;
+    background-color: var(--background-color-lvl1);
   }
 
   &.text-primary {

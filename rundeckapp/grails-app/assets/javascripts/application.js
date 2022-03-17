@@ -16,7 +16,6 @@
 
 //= require noconflict
 //= require_self
-//= require versionIdentity
 //= require actionHandlers
 
 const KEYS = {
@@ -313,7 +312,7 @@ function _applyAce(e, height) {
 
   jQuery(e).addClass('ace_editor');
   var editor = ace.edit(generateId(e));
-  editor.setTheme("ace/theme/" + (jQuery(e).data('aceSessionTheme') || 'chrome'));
+  applyAceTheme(editor);
   editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
   editor.setReadOnly(true);
 }
@@ -354,6 +353,35 @@ var _ace_modes = [
   "yaml"
 ];
 
+function getAceTheme() {
+  let theme = document.documentElement.dataset.colorTheme || 'light';
+
+  if (theme == 'system')
+    theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+  return theme == 'dark' ? 'tomorrow_night' : 'chrome';
+}
+
+function applyAceTheme(editor) {
+  editor.setTheme(`ace/theme/${getAceTheme()}`);
+  const query = matchMedia('(prefers-color-scheme: dark)');
+
+  const changeHandler = () => {
+    editor.setTheme(`ace/theme/${getAceTheme()}`);
+  };
+
+  // Support for Safari <14
+  if (typeof query.addEventListener == "function")
+    query.addEventListener('change', changeHandler);
+  else
+    query.addListener(changeHandler);
+
+  const observer = new MutationObserver(() => {
+    editor.setTheme(`ace/theme/${getAceTheme()}`);
+  })
+  observer.observe(document.documentElement, {attributes: true})
+}
+
 function getAceSyntaxMode(aceeditor) {
   "use strict";
   return aceeditor.getSession().getMode().$id.split('/')[2];
@@ -383,38 +411,10 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
 
   //create editor
   var editor = ace.edit(generateId(_shadow));
-  editor.$blockScrolling = Infinity;
-
-  var checkResize;
-  if (data.aceResizeMax) {
-    var heightPx = parseInt(height.replace(/px$/, ''));
-    var lineheight = editor.renderer.lineHeight;
-    var checkSize = Math.floor(heightPx / lineheight);
-    var checkSizeMax = parseInt(data.aceResizeMax);
-    if (checkSize < checkSizeMax) {
-
-      var checkSizeInc = 5;
-      var pxInc = lineheight;
-      checkResize = function (editor) {
-        "use strict";
-        var lineCount = editor.session.getLength();
-        if (lineCount > checkSize && checkSize < checkSizeMax) {
-          var diff = Math.min(checkSizeMax - checkSize, lineCount - checkSize);
-          var increment = Math.max(checkSizeInc, diff);
-          checkSize += increment;
-          heightPx += increment * pxInc;
-          _shadow.css({
-            height: heightPx + 'px'
-          });
-          editor.resize();
-        }
-      };
-
-      if (data.aceResizeAuto) {
-        checkResize(editor);
-      }
-    }
-  }
+  editor.setOptions({
+    maxLines: Infinity,
+    minLines: 10
+  });
 
   setAceSyntaxMode(data.aceSessionMode, editor);
   editor.setTheme("ace/theme/chrome");
@@ -424,9 +424,6 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
     jQuery(textarea).get(0).dispatchEvent(new Event('change'));
     if (callback) {
       callback(editor);
-    }
-    if (checkResize) {
-      checkResize(editor);
     }
   });
   if (data.aceAutofocus) {
@@ -944,14 +941,14 @@ function _initPopoverContentFor(parent, options) {
 function _initAffix() {
   //affixed elements
   jQuery("a[href='#top']").click(function () {
-    jQuery("#main-panel").animate({
+    jQuery("#section-main").animate({
       scrollTop: 0
     }, "slow");
     return false;
   });
   jQuery("a[href='#bottom']").click(function () {
     //window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
-    var body = jQuery("#main-panel")
+    var body = jQuery("#section-main")
     body.animate({
       scrollTop: body[0].scrollHeight
     }, "fast");

@@ -29,7 +29,7 @@
         padding-top: 10px;
 
         // Rounded
-        background-color: #F9F9F9;
+        background-color: var(--background-color-accent-lvl2);
     }
 
     .rdtabs__rightendcap {
@@ -41,14 +41,14 @@
     }
 
     .rdtabs__tab--active {
-        background-color: white;
-        border-bottom: var(--line-width) solid white;
+        background-color: var(--background-color-lvl2);;
+        border-bottom: var(--line-width) solid var(--background-color-lvl2);;
         border-top-left-radius: var(--radius);
         border-top-right-radius: var(--radius);
 
         .rdtabs__tab-inner {
             clip-path: inset(0 0 8px 0);
-            background-color: white;
+            background-color: var(--background-color-lvl2);
             border-top: var(--line-width) solid #D3DBE5;
             border-left: var(--line-width) solid #D3DBE5;
             border-right: var(--line-width) solid #D3DBE5;
@@ -75,11 +75,11 @@
 
     .rdtabs__tab-component:not(.rdtabs__tab--active) {
         .rdtabs__tab-inner {
-            border-left: var(--line-width) solid #F9F9F9;
-            border-right: var(--line-width) solid #F9F9F9;
+            border-left: var(--line-width) solid var(--background-color-accent-lvl2);
+            border-right: var(--line-width) solid var(--background-color-accent-lvl2);
             border-top: var(--line-width) solid transparent;
             border-bottom: var(--line-width) solid #D3DBE5;
-            background-color: #F9F9F9;
+            background-color: var(--background-color-accent-lvl2);
         }
 
         .rdtabs__tab-inner:after {
@@ -97,7 +97,7 @@
 
 
     .rdtabs__tab-previous {
-        background-color: white;
+        background-color: var(--background-color-lvl2);
         .rdtabs__tab-inner {
             clip-path: inset(0 8px 0 0);
         }
@@ -108,13 +108,13 @@
         height: 100%;
         width: var(--radius);
         right:0;
-        background-color: #F9F9F9;
+        background-color: var(--background-color-accent-lvl2);
         border-bottom-right-radius: var(--radius);
         position: absolute;
     }
 
     .rdtabs__tab--active + .rdtabs__tab-component {
-        background-color: white;
+        background-color: var(--background-color-lvl2);
         .rdtabs__tab-inner {
             clip-path: inset(0 0 0 8px);
         }
@@ -125,7 +125,7 @@
         height: 100%;
         width: var(--radius);
         left:0;
-        background-color: #F9F9F9;
+        background-color: var(--background-color-accent-lvl2);
         border-bottom-left-radius: var(--radius);
         position: absolute;
     }
@@ -155,12 +155,12 @@
         align-items: center;
         height: 100%;
         font-weight: 600;
-        color: #66615b;
+        color: var(--text-muted-color);
         height: 100%;
     }
 
     .rdtabs__tab--active {
-        color: black;
+        color: var(--font-color);
     }
 
 }

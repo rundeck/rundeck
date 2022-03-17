@@ -151,6 +151,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
         }
+        service.configurationService = Mock(ConfigurationService)
         def mailbuilder = Mock(MailMessageBuilder)
 
         when:
@@ -212,7 +213,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
         }
-
+        service.configurationService = Mock(ConfigurationService)
 
         when:
         def result = service.triggerJobNotification('start', job, content)
@@ -400,6 +401,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
         }
+        service.configurationService = Mock(ConfigurationService)
 
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         reader.reader = new TestReader(logs:
@@ -429,7 +431,7 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         ExpandoMetaClass.disableGlobally()
         File tmpTemplate = File.createTempFile("tmp","tmplate")
         tmpTemplate << 'My Email template <span style="color: red;">${logoutput.data}</span>'
-        grailsApplication.config.rundeck.mail.template.file = tmpTemplate.getAbsolutePath()
+
         def (job, execution) = createTestJob()
         def content = [
                 execution: execution,
@@ -459,6 +461,9 @@ class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<N
         }
         service.executionService = Mock(ExecutionService){
             getEffectiveSuccessNodeList(_)>>[]
+        }
+        service.configurationService = Mock(ConfigurationService){
+            getString("mail.template.file")>>tmpTemplate.getAbsolutePath()
         }
 
         def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)

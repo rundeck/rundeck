@@ -88,6 +88,9 @@ function onScheduleSubmit() {
         var $tempElement = jQuery('<input type="hidden"/>');
         $tempElement.attr('name', '_action_runJobLater')
             .appendTo($form);
+
+        var $timeElement = jQuery('#runAtTime');
+        $timeElement.appendTo($form);
     });
     $form.submit();
 }

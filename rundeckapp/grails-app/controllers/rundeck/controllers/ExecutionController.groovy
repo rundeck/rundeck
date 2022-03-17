@@ -38,12 +38,20 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.quartz.JobExecutionContext
 import org.rundeck.app.AppConstants
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeAdhoc
+import org.rundeck.core.auth.web.RdAuthorizeExecution
+import org.rundeck.core.auth.web.RdAuthorizeProject
+import org.rundeck.core.auth.web.RdAuthorizeSystem
+import org.rundeck.util.Sizes
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
@@ -60,7 +68,6 @@ import java.text.SimpleDateFormat
 */
 class ExecutionController extends ControllerBase{
     FrameworkService frameworkService
-    AppAuthContextProcessor rundeckAuthContextProcessor
     ExecutionService executionService
     LoggingService loggingService
     ScheduledExecutionService scheduledExecutionService
@@ -87,30 +94,22 @@ class ExecutionController extends ControllerBase{
     }
 
     def follow() {
-        def m = show()
-        if(response.status != 302) {
-            render(view:'show',model:m)
-        }
+        return redirect(action: 'show', controller: 'execution', params: params)
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def followFragment() {
         return render(view:'showFragment',model:show())
     }
+
     /**
      * List recent adhoc executions to fill the recent commands menu on commands page.
      * @param project project name
      * @param max maximum results, defaults to 10
      * @return
      */
+    @RdAuthorizeAdhoc(RundeckAccess.General.AUTH_APP_READ)
     def adhocHistoryAjax(String project, int max, String query){
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,project)
-
-        if (unauthorizedResponse(
-                rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_ADHOC,
-                                                          AuthConstants.ACTION_READ, params.project),
-                AuthConstants.ACTION_READ, 'adhoc', 'commands')) {
-            return
-        }
 
         def execs = []
         def uniques=new HashSet<String>()
@@ -193,32 +192,20 @@ class ExecutionController extends ControllerBase{
         ]
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     public def show (ExecutionViewParams viewparams){
         if (viewparams.hasErrors()) {
             flash.errors=viewparams.errors
             render(view: '/common/error')
             return
         }
-        def Execution e = Execution.get(params.id)
-        if(notFoundResponse(e,'Execution ID',params.id)){
-            return
-        }
+        def Execution e = authorizingExecution.resource
         def filesize=-1
         if(null!=e.outputfilepath){
             def file = new File(e.outputfilepath)
             if (file.exists()) {
                 filesize = file.length()
             }
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
-
-        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e,
-                [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]), AuthConstants.ACTION_VIEW,'Execution',params.id)) {
-            return
-        }
-        if(!params.project || params.project!=e.project) {
-            redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project], fragment: params?.outdetails)
-            return
         }
         params.project=e.project
         request.project=e.project
@@ -249,10 +236,13 @@ class ExecutionController extends ControllerBase{
         }
 
         eprev = result ? result[0] : null
-        def readAuth=rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
+        def readAuth = authorizingExecution.isAuthorized(RundeckAccess.General.APP_READ)
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
+
+        String max = getGrailsApplication().config.get("rundeck.logviewer.trimOutput")
+        Long trimOutput = Sizes.parseFileSize(max)
 
         return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
@@ -266,27 +256,18 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 inputFilesMap         : inputFilesMap,
-                clusterModeEnabled    : frameworkService.isClusterModeEnabled()
+                clusterModeEnabled    : frameworkService.isClusterModeEnabled(),
+                trimOutput            : trimOutput
         ]
     }
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION)
     def delete() {
         withForm{
-        def Execution e = Execution.get(params.id)
-        if (notFoundResponse(e, 'Execution ID', params.id)) {
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
-
-        if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                rundeckAuthContextProcessor.authResourceForProject(e.project),
-                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]),
-                AuthConstants.ACTION_DELETE_EXECUTION,'Project',e.project)) {
-            return
-        }
-        params.project = e.project
+        def authed = authorizingExecution
+        def Execution e = authorizingExecution.resource
         def jobid=e.scheduledExecution?.extid
-        def result=executionService.deleteExecution(e,authContext,session.user)
+        def result = executionService.deleteExecution(authorizingProject, authed)
         if(!result.success){
             flash.error=result.error
             return redirect(controller: 'execution', action: 'show', id: params.id, params: [project: params.project])
@@ -303,6 +284,7 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_DELETE_EXECUTION)
     def bulkDelete(){
         withForm{
         def ids
@@ -316,8 +298,8 @@ class ExecutionController extends ControllerBase{
             flash.error="Some IDS are required for bulk delete"
             return redirect(action: 'index',controller: 'reports',params: [project:params.project])
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
-        def result=executionService.deleteBulkExecutionIds(ids,authContext,session.user)
+
+        def result = executionService.deleteBulkExecutionIds(ids, projectAuthContext, session.user)
         if(!result.success){
             flash.error=result.failures*.message.join(", ")
         }
@@ -328,20 +310,20 @@ class ExecutionController extends ControllerBase{
             return redirect(action: 'index', controller: 'reports', params: [project: params.project])
         }
     }
+
     def ajaxExecState(){
-        def Execution e = Execution.get(params.id)
-        if (!e) {
-            log.error("Execution not found for id: " + params.id)
+        Execution e
+        //NB: send custom response for unauthorized/not found
+        try {
+            e = authorizingExecution.access(RundeckAccess.Execution.APP_READ_OR_VIEW)
+        } catch (UnauthorizedAccess ignored) {
+            response.status=HttpServletResponse.SC_FORBIDDEN
+            return render(contentType: 'application/json',text:[error: "Unauthorized: View Execution ${params.id}"] as JSON)
+        } catch (NotFound ignored) {
             response.status=HttpServletResponse.SC_NOT_FOUND
             return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
         }
 
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
-
-        if (e && !rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])) {
-            response.status=HttpServletResponse.SC_FORBIDDEN
-            return render(contentType: 'application/json',text:[error: "Unauthorized: View Execution ${params.id}"] as JSON)
-        }
 
         def jobcomplete = e.dateCompleted != null
         def execState = e.executionState
@@ -423,7 +405,7 @@ class ExecutionController extends ControllerBase{
         if(execState == 'missed') {
             data.state = [error: 'missed',errorMessage: "Missed execution scheduled at ${StateMapping.encodeDate(e.dateStarted)}"]
         }
-        def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
+        def limit= configurationService.getInteger("ajax.executionState.compression.nodeThreshold", 500)
         if (selectedNodes || data.state?.allNodes?.size() > limit) {
             renderCompressed(request, response, 'application/json', data as JSON)
         }else{
@@ -431,6 +413,7 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def ajaxExecNodeState(ExecutionViewParams viewparams) {
         if (viewparams.hasErrors()) {
             response.status = HttpServletResponse.SC_BAD_REQUEST
@@ -443,19 +426,7 @@ class ExecutionController extends ControllerBase{
         if (requireAjax(action: 'show', controller: 'execution', params: params)) {
             return
         }
-        def Execution e = Execution.get(params.id)
-        if (!e) {
-            response.status=HttpServletResponse.SC_NOT_FOUND
-            return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
-        }
-
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
-
-        if (e && !rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])) {
-            response.status=HttpServletResponse.SC_FORBIDDEN
-            return render(contentType: 'application/json',text:[error: "Unauthorized: View Execution ${params.id}"] as JSON)
-        }
-
+        def Execution e = authorizingExecution.resource
 
         def data=[:]
         def selectedNode=params.node
@@ -485,33 +456,10 @@ class ExecutionController extends ControllerBase{
         }
         return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
-    @PackageScope
-    Execution getAuthorizedExecution(id){
-        def Execution e = Execution.get(id)
-        if (notFoundResponse(e, 'Execution ID', id)) {
-            return null
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, e.project)
-        if (unauthorizedResponse(
-            rundeckAuthContextProcessor.authorizeProjectExecutionAny(
-                authContext,
-                e,
-                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
-            ),
-            AuthConstants.ACTION_VIEW,
-            'Execution',
-            id
-        )) {
-            return null
-        }
-        return e
-    }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def mail() {
-        Execution e = getAuthorizedExecution(params.id)
-        if(!e){
-            return
-        }
+        Execution e = authorizingExecution.resource
         def file = loggingService.getLogFileForExecution(e)
         def filesize=-1
         if (file.exists()) {
@@ -533,18 +481,14 @@ class ExecutionController extends ControllerBase{
         }
     }
     def executionMode(){
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-
         withForm {
             def requestActive=params.mode == 'active'
-            def authAction=requestActive?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
-            if (unauthorizedResponse(rundeckAuthContextProcessor.authorizeApplicationResourceAny(authContext,
-                                                                                      AuthConstants.RESOURCE_TYPE_SYSTEM,
-                                                                                      [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]),
 
-                                     authAction,'for','Rundeck')) {
-                return
-            }
+            authorizingSystem.authorize(
+                requestActive ? RundeckAccess.System.ADMIN_ENABLE_EXECUTION :
+                RundeckAccess.System.ADMIN_DISABLE_EXECUTION
+            )
+
             if(requestActive == executionService.executionsAreActive){
                 flash.message=g.message(code:'action.executionMode.notchanged.'+(requestActive?'active':'passive')+'.text')
                 return redirect(controller: 'menu',action:'executionMode')
@@ -604,32 +548,24 @@ class ExecutionController extends ControllerBase{
 
         ExecutionService.AbortResult abortresult
         try {
-
-            def Execution e = Execution.get(params.id)
-            if (!e) {
-                log.error("Execution not found for id: " + params.id)
-                return withFormat {
-                    json {
-                        render(contentType: "application/json") {
-                            delegate.cancelled false
-                            delegate.error "Execution not found for id: " + params.id
-                        }
-                    }
-                    xml {
-                        xmlerror()
-                    }
-                }
-            }
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, e.project)
-            def ScheduledExecution se = e.scheduledExecution
             abortresult = executionService.abortExecution(
-                se,
-                e,
-                session.user,
-                authContext,
+                authorizingExecution,
                 null,
                 params.forceIncomplete == 'true'
             )
+        } catch (NotFound ignored){
+            log.error("Execution not found for id: " + params.id)
+            return withFormat {
+                json {
+                    render(contentType: "application/json") {
+                        delegate.cancelled false
+                        delegate.error "Execution not found for id: " + params.id
+                    }
+                }
+                xml {
+                    xmlerror()
+                }
+            }
         }catch (DataAccessResourceFailureException ex){
             log.error("Database acces failure, forced job interruption",ex)
             //force interrupt on database problem
@@ -705,8 +641,13 @@ class ExecutionController extends ControllerBase{
         }
 
         ExecutionService.AbortResult abortresult
-        def Execution e = Execution.get(params.id)
-        if (!e) {
+        try {
+            abortresult = executionService.abortExecution(
+                authorizingExecution,
+                null,
+                true
+            )
+        } catch (NotFound ignored) {
             log.error("Execution not found for id: " + params.id)
             return withFormat {
                 json {
@@ -720,16 +661,6 @@ class ExecutionController extends ControllerBase{
                 }
             }
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, e.project)
-        def ScheduledExecution se = e.scheduledExecution
-        abortresult = executionService.abortExecution(
-            se,
-            e,
-            session.user,
-            authContext,
-            null,
-            true
-        )
         def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
         withFormat{
             json{
@@ -742,11 +673,10 @@ class ExecutionController extends ControllerBase{
         }
 
     }
+
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def downloadOutput() {
-        Execution e = getAuthorizedExecution(params.id)
-        if(!e){
-            return
-        }
+        Execution e = authorizingExecution.resource
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
@@ -811,11 +741,9 @@ class ExecutionController extends ControllerBase{
         iterator.close()
     }
 
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def renderOutput() {
-        Execution e = getAuthorizedExecution(params.id)
-        if(!e){
-            return
-        }
+        Execution e = authorizingExecution.resource
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
@@ -953,6 +881,7 @@ setTimeout(function(){
 
     }
 
+    @PackageScope
     boolean checkAllowUnsanitized(String project) {
         if(frameworkService.getRundeckFramework().hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
             if ("true" != frameworkService.getRundeckFramework().
@@ -1189,11 +1118,6 @@ setTimeout(function(){
      */
     def tailExecutionOutput () {
         log.debug("tailExecutionOutput: ${params}, format: ${request.format}")
-        Execution e = Execution.get(Long.parseLong(params.id))
-        if(!apiService.requireExists(response,e,['Execution',params.id])){
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e?.project)
         def reqError=false
 
         def apiError = { String code, List args, int status = 0 ->
@@ -1222,12 +1146,19 @@ setTimeout(function(){
                 }
             }
         }
-        if(!e){
-            return apiError('api.error.item.doesnotexist', ['execution', params.id], HttpServletResponse.SC_NOT_FOUND);
+        Execution e
+
+        //NB: handle authorization/not found response uniquely for this endpoint
+        try {
+            e = authorizingExecution.access(RundeckAccess.Execution.APP_READ_OR_VIEW)
+        } catch (UnauthorizedAccess ignored) {
+            return apiError(
+                'api.error.item.unauthorized',
+                [AuthConstants.ACTION_VIEW, "Execution", params.id],
+                HttpServletResponse.SC_FORBIDDEN
+            )
         }
-        if(e && !rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext,e,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])){
-            return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_VIEW, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
-        }
+
         if (params.stepctx && !(params.stepctx ==~ /^(\d+e?(@.+?)?\/?)+$/)) {
             return apiError("api.error.parameter.invalid",[params.stepctx,'stepctx',"Invalid stepctx filter"],HttpServletResponse.SC_BAD_REQUEST)
         }
@@ -1748,32 +1679,16 @@ setTimeout(function(){
     * API actions
      */
 
-    public String createExecutionUrl(def id,def project) {
-        return g.createLink(controller: 'execution', action: 'follow', id: id, absolute: true,
-                params: [project: project])
-    }
-    public String createServerUrl() {
-        return g.createLink(controller: 'menu', action: 'index', absolute: true)
-    }
 
     /**
      * API: /api/execution/{id} , version 1
      */
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecution(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def Execution e = Execution.get(params.id)
-        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
-        if(!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext,e,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
-                response,
-                [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[])){
-            return
-        }
+        def Execution e = authorizingExecution.resource
 
         if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
@@ -1794,23 +1709,12 @@ setTimeout(function(){
     /**
      * API: /api/execution/{id}/state , version 11
      */
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecutionState(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def Execution e = Execution.get(params.id)
-
-        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
-        if(!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext,e,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
-                response,
-                [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[])){
-            return
-        }
-
+        Execution e = authorizingExecution.resource
 
         def loader = workflowService.requestState(e)
         def state= loader.workflowState
@@ -1912,42 +1816,24 @@ setTimeout(function(){
     /**
      * API: /api/execution/{id}/abort, version 1
      */
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_KILL)
     def apiExecutionAbort(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-//        ExecutionService.AbortResult abortresult
-        def Execution e
+
+        def auth = authorizingExecution
+        Execution e = auth.resource
         ExecutionService.AbortResult abortresult
         try {
-            e = Execution.get(params.id)
-            if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
-                return
-            }
-            AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, e.project)
-            if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL]),
-                response,
-                [AuthConstants.ACTION_KILL, "Execution", params.id] as Object[]
-            )) {
-                return
+            def killas=null
+            if (params.asUser) {
+                //authorized within service call
+                killas= params.asUser
             }
 
-        def ScheduledExecution se = e.scheduledExecution
-        def user=session.user
-        def killas=null
-        if (params.asUser) {
-            //authorized within service call
-            killas= params.asUser
-        }
-
-
-
-        abortresult = executionService.abortExecution(
-                se,
-                e,
-                user,
-                authContext,
+            abortresult = executionService.abortExecution(
+                auth,
                 killas,
                 params.forceIncomplete == 'true'
             )
@@ -2009,30 +1895,19 @@ setTimeout(function(){
      * DELETE /api/12/execution/[ID]
      * @return
      */
+    @GrailsCompileStatic
     def apiExecutionDelete (){
         if (!apiService.requireApi(request, response, ApiVersions.V12)) {
             return
         }
-        def Execution e = Execution.get(params.id)
-        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,e.project)
-        if(!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                        authContext,
-                        rundeckAuthContextProcessor.authResourceForProject(e.project),
-                        [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
-                ),
-                response,
-                [AuthConstants.ACTION_DELETE_EXECUTION, "Project", e.project] as Object[])){
-            return
-        }
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
-
-        def result = executionService.deleteExecution(e, authContext,session.user)
+        def eauth=authorizingExecution
+        def result = executionService.deleteExecution(
+            authorizingProject(eauth.resource.project),
+            eauth
+        )
         if(!result.success){
             log.error("Failed to delete execution: ${result.message}")
+            def respFormat = apiService.extractResponseFormat(getRequest(), response, ['xml', 'json'])
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -2103,7 +1978,6 @@ setTimeout(function(){
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
 
-        //XXX:TODO use project specific auth context
         def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
@@ -2202,11 +2076,7 @@ setTimeout(function(){
             query.executionTypeFilter = null
         }
         def resOffset = params.offset ? params.int('offset') : 0
-        def resMax = params.max ?
-                params.int('max') :
-                grailsApplication.config.rundeck?.pagination?.default?.max ?
-                        grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-                        20
+        def resMax = params.max ? params.int('max') : configurationService.getInteger('pagination.default.max',20)
 
         def results
         try {
@@ -2245,21 +2115,10 @@ setTimeout(function(){
      *
      * @return
      */
+    @RdAuthorizeSystem(RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN)
     def apiExecutionModeStatus() {
-
         if (!apiService.requireApi(request, response, ApiVersions.V32)) {
             return
-        }
-
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        if (!rundeckAuthContextProcessor.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                AuthConstants.ACTION_READ)) {
-            return apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code  : "api.error.item.unauthorized",
-                            args  : ["Read execution status", "Rundeck", '']
-                    ])
         }
 
         def executionStatus = configurationService.executionModeActive
@@ -2289,6 +2148,10 @@ setTimeout(function(){
      *
      * @return
      */
+
+    @RdAuthorizeSystem(
+        RundeckAccess.System.AUTH_ADMIN_ENABLE_EXECUTION
+    )
     def apiExecutionModeActive() {
         apiExecutionMode(true)
     }
@@ -2296,6 +2159,9 @@ setTimeout(function(){
      *
      * @return
      */
+    @RdAuthorizeSystem(
+        RundeckAccess.System.AUTH_ADMIN_DISABLE_EXECUTION
+    )
     def apiExecutionModePassive() {
         apiExecutionMode(false)
     }
@@ -2307,24 +2173,7 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response, ApiVersions.V14)) {
             return
         }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
 
-        def authAction = active?AuthConstants.ACTION_ENABLE_EXECUTIONS:AuthConstants.ACTION_DISABLE_EXECUTIONS
-        if (!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
-                authContext,
-                AuthConstants.RESOURCE_TYPE_SYSTEM,
-                [authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
-            )
-        ) {
-            return apiService.renderErrorFormat(response,
-                                                [
-                                                        status: HttpServletResponse.SC_FORBIDDEN,
-                                                        code: "api.error.item.unauthorized",
-                                                        args: [authAction, "Rundeck", ''],
-                                                        format: respFormat
-                                                ])
-        }
         executionService.setExecutionsAreActive(active)
         withFormat{
             json {
@@ -2343,26 +2192,13 @@ setTimeout(function(){
     /**
      * List input files for an execution
      */
+    @RdAuthorizeExecution(RundeckAccess.Execution.AUTH_APP_READ_OR_VIEW)
     def apiExecutionInputFiles() {
         if (!apiService.requireApi(request, response, ApiVersions.V19)) {
             return
         }
-        if (!apiService.requireParameters(params, response, ['id'])) {
-            return
-        }
 
-        def Execution e = Execution.get(params.id)
-        if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, e.project)
-        if (!apiService.requireAuthorized(
-                rundeckAuthContextProcessor.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
-                response,
-                [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[]
-        )) {
-            return
-        }
+        Execution e = authorizingExecution.resource
 
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
 

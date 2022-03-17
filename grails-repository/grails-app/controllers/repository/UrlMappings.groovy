@@ -9,7 +9,7 @@ class UrlMappings {
             }
         }
 
-        if(getGrailsApplication().config.rundeck.feature.repository.enabled in ["true",true]) {
+        if(getGrailsApplication().config.getProperty("rundeck.feature.repository.enabled",String.class) in ["true",true]) {
             "/api/$api_version/repository/list"(controller: "repository", action: "listRepositories")
             "/api/$api_version/repository/artifacts/list"(controller: "repository", action: "listArtifacts")
             "/api/$api_version/repository/artifacts/search"(controller: "repository", action: "searchArtifacts")

@@ -71,6 +71,14 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     def setup(){
 
         mockCodec(URIComponentCodec)
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
     }
 
     private void assertMap(key, map, value) {
@@ -784,6 +792,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiJobExecutions_basic() {
         when:
         def sec = controller
+        sec.response.format = "xml"
 
         def se = createTestJob()
 
@@ -805,6 +814,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiJobExecutions_single() {
         when:
         def sec = controller
+        sec.response.format = "xml"
 
         def se = createTestJob()
         def exec = new Execution(
@@ -839,6 +849,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiJobExecutions_statusParam() {
         when:
         def sec = controller
+        sec.response.format = "xml"
 
         def se = createTestJob()
         def exec = new Execution(
@@ -928,6 +939,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiRunJob() {
         when:
         def sec = controller
+        sec.response.format = "xml"
 
         def se = new ScheduledExecution(
                 jobName: 'monkey1', project: 'testProject', description: 'blah',
@@ -1016,6 +1028,8 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
 
     private void assertRunJobAsUser(Map job, String expectJobUser, String userName) {
         def sec = controller
+        sec.response.format = "xml"
+
         def se = new ScheduledExecution(job)
         se.workflow= new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         se.save()
@@ -1440,6 +1454,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiRunCommand_XML() {
         when:
         def sec = controller
+        sec.response.format = "xml"
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)
@@ -1775,6 +1790,7 @@ class ScheduledExecutionController2Spec extends HibernateSpec implements Control
     public void testApiRunCommandAsUser() {
         when:
         def sec = controller
+        sec.response.format = "xml"
 
         //try to do api job run
         def fwkControl = new MockFor(FrameworkService, true)

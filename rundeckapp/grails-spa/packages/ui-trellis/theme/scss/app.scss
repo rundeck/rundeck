@@ -1,52 +1,95 @@
 // Import first so they can be wired into the bootstrap scss
-@import "paper/custom-properties";
+@import "_theme";
 
-@import "bootstrap/stylesheets/bootstrap";
+@import "runstrap/variables";
+@import "runstrap/mixins";
 
-@import "paper/variables";
-@import "paper/mixins";
-
-//plugins css
-@import "paper/plugins/animate";
-@import "paper/plugins/fullcalendar";
-@import "paper/plugins/chartist";
-@import "paper/plugins/perfect-scrollbar";
-@import "paper/plugins/jquery.jvectormap";
-@import "~perfect-scrollbar/css/perfect-scrollbar.css";
-
-// UI Next Layout
-@import "paper/view";
+// Reset and dependencies
+@import "runstrap/normalize";
+@import "runstrap/print";
+@import "runstrap/glyphicons";
 
 // Core CSS
-@import "paper/typography";
-@import "paper/sidebar-and-main-panel";
-@import "paper/buttons";
-@import "paper/misc";
-@import "paper/inputs";
-@import "paper/progress-bars";
-@import "paper/forms";
-@import "paper/alerts";
-@import "paper/tables";
-@import "paper/tooltips-and-popovers";
-@import "paper/navbars";
-@import "paper/footers";
-@import "paper/cards";
-@import "paper/timeline";
-@import "paper/slider";
-@import "paper/select";
-@import "paper/labels";
-@import "paper/chat-message";
-@import "paper/checkbox-radio";
+@import "runstrap/layouts";
+@import "runstrap/scaffolding";
+@import "runstrap/type";
+@import "runstrap/typography";
+@import "runstrap/code";
+@import "runstrap/grid";
+@import "runstrap/tables";
+@import "runstrap/forms";
+@import "runstrap/buttons";
+@import "runstrap/sidebar-and-main-panel";
+@import "runstrap/misc";
+@import "runstrap/inputs";
+@import "runstrap/progress-bars";
+@import "runstrap/footers";
+@import "runstrap/cards";
+@import "runstrap/slider";
+@import "runstrap/select";
+@import "runstrap/chat-message";
+@import "runstrap/checkbox-radio";
+
+// Components
+@import "runstrap/component-animations";
+@import "runstrap/dropdown";
+@import "runstrap/button-groups";
+@import "runstrap/input-groups";
+@import "runstrap/navs";
+@import "runstrap/navbar";
+@import "runstrap/breadcrumbs";
+@import "runstrap/pagination";
+@import "runstrap/pager";
+@import "runstrap/labels";
+@import "runstrap/badges";
+@import "runstrap/jumbotron";
+@import "runstrap/thumbnails";
+@import "runstrap/alerts";
+@import "runstrap/progress-bars";
+@import "runstrap/media";
+@import "runstrap/list-group";
+@import "runstrap/panels";
+@import "runstrap/responsive-embed";
+@import "runstrap/wells";
+@import "runstrap/close";
 
 // Fancy Stuff
-@import "paper/dropdown";
-@import "paper/social";
-@import "paper/tags";
-@import "paper/collapse";
-@import "paper/carousel";
-@import "paper/animated-buttons";
-@import "paper/switch";
-@import "paper/utilities";
+@import "runstrap/social";
+@import "runstrap/tags";
+@import "runstrap/collapse";
+@import "runstrap/animated-buttons";
+@import "runstrap/switch";
+@import "runstrap/storybook";
+
+// Components w/ JavaScript
+@import "runstrap/modals";
+@import "runstrap/tooltip-and-popovers";
+@import "runstrap/popovers";
+@import "runstrap/carousel";
+
+// Utility classes
+@import "runstrap/utilities";
+@import "runstrap/responsive-utilities";
+
+//plugins css
+@import "runstrap/plugins/animate";
+@import "runstrap/plugins/fullcalendar";
+@import "runstrap/plugins/chartist";
+@import "runstrap/plugins/perfect-scrollbar";
+@import "runstrap/plugins/jquery.jvectormap";
+@import "~perfect-scrollbar/css/perfect-scrollbar.css";
+
+//SCSS for Pages
+@import "runstrap/pages";
+
+@import "runstrap/tabs-navs-pagination";
+@import "runstrap/circlechart";
+ 
+@import "runstrap/responsive";
+
+// UI Next Layout
+@import "runstrap/view";
+
 
 // Font Awesome 5
 @import "fontawesome/fontawesome";
@@ -54,16 +97,10 @@
 @import "fontawesome/solid";
 @import "fontawesome/brands";
 
-//SCSS for Pages
-@import "paper/pages";
-
-@import "paper/tabs-navs-pagination";
-@import "paper/circlechart";
-
-@import "paper/responsive";
 
 // CUSTOM
 @import "custom/rundeck-icon";
+@import "custom/pagerduty-icon";
 @import "custom/mainbar";
 @import "custom/sidebar";
 @import "custom/modals";
@@ -72,12 +109,11 @@
 @import "custom/text";
 @import "custom/forms";
 @import "custom/flexbox";
-@import "custom/jumbotron";
 @import "custom/buttons";
 @import "custom/dropdown";
 @import "custom/expand";
 @import "custom/execution-page";
-@import "custom/input-group";
+// @import "custom/input-group";
 @import "custom/jobs";
 @import "custom/links";
 @import "custom/nodes-embed";
@@ -106,7 +142,7 @@
 @import "custom/script-content";
 @import "custom/plugin-config";
 @import "custom/ace-editor";
-
+@import "custom/logo";
 
 // PAGES
 @import "pages/login";

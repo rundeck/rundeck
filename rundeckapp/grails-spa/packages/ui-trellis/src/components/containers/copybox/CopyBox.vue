@@ -49,11 +49,11 @@ export default Vue.extend({
 <style scoped lang="scss">
 .rd-copybox {
     position: relative;
-    background-color: white;
+    background-color: var(--background-color-lvl2);
     border-radius: 5px;
     border-style: solid;
     border-width: 0.1em;
-    border-color: #AFC4DC;
+    border-color: var(--border-color);
     display: flex;
     cursor: pointer;
 }
@@ -94,7 +94,7 @@ export default Vue.extend({
     top: 10px;
     left: 10px;
 
-    color: white;
+    color: var(--font-fill-color);
     font-weight: 800;
     opacity: 0;
 

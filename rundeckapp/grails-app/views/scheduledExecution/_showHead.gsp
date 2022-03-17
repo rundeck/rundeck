@@ -56,7 +56,7 @@
         <g:if test="${jobActionButtons}">
             <div class="job-action-button">
                 <g:render template="/scheduledExecution/jobActionButton"
-                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-sm', isScheduled: isScheduled]"/>
+                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-default btn-sm btn-transparent', isScheduled: isScheduled]"/>
           </div>
         </g:if>
       </span>
@@ -102,12 +102,11 @@
               </span>
               <g:if test="${remoteClusterNodeUUID}">
                   on
-                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}"
-                        data-name-truncated="8"
-                        data-uuid-label-none="true"
-                        class="rundeck-server-uuid text-secondary">
-                      <i class="fas fa-dot-circle text-muted cluster-status-icon"></i>
+                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID.substring(0,8)}"
+                        data-show-id="false"
+                        class="rundeck-server-uuid">
                   </span>
+                  <i class="fas fa-dot-circle cluster-status-icon"></i>
               </g:if>
           </span>
       </g:if>

@@ -23,6 +23,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.UtilityTagLib
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginApiService
 import rundeck.services.PluginApiServiceSpec
@@ -50,6 +51,13 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     def setup(){
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+
         mockTagLib(UtilityTagLib)
     }
 

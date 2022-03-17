@@ -9,6 +9,7 @@ import { ProjectStore } from "./Projects"
 import { NewsStore } from './News'
 import { PluginStore } from './Plugins'
 import { WebhookStore } from './Webhooks'
+import { ThemeStore } from "./Theme"
 
 export class RootStore {
     executionOutputStore: ExecutionOutputStore
@@ -21,17 +22,20 @@ export class RootStore {
     news: NewsStore
     plugins: PluginStore
     webhooks: WebhookStore
+    theme: ThemeStore
 
-    constructor(readonly client: RundeckClient) {
+    constructor(readonly client: RundeckClient, appMeta: any = {}) {
         this.executionOutputStore = new ExecutionOutputStore(this, client)
         this.workflowStore = new WorkflowStore(this, client)
         this.navBar = new NavBar(this, client)
         this.utilityBar = new UtilityBar(this, client)
         this.system = new SystemStore(this, client)
+        this.system.loadMeta(appMeta)
         this.releases = new Releases(this, client)
         this.projects = new ProjectStore(this, client)
         this.news = new NewsStore(this, client)
         this.plugins = new PluginStore(this, client)
         this.webhooks = new WebhookStore(this, client)
+        this.theme = new ThemeStore()
     }
 }

@@ -1,8 +1,8 @@
 <template>
   <div v-show="displayCard" class="px-3">
     <div class="card w-full p-6">
-      <div class="col-md-3">
-        <div v-if="result.record.images.thumbnail.url">
+      <div class="col-md-3"  v-if="result.record !=null">
+        <div v-if="result.record !=null && result.record.images.thumbnail!=null && result.record.images.thumbnail.url">
           <div :style="{ backgroundImage: `url( ${result.record.images.thumbnail.url} )` }" class="w-full thumbnail"></div>
         </div>
       </div>
@@ -66,7 +66,7 @@
             <a
               href="https://www.rundeck.com/test-drive"
               target="_blank"
-              class="btn btn-success btn-md"
+              class="btn btn-default btn-md"
             >Learn More</a>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default {
 <style lang="scss" scoped>
 .px-3{
   padding-left: 0.75rem;
-  padding-right: 0.75rem; 
+  padding-right: 0.75rem;
 }
 .p-6{
   padding: 1.8rem;

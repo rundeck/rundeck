@@ -107,7 +107,7 @@
 
                                 <div class="btn-group pull-right visibility-hidden">
                                     <button type="button"
-                                            class="btn btn-secondary btn-xs dropdown-toggle act_job_action_dropdown"
+                                            class="btn btn-default btn-xs dropdown-toggle act_job_action_dropdown"
                                             data-job-id="${enc(attr:scheduledExecution.extid)}"
                                             data-toggle="dropdown"
                                             aria-expanded="false">

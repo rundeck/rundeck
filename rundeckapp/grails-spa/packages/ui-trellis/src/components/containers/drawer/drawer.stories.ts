@@ -1,13 +1,13 @@
 import Vue from 'vue'
 import {addons} from '@storybook/addons'
-import {CHANGE, array ,object, boolean, withKnobs, select} from '@storybook/addon-knobs'
+import {CHANGE, array ,object, boolean, withKnobs, select, text} from '@storybook/addon-knobs'
 
 import '../../../stories/setup'
 
 import Drawer from './Drawer.vue'
 
 export default {
-    title: 'Containers',
+    title: 'Containers/Drawer',
     decorators: [withKnobs({disableDebounce: true})]
 }
 
@@ -25,14 +25,41 @@ export const drawer = () => {
 
     return Vue.extend({
         template: `
-        <div style="height: 500px;width: 500px;background-color: beige;position: relative;overflow: hidden;">
+        <div style="height: 100%;width: 100%;background-color: beige;position: relative;overflow: hidden;">
             <Drawer v-bind="$props" @close="close">Foo</Drawer>
         </div>`,
         components: {Drawer},
         props: {
             title: {default: 'Settings'},
             visible: {default: boolean('Open', true)},
-            placement: {default: select('Placement', {left: 'left', right: 'right'}, 'left')}
+            placement: {default: select('Placement', {left: 'left', right: 'right', top: 'top'}, 'left')}
+        },
+        mounted() {
+            setupStory(this)
+        },
+        methods: {
+            close() {
+                chan.emit(CHANGE, {name: 'Open', value: false})
+            }
+        }
+    })
+}
+
+export const autoSize = () => {
+    const chan = addons.getChannel()
+
+    return Vue.extend({
+        template: `
+        <div style="height: 100%;width: 100%;background-color: beige;position: relative;overflow: hidden;">
+            <Drawer v-bind="$props" @close="close">Foo</Drawer>
+        </div>`,
+        components: {Drawer},
+        props: {
+            title: {default: 'Settings'},
+            visible: {default: boolean('Open', true)},
+            width: {default: text('Width', '50%')},
+            height: {default: text('Height', '50%')},
+            placement: {default: select('Placement', {left: 'left', right: 'right', top: 'top'}, 'left')}
         },
         mounted() {
             setupStory(this)

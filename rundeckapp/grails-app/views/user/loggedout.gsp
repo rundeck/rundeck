@@ -1,3 +1,4 @@
+<%@ page import="grails.util.Environment" %>
 <!DOCTYPE html>
 <!--[if lt IE 7 ]> <html class="ie6"> <![endif]-->
 <!--[if IE 7 ]>    <html class="ie7"> <![endif]-->
@@ -22,31 +23,42 @@
   --}%
 
     <g:appTitle/> - Logged Out</title>
+
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
+    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: g.appFavicon())}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
+    <asset:stylesheet href="static/css/components/server-identity.css"/>
 
+    <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
+        <asset:javascript src="vendor/vue.js"/>
+    </g:if>
+    <g:else>
+        <asset:javascript src="vendor/vue.min.js"/>
+    </g:else>
+    <asset:javascript src="static/components/server-identity.js" asset-defer="true" />
+
+    <asset:javascript src="static/js/chunk-common.js"/>
+    <asset:javascript src="static/js/chunk-vendors.js"/>
+    <asset:javascript src="static/pages/login.js"/>
 
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="vendor/jquery.js"/>
-    <asset:javascript src="versionIdentity.js"/>
     <g:render template="/common/css"/>
 </head>
 <body id="loginpage">
-    <div class="full-page login-page">
-    <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
+    <div class="login-page">
       <div class="content">
         <div class="container">
           <div class="row">
-            <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+            <g:set var="userDefinedInstanceName" value="${cfg.getString(config: "gui.instanceName")}"/>
             <g:if test="${userDefinedInstanceName}">
               <div class="col-md-12" style="text-align:center;margin-bottom:3em;">
                   <span class="label label-white" style="padding:.8em;font-size: 20px; border-radius:3px;    box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);">
@@ -59,12 +71,13 @@
                 <div class="card-header">
                   <h4 class="card-title">
                     <div class="logo">
-                        <g:set var="logoImage" value="${g.message(code: 'app.login.logo', default: '')?:'logos/rundeck-logo-black.png'}"/>
-                        <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
-                            <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;"/>
+                        <g:set var="logoImage" value="${"static/img/${g.appLogo()}"}"/>
+                        <g:set var="titleLink" value="${cfg.getString(config: "gui.titleLink")}"/>
+                        <a href="${titleLink ? enc(attr:titleLink) : g.createLink(uri: '/')}" title="Home">
+                            <asset:image src="${logoImage}" alt="Rundeck" style="width: 200px;" onload="SVGInject(this)"/>
                         </a>
 
-                        <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
+                        <g:set var="userDefinedLogo" value="${cfg.getString(config: "gui.logo")}"/>
                         <g:if test="${userDefinedLogo}">
                           <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
                           <g:set var="userAssetBase" value="/user-assets" />
@@ -80,7 +93,7 @@
                 </div>
                 <div class="card-content">
                   <p class="text-center">
-                    <g:link controller="menu" action="home" class="btn btn-cta btn-large">
+                    <g:link controller="menu" action="home" class="btn btn-primary btn-large">
                       <g:message code="login.again" />
                     </g:link>
                   </p>
@@ -92,5 +105,6 @@
     </div>
     <g:render template="/common/footer"/>
   </div>
+<asset:deferredScripts/>
 </body>
 </html>

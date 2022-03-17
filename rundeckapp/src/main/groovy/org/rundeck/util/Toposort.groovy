@@ -75,7 +75,7 @@ class Toposort {
             }
         }
         def l = new ArrayList()
-        List s = new ArrayList(nodes.findAll { !iedges[it] })
+        List s = nodes.findAll { !iedges[it] }
         while (s) {
             def n = s.first()
             s.remove(n)

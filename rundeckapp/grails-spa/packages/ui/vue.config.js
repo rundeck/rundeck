@@ -3,6 +3,7 @@ const webpack = require('webpack')
 
 module.exports = {
   pages: {
+    'components/copybox': { entry: './src/components/copybox/main.ts' },
     'components/central': { entry: './src/components/central/main.ts'},
     'components/ko-paginator': { entry: './src/components/ko-paginator/main.ts'},
     'components/motd': { entry: './src/components/motd/main.js'},
@@ -13,7 +14,9 @@ module.exports = {
     'components/tour': { entry: './src/components/tour/main.js'},
     'components/version-notification': { entry: './src/components/version-notification/main.js'},
     'components/version': { entry: './src/components/version/main.js'},
+    'components/server-identity': { entry: './src/components/server-identity/main.js'},
     'components/community-news-notification': { entry: './src/components/community-news-notification/main.js'},
+    'pages/login': { entry: './src/pages/login/main.ts'},
     'pages/project-dashboard': { entry: './src/pages/project-dashboard/main.js'},
     'pages/project-activity': { entry: './src/pages/project-activity/main.js'},
     'pages/repository': { entry: './src/pages/repository/main.js'},

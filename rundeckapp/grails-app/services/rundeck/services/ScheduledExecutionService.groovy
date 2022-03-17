@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
@@ -168,7 +169,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def SessionBinderJobListener sessionBinderListener
     ApplicationContext applicationContext
 
-    def grailsApplication
     def MessageSource messageSource
     PluginService pluginService
     def executionUtilService
@@ -180,6 +180,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     private def triggerComponents
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
+    ConfigurationService configurationService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -235,25 +236,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }.sort { a, b -> a.name <=> b.name }
     }
 
-    boolean getPaginationEnabled() {
-        grailsApplication.config.rundeck.gui.paginatejobs.enabled in ["true",true]
-    }
-
     def getMatchedNodesMaxCount() {
-        !grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.isEmpty() ? grailsApplication.config.rundeck.gui.matchedNodesMaxCount?.toInteger() : null
+        configurationService.getInteger("gui.matchedNodesMaxCount",null)
     }
 
-    def getConfiguredMaxPerPage(int defaultMax) {
-        if(paginationEnabled) {
-            return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
-        }
-        return defaultMax
-    }
-
-    def Map finishquery ( query,params,model){
+    Map finishquery ( query,params,model){
 
         if(!params.max){
-            params.max=getConfiguredMaxPerPage(10)
+            params.max=query.max
         }
         if(!params.offset){
             params.offset=0
@@ -289,7 +279,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
 
-        def tmod=[max: query?.max?query.max:getConfiguredMaxPerPage(10),
+        def tmod=[max: query?query.max:null,
             offset:query?.offset?query.offset:0,
             paginateParams:paginateParams,
             displayParams:displayParams]
@@ -314,10 +304,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Integer queryMax=query.max
         Integer queryOffset=query.offset
 
-        if(paginationEnabled) {
-            if (!queryMax) {
-                queryMax = getConfiguredMaxPerPage(10)
-            }
+        if(query.paginatedRequired) {
             if (!queryOffset) {
                 queryOffset = 0
             }
@@ -342,8 +329,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def scheduled = crit.list{
             if(queryMax && queryMax>0){
                 maxResults(queryMax)
-            }else{
-//                maxResults(10)
             }
             if(queryOffset){
                 firstResult(queryOffset.toInteger())
@@ -421,7 +406,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(query && query.sortBy && xfilters[query.sortBy]){
                 order(xfilters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
             }else{
-                if(paginationEnabled) {
+                if(query.paginatedRequired) {
                     order("groupPath","asc")
                 }
                 order("jobName","asc")
@@ -507,7 +492,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /**
      * return a map of defined group path to count of the number of jobs with that exact path
      */
-    def Map getGroups(project, AuthContext authContext){
+    Map getGroups(project, AuthContext authContext){
         def groupMap=[:]
 
         //collect all jobs and authorize the user for the set of available Job actions
@@ -598,7 +583,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * @return Map of job ID to boolean, indicating whether the job was claimed
      */
-    def Map claimScheduledJobs(
+    Map claimScheduledJobs(
             String toServerUUID,
             String fromServerUUID = null,
             boolean selectAll = false,
@@ -696,16 +681,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal, boolean remoteAssigned = false) {
         if (jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid) && shouldScheduleInThisProject(scheduledExecution.project)) {
-            def nextdate = null
-            def nextExecNode = null
             try {
-                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
+                return scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal, remoteAssigned)
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
             }
         } else if (wasScheduled && oldJobName && oldJobGroup) {
-            deleteJob(oldJobName, oldJobGroup)
+            return deleteJob(oldJobName, oldJobGroup)
         }
+
+        return false
     }
 
     /**
@@ -877,7 +862,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
           ]
      * </pre>
      */
-    def Map getGroupTree(project, AuthContext authContext){
+    Map getGroupTree(project, AuthContext authContext){
         def groupMap = getGroups(project, authContext)
         def tree=[:]
         groupMap.keySet().each{
@@ -957,19 +942,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    static class DeleteJobResult{
+        boolean success
+        String error
+    }
     /**
      * Immediately delete a ScheduledExecution
      * @param username @param scheduledExecution
      * @return
      */
-    def deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
+    DeleteJobResult deleteScheduledExecution(ScheduledExecution scheduledExecution, boolean deleteExecutions=false,
                                  AuthContext authContext=null, String username){
         scheduledExecution = ScheduledExecution.get(scheduledExecution.id)
         def originalRef=jobEventRevRef(scheduledExecution)
         def jobname = scheduledExecution.generateJobScheduledName()
         def groupname = scheduledExecution.generateJobGroupName()
-        def errmsg=null
-        def success = false
+        String errmsg=null
+        boolean success = false
         Execution.withTransaction {
             //find any currently running executions for this job, and if so, throw exception
             def found = Execution.createCriteria().get {
@@ -983,7 +972,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (found) {
                 errmsg = 'Cannot delete {{Job ' + scheduledExecution.extid + '}} "' + scheduledExecution.jobName  +
                         '" it is currently being executed: {{Execution ' + found.id + '}}'
-                return [success:false,error:errmsg]
+                return new DeleteJobResult(success:false,error:errmsg)
             }
             def stats= ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if(stats){
@@ -1031,7 +1020,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //issue event directly
             notify('jobChanged', event)
         }
-        return [success:success,error:errmsg]
+        return new DeleteJobResult(success:success,error:errmsg)
     }
     /**
      * Attempt to delete a job given an id
@@ -1139,9 +1128,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         def data=["project": se.project,
-                  "jobId":se.uuid, "oldServerNodeUUID": se.serverNodeUUID]
+                  "jobId":se.uuid,
+                  "oldQuartzJobName": oldJobName,
+                  "oldQuartzGroupName": oldGroupName]
 
-        if(!forceLocal){
+        if(!forceLocal && frameworkService.isClusterModeEnabled()){
             boolean remoteAssign = remoteAssigned ?: jobSchedulerService.scheduleRemoteJob(data)
 
             if(remoteAssign){
@@ -1409,7 +1400,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /**
      * Schedule a temp job to execute immediately.
      */
-    def Map scheduleTempJob(AuthContext authContext, Execution e) {
+    Map scheduleTempJob(AuthContext authContext, Execution e) {
         if(!executionService.getExecutionsAreActive()){
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message:msg]
@@ -1525,7 +1516,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param scheduledExecutions
      * @return
      */
-    def Map clusterScheduledJobs(Collection<ScheduledExecution> scheduledExecutions) {
+    Map clusterScheduledJobs(Collection<ScheduledExecution> scheduledExecutions) {
         def map = [ : ]
         if(frameworkService.isClusterModeEnabled()) {
             def serverUUID = frameworkService.getServerUUID()
@@ -2030,12 +2021,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         nots
     }
 
-    static Orchestrator parseParamOrchestrator(params){
-        Orchestrator orchestrator = new Orchestrator(type:params.orchestratorId)
-        def plugin = params.orchestratorPlugin[params.orchestratorId];
-        //def config = params.orchestratorPlugin[params.orchestratorId].config
-        if(plugin){
-            orchestrator.configuration = plugin.config
+    @CompileStatic
+    static Orchestrator parseParamOrchestrator(Map params, String type){
+        Orchestrator orchestrator = new Orchestrator(type:type)
+        def plugin = (params.orchestratorPlugin instanceof Map) ? params.orchestratorPlugin[type] : [:]
+        if(plugin instanceof Map){
+            def configVal = plugin.get('config')
+            if(configVal instanceof Map){
+                orchestrator.configuration = configVal
+            }
         }
         orchestrator
     }
@@ -2617,10 +2611,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return true if not valid
      */
     @CompileStatic
-    boolean validateDefinitionComponents(ImportedJob<ScheduledExecution> importedJob, Map params, Map validation) {
+    boolean validateDefinitionComponents(ImportedJob<ScheduledExecution> importedJob, Map params, Map<String, Map<String, String>> validation) {
         def reports = rundeckJobDefinitionManager.validateImportedJob(importedJob)
         params?.put('jobComponentValidation', reports.validations)
-        validation?.putAll(reports.validations.collectEntries { [it.key, it.value.errors] })
+        validation?.putAll(reports.validations.collectEntries { [it.key, it.value.errors] } as Map<? extends String, ? extends Map<String, String>>)
         return !reports.valid
     }
 
@@ -2986,7 +2980,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(input){
             orchestrator = input.orchestrator
         }else if (params.orchestratorId) {
-            orchestrator = parseParamOrchestrator(params)
+            orchestrator = parseParamOrchestrator(params, params.orchestratorId.toString())
         }
         if(scheduledExecution.id && scheduledExecution.orchestrator){
             if(!hasExecutionsLinkedToOrchestrator(scheduledExecution.orchestrator)) scheduledExecution.orchestrator.delete() //cannot deleted this orchestrator if linked to executions
@@ -3037,8 +3031,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             } else if (params.options instanceof Map) {
                 while (params.options["options[${i}]"]) {
-                    def Map optdefparams = params.options["options[${i}]"]
-                    def Option theopt = new Option(optdefparams)
+                    Map optdefparams = params.options["options[${i}]"]
+                    Option theopt = new Option(optdefparams)
                     scheduledExecution.addToOptions(theopt)
                     theopt.scheduledExecution = scheduledExecution
                     i++
@@ -3361,7 +3355,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean schedulingWasChanged = oldjob.schedulingWasChanged(scheduledExecution)
         if(frameworkService.isClusterModeEnabled()){
             if (schedulingWasChanged) {
-                modify = jobSchedulerService.updateScheduleOwner(scheduledExecution.asReference())
+                JobReferenceImpl jobReference = scheduledExecution.asReference()
+                jobReference.setOriginalQuartzJobName(oldjob.oldjobname)
+                jobReference.setOriginalQuartzGroupName(oldjob.oldjobgroup)
+                modify = jobSchedulerService.updateScheduleOwner(jobReference)
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
                 }
@@ -3419,7 +3416,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     .save(flush: true)
         }
 
-        rescheduleJob(
+        def scheduleResult = rescheduleJob(
             scheduledExecution,
             oldjob.isScheduled,
             renamed ? oldjob.oldjobname : scheduledExecution.generateJobScheduledName(),
@@ -3427,12 +3424,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             false, !schedulingWasChanged || !modify
         )
 
+        boolean remoteSchedulingChanged = scheduleResult == null || scheduleResult == [null, null]
+
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
         if (renamed) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
         }
         def event = createJobChangeEvent(eventType, scheduledExecution, oldjob.originalRef)
-        return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
+        return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event, remoteSchedulingChanged: remoteSchedulingChanged]
 
 
     }
@@ -3845,7 +3844,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param mapConfig
      * @return option remote
      */
-    def Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
+    Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
@@ -3858,11 +3857,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         int timeout = 10
         int contimeout = 0
         int retryCount = 5
-        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlTimeout) {
+        if (configurationService.getString("jobs.options.remoteUrlTimeout")) {
             try {
-                timeout = Integer.parseInt(
-                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlTimeout?.toString()
-                )
+                timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout")
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlTimeout is not a valid integer: "
@@ -3870,11 +3867,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
             }
         }
-        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlConnectionTimeout) {
+        if (configurationService.getString("jobs.options.remoteUrlConnectionTimeout")) {
             try {
-                contimeout = Integer.parseInt(
-                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlConnectionTimeout?.toString()
-                )
+                contimeout = configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout")
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlConnectionTimeout is not a valid integer: "
@@ -3882,11 +3877,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
             }
         }
-        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlRetry) {
+        if (configurationService.getString("jobs.options.remoteUrlRetry")) {
             try {
-                retryCount = Integer.parseInt(
-                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlRetry?.toString()
-                )
+                retryCount = configurationService.getInteger("jobs.options.remoteUrlRetry")
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "

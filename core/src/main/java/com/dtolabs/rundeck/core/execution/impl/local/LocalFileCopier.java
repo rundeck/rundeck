@@ -45,18 +45,11 @@ import java.util.List;
  */
 public class LocalFileCopier extends BaseFileCopier implements FileCopier {
     public static final String SERVICE_PROVIDER_TYPE = "local";
-    public static final String DISABLE_LOCAL_EXECUTOR_ENV = "RUNDECK_DISABLED_LOCAL_EXECUTOR";
     private boolean disableLocalExecutor = false;
 
     public LocalFileCopier(Framework framework) {
         this.framework = framework;
-
-        String disableLocalExecutor = System.getenv(DISABLE_LOCAL_EXECUTOR_ENV);
-
-        if(disableLocalExecutor!=null && disableLocalExecutor.equals("true")){
-            this.disableLocalExecutor=true;
-        }
-
+        this.disableLocalExecutor = LocalNodeExecutor.getDisableLocalExecutorEnv();
     }
 
     public void setDisableLocalExecutor(boolean disableLocalExecutor) {

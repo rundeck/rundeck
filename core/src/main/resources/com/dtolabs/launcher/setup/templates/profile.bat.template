@@ -9,5 +9,5 @@ set JAVA_HOME=@user.java_home.win@
 set Path=%JAVA_HOME%\bin;%RDECK_BASE%\tools\bin;%Path%
 
 set RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=%RDECK_BASE%\etc\truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
-set RDECK_CLI_OPTS=-Xms64m -Xmx128m
+set RDECK_CLI_OPTS=-Xms256m -Xmx4096m
 set RD_LIBDIR=%RDECK_BASE%\tools\lib

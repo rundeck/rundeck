@@ -63,7 +63,7 @@ export default class PluginSelect extends Vue {
     padding-left: 10px;
 
     &--selected, &:hover {
-        background-color: #DADEE2;
+        background-color: var(--background-color-accent);
     }
 
     &:before {

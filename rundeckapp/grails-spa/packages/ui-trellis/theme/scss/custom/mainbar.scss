@@ -1,4 +1,4 @@
-@import "../paper/variables";
+@import "../runstrap/variables";
 .mainbar {
   height: 45px;
   width: 100%;
@@ -6,9 +6,9 @@
   align-items: center;
   padding-left: 0;
   padding-right: 20px;
-  background: $bg-mainheader;
+  background: var(--mainbar-bg-color);
 
-  box-shadow: 0px 1px 1px #D3D7DF;
+  box-shadow: var(--box-shadow-bottom-lv1);
 
   &.navbar {
     border-bottom: 1px solid darken($bg-mainheader, 10%);
@@ -25,7 +25,7 @@
   // Cog
   .fa-cog,
   .fa-user {
-    color: #65605a;
+    color: var(--font-color);
   }
 
   #projectHomeLink {
@@ -204,14 +204,14 @@
 }
 
 .subtitlebar {
-  background: $bg-subheader;
+  background: var(--background-color-lvl2);
 
   &.navbar {
     border-bottom: 1px solid darken($bg-subheader, 10%);
   }
 
   &.plain {
-    background: none;
+    background: var(--background-color-lvl3);
   }
 }
 

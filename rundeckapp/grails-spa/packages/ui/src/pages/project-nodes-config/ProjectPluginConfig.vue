@@ -68,7 +68,7 @@
                 <div class="col-xs-12 col-sm-12">
                   <span v-if="editFocus===-1">
                     <a
-                      class="btn btn-info btn-xs"
+                      class="btn btn-default btn-xs"
                       @click="editFocus=index"
                       :key="'edit'"
                     >{{$t('Edit')}}</a>
@@ -79,7 +79,7 @@
                       @click="savePlugin(plugin,index)"
                       :key="'save'"
                     >{{$t('Save')}}</a>
-                    <a class="btn btn-warning btn-xs" @click="editFocus=-1">{{$t('Cancel')}}</a>
+                    <a class="btn btn-default btn-xs" @click="editFocus=-1">{{$t('Cancel')}}</a>
                   </span>
                   <span class="small text-info" v-if="plugin.modified">
                     <i class="fas fa-pen-square"></i>
@@ -124,7 +124,7 @@
         </div>
 
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
-          <btn type="cta" @click="modalAddOpen=true">
+          <btn type="primary" @click="modalAddOpen=true">
             {{pluginLabels && pluginLabels.addButton || serviceName}}
             <i class="fas fa-plus"></i>
           </btn>
@@ -135,6 +135,7 @@
             ref="modal"
             size="lg"
             id="add-new-modal"
+            append-to-body
           >
             <div class="list-group">
               <a

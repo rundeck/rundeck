@@ -44,13 +44,6 @@ wait_for(){
 
 wait_for
 
-run_tests(){
-	local FARGS=("$@")
-	local SRC=${FARGS[0]}
-    export TEST_NAME=$TEST_NAME
-	bash -c  $SRC/src/test.sh $RD_URL admin admin
-}
-
 #sudo chown -R $USERNAME:$USERNAME $TEST_DIR
 
 export PATH=$PATH:$HOME/tools/bin
@@ -62,7 +55,8 @@ echo "starting test.sh"
 set +e
 chmod -w $TEST_DIR/src/test.sh
 
-run_tests $TEST_DIR
+export TEST_NAME=$TEST_NAME
+bash -c $TEST_DIR/src/test.sh $RD_URL admin admin
 
 EC=$?
 

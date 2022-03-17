@@ -3,6 +3,7 @@ import Vue from 'vue'
 import NavigationBar from '@rundeck/ui-trellis/lib/components/navbar/NavBar.vue'
 import UtilityBar from '@rundeck/ui-trellis/lib/components/utility-bar/UtilityBar.vue'
 import RundeckInfoWidget from '@rundeck/ui-trellis/lib/components/widgets/rundeck-info/RundeckInfoWidget.vue'
+import ThemeSelectWidget from '@rundeck/ui-trellis/lib/components/widgets/theme-select/ThemeSelect.vue'
 
 import {UtilityActionItem} from '@rundeck/ui-trellis/lib/stores/UtilityBar'
 import { getRundeckContext, getAppLinks } from '@rundeck/ui-trellis'
@@ -20,12 +21,28 @@ rootStore.utilityBar.addItems([
       "id": "utility-edition",
       "container": "root",
       "group": "left",
-      "class": "rdicon app-logo",
-      "label": "COMMUNITY",
+      "class": rootStore.system.appInfo.logocss+" app-logo",
+      "label": rootStore.system.appInfo.title.toUpperCase(),
       "visible": true,
       widget: Vue.extend({
         components: {RundeckInfoWidget},
         template: `<RundeckInfoWidget/>`,
+        provide: {
+          rootStore
+        }
+      })
+  },
+  {
+      "type": "widget",
+      "id": "utility-theme",
+      "container": "root",
+      "group": "right",
+      "class": "fas fa-sun fas-xs",
+      // "label": "Theme",
+      "visible": true,
+      widget: Vue.extend({
+        components: {ThemeSelectWidget},
+        template: `<ThemeSelectWidget/>`,
         provide: {
           rootStore
         }

@@ -18,7 +18,7 @@
               <i class="fas" :class="triggerIcons[trigger]"></i>
               {{$t('notification.event.'+trigger)}}
               </span>
-              <btn type="secondary"
+              <btn type="default"
                    class="  flex-item"
                    size="sm" @click="addNotification(trigger)">
                 <i class="fas fa-plus"></i>
@@ -89,7 +89,7 @@
                 />
               </div>
 
-              <btn type="secondary" size="sm" @click="doEditNotification(notif)">Edit</btn>
+              <btn type="default" size="sm" @click="doEditNotification(notif)">Edit</btn>
 
             </div>
           </div>
@@ -100,7 +100,7 @@
 
 
 
-    <modal v-model="editModal" :title="$t(editIndex<0?'Create Notification':'Edit Notification')" size="lg" id="job-notifications-edit-modal">
+    <modal v-model="editModal" :title="$t(editIndex<0?'Create Notification':'Edit Notification')" size="lg" id="job-notifications-edit-modal" append-to-body>
       <div>
         <div class="form-group"  >
           <label class="col-sm-2 control-label  " >
@@ -250,8 +250,6 @@ export default {
   components: {PluginInfo,PluginConfig,ExtendedDescription,UndoRedo},
   data () {
     return {
-      project: null,
-      rdBase: null,
       notifyAvgDurationThreshold:null,
       pluginProviders: [],
       pluginLabels: {},
@@ -469,12 +467,8 @@ export default {
     }
   },
   async mounted () {
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-      this.rdBase = window._rundeck.rdBase
-      this.project = window._rundeck.projectName
-      this.notifications = [].concat(this.notificationData.notifications || [])
-      this.notifyAvgDurationThreshold = this.notificationData.notifyAvgDurationThreshold
-    }
+    this.notifications = [].concat(this.notificationData.notifications || [])
+    this.notifyAvgDurationThreshold = this.notificationData.notifyAvgDurationThreshold
     this.$on("undo",this.doUndo)
     this.$on("redo",this.doRedo)
     pluginService

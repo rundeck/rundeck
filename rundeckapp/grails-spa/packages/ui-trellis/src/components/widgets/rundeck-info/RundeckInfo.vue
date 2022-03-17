@@ -3,21 +3,24 @@
         <div class="rundeck-info-widget__group">
             <div class="rundeck-info-widget__more-link">
                 <a :href="welcomeUrl()">
-                    <RundeckLogo/>
+                    <RundeckLogo v-if="appInfo.title === 'Rundeck'"/>
+                    <PagerdutyLogo v-else/>
                 </a>
             </div>
             <div class="rundeck-info-widget__header">
-                <RundeckVersion :app="false" :logo="false" :edition="version.edition" :number="version.number" :tag="version.tag"/>
+                <RundeckVersion :app="false" :logo="false" :title="appInfo.title" :logocss="appInfo.logocss" :number="version.number" :tag="version.tag"/>
             </div>
             <div>
                 <VersionDisplay :text="`${version.name} ${version.color} ${version.icon}`" :icon="version.icon" :color="version.color" />
             </div>
             <div>
-                <ServerDisplay
-                    :name="server.name"
-                    :glyphicon="server.icon"
-                    :uuid="server.uuid"
-                />
+                <span class="server-display">
+                    <ServerDisplay
+                        :name="server.name"
+                        :glyphicon="server.icon"
+                        :uuid="server.uuid"
+                    />
+                </span>
             </div>
         </div>
         <div v-if="latest" class="rundeck-info-widget__group" style="border-top: solid 1px grey;">
@@ -37,12 +40,13 @@ import Vue from 'vue'
 import { Observer } from 'mobx-vue'
 import {Component, Prop} from 'vue-property-decorator'
 
-import { VersionInfo, ServerInfo } from '../../../stores/System'
+import {VersionInfo, ServerInfo, AppInfo} from '../../../stores/System'
 import { Release } from '../../../stores/Releases'
 
-import {url} from '../../../rundeckService'
+import {getRundeckContext, url} from '../../../rundeckService'
 
 import RundeckLogo from '../../svg/RundeckLogo.vue'
+import PagerdutyLogo from '../../svg/PagerdutyLogo.vue'
 
 import Copyright from '../../version/Copyright.vue'
 import RundeckVersion from '../../version/RundeckVersionDisplay.vue'
@@ -55,6 +59,7 @@ import ServerDisplay from '../../version/ServerDisplay.vue'
     VersionDisplay,
     RundeckVersion,
     RundeckLogo,
+    PagerdutyLogo,
     Copyright
 }})
 export default class RundeckInfoWidget extends Vue {
@@ -67,7 +72,11 @@ export default class RundeckInfoWidget extends Vue {
     @Prop()
     server!: ServerInfo
 
+    @Prop()
+    appInfo!: AppInfo
+
     async mounted() {
+        const context = getRundeckContext()
     }
 
     welcomeUrl() {
@@ -115,6 +124,11 @@ export default class RundeckInfoWidget extends Vue {
 
 .rundeck-info-widget__heading {
     font-weight: bold;
+}
+.server-display{
+    background-color: var(--grey-400);
+    padding: 1px 8px;
+    border-radius: 1em;
 }
 
 </style>

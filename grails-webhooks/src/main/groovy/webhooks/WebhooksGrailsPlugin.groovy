@@ -2,6 +2,7 @@ package webhooks
 
 import grails.plugins.*
 import grails.util.Environment
+import webhooks.authenticator.AuthorizationHeaderAuthenticator
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -50,7 +51,7 @@ Brief summary/description of the plugin.
 
     Closure doWithSpring() { {->
 
-        if(application.config.rundeck.feature.webhooks.enabled in ["true",true]) {
+        if(application.config.getProperty("rundeck.feature.webhooks.enabled", Boolean.class, false)) {
             webhooksMenuItem(WebhooksMenuItem)
 
             [

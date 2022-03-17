@@ -1,7 +1,19 @@
-plugins {
-  id "com.moowork.node"
-  id 'base'
+buildscript {
+    repositories {
+        maven { url "https://repo.grails.org/grails/core" }
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "com.github.node-gradle:gradle-node-plugin:3.1.1"
+    }
 }
+
+// plugins {
+//   id "com.github.node-gradle.node"
+//   id 'base'
+// }
+apply plugin: 'com.github.node-gradle.node'
+apply plugin: 'base'
 
 configurations{
   lib
@@ -9,8 +21,51 @@ configurations{
 }
 
 node{
-    download = project.hasProperty('node.install')
-    version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
+    // Whether to download and install a specific Node.js version or not
+    // If false, it will use the globally installed Node.js
+    // If true, it will download node using above parameters
+    // Note that npm is bundled with Node.js
+    download = false
+    
+    // Version of node to download and install (only used if download is true)
+    // It will be unpacked in the workDir
+    version = "v16.13.0"
+    
+    // // Version of npm to use
+    // // If specified, installs it in the npmWorkDir
+    // // If empty, the plugin will use the npm command bundled with Node.js
+    // npmVersion = ""
+    
+    // // Version of Yarn to use
+    // // Any Yarn task first installs Yarn in the yarnWorkDir
+    // // It uses the specified version if defined and the latest version otherwise (by default)
+    // yarnVersion = ""
+    
+    // // Base URL for fetching node distributions
+    // // Only used if download is true
+    // // Change it if you want to use a mirror
+    // // Or set to null if you want to add the repository on your own.
+    // distBaseUrl = "https://nodejs.org/dist"
+    
+    // // The npm command executed by the npmInstall task
+    // // By default it is install but it can be changed to ci
+    // npmInstallCommand = "install"
+    
+    
+    // // The directory where npm is installed (when a specific version is defined)
+    // npmWorkDir = file("${project.projectDir}/.gradle/npm")
+    
+    
+    // // The Node.js project directory location
+    // // This is where the package.json file and node_modules directory are located
+    // // By default it is at the root of the current project
+    // nodeProjectDir = file("${project.projectDir}")
+    
+    // // Whether the plugin automatically should add the proxy configuration to npm and yarn commands
+    // // according the proxy configuration defined for Gradle
+    // // Disable this option if you want to configure the proxy for npm or yarn on your own
+    // // (in the .npmrc file for instance)
+    // nodeProxySettings = ProxySettings.SMART
 }
 
 def sourceDirs = [
@@ -31,7 +86,7 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
     it.inputs.dir 'src'
 
     it.outputs.dir(file("$buildDir"))
-    it.outputs.cacheIf { true }
+    it.outputs.cacheIf { false }
 
     def npmCommand = System.env.CI ?
       'ci:build' :
@@ -53,12 +108,12 @@ def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
 
     if (findProperty('environment')?:'development' == 'release') {
         if (project.vTag == 'GA')
-            args << "${project.vNum}".toString()
+            args.add("${project.vNum}".toString())
         else
-            args << "${project.vNum}-${project.vTag}.${new Date().getTime()}".toString()
+            args.add("${project.vNum}-${project.vTag}.${new Date().getTime()}".toString())
     }
     else {
-        args << "${project.vNum}-snapshot.${new Date().getTime()}".toString()
+        args.add("${project.vNum}-snapshot.${new Date().getTime()}".toString())
     }
 
     /** Copy to staging location where we will modify it */
@@ -146,14 +201,15 @@ tasks.register('runNpmPublish', NpmTask) {t ->
 
     def dryRun = (findProperty('dryRun') as String ?: 'true').toBoolean()
 
-    args = ['publish', '--dry-run']
+    List myArgs = ['publish', '--dry-run']
 
     if (!dryRun)
-        args = args - '--dry-run'
+        myArgs = myArgs - '--dry-run'
 
-    if (project.environment != 'release') {
-        args += ['--tag', 'snapshot']
+    if (project.findProperty('environment') != 'release') {
+        myArgs += ['--tag', 'snapshot']
     }
+    args=myArgs
 
     t.execOverrides {
         it.workingDir = 'build/pack'

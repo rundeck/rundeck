@@ -4,7 +4,7 @@
         margin: 0 -15px;
          padding: 0 25px;
         &:nth-child(odd){
-            background-color: #F5F7FA;
+            background-color: var(--table-stripe-color);
         }
         .row{
             display: flex;
@@ -49,7 +49,7 @@
         }
     }
     .project_list_readme{
-        background-color: #f7f7f7;
+        background-color: var(--background-color-accent-lvl2);
         padding: 30px;
         border-radius: .5rem;
         margin-top: 10px;

@@ -1,0 +1,67 @@
+plugins {
+    id 'groovy'
+}
+
+ext.pluginClassNames='org.rundeck.plugin.azureobjectstore.AzureObjectStorePlugin'
+ext.pluginName = 'Azure Object Store Plugin'
+ext.pluginDescription = 'Stores data in an Azure Storage compliant object store'
+
+configurations{
+    pluginLibs
+
+    //declare compile to extend from pluginLibs so it inherits the dependencies
+    implementation {
+        extendsFrom pluginLibs
+    }
+}
+
+dependencies {
+    // Use the latest Groovy version for building this library
+    implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+
+    pluginLibs (group: 'com.microsoft.azure', name: 'azure', version: '1.3.0'){
+        exclude group: "com.fasterxml.jackson.core"
+    }
+    pluginLibs (group: 'com.microsoft.azure', name: 'azure-storage', version: '6.1.0') {
+        exclude group: "com.fasterxml.jackson.core"
+    }
+
+    // Use the awesome Spock testing and specification framework
+    testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
+    testImplementation "com.squareup.okhttp3:mockwebserver:3.11.0"
+    testImplementation "org.testcontainers:testcontainers:1.15.0"
+    testImplementation "cglib:cglib-nodep:3.2.5"
+    testImplementation 'org.objenesis:objenesis:1.4'
+    testImplementation "org.slf4j:slf4j-simple:1.6.1"
+    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.pluginLibs
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+jar {
+    from "$buildDir/output"
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+        def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
+    }
+}
+
+//set jar task to depend on copyToLib
+jar.dependsOn(copyToLib)
+

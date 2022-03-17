@@ -18,29 +18,39 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
-import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
-import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
-import org.grails.plugins.testing.GrailsMockHttpServletResponse
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
-import org.springframework.context.MessageSource
+import org.rundeck.core.auth.access.AuthActions
+import org.rundeck.core.auth.access.MissingParameter
+import org.rundeck.core.auth.access.NotFound
+import org.rundeck.core.auth.access.UnauthorizedAccess
+import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.core.auth.web.RdAuthorizeProject
+import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
 import rundeck.Project
 import rundeck.services.ApiService
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
+import spock.lang.Unroll
 
 import javax.security.auth.Subject
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.lang.annotation.Annotation
 
 import static org.junit.Assert.*
 
@@ -49,7 +59,11 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     List<Class> getDomainClasses() { [Project] }
 
     def setup(){
-        controller.apiService = new ApiService()
+        controller.apiService = Mock(ApiService)
+
+        session.subject = new Subject()
+        controller.rundeckWebDefaultParameterNamesMapper=Mock(WebDefaultParameterNamesMapper)
+        controller.rundeckExceptionHandler=Mock(WebExceptionHandler)
     }
     /**
      * utility method to mock a class
@@ -61,7 +75,7 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     }
 
     void apiProjectList_xml(){
-        when:
+        given:
         controller.frameworkService = mockWith(FrameworkService){
             projects(1..1){auth->
                 [
@@ -80,7 +94,7 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
 
             }
         }
-
+        when:
         response.format='xml'
         controller.apiProjectList()
         then:
@@ -228,79 +242,46 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
 
     }
 
-    void apiProjectGet_missingProjectParam(){
-        when:
-        controller.frameworkService = mockWith(FrameworkService){
-        }
+    void apiProjectGet_missingProjectParam() {
+        given:
+            controller.frameworkService = Mock(FrameworkService) {
+            }
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
-        controller.apiService = mockWith(ApiService) {
-            requireApi(1..1) { req, resp -> true }
-            renderErrorFormat(1..1) { resp, map ->
-                assertEquals(HttpServletResponse.SC_BAD_REQUEST,map.status)
-                assertEquals('api.error.parameter.required',map.code)
-                resp.status=map.status
+            controller.apiService = Mock(ApiService) {
+                1 * requireApi(_, _) >> true
             }
-        }
 
-        response.format='xml'
-        controller.apiProjectGet()
+            response.format = 'xml'
+            controller.rundeckExceptionHandler = Mock(WebExceptionHandler)
+        when:
+            controller.apiProjectGet()
         then:
-        assert response.status==HttpServletResponse.SC_BAD_REQUEST
+            1 * controller.rundeckExceptionHandler.handleException(_, _, _ as MissingParameter)
     }
 
-    void apiProjectGet_unauthorized(){
-        when:
-        controller.frameworkService = mockWith(FrameworkService){
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>false
-            }
 
-        controller.apiService = mockWith(ApiService) {
-            requireApi(1..1) { req, resp -> true }
-            renderErrorFormat(1..1) { resp, map ->
-                assertEquals(HttpServletResponse.SC_FORBIDDEN,map.status)
-                assertEquals('api.error.item.unauthorized',map.code)
-                resp.status=map.status
-            }
-        }
-
-        response.format='xml'
-        params.project='test1'
-        controller.apiProjectGet()
-        then:
-        assert response.status==HttpServletResponse.SC_FORBIDDEN
+    private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
+        artefactInstance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)
     }
 
-    void apiProjectGet_notfound(){
+    @Unroll
+    def "RdAuthorizeProject for endpoint #endpoint requires auth #access"() {
         when:
-        controller.frameworkService = mockWith(FrameworkService){
-            existsFrameworkProject(1..1) { proj ->
-                assertEquals('test1',proj)
-                false
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-            }
-
-        controller.apiService = mockWith(ApiService) {
-            requireApi(1..1) { req, resp -> true }
-            renderErrorFormat(1..1) { resp, map ->
-                assertEquals(HttpServletResponse.SC_NOT_FOUND,map.status)
-                assertEquals('api.error.item.doesnotexist',map.code)
-                resp.status=map.status
-            }
-        }
-
-        response.format='xml'
-        params.project='test1'
-        controller.apiProjectGet()
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeProject)
         then:
-        assert response.status==HttpServletResponse.SC_NOT_FOUND
+            result.value() == access
+        where:
+            endpoint                    | access
+            'apiProjectGet'             | RundeckAccess.General.AUTH_APP_READ
+            'apiProjectDelete'          | RundeckAccess.General.AUTH_APP_DELETE
+            'apiProjectConfigGet'       | RundeckAccess.Project.AUTH_APP_CONFIGURE
+            'apiProjectConfigPut'       | RundeckAccess.Project.AUTH_APP_CONFIGURE
+            'apiProjectExport'          | RundeckAccess.Project.AUTH_APP_EXPORT
+            'apiProjectImport'          | RundeckAccess.Project.AUTH_APP_IMPORT
+            'apiProjectConfigKeyGet'    | RundeckAccess.Project.AUTH_APP_CONFIGURE
+            'apiProjectConfigKeyPut'    | RundeckAccess.Project.AUTH_APP_CONFIGURE
+            'apiProjectConfigKeyDelete' | RundeckAccess.Project.AUTH_APP_CONFIGURE
     }
 
     private Object createFrameworkService(boolean configAuth, String projectName, LinkedHashMap<String,
@@ -329,440 +310,329 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         }
     }
 
-    void apiProjectGet_xml_noconfig_v11(){
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(false, 'test1')
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-                1 * authorizeProjectConfigure(_,'test1')>>false
+    @Unroll
+    def "renderApiProjectXml hasConfig #hasConfig vers #vers"() {
+        given:
+            Properties projProps = new Properties(
+                [
+                    'project.description': 'a description',
+                    'project.label'      : 'a label',
+                    "test.property"      : "value1",
+                    "test.property2"     : "value2"
+                ]
+            )
+            def configDate = new Date()
+            def rdProject = Mock(IRundeckProject) {
+                _ * getName() >> 'test1'
+                _ * getProjectProperties() >> projProps
+                _ * hasProperty(_) >> {
+                    projProps[it[0]] != null
+                }
+                seeCreated * getConfigCreatedTime() >> configDate
             }
-
-        response.format='xml'
-        params.project='test1'
-        request.setAttribute('api_version', 11) //do not include <result> wrapper
-        controller.apiProjectGet()
-        then:
-        assert response.status==HttpServletResponse.SC_OK
-
-        //XML result has no wrapper
-        assertEquals 'project', response.xml.name()
-        assertEquals 0, response.xml.result.size()
-        assertEquals 0, response.xml.projects.size()
-
+            controller.frameworkService = Mock(FrameworkService) {
+                seeConfig * loadProjectProperties(rdProject) >> projProps
+            }
+            def writer = new StringWriter()
+            def builder = new MarkupBuilder(writer)
         when:
-        def project=response.xml
-
-        //test project element
+            controller.renderApiProjectXml(rdProject, builder, hasConfig, vers)
+            def result = writer.toString()
+            def response = new XmlSlurper().parseText(result)
         then:
-        assertEquals 'test1', project.name.text()
-        assertEquals '', project.description.text()
-        assertEquals 0, project.config.size()
+
+            //XML result has no wrapper
+            'project' == response.name()
+            0 == response.result.size()
+            0 == response.projects.size()
+
+            'test1' == response.name.text()
+            'a description' == response.description.text()
+            seeConfig == response.config.size()
+
+            (seeConfig?4:0)== response.config.property.size()
+
+            response.config.property[0].'@key'.text() == (seeConfig?'test.property':'')
+            response.config.property[0].'@value'.text() == (seeConfig?'value1':'')
+            response.config.property[1].'@key'.text() == (seeConfig?'test.property2':'')
+            response.config.property[1].'@value'.text() == (seeConfig?'value2':'')
+
+            response.label.size()==seeLabel
+
+            response.label.text()==(seeLabel?'a label':'')
+
+            response.created.size()==seeCreated
+
+            response.created.text()==(seeCreated?configDate.toString():'')
+
+        where:
+            hasConfig | vers | seeConfig | seeLabel | seeCreated
+            false     | 11   | 0         | 0        | 0
+            true      | 11   | 1         | 0        | 0
+            false     | 26   | 0         | 1        | 0
+            true      | 26   | 1         | 1        | 0
+            true      | 33   | 1         | 1        | 1
+            false     | 33   | 0         | 1        | 1
     }
-    /**
-     * apiversion {@literal <} 11 will result in no {@literal <config>} element, even if authorized
-     */
-    /**
-     * apiversion {@literal >=} 11 will result in {@literal <config>} element, if authorized
-     */
-    void apiProjectGet_xml_withconfig_v11(){
-
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(true, 'test1', ["test.property": "value1", "test.property2": "value2"])
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-                1 * authorizeProjectConfigure(_,'test1')>>true
+    @Unroll
+    def "renderApiProjectJson hasConfig #hasConfig vers #vers"() {
+        given:
+            Properties projProps = new Properties(
+                [
+                    'project.description': 'a description',
+                    'project.label'      : 'a label',
+                    "test.property"      : "value1",
+                    "test.property2"     : "value2"
+                ]
+            )
+            def configDate = new Date()
+            def configDateString = ExecutionService.ISO_8601_DATE_FORMAT.get().format(configDate)
+            def rdProject = Mock(IRundeckProject) {
+                _ * getName() >> 'test1'
+                _ * getProjectProperties() >> projProps
+                _ * hasProperty(_) >> {
+                    projProps[it[0]] != null
+                }
+                seeCreated * getConfigCreatedTime() >> configDate
             }
-        response.format='xml'
-        params.project='test1'
-        request.setAttribute('api_version', 11) //do not include <result> wrapper
-        controller.apiProjectGet()
-
-        then:
-        assert response.status==HttpServletResponse.SC_OK
-
-        //XML result has wrapper
-        assertEquals 'project', response.xml.name()
-
-        assertEquals 0, response.xml.projects.size()
-        assertEquals 0, response.xml.project.size()
-
-        when:
-        def project = response.xml
-
-        then:
-        //test project element
-        assertEquals 'test1', project.name.text()
-        assertEquals '', project.description.text()
-        assertEquals 1, project.config.size()
-        assertEquals 2, project.config.property.size()
-        assertEquals 'test.property', project.config.property[0].'@key'.text()
-        assertEquals 'value1', project.config.property[0].'@value'.text()
-        assertEquals 'test.property2', project.config.property[1].'@key'.text()
-        assertEquals 'value2', project.config.property[1].'@value'.text()
-    }
-
-    void apiProjectGet_json_noconfig() {
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(false, 'test1')
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-                1 * authorizeProjectConfigure(_,'test1')>>false
+            controller.frameworkService = Mock(FrameworkService) {
+                seeConfig * loadProjectProperties(rdProject) >> projProps
             }
-        response.format = 'json'
-        params.project = 'test1'
-        request.setAttribute('api_version', 11) // trigger xml <result> wrapper
-        controller.apiProjectGet()
-
-        then:
-        assert response.status == HttpServletResponse.SC_OK
-
         when:
-        def project = response.json
+            def response=controller.renderApiProjectJson(rdProject, hasConfig, vers)
 
         then:
-        //test project element
-        assertEquals 'test1', project.name
-        assertEquals '', project.description
-        assertEquals null, project.config
-    }
 
-    void apiProjectGet_json_withconfig() {
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.frameworkService = createFrameworkService(true, 'test1',['test.property':'value1',
-                'test.property2':'value2'])
+           'test1' == response.name
+            'a description' == response.description
+            (seeConfig ? false : true) == (response.config == null)
 
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-                1 * authorizeProjectConfigure(_,'test1')>>true
-            }
-        response.format = 'json'
-        params.project = 'test1'
-        request.setAttribute('api_version', 11) // trigger xml <result> wrapper
-        controller.apiProjectGet()
-        then:
-        assert response.status == HttpServletResponse.SC_OK
+            (seeConfig?4:null)== response.config?.size()
 
-        when:
-        def project = response.json
+            response.config?.get('test.property') == (seeConfig?'value1':null)
+            response.config?.get('test.property2') == (seeConfig?'value2':null)
 
-        then:
-        //test project element
-        assertEquals 'test1', project.name
-        assertEquals '', project.description
-        assertEquals(['test.property': 'value1', 'test.property2': 'value2'], project.config)
+            response.label==(seeLabel?'a label':null)
+
+            response.created==(seeCreated?configDateString:null)
+
+        where:
+            hasConfig | vers | seeConfig | seeLabel | seeCreated
+            false     | 11   | 0         | 0        | 0
+            true      | 11   | 1         | 0        | 0
+            false     | 26   | 0         | 1        | 0
+            true      | 26   | 1         | 1        | 0
+            true      | 33   | 1         | 1        | 1
+            false     | 33   | 0         | 1        | 1
     }
 
-    void apiProjectCreate_xml_unauthorized() {
+
+
+    @Unroll
+    def "rd authorize app type annotation required for endpoint #endpoint"() {
         when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.apiService.messageSource= mockWith(MessageSource) {
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
-        setupProjectCreate(controller, false, true, null, null, null)
-
-        request.xml='<project><name>test1</name></project>'
-        request.method='POST'
-        response.format = 'xml'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectCreate()
-
+            def result = getControllerMethodAnnotation(endpoint, RdAuthorizeApplicationType)
         then:
-        assert response.status == HttpServletResponse.SC_FORBIDDEN
-
-        when:
-        def result = response.xml
-
-        then:
-        //test project element
-        assertEquals 'true', result.'@error'.text()
-        assertEquals 'api.error.item.unauthorized', result.error.'@code'.text()
-        assertEquals 'api.error.item.unauthorized', result.error.message.text()
+            result.access() == access
+            result.type() == type
+        where:
+            endpoint           | type                       | access
+            'apiProjectCreate' | AuthConstants.TYPE_PROJECT | RundeckAccess.General.AUTH_APP_CREATE
     }
 
-    void apiProjectCreate_json_unauthorized() {
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource= mockWith(MessageSource) {
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
-        setupProjectCreate(controller, false, true, null, null, null)
-
-        request.json='{"name":"test1"}'
-        request.method='POST'
-        response.format = 'json'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectCreate()
-        then:
-        assert response.status == HttpServletResponse.SC_FORBIDDEN
-
-        when:
-        def result = response.json
-
-        then:
-        //test project element
-        assertEquals true, result.error
-        assertEquals 'api.error.item.unauthorized', result.errorCode
-        assertEquals 'api.error.item.unauthorized', result.message
-    }
     /**
      * Missing project name element
      */
     void apiProjectCreate_xml_invalid() {
-        when:
-        defineBeans {
-            apiService(ApiService)
-        }
-        controller.apiService.messageSource= mockWith(MessageSource) {
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-            _ * authResourceForProject('test1')
-            1 * authorizeApplicationResourceTypeAll(_,'project',[AuthConstants.ACTION_CREATE])>>true
-        }
+        given:
+        controller.apiService=Mock(ApiService)
+
         request.xml='<project><namex>test1</namex></project>'
         request.method='POST'
         response.format = 'xml'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
         then:
-        assert response.status == HttpServletResponse.SC_BAD_REQUEST
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.apiService.parseJsonXmlWith(_,_,_)>>false
+        response.contentLength==0
 
-        when:
-        def result = response.xml
-
-        then:
-        //test project element
-        assertEquals 'true', result.'@error'.text()
-        assertEquals 'api.error.invalid.request', result.error.'@code'.text()
-        assertEquals 'api.error.invalid.request', result.error.message.text()
     }/**
      * Missing project name element
      */
     void apiProjectCreate_json_invalid() {
-        when:
-        controller.apiService = new ApiService()
+        given:
+        controller.apiService=Mock(ApiService)
         mockCodec(JSONCodec)
-        controller.apiService.messageSource= mockWith(MessageSource) {
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
 
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                _ * authResourceForProject('test1')
-                1 * authorizeApplicationResourceTypeAll(_,'project',[AuthConstants.ACTION_CREATE])>>true
-            }
         request.json='{"blame":"monkey"}'
         request.method='POST'
         response.format = 'json'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_BAD_REQUEST
-
-        def result = response.json
 
         then:
-        //test project element
-        assertEquals true, result.error
-        assertEquals 'api.error.invalid.request', result.errorCode
-        assertEquals 'api.error.invalid.request', result.message
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.apiService.parseJsonXmlWith(_,_,_)>>false
+        response.contentLength==0
     }
     /**
      * project already exists
      */
     void apiProjectCreate_xml_projectExists() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource= mockWith(MessageSource){
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
+        given:
+        controller.apiService=Mock(ApiService)
 
-        setupProjectCreate(controller, true, true, null, null, null)
+        setupProjectCreate(controller, true, false, null, null, null)
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
         response.format = 'xml'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_CONFLICT
-
-        def result = response.xml
 
         //test project element
         then:
-        assertEquals 'true', result.'@error'.text()
-        assertEquals 'api.error.item.alreadyexists', result.error.'@code'.text()
-        assertEquals 'api.error.item.alreadyexists', result.error.message.text()
+            assert response.status == HttpServletResponse.SC_CONFLICT
+
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+        1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+            it[2].get('xml').call(it[0].XML)
+            true
+        }
+        1 * controller.apiService.renderErrorFormat(_, {
+            it.code=='api.error.item.alreadyexists'
+        })>> {
+            it[0].status=it[1].status
+        }
+
     }
     /**
      * project already exists
      */
     void apiProjectCreate_json_projectExists() {
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource= mockWith(MessageSource){
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
+        given:
+        controller.apiService=Mock(ApiService)
 
-        setupProjectCreate(controller, true, true, null, null, null)
+        setupProjectCreate(controller, true, false, null, null, null)
         request.json = '{"name":"test1"}'
         request.method='POST'
         response.format = 'json'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_CONFLICT
 
-        def result = response.json
 
         //test project element
         then:
-        assertEquals true, result.error
-        assertEquals 'api.error.item.alreadyexists', result.errorCode
-        assertEquals 'api.error.item.alreadyexists', result.message
+            assert response.status == HttpServletResponse.SC_CONFLICT
+        1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+        1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+            it[2].get('json').call(it[0].JSON)
+            true
+        }
+        1 * controller.apiService.renderErrorFormat(_, {
+            it.code=='api.error.item.alreadyexists'
+        })>> {
+            it[0].status=it[1].status
+        }
     }
     /**
      * Failure to create project
      */
     void apiProjectCreate_xml_withErrors() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource= mockWith(MessageSource){
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
-        setupProjectCreate(controller, true, false, ['error1', 'error2'], [:], null)
+        given:
+            controller.apiService=Mock(ApiService)
+        setupProjectCreate(controller, false, false, ['error1', 'error2'], [:], null)
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
         response.format = 'xml'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-
-        def result = response.xml
 
         //test project element
         then:
-        assertEquals 'true', result.'@error'.text()
-        assertEquals 1,result.error.'@code'.size()
-        assertEquals 'api.error.unknown',result.error.'@code'.text()
-        assertEquals 'error1; error2', result.error.message.text()
+        1 * controller.apiService.requireApi(*_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('xml').call(it[0].XML)
+                true
+            }
+        1 * controller.apiService.renderErrorFormat(_, {
+            it.status== HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+        })
     }
     /**
      * Failure to create project
      */
     void apiProjectCreate_json_withErrors() {
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource= mockWith(MessageSource){
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
-        setupProjectCreate(controller, true, false, ['error1', 'error2'], [:], null)
+        given:
+            controller.apiService=Mock(ApiService)
+        setupProjectCreate(controller, false, false, ['error1', 'error2'], [:], null)
         request.json = '{"name":"test1"}'
         request.method='POST'
         response.format = 'json'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-
-        def result = response.json
-
-        //test project element
         then:
-        assertEquals true, result.error
-        assertEquals 'api.error.unknown', result.errorCode
-        assertEquals 'error1; error2', result.message
+
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+            1 * controller.apiService.requireApi(*_)>>true
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('json').call(it[0].JSON)
+                true
+            }
+            1 * controller.apiService.renderErrorFormat(_, {
+                it.status== HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+            })
     }
     /**
      * Successful
      */
     void apiProjectCreate_xml_success() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource= mockWith(MessageSource){
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
-        setupProjectCreate(controller, true, false, [], [:], ['prop1': 'value1', 'prop2': 'value2'])
+        
+        given:
+            controller.apiService=Mock(ApiService)
+        setupProjectCreate(controller, false, true, [], [:], ['prop1': 'value1', 'prop2': 'value2'])
         request.xml='<project><name>test1</name></project>'
         request.method='POST'
         response.format = 'xml'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_CREATED
-
-        def result = response.xml
-
-        //test project element
-        assertEquals 0, result.'@error'.size()
-        def project =result
         then:
-        assertEquals "test1",project.name.text()
-        assertEquals 1,project.config.size()
-        assertEquals 2, project.config.property.size()
-        assertEquals 'prop1', project.config.property[0].'@key'.text()
-        assertEquals 'value1', project.config.property[0].'@value'.text()
-        assertEquals 'prop2', project.config.property[1].'@key'.text()
-        assertEquals 'value2', project.config.property[1].'@value'.text()
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('xml').call(it[0].XML)
+                true
+            }
+            1 * controller.apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, _ as HttpServletRequest, _ as HttpServletResponse, _ as Closure)
     }
     /**
      * Successful
      */
     void apiProjectCreate_json_success() {
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource= mockWith(MessageSource){
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
-        setupProjectCreate(controller, true, false, [],
-                           [:], ['prop1': 'value1', 'prop2': 'value2'])
+
+        given:
+            controller.apiService=Mock(ApiService)
+        setupProjectCreate(
+            controller, false, false, [],
+            [:], ['prop1': 'value1', 'prop2': 'value2']
+        )
         request.json = '{"name":"test1"}'
         request.method='POST'
         response.format = 'json'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_CREATED
+        then:
+
+            1 * controller.apiService.requireApi(*_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('json').call(it[0].JSON)
+                true
+            }
+         response.status == HttpServletResponse.SC_CREATED
 
         def result = response.json
 
@@ -770,7 +640,6 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
         assertEquals null,result.error
         def project =result
 
-        then:
         assertEquals "test1",project.name
         assertEquals 2, project.config.size()
         assertEquals 'value1', project.config['prop1']
@@ -780,94 +649,95 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
      * Create project with input config
      */
     void apiProjectCreate_xml_withconfig() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource= mockWith(MessageSource){
-            getMessage{code,args,defval,locale->
-                code
-            }
-        }
-        setupProjectCreate(controller, true, false, [],
-                           ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
+        
+        given:
+        controller.apiService=Mock(ApiService)
+        setupProjectCreate(
+            controller,
+            false,
+            true,
+            [],
+            ['input1': 'value1', 'input2': 'value2'],
+            ['prop1': 'value1', 'prop2': 'value2']
+        )
         request.xml='<project><name>test1</name><config><property key="input1" value="value1"/><property key="input2"' +
                 ' value="value2"/></config></project>'
         request.method='POST'
         response.format = 'xml'
-        request.setAttribute('api_version', 11) // require version 11
+        when:
         controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_CREATED
-
-        def result = response.xml
-
-        //test project element
-        assertEquals 0, result.'@error'.size()
-        def project =result
-
         then:
-        assertEquals "test1",project.name.text()
-        assertEquals 1,project.config.size()
-        assertEquals 2, project.config.property.size()
-        assertEquals 'prop1', project.config.property[0].'@key'.text()
-        assertEquals 'value1', project.config.property[0].'@value'.text()
-        assertEquals 'prop2', project.config.property[1].'@key'.text()
-        assertEquals 'value2', project.config.property[1].'@value'.text()
+            1 * controller.apiService.requireApi(*_)>>true
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('xml').call(it[0].XML)
+                true
+            }
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+            1 * controller.apiService.renderSuccessXml(HttpServletResponse.SC_CREATED, _ as HttpServletRequest, _ as HttpServletResponse, _ as Closure)
     }
     /**
      * Create project with input config
      */
     void apiProjectCreate_json_withconfig() {
+        given:
+            controller.apiService=Mock(ApiService)
+            setupProjectCreate(
+                controller,
+                false,
+                false,
+                [],
+                ['input1': 'value1', 'input2': 'value2'],
+                ['prop1': 'value1', 'prop2': 'value2']
+            )
+            request.json = '{"name":"test1","config": { "input1":"value1","input2":"value2" } }'
+            request.method='POST'
+            response.format = 'json'
         when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource= mockWith(MessageSource){ getMessage {code,args,locale-> code } }
-        setupProjectCreate(controller, true, false, [],
-                           ['input1': 'value1', 'input2': 'value2'], ['prop1': 'value1', 'prop2': 'value2'])
-        request.json = '{"name":"test1","config": { "input1":"value1","input2":"value2" } }'
-        request.method='POST'
-        response.format = 'json'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectCreate()
-        assert response.status == HttpServletResponse.SC_CREATED
-
-        def result = response.json
-
-        //test project element
-        assertEquals null, result.error
-        def project = result
+            controller.apiProjectCreate()
         then:
-        assertEquals "test1", project.name
-        assertEquals 2, project.config.size()
-        assertEquals 'value1', project.config['prop1']
-        assertEquals 'value2', project.config['prop2']
+
+            response.status == HttpServletResponse.SC_CREATED
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+            1 * controller.apiService.requireApi(*_)>>true
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('json').call(it[0].JSON)
+                true
+            }
+            def result = response.json
+            //test project element
+            null == result.error
+            "test1" == result.name
+            2 == result.config.size()
+            'value1' == result.config['prop1']
+            'value2' == result.config['prop2']
     }
 
-    private def setupProjectCreate(ProjectController controller, boolean authorized, boolean exists, List createErrors,
-                                   Map<String, String> inputProps,
-                                   Map<String, String> configProps) {
-
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-            _ * authResourceForProject('test1')
-            1 * authorizeApplicationResourceTypeAll(_,'project',[AuthConstants.ACTION_CREATE])>>authorized
-        }
+    private def setupProjectCreate(
+        ProjectController controller,
+        boolean exists,
+        boolean isxml,
+        List createErrors,
+        Map<String, String> inputProps,
+        Map<String, String> configProps
+    ) {
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
         def prja = Stub(IRundeckProject) {
             getName()>>'test1'
             getProjectProperties()>>[:]
         }
         controller.frameworkService=Mock(FrameworkService)
 
-        if(authorized){
-            1 * controller.frameworkService.existsFrameworkProject('test1')>>exists
+        1 * controller.frameworkService.existsFrameworkProject('test1')>>exists
 
 
-            (exists?0:1)*controller.frameworkService.createFrameworkProject('test1',inputProps)>> [createErrors?.size() > 0 ? null: prja, createErrors]
-            if(!exists){
-                (createErrors?.size() > 0?0:1)*controller.frameworkService.loadProjectProperties(prja)>>configProps
-            }
+        (exists?0:1)*controller.frameworkService.createFrameworkProject('test1',inputProps)>> [createErrors?.size() > 0 ? null: prja, createErrors]
+        if(!exists && !isxml){
+            (createErrors?.size() > 0?0:1)*controller.frameworkService.loadProjectProperties(prja)>>configProps
         }
-
     }
 
-    void deleteProject_xml_missingparam(){
+    @Unroll
+    void "deleteProject #format project parameter missing"(){
         given:
             controller.apiService = Mock(ApiService)
         when:
@@ -876,205 +746,84 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             controller.apiProjectDelete()
         then:
             1 * controller.apiService.requireApi(*_) >> true
-            1 * controller.apiService.renderErrorFormat(_,[
-                status: HttpServletResponse.SC_BAD_REQUEST,
-                code: "api.error.parameter.required",
-                args: ['project']
-            ])
+            1 * controller.rundeckExceptionHandler.handleException(_, _, _ as MissingParameter)>>true
+        where:
+            format << ['xml','json']
 
     }
 
-    void deleteProject_json_missingparam(){
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        mockCodec(JSONCodec)
-        request.method = 'DELETE'
-        response.format='json'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectDelete()
-        then:
-        assert response.status == HttpServletResponse.SC_BAD_REQUEST
-        assertEquals true, response.json.error
-        assertEquals "api.error.parameter.required", response.json.errorCode
-    }
-
-    void deleteProject_xml_notfound(){
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        mockCodec(JSONCodec)
-        controller.frameworkService=mockFrameworkServiceForProjectDelete(false, false)
-        request.method = 'DELETE'
-        response.format='xml'
-        params.project='test1'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectDelete()
-        then:
-        assert response.status == HttpServletResponse.SC_NOT_FOUND
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals "api.error.item.doesnotexist", response.xml.error.'@code'.text()
-    }
-
-    void deleteProject_json_notfound(){
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        mockCodec(JSONCodec)
-        controller.frameworkService=mockFrameworkServiceForProjectDelete(false, false)
-        request.method = 'DELETE'
-        response.format='json'
-        params.project='test1'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectDelete()
-        assert response.status == HttpServletResponse.SC_NOT_FOUND
-        assertEquals true, response.json.error
-        assertEquals "api.error.item.doesnotexist", response.json.errorCode
-    }
-
-    void deleteProject_xml_unauthorized(){
-        when:
-
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        mockCodec(JSONCodec)
-        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, false)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>false
+    private def setupAuthDelete(String name='test1',boolean allowed=true, boolean found=true){
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer){
+            1 * project(_,_)>>Mock(AuthorizingProject){
+                _ * getAuthContext() >> Mock(UserAndRolesAuthContext)
+                1 * getResource()>>{
+                    if(!allowed){
+                        throw new UnauthorizedAccess('delete','project',name)
+                    }
+                    if(!found){
+                        throw new NotFound('project',name)
+                    }
+                    Stub(IRundeckProject){
+                        getName()>>name
+                    }
+                }
             }
-        request.method = 'DELETE'
-        response.format='xml'
-        params.project='test1'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectDelete()
-        then:
-        assert response.status == HttpServletResponse.SC_FORBIDDEN
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals "api.error.item.unauthorized", response.xml.error.'@code'.text()
+        }
     }
 
-    void deleteProject_json_unauthorized(){
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+    void "deleteProject has errors"(){
+        
+        given:
+        controller.apiService=Mock(ApiService)
         mockCodec(JSONCodec)
-        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, false)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>false
-            }
-        request.method = 'DELETE'
-        response.format='json'
-        params.project='test1'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectDelete()
-        then:
-        assert response.status == HttpServletResponse.SC_FORBIDDEN
-        assertEquals true, response.json.error
-        assertEquals "api.error.item.unauthorized", response.json.errorCode
-    }
-
-    void deleteProject_xml_haserrors(){
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        mockCodec(JSONCodec)
-        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete()
         controller.projectService=mockProjectServiceForProjectDelete(false, 'deleteProjectFailed')
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-            authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-        }
 
-            request.method = 'DELETE'
-        response.format='xml'
+        setupAuthDelete()
+
+        request.method = 'DELETE'
         params.project='test1'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectDelete()
-        then:
-        assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals "deleteProjectFailed", response.xml.error.message.text()
-    }
-
-
-
-    void deleteProject_json_haserrors(){
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        mockCodec(JSONCodec)
-        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
-        controller.projectService = mockProjectServiceForProjectDelete(false, 'deleteProjectFailed')
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-            authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-        }
-
-            request.method = 'DELETE'
-        response.format='json'
-        params.project='test1'
-        request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
         then:
-        assert response.status == HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-        assertEquals true, response.json.error
-        assertEquals "deleteProjectFailed", response.json.message
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.renderErrorFormat(_,[
+                status : HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                code   : "api.error.unknown",
+                message: 'deleteProjectFailed',
+            ])
     }
 
     void deleteProject_xml_success(){
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        
+        given:
+            controller.apiService=Mock(ApiService)
         mockCodec(JSONCodec)
-        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
+        controller.frameworkService=mockFrameworkServiceForProjectDelete()
         controller.projectService=mockProjectServiceForProjectDelete(true, null)
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-            }
+
+        setupAuthDelete()
 
             request.method = 'DELETE'
-        response.format='xml'
         params.project='test1'
-        request.setAttribute('api_version', 11) // require version 11
-        controller.apiProjectDelete()
-        then:
-        assert response.status == HttpServletResponse.SC_NO_CONTENT
-    }
-
-
-
-    void deleteProject_json_success(){
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        mockCodec(JSONCodec)
-        controller.frameworkService=mockFrameworkServiceForProjectDelete(true, true)
-        controller.projectService = mockProjectServiceForProjectDelete(true, null)
-        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_DELETE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>true
-            }
-
-            request.method = 'DELETE'
-        response.format='json'
-        params.project='test1'
-        request.setAttribute('api_version', 11) // require version 11
         controller.apiProjectDelete()
         then:
+            1 * controller.apiService.requireApi(_,_)>>true
         assert response.status == HttpServletResponse.SC_NO_CONTENT
     }
+
+
+
 
     def mockProjectServiceForProjectDelete(boolean success, String errorMessage) {
         Mock(ProjectService) {
-            1 * deleteProject (*_)>>[success: success, error: errorMessage]
+            1 * deleteProject (*_)>>new ProjectService.DeleteResponse(success: success, error: errorMessage)
         }
     }
 
-    private def mockFrameworkServiceForProjectDelete(boolean exists, boolean authorized){
+    private def mockFrameworkServiceForProjectDelete(){
         Mock(FrameworkService){
-
-            _*existsFrameworkProject(_)>>exists
-            if(!authorized){
-                return
-            }
             getFrameworkProject('test1')>>Mock(IRundeckProject){
                 getName()>>'test1'
             }
@@ -1083,13 +832,6 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     private def mockFrameworkServiceForProjectConfigGet(boolean exists, boolean authorized, String action,
                                                         LinkedHashMap props, String textformat=null){
         Mock(FrameworkService){
-            1 * existsFrameworkProject(_)>>exists
-            if(!exists){
-                return
-            }
-            if(!authorized){
-                return
-            }
             (exists&&authorized?1:0)*getFrameworkProject('test1')>>Mock(IRundeckProject){
                 getName()>>'test1'
                 getProjectProperties()>>props
@@ -1100,50 +842,36 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
     private def mockFrameworkServiceForProjectConfigPut(boolean exists, boolean authorized, String action,
                                                         LinkedHashMap currentProps, boolean success, String errorMessage,
                                                         String propFileText, boolean handleScheduling = false){
-        mockWith(FrameworkService){
-            Map newConfigProps = [:]
-            existsFrameworkProject{String name->
-                exists
-            }
+        Map newConfigProps = [:]
+        Mock(FrameworkService){
+
+            _ * existsFrameworkProject(_) >> exists
             if(!exists){
                 return
             }
 
-            if(!authorized){
-                return
-            }
-            getFrameworkProject{name->
-                assertEquals('test1',name)
-                Mock(IRundeckProject){
-                    getName()>>'test1'
-                    getProjectProperties()>>currentProps
-                }
-            }
-            setFrameworkProjectConfig{proj,configProps->
+
+            1 * setFrameworkProjectConfig('test1', _) >> {
 //                assertEquals props,configProps
-                newConfigProps = configProps
+                newConfigProps = it[1]
                 [success: success,error: errorMessage]
             }
             if(handleScheduling) {
-                handleProjectSchedulingEnabledChange { String proj, isExecutionDisabledNow, isScheduleDisabledNow, newExecutionDisabledStatus, newScheduleDisabledStatus ->
-
-                }
+                1 * handleProjectSchedulingEnabledChange(*_)
             }
             if(!success){
                 return
             }
-            loadProjectProperties { proj ->
+            1 * loadProjectProperties(_)>> {
                 newConfigProps
             }
+
         }
     }
-    private def mockFrameworkServiceForProjectConfigKeyPut(boolean exists, boolean authorized, String action,
-                                                        LinkedHashMap props, boolean success, String errorMessage,
-                                                        String propFileText){
-        mockWith(FrameworkService){
-            existsFrameworkProject{String name->
-                exists
-            }
+    private def mockFrameworkServiceForProjectConfigKeyPut(boolean exists, boolean authorized,
+                                                        LinkedHashMap props, boolean success){
+        Mock(FrameworkService){
+            _ * existsFrameworkProject('test1')>>exists
             if(!exists){
                 return
             }
@@ -1151,29 +879,27 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             if(!authorized){
                 return
             }
-            getFrameworkProject{name->
-                assertEquals('test1',name)
-                [name:name,propertyFile: [text: propFileText]]
+            1 * getFrameworkProject('test1')>>Mock(IRundeckProject){
+                _*getName()>>'test1'
+
             }
-            updateFrameworkProjectConfig{proj,configProps, prefixes->
-                assertEquals props,configProps
-                [success: success,error: errorMessage]
+
+            1 * updateFrameworkProjectConfig(_,props,_)>>{
+
+                [success: success]
             }
             if(!success){
                 return
             }
-            loadProjectProperties { proj ->
-                props
-            }
+            1 * loadProjectProperties(_)>> props
+
         }
     }
-    private def mockFrameworkServiceForProjectConfigKeyDelete(boolean exists, boolean authorized, String action,
-                                                        String propname, boolean success, String errorMessage,
-                                                        String propFileText){
-        mockWith(FrameworkService){
-            existsFrameworkProject{String name->
-                exists
-            }
+    private def mockFrameworkServiceForProjectConfigKeyDelete(boolean exists, boolean authorized,
+                                                        String propname, boolean success){
+        Mock(FrameworkService){
+            _*existsFrameworkProject('test1')>>exists
+
             if(!exists){
                 return
             }
@@ -1181,23 +907,17 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             if(!authorized){
                 return
             }
-            getFrameworkProject{name->
-                assertEquals('test1',name)
-                [name:name,propertyFile: [text: propFileText]]
-            }
-            removeFrameworkProjectConfigProperties{proj,removeSet->
-                assertEquals ([propname] as Set,removeSet)
-                [success: success,error: errorMessage]
+           1 * getFrameworkProject('test1')>> Mock(IRundeckProject){
+               _*getName()>>'test1'
+           }
+            1 * removeFrameworkProjectConfigProperties(_,_)>>{
+                assertEquals ([propname] as Set,it[1])
+                [success: success]
             }
         }
     }
-    private def mockFrameworkServiceForProjectExport(boolean exists, boolean authorized, String action,
-                                                     boolean isacl=false,boolean aclauth=false,
-                                                     boolean isscm=false, boolean scmauth=false){
-        mockWith(FrameworkService){
-            existsFrameworkProject{String name->
-                exists
-            }
+    private def mockFrameworkServiceForProjectExport(boolean exists, boolean authorized){
+        Mock(FrameworkService){
             if(!exists){
                 return
             }
@@ -1205,59 +925,20 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             if(!authorized){
                 return
             }
-            getFrameworkProject{name->
-                assertEquals('test1',name)
-                [name:name]
+            1 * getFrameworkProject('test1')>>Mock(IRundeckProject){
+                _*getName()>>'test1'
             }
-            getRundeckFramework{->
-                null
-            }
+            1*getRundeckFramework()
 
-
-
-            getAuthContextForSubjectAndProject{subj,proj->
-                null
-            }
         }
     }
-    private def mockFrameworkServiceForProjectImport(boolean exists, boolean authorized, String action,
-                                                     boolean isacl=false,boolean aclauth=false,
-                                                     boolean isscm=false,boolean scmauth=false){
-        mockWith(FrameworkService){
-            existsFrameworkProject{String name->
-                exists
+    private def mockFrameworkServiceForProjectImport(){
+        Mock(FrameworkService){
+            1 * getFrameworkProject('test1')>>Mock(IRundeckProject){
+                _*getName()>>'test1'
             }
-            if(!exists){
-                return
-            }
+            _ * getRundeckFramework()
 
-            if(!authorized){
-                return
-            }
-            getFrameworkProject{name->
-                assertEquals('test1',name)
-                [name:name]
-            }
-            getRundeckFramework{->
-                null
-            }
-            getAuthContextForSubject{subj->null}
-
-
-            if(isscm){
-                authResourceForProject{ name ->
-                    assertEquals("test1", name)
-                    [admin: true]
-                }
-                authorizeApplicationResourceAll(1..1){ctx,resource,actions->
-                    aassertTrue(AuthConstants.ACTION_CONFIGURE in actions)
-                    assertTrue(AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN in actions)
-                    scmauth
-                }
-            }
-            getAuthContextForSubjectAndProject{subj,proj->
-                null
-            }
         }
     }
 
@@ -1280,1133 +961,877 @@ class ProjectController2Spec extends HibernateSpec implements ControllerUnitTest
             controller.apiService=Mock(ApiService){
                 requireApi(_,_)>>true
             }
+
         when:
         controller.frameworkService= Mock(FrameworkService)
         controller.apiProjectConfigGet()
         then:
 
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.renderErrorFormat(response,
-                                         [
-                                             status: HttpServletResponse.SC_BAD_REQUEST,
-                                             code: "api.error.parameter.required",
-                                             args: ['project']
-                                         ])
+            1 * controller.apiService.requireApi(*_) >> true
+            1 * controller.rundeckExceptionHandler.handleException(_, _, _ as MissingParameter)>>true
     }
 
-    private void assertXmlError(GrailsMockHttpServletResponse response, int status, String code) {
-        assertEquals status, response.status
-        assertEquals "true", response.xml.'@error'.text()
-        assertEquals code, response.xml.error.message.text()
+    private void setupAuthImport(boolean auth = true,
+                                    boolean found = true,
+                                    String name = 'test1',
+                                    AuthActions actions = RundeckAccess.Project.APP_IMPORT){
+        setupAuthAccess(auth, found, name, actions)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
     }
-
-
-    void apiProjectConfigGet_json_missingparam(){
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= Mock(FrameworkService)
-        request.api_version = 11
-        response.format='json'
-        controller.apiProjectConfigGet()
-        then:
-        assertEquals HttpServletResponse.SC_BAD_REQUEST, response.status
-        assertEquals true, response.json.error
-        assertEquals "api.error.parameter.required", response.json.errorCode
+    private void setupAuthExport(boolean auth = true,
+                                    boolean found = true,
+                                    String name = 'test1',
+                                    AuthActions actions = RundeckAccess.Project.APP_EXPORT){
+        setupAuthAccess(auth, found, name, actions)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
     }
-
-    void apiProjectConfigGet_xml_notfound(){
-        given:
-            controller.apiService = Mock(ApiService)
-        when:
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
-        request.api_version = 11
-        params.project='test1'
-        controller.apiProjectConfigGet()
-        then:
-
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.renderErrorFormat(response,
-                                                        [
-                                                            status: HttpServletResponse.SC_NOT_FOUND,
-                                                            code: "api.error.item.doesnotexist",
-                                                            args: ['Project', 'test1']
-                                                        ])
+    private void setupAuthConfigure(
+        boolean auth = true,
+        boolean found = true,
+        String name = 'test1',
+        AuthActions actions = RundeckAccess.Project.APP_CONFIGURE
+    ) {
+        setupAuthAccess(auth, found, name, actions)
     }
-
-    void apiProjectConfigGet_json_notfound(){
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(false, false, 'read', [:])
-        request.api_version = 11
-        params.project = 'test1'
-        response.format='json'
-        controller.apiProjectConfigGet()
-        then:
-        assertEquals HttpServletResponse.SC_NOT_FOUND, response.status
-        assertEquals true, response.json.error
-        assertEquals "api.error.item.doesnotexist", response.json.errorCode
-    }
-
-    void apiProjectConfigGet_xml_unauthorized(){
-        given:
-            controller.apiService=Mock(ApiService)
-        when:
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>false
-
+    private void setupAuthAccess(
+        boolean auth = true,
+        boolean found = true,
+        String name = 'test1',
+        AuthActions actions = RundeckAccess.Project.APP_CONFIGURE,
+        AuthActions authCheck = null,
+        boolean authCheckValue=true
+    ) {
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            (authCheck?2:1) * project(_, _) >> Mock(AuthorizingProject) {
+                1 * access(actions) >> {
+                    if(!auth) {
+                        throw new UnauthorizedAccess(actions.description, 'Project', name)
+                    }
+                    if(!found) {
+                        throw new NotFound( 'Project', name)
+                    }
+                    Stub(IRundeckProject){
+                        getName()>>name
+                    }
+                }
+                (authCheck ? 1 : 0) * authorize(authCheck) >> {
+                    if(!authCheckValue){
+                        throw new UnauthorizedAccess(authCheck.description, 'Project', name)
+                    }
+                }
+                0*_(*_)
             }
-        request.api_version = 11
-        params.project='test1'
-        controller.apiProjectConfigGet()
-        then:
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.renderErrorFormat(_,
-                                             [
-                                                 status: HttpServletResponse.SC_FORBIDDEN,
-                                                 code: "api.error.item.unauthorized",
-                                                 args: ['configure', "Project", 'test1']
-                                             ])
+            0*_(*_)
+        }
     }
-
-    void apiProjectConfigGet_json_unauthorized(){
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, false, 'configure', [:])
-
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                1 * authResourceForProject('test1')
-                1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])>>false
-
+    private void setupGetResource(IRundeckProject pject=null) {
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * project(_, _) >> Mock(AuthorizingProject) {
+                1 * getResource() >> {
+                    pject?:Stub(IRundeckProject){
+                        getName()>>'test'
+                    }
+                }
+                0*_(*_)
             }
-        request.api_version = 11
-        params.project = 'test1'
-        response.format='json'
-        controller.apiProjectConfigGet()
-        then:
-        assertEquals HttpServletResponse.SC_FORBIDDEN, response.status
-        assertEquals true, response.json.error
-        assertEquals "api.error.item.unauthorized", response.json.errorCode
+            0*_(*_)
+        }
     }
+
 
     void apiProjectConfigGet_xml_success(){
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
+        
+        given:
+        controller.apiService=Mock(ApiService)
 
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
+        setupGetResource(Mock(IRundeckProject){
+            getName()>>'test1'
+            getProjectProperties()>>["prop1": "value1", "prop2": "value2"]
+        })
         request.api_version = 11
         params.project='test1'
-        controller.apiProjectConfigGet()
+        when:
+            controller.apiProjectConfigGet()
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "config",response.xml.name()
-        assertEquals 2,response.xml.property.size()
-        assertEquals 'prop1',response.xml.property[0].'@key'.text()
-        assertEquals 'value1',response.xml.property[0].'@value'.text()
-        assertEquals 'prop2',response.xml.property[1].'@key'.text()
-        assertEquals 'value2',response.xml.property[1].'@value'.text()
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_,_)>>'xml'
+            1 * controller.apiService.renderSuccessXml(_ as HttpServletRequest,_,_ as Closure)
+    }
+    def "respondXmlConfig"(){
+        given:
+            def pject = Mock(IRundeckProject)
+            def writer = new StringWriter()
+            def builder = new MarkupBuilder(writer)
+            controller.frameworkService = Mock(FrameworkService){
+                1 * loadProjectProperties(pject)>>[
+                    prop1:'value1',
+                    prop2:'value2'
+                ]
+            }
+        when:
+            controller.renderApiProjectConfigXml(pject,builder)
+            def response = new XmlSlurper().parseText(writer.toString())
+        then:
+            assertEquals "config",response.name()
+            assertEquals 2,response.property.size()
+            assertEquals 'prop1',response.property[0].'@key'.text()
+            assertEquals 'value1',response.property[0].'@value'.text()
+            assertEquals 'prop2',response.property[1].'@key'.text()
+            assertEquals 'value2',response.property[1].'@value'.text()
     }
 
     void apiProjectConfigGet_json_success(){
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
+        
+        given:
+        controller.apiService=Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService){
+            1 * loadProjectProperties(_)>>["prop1": "value1", "prop2": "value2"]
+        }
+        setupGetResource(Mock(IRundeckProject){
+            getName()>>'test1'
+        })
         request.api_version = 11
         params.project = 'test1'
         response.format='json'
+        when:
         controller.apiProjectConfigGet()
         then:
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_,_)>>'json'
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals "value1",response.json.prop1
         assertEquals "value2",response.json.prop2
     }
 
     void apiProjectConfigGet_text_success(){
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigGet(true, true, 'configure', [:],
-                "text format for properties")
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
+        
+        given:
+        controller.apiService=Mock(ApiService)
+        setupGetResource(Mock(IRundeckProject){
+            getName()>>'test1'
+            getProjectProperties()>>["prop1": "value1", "prop2": "value2"]
+        })
         request.api_version = 11
         params.project = 'test1'
         response.format='text'
+        when:
         controller.apiProjectConfigGet()
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertTrue response.text.startsWith("#\n#")
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_,_)>>'text'
+            assertEquals HttpServletResponse.SC_OK, response.status
+            assertTrue response.text.startsWith("#\n#")
     }
 
 
     void apiProjectConfigPut_xml_success(){
-        when:
-        //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.apiService = new ApiService()
-        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
-                prop2: 'value2'], true, null, 'text')
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        
+        given:
+            controller.apiService=Mock(ApiService)
+            def pject=Mock(IRundeckProject) {
+                _* getName() >> 'test1'
+                _* getProjectProperties() >> ['prop1': 'valueA']
             }
-        request.api_version = 11
-        params.project = 'test1'
-        request.method='PUT'
-        request.xml='<config><property key="prop1" value="value1"/><property key="prop2" value="value2"/></config>'
+            controller.frameworkService= Mock(FrameworkService)
+            setupGetResource(pject)
+
+            request.api_version = 11
+            params.project = 'test1'
+            request.method='PUT'
+            request.xml='<config><property key="prop1" value="value1"/><property key="prop2" value="value2"/></config>'
+
+        when:
         controller.apiProjectConfigPut()
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "config", response.xml.name()
-        assertEquals 2, response.xml.property.size()
-        assertEquals 'prop2', response.xml.property[0].'@key'.text()
-        assertEquals 'value2', response.xml.property[0].'@value'.text()
-        assertEquals 'prop1', response.xml.property[1].'@key'.text()
-        assertEquals 'value1', response.xml.property[1].'@value'.text()
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('xml').call(it[0].XML)
+                true
+            }
+            1 * controller.frameworkService.setFrameworkProjectConfig('test1', [prop1: 'value1',prop2:'value2']) >> {
+                [success: true,error: null]
+            }
+            1 * controller.apiService.renderSuccessXml (_,_,_ as Closure)
     }
 
-    void apiProjectConfigPut_xml_disabling_execution_success(){
-        when:
-        //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.apiService = new ApiService()
-        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure',
-                ['project.disable.executions': 'false'], true, null, 'text', true)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+    @Unroll
+    void "apiProjectConfigPut xml change scheduling"(){
+        
+        given:
+            controller.apiService=Mock(ApiService)
+            def pject=Mock(IRundeckProject) {
+                _* getName() >> 'test1'
+                _* getProjectProperties() >> [
+                    'project.disable.executions': (curExecDisabled).toString(),
+                    'project.disable.schedule': (curSchedDisabled).toString()
+                ]
             }
-        request.api_version = 11
-        params.project = 'test1'
-        request.method='PUT'
-        request.xml='<config><property key="project.disable.executions" value="true"/></config>'
-        controller.apiProjectConfigPut()
+            controller.frameworkService= Mock(FrameworkService)
+
+            request.api_version = 11
+            params.project = 'test1'
+            request.method='PUT'
+            request.xml= "<config>" +
+                         "<property key=\"project.disable.executions\" value=\"${newExecDisabled}\"/>" +
+                         "<property key=\"project.disable.schedule\" value=\"${newSchedDisabled}\"/>" +
+                         "</config>"
+
+            setupGetResource(pject)
+        when:
+            controller.apiProjectConfigPut()
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "config", response.xml.name()
-        assertEquals 1, response.xml.property.size()
-        assertEquals 'project.disable.executions', response.xml.property[0].'@key'.text()
-        assertEquals 'true', response.xml.property[0].'@value'.text()
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('xml').call(it[0].XML)
+                true
+            }
+            1 * controller.frameworkService.setFrameworkProjectConfig('test1', _) >> {
+                [success: true,error: null]
+            }
+            1 * controller.frameworkService.handleProjectSchedulingEnabledChange(_,curExecDisabled,curSchedDisabled,newExecDisabled,newSchedDisabled)
+            1 * controller.apiService.renderSuccessXml (_,_,_ as Closure)
+        where:
+            curExecDisabled | curSchedDisabled | newExecDisabled | newSchedDisabled
+            false           | false            | true            | false
+            false           | false            | false           | true
+            true            | false            | false           | false
+            false           | true             | false           | false
     }
 
-    void apiProjectConfigPut_xml_disabling_schedule_success(){
-        when:
-        //controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.apiService = new ApiService()
-        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure',
-                ['project.disable.schedule': 'false'], true, null, 'text', true)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+    void apiProjectConfigPut_text_success(){
+        
+        given:
+            controller.apiService=Mock(ApiService)
+
+            def pject=Mock(IRundeckProject) {
+                _* getName() >> 'test1'
+                _* getProjectProperties() >> ['prop1': 'valueRead']
             }
-        request.api_version = 11
-        params.project = 'test1'
-        request.method='PUT'
-        request.xml='<config><property key="project.disable.schedule" value="true"/></config>'
-        controller.apiProjectConfigPut()
+            setupGetResource(pject)
+            controller.frameworkService= Mock(FrameworkService)
+
+            params.project = 'test1'
+            request.method='PUT'
+            request.contentType = 'text/plain'
+            request.content = 'prop1=value1\nprop2=value2\n'.bytes
+        when:
+            controller.apiProjectConfigPut()
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "config", response.xml.name()
-        assertEquals 1, response.xml.property.size()
-        assertEquals 'project.disable.schedule', response.xml.property[0].'@key'.text()
-        assertEquals 'true', response.xml.property[0].'@value'.text()
+             assertEquals HttpServletResponse.SC_OK, response.status
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'text'
+
+            1 * controller.frameworkService.setFrameworkProjectConfig('test1', [prop1: 'value1',prop2:'value2']) >> {
+                [success: true,error: null]
+            }
+
+            response.status == 200
+            response.contentType == 'text/plain'
+            response.text.split(/[\n\r]/).contains 'prop1=valueRead'
     }
 
     void apiProjectConfigPut_json_success(){
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
-                prop2: 'value2'], true, null, 'text')
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        request.json='{"prop1" :"value1","prop2":"value2"}'
-        request.method='PUT'
-        controller.apiProjectConfigPut()
-        then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'value1', response.json.prop1
-        assertEquals 'value2', response.json.prop2
-    }
 
-    void apiProjectConfigPut_json_disabling_executions_success(){
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure',
-                ['project.disable.executions': 'true'], true, null, 'text', true)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        request.json='{"project.disable.executions":"false"}'
-        request.method='PUT'
-        controller.apiProjectConfigPut()
-        then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'false', response.json.getAt('project.disable.executions')
-    }
+        given:
+            controller.apiService=Mock(ApiService)
 
-    void apiProjectConfigPut_json_disabling_schedule_success(){
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure',
-                ['project.disable.schedule': 'true'], true, null, 'text', true)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+            def pject=Mock(IRundeckProject) {
+                _* getName() >> 'test1'
+                _* getProjectProperties() >> ['prop1': 'valueA']
             }
-        request.api_version = 11
-        params.project = 'test1'
-        request.json='{"project.disable.schedule":"false"}'
-        request.method='PUT'
-        controller.apiProjectConfigPut()
+            setupGetResource(pject)
+            controller.frameworkService= Mock(FrameworkService)
+
+            params.project = 'test1'
+            request.method='PUT'
+            request.json='{"prop1" :"value1","prop2":"value2"}'
+        when:
+            controller.apiProjectConfigPut()
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'false', response.json.getAt('project.disable.schedule')
+             assertEquals HttpServletResponse.SC_OK, response.status
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'json'
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('json').call(it[0].JSON)
+                true
+            }
+            1 * controller.frameworkService.setFrameworkProjectConfig('test1', [prop1: 'value1',prop2:'value2']) >> {
+                [success: true,error: null]
+            }
+            1 * controller.frameworkService.loadProjectProperties(pject) >> [prop1: 'value1',prop2:'value2',prop3:'value3']
+            assertEquals 'value1', response.json.prop1
+            assertEquals 'value2', response.json.prop2
+            assertEquals 'value3', response.json.prop3
     }
 
 
+    @Unroll
+    void "apiProjectConfigPut json change scheduling"(){
 
-    void apiProjectConfigKeyGet_xml_success() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        given:
+            controller.apiService=Mock(ApiService)
+            def pject=Mock(IRundeckProject) {
+                _* getName() >> 'test1'
+                _* getProjectProperties() >> [
+                    'project.disable.executions': (curExecDisabled).toString(),
+                    'project.disable.schedule': (curSchedDisabled).toString()
+                ]
             }
+            controller.frameworkService= Mock(FrameworkService)
+
+            request.api_version = 11
+            params.project = 'test1'
+            request.method='PUT'
+            request.json= [
+                'project.disable.executions':"${newExecDisabled}",
+                'project.disable.schedule':"${newSchedDisabled}"
+            ]
+
+            setupGetResource(pject)
+        when:
+            controller.apiProjectConfigPut()
+        then:
+            1 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.extractResponseFormat(_,_,_)>>'xml'
+            1 * controller.apiService.parseJsonXmlWith(_,_,_)>>{
+                it[2].get('json').call(it[0].JSON)
+                true
+            }
+            1 * controller.frameworkService.setFrameworkProjectConfig('test1', _) >> {
+                [success: true,error: null]
+            }
+            1 * controller.frameworkService.handleProjectSchedulingEnabledChange(_,curExecDisabled,curSchedDisabled,newExecDisabled,newSchedDisabled)
+
+        where:
+            curExecDisabled | curSchedDisabled | newExecDisabled | newSchedDisabled
+            false           | false            | true            | false
+            false           | false            | false           | true
+            true            | false            | false           | false
+            false           | true             | false           | false
+    }
+
+
+    @Unroll
+    void "apiProjectConfigKeyGet #format success"() {
+        given:
+        controller.apiService=Mock(ApiService)
+        controller.frameworkService =Mock(FrameworkService){
+            _*loadProjectProperties(_)>>["prop1": "value1", "prop2": "value2"]
+        }
+        setupGetResource()
         request.api_version = 11
-        params.project = 'test1'
+        params.project = 'test'
         params.keypath = 'prop1'
-        response.format='xml'
+        response.format=format
+        when:
         controller.apiProjectConfigKeyGet()
 
         then:
         assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "property", response.xml.name()
-        assertEquals 'prop1', response.xml.'@key'.text()
-        assertEquals 'value1', response.xml.'@value'.text()
-    }
-
-
-    void apiProjectConfigKeyGet_json_success() {
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        response.text==expected
+        with(controller.apiService) {
+            1 * requireApi(_, _) >> true
+            1 * restoreUriPath(_, _) >> 'prop1'
+            1 * extractResponseFormat(_, _, _, _) >> format
+            (format == 'xml' ? 1 : 0) * renderSuccessXml(_, _, _ as Closure) >> {
+                it[1].writer << '<property key=\'prop1\' value=\'value1\' />'
             }
-        request.api_version = 11
-        params.project = 'test1'
-        params.keypath = 'prop1'
-        response.format='json'
-        controller.apiProjectConfigKeyGet()
-        then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'prop1', response.json.key
-        assertEquals 'value1', response.json.value
+        }
+        where:
+            format | expected
+            'xml'  | "<property key='prop1' value='value1' />"
+            'json' | '{"key":"prop1","value":"value1"}'
+            'text' | 'value1'
     }
 
-    void apiProjectConfigKeyGet_text_success() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectConfigGet(true, true, 'configure', ["prop1": "value1", "prop2": "value2"])
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+
+
+
+    @Unroll
+    void "apiProjectConfigKeyPut #format success"() {
+        
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.frameworkService =Mock(FrameworkService){
+                _*updateFrameworkProjectConfig(_,["prop1": "value1"],_)>> [success: true]
+                _*loadProjectProperties(_)>>["prop1": "value1", "prop2": "value2"]
             }
-        request.api_version = 11
-        params.project = 'test1'
-        params.keypath = 'prop1'
-        response.format='text'
-        controller.apiProjectConfigKeyGet()
-        then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'value1', response.text
-    }
-
-
-
-    void apiProjectConfigKeyPut_xml_success() {
+            setupGetResource()
+            request.api_version = 11
+            params.project = 'test1'
+            params.keypath = 'prop1'
+            request.setContent(input.bytes)
+            request.format=format
+            request.method='PUT'
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
-                ["prop1": "value1"],true,null,null)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        params.keypath = 'prop1'
-        request.xml='<property key="prop1" value="value1"/>'
-        request.method='PUT'
-        controller.apiProjectConfigKeyPut()
+            controller.apiProjectConfigKeyPut()
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "property", response.xml.name()
-        assertEquals 'prop1', response.xml.'@key'.text()
-        assertEquals 'value1', response.xml.'@value'.text()
+            assertEquals HttpServletResponse.SC_OK, response.status
+            response.text==expected
+            with(controller.apiService) {
+                1 * requireApi(_, _) >> true
+                1 * restoreUriPath(_, _) >> 'prop1'
+                1 * extractResponseFormat(_, _, _) >> format
+                (format == 'xml' ? 1 : 0) * renderSuccessXml(_, _, _ as Closure) >> {
+                    it[1].writer << '<property key=\'prop1\' value=\'value1\' />'
+                }
+                (format!='text'?1:0) * parseJsonXmlWith(_,_,_)>>{
+                    if(format=='json'){
+                        it[2].get('json').call(it[0].JSON)
+                    }else{
+
+                        it[2].get('xml').call(it[0].XML)
+                    }
+                    true
+                }
+            }
+        where:
+            format |input|expected
+            'xml'  |'<property key="prop1" value="value1"/>'|"<property key='prop1' value='value1' />"
+            'json' |'{"key":"prop1","value":"value1"}'|'{"key":"prop1","value":"value1"}'
+            'text' |'value1'|'value1'
     }
 
-
-    void apiProjectConfigKeyPut_json_success() {
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
-                ["prop1": "value1"],true,null,null)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        params.keypath = 'prop1'
-        request.json='{"key":"prop1","value":"value1"}'
-        request.method='PUT'
-        controller.apiProjectConfigKeyPut()
-        then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'prop1', response.json.key
-        assertEquals 'value1', response.json.value
-    }
-
-    void apiProjectConfigKeyPut_text_success() {
-        when:
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectConfigKeyPut(true, true, 'configure',
-                ["prop1": "value1"],true,null,null)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        params.keypath = 'prop1'
-        request.content='value1'
-        request.contentType='text/plain'
-        request.method='PUT'
-        controller.apiProjectConfigKeyPut()
-        then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'value1', response.text
-    }
 
 
     void apiProjectConfigKeyDelete_success() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectConfigKeyDelete(true, true, 'configure',
-                'prop1', true, null, null)
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['configure', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        
+        given:
+            controller.apiService=Mock(ApiService)
+            controller.frameworkService =Mock(FrameworkService){
+                _*removeFrameworkProjectConfigProperties(_,['prop1'].toSet())>>[success:true]\
             }
-        request.api_version = 11
-        params.project = 'test1'
-        params.keypath = 'prop1'
-        request.method='DELETE'
-        controller.apiProjectConfigKeyDelete()
+            setupGetResource()
+            params.project = 'test1'
+            params.keypath = 'prop1'
+            request.method='DELETE'
+        when:
+            controller.apiProjectConfigKeyDelete()
 
         then:
-        assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
+            assertEquals HttpServletResponse.SC_NO_CONTENT, response.status
+            with(controller.apiService) {
+                1 * requireApi(_, _) >> true
+                1 * restoreUriPath(_, _) >> 'prop1'
+            }
     }
 
-    void apiProjectExport_success() {
+    void "apiProjectExport"() {
+        
+        given:
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(*_)>>true
+            }
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService){
+                1 * exportProjectToOutputStream({ it.name=='test' },_,_,_,_,_)>>{
+                    it[2]<<'some data'
+                }
+            }
+            setupGetResource()
+
+            request.api_version = 11
+            params.project = 'test'
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true, true, true)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,ProjectArchiveExportRequest opts,auth->
-                assertEquals 'test1',project.name
-                stream<<'some data'
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['export', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        controller.apiProjectExport()
+            controller.apiProjectExport()
 
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'application/zip', response.contentType
-        assertEquals 'some data', response.text
+            assertEquals HttpServletResponse.SC_OK, response.status
+            assertEquals 'application/zip', response.contentType
+            assertEquals 'some data', response.text
+    }
+
+    void apiProjectExport_scm_old_api_v() {
+
+        given:
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(*_)>>true
+            }
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService){
+                1 * exportProjectToOutputStream( _,_,_,_,{
+                    !it.scm
+                },_)>> {
+                    it[2]<<'some data'
+                }
+            }
+            setupGetResource()
+            request.api_version = 11
+            params.project = 'test1'
+            params.exportScm='true'
+        when:
+            controller.apiProjectExport()
+        then:
+            assertEquals HttpServletResponse.SC_OK, response.status
+            assertEquals 'application/zip', response.contentType
+            assertEquals 'some data', response.text
+    }
+
+    void apiProjectExport_scm_success_v28() {
+
+        given:
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(*_)>>true
+            }
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService){
+                1 * exportProjectToOutputStream( _,_,_,_,{
+                    it.scm
+                },_)>> {
+                    it[2]<<'some data'
+                }
+                0*_(*_)
+            }
+            setupGetResource()
+            request.api_version = 28
+            params.project = 'test1'
+            params.exportScm='true'
+        when:
+            controller.apiProjectExport()
+        then:
+
+            assertEquals HttpServletResponse.SC_OK, response.status
+            assertEquals 'application/zip', response.contentType
+            assertEquals 'some data', response.text
 
     }
 
     void "apiProjectExport requires api"() {
         given:
             controller.apiService=Mock(ApiService)
+            controller.rundeckAppAuthorizer=Mock(AppAuthorizer)
         when:
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        params.project = 'test1'
-        controller.apiProjectExport()
+            params.project = 'test1'
+            controller.apiProjectExport()
         then:
 
             1 * controller.apiService.requireApi(_,_)>>false
+            0 * controller.rundeckAppAuthorizer._(*_)
     }
 
-    void apiProjectExport_notfound() {
-        given:
-            controller.apiService=Mock(ApiService)
-        when:
-        params.project = 'test1'
-        controller.frameworkService=Mock(FrameworkService){
-            existsFrameworkProject('test1')>>false
-        }
-        controller.apiProjectExport()
-        then:
-
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.renderErrorFormat(_,
-                                                        [
-                                                            status: HttpServletResponse.SC_NOT_FOUND,
-                                                            code: "api.error.item.doesnotexist",
-                                                            args: ['Project', 'test1']
-                                                        ])
-    }
-
-    void apiProjectExport_unauthorized() {
-        given:
-            controller.apiService=Mock(ApiService)
-        when:
-        controller.frameworkService = Mock(FrameworkService){
-            existsFrameworkProject('test1')>>true
-        }
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream->
-                assertEquals 'test1',project.name
-                stream<<'some data'
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['export', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
-            }
-        params.project = 'test1'
-        controller.apiProjectExport()
-        then:
-
-            1 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.renderErrorFormat(_,
-                                                        [
-                                                            status: HttpServletResponse.SC_FORBIDDEN,
-                                                            code: "api.error.item.unauthorized",
-                                                            args: ['export', "Project", 'test1']
-                                                        ])
-    }
-
-    void apiProjectImport_notfound() {
-        given:
-            controller.apiService=Mock(ApiService)
-        when:
-        controller.frameworkService = Mock(FrameworkService){
-            existsFrameworkProject('test1')>>false
-        }
-        params.project = 'test1'
-        request.format='blah'
-        request.method='PUT'
-        controller.apiProjectImport()
-        then:
-            2 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.renderErrorFormat(_,
-                                                        [
-                                                            status: HttpServletResponse.SC_NOT_FOUND,
-                                                            code: "api.error.item.doesnotexist",
-                                                            args: ['Project', 'test1']
-                                                        ])
-    }
-
-    void apiProjectImport_unauthorized() {
-        given:
-            controller.apiService=Mock(ApiService)
-        when:
-        controller.frameworkService = Mock(FrameworkService){
-            1 * existsFrameworkProject('test1')>>true
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
-            }
-        params.project = 'test1'
-        request.format='blah'
-        request.method='PUT'
-        controller.apiProjectImport()
-        then:
-            2 * controller.apiService.requireApi(_,_)>>true
-            1 * controller.apiService.renderErrorFormat(_,
-                                                        [
-                                                            status: HttpServletResponse.SC_FORBIDDEN,
-                                                            code: "api.error.item.unauthorized",
-                                                            args: ['import', "Project", 'test1']
-                                                        ])
-    }
 
     void apiProjectImport_invalidFormat() {
         given:
             controller.apiService=Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+
+            params.project = 'test1'
+            request.format='blah'
+            request.method='PUT'
+
+            request.api_version=11
+            setupGetResource()
         when:
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        params.project = 'test1'
-        request.format='blah'
-        request.method='PUT'
-        controller.apiProjectImport()
+            controller.apiProjectImport()
         then:
-            2 * controller.apiService.requireApi(_,_)>>true
+            1 * controller.apiService.requireApi(_,_)>>true
             1 * controller.apiService.requireRequestFormat(_,_,['application/zip'])>>false
     }
 
-    void apiProjectImport_xml_failure() {
+    @Unroll
+    void "apiProjectImport #format failure"() {
+        
+        given:
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService){
+                1 * importToProject(_,_,_,_,_)>>{
+                    [success:false,joberrors:['error1','error2']]
+                }
+            }
+            params.project = 'test1'
+            request.format='application/zip'
+            response.format=format
+            session.user='user1'
+            request.method='PUT'
+            request.api_version=11
+            setupGetResource()
+            setupImportApiService(format)
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                [success:false,joberrors:['error1','error2']]
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        request.format='application/zip'
-        response.format='xml'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport(new ProjectArchiveParams(project:'test1'))
+            controller.apiProjectImport(new ProjectArchiveParams(project:'test1'))
 
         then:
-        assertEquals HttpServletResponse.SC_OK,response.status
-        assertEquals 'failed',response.xml.'@status'.text()
-        assertEquals '2',response.xml.errors.'@count'.text()
-        assertEquals 2,response.xml.errors.error.size()
-        assertEquals 'error1',response.xml.errors.error[0].text()
-        assertEquals 'error2',response.xml.errors.error[1].text()
+            assertEquals HttpServletResponse.SC_OK,response.status
+            response.text==expect
+        where:
+            format | expect
+            'xml'|'''<import status='failed' successful='false'>
+  <errors count='2'>
+    <error>error1</error>
+    <error>error2</error>
+  </errors>
+</import>'''
+            'json'|'{"import_status":"failed","successful":false,"errors":["error1","error2"]}'
     }
 
-    void apiProjectImport_json_failure() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                [success:false,joberrors:['error1','error2']]
+    private setupImportApiService(String format){
+        controller.apiService=Mock(ApiService){
+            1 * requireApi(_,_)>>true
+            1 * extractResponseFormat(*_)>>format
+            1 * requireRequestFormat(_,_,['application/zip'])>>true
+            (format=='xml'?1:0) * renderSuccessXml(_,_,_ as Closure)>> {
+                def mb = new MarkupBuilder(it[1].writer)
+                it[2].delegate=mb
+                it[2].resolveStrategy=Closure.DELEGATE_FIRST
+                it[2].call()
             }
         }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+    }
+
+    @Unroll
+    void "apiProjectImport #format success"() {
+        
+        given:
+            setupImportApiService(format)
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService){
+                1 * importToProject(
+                    _, _, _, _, {
+                    it.importExecutions
+                    it.jobUuidOption == 'preserve'
+                    !it.importConfig
+                    !it.importACL
+                }
+                ) >> [success: true]
+                0*_(*_)
             }
-        request.api_version = 11
-        params.project = 'test1'
-        request.format='application/zip'
-        response.format='json'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
+            setupGetResource()
+            request.api_version = 11
+            params.project = 'test1'
+            request.format='application/zip'
+            response.format=format
+            session.user='user1'
+            request.method='PUT'
+        when:
+            controller.apiProjectImport()
 
         then:
-        assertEquals HttpServletResponse.SC_OK,response.status
-        assertEquals 'failed',response.json.import_status
-        assertEquals 2,response.json.errors.size()
-        assertEquals 'error1',response.json.errors[0]
-        assertEquals 'error2',response.json.errors[1]
+            assertEquals HttpServletResponse.SC_OK,response.status
+            response.text==expect
+        where:
+            format| expect
+            'xml' | '<import status=\'successful\' successful=\'true\' />'
+            'json'|'{"import_status":"successful","successful":true}'
     }
 
-    void apiProjectImport_xml_success() {
+
+
+    @Unroll
+    void "apiProjectImport #param #val"() {
+        
+        given:
+            setupImportApiService('json')
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService){
+                1 * importToProject(
+                    _, _, _, _, {
+                    it."$param"==val
+                }
+                ) >> [success: true]
+                0*_(*_)
+            }
+            setupGetResource()
+            request.api_version = 11
+            params.project = 'test1'
+            params."$param"=val.toString()
+            request.format='application/zip'
+            session.user='user1'
+            request.method='PUT'
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                assertEquals(true, options.importExecutions)
-                assertEquals('preserve', options.jobUuidOption)
-                assertEquals(false, options.importConfig)
-                assertEquals(false, options.importACL)
-                [success:true]
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        request.format='application/zip'
-        response.format='xml'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
+            controller.apiProjectImport()
 
         then:
-        assertEquals HttpServletResponse.SC_OK,response.status
-        assertEquals 'successful',response.xml.'@status'.text()
-        assertEquals 0,response.xml.errors.size()
+            assertEquals HttpServletResponse.SC_OK,response.status
+        where:
+            param              | val
+            'importExecutions' | true
+            'importExecutions' | false
+            'jobUuidOption'    | 'preserve'
+            'jobUuidOption'    | 'remove'
     }
 
-    void apiProjectImport_importExecutionsFalse() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
 
 
-                assertEquals(false, options.importExecutions)
-                assertEquals('preserve', options.jobUuidOption)
-                assertEquals(false, options.importConfig)
-                assertEquals(false, options.importACL)
-                [success:true]
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        params.importExecutions='false'
-        request.format='application/zip'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
-
-        then:
-        assertEquals HttpServletResponse.SC_OK,response.status
-    }
-
-    void apiProjectImport_importExecutionsTrue() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project, framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                assertEquals(true, options.importExecutions)
-                assertEquals('preserve', options.jobUuidOption)
-                assertEquals(false, options.importConfig)
-                assertEquals(false, options.importACL)
-                [success:true]
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        params.importExecutions='true'
-        request.format='application/zip'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
-        then:
-        assertEquals HttpServletResponse.SC_OK,response.status
-    }
-
-    void apiProjectImport_jobUuidOptionPreserve() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                assertEquals(true, options.importExecutions)
-                assertEquals('preserve', options.jobUuidOption)
-                assertEquals(false, options.importConfig)
-                assertEquals(false, options.importACL)
-                [success:true]
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        params.jobUuidOption='preserve'
-        request.format='application/zip'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
-        then:
-        assertEquals HttpServletResponse.SC_OK,response.status
-    }
-
-    void apiProjectImport_jobUuidOptionRemove() {
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                assertEquals(true, options.importExecutions)
-                assertEquals('remove', options.jobUuidOption)
-                assertEquals(false, options.importConfig)
-                assertEquals(false, options.importACL)
-                [success:true]
-            }
-        }
-        request.api_version = 11
-        params.project = 'test1'
-        params.jobUuidOption='remove'
-        request.format='application/zip'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
-        assertEquals ("expected 200, ${response.contentAsString}",HttpServletResponse.SC_OK,response.status)
-    }
 
     void apiProjectImport_jobUuidOption_invalidValue() {
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args.join(';') } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                assertEquals([importExecutions: true, jobUuidOption: 'remove',importConfig:false, importACL:false], options)
-                [success:true]
+        given:
+            setupImportApiService('json')
+            controller.frameworkService =Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService){
+                0*_(*_)
             }
-        }
-        request.api_version = 11
-        params.project = 'test1'
-        params.jobUuidOption='blah'
-        request.format='application/zip'
-        response.format='json'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
-        assertEquals ("expected 200, ${response.contentAsString}",HttpServletResponse.SC_BAD_REQUEST,response.status)
-        assertEquals(
-                ["message": "api.error.invalid.request;Property [jobUuidOption] of class [class com.dtolabs.rundeck.app.support.ProjectArchiveParams] with value [blah] is not contained within the list [[preserve, remove]]",
-                 "error": true,
-                 "errorCode": "api.error.invalid.request",
-                 "apiversion": ApiVersions.API_CURRENT_VERSION],
-                response.json
-        )
+            setupGetResource()
+            request.api_version = 11
+            params.project = 'test1'
+            params.jobUuidOption='blah'
+            request.format='application/zip'
+            response.format='json'
+            session.user='user1'
+            request.method='PUT'
+        when:
+            controller.apiProjectImport()
+        then:
+            1 * controller.apiService.renderErrorFormat(_, {
+                it.status == HttpServletResponse.SC_BAD_REQUEST
+                it.code== 'api.error.invalid.request'
+                it.args==['Property [jobUuidOption] of class [class com.dtolabs.rundeck.app.support.ProjectArchiveParams] with value [blah] is not contained within the list [[preserve, remove]]']
+            })
     }
-
-    void apiProjectImport_json_success() {
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import')
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                             UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                [success:true]
-            }
-        }
-        request.api_version = 11
-        params.project = 'test1'
-        request.format='application/zip'
-        response.format='json'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
-        assertEquals HttpServletResponse.SC_OK,response.status
-        assertEquals 'successful',response.json.import_status
-        assertEquals null,response.json.errors
-    }
-
 
 
     void apiProjectImport_importAcl_unauthorized() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',true,false)
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                [success:true]
-            }
-        }
+        
+        given:
+            setupImportApiService('json')
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService)
+            setupGetResource()
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authResourceForProjectAcl('test1')>>[acl:true]
-                authorizeApplicationResourceAny(_, null, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-                authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
+                1 * authResourceForProjectAcl('test')>>[acl:true]
+                0 *authorizeApplicationResourceAny(_, null, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
             }
-        request.api_version = 11
-        params.project = 'test1'
-        params.importACL='true'
-        request.format='application/zip'
-        response.format='json'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                                      [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
+            request.api_version = 11
+            params.project = 'test1'
+            params.importACL='true'
+            request.format='application/zip'
+            response.format='json'
+            session.user='user1'
+            request.method='PUT'
+        when:
+            controller.apiProjectImport()
         then:
-        assertEquals HttpServletResponse.SC_FORBIDDEN,response.status
-        assertEquals( [
-                              message:"api.error.item.unauthorized;[create, ACL for Project, [name:test1]]",
-                              error: true,
-                              errorCode : "api.error.item.unauthorized",
-                              apiversion: ApiVersions.API_CURRENT_VERSION
-                      ],
-                      response.json
-        )
-        assertEquals null,response.json.errors
+            with(controller.projectService){
+                0 * importToProject(*_)>>[success:true]
+            }
+            1 * controller.apiService.renderErrorFormat(_,
+                [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code  : "api.error.item.unauthorized",
+                    args  : [AuthConstants.ACTION_CREATE, "ACL for Project", 'test']
+                ]
+            )
     }
 
 
     void apiProjectImport_importAcl_authorized() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',true,true)
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
 
-
-                assertTrue(options.importACL)
-                [success:true]
-            }
-        }
+        given:
+            setupImportApiService('json')
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService)
+            setupGetResource()
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authResourceForProjectAcl('test1')>>[acl:true]
-                authorizeApplicationResourceAny(_, null, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-                authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+                1 * authResourceForProjectAcl('test')>>[acl:true]
+                0 *authorizeApplicationResourceAny(_, null, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+                1 * authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
             }
-        request.api_version = 28
-        params.project = 'test1'
-        params.importACL='true'
-        request.format='application/zip'
-        response.format='json'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                                      [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
+            request.api_version = 11
+            params.project = 'test1'
+            params.importACL='true'
+            request.format='application/zip'
+            response.format='json'
+            session.user='user1'
+            request.method='PUT'
+        when:
+            controller.apiProjectImport()
         then:
-        assertEquals HttpServletResponse.SC_OK,response.status
-        assertEquals( [
-                              import_status: 'successful',
-                              successful   : true
-                      ],
-                      response.json
-        )
-        assertEquals null,response.json.errors
+
+            with(controller.projectService){
+                1 * importToProject(*_)>>[success:true]
+            }
+            assertEquals HttpServletResponse.SC_OK,response.status
+            assertEquals( [
+                                  import_status: 'successful',
+                                  successful   : true
+                          ],
+                          response.json
+            )
+            assertEquals null,response.json.errors
     }
 
 
     void apiProjectImport_importScm_unauthorized() {
+        given:
+            setupImportApiService('json')
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService)
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+                2 * project(_, _) >> Mock(AuthorizingProject) {
+                    1 * getResource() >> {
+                        Stub(IRundeckProject){
+                            getName()>>'test'
+                        }
+                    }
+                    1 * authorize(RundeckAccess.Project.APP_CONFIGURE)>>{
+                        throw new UnauthorizedAccess('configure','project','test')
+                    }
+                    0*_(*_)
+                }
+                0*_(*_)
+            }
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
+
+            request.api_version = 28
+            params.project = 'test1'
+            params.importScm='true'
+            request.format='application/zip'
+            response.format='json'
+            session.user='user1'
+            request.method='PUT'
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',false,false,true,false)
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                [success:true]
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authorizeApplicationResourceAny(_, _, ['import', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-                authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> false
-            }
-        request.api_version = 28
-        params.project = 'test1'
-        params.importScm='true'
-        request.format='application/zip'
-        response.format='json'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
+            controller.apiProjectImport()
         then:
-        assertEquals HttpServletResponse.SC_FORBIDDEN,response.status
-        assertEquals( [
-                message:"api.error.item.unauthorized;[configure, SCM for Project, [name:test1]]",
-                error: true,
-                errorCode : "api.error.item.unauthorized",
-                apiversion: ApiVersions.API_CURRENT_VERSION
-        ],
-                response.json
-        )
-        assertEquals null,response.json.errors
+            1 * controller.rundeckExceptionHandler.handleException(_,_,_ as UnauthorizedAccess)
     }
 
 
     void apiProjectImport_importScm_authorized() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
-        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',false,true,true,true)
-        controller.projectService=mockWith(ProjectService){
-            importToProject{  project,  framework,
-                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
-
-
-                assertTrue(options.importScm)
-                [success:true]
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                _ * getAuthContextForSubject(_)
-                _ * getAuthContextForSubjectAndProject(_,_)
-                _ * authResourceForProject('test1')
-                authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-                authorizeProjectConfigure(_, 'test1') >> true
+        given:
+            setupImportApiService('json')
+            controller.frameworkService = Mock(FrameworkService)
+            controller.projectService=Mock(ProjectService)
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+                2 * project(_, _) >> Mock(AuthorizingProject) {
+                    1 * getResource() >> {
+                        Stub(IRundeckProject){
+                            getName()>>'test'
+                        }
+                    }
+                    1 * authorize(RundeckAccess.Project.APP_CONFIGURE)
+                    0*_(*_)
+                }
                 0*_(*_)
             }
-        request.api_version = 28
-        params.project = 'test1'
-        params.importScm='true'
-        request.format='application/zip'
-        response.format='json'
-        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
-                [] as Set, [] as Set)
-        session.user='user1'
-        request.method='PUT'
-        controller.apiProjectImport()
+            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor)
 
-        then:
-        assertEquals HttpServletResponse.SC_OK,response.status
-        assertEquals( [
-                import_status: 'successful',
-                successful   : true
-        ],
-                response.json
-        )
-        assertEquals null,response.json.errors
-    }
-
-
-    void apiProjectExport_scm_old_api_v() {
+            request.api_version = 28
+            params.project = 'test1'
+            params.importScm='true'
+            request.format='application/zip'
+            response.format='json'
+            session.user='user1'
+            request.method='PUT'
         when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{ project, fwk, stream, l, ProjectArchiveExportRequest opts, auth->
-                assertEquals 'test1',project.name
-                assertFalse opts.scm
-                stream<<'some data'
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authResourceForProjectAcl('test1')>>[acl:true]
-                authorizeApplicationResourceAny(_, null, ['export', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-                authorizeApplicationResourceAny(_, null, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-                authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 11
-        params.project = 'test1'
-        params.exportScm='true'
-        controller.apiProjectExport()
+            controller.apiProjectImport()
+
         then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'application/zip', response.contentType
-        assertEquals 'some data', response.text
+            with(controller.projectService){
+                1 * importToProject(*_)>>[success:true]
+            }
+            assertEquals HttpServletResponse.SC_OK,response.status
+            assertEquals( [
+                    import_status: 'successful',
+                    successful   : true
+            ],
+                    response.json
+            )
+            assertEquals null,response.json.errors
     }
 
-    void apiProjectExport_scm_success_v28() {
-        when:
-        controller.apiService = new ApiService()
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
-        controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,ProjectArchiveExportRequest opts,scmperms->
-                assertEquals 'test1',project.name
 
-                assertTrue opts.scm
-                stream<<'some data'
-            }
-        }
-            controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                authResourceForProjectAcl('test1')>>[acl:true]
-                authorizeApplicationResourceAny(_, null, ['export', AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-                authorizeApplicationResourceAny(_, null, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-                authorizeApplicationResourceAny(_, [acl:true], [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
-            }
-        request.api_version = 28
-        params.project = 'test1'
-        params.exportScm='true'
-        controller.apiProjectExport()
-        then:
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'application/zip', response.contentType
-        assertEquals 'some data', response.text
-
-    }
 
     void apiProjectList_json_date_v33_creation_time(){
         when:

@@ -84,7 +84,7 @@
                             <div class="col-xs-1">
                                 <g:link action="edit"
                                         params="[login: user.login]"
-                                        class="btn btn-cta btn-sm"
+                                        class="btn btn-default btn-sm"
                                         title="${message(code: 'userController.action.edit.description', args: [user.login])}">
                                     <g:icon name="edit"/>
                                     <g:message code="button.Edit.label"/>

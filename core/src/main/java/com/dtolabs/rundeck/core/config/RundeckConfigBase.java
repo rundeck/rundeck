@@ -48,6 +48,7 @@ public class RundeckConfigBase {
     RundeckLogConfig log;
     RundeckGuiConfig gui;
     RundeckLoginConfig login;
+    RundeckSsoConfig sso;
     RundeckFeatureConfig feature;
     RundeckWebConfig web;
     RundeckAjaxConfig ajax;
@@ -66,6 +67,12 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckApiConfig {
         ApiTokensConfig tokens;
+        PaginateJobs paginatejobs;
+
+        @Data
+        public static class PaginateJobs {
+            Boolean enabled;
+        }
 
         @Data
         public static class ApiTokensConfig {
@@ -96,8 +103,16 @@ public class RundeckConfigBase {
             String fileStoragePlugin;
             LogFileStorage fileStorage;
             LogOutput output;
+            boolean localFileStorageEnabled;
+            String streamingReaderPlugin;
+            String streamingWriterPlugins;
+            ExecutionLogsPlugins plugins;
         }
 
+        @Data
+        public static class ExecutionLogsPlugins {
+            boolean streamingWriterStepLabelsEnabled;
+        }
         @Data
         public static class LogOutput {
             String limit;
@@ -144,26 +159,34 @@ public class RundeckConfigBase {
     }
 
     @Data
+    public static class Enabled {
+        Boolean enabled;
+
+        public Enabled() { this(false); }
+        public Enabled(final Boolean enabled) {
+            this.enabled = enabled;
+        }
+    }
+
+    @Data
     public static class RundeckMetricsConfig {
         Boolean enabled;
         Boolean jmxEnabled;
         Boolean requestFilterEnabled;
         String servletUrlPattern;
         Datasource datasource;
+        Api api;
 
         @Data
         public static class Api {
             Boolean enabled;
-            ApiEnabled metrics;
-            ApiEnabled ping;
-            ApiEnabled threads;
-            ApiEnabled healthcheck;
+            Enabled metrics;
+            Enabled ping;
+            Enabled threads;
+            Enabled healthcheck;
+            Enabled cpuProfile;
         }
 
-        @Data
-        public static class ApiEnabled {
-            Boolean enabled;
-        }
 
         @Data
         public static class Datasource {
@@ -355,16 +378,10 @@ public class RundeckConfigBase {
         Enabled eventStore = new Enabled(true);
         Enabled projectKeyStorage = new Enabled(true);
         Enabled pluginSecurity = new Enabled(false);
+        Enabled healthEndpoint = new Enabled(true);
+        Enabled fileUploadPlugin = new Enabled(true);
 
-        @Data
-        public static class Enabled {
-            Boolean enabled;
 
-            public Enabled() { this(false); }
-            public Enabled(final Boolean enabled) {
-                this.enabled = enabled;
-            }
-        }
 
         @Data
         public static class Repository {
@@ -468,6 +485,24 @@ public class RundeckConfigBase {
     }
 
     @Data
+    public static class RundeckSsoConfig {
+        LoginButton loginButton;
+    }
+
+    @Data
+    public static class LoginButton {
+        LoginButtonImage image;
+        Boolean enabled;
+        String title;
+        String url;
+    }
+
+    @Data
+    public static class LoginButtonImage {
+        Boolean enabled;
+    }
+
+    @Data
     public static class LocalLogin {
         Boolean enabled;
     }
@@ -477,6 +512,9 @@ public class RundeckConfigBase {
         String instanceName;
         String startpage;
         String logo;
+        String svglogo;
+        String favicon;
+        String logocss;
         String logoHires;
         Boolean clusterIdentityInHeader;
         Boolean clusterIdentityInFooter;
@@ -489,6 +527,17 @@ public class RundeckConfigBase {
         Job job;
         Home home;
         GuiSystemConfig system;
+        String title;
+        String sidebarColor;
+        String sidebarTextColor;
+        String sidebarTextActiveColor;
+        String instanceNameLabelColor;
+        String instanceNameLabelTextColor;
+        String titleLink;
+        String helpLink;
+        Boolean realJobTree;
+        String logoSmall;
+        Integer matchedNodesMaxCount;
 
         @Data
         public static class GuiSystemConfig{
@@ -541,7 +590,15 @@ public class RundeckConfigBase {
         @Data
         public static class PaginateJobs {
             Boolean enabled;
-            String maxPerPage;
+            Max max;
+            @Data
+            public static class Max {
+                Per per;
+                @Data
+                public static class Per {
+                    Integer page;
+                }
+            }
         }
 
         @Data

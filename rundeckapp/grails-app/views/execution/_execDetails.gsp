@@ -160,10 +160,10 @@
     <g:if test="${execdata?.doNodedispatch}">
     <tbody>
     <g:if test="${!nomatchednodes}">
-            <tr>
+            <tr id="exec_detail_nodes">
                 <td><g:message code="Node.plural" /></td>
                 <td >
-                    <span id="matchednodes_${rkey}" class="matchednodes embed">
+                    <span id="matchednodes_${rkey}" class="matchednodes embed exec_detail__matchednodes">
                         <span class="text-strong"><g:message code="include.nodes.matching" /></span>
                         <g:set var="filterstring" value="${execdata.asFilter()}"/>
                         <g:set var="jsdata" value="${[filter:filterstring]}"/>
@@ -216,7 +216,7 @@
                     </g:else>
                     </span>
 
-                    <div>
+                    <div class="exec_detail__threadcount">
                         <span class="text-strong text-em">
                             <g:message code="execute.up.to"/>
                             <strong>
@@ -227,7 +227,7 @@
                         </span>
                     </div>
 
-                    <div>
+                    <div class="exec_detail__nodeKeepgoing">
                         <span class="text-strong text-em">
                             <g:message code="if.a.node.fails" />:
                             <strong>
@@ -236,7 +236,7 @@
                             </strong>
                         </span>
                     </div>
-                    <div>
+                    <div class="exec_detail__nodeRankOrderAscending">
                     <span class="text-strong text-em">
                         <g:set value="${null == execdata?.nodeRankOrderAscending || execdata?.nodeRankOrderAscending}"
                                var="isAscending"/>
@@ -252,7 +252,7 @@
                     </span>
                     </div>
                     <g:if test="${execdata instanceof ScheduledExecution}">
-                    <div>
+                    <div class="exec_detail__nodeSelectedByDefault">
                         <span class="text-strong text-em">
                             <g:message code="scheduledExecution.property.nodesSelectedByDefault.label" />:
                             <strong>
@@ -271,7 +271,7 @@
     <g:else>
         <g:if test="${!nomatchednodes}">
         <tbody>
-        <tr>
+        <tr class="exec_detail__no_dispatch">
             <td><g:message code="job.detail.node.prompt" /></td>
             <td class="matchednodes embed" id="matchednodes_${rkey}">
                 <span class="text-strong"><g:message code="execute.on.the.server.node" /></span>
@@ -358,7 +358,7 @@
         </tr>
     </g:if>
     <g:if test="${execdata.orchestrator}">
-        <tr>
+        <tr id="exec_detail_orchestrator">
             <td class="displabel"><g:message code="scheduledExecution.property.orchestrator.prompt" /></td>
             <td class="container">
                 <g:render template="/execution/execDetailsOrchestrator" model="${[orchestrator: execdata.orchestrator]}"/>

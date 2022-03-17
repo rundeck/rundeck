@@ -23,65 +23,7 @@
 
 <g:appTitle/> - <g:message
             code="ScheduledExecution.page.edit.title"/></title>
-    <asset:javascript src="jquery.autocomplete.min.js"/>
-    <asset:javascript src="leavePageConfirm.js"/>
-    <asset:javascript src="jobEditPage_bundle.js"/>
-    <asset:javascript src="util/markdeep.js"/>
-    <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="util/tab-router.js"/>
-    <g:jsMessages code="page.unsaved.changes"/>
-
-        <asset:javascript src="static/pages/job/editor.js" defer="defer"/>
-        <asset:stylesheet src="static/css/pages/job/editor.css" />
-        <g:jsMessages code="
-    yes,
-    no,
-    scheduledExecution.property.notified.label.text,
-    scheduledExecution.property.notifyAvgDurationThreshold.label,
-    scheduledExecution.property.notifyAvgDurationThreshold.description,
-    to,
-    subject,
-    notification.email.description,
-    notification.email.subject.description,
-    notification.email.subject.helpLink,
-    attach.output.log,
-    attach.output.log.asFile,
-    attach.output.log.inline,
-    notification.webhook.field.title,
-    notification.webhook.field.description,
-    notify.url.format.label,
-    notify.url.format.xml,
-    notify.url.format.json,
-"/>
-        <g:jsMessages codes="${[
-                'onsuccess',
-                'onfailure',
-                'onstart',
-                'onavgduration',
-                'onretryablefailure'
-        ].collect{'notification.event.'+it}}"/>
-
-        <g:embedJSON id="jobNotificationsJSON"
-                     data="${ [notifications:scheduledExecution.notifications?.collect{it.toNormalizedMap()}?:[],
-                               notifyAvgDurationThreshold:scheduledExecution?.notifyAvgDurationThreshold,
-                     ]}"/>
-
-
-    <g:javascript>
-        window._rundeck = Object.assign(window._rundeck || {}, {
-            data: {notificationData: loadJsonData('jobNotificationsJSON')}
-        })
-
-        var workflowEditor = new WorkflowEditor();
-        var confirm = new PageConfirm(message('page.unsaved.changes'));
-        _onJobEdit(confirm.setNeedsConfirm);
-        jQuery(function () {
-            setupTabRouter('#job_edit_tabs', 'tab_');
-            jQuery('input').not(".allowenter").on('keydown', noenter);
-        })
-    </g:javascript>
-    <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
-    <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
+    <tmpl:jobEditCommon/>
 </head>
 <body>
 <div class="content">

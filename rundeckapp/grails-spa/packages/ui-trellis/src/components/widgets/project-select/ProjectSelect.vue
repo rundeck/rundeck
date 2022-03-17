@@ -30,8 +30,13 @@
                 </RecycleScroller>
             </Skeleton>
         </div>
-        <div class="widget-section" style="height: 40px; flex-grow: 0; flex-shrink: 0;border-top: solid 1px grey; padding-left: 10px">
-            <a class="text-info" :href="allProjectsLink" @click@keypress.enter="handleSelect">View All Projects</a>
+             <div class="btn-group btn-group-justified" style="height: 40px; flex-grow: 0; flex-shrink: 0; border-top: solid 1px grey;">
+                <a href="allProjectsLink" @click.prevent="allClicked" @keypress.enter.prevent="allClicked" class="btn btn-default" style="border-radius: 0px; border: 0px; border-right: solid 1px grey;">
+                <i class="far fa-eye"></i>
+                View All</a>
+                <a href="/resources/createProject" class="btn btn-default" style="border-radius: 0px; border: 0px;">
+                <i class="fas fa-plus-circle"></i>
+                Create Project</a>
         </div>
     </div>
 </template>
@@ -108,7 +113,7 @@ export default class ProjectSelect extends Vue {
         this.$emit('project:selected', project)
     }
 
-    allClickekd() {
+    allClicked() {
         this.$emit('project:select-all')
     }
 }
@@ -154,7 +159,7 @@ export default class ProjectSelect extends Vue {
         position: absolute;
         content: "";
         height: 100%;
-        border-left: 3px solid #F73F39;
+        border-left: 3px solid var(--brand-color);
         margin-left: -10px;
     }
 }
@@ -163,7 +168,6 @@ export default class ProjectSelect extends Vue {
     right: initial;
     left: 0;
     top: 8px;
-    color:black;
 }
 
 .has-search .form-control {

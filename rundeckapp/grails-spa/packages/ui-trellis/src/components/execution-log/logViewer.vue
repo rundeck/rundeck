@@ -1,9 +1,6 @@
 <template>
   <div class="execution-log"
-    v-bind:class="{
-      'execution-log--dark': this.settings.theme == 'dark',
-      'execution-log--light': this.settings.theme == 'light',
-      }"
+    :class="[`execution-log--${colorTheme()}`]"
   >
     <rd-drawer
         title="Settings"
@@ -21,7 +18,7 @@
           <select class="form-control select"
             v-model="settings.theme"
           >
-            <option v-for="themeOpt in themes" :key="themeOpt">{{themeOpt}}</option>
+            <option v-for="themeOpt in themes" :key="themeOpt.value" :value="themeOpt.value">{{themeOpt.label}}</option>
           </select>
         </div>
         <div class="checkbox">
@@ -111,6 +108,7 @@ import VueRouter from 'vue-router'
 import { RootStore } from '../../stores/RootStore'
 import RdDrawer from '../containers/drawer/Drawer.vue'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
+import { Observer } from 'mobx-vue'
 
 const CONFIG_STORAGE_KEY='execution-viewer'
 
@@ -125,6 +123,7 @@ interface IEventViewerSettings {
   lineWrap: boolean
 }
 
+@Observer
 @Component({
   components: {
     'rd-drawer': RdDrawer,
@@ -159,6 +158,9 @@ export default class LogViewer extends Vue {
     maxLogSize!: number
 
     @Prop()
+    trimOutput!: number
+
+    @Prop()
     config?: IEventViewerSettings
 
     @Prop({default: true})
@@ -170,7 +172,12 @@ export default class LogViewer extends Vue {
     @Inject()
     private readonly rootStore!: RootStore
 
-    themes = ['light', 'dark', 'none']
+    themes = [
+      {label: 'Rundeck Theme', value: 'rundeck'},
+      {label: 'Light', value: 'light'},
+      {label: 'Dark', value: 'dark'},
+      {label: 'None', value: 'none'}
+    ]
 
     scrollTolerance = 5
 
@@ -181,7 +188,7 @@ export default class LogViewer extends Vue {
     progress = 0
 
     private settings: IEventViewerSettings = {
-      theme: 'light',
+      theme: 'rundeck',
       stats: false,
       timestamps: false,
       command: true,
@@ -413,17 +420,10 @@ export default class LogViewer extends Vue {
         }, {passive: false})
     }
 
-    private handleExecutionLogResp(res: EnrichedExecutionOutput) {
-      this.execCompleted = res.execCompleted
-      this.completed = res.completed
-      this.nextProgress = res.completed ?
-        100:
-        Math.round((parseInt(res.offset) / res.totalSize) * 100)
+    private handleExecutionLogResp() {
+      if (!this.trimOutput) return
 
-      if (res.entries.length == 0)
-        return
-
-      if (this.overSize && this.viewer.offset > this.maxLogSize) {
+      if (this.viewer.offset > this.trimOutput) {
         const removeSize = this.logBuilder.dropChunk()
         for (let x = 0; x < removeSize; x++) {
           const scapeGoat = this.$options.vues.shift()
@@ -552,13 +552,21 @@ export default class LogViewer extends Vue {
 
             this.logSize = this.viewer.offset
             this.logLines = this.viewer.entries.length
-            // this.handleExecutionLogResp(res)
+            this.handleExecutionLogResp()
 
             if (this.viewer.completed)
                 break
         }
         this.totalTime = Date.now() - this.startTime
         this.populateLogsProm = undefined
+    }
+
+    colorTheme() {
+      if (this.settings.theme == 'rundeck')
+        return this.rootStore.theme.theme
+      else
+        return this.settings.theme
+
     }
 }
 </script>
@@ -567,11 +575,6 @@ export default class LogViewer extends Vue {
 @import './ansi.css';
 @import './theme-light.scss';
 @import './theme-dark.scss';
-
-/** Causing z-index issues with modals */
-// .main-panel {
-//   transform: translate3d(0,0,0)
-// }
 
 .anticon {
   display: inline-block;

@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import org.rundeck.app.web.WebUtilService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import grails.converters.JSON
@@ -43,7 +44,7 @@ import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.time.Clock
 
-class ApiService {
+class ApiService implements WebUtilService{
     public static final String APPLICATION_XML_CONTENT_TYPE = 'application/xml'
     public static final String JSON_CONTENT_TYPE = 'application/json'
     def messageSource
@@ -51,6 +52,8 @@ class ApiService {
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     def configurationService
     def userService
+    @Delegate
+    WebUtilService rundeckWebUtil
 
     public static final Map<String,String> HTTP_METHOD_ACTIONS = Collections.unmodifiableMap (
             POST: AuthConstants.ACTION_CREATE,
@@ -366,26 +369,8 @@ class ApiService {
         string ? Sizes.parseTimeDuration(string) : 0
     }
 
-    @CompileStatic
-    def respondOutput(HttpServletResponse response, String contentType, String output) {
-        response.setContentType(contentType)
-        response.setCharacterEncoding('UTF-8')
-        response.setHeader("X-Rundeck-API-Version",ApiVersions.API_CURRENT_VERSION.toString())
-        def out = response.outputStream
-        out << output
-        out.flush()
 
-        null
-    }
 
-    @CompileStatic
-    def appendResponseOutput(HttpServletResponse response, String output) {
-        response.outputStream << output
-    }
-
-    def respondXml(HttpServletResponse response, Closure recall) {
-        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderXml(recall))
-    }
 
     def renderXml(Closure recall) {
         def writer = new StringWriter()
@@ -412,7 +397,7 @@ class ApiService {
         if (status) {
             response.status = status
         }
-        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderSuccessXmlUnwrapped(recall))
+        respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderXml(recall))
     }
     /**
      *
@@ -425,17 +410,13 @@ class ApiService {
     def renderSuccessXml(int status=0,HttpServletResponse response, Closure recall) {
        return renderSuccessXml (status,null,response,recall)
     }
-    def renderSuccessXmlUnwrapped(Closure recall){
-        return renderXml(recall)
-    }
     /**
-     * TODO: remove "result" wrapper from API responses after Rundeck 2.6
      * @param recall
      * @return
      * @deprecated
      */
     def renderSuccessXml(Closure recall){
-        return renderSuccessXmlUnwrapped {
+        return renderXml {
             result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
                 recall.delegate = delegate
                 recall.resolveStrategy=Closure.DELEGATE_FIRST
@@ -470,108 +451,7 @@ class ApiService {
         }
         return paramValue
     }
-    /**
-     * Determine appropriate response format based on allowed formats or request format. If the requested response
-     * type is in the allowed formats it is returned, otherwise if a default format is specified it is used.  If the
-     * response format is not in the allowed formats and no default is specified, the request content type format is
-     * returned.
-     * @param request request
-     * @param response response
-     * @param allowed list of allowed formats
-     * @param defformat default format, or null to use the request format
-     * @return format name
-     */
-    public String extractResponseFormat(HttpServletRequest request, HttpServletResponse response,
-                                      ArrayList<String> allowed, String defformat = null) {
-        def defFormatEval = defformat ?: request.format
-        return ((response.format in allowed) ? response.format : (defFormatEval in allowed?defFormatEval:null))
-    }
-    /**
-     * Require request to be a certain format, returns false if not valid and error response is already sent
-     * @param request request
-     * @param response response
-     * @param allowed allowed formats or mime-types
-     * @param responseFormat response format to send ('xml' or 'json') if request is not valid, or null to use default
-     * @return true if valid, false otherwise
-     */
-    def requireRequestFormat(HttpServletRequest request, HttpServletResponse response, ArrayList<String> allowed, def
-    responseFormat = null) {
-        def contentType = request.getHeader("Content-Type")
-        def test = request.format in allowed || (contentType && (extractMimeType(contentType) in allowed))
-        if (!test) {
-            //bad request
-            renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code: "api.error.invalid.request",
-                            args: ["Expected request content to be one of allowed formats: [" + allowed.join(', ' +
-                                    '') + "], " +
-                                    "but was: " +
-                                    "${contentType}"],
-                            format: responseFormat
-                    ])
-        }
-        test
-    }
 
-    String extractMimeType(String s) {
-        return s.contains(';') ? s.split(';')[0].trim(): s;
-    }
-/**
-     * Parse XML or JSON input formatted data, and handle with appropriate closure.  If the input format is not
-     * supported, or there is an error parsing the input, an error response is sent, and false is returned.
-     * @param request request
-     * @param response response
-     * @param handlers handler map, using keys 'xml' or 'json'.
-     * @return true if parsing was successful, false if an error occurred and a response has already been sent
-     */
-    public boolean parseJsonXmlWith(HttpServletRequest request, HttpServletResponse response,
-                                    Map<String, Closure> handlers) {
-        def respFormat = extractResponseFormat(request, response, ['xml', 'json'])
-        if (!requireRequestFormat(request, response, ['xml', 'json'], respFormat)) {
-            return false
-        }
-        String error
-        request.withFormat {
-            json {
-                if (handlers.json) {
-                    try {
-                        def parsed = request.JSON
-
-                        if (!parsed) {
-                            error = "Could not parse JSON"
-                        } else {
-                            handlers.json(parsed)
-                        }
-                    } catch (ConverterException e) {
-                        error = e.message + (e.cause ? ": ${e.cause.message}" : '')
-                    }
-                }else{
-                    error="Unexpected content type: ${request.getHeader('Content-Type')}"
-                }
-            }
-            xml {
-                if (handlers.xml) {
-                    try {
-                        handlers.xml(request.XML)
-                    } catch (ConverterException e) {
-                        error = e.message + (e.cause ? ": ${e.cause.message}" : '')
-                    }
-                } else {
-                    error = "Unexpected content type: ${request.getHeader('Content-Type')}"
-                }
-            }
-        }
-        if (error) {
-            renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    message: error,
-                    format: respFormat
-            ])
-            return false
-        }
-        return true
-    }
 
     /**
      * Return an unauthorized response
@@ -591,37 +471,6 @@ class ApiService {
         )
     }
 
-    /**
-     * Render error in either JSON or XML format, depending on expected response
-     * @param response
-     * @param error
-     * @return
-     */
-    def renderErrorFormat(HttpServletResponse response, Map error){
-        def resp=[xml: this.&renderErrorXml,json: this.&renderErrorJson, text:{resp,err->
-            if (err.status) {
-                response.setStatus(err.status)
-            }
-            appendResponseOutput(response, renderErrorText(err))
-        }]
-        def eformat = error.format
-        def rformat = response.format
-        def respFormat = eformat && resp[eformat] ? eformat :
-            rformat && resp[rformat] ? rformat : 'json'
-        return resp[respFormat](response,error)
-    }
-    def renderErrorXml(HttpServletResponse response, Map error){
-        if(error.status){
-            response.setStatus(error.status)
-        }
-        return respondOutput(response, APPLICATION_XML_CONTENT_TYPE, renderErrorXml(error, error.code))
-    }
-    def renderErrorJson(HttpServletResponse response, Map error){
-        if(error.status){
-            response.setStatus(error.status)
-        }
-        return respondOutput(response, JSON_CONTENT_TYPE, renderErrorJson(error, error.code))
-    }
     /**
      * Require all specified parameters in the request, send json/xml response based on accept header
      * @param request
@@ -686,52 +535,6 @@ class ApiService {
         }
         return true
     }
-    /**
-     * Require that the original request is via the /api URL mapping
-     * @param request
-     * @param response
-     * @return false if it is not a valid API request. If false, then an error status response has already been sent
-     */
-    def requireApi(request, HttpServletResponse response, int min=ApiVersions.API_MIN_VERSION){
-        if(!request.api_version){
-            //not a /api URL
-            response.sendError(HttpServletResponse.SC_NOT_FOUND)
-
-            return false
-        }
-        if(!requireVersion(request, response, min)){
-            return false
-        }
-
-        true
-    }
-    /**
-     * Require a minimum API version, and optional maximum
-     * @param request
-     * @param response
-     * @param min
-     * @param max
-     * @return false if requirement is not met: response will already have been made
-     */
-    def requireVersion(request, HttpServletResponse response, int min, int max = 0){
-        if (request.api_version < min) {
-            renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_BAD_REQUEST,
-                    code:'api.error.api-version.unsupported',
-                    args: [request.api_version, request.forwardURI, "Minimum supported version: " + min]
-            ])
-            return false
-        }
-        if (max > 0 && request.api_version > max) {
-            renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.api-version.unsupported',
-                    args: [request.api_version, request.forwardURI, "Maximum supported version: " + max]
-            ])
-            return false
-        }
-        return true
-    }
 
     def requireAuthorized(authorized, HttpServletResponse response, Object[] args = []) {
         if (!authorized) {
@@ -746,98 +549,6 @@ class ApiService {
         return authorized
     }
 
-    def renderErrorText(messages, String code=null){
-        if (!messages) {
-            return messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
-        }
-        if (messages instanceof List) {
-            return messages.join("\r\n")
-        }else if (messages instanceof Map && messages.message) {
-            return messages.message
-        } else if (messages instanceof Map && messages.code) {
-            return messageSource.getMessage(
-                messages.code,
-                messages.args ? messages.args as Object[] : null,
-                messages.code,
-                null
-            )
-        }
-        return messages.toString()
-    }
-    def renderErrorJson(messages, String code=null){
-        def result=[
-                error: true,
-                apiversion: ApiVersions.API_CURRENT_VERSION,
-        ]
-        result.errorCode = code ?: 'api.error.unknown'
-        if (!messages) {
-            result.'message' = messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
-        }
-        if (messages instanceof List) {
-            result.messages=messages
-        } else if (messages instanceof Map && messages.code) {
-            result.message = (
-                messages.message ?:
-                messageSource.getMessage(
-                    messages.code,
-                    messages.args ? messages.args as Object[] : null,
-                    messages.code,
-                    null
-                )
-            )
-        }else if (messages instanceof Map && messages.message) {
-            result.message=messages.message
-        }
-        return (result as JSON).toString()
-    }
-    def renderErrorXml(messages, String code=null, builder=null){
-        def writer = new StringWriter()
-        def xml
-        if(!builder){
-            xml = new MarkupBuilder(writer)
-        }else{
-            xml=builder
-        }
-        xml.with {
-            result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
-                // REVIEW: disabled by grails3 merge
-//                def errorprops = [:]
-                def errorprops = [code: code ?: 'api.error.unknown']
-                if (code) {
-                    errorprops = [code: code]
-                }
-                delegate.'error'(errorprops) {
-                    if (!messages) {
-                        delegate.'message'(
-                            messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
-                        )
-                    }
-                    if (messages instanceof List) {
-                        delegate.'messages' {
-                            messages.each {
-                                delegate.'message'(it)
-                            }
-                        }
-                    }else if(messages instanceof Map && messages.code){
-                        delegate.'message'(
-                            messages.message ?:
-                            messageSource.getMessage(
-                                messages.code,
-                                messages.args ? messages.args as Object[] : null,
-                                messages.code,
-                                null
-                            )
-                        )
-                    }else if(messages instanceof Map && messages.message){
-                        delegate.'message'(messages.message)
-                    }
-                }
-            }
-        }
-        if(!builder){
-            return writer.toString()
-        }
-    }
 
     /**
      * in XML, render a file as a wrapped strings specified by a 'contents' entry/element

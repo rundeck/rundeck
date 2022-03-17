@@ -104,7 +104,8 @@ public class AuthResources {
     public static final List<String> appJobKindActions =
             Arrays.asList(
                     AuthConstants.ACTION_ADMIN,
-                    AuthConstants.ACTION_APP_ADMIN
+                    AuthConstants.ACTION_APP_ADMIN,
+                    AuthConstants.ACTION_OPS_ADMIN
             );
     public static final List<String> appApitokenKindActions =
             Arrays.asList(
@@ -121,7 +122,8 @@ public class AuthResources {
             AuthConstants.ACTION_INSTALL,
             AuthConstants.ACTION_UNINSTALL,
             AuthConstants.ACTION_ADMIN,
-            AuthConstants.ACTION_APP_ADMIN
+            AuthConstants.ACTION_APP_ADMIN,
+            AuthConstants.ACTION_OPS_ADMIN
     );
     public static final List<String> appWebhookKindActions = Arrays.asList(
             AuthConstants.ACTION_READ,
@@ -211,6 +213,7 @@ public class AuthResources {
         projResActionsByType.put(AuthConstants.TYPE_JOB, projectJobActions);
         projResActionsByType.put(AuthConstants.TYPE_ADHOC, projectAdhocActions);
         projResActionsByType.put(AuthConstants.TYPE_NODE, projectNodeActions);
+        projResActionsByType.put(AuthConstants.TYPE_STORAGE, storageActions);
     }
 
 

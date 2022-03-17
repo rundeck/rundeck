@@ -87,4 +87,28 @@ class LocalNodeExecutorSpec extends Specification {
         result.failureMessage == "Local Executor is disabled"
 
     }
+
+    def "disable local executor jvm propertu"() {
+        given:
+        def node = Mock(INodeEntry)
+        def context = Mock(ExecutionContext){
+            getExecutionListener()>> Mock(ExecutionListener)
+        }
+        def command = ['a', 'command'] as String[]
+        def framework = Mock(Framework)
+
+        System.setProperty("rundeck.localExecutor.disabled","true")
+
+        def plugin = new LocalNodeExecutor(framework)
+
+        when:
+        def result = plugin.executeCommand(context, command, node)
+
+        then:
+        result != null
+        !result.success
+        result.failureReason != null
+        result.failureMessage == "Local Executor is disabled"
+
+    }
 }

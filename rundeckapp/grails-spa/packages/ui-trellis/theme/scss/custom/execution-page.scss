@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../paper/variables";
+@import "../runstrap/variables";
 
 .subtitlebar {
   &.execution-page {
-    background-color: $bg-default-inverse;
+    background-color: var(--background-color-accent-lvl2);
     // border-bottom: 1px solid darken($bg-subheader, 10%);
     margin-bottom: 20px;
     border-radius: 6px;
     .execution-head-info {
-      background: #ffffff;
+      background: var(--background-color-lvl2);
       border-top-right-radius: 6px;
       border-bottom-right-radius: 6px;
     }

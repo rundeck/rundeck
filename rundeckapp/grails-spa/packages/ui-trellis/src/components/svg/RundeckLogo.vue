@@ -73,11 +73,16 @@ export default Vue.extend({
     &__rd-text {
         fill-rule:evenodd;
         clip-rule:evenodd;
+		fill: var(--font-color)
     }
     &__chevron {
         fill-rule:evenodd;
         clip-rule:evenodd;
-        fill:#EF433D;
+        fill: var(--brand-color);
     }
+
+	&__text {
+		fill: var(--font-color);
+	}
 }
 </style>

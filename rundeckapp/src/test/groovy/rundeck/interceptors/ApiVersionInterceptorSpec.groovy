@@ -1,16 +1,15 @@
 package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.testing.web.interceptor.InterceptorUnitTest
-import org.grails.plugins.web.servlet.mvc.InvalidResponseHandler
 import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
+import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.grails.web.converters.configuration.ConvertersConfigurationHolder
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import org.grails.web.servlet.mvc.TokenResponseHandler
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
-import rundeck.controllers.ProjectController
 import rundeck.controllers.TokenVerifierController
 import rundeck.services.ApiService
 import spock.lang.Specification
@@ -18,6 +17,20 @@ import spock.lang.Specification
 class ApiVersionInterceptorSpec extends Specification implements InterceptorUnitTest<ApiVersionInterceptor> {
 
     def setup() {
+        def mockMetric = Mock(MetricRegistry){
+            _ * timer(_)>>Mock(Timer){
+
+            }
+        }
+        def mockToken = Mock(TokenVerifierController)
+        def apiServiceMock = Mock(ApiService)
+        def msgSrc = Mock(MessageSource)
+        defineBeans {
+            metricRegistry(InstanceFactoryBean,mockMetric)
+            tokenVerifierController(InstanceFactoryBean,mockToken)
+            apiService(InstanceFactoryBean, apiServiceMock)
+            delegate.'messageSource'(InstanceFactoryBean, msgSrc)
+        }
     }
 
     def cleanup() {
@@ -25,15 +38,6 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
     }
 
     void "Test apiVersion interceptor matching"() {
-        given:
-        def service = Mock(ApiService)
-        def msgSrc = Mock(MessageSource)
-        defineBeans {
-            metricRegistry(MetricRegistry)
-            tokenVerifierController(TokenVerifierController)
-            apiService(service)
-            messageSource(msgSrc)
-        }
         when:"A request matches the interceptor"
             withRequest(uri:"/api/apiVersion")
 
@@ -43,16 +47,9 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
 
     void "Valid sync tokens allow api access"() {
         given:
-        def service = Mock(ApiService)
-        def msgSrc = Mock(MessageSource)
         def tkController = Mock(TokenVerifierController)
+        interceptor.tokenVerifierController = tkController
 
-        defineBeans {
-            metricRegistry(MetricRegistry)
-            tokenVerifierController(tkController)
-            apiService(service)
-            messageSource(msgSrc)
-        }
 
         ApiMarshallerRegistrar apiMarshallerRegistrar = new ApiMarshallerRegistrar()
         apiMarshallerRegistrar.registerApiMarshallers()
@@ -61,7 +58,6 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
             params[SynchronizerTokensHolder.TOKEN_URI] = "/"
             request.method = "POST"
             params.api_version = ApiVersions.API_CURRENT_VERSION.toString()
-            interceptor.tokenVerifierController = tkController
             boolean allowed = interceptor.before()
 
         then:
@@ -73,17 +69,23 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
 
     }
 
+    void "api access before marshallers registered causes 503"() {
+        given:
+            ConvertersConfigurationHolder.clear()
+
+        when:
+            request.method = "GET"
+            params.api_version = ApiVersions.API_CURRENT_VERSION.toString()
+            boolean allowed = interceptor.before()
+
+        then:
+            allowed
+            request.apiVersionStatusNotReady
+
+    }
+
     void "Invalid sync tokens do not allow api access"() {
         given:
-        def service = Mock(ApiService)
-        def msgSrc = Mock(MessageSource)
-
-        defineBeans {
-            metricRegistry(MetricRegistry)
-            tokenVerifierController(TokenVerifierController)
-            apiService(service)
-            messageSource(msgSrc)
-        }
 
         ApiMarshallerRegistrar apiMarshallerRegistrar = new ApiMarshallerRegistrar()
         apiMarshallerRegistrar.registerApiMarshallers()

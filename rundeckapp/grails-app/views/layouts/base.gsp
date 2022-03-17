@@ -36,7 +36,7 @@
     <meta name="locale" content="${response.locale.toString()}"/>
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
+    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: g.appFavicon())}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
     <g:render template="/common/navData"/>
@@ -76,8 +76,11 @@
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/version.css"/>
+    <asset:stylesheet href="static/css/components/server-identity.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
-    <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+    <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
+
+    <g:if test="${!communityNewsDisabled}">
       <asset:stylesheet href="static/css/components/community-news-notification.css"/>
     </g:if>
     <!-- /VUE CSS MODULES -->
@@ -129,13 +132,18 @@
 
         window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        context: '${grailsApplication.config.server.servlet.'context-path'}',
+        context: '${grailsApplication.config.getProperty("server.servlet.context-path", String.class)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         language: '${response.locale?.language ?: request.locale?.language}',
         locale: '${response.locale?.toString() ?: request.locale?.toString()}',
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
         activeTourStep: '${session.filterPref?.activeTourStep}',
+        appMeta: {
+            title: '${g.appTitle()}',
+            logo:'${g.appLogo()}',
+            logocss:'${g.appLogocss()}'
+        },
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}',
         feature: {
             eventStore: {enabled: ${feature.isEnabled(name:'eventStore')}},
@@ -215,18 +223,14 @@
 
 <g:set var="projectName" value="${params.project ?: request.project}"/>
 
-<section id="section-header" style="grid-area: header; background-color: red;">
-    <g:render template="/common/mainbar"/>
-</section>
-
-<section id="section-main" class="${projectName ? 'with-project' : ''}" style="grid-area: main;">
+<section id="section-main" class="${projectName ? 'with-project' : ''}">
     <g:if test="${projectName}">
-        <section id="section-navbar" style="grid-area: nav;">
+        <section id="section-navbar">
             <div id="navbar"/>
         </section>
     </g:if>
 
-    <section id="section-content" style="grid-area: content;display: flex; flex-direction: column">
+    <section id="section-content">
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">
@@ -243,15 +247,15 @@
             </nav>
         </g:ifPageProperty>
         <g:ifPageProperty name="page.subtitlesection">
-            <nav id="subtitlebar" class=" subtitlebar has-content ${pageProperty(name: 'page.subtitlecss')}">
+            <nav id="subtitlebar" class="has-content ${pageProperty(name: 'page.subtitlecss')}">
 
                 <g:pageProperty name="page.subtitlesection"/>
 
             </nav>
         </g:ifPageProperty>
 
-        <div class="vue-project-motd container-fluid">
-            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
+        <div class="vue-project-motd" style="background-color: var(--background-color-lvl2)">
+            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}"></motd>
         </div>
 
         <g:ifPageProperty name="page.searchbarsection">
@@ -267,7 +271,11 @@
     </section>
 </section>
 
-<section id="section-utility" style="grid-area: utility;">
+<section id="section-header" style="background-color: red;">
+    <g:render template="/common/mainbar"/>
+</section>
+
+<section id="section-utility">
     <div id="utilityBar"/>
 </section>
 
@@ -278,14 +286,20 @@
     </script>
 </g:if>
 
+<script type="text/javascript">
+    jQuery('.modal-container').appendTo('body');
+    jQuery('body > :not(.modal-container) .modal').appendTo('body');
+</script>
+
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/version.js"/>
+<asset:javascript src="static/components/server-identity.js"/>
 <asset:javascript src="static/components/tour.js"/>
-<g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+<g:if test="${!communityNewsDisabled}">
     <asset:javascript src="static/components/community-news-notification.js"/>
 </g:if>
-
+<asset:deferredScripts/>
 <!-- /VUE JS MODULES -->
 </body>
 

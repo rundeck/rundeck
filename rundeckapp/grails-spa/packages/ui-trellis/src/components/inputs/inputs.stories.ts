@@ -56,12 +56,8 @@ export const inputSwitchOn = () => {
 
 export const inputSwitchDisabled = () => {
     return Vue.extend({
-        template: `<InputSwitch v-bind="$props"/>`,
+        template: `<div><InputSwitch :disabled="true"/><InputSwitch :disabled="true" :value="true"/></div>`,
         components: {InputSwitch},
-        props: {
-            checked: {default: boolean('checked', true)},
-            disabled: {default: boolean('disabled', true)}
-        },
         mounted() {
             setupStory(this)
         }
@@ -73,7 +69,7 @@ export const inputSwitchContrast = () => {
 
     return Vue.extend({
         template: `
-        <div style="background-color: #e5ebf2;height: 100%;width: 100%">
+        <div style="background-color: var(--background-color-accent-lvl2);height: 100%;width: 100%">
         <InputSwitch @input="handleChecked" :value="checked" contrast/>
         </div>
         `,

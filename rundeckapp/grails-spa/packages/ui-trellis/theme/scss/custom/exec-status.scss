@@ -1,4 +1,4 @@
-@import '../paper/_variables';
+@import '../runstrap/_variables';
 //execution status text
 .exec-status {
   font-family: "Font Awesome 5 Free";
@@ -19,7 +19,7 @@
   }
 
   &[data-execstate=OTHER][data-statusstring=incomplete] {
-    color: orange;
+    color: var(--warning-color);
     &.icon{
       &:before {
         content: "\f12a";
@@ -59,9 +59,9 @@
 
   &.aborted,
   &[data-execstate=ABORTED] {
-    color: var(--dark-gray);
+    color: var(--background-color-accent-lvl3);
     &.icon{
-      &:before {
+      &:after {
         content: "\f056";
       }
     }

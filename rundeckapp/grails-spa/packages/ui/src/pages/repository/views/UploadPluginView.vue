@@ -1,15 +1,17 @@
 <template>
-  <div>
-    <h2 style="margin-bottom:2em;">Plugin Install</h2>
-    <div class="row">
-      <PluginUploadForm/>
-    </div>
+  <div class="card">
+    <div class="card-content">
+      <h2 style="margin-bottom:2em;">Plugin Install</h2>
+      <div class="row">
+        <PluginUploadForm/>
+      </div>
 
-    <div style="margin:3em 0;">
-      <div style="text-align: center;font-size: 3em; font-style: italic;">OR</div>
-    </div>
-    <div class="row">
-      <PluginURLUploadForm/>
+      <div style="margin:3em 0;">
+        <div style="text-align: center;font-size: 3em; font-style: italic;">OR</div>
+      </div>
+      <div class="row">
+        <PluginURLUploadForm/>
+      </div>
     </div>
   </div>
 </template>

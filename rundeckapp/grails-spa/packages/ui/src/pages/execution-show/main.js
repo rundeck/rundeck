@@ -3,15 +3,15 @@
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 
+import { getRundeckContext } from '@rundeck/ui-trellis/lib'
 import LogViewer from '@rundeck/ui-trellis/lib/components/execution-log/logViewer.vue'
-import {RootStore} from '@rundeck/ui-trellis/lib/stores/RootStore'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 
 import './nodeView'
 
 const VIEWER_CLASS = 'execution-log-viewer'
 
-const rootStore = new RootStore(window._rundeck.rundeckClient)
+const rootStore = getRundeckContext().rootStore
 
 let MOUNTED = false
 
@@ -60,7 +60,7 @@ setTimeout(() => {
 }, 0)
 
 /** Stop page from jumping to log anchor */
-const mainPanel = document.getElementById('main-panel')
+const mainPanel = document.getElementById('section-main')
 if (location.hash) {
   setTimeout(function() {
     mainPanel.scrollTo(0, 0)
@@ -95,13 +95,14 @@ function mount(e) {
    * Ant accesses the root Vue instance constructor.
    * Since the viewer is a class component that would make its
    * constructor the root constructor and chaos ensues...
-   * */  
+   * */
   const template = `\
   <LogViewer
     v-if="this.$el.parentNode.display != 'none'"
     executionId="${e.dataset.executionId}"
     jumpToLine="${jumpToLine || null}"
     ref="viewer"
+    trimOutput="${e.dataset.trimOutput}"
   />
   `
 
@@ -129,7 +130,7 @@ function mount(e) {
   vue.$on('line-deselect', (e) => {
     const newHash = `${window.location.hash.split('L')[0]}`
 
-    const panel = document.getElementById('main-panel')
+    const panel = document.getElementById('section-main')
     const scrollPos = panel.scrollTop
     window.location.hash = newHash
     panel.scrollTop = scrollPos

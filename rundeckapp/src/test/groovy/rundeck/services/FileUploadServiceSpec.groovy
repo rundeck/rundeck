@@ -4,7 +4,9 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -19,6 +21,7 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.events.ExecutionCompleteEvent
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -471,6 +474,58 @@ class FileUploadServiceSpec extends HibernateSpec implements ServiceUnitTest<Fil
         FileUploadPlugin.InternalState.Retained | 'retained'
     }
 
+    def "execution complete event with retry feature enabled"() {
+        given:
+        JobFileRecord.metaClass.static.withNewSession = {Closure c -> c.call() }
+        String jobid = 'ajobid'
+        String user = 'auser'
+        String origName = 'afile'
+        String optionName = 'myopt'
+        String sha = 'fc4b5fd6816f75a7c81fc8eaa9499d6a299bd803397166e8c4cf9280b801d62c'
+        def storageRef = 'abcd'
+
+        ScheduledExecution job = mkjob(jobid)
+        job.validate()
+        Execution exec = mkexec(job)
+        exec.willRetry = true
+        exec.validate()
+        def jfr = new JobFileRecord(
+                fileName: origName,
+                size: 123,
+                recordType: 'option',
+                expirationDate: new Date(),
+                fileState: 'retained',
+                uuid: '44a26bb3-5013-4906-9997-286306005408',
+                serverNodeUUID: null,
+                sha: sha,
+                jobId: jobid,
+                recordName: optionName,
+                storageType: 'filesystem-temp',
+                user: user,
+                storageReference: storageRef,
+                project: 'testproj',
+                execution: exec
+        ).save()
+
+        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
+            createPluggableService(_) >> Mock(PluggableProviderService)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckPluginRegistry() >> rundeckPluginRegistry
+        }
+        service.pluginService = Mock(PluginService)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+        }
+        def event = new ExecutionCompleteEvent(execution: exec, job: job)
+        when:
+        service.executionComplete(event)
+        then:
+        0 * service.getFrameworkService().getFrameworkPropertyResolver()
+        0 * service.pluginService.configurePlugin('filesystem-temp', _, _,_)
+        jfr.fileState == 'retained'
+    }
+
     @Unroll
     def "validate inuse file for execution"() {
         given:
@@ -483,6 +538,7 @@ class FileUploadServiceSpec extends HibernateSpec implements ServiceUnitTest<Fil
         ScheduledExecution job = mkjob(jobid)
         job.validate()
         Execution exec = mkexec(job)
+        exec.willRetry = willRetry
         exec.validate()
 
         def jfr = new JobFileRecord(
@@ -508,8 +564,12 @@ class FileUploadServiceSpec extends HibernateSpec implements ServiceUnitTest<Fil
         when:
         def result = service.validateFileRefForJobOption(ref, inputjobid, inputoptname)
         then:
-        result.valid == false
-        result.error == 'inuse'
+        result.valid == valid
+        result.error == error
+        where:
+        willRetry | valid | error
+        false     | false | 'inuse'
+        true      | true  | null
     }
 
     def "attach file for scheduled execution"() {
@@ -560,5 +620,28 @@ class FileUploadServiceSpec extends HibernateSpec implements ServiceUnitTest<Fil
         then:
         result
         result.fileName==origName
+    }
+
+    def "validate option with plugin disabled"(){
+
+        given:
+        def option = new Option(optionType: 'file', name: 'myopt', required: false, enforced: false).save()
+        service.featureService = Mock(FeatureService){
+            featurePresent("fileUploadPlugin")>>false
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+            getLong('fileUploadService.tempfile.expiration', _) >> 30000L
+        }
+        service.pluginService = Mock(PluginService){
+            validatePluginConfig(_, _,_) >> new ValidatedPlugin(valid: true, report: Validator.buildReport().build())
+        }
+
+        when:
+        def result = service.validateFileOptConfig(option)
+
+        then:
+        option.errors.hasErrors() == true
+
     }
 }

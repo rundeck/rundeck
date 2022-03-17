@@ -9,14 +9,9 @@ Vue.use(uiv)
 import LogViewer from './logViewer.vue'
 
 import { ExecutionLog } from '../../utilities/ExecutionLogConsumer'
-import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
-import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
 
 import fetchMock from 'fetch-mock'
 import { RootStore } from '../../stores/RootStore'
-
-// @ts-ignore
-window._rundeck = {rundeckClient: new Rundeck(new TokenCredentialProvider('foo'), {baseUri: '/', httpClient: new BrowserFetchHttpClient()})}
 
 const rootStore = new RootStore(window._rundeck.rundeckClient)
 

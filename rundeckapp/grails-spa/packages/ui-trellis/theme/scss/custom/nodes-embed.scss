@@ -31,7 +31,7 @@
 .node-details-simple {
   .subattrs {
     td {
-      background: #f8f8f8;
+      background: var(--background-color-lvl2);
     }
   }
 }
@@ -51,7 +51,7 @@
   & .key {
     text-align: right;
     font-weight: bold;
-    color: #555;
+    color: var(--text-muted-color);
   }
 
   & tr .value {

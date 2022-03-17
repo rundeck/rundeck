@@ -18,6 +18,7 @@ import com.rundeck.repository.definition.RepositoryDefinition
 import com.rundeck.repository.api.RepositoryOwner
 import com.rundeck.repository.client.RepositoryClient
 import grails.testing.web.controllers.ControllerUnitTest
+import org.rundeck.core.auth.AuthConstants
 import spock.lang.Specification
 
 class RepositoryControllerSpec extends Specification implements ControllerUnitTest<RepositoryController> {
@@ -29,8 +30,25 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         controller.repoClient = client
         controller.frameworkService = new FakeFrameworkService()
         controller.pluginApiService = new FakePluginApiService()
+    }
+
+    private void setupAuthSystemAdmin(Boolean authorized=true) {
         controller.rundeckAuthContextProcessor = Mock(AuthContextProcessor) {
-            authorizeApplicationResourceAny(_,_,_) >> true
+            1 * authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]
+            ) >> authorized
+            getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
+        }
+    }
+    private void setupAuthPluginAction(String action, Boolean authorized=true) {
+        controller.rundeckAuthContextProcessor = Mock(AuthContextProcessor) {
+            1 * authorizeApplicationResourceAny(
+                _,
+                AuthConstants.RESOURCE_TYPE_PLUGIN,
+                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN, action]
+            ) >> authorized
             getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext)
         }
     }
@@ -39,6 +57,8 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     }
 
     void "list Repositories"() {
+        given:
+        setupAuthSystemAdmin()
         when:
         1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE),
                                               new RepositoryDefinition(repositoryName: "official",owner:RepositoryOwner.RUNDECK,enabled:false)]
@@ -49,12 +69,24 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         response.json == [[name:"private",type:"PRIVATE",enabled:true],[name:"official",type:"RUNDECK",enabled:false]]
 
     }
+    void "list Repositories unauthorized"() {
+        given:
+            setupAuthSystemAdmin(false)
+        when:
+        controller.listRepositories()
+
+        then:
+            0 * client.listRepositories()
+            response.status==400
+            response.json == [error:'You are not authorized to perform this action']
+    }
 
     void "list artifacts no repo specified"() {
         given:
         String pluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
         controller.pluginApiService.installedPluginIds = [:]
         controller.pluginApiService.installedPluginIds[pluginId] = "1.0"
+        setupAuthPluginAction(AuthConstants.ACTION_READ)
 
         when:
         1 * client.listArtifacts(_,_) >> testArtifactList("private")
@@ -73,9 +105,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     void "list artifacts without correct permission"() {
         given:
-        controller.rundeckAuthContextProcessor = Mock(AuthContextProcessor) {
-            authorizeApplicationResourceAny(_,_,_) >> false
-        }
+            setupAuthPluginAction(AuthConstants.ACTION_READ, false)
 
         when:
         0 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
@@ -90,6 +120,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     void "search artifacts"() {
         given:
         controller.pluginApiService.installedPluginIds = [:]
+        setupAuthPluginAction(AuthConstants.ACTION_READ)
 
         when:
         1 * client.searchManifests(_) >> testSearch("private")
@@ -104,12 +135,29 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         response.json.artifacts[0].results[0].installed == false
 
     }
+    void "search artifacts unauthorized"() {
+        given:
+        controller.pluginApiService.installedPluginIds = [:]
+
+        setupAuthPluginAction(AuthConstants.ACTION_READ, false)
+
+        when:
+        params.searchTerm = "artifactType: script-plugin"
+        controller.searchArtifacts()
+
+        then:
+
+            0 * client.searchManifests(_)
+
+    }
+
 
     void "list installed artifacts"() {
         given:
         def installedPluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
         controller.pluginApiService.installedPluginIds = [:]
         controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
+        setupAuthPluginAction(AuthConstants.ACTION_READ)
 
         when:
         1 * client.listArtifacts(_,_) >> testArtifactList("private")
@@ -125,6 +173,8 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     }
 
     void "upload artifact no repo specified and only 1 repo defined"() {
+        given:
+        setupAuthPluginAction(AuthConstants.ACTION_INSTALL)
         when:
         ResponseBatch successBatch = new ResponseBatch()
         successBatch.addMessage(ResponseMessage.success())
@@ -151,10 +201,24 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         response.json == ["error": "Unable to upload plugins, see find plugins page for all available plugins"]
 
     }
+    void "upload artifact unauthorized"() {
+        given:
+
+            controller.featureService = Mock(FeatureService)
+            setupAuthPluginAction(AuthConstants.ACTION_INSTALL, false)
+        when:
+            controller.uploadArtifact()
+
+        then:
+            response.status==400
+            response.json == ["error": "You are not authorized to perform this action"]
+            0 * client.uploadArtifact(*_)
+    }
 
     void "install artifact no repo specified and only 1 repo defined"() {
         given:
         controller.repositoryPluginService = Mock(RepositoryPluginService)
+        setupAuthPluginAction(AuthConstants.ACTION_INSTALL)
 
         when:
         ResponseBatch successBatch = new ResponseBatch()
@@ -171,12 +235,33 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
+    void "install artifact unauthorized"() {
+        given:
+        controller.repositoryPluginService = Mock(RepositoryPluginService)
+            setupAuthPluginAction(AuthConstants.ACTION_INSTALL, false)
+
+        when:
+            controller.installArtifact()
+
+        then:
+            response.status==400
+            response.json == ["error":"You are not authorized to perform this action"]
+
+            0 * client.listRepositories()
+            0 * client.installArtifact(_,_,_)
+            0 * client.getArtifact(_,_, null)
+            0 * controller.repositoryPluginService.removeOldPlugin(_)
+            0 * controller.repositoryPluginService.syncInstalledArtifactsToPluginTarget()
+
+    }
+
     void "uninstall artifact no repo specified and only 1 repo defined"() {
         given:
         controller.repositoryPluginService = Mock(RepositoryPluginService)
         def installedPluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
         controller.pluginApiService.installedPluginIds = [:]
         controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
+        setupAuthPluginAction(AuthConstants.ACTION_UNINSTALL)
 
         when:
         params.artifactId = installedPluginId
@@ -187,6 +272,28 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
         then:
         response.json == ["msg":"Plugin Uninstalled"]
+
+    }
+
+    void "uninstall artifact unauthorized"() {
+        given:
+        controller.repositoryPluginService = Mock(RepositoryPluginService)
+        def installedPluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
+        controller.pluginApiService.installedPluginIds = [:]
+        controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
+
+            setupAuthPluginAction(AuthConstants.ACTION_UNINSTALL, false)
+
+        when:
+        params.artifactId = installedPluginId
+        controller.uninstallArtifact()
+
+        then:
+            response.status==400
+            response.json == ["error":"You are not authorized to perform this action"]
+            0 * client.listRepositories()
+            0 * client.getArtifact("private",installedPluginId, "1.0")
+            0 * controller.repositoryPluginService.uninstallArtifact(_)
 
     }
 
@@ -209,6 +316,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         def mockPluginMeta = Mock(PluginMetadata) {
             getFile() >> { tmp  }
         }
+        setupAuthPluginAction(AuthConstants.ACTION_UNINSTALL)
 
         when:
         params.artifactId = installedPluginId
@@ -229,6 +337,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     void "regenreate manifest no repo specified and only 1 repo defined"() {
         given:
         controller.repositoryPluginService = Mock(RepositoryPluginService)
+        setupAuthSystemAdmin()
 
         when:
         1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
@@ -239,6 +348,23 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         response.json == ["msg":"Refreshed Repository private"]
 
     }
+
+    void "regenreate manifest unauthorized"() {
+        given:
+            controller.repositoryPluginService = Mock(RepositoryPluginService)
+            setupAuthSystemAdmin(false)
+        when:
+            controller.regenerateManifest()
+
+        then:
+            response.status==400
+            response.json == ["error":"You are not authorized to perform this action"]
+
+            0 * client.listRepositories()
+            0 * client.refreshRepositoryManifest(_)
+
+    }
+
 
     void "convert to number for version check"() {
         when:

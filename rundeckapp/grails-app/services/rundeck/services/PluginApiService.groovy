@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
@@ -138,9 +139,11 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
-        pluginDescs['FileUpload']=pluginService.listPlugins(FileUploadPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        if(featureService.featurePresent(Features.FILE_UPLOAD_PLUGIN)) {
+            pluginDescs['FileUpload'] = pluginService.listPlugins(FileUploadPlugin).collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
         pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
@@ -244,8 +247,8 @@ class PluginApiService {
 
     def listPlugins() {
         Locale locale = getLocale()
-        String appDate = servletContext.getAttribute('version.date')
-        String appVer = servletContext.getAttribute('version.number')
+        long appEpoch = VersionConstants.DATE.time
+        String appVer = VersionConstants.VERSION
         def pluginList = listPluginsDetailed()
         def tersePluginList = pluginList.descriptions.collect {
             String service = it.key
@@ -253,7 +256,6 @@ class PluginApiService {
                 def meta = rundeckPluginRegistry.getPluginMetadata(service, provider.name)
                 boolean builtin = meta == null
                 String ver = meta?.pluginFileVersion ?: appVer
-                String dte = meta?.pluginDate ?: appDate
                 String artifactName = meta?.pluginArtifactName ?: provider.name
                 String tgtHost = meta?.targetHostCompatibility ?: 'all'
                 String rdVer = meta?.rundeckCompatibilityVersion ?: 'unspecified'
@@ -271,7 +273,7 @@ class PluginApiService {
                  pluginAuthor : author,
                  rundeckCompatibilityVersion: rdVer,
                  targetHostCompatibility: tgtHost,
-                 pluginDate   : toEpoch(dte),
+                 pluginDate   : meta?.pluginDate?.time?:appEpoch,
                  enabled      : true] as LinkedHashMap<Object, Object>
 
                 if(service != ServiceNameConstants.UI) {
@@ -380,14 +382,4 @@ class PluginApiService {
 
     }
 
-    private synchronized long toEpoch(String dateString) {
-        try {
-            return PLUGIN_DATE_FMT.parse(dateString).time
-        } catch(Exception ex) {
-            log.error("unable to parse date: ${dateString}")
-        }
-        return System.currentTimeMillis()
-    }
-
-    private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
 }

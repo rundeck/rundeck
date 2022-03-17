@@ -94,35 +94,39 @@
                 </div>
             </div>
         </g:if>
-        <div class="form-group ${input?.errors?.hasFieldErrors('fileText') ? 'has-error' : ''}">
-            <div class="col-sm-12" id="acl_text_editor_content">
-                <textarea
-                        name="fileText"
-                        class="form-control code apply_ace"
-                        data-ace-autofocus='true'
-                        data-ace-session-mode="yaml"
-                        data-ace-height="500px"
-                        data-ace-control-soft-wrap="true">${fileText}</textarea>
-                <g:if test="${input?.errors?.hasFieldErrors('fileText')}">
+        <div class="card">
+        <div class="card-content">
+            <div class="form-group ${input?.errors?.hasFieldErrors('fileText') ? 'has-error' : ''}">
+                <div class="col-sm-12" id="acl_text_editor_content">
+                    <textarea
+                            name="fileText"
+                            class="form-control code apply_ace"
+                            data-ace-autofocus='true'
+                            data-ace-session-mode="yaml"
+                            data-ace-height="500px"
+                            data-ace-control-soft-wrap="true">${fileText}</textarea>
+                    <g:if test="${input?.errors?.hasFieldErrors('fileText')}">
 
-                    <div class="help-block">
-                        <g:fieldError field="fileText" bean="${input}"/>
-                    </div>
-                </g:if>
+                        <div class="help-block">
+                            <g:fieldError field="fileText" bean="${input}"/>
+                        </div>
+                    </g:if>
+                </div>
             </div>
+            <g:if test="${validation && !validation.valid}">
+                <h3>
+                    <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
+                    title="${message(code: "aclpolicy.format.validation.failed")}"></i>
+                    <g:message code="error.validation.failed.title"/>
+                </h3>
+
+
+                <g:render template="aclValidationReport"
+                        model="${[validation: validation, documentPrefix: validationDocumentPrefix]}"/>
+
+            </g:if>
         </div>
-        <g:if test="${validation && !validation.valid}">
-            <h3>
-                <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
-                   title="${message(code: "aclpolicy.format.validation.failed")}"></i>
-                <g:message code="error.validation.failed.title"/>
-            </h3>
-
-
-            <g:render template="aclValidationReport"
-                      model="${[validation: validation, documentPrefix: validationDocumentPrefix]}"/>
-
-        </g:if>
+        </div>
     </div>
 
 

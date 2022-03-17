@@ -1,4 +1,4 @@
-@import "../paper/variables";
+@import "../runstrap/variables";
 
 .text-truncated-to-first-character{
   display:block;
@@ -86,12 +86,12 @@
 
 .row.row-hover:hover {
 
-  background-color: #f5f5f5;
+  background-color: var(--background-color-accent-lvl2);
 }
 
 .row.row-border-top {
   border-width: 2px 0 0 0;
-  border-color: #eeeeee;
+  border-color: var(--border-color);
   border-style: solid;
 }
 

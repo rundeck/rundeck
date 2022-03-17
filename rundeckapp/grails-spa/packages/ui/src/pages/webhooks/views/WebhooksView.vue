@@ -1,21 +1,21 @@
 <template>
-<div id="wh-view" style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
+<div id="wh-view" style="display: flex;flex-direction: column; height: calc(100vh - 69px); overflow: hidden; margin: -2rem">
   <div id="wh-title" class="screen-title" style="display: flex;">
     <span class="text-h3"><i class="fas fa-plug"></i> {{ $t('message.webhookPageTitle') }}</span>
     <div style="margin-left: auto;">
-      <a class="btn"
-        :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
+      <a class="btn btn-primary"
+        :class="{'btn-primary': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
         style="font-weight: 800"
         @click="handleAddNew"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
     </div>
   </div>
-  
+
   <div style="display: flex; height: 100%;overflow: hidden;">
     <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 20px;overflow-x: hidden;overflow-y: auto;">
       <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
     </div>
 
-    <div class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
+    <div id="wh-details" class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
       <div>
         <div id="wh-edit" v-if="curHook">
           <div id="wh-header">
@@ -25,13 +25,13 @@
                           style="font-weight: 800;"
                           v-if="curHook.id"
                           @click="handleDelete"
-                          class="btn btn-transparent">{{ $t('message.webhookDeleteBtn') }}</a>
+                          class="btn btn-danger">{{ $t('message.webhookDeleteBtn') }}</a>
                   </div>
                   <div>
                     <a
                             v-if="!curHook.id"
                             @click="handleCancel"
-                            class="btn btn-md "
+                            class="btn btn-md btn-default"
                     >{{ $t('message.cancel') }}</a>
                     <btn
                             :disabled="!(dirty || curHook.new)"
@@ -47,7 +47,7 @@
             <Tab :index="0" title="General">
               <div class="wh-edit__body">
                 <div  class="form-group">
-                  <div class="card wh-url-card">
+                  <div class="card card-accent">
                   <div class="card-content">
                     <label>{{ $t('message.webhookPostUrlLabel') }}</label>
                     <div class="help-block">
@@ -55,6 +55,19 @@
                     </div>
                     <CopyBox style="max-width: 800px" v-if="!curHook.new" :content="postUrl()"/>
                     <span class="form-control fc-span-adj font-italic" style="height: auto;" v-if="curHook.new">{{$t('message.webhookPostUrlPlaceholder')}}</span>
+                  </div>
+                  <div class="card-content">
+                    <label>{{ $t('message.webhookAuthLabel') }}</label>
+                    <div class="help-block"> {{$t('message.webhookGenerateSecretCheckboxHelp')}}</div>
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.useAuth" @click="confirmAuthToggle" class="form-control" id="wh-authtoggle"><label for="wh-authtoggle">{{ $t('message.webhookGenerateSecurityLabel') }}</label></div>
+                    <div v-if="showRegenButton">
+                      <button class="btn btn-sm btn-default" @click="setRegenerate">Regenerate</button>
+                      <span v-if="curHook.regenAuth" style="color: var(--color-red); margin-left: 5px"> {{$t('message.webhookRegenClicked')}}</span>
+                    </div>
+                    <div v-if="hkSecret" >
+                      <label style="color: var(--color-red); margin-top: 5px">{{$t('message.webhookSecretMessageHelp')}}</label>
+                      <CopyBox style="max-width: 800px" :content="hkSecret"/>
+                    </div>
                   </div>
                   </div>
                 </div>
@@ -74,7 +87,7 @@
                     </div>
                   </div>
                   <div class="form-group">
-                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label>{{ $t('message.webhookEnabledLabel') }}</label></div>
+                    <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control" id="wh-enabled"><label for="wh-enabled">{{ $t('message.webhookEnabledLabel') }}</label></div>
                   </div>
                 </div>
                 </div>
@@ -85,7 +98,7 @@
                 <div class="card" style="padding: 1em;">
                   <div class="form-group">
                     <div class="btn-group">
-                      <button class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-info':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
+                      <button class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" :class="{'btn-default':!curHook.eventPlugin, 'btn-muted':curHook.eventPlugin}"
                         aria-expanded="false" >
 
                         <plugin-info
@@ -158,6 +171,7 @@ import CopyBox from '@rundeck/ui-trellis/lib/components/containers/copybox/CopyB
 import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
 import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
 import WebhookPicker from '@rundeck/ui-trellis/lib/components/widgets/webhook-select/WebhookSelect.vue'
+import KeyStorageSelector from '@rundeck/ui-trellis/lib/components/plugins/KeyStorageSelector.vue'
 
 import {getServiceProviderDescription,
   getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
@@ -198,7 +212,8 @@ export default observer(Vue.extend({
     Tabs,
     Tab,
     WebhookPicker,
-    WebhookTitle
+    WebhookTitle,
+    KeyStorageSelector
   },
   inject: ["rootStore"],
   data() {
@@ -206,6 +221,8 @@ export default observer(Vue.extend({
       webhooks: [],
       webhookPlugins: [],
       curHook: null,
+      hkSecret: null,
+      origUseAuthVal: false,
       config: null,
       errors: {},
       validation:{valid:true,errors:{}},
@@ -217,7 +234,29 @@ export default observer(Vue.extend({
       dirty: false
     }
   },
+  computed: {
+    showRegenButton() {
+      return !this.hkSecret && this.curHook.useAuth && !this.curHook.new && this.origUseAuthVal
+    }
+  },
   methods: {
+    confirmAuthToggle() {
+      if(this.curHook.useAuth) {
+        var self = this
+        self.$confirm({
+          title:"Confirm",
+          content:"Are you sure you want to remove this webhook authorization string?"
+        }).then(() => {
+          //do nothing
+        }).catch(() => {
+          this.curHook.useAuth = true
+        })
+      }
+
+    },
+    setRegenerate() {
+      this.curHook.regenAuth = true
+    },
     input() {
       this.dirty = true
     },
@@ -270,7 +309,11 @@ export default observer(Vue.extend({
       this.cleanAction(() => this.select(selected))
     },
     select(selected) {
+      if (!this.curHook || this.curHook.uuid !== selected.uuid) {
+          this.hkSecret = null
+      }
       this.curHook = this.rootStore.webhooks.clone(selected)
+      this.origUseAuthVal = this.curHook.useAuth
 
       this.dirty = false
 
@@ -279,7 +322,7 @@ export default observer(Vue.extend({
       }, (data) => {
         this.dirty = true
       })
-      
+
       this.setValidation(true)
       this.setSelectedPlugin(true)
     },
@@ -305,13 +348,14 @@ export default observer(Vue.extend({
     },
     async handleSave() {
       const webhook = this.curHook
-
+      if(this.curHook.useAuth && this.origUseAuthVal === false) {
+        this.curHook.regenAuth = true
+      }
       if(!webhook.eventPlugin) {
         this.setError("You must select a Webhook plugin before saving")
         return
       }
       webhook.config = this.selectedPlugin.config
-
       let resp
       if (webhook.new)
         resp = await this.rootStore.webhooks.create(webhook)
@@ -325,6 +369,9 @@ export default observer(Vue.extend({
         this.setValidation(false, data.errors)
       } else {
         this.setMessage("Saved!")
+        if(data.generatedSecurityString) {
+          this.hkSecret = data.generatedSecurityString
+        }
         this.setValidation(true)
         this.dirty = false
         await this.rootStore.webhooks.refresh(this.projectName)
@@ -343,7 +390,8 @@ export default observer(Vue.extend({
       var self = this
       self.$confirm({
         title:"Confirm",
-        content:"Are you sure you want to delete this webhook?"
+        content:"Are you sure you want to delete this webhook?",
+        okType:"danger"
       }).then(() => {
 
         this.rootStore.webhooks.delete(this.curHook).then(response => {
@@ -392,8 +440,10 @@ export default observer(Vue.extend({
       this.cleanAction(() => this.addNewHook())
     },
     addNewHook() {
+      this.hkSecret = null
       this.showPluginConfig = false
-      this.curHook = this.rootStore.webhooks.newFromApi({name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, new: true, config: {}})
+      this.origUseAuthVal = false
+      this.curHook = this.rootStore.webhooks.newFromApi({name: "New Hook", user: curUser, roles: curUserRoles, useAuth: false, enabled: true, project: projectName, new: true, config: {}})
       this.config = this.curHook.config
       this.dirty = true
     },
@@ -430,18 +480,17 @@ export default observer(Vue.extend({
     flex-basis: 70px;
     flex-grow: 0;
     flex-shrink: 0;
-    border-color: #d7d7d7;
-    border-bottom: 0.1em solid #d7d7d7;
-    h3 {
-      margin: 0;
-      padding: 0;
-      font-weight: 700;
-      color: black;
-    }
+    background-color: var(--background-color-lvl2);
+    border-color: var(--background-color);
+    border-bottom: 0.1em solid var(--background-color);
+  }
+
+  #wh-details {
+    background-color: var(--background-color-lvl2);
   }
 
   #wh-list {
-    background-color: #f4f5f7;
+    background-color: var(--background-color);
     border-right: 0.1em solid #d3dbe5;
     flex-shrink: 0;
   }
@@ -454,19 +503,19 @@ export default observer(Vue.extend({
   #wh-header {
     display: flex;
     align-items: center;
-    background-color: #f7f7f7;
+    background-color: var(--background-color-accent-lvl2);
     height: 70px;
     padding: 0 2em 0 2em;
 
     h3 {
-      color: black;
+      color: var(--font-color);
       font-weight: 700;
       margin: 0;
     }
   }
 
   ::v-deep [data-tabkey="webhook-header"] > .rdtabs__tabheader {
-    background-color: #f7f7f7;
+    background-color: var(--background-color-accent-lvl2);
     border: none;
     padding: 0 2em;
   }
@@ -507,9 +556,10 @@ export default observer(Vue.extend({
   }
 
   .readonly {
-    color: #555;
-    background-color: #eee;
+    color: var(--input-disabled-color);
+    background-color: var(--input-disabled-bg-color);
     padding: 8px 12px 6px;
+    cursor: not-allowed;
   }
 
   .form-margin {
@@ -527,12 +577,12 @@ export default observer(Vue.extend({
     position: absolute;
     top: -45px;
     left: -200px;
-    background-color: #fefefe;
+    background-color: var(--input-bg-color);
     display: none;
-    border: 1px solid #999;
+    border: 1px solid var(--input-bg-color);
     padding: 10px;
     border-radius: 3px;
-    color: #636363;
+    color: var(--input-color);
     z-index: 999;
     font-family: 'Muli', Arial, sans-serif;
   }

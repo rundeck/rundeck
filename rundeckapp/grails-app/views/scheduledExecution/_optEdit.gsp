@@ -57,6 +57,7 @@
             </label>
 
             <div class="col-sm-10">
+                <feature:enabled name="fileUploadPlugin">
                 <g:select
                         data-bind="value: optionType"
                         name="optionType"
@@ -71,49 +72,67 @@
                     }"
                         id="opttype_${rkey}">
                 </g:select>
+                </feature:enabled>
+                <feature:disabled name="fileUploadPlugin">
+                    <g:select
+                            data-bind="value: optionType"
+                            name="optionType"
+                            class="form-control "
+                            value="${option?.optionType}"
+                            optionKey="key"
+                            optionValue="value"
+                            from="${[
+                                    [key:'',value:message(code:'form.option.optionType.text.label')],
+                            ]
+                            }"
+                            id="opttype_${rkey}">
+                    </g:select>
+                </feature:disabled>
             </div>
         </div>
 
         <div class="form-group" data-bind="visible: isFileType()">
             <div class="col-sm-10 col-sm-offset-2">
-                <g:if test="${fileUploadPluginDescription}">
-                    <stepplugin:pluginIcon service="FileUpload"
-                                           name="${fileUploadPluginDescription.name}"
-                                           width="16px"
-                                           height="16px">
-                        <i class="rdicon icon-small plugin"></i>
-                    </stepplugin:pluginIcon>
-                    <stepplugin:message
-                            service="FileUpload"
-                            name="${fileUploadPluginDescription.name}"
-                            code="plugin.title"
-                            default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
-                    <span class="text-strong"><g:render template="/scheduledExecution/description"
-                                                       model="[description:
-                                                                       stepplugin.messageText(
-                                                                               service: 'FileUpload',
-                                                                               name: fileUploadPluginDescription.name,
-                                                                               code: 'plugin.description',
-                                                                               default: fileUploadPluginDescription.description
-                                                                       ),
-                                                               textCss    : '',
-                                                               mode       : 'hidden', rkey: g.rkey()]"/></span>
+                <feature:enabled name="fileUploadPlugin">
+                    <g:if test="${fileUploadPluginDescription}">
+                        <stepplugin:pluginIcon service="FileUpload"
+                                               name="${fileUploadPluginDescription.name}"
+                                               width="16px"
+                                               height="16px">
+                            <i class="rdicon icon-small plugin"></i>
+                        </stepplugin:pluginIcon>
+                        <stepplugin:message
+                                service="FileUpload"
+                                name="${fileUploadPluginDescription.name}"
+                                code="plugin.title"
+                                default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
+                        <span class="text-strong"><g:render template="/scheduledExecution/description"
+                                                           model="[description:
+                                                                           stepplugin.messageText(
+                                                                                   service: 'FileUpload',
+                                                                                   name: fileUploadPluginDescription.name,
+                                                                                   code: 'plugin.description',
+                                                                                   default: fileUploadPluginDescription.description
+                                                                           ),
+                                                                   textCss    : '',
+                                                                   mode       : 'hidden', rkey: g.rkey()]"/></span>
 
-                    <g:if test="${fileUploadPluginDescription?.properties}">
-                        <g:set var="prefix" value="${'configMap.'}"/>
-                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                service:'FileUpload',
-                                provider:fileUploadPluginDescription.name,
-                                properties:fileUploadPluginDescription?.properties,
-                                report: configMapValidate,
-                                prefix:prefix,
-                                values:option?.configMap,
-                                fieldnamePrefix:prefix,
-                                origfieldnamePrefix:'orig.' + prefix,
-                                allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
-                        ]}"/>
+                        <g:if test="${fileUploadPluginDescription?.properties}">
+                            <g:set var="prefix" value="${'configMap.'}"/>
+                            <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    service:'FileUpload',
+                                    provider:fileUploadPluginDescription.name,
+                                    properties:fileUploadPluginDescription?.properties,
+                                    report: configMapValidate,
+                                    prefix:prefix,
+                                    values:option?.configMap,
+                                    fieldnamePrefix:prefix,
+                                    origfieldnamePrefix:'orig.' + prefix,
+                                    allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                            ]}"/>
+                        </g:if>
                     </g:if>
-                </g:if>
+                </feature:enabled>
             </div>
         </div>
 
@@ -742,7 +761,7 @@
                 <g:hiddenField name="newoption" value="true"/>
                 <span class="btn btn-default btn-sm" onclick="_optcancelnew();"
                       title="${g.message(code:'form.option.cancel.title',encodeAs:'HTMLAttribute')}"><g:message code="cancel" /></span>
-                <span class="btn btn-primary btn-sm" onclick="_optsavenew('optedit_${enc(attr:rkey)}', 'reqtoken_${enc(attr:rkey)}');"
+                <span class="btn btn-cta btn-sm" onclick="_optsavenew('optedit_${enc(attr:rkey)}', 'reqtoken_${enc(attr:rkey)}');"
                       title="${g.message(code:'form.option.create.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
                 <g:javascript>
                     fireWhenReady('optname_${enc(js:rkey)}',function(){
@@ -753,7 +772,7 @@
             <g:else>
                 <span class="btn btn-default btn-sm" onclick="_optview('${enc(js:origName?:option?.name)}',jQuery(this).closest('li.optEntry'));"
                       title="${g.message(code:'form.option.discard.title', encodeAs: 'HTMLAttribute')}"><g:message code="discard" /></span>
-                <span class="btn btn-primary btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',jQuery(this).closest('li.optEntry'));"
+                <span class="btn btn-cta btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',jQuery(this).closest('li.optEntry'));"
                       title="${g.message(code:'form.option.save.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
             </g:else>
             <span class="text-warning cancelsavemsg" style="display:none;">
@@ -779,7 +798,7 @@
           bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',
           optionType:"${option?.optionType}",
           enforceType:currentEnforceType,
-          defaultValue:"${enc(attr:option?.defaultValue)}",
+          defaultValue:"${option?.defaultValue}",
           showDefaultValue:"${!option?.secureInput && !option?.isDate}",
           valuesList:"${listvalue ? listvalue : listjoin ? listjoin.join(',') : ''}",
           valuesUrl:"${option?.getRealValuesUrl()?.toString()}"});

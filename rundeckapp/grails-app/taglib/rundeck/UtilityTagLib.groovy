@@ -23,6 +23,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.gui.AuthMenuItem
 import org.grails.web.gsp.io.GrailsConventionGroovyPageLocator
+import org.rundeck.app.gui.GroupedMenuItem
 import org.rundeck.app.gui.MenuItem
 import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -50,6 +51,9 @@ class UtilityTagLib{
             'executionMode',
             'scheduleMode',
             'appTitle',
+            'appFavicon',
+            'appLogo',
+            'appLogocss',
             'rkey',
             'w3cDateValue',
             'sortGroupKeys',
@@ -851,13 +855,13 @@ class UtilityTagLib{
                 fragment='#'+split[1]
             }
         }
-        def rdversion = grailsApplication.metadata.getProperty('info.app.version', String)
+        def rdversion = grailsApplication.metadata.getProperty('info.app.version', String).get()
         def rdversionShort = rdversion.split('-')[0]
 
         def helpBase
         def helpUrl
-        if(grailsApplication.config.rundeck?.gui?.helpLink){
-            helpBase= grailsApplication.config.rundeck?.gui?.helpLink
+        if(configurationService.getString("gui.helpLink")){
+            helpBase= configurationService.getString("gui.helpLink")
             helpUrl=helpBase + path + fragment
         }else{
             def docVersion = rdversion?.contains('SNAPSHOT')?'docs':rdversionShort
@@ -1101,7 +1105,7 @@ class UtilityTagLib{
 
     protected SynchronizerTokensHolder tokensHolder() {
         SynchronizerTokensHolder tokensHolder
-        if (grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true, 'true']) {
+        if (configurationService.getBoolean("security.useHMacRequestTokens", false)) {
             //enable hmac request tokens which expire instead of Grails' default UUID based tokens
             tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user,
                     request.remoteAddr])
@@ -1130,7 +1134,7 @@ class UtilityTagLib{
         if (attrs.containsKey('useToken')) {
             useToken = attrs.boolean('useToken')
         }
-        if(useToken && grailsApplication.config.rundeck?.security?.useHMacRequestTokens in [true,'true']){
+        if(useToken && configurationService.getBoolean("security.useHMacRequestTokens",false)){
             //enable hmac request tokens which expire instead of Grails' default UUID based tokens
             def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
         }
@@ -1140,7 +1144,16 @@ class UtilityTagLib{
     }
 
     def appTitle={attrs,body->
-        grailsApplication.config.rundeck.gui.title ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
+        configurationService.getString("gui.title") ?:g.message(code:'main.app.name',default:'')?:g.message(code:'main.app.default.name')
+    }
+    def appFavicon={attrs,body->
+        configurationService.getString("gui.favicon") ?:g.message(code:'main.app.favicon',default:'')?:g.message(code:'main.app.default.favicon')
+    }
+    def appLogo={attrs,body->
+        configurationService.getString("gui.svglogo") ?:g.message(code:'main.app.svglogo',default:'')?:g.message(code:'main.app.default.svglogo')
+    }
+    def appLogocss={attrs,body->
+        configurationService.getString("gui.logocss") ?:g.message(code:'main.app.logocss',default:'')?:g.message(code:'main.app.default.logocss')
     }
 
     def executionMode={attrs,body->
@@ -1912,6 +1925,7 @@ ansi-bg-default'''))
     def forMenuItems = { attrs, body ->
         String type = attrs.type
         String var = attrs.var
+        String groupvar = attrs.groupvar
         String project = attrs.project
         def menuType = MenuItem.MenuType.valueOf(type.toUpperCase())
         if (menuType.projectType && !project) {
@@ -1927,14 +1941,37 @@ ansi-bg-default'''))
         ) : null
 
         def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
+        Set<String> groups=new HashSet<>()
         applicationContext.getBeansOfType(MenuItem).
                 findAll { it.value.type == menuType }.
                 findAll { checkEnabled.apply(it.value) }.
                 sort {a, b->
-                    a.value.priority <=> b.value.priority
+                    String ga = GroupedMenuItem.groupId(a.value)
+                    String gb = GroupedMenuItem.groupId(b.value)
+                    if(ga == gb){
+                        return a.value.priority <=> b.value.priority
+                    } else if (ga && !gb) {
+                        return 1
+                    } else if (!ga && gb) {
+                        return -1
+                    }else{
+                        return ga <=> gb
+                    }
                 }.
                 each { name, MenuItem item ->
-                    out << body((var): item)
+                    Map data=[(var): item]
+                    String group = GroupedMenuItem.groupId(item)
+                    if (groupvar && group && !groups.contains(group)) {
+                        groups << group
+                        data << [
+                            (groupvar): [
+                                id   : group,
+                                // title: GroupedMenuItem.groupTitle(item),
+                                // titleCode : GroupedMenuItem.groupTitleCode(item)
+                            ]
+                        ]
+                    }
+                    out << body(data)
                 }
     }
 

@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.VersionConstants;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
@@ -422,6 +423,13 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
      * Return true if loaded metadata about the plugin file is valid.
      */
     static PluginValidation validatePluginMeta(final PluginMeta pluginList, final File file) {
+        return validatePluginMeta(pluginList, file, VersionConstants.VERSION);
+    }
+
+    /**
+     * Return true if loaded metadata about the plugin file is valid.
+     */
+    static PluginValidation validatePluginMeta(final PluginMeta pluginList, final File file, final String rundeckVersion) {
         PluginValidation.State state = PluginValidation.State.VALID;
         if (pluginList == null) {
             return PluginValidation.builder()
@@ -457,6 +465,7 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
             PluginValidation.State
                 versCompatState = PluginMetadataValidator.validateRundeckCompatibility(
                 validationErrors,
+                rundeckVersion,
                 pluginList.getRundeckCompatibilityVersion()
             );
 

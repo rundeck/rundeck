@@ -1,27 +1,25 @@
-@import '../paper/_variables';
+@import "../runstrap/variables";
 
 .label{
-  &.label-default{
-    a{
-      color: var(--white-color);
-    }
+  &.label-default {
+    color: var(--default-color);
+    background-color: var(--font-color);
   }
   &.label-white{
-    background-color: white;
-    color: black;
+    background-color: var(--white-color);
+    color: var(--black-color);
   }
 
   &.label-muted {
-    color: var(--dark-gray);
-    background-color: var(--very-light-gray);
+    color: var(--text-muted-color);
+    background-color: var(--background-color-accent);
     &.active{
-      background-color: var(--light-gray);
+      background-color: var(--text-muted-color);
     }
   }
 
   &.label-secondary {
-    color: var(--dark-gray);
-    background-color: var(--light-gray);
+    background-color: var(--background-color-accent);
     &.active{
       background-color: var(--medium-gray);
     }

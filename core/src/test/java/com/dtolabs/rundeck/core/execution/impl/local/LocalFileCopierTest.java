@@ -57,6 +57,7 @@ public class LocalFileCopierTest {
 
     @Test
     public void testCopyString() throws IOException, FileCopierException {
+        System.setProperty("rundeck.localExecutor.disabled","false");
         LocalFileCopier localFileCopier = new LocalFileCopier(getFramework());
         File temp = File.createTempFile("string-copy", "tmp");
         temp.deleteOnExit();
@@ -68,6 +69,7 @@ public class LocalFileCopierTest {
 
     @Test
     public void testCopyInputStream() throws IOException, FileCopierException {
+        System.setProperty("rundeck.localExecutor.disabled","false");
         LocalFileCopier localFileCopier = new LocalFileCopier(getFramework());
         File temp = File.createTempFile("string-copy", "tmp");
         temp.deleteOnExit();
@@ -80,6 +82,7 @@ public class LocalFileCopierTest {
 
     @Test
     public void testCopyFile() throws IOException, FileCopierException {
+        System.setProperty("rundeck.localExecutor.disabled","false");
         LocalFileCopier localFileCopier = new LocalFileCopier(getFramework());
         File temp = File.createTempFile("string-copy", "tmp");
         temp.deleteOnExit();

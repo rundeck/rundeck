@@ -21,10 +21,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.google.common.collect.Lists
-import groovy.sql.Sql
+import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
-import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
 import rundeck.ScheduledExecution
@@ -36,6 +35,8 @@ class ReportService  {
 
     def grailsApplication
     AppAuthContextEvaluator rundeckAuthContextEvaluator
+    ConfigurationService configurationService
+
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
 
@@ -92,7 +93,7 @@ class ReportService  {
      def public finishquery(ExecQuery query,def params, Map model){
 
         if(!params.max){
-            params.max=grailsApplication.config.reportservice.pagination.default?grailsApplication.config.reportservice.pagination.default.toInteger():20
+            params.max=grailsApplication.config.getProperty("reportservice.pagination.default",Integer.class, 20)
         }
         if(!params.offset){
             params.offset=0
@@ -178,7 +179,9 @@ class ReportService  {
             paginateParams.remove(it)
         }
 
-        def tmod=[max: query?.max?query.max:grailsApplication.config.reportservice.pagination.default?grailsApplication.config.reportservice.pagination.default.toInteger():20,
+         Integer defaultMax = grailsApplication.config.getProperty("reportservice.pagination.default",Integer.class, 20)
+
+         def tmod=[max: query?.max?query.max:defaultMax,
             offset:query?.offset?query.offset:0,
             paginateParams:paginateParams,
             displayParams:displayParams]
@@ -455,9 +458,7 @@ class ReportService  {
             if (query?.max) {
                 maxResults(query?.max.toInteger())
             } else {
-                maxResults(grailsApplication.config.rundeck?.pagination?.default?.max ?
-                                   grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-                                   20 )
+                maxResults(configurationService.getInteger("pagination.default.max",20))
             }
             if (query?.offset) {
                 firstResult(query.offset.toInteger())
@@ -479,8 +480,8 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
-        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def minLevel = configurationService.getString("min.isolation.level","")
+        def isolationLevel = (minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
         def total = ExecReport.withTransaction([isolationLevel: isolationLevel]) {
             ExecReport.createCriteria().count {
                 applyExecutionCriteria(query, delegate, isJobs)

@@ -49,7 +49,7 @@
   </div>
 <div class="row" style="margin-bottom: 20px;">
     <div class="col-xs-12 subtitle-head">
-        <div class="subtitle-head-item input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
+        <div class="subtitle-head-item input-group multiple-control-input-group" style="margin-bottom:0;">
             <g:render template="nodeFilterInputGroup"
                       model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
         </div>
@@ -297,7 +297,7 @@
             <g:hiddenField name="project" value="${params.project}"/>
             <g:render template="nodeFiltersHidden"/>
             <g:render template="/common/queryFilterManagerModal"
-                      model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+                      model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmitAjax: true]}"/>
         </g:form>
 </div>
 </div>

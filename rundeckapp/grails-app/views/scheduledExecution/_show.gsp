@@ -41,7 +41,9 @@
                       ]"/>
 
             <section class="section-space">
-                <small class="uuid text-secondary">${scheduledExecution.extid}</small>
+                <div class="vue-copybox">
+                    <copy-box content="${scheduledExecution.extid}" style="max-width: 375px;"/>
+                </div>
             </section>
         </div>
 
@@ -52,12 +54,12 @@
                           model="[scheduledExecution: scheduledExecution,
                                   hideTitle         : false,
                                   dropdownClass     : 'dropdown-menu-right',
-                                  btnClass          : 'btn btn-sm']"/>
+                                  btnClass          : 'btn btn-default btn-transparent btn-sm']"/>
             </div>
 
             <g:if test="${readAccess}">
                 <section class="section-space">
-                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-sm ">
+                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-default btn-transparent btn-simple btn-sm ">
 
                         <g:if test="${rundoctext}">
                             <i class="glyphicon glyphicon-book"></i>

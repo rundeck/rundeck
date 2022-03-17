@@ -184,9 +184,9 @@ rundeck:
                     comment: the following policy definition should work in default rundeck install
                     config:
                         default-src: 'none'
-                        connect-src: 'self https://api.rundeck.com'
+                        connect-src: 'self https://api.rundeck.com https://data.analytics.rundeck.com'
                         style-src: 'self unsafe-inline'
-                        script-src: 'self unsafe-inline unsafe-eval'
+                        script-src: 'self https://content.analytics.rundeck.com unsafe-inline unsafe-eval'
                         font-src: 'self data:'
                         img-src: '* data:'
                         form-action: 'self'
@@ -203,6 +203,7 @@ rundeck:
                     - /error
                     - /favicon.ico
                     - /health
+                    - /user/reset
     storage:
         default: deleteMe
     execution:
@@ -233,6 +234,8 @@ rundeck:
                 enabled: true
             healthcheck:
                 enabled: true
+            cpuProfile:
+                enabled: false
     gui:
         execution:
             tail:
@@ -296,6 +299,8 @@ rundeck:
             enabled: true
         notificationsOwnThread:
             enabled: false #FYI FALSE
+        fileUploadPlugin:
+            enabled: true
 ---
 
 beans:
@@ -307,6 +312,7 @@ server:
     port: 4440
     servlet:
         session:
+            persistent: false
             cookie:
                 http-only: true
             tracking-modes: 'cookie'

@@ -85,7 +85,7 @@
             <div class="col-sm-12">
                 <h3>
                     <g:message code="userController.page.profile.heading.userTokens.label"/>
-                    <a class="btn btn-cta btn-xs"
+                    <a class="btn btn-default btn-xs"
                        data-toggle="modal"
                        href="#gentokenmodal">
                         <g:icon name="plus"/>

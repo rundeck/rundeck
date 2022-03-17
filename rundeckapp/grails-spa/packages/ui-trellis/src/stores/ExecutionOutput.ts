@@ -1,4 +1,4 @@
-import {observable, action, IObservableArray} from 'mobx'
+import {observable, action, IObservableArray, observe, IArrayChange, IArraySplice} from 'mobx'
 import {ObservableGroupMap, actionAsync, task} from 'mobx-utils'
 
 import {RundeckClient} from '@rundeck/client'
@@ -171,6 +171,15 @@ export class ExecutionOutput {
     
         const backoff = this.backoff / 2
         this.backoff = backoff < BACKOFF_MIN ? 0 : backoff
+    }
+
+    /**
+     * Registers the callback to receive MobX array changes. Use this to ensure same MobX import is used.
+     */
+    observeEntries(callback: (change: IArrayChange<ExecutionOutputEntry> | IArraySplice<ExecutionOutputEntry>) => void) {
+        observe(this.entries, change => {
+          callback(change)
+        })
     }
 }
 

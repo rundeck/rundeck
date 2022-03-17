@@ -3,54 +3,42 @@ import {By, until, WebElementPromise} from 'selenium-webdriver'
 import {Page} from '@rundeck/testdeck/page'
 import {Context} from '@rundeck/testdeck/context'
 
-export const Elems= {
+export const Elems = {
+    // Common elements
+    saveButton  : By.css('#Create'),
+    updateButton  : By.css('#jobUpdateSaveButton'),
+    cancelButton  : By.css('#createFormCancelButton'),
+    editCancelButton  : By.css('#editFormCancelButton'),
+    editSaveButton: By.css('#editForm div.card-footer input.btn.btn-cta[type=submit][value=Save]'),
+    errorAlert  : By.css('#error'),
+    formValidationAlert: By.css('#page_job_edit > div.list-group-item > div.alert.alert-danger'),
+    storagebrowse: By.xpath('//*[starts-with(@id,"storagebrowse")]'),
+    storagebrowseClose: By.xpath('//*[@id="storagebrowse"]/div/div/div[3]/button[1]'),
+    // Details tab
     jobNameInput  : By.css('form input[name="jobName"]'),
     groupPathInput  : By.css('form input[name="groupPath"]'),
     descriptionTextarea  : By.css('form textarea[name="description"]'),
-    saveButton  : By.css('#Create'),
-    cancelButton  : By.css('#createFormCancelButton'),
-    editSaveButton: By.css('#editForm div.card-footer input.btn.btn-primary[type=submit][value=Save]'),
-    errorAlert  : By.css('#error'),
-    formValidationAlert: By.css('#page_job_edit > div.list-group-item > div.alert.alert-danger'),
-
+    groupChooseButton: By.css('span.btn[data-target="#groupChooseModal"]'),
+    groupChooseInput : By.css('input#schedJobGroup'),
+    groupChooseModal : By.css('div#groupChooseModal_content'),
+    modalGroupEntry : By.css('span.groupname.jobgroupexpand'),
+    modalCancel : By.css('button.btn[data-dismiss="modal"]'),
+    // Workflow tab
     tabWorkflow  : By.css('#job_edit_tabs > li > a[href=\'#tab_workflow\']'),
     addNewWfStepButton: By.xpath('//*[@id="wfnewbutton"]/span'),
     addNewWfStepCommand: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[data-node-step-type=command]'),
     wfStepCommandRemoteText: By.css('#adhocRemoteStringField'),
-    wfStep0SaveButton: By.css('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-primary.btn-sm'),
+    wfStep0SaveButton: By.css('#wfli_0 div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm'),
     wfstep0vis: By.css('#wfivis_0'),
     optionNewButton: By.css('#optnewbutton > span'),
     option0EditForm: By.css('#optvis_0 > div.optEditForm'),
     option0NameInput: By.css('#optvis_0 > div.optEditForm input[type=text][name=name]'),
-    optionFormSaveButton: By.css('#optvis_0 > div.optEditForm  div.floatr > span.btn.btn-primary.btn-sm'),
+    optionFormSaveButton: By.css('#optvis_0 > div.optEditForm  div.floatr > span.btn.btn-cta.btn-sm'),
     option0UsageSession: By.css('#optvis_0 > div.optEditForm > div > section.section-separator-solo'),
     option0Type: By.xpath('//*[starts-with(@id,"sectrue")]'),
     option0KeySelector: By.xpath('//*[starts-with(@id,"defaultStoragePath")]'),
     option0OpenKeyStorage: By.css('.btn.btn-default.obs-select-storage-path'),
     option0li: By.css('#optli_0'),
-
-    storagebrowse: By.xpath('//*[starts-with(@id,"storagebrowse")]'),
-    storagebrowseClose: By.xpath('//*[@id="storagebrowse"]/div/div/div[3]/button[1]'),
-
-    notificationsTab: By.css("#job_edit_tabs > li > a[href=\'#tab_notifications\']"),
-    notificationsTabContent: By.css("#tab_notifications"),
-    enableNotifications: By.css('#notifiedTrue'),
-    notifyOnsuccessEmail: By.css('#notifyOnsuccessEmail'),
-    vueNotificationEditSection: By.css('#job-editor-notifications-vue'),
-    vueAddSuccessButton: By.css('#job-notifications-onstart > .list-group-item:first-child > button'),
-    vueEditNotificationModal: By.css('#job-notifications-edit-modal'),
-    vueEditNotificationModalSaveBtn: By.css('#job-notifications-edit-modal-btn-save'),
-    vueEditNotificationModalCancelBtn: By.css('#job-notifications-edit-modal-btn-cancel'),
-    vueEditNotificationPluginTypeDropdownButton: By.css('#notification-edit-type-dropdown > button'),
-    vueEditNotificationPluginTypeDropdownMenu: By.css('#notification-edit-type-dropdown > ul'),
-    vueNotificationConfig: By.css('#notification-edit-config'),
-    notifySuccessRecipients: By.css('#notifySuccessRecipients'),
-    tabNodes  : By.css('#job_edit_tabs > li > a[href=\'#tab_nodes\']'),
-    doNodedispatchTrue  : By.xpath('//*[@id="doNodedispatchTrue"]'),
-    nodeFilter  : By.xpath('//*[@id="schedJobNodeFilter"]'),
-    nodeFilterButton  : By.xpath('//*[@id="nodegroupitem"]/div[3]/div/div/span/div[1]/button'),
-    nodeFilterSelectAllLink  : By.xpath('//*[@id="nodegroupitem"]/div[3]/div/div/span/div[1]/ul/li[1]/a'),
-    matchedNodesText  : By.xpath('//*[@id="nodegroupitem"]/div[6]/div/div[1]/div/div/div[1]/div[1]/span[1]/span'),
     workflowStrategy  : By.xpath('//*[@id="workflow.strategy"]'),
     strategyPluginparallel: By.xpath('//*[@id="strategyPluginparallel"]'),
     strategyPluginparallelMsg: By.xpath('//*[@id="strategyPluginparallel"]/span/span'),
@@ -63,22 +51,92 @@ export const Elems= {
     revertOptionsConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]'),
 
     wfUndoButton: By.xpath('//*[@id="wfundoredo"]/div/span[1]'),
-    //wfUndoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_undo.flash_undo'),
+    // wfUndoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_undo.flash_undo'),
     wfRedoButton: By.xpath('//*[@id="wfundoredo"]/div/span[2]'),
-    //wfRedoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_redo.flash_undo'),
+    // wfRedoButton: By.css('#wfundoredo > div > span.btn.btn-xs.btn-default.act_redo.flash_undo'),
     revertWfButton: By.xpath('//*[@id="wfundoredo"]/div/span[3]'),
-    revertWfConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]')
-
+    revertWfConfirm: By.xpath('//*[starts-with(@id,"popover")]/div[2]/span[2]'),
+    // Notifications Tab
+    notificationsTab: By.css('#job_edit_tabs > li > a[href=\'#tab_notifications\']'),
+    notificationsTabContent: By.css('#tab_notifications'),
+    enableNotifications: By.css('#notifiedTrue'),
+    notifyOnsuccessEmail: By.css('#notifyOnsuccessEmail'),
+    vueNotificationEditSection: By.css('#job-editor-notifications-vue'),
+    vueAddSuccessButton: By.css('#job-notifications-onstart > .list-group-item:first-child > button'),
+    vueEditNotificationModal: By.css('#job-notifications-edit-modal'),
+    vueEditNotificationModalSaveBtn: By.css('#job-notifications-edit-modal-btn-save'),
+    vueEditNotificationModalCancelBtn: By.css('#job-notifications-edit-modal-btn-cancel'),
+    vueEditNotificationPluginTypeDropdownButton: By.css('#notification-edit-type-dropdown > button'),
+    vueEditNotificationPluginTypeDropdownMenu: By.css('#notification-edit-type-dropdown > ul'),
+    vueNotificationConfig: By.css('#notification-edit-config'),
+    notifySuccessRecipients: By.css('#notifySuccessRecipients'),
+    // Nodes tab
+    tabNodes  : By.css('#job_edit_tabs > li > a[href=\'#tab_nodes\']'),
+    doNodedispatchTrue  : By.css('input#doNodedispatchTrue'),
+    doNodedispatchFalse  : By.css('input#doNodedispatchFalse'),
+    nodeFilterMenuLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_dropdown'),
+    nodeFilterSelectAllLink  : By.css('#job_edit__node_filter_include .job_edit__node_filter__filter_select_all'),
+    nodeFilterInput  : By.css('input#schedJobNodeFilter'),
+    nodeFilterHelp : By.css('button#filterSearchHelpBtn'),
+    nodeFilterSearch  : By.css('#job_edit__node_filter_include button.node_filter__dosearch'),
+    excludeFilterMenuLink  : By.css('#job_edit__node_filter_exclude .job_edit__node_filter__filter_select_dropdown'),
+    excludeFilterSelectAllLink  : By.css('#job_edit__node_filter_exclude .job_edit__node_filter__filter_select_all'),
+    excludeFilterInput: By.css('input#schedJobNodeFilterExclude'),
+    excludeFilterSearch : By.css('#job_edit__node_filter_exclude button.node_filter__dosearch'),
+    matchedNodesText  : By.css('#nodegroupitem .node_filter_results__matched_nodes .node_filter_results__matched_nodes_count'),
+    matchedNodesRefresh : By.css('button.refresh_nodes'),
+    showExcludedNodesRadioYes  : By.css('#nodegroupitem #excludeFilterTrue'),
+    showExcludedNodesRadioNo  : By.css('#nodegroupitem #excludeFilterFalse'),
+    editableFilterYes  : By.css('#nodegroupitem #editableTrue'),
+    editableFilterNo  : By.css('#nodegroupitem #editableFalse'),
+    schedJobnodeThreadcount: By.css('#nodegroupitem #schedJobnodeThreadcount'),
+    schedJobnodeRankAttribute: By.css('#nodegroupitem #schedJobnodeRankAttribute'),
+    nodeRankOrderAscending: By.css('#nodegroupitem #nodeRankOrderAscending'),
+    nodeRankOrderDescending: By.css('#nodegroupitem #nodeRankOrderDescending'),
+    nodeFailsKeepgoingTrue: By.css('#nodegroupitem #nodeKeepgoingTrue'),
+    nodeFailsKeepgoingFalse: By.css('#nodegroupitem #nodeKeepgoingFalse'),
+    emptyNodeSetFailTrue: By.css('#nodegroupitem #successOnEmptyNodeFilterTrue'),
+    emptyNodeSetFailFalse: By.css('#nodegroupitem #successOnEmptyNodeFilterFalse'),
+    nodesSelectedByDefaultTrue: By.css('#nodegroupitem #nodesSelectedByDefaultTrue'),
+    nodesSelectedByDefaultFalse: By.css('#nodegroupitem #nodesSelectedByDefaultFalse'),
+    orchestratorDropdown: By.css('#orchestrator-edit-type-dropdown'),
+    orchestratorDropdownButton: By.css('#orchestrator-edit-type-dropdown > button'),
+    // Schedule tab
+    scheduleTab: By.css('#job_edit_tabs > li > a[href=\'#tab_schedule\']'),
+    scheduleRunNo: By.css('input#scheduledFalse'),
+    scheduleRunYes: By.css('input#scheduledTrue'),
+    simpleTab: By.css('a[href="#cronsimple"]'),
+    crontabTab: By.css('a[href="#cronstrtab"]'),
+    scheduleHourDropdown: By.css('select#hour'),
+    scheduleMinuteDropdown: By.css('select#minute'),
+    scheduleEveryDayCheckbox: By.css('input#everyDay'),
+    scheduleEveryMonthCheckbox: By.css('input#everyMonth'),
+    scheduleDaysCheckboxDiv: By.css('div#DayOfWeekDialog'),
+    scheduleMonthCheckboxDiv: By.css('div#MonthDialog'),
+    scheduleDayCheckboxes: By.css('input[class="crontab.dayOfWeek"]'),
+    scheduleMonthCheckboxes: By.css('input[class="crontab.month"]'),
+    crontabString: By.css('input#crontabString'),
+    timeZoneInput: By.css('input#timeZone'),
+    enableSchedulingYes: By.css('input#scheduleEnabledTrue'),
+    enableSchedulingNo: By.css('input#scheduleEnabledFalse'),
+    enableExecutionYes: By.css('input#executionEnabledTrue'),
+    enableExecutionNo: By.css('input#executionEnabledFalse'),
+    // Execution Plugins tab
+    // Other tab
+    otherTab  : By.css('#job_edit_tabs > li > a[href=\'#tab_other\']'),
+    multiExecFalse: By.css('input#multipleFalse'),
+    multiExecTrue: By.css('input#multipleTrue'),
+    retryInput: By.css('input#schedJobRetry')
+    // Job Queue tab
 }
-
 
 export class JobCreatePage extends Page {
     path = '/resources/createProject'
-    projectName=''
+    projectName = ''
 
     constructor(readonly ctx: Context, readonly project: string) {
         super(ctx)
-        this.projectName=project
+        this.projectName = project
         this.path = `/project/${project}/job/create`
     }
     editPagePath(jobId: string){
@@ -89,20 +147,35 @@ export class JobCreatePage extends Page {
         await driver.get(this.ctx.urlFor(this.editPagePath(jobId)))
     }
 
-    async jobNameInput(){
+    async jobNameInput() {
         return await this.ctx.driver.findElement(Elems.jobNameInput)
     }
-    async groupPathInput(){
+    async groupPathInput() {
         return await this.ctx.driver.findElement(Elems.groupPathInput)
     }
-    async descriptionTextarea(){
+    async descriptionTextarea() {
         return await this.ctx.driver.findElement(Elems.descriptionTextarea)
     }
-    saveButton():WebElementPromise{
+    async groupChooseButton() {
+        return await this.ctx.driver.findElement(Elems.groupChooseButton)
+    }
+    async groupChooseInput() {
+        return await this.ctx.driver.findElement(Elems.groupChooseInput)
+    }
+    async groupChooseModal() {
+        return await this.ctx.driver.findElement(Elems.groupChooseModal)
+    }
+    async saveButton() {
         return this.ctx.driver.findElement(Elems.saveButton)
     }
-    cancelButton():WebElementPromise{
+    async  updateButton() {
+        return this.ctx.driver.findElement(Elems.updateButton)
+    }
+    async cancelButton() {
         return this.ctx.driver.findElement(Elems.cancelButton)
+    }
+    async editCancelButton() {
+        return this.ctx.driver.findElement(Elems.editCancelButton)
     }
     async editSaveButton(){
         return this.ctx.driver.findElement(Elems.editSaveButton)
@@ -169,7 +242,10 @@ export class JobCreatePage extends Page {
     }
     async vueEditNotificationModalHidden() {
         const modal = await this.ctx.driver.findElement(Elems.vueEditNotificationModal)
-        return this.ctx.driver.wait(until.elementIsNotVisible(modal), 15000)
+        if (!modal)
+            return void(0)
+        else
+            return this.ctx.driver.wait(until.stalenessOf(modal), 15000)
     }
     async vueEditNotificationPluginTypeDropdownMenu() {
         return this.ctx.driver.wait(until.elementLocated(Elems.vueEditNotificationPluginTypeDropdownMenu), 15000)
@@ -224,12 +300,48 @@ export class JobCreatePage extends Page {
         return this.ctx.driver.wait(until.elementLocated(Elems.doNodedispatchTrue),15000)
     }
     async nodeFilter(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilter),15000)
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterInput),15000)
     }
     async nodeFilterButton(){
-        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterButton),15000)
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSearch),15000)
     }
-    async nodeFilterSelectAllLink(){
+    async excludeFilterSearch() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.excludeFilterSearch),15000)
+    }
+    async nodeFilterMenuLink(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterMenuLink),15000)
+    }
+    async showExcludedNodesRadioYes() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.showExcludedNodesRadioYes),15000)
+    }
+    async editableFilterYes() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.editableFilterYes),15000)
+    }
+    async schedJobnodeThreadcount() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.schedJobnodeThreadcount),15000)
+    }
+    async schedJobnodeRankAttribute() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.schedJobnodeRankAttribute),15000)
+    }
+    async nodeRankOrderDescending() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeRankOrderDescending),15000)
+    }
+    async nodeKeepgoingTrue() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFailsKeepgoingTrue),15000)
+    }
+    async nodeKeepgoingFalse() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodeFailsKeepgoingFalse),15000)
+    }
+    async successOnEmptyNodeFilterTrue() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.emptyNodeSetFailTrue),15000)
+    }
+    async successOnEmptyNodeFilterFalse() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.emptyNodeSetFailFalse),15000)
+    }
+    async nodesSelectedByDefaultFalse() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.nodesSelectedByDefaultFalse),15000)
+    }
+    async nodeFilterSelectAllLink() {
         return this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSelectAllLink),15000)
     }
     async matchedNodes(){
@@ -237,8 +349,24 @@ export class JobCreatePage extends Page {
     }
     async matchedNodesText(){
         let matchedNodeElem = await this.matchedNodes()
-        await matchedNodeElem.isDisplayed();
+        await matchedNodeElem.isDisplayed()
         return await matchedNodeElem.getText()
+    }
+    async orchestratorDropdown() {
+        return this.ctx.driver.findElement(Elems.orchestratorDropdown)
+    }
+    async orchestratorDropdownButton() {
+        return this.ctx.driver.wait(until.elementLocated(Elems.orchestratorDropdownButton),15000)
+    }
+    async orchestratorChoice(val: string) {
+        const orchChoiceLink = By.css(
+          '#orchestrator-edit-type-dropdown > ul > li > a[role=button][data-plugin-type=' + val + ']'
+        )
+        return this.ctx.driver.findElement(orchChoiceLink)
+    }
+    async orchestratorOptions() {
+        const dropdown = await this.orchestratorDropdown()
+        return dropdown.findElements(By.css('ul.dropdown-menu li'));
     }
     async workflowStrategy(){
         return this.ctx.driver.wait(until.elementLocated(Elems.workflowStrategy),15000)
@@ -297,7 +425,7 @@ export class JobCreatePage extends Page {
     }
 
     async optionFormSave(position: string){
-        let  optionEditForm = By.css('#optvis_'+position+' > div.optEditForm  div.floatr > span.btn.btn-primary.btn-sm')
+        let  optionEditForm = By.css('#optvis_'+position+' > div.optEditForm  div.floatr > span.btn.btn-cta.btn-sm')
         return await this.ctx.driver.findElement(optionEditForm)
     }
 
@@ -354,7 +482,7 @@ export class JobCreatePage extends Page {
     }
 
     async wfStepSaveButton(position: string){
-        let wfStep0SaveButton = By.css('#wfli_'+position+' div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-primary.btn-sm')
+        let wfStep0SaveButton = By.css('#wfli_'+position+' div.wfitemEditForm div._wfiedit > div.floatr > span.btn.btn-cta.btn-sm')
         return await this.ctx.driver.findElement(wfStep0SaveButton)
     }
     async waitWfstepvis(position: string){
@@ -415,5 +543,77 @@ export class JobCreatePage extends Page {
     formValidationAlert():WebElementPromise{
         return this.ctx.driver.findElement(Elems.formValidationAlert)
     }
-
+    // Schedule tab elements
+    async scheduleTab() {
+        return this.ctx.driver.findElement(Elems.scheduleTab)
+    }
+    async scheduleRunYes() {
+        return this.ctx.driver.findElement(Elems.scheduleRunYes)
+    }
+    async scheduleRunNo() {
+        return this.ctx.driver.findElement(Elems.scheduleRunNo)
+    }
+    async simpleTab() {
+        return this.ctx.driver.findElement(Elems.simpleTab)
+    }
+    async crontabTab() {
+        return this.ctx.driver.findElement(Elems.crontabTab)
+    }
+    async scheduleHourDropdown() {
+        return this.ctx.driver.findElement(Elems.scheduleHourDropdown)
+    }
+    async scheduleMinuteDropdown() {
+        return this.ctx.driver.findElement(Elems.scheduleMinuteDropdown)
+    }
+    async scheduleEveryDayCheckbox() {
+        return this.ctx.driver.findElement(Elems.scheduleEveryDayCheckbox)
+    }
+    async scheduleEveryMonthCheckbox() {
+        return this.ctx.driver.findElement(Elems.scheduleEveryMonthCheckbox)
+    }
+    async scheduleDaysCheckboxDiv() {
+        return this.ctx.driver.findElement(Elems.scheduleDaysCheckboxDiv)
+    }
+    async scheduleMonthCheckboxDiv() {
+        return this.ctx.driver.findElement(Elems.scheduleMonthCheckboxDiv)
+    }
+    async scheduleDayCheckboxes() {
+        const parentDiv = await this.scheduleDaysCheckboxDiv();
+        return parentDiv.findElements(Elems.scheduleDayCheckboxes);
+    }
+    async scheduleMonthCheckboxes() {
+        const parentDiv = await this.scheduleMonthCheckboxDiv();
+        return parentDiv.findElements(Elems.scheduleMonthCheckboxes);
+    }
+    async crontabString() {
+        return this.ctx.driver.findElement(Elems.crontabString)
+    }
+    async timeZoneInput() {
+        return this.ctx.driver.findElement(Elems.timeZoneInput)
+    }
+    async enableSchedulingYes() {
+        return this.ctx.driver.findElement(Elems.enableSchedulingYes)
+    }
+    async enableSchedulingNo() {
+        return this.ctx.driver.findElement(Elems.enableSchedulingNo)
+    }
+    async enableExecutionYes() {
+        return this.ctx.driver.findElement(Elems.enableExecutionYes)
+    }
+    async enableExecutionNo() {
+        return this.ctx.driver.findElement(Elems.enableExecutionNo)
+    }
+    // Other tab elements
+    async otherTab() {
+        return this.ctx.driver.findElement(Elems.otherTab)
+    }
+    async multiExecFalse() {
+        return this.ctx.driver.findElement(Elems.multiExecFalse)
+    }
+    async multiExecTrue() {
+        return this.ctx.driver.findElement(Elems.multiExecTrue)
+    }
+    async retryInput() {
+        return this.ctx.driver.findElement(Elems.retryInput)
+    }
 }

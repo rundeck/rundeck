@@ -63,7 +63,7 @@ export default class UtilBar extends Vue {
 <style scoped lang="scss">
 .utility-bar {
     position: relative;
-    background-color: white;
+    background-color: var(--utility-bar-background-color);
     box-shadow: 0px -1px grey;
     width: 100%;
     height: 100%;
@@ -90,13 +90,14 @@ ul {
     align-items: center;
     height: 100%;
     margin: 0;
-    color: #808080;
+    // color: #808080;
+    color: var(--font-color);
     padding: 2px 5px;
     cursor: pointer;
 
     &:hover {
-        color: #373737;
-        background-color:#E5E5E5;
+        color: var(--font-color);
+        background-color: var(--background-color-accent-lvl2);
     }
 
     >span {
@@ -115,14 +116,15 @@ ul {
         min-width: 19px;
         padding: 0 5px;
         border-radius: 50%;
-        background-color: #808080;;
+        // background-color: #808080;
+        background-color: var(--font-color);
         text-align: center;
         color: white;
         font-size: 12px;
     }
 
     &:hover &-counter {
-        background-color: #373737;
+        background-color: var(--font-color);
     }
 }
 </style>

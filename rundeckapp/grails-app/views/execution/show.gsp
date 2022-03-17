@@ -49,8 +49,9 @@
       <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN])}"/>
       <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: AuthConstants.CTX_APPLICATION, type: AuthConstants.TYPE_PROJECT, name: params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
-      <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
-      <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
+      <g:set var="defaultLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.default", default: 20)}"/>
+      <g:set var="maxLastLines" value="${cfg.getInteger(config: "gui.execution.tail.lines.max", default: 20)}"/>
+
 
       <asset:javascript src="execution/show.js"/>
 
@@ -206,7 +207,7 @@ search
                                 <g:if test="${deleteExecAuth || authChecks[AuthConstants.ACTION_READ]}">
                                     <div class="btn-group" data-bind="visible: completed()">
                                         <button type="button"
-                                                class="btn btn-muted btn-sm dropdown-toggle"
+                                                class="btn btn-default btn-sm dropdown-toggle"
                                                 data-toggle="dropdown"
                                                 aria-expanded="false">
                                             <i class="glyphicon glyphicon-list"></i>
@@ -615,7 +616,7 @@ search
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
                                   <span class="btn-group">
-                                      <button type="button" class="btn btn-xs dropdown-toggle"
+                                      <button type="button" class="btn btn-default btn-xs dropdown-toggle"
                                               data-toggle="dropdown">
                                           <g:message code="execution.log" />
                                           <span class="caret"></span>
@@ -851,7 +852,7 @@ search
                                        class="card-content-full-width"
                                        data-bind="visible: activeTab() === 'output' || activeTab().startsWith('outputL')"
                                   >
-                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true"></div>
+                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="light" data-follow="true" data-trim-output="${trimOutput}"></div>
                                   </div>
 
                               </div>
@@ -969,6 +970,7 @@ search
           </div>
           <div class="modal-footer">
             <g:form controller="execution" action="delete" method="post" useToken="true">
+              <g:hiddenField name="project" value="${execution.project}"/>
               <g:hiddenField name="id" value="${execution.id}"/>
               <button type="submit" class="btn btn-default btn-xs " data-dismiss="modal">
                 <g:message code="cancel" />
@@ -1160,7 +1162,7 @@ search
         );
         flowState = new FlowState('${enc(js: execution?.id)}','flowstate',{
         workflow:workflow,
-        loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
+        loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id,params:[project:execution.project]))}",
         outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
         selectedOutputStatusId:'selectedoutputview',
         reloadInterval:1500,

@@ -48,6 +48,7 @@ import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
 import rundeck.UtilityTagLib
+import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import spock.lang.Unroll
@@ -60,6 +61,17 @@ import static org.rundeck.core.auth.AuthConstants.*
 class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
 
     List<Class> getDomainClasses() { [NodeFilter, User] }
+
+    def setup() {
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+
+        defineBeans {
+            configurationService(ConfigurationService) {
+                grailsApplication = grailsApplication
+            }
+        }
+    }
 
     def "system acls require api_version 14"(){
         setup:
@@ -283,6 +295,8 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         when:
         params.path=''
         params.project="test"
+        controller.response.format = "json"
+
         def result=controller.apiSystemAcls()
 
         then:
@@ -351,6 +365,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.path='test.aclpolicy'
         params.project="test"
         response.format='json'
+        request.format='yaml'
         request.method='POST'
         request.contentType='application/yaml'
         request.content=('{ description: \'\', \n' +
@@ -465,12 +480,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.path='test.aclpolicy'
         params.project="test"
         response.format='json'
+        request.format='yaml'
         request.method='PUT'
         request.contentType='application/yaml'
         request.content=('{ description: \'\', \n' +
                 'context: { project: \'test\' }, \n' +
                 'by: { username: \'test\' }, \n' +
                 'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        controller.response.format = "json"
         def result=controller.apiSystemAcls()
 
         then:
@@ -563,12 +580,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.path='test.aclpolicy'
         params.project="test"
         response.format='json'
+        request.format='yaml'
         request.method='POST'
         request.contentType='application/yaml'
         request.content=('{ description: \'\', \n' +
                 'context: { project: \'test\' }, \n' +
                 'by: { username: \'test\' }, \n' +
                 'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        controller.response.format = "json"
         def result=controller.apiSystemAcls()
 
         then:
@@ -608,12 +627,14 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         params.path='test.aclpolicy'
         params.project="test"
         response.format='xml'
+        request.format='yaml'
         request.method='POST'
         request.contentType='application/yaml'
         request.content=('{ description: \'\', \n' +
                 'context: { project: \'test\' }, \n' +
                 'by: { username: \'test\' }, \n' +
                 'for: { resource: [ { allow: \'x\' } ] } }').bytes
+        controller.response.format = "xml"
         def result=controller.apiSystemAcls()
 
         then:
@@ -867,7 +888,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
             1 * requireApi(_, _) >> true
             1 * renderErrorFormat(_,{map->
                 map.status==404
-            })>>'404result'
+            })>>{it[0].status=it[1].status}
         }
         def query = new ExtNodeFilters(project: 'test')
         params.project="test"
@@ -876,7 +897,7 @@ class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTes
         def result=controller.apiResourcesv2(query)
 
         then:
-        result == '404result'
+        response.status==404
     }
 
     def "get project resources filters authorized nodes"() {

@@ -3,9 +3,9 @@ import Vue from 'vue'
 import {autorun} from 'mobx'
 
 import LogViewer from '@rundeck/ui-trellis/lib/components/execution-log/logViewer.vue'
-import {RootStore} from '@rundeck/ui-trellis/lib/stores/RootStore'
+import { getRundeckContext } from '@rundeck/ui-trellis'
 
-const rootStore = new RootStore(window._rundeck.rundeckClient)
+const rootStore = getRundeckContext().rootStore
 
 window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
     const execId = nodeStep.flow.executionId()

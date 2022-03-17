@@ -150,6 +150,9 @@ export class Webhook {
     @observable project!: string
     @observable roles!: string
     @observable user!: string
+    @observable useAuth!: boolean
+    @observable regenAuth!: boolean
+    @observable authString!: string
     @observable eventPluginName!: string
     @observable eventPlugin?: Plugin
 
@@ -174,6 +177,9 @@ export class Webhook {
         this.project = json.project
         this.roles = json.roles
         this.user = json.user
+        this.useAuth = json.useAuth
+        this.regenAuth = json.regenAuth
+        this.authString = json.authString
         this.eventPluginName = json.eventPlugin
     }
 
@@ -191,6 +197,9 @@ export class Webhook {
             project: this.project,
             roles: this.roles,
             user: this.user,
+            useAuth: this.useAuth,
+            regenAuth: this.regenAuth,
+            authString: this.authString,
             eventPlugin: this.eventPlugin?.name
         }
     }

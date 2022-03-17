@@ -27,7 +27,7 @@ import org.apache.commons.cli.ParseException
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 import rundeckapp.Application
 import rundeckapp.init.RundeckInitConfig
-import liquibase.util.StringUtils
+import liquibase.util.StringUtil
 
 
 class CommandLineSetup {
@@ -117,6 +117,10 @@ class CommandLineSetup {
                 .withDescription("Down migrate or rollback to previous db versions.")
                 .create('r');
 
+        Option migrate =   OptionBuilder.withLongOpt("migrate-only")
+                .withDescription("Run database migrations then exit.")
+                .create('m');
+
         options.addOption(baseDir);
         options.addOption(dataDir);
         options.addOption(serverDir);
@@ -131,6 +135,7 @@ class CommandLineSetup {
         options.addOption(projectDir);
         options.addOption(encryptpwd);
         options.addOption(rollback);
+        options.addOption(migrate);
     }
 
     RundeckCliOptions runSetup(String[] args) {
@@ -189,8 +194,9 @@ class CommandLineSetup {
         if(!System.getProperty("logging.config")) {
             System.setProperty("logging.config",System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR)+"/log4j2.properties")
         }
-        if(!StringUtils.isEmpty(cliOptions.tag))
+        if(!StringUtil.isEmpty(cliOptions.tag))
             cliOptions.rollback = true
+        cliOptions.migrate = cl.hasOption('m')
         return cliOptions
 
     }
