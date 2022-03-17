@@ -245,7 +245,7 @@ var StepFiltersTest = function () {
     };
 
     self.testAll = function () {
-        jQuery('#section-main').append(jQuery('<div id="step-filters-tests" class="test-elem"></div>'))
+        jQuery('#section-main').append(jQuery('<div id="step-filters-tests" class="test-elem" style="overflow: scroll"></div>'))
         assert("Start: filterStepKOTest.js", 1, 1);
         for (var i in self) {
             if (i.endsWith('Test')) {

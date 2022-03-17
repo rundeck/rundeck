@@ -71,7 +71,7 @@ export function getSimpleDecomposition(hour : string, minute : string, dayOfWeek
   var monthsofyearlist = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
   var decomposedDayOfWeek = decomposeUsingValues(
-    dayOfWeek ? dayOfWeek : '*', daysofweeklist, true);
+    dayOfWeek ? dayOfWeek : '*', daysofweeklist, false);
 
   var decomposedMonthsOfYear = decomposeUsingValues(
     month ? month : '*', monthsofyearlist, false);
@@ -114,22 +114,23 @@ export function decomposeUsingValues(value : string, listOfLongValues : string[]
     }
 
   } else {
-    let smallResults = splitItems.map(item => decomposeUsingValues(item, listOfLongValues, indexStartAtZero))  as any ;
+    let smallResults = splitItems.map(item => valueToName(item, listOfLongValues, indexStartAtZero)) as any
     return flatten(smallResults);
   }
 }
 
 export function valueToIndex(value : string, listOfNames : string[], indexStartAtZero : boolean) {
   if (/\d/.test(value)) {
-    return +value;
+    return indexStartAtZero ? parseInt(value) : parseInt(value) - 1
   } else {
-    return (indexStartAtZero) ? listOfNames.indexOf(value) : (listOfNames.indexOf(value) + 1);
+    return indexStartAtZero ? listOfNames.indexOf(value) : (listOfNames.indexOf(value) + 1)
   }
 }
 
 export function valueToName(value : string, listOfNames : string[], indexStartAtZero : boolean) {
   if (/\d/.test(value)) {
-    return (indexStartAtZero) ? (listOfNames[+value]) : listOfNames[(+value) - 1];
+    const index = parseInt(value)
+    return indexStartAtZero ? listOfNames[index] : listOfNames[index - 1]
   } else {
     return value;
   }
