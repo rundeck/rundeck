@@ -34,9 +34,9 @@
 }
 
 .text-h1, .text-h2, .text-h3, .text-h4, .text-h5 {
-  color: var(--grey-800);
+  color: var(--font-color);
   a {
-    color: var(--grey-800) !important;
+    color: var(--font-color) !important;
     font-weight: bold !important;
   }
 }
