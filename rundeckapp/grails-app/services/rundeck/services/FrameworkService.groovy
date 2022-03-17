@@ -535,12 +535,36 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
      * @param projectName
      * @return
      */
+    PropertyResolverFactory.Factory pluginConfigFactory(String projectName, Map instanceConfiguration) {
+        pluginConfigFactory(instanceConfiguration, getFrameworkProject(projectName).getProperties())
+    }
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
+    PropertyResolverFactory.Factory pluginConfigFactory(Map instanceConfiguration, Map projectConfig) {
+        PropertyResolverFactory.pluginPrefixedScoped(
+            PropertyResolverFactory.instanceRetriever(instanceConfiguration),
+            PropertyResolverFactory.instanceRetriever(projectConfig),
+            rundeckFramework.getPropertyRetriever()
+        )
+    }
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
     PropertyResolver getFrameworkPropertyResolver(String projectName=null, Map instanceConfiguration=null) {
         return PropertyResolverFactory.createResolver(
                 instanceConfiguration ? PropertyResolverFactory.instanceRetriever(instanceConfiguration) : null,
-                null != projectName ? PropertyResolverFactory.instanceRetriever(getFrameworkProject(projectName).getProperties()) : null,
+                null != projectName ? getProjectPropertyResolver(projectName) : null,
                 rundeckFramework.getPropertyRetriever()
         )
+    }
+
+    public PropertyRetriever getProjectPropertyResolver(String projectName) {
+        PropertyResolverFactory.instanceRetriever(getFrameworkProject(projectName).getProperties())
     }
     /**
      * Get a property resolver for optional project level

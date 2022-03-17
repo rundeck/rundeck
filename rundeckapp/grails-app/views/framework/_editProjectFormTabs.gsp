@@ -51,6 +51,12 @@
                     </li>
                 </g:each>
 
+
+                    <li>
+                        <a href="#tab_plugins" data-toggle="tab">
+                            <g:message code="project.edit.page.tab.plugins.title" default="Plugins"/>
+                        </a>
+                    </li>
             </ul>
         </div>
     </div>

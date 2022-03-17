@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 
@@ -77,21 +78,23 @@ public interface PluginRegistry {
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                      IFramework framework,
                                         String project, Map instanceConfiguration) ;
+
     /**
-     * Create and configure a plugin instance with the given bean or provider name, resolving properties via
-     * the framework and specified project properties as well as instance configuration.
-     * @param name name of bean or provider
-     * @param service provider service
-     * @param instanceConfiguration configuration or null
+     *
+     * @param name
+     * @param service
+     * @param resolverFactory
+     * @param defaultScope
+     * @param <T>
      * @return
      */
     public <T> ConfiguredPlugin<T> configurePluginByName(
             String name,
             PluggableProviderService<T> service,
-            IPropertyLookup frameworkLookup,
-            IPropertyLookup projectLookup,
-            Map instanceConfiguration
+            PropertyResolverFactory.Factory resolverFactory,
+            PropertyScope defaultScope
     );
+
 
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                          PropertyResolver resolver, PropertyScope defaultScope);
@@ -119,6 +122,16 @@ public interface PluginRegistry {
     public <T> Map<String,Object> getPluginConfigurationByName(String name, PluggableProviderService<T> service,
                                               PropertyResolver resolver, PropertyScope defaultScope) ;
     /**
+     * Return the mapped configuration properties for the plugin
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
+     */
+    public <T> Map<String,Object> getPluginConfigurationByName(String name, PluggableProviderService<T> service,
+                                              PropertyResolverFactory.Factory resolver, PropertyScope defaultScope) ;
+    /**
      * Validate a provider for a service using a property resolver and a
      * default property scope
      * @param name name of bean or provider
@@ -128,6 +141,26 @@ public interface PluginRegistry {
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
     ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
+    /**
+     * Validate a provider for a service using a property resolver and a
+     * default property scope
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
+     */
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolverFactory.Factory resolverFactory, PropertyScope defaultScope) ;
+    /**
+     * Validate a provider for a service using a property resolver and a
+     * default property scope
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
+     */
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolverFactory.Factory resolverFactory, PropertyScope defaultScope,PropertyScope ignoredScope) ;
     /**
      * Validate a provider for a service using a property resolver and a
      * default property scope, and an ignoredScope

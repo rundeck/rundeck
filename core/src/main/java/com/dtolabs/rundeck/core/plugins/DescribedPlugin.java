@@ -29,23 +29,19 @@ import java.io.File;
  * @since 2014-02-19
  */
 public class DescribedPlugin<T> {
-    public DescribedPlugin(T instance, Description description, String name) {
-        this.instance = instance;
-        this.description = description;
-        this.name = name;
-    }
-
-    public DescribedPlugin(T instance, Description description, String name, File file) {
+    public DescribedPlugin(T instance, Description description, String name, File file, DescribedPlugin<?> groupDescribedPlugin) {
         this.name = name;
         this.instance = instance;
         this.description = description;
         this.file = file;
+        this.groupDescribedPlugin = groupDescribedPlugin;
     }
 
     @Getter @Setter String name;
     @Getter T instance;
     @Getter @Setter Description description;
     @Getter File file;
+    @Getter @Setter DescribedPlugin<?> groupDescribedPlugin;
 
     @Override
     public String toString() {

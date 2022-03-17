@@ -23,7 +23,6 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
@@ -171,7 +170,41 @@ public class PropertyResolverFactory {
                 null != projectName ? projectRetriever(projectPrefix, framework, projectName) : null,
                 frameworkRetriever(frameworkPrefix, framework)
         );
+    }/**
+     * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     * @param framework the framework
+     * @param projectName name of the project, or null to disable project property resolution
+     * @param instanceProperties instance properties, or null
+     */
+    public static Factory createFrameworkProjectRuntimeResolverFactory(
+            final IFramework framework,
+            final String projectName,
+            final Map<String, Object> instanceProperties
+    )
+    {
+        return (String svc, String provider) -> {
+            final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(svc, provider));
+            final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(svc, provider));
+            return createResolver(
+                    instanceRetriever(instanceProperties),
+                    null != projectName ? projectRetriever(projectPrefix, framework, projectName) : null,
+                    frameworkRetriever(frameworkPrefix, framework)
+            );
+        };
     }
+
+
+    /**
+     * create resolver using service name and provider name arguments
+     */
+    public static interface Factory {
+        PropertyResolver create(String service, String provider);
+    }
+
+    public static Factory creates(PropertyResolver resolver){
+        return (a, b) -> resolver;
+    }
+
     /**
      * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
      * @param framework the framework property lookup
@@ -211,35 +244,34 @@ public class PropertyResolverFactory {
     /**
      * @return Create a resolver from a set of retrievers, possibly null
      *
-     * @param resolver resolver
-     * @param pluginType service type name
-     * @param providerName provider name
+     * @param instance instance data
+     * @param projectScope project scope
+     * @param frameworkScope scope
      */
-    public static PropertyResolver createPrefixedResolver(final PropertyResolver resolver, String providerName, String pluginType) {
-        final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
-        final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
-        return new PropertyResolver(){
-            public Object resolvePropertyValue(String name, PropertyScope scope) {
+    public static Factory pluginPrefixedScoped(final PropertyRetriever instance, final PropertyRetriever projectScope, final PropertyRetriever frameworkScope) {
+        return (String pluginType, String providerName)-> {
+            final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+            final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
+            return (PropertyResolver) (name, scope) -> {
                 String value = null;
                 if (scope.isInstanceLevel()) {
-                    value = (String)resolver.resolvePropertyValue(name,scope);
+                    value = (String) instance.getProperty(name);
                 }
                 if (null != value || scope == PropertyScope.InstanceOnly) {
                     return value;
                 }
 
                 if (scope.isProjectLevel()) {
-                    value = (String) resolver.resolvePropertyValue(projectPrefix + name, scope);
+                    value = (String) projectScope.getProperty(projectPrefix + name);
                 }
                 if (null != value || scope == PropertyScope.ProjectOnly) {
                     return value;
                 }
 
-                value = (String) resolver.resolvePropertyValue(frameworkPrefix + name, scope);
+                value = (String) frameworkScope.getProperty(frameworkPrefix + name);
                 return value;
-            }
+            };
         };
-
     }
 
     /**

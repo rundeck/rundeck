@@ -30,28 +30,20 @@ class CloseableDescribedPlugin<T> extends DescribedPlugin<T> implements Closeabl
     CloseableProvider<T> closeable;
 
     CloseableDescribedPlugin(final DescribedPlugin<T> plugin) {
-        super(plugin.instance, plugin.description, plugin.name, plugin.file)
+        super(plugin.instance, plugin.description, plugin.name, plugin.file, plugin.groupDescribedPlugin)
         this.closeable = Closeables.closeableProvider(plugin.instance)
     }
+
 
     CloseableDescribedPlugin(
             final CloseableProvider<T> closeable,
             final Description description,
             final String name,
-            final File file
+            final File file,
+            DescribedPlugin<?> groupDescribedPlugin
     )
     {
-        super(closeable.provider, description, name, file)
-        this.closeable = closeable
-    }
-
-    CloseableDescribedPlugin(
-            final CloseableProvider<T> closeable,
-            final Description description,
-            final String name
-    )
-    {
-        super(closeable.provider, description, name)
+        super(closeable.provider, description, name, file, groupDescribedPlugin)
         this.closeable = closeable
     }
 

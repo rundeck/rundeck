@@ -16,16 +16,17 @@
 
 /*
 * DescriptionBuilder.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 11/21/12 10:47 AM
-* 
+*
 */
 package com.dtolabs.rundeck.plugins.util;
 
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.plugins.config.PluginGroup;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -44,6 +45,7 @@ public class DescriptionBuilder {
     private String title;
     private String description;
     private Map<String, String> metadata;
+    private Class<? extends PluginGroup> pluginGroupType;
 
     private DescriptionBuilder() {
         properties = new ArrayList<Property>();
@@ -159,6 +161,16 @@ public class DescriptionBuilder {
      */
     public DescriptionBuilder frameworkMapping(final Map<String,String> mapping) {
         this.fwkmapping.putAll(mapping);
+        return this;
+    }
+
+    /**
+     * Set plugin group
+     * @param pluginGroupType
+     * @return
+     */
+    public DescriptionBuilder pluginGroup(Class<? extends PluginGroup> pluginGroupType){
+        this.pluginGroupType = pluginGroupType;
         return this;
     }
 
@@ -412,6 +424,11 @@ public class DescriptionBuilder {
             @Override
             public Map<String, String> getMetadata() {
                 return metadata2;
+            }
+
+            @Override
+            public <T extends PluginGroup> Class<T> getPluginGroupType() {
+                return (Class<T>) pluginGroupType;
             }
 
             @Override

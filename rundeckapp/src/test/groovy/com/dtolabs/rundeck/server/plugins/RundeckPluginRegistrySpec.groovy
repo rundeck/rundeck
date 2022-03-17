@@ -14,6 +14,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.plugins.config.ConfiguredBy
+import com.dtolabs.rundeck.plugins.config.Group
+import com.dtolabs.rundeck.plugins.config.PluginGroup
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
@@ -114,6 +118,75 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             [:] | [:] | 'prop1' | null
             ['project.plugin.TestSvc.aplugin.prop1': 'propval'] | [:] | 'prop1' | 'propval'
             [:] | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval'] | 'prop1' | 'fwkval'
+
+    }
+
+    @Plugin(service = "PluginGroup", name = 'testgroup')
+    static class TestGroup implements PluginGroup{
+        @PluginProperty
+        String groupVal
+
+    }
+    @Plugin(service = "TestService", name = 'testprov1')
+    @Group(TestGroup)
+    static class TestPluginWithGroup implements ConfiguredBy<TestGroup> {
+        TestGroup pluginGroup
+        @PluginProperty
+        String prop1
+    }
+
+    @Unroll
+    def "configure plugin by name with group"() {
+        given:
+
+            def sut = new RundeckPluginRegistry()
+            sut.pluginRegistryMap=[:]
+            sut.pluginDirectory = File.createTempDir('test', 'dir')
+            sut.applicationContext = applicationContext
+            def fwk = Mock(IFramework) {
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    getFrameworkProject(project) >> Mock(IRundeckProject) {
+                        getProperties() >> projProps
+                    }
+                }
+                getPropertyRetriever() >> new mapRetriever(fwkProps)
+
+            }
+            def svc = Mock(PluggableProviderService) {
+                _*getName() >> 'TestService'
+                _*providerOfType('testprov1') >> { new TestPluginWithGroup() }
+
+            }
+            def grpSvc = Mock(PluggableProviderService) {
+                _*getName() >> 'PluginGroup'
+                _*providerOfType('testgroup') >> { new TestGroup() }
+            }
+            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader){
+                createPluginService(PluginGroup, 'PluginGroup') >> grpSvc
+            }
+            sut.rundeckPluginBlocklist=Mock(RundeckPluginBlocklist)
+        when:
+            def result = sut.configurePluginByName('testprov1', svc, fwk, project, [:])
+        then:
+            result
+            result.instance instanceof TestPluginWithGroup
+            TestPluginWithGroup plugin = result.instance
+            plugin.prop1==propval
+            plugin.pluginGroup
+            plugin.pluginGroup.groupVal==groupVal
+
+
+        where:
+            project='AProject'
+            projProps | fwkProps | propval | groupVal
+            [:] | [:] | null | null
+            [:] | ['framework.plugin.TestService.testprov1.prop1': 'prop1'] | 'prop1' | null
+            ['project.plugin.TestService.testprov1.prop1': 'propval'] | [:] | 'propval' | null
+            ['project.plugin.TestService.testprov1.prop1': 'propval'] | ['framework.plugin.TestService.testprov1.prop1': 'prop1'] | 'propval' | null
+
+            ['project.plugin.PluginGroup.testgroup.groupVal': 'projval2'] | [:] | null | 'projval2'
+            [:] | ['framework.plugin.PluginGroup.testgroup.groupVal': 'fwkval2'] | null | 'fwkval2'
+            ['project.plugin.PluginGroup.testgroup.groupVal': 'projval2'] | ['framework.plugin.PluginGroup.testgroup.groupVal': 'fwkval2'] | null | 'projval2'
 
     }
 

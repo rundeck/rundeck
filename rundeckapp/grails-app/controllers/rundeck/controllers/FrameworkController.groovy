@@ -29,6 +29,8 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import org.grails.web.json.JSONArray
+import org.grails.web.json.JSONObject
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -56,6 +58,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
+import rundeck.Notification
 import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
@@ -1354,6 +1357,36 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
 
+            //specific props for typed pluginValues
+            if(params.pluginValues?.PluginGroup?.json){
+                removePrefixes.add("project.plugin.PluginGroup.".toString())
+                def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
+                if(groupData instanceof Collection){
+                    for(Object data: groupData){
+                        if(data instanceof Map
+                            && data.type instanceof String
+                            && data.config instanceof Map) {
+                            String type = data.get('type')
+                            Map config = data.get('config')
+                            for (String confKey : config.keySet()) {
+                                projProps.put(
+                                    "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                    config.get(confKey).toString()
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+//            if(params.pluginValues?.PluginGroup?.json){
+//                params.pluginValues.each { k, v ->
+//                    if(v instanceof String) {
+//                        removePrefixes.add("project.plugin.${k}.".toString())
+//                        projProps.put("project.plugin.${k}".toString(), v)
+//                    }
+//                }
+//            }
+
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
@@ -1681,7 +1714,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             Map<String, Object> extraMap = pluginDef.extra ?: [:]
 
 
-            configs << new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
+            configs <<  SimplePluginConfiguration.builder()
                     .service(serviceName)
                     .provider(type)
                     .configuration(configMap)
