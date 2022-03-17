@@ -27,7 +27,7 @@
         </div>
       </div>
     </div>
-    <div class="form-group" id="scheduledExecutionEditTZ" name="scheduledExecutionEditTZ">
+    <div class="form-group" id="scheduledExecutionEditTZ">
     <template v-if="modelData.scheduled">
       <div class="form-group">
         <div class="col-sm-10 col-sm-offset-2">
@@ -38,13 +38,13 @@
                   <div class="col-xs-10">
                     <div class="vue-tabs"><div class="nav-tabs-navigation">
                       <ul class="nav nav-tabs ">
-                        <li id="simpleLi" v-bind:class="{active: !modelData.useCrontabString? true: false}">
+                        <li id="simpleLi" v-bind:class="{active: !modelData.useCrontabString}">
                           <a data-crontabstring="false"
                              href="#cronsimple"
                              @click="showSimpleCron"
                           >Simple</a>
                         </li>
-                        <li id="cronLi" v-bind:class="{active: modelData.useCrontabString? true: false}">
+                        <li id="cronLi" v-bind:class="{active: !!modelData.useCrontabString}">
                           <a data-crontabstring="true"
                              href="#cronstrtab"
                              @click="showCronExpression"
@@ -186,7 +186,6 @@
         </div>
       </div>
       <!--------------------------->
-     <!-- <div class="form-group" id="scheduledExecutionEditTZ" name="scheduledExecutionEditTZ">-->
       <div class="form-group">
         <div class="col-sm-2 control-label text-form-label">
           {{$t('scheduledExecution.property.timezone.prompt')}}
