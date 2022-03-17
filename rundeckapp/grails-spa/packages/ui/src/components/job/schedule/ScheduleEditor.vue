@@ -299,6 +299,9 @@ export default class ScheduleEditor extends Vue {
   @Prop({required: true})
   eventBus!: Vue
 
+  @Prop({required: false, default: false})
+  useCrontabString!: boolean
+
   labelColClass = 'col-sm-2 control-label'
   fieldColSize = 'col-sm-10'
 
@@ -330,10 +333,9 @@ export default class ScheduleEditor extends Vue {
   async mounted() {
     this.modelData = Object.assign({
       selectedDays: [],
-      selectedMonths: []
+      selectedMonths: [],
+      useCrontabString: this.useCrontabString
     }, this.value)
-
-    this.showSimpleCron()
   }
 
   loadScheduleIntoSimpleTab (decomposedSchedule:any){
