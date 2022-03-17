@@ -37,6 +37,9 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-exchange-alt"></i> ${g.message(code:"gui.menu.Scm")}</span>
+  </div>
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
@@ -46,11 +49,6 @@
     <div class="row">
       <div class="col-xs-12">
         <div class="card card-default">
-          <div class="card-header">
-            <h3 class="card-title">
-              <g:message code="gui.menu.Scm" default="Setup SCM"/>
-            </h3>
-          </div>
           <div class="card-content">
             <p class="text-info">
               <g:message code="scmController.page.index.description" default="Enable or configure SCM integration."/>

@@ -28,6 +28,9 @@ implied. - See the License for the specific language governing permissions and -
       <body>
       <div class="content">
       <div id="layoutBody">
+        <div class="title">
+          <span class="text-h3"><i class="fas fa-key"></i> ${g.message(code:"gui.menu.KeyStorage")}</span>
+        </div>
         <div id="page_storage" class="container-fluid">
           <div class="row">
             <div class="col-sm-12">

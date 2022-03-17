@@ -118,6 +118,9 @@ search
 
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-terminal"></i> ${g.message(code:"gui.menu.Adhoc")}</span>
+  </div>
 <div>
     <div>
       <div class="row">

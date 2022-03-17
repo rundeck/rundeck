@@ -1,8 +1,7 @@
 <template>
 <div id="wh-view" style="display: flex;flex-direction: column; height: 100%; overflow: hidden;">
   <div id="wh-title" class="screen-title" style="display: flex;">
-
-    <h3>{{ $t('message.webhookPageTitle') }}</h3>
+    <span class="text-h3"><i class="fas fa-plug"></i> {{ $t('message.webhookPageTitle') }}</span>
     <div style="margin-left: auto;">
       <a class="btn"
         :class="{'btn-cta': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"

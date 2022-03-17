@@ -46,6 +46,9 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-file-download"></i> ${g.message(code:"menu.logStorage.page.title")}</span>
+  </div>
   <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">
@@ -56,12 +59,10 @@
     <div class="row">
         <div class="col-sm-12">
           <div class="card">
-            <div class="card-header">
-              <h3 class="card-title"><g:message code="menu.logStorage.table.title"/>
+            <div>
                   <span data-bind="if: !loaded() || loading()">
                       <asset:image class="loading-spinner" src="spinner-blue.gif" width="20px" height="20px"/>
                   </span>
-              </h3>
             </div>
             <div class="card-content">
 

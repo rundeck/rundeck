@@ -35,8 +35,9 @@
 
 .text-h1, .text-h2, .text-h3, .text-h4, .text-h5 {
   color: var(--grey-800);
-  a{
+  a {
     color: var(--grey-800) !important;
+    font-weight: bold !important;
   }
 }
 
@@ -103,4 +104,8 @@ pre.snippet .line{
   &.error{
     color: red;
   }
+}
+
+.title {
+  margin-bottom: 20px;
 }

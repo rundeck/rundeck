@@ -35,6 +35,9 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-upload"></i> ${g.message(code:"import.archive")}</span>
+  </div>
 <div class="row">
     <div class="col-sm-12">
         <g:render template="/common/messages"/>

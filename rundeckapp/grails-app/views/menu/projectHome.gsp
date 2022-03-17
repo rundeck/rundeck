@@ -70,6 +70,9 @@
 <content tag="subtitlesection">
 
 <div class="container-fluid" >
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-clipboard-list"></i> ${g.message(code:"gui.menu.Dashboard")}</span>
+  </div>
 <div class="row">
 <div class="col-xs-12">
 <div data-ko-bind="projectHome">

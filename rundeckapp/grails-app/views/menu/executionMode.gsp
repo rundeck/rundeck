@@ -34,6 +34,9 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-play"></i> ${g.message(code:"gui.menu.ExecutionMode")}</span>
+  </div>
   <div class="container-fluid">
     <div class="row">
         <div class="col-sm-12">

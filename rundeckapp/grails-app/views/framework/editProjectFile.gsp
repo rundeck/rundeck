@@ -49,6 +49,16 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3">
+      <g:if test="${filename?.equals('readme.md')}">
+      <i class="fas fa-file-alt"></i> ${g.message(code:"edit.readme")}
+      </g:if>
+      <g:else>
+      <i class="fas fa-comment-alt"></i> ${g.message(code:"edit.message.of.the.day")}
+      </g:else>
+    </span>
+  </div>
   <div class="container-fluid">
     <div class="row">
       <div class="col-sm-12">
