@@ -138,26 +138,27 @@
                                 <div class="col-sm-6">
                                   <div class="form-group">
                                     <input
+                                      ref="crontabInput"
                                       type="text"
                                       name="crontabString"
                                       autofocus="true"
                                       class="form-control input-sm"
                                       size="50"
+                                      @click="updateCrontabPosition"
+                                      @keyup="updateCrontabPosition"
                                       @change="validateCronExpression"
-                                      @blur="validateCronExpression"
+                                      @blur="crontabBlur"
                                       v-model="modelData.crontabString"
                                     >
                                     <input type="hidden" name="useCrontabString" v-model="modelData.useCrontabString">
                                   </div>
+                                  <span class="text-muted" style="font-style: italic" v-if="crontabHint">{{crontabHint}}</span>
                                 </div>
                                 <div class="col-sm-6">
                                   <template>
                                     <div v-html="errors">
                                     </div>
                                   </template>
-                                </div>
-                                <div class="col-sm-2" v-if="false">
-                                  <span v-if="false" id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;" v-model="name">{{name}}</span>
                                 </div>
                               </div>
                               <div class="row">
@@ -309,6 +310,7 @@ export default class ScheduleEditor extends Vue {
   minutes:any = []
   days:any = []
   months:any = []
+  crontabpos:number = -1
 
   async beforeMount() {
     var hours = <any>[]
@@ -379,6 +381,70 @@ export default class ScheduleEditor extends Vue {
   @Watch('modelData', {deep: true})
   wasChanged() {
     this.$emit('input', this.modelData)
+  }
+  crontabBlur(){
+    this.validateCronExpression()
+    this.crontabpos=-1
+  }
+  updateCrontabPosition(){
+    this.crontabpos = this.getCaretPos(this.$refs['crontabInput']);
+  }
+
+  get crontabHint(){
+    return this.modelData.useCrontabString ?
+      this.getHintText(this.crontabpos, this.modelData.crontabString)
+      : ''
+  }
+
+  /**
+   * Get crontab position hint string
+   * @param pos caret position within string
+   * @param text string
+   */
+  getHintText(pos:number, text:string){
+    let c = this.getCrontabSection(pos,text)
+    if (c >= 0 && c <= 6) {
+      return this.$t(`cron.section.${c}`)
+    }
+    return ''
+  }
+
+  /**
+   * Get crontab position hint string
+   * @param pos caret position within string
+   * @param text string
+   */
+  getCrontabSection(pos:number, text:string):number{
+    if (pos < 0) {
+      return -1
+    }
+    //find # of space chars prior to pos
+    let sub = text.substring(0, pos)
+    let c = sub.split(' ').length
+    if (c >= 1 && c <= 7) {
+      return c-1
+    }
+    return -1
+  }
+
+  /**
+   * Determine selection caret position within the input field
+   * nb: there's probably a better/modern way to do this, this is old code
+   * @param el input element
+   */
+  getCaretPos(el:any) {
+    let rng, ii = -1;
+    if (typeof el.selectionStart == "number") {
+      return  el.selectionStart;
+      //@ts-ignore
+    } else if (document.selection && el.createTextRange) {
+      //@ts-ignore
+      rng = document.selection.createRange();
+      rng.collapse(true);
+      rng.moveStart("character", -el.value.length);
+      return  rng.text.length;
+    }
+    return ii;
   }
 }
 </script>
