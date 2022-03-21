@@ -2936,38 +2936,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }.findAll{it}
         }
-        def addedNotifications=[]
-        if(!scheduledExecution.notifications) replaceAll = true
-        notificationSet.each{Notification n->
-            //modify existing notification
-            Notification oldn = replaceAll?null:scheduledExecution.findNotification(n.eventTrigger,n.type)//TODO: WHY DO WE DELETE EXISTING NOTIFICATIONS
-            if(oldn){
-                oldn.content=n.content
-                oldn.format=n.format
-                def x=n
-                n=oldn
-                n.scheduledExecution = scheduledExecution
-                x.discard()
-            }else{
-                n.scheduledExecution = scheduledExecution
-                scheduledExecution.addToNotifications(n)
-            }
-            addedNotifications << n
-        }
-        //delete notifications that are not part of the modified set
+
         if (scheduledExecution.notifications) {
-            List<Notification> todelete = []
-            scheduledExecution.notifications.each { Notification note ->
-                if(!(note in addedNotifications)){
-                    todelete << note
-                }
-            }
-            todelete.each {
+            List<Notification> toDelete = []
+            scheduledExecution.notifications.each { Notification notif -> toDelete << notif }
+            toDelete.each {
                 it.delete()
                 scheduledExecution.removeFromNotifications(it)
-//                todiscard << it
             }
+        }
 
+        notificationSet.each{Notification notif->
+            notif.scheduledExecution = scheduledExecution
+            scheduledExecution.addToNotifications(notif)
         }
     }
 
