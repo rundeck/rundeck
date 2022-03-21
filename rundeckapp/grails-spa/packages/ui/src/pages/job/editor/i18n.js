@@ -12,6 +12,17 @@ const translationStrings = {
                 cancel: "Cancel",
                 ok: "OK"
             }
+        },
+        cron:{
+            section:{
+                0:'Seconds',
+                1:'Minutes',
+                2:'Hours',
+                3:'Day of Month',
+                4:'Month',
+                5:'Day of Week',
+                6:'Year'
+            }
         }
     }
 }
