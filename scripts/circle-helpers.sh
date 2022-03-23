@@ -169,7 +169,7 @@ fetch_commit_common_artifacts() {
 
 docker_login() {
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-    $(aws ecr get-login --no-include-email --region us-west-2)
+    $(aws ecr get-login-password --no-include-email --region us-west-2)
 }
 
 build_rdtest() {
