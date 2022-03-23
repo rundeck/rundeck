@@ -45,6 +45,7 @@ import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import java.lang.annotation.Annotation
@@ -53,7 +54,7 @@ import java.sql.Time
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
-class ExecutionController2Spec extends HibernateSpec implements ControllerUnitTest<ExecutionController>  {
+class ExecutionController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<ExecutionController>  {
 
     List<Class> getDomainClasses() { [Workflow,ScheduledExecution,Execution,CommandExec]}
 

@@ -25,11 +25,12 @@ import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FrameworkService
 import rundeck.utils.OptionsUtil
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
-class OptionsUtilsTests extends HibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+class OptionsUtilsTests extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
 
     List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, FrameworkService, User] }
     /**

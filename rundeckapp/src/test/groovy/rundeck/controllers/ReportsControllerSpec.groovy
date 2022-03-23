@@ -28,11 +28,12 @@ import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 import rundeck.services.UserService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 9/22/16.
  */
-class ReportsControllerSpec extends HibernateSpec implements ControllerUnitTest<ReportsController> {
+class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ReportsController> {
 
     List<Class> getDomainClasses() { [ScheduledExecution, ReferencedExecution, CommandExec] }
 

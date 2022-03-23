@@ -44,6 +44,7 @@ import rundeck.Workflow
 import rundeck.controllers.ApiController
 import spock.lang.Specification
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import java.time.Clock
 import java.time.Instant
@@ -52,7 +53,7 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-class ApiServiceSpec extends HibernateSpec implements ControllerUnitTest<ApiController> {
+class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<ApiController> {
 
     List<Class> getDomainClasses() { [User, AuthToken] }
 

@@ -3,6 +3,7 @@ package rundeck
 import com.dtolabs.rundeck.core.event.EventQueryType
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Rollback
+import grails.test.hibernate.HibernateSpec
 import org.grails.orm.hibernate.HibernateDatastore
 import rundeck.services.Evt
 import rundeck.services.EvtQuery
@@ -11,9 +12,9 @@ import rundeck.services.GormEventStoreService
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+import testhelper.RundeckHibernateSpec
 
-class GormEventStoreServiceSpec extends Specification {
-    @Shared @AutoCleanup HibernateDatastore hibernateDatastore
+class GormEventStoreServiceSpec extends RundeckHibernateSpec {
     @Shared GormEventStoreService service
     @Shared FrameworkService framework
 
@@ -21,8 +22,9 @@ class GormEventStoreServiceSpec extends Specification {
         String event
     }
 
+    List<Class> getDomainClasses() { [StoredEvent] }
+
     def setupSpec() {
-        hibernateDatastore = new HibernateDatastore(StoredEvent)
         framework = Mock(FrameworkService) {
             it.serverUUID >> '16b02806-f4b3-4628-9d9c-2dd2cc67d53c'
         }
@@ -30,9 +32,7 @@ class GormEventStoreServiceSpec extends Specification {
         service.frameworkService = framework
     }
 
-    def setup() {
-        hibernateDatastore
-    }
+    def setup() {}
 
     @Rollback
     def "test basic store and querys"() {

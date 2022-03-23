@@ -37,8 +37,9 @@ import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.data.DataUtil
 import rundeck.Project
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
-class ProjectManagerServiceSpec extends HibernateSpec implements ServiceUnitTest<ProjectManagerService> {
+class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ProjectManagerService> {
 
     List<Class> getDomainClasses() { [Project] }
 

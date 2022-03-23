@@ -35,6 +35,7 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecyclePluginService
 import rundeck.services.ScheduledExecutionService
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
@@ -46,7 +47,7 @@ import static org.junit.Assert.*
 * $Id$
 */
 
-public class ScheduledExecutionServiceSpec extends HibernateSpec {
+public class ScheduledExecutionServiceSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow,CommandExec]}
 

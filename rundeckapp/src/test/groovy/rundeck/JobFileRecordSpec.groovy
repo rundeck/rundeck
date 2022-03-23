@@ -2,11 +2,12 @@ package rundeck
 
 import grails.test.hibernate.HibernateSpec
 import rundeck.services.FileUploadService
+import testhelper.RundeckHibernateSpec
 
 /**
  * See the API for {@link grails.test.mixin.domain.DomainClassUnitTestMixin} for usage instructions
  */
-class JobFileRecordSpec extends HibernateSpec {
+class JobFileRecordSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [Execution, Workflow, CommandExec, JobFileRecord] }
 

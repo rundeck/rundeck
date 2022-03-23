@@ -22,11 +22,12 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.test.hibernate.HibernateSpec
 import rundeck.services.*
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 2/17/15.
  */
-class ExecutionServiceTempSpec extends HibernateSpec {
+class ExecutionServiceTempSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution] }
 

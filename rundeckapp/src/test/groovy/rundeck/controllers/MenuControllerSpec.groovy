@@ -72,6 +72,7 @@ import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Ignore
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -81,7 +82,7 @@ import java.nio.file.Files
 /**
  * Created by greg on 3/15/16.
  */
-class MenuControllerSpec extends HibernateSpec implements ControllerUnitTest<MenuController> {
+class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<MenuController> {
 
     List<Class> getDomainClasses() { [ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService] }
 

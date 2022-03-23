@@ -14,10 +14,11 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.logging.ExecutionLogWriter
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.assertNotNull
 
-class ExecutionUtilServiceSpec extends HibernateSpec implements ServiceUnitTest<ExecutionUtilService> {
+class ExecutionUtilServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ExecutionUtilService> {
     List<Class> getDomainClasses() { [Execution, ScheduledExecution, Workflow, CommandExec] }
 
     def testfinishExecutionMetricsSuccess() {

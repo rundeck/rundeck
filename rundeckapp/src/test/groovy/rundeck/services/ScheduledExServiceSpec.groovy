@@ -25,6 +25,7 @@ import groovy.mock.interceptor.StubFor
 import org.junit.Ignore
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.springframework.context.ApplicationContext
+import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
@@ -52,7 +53,7 @@ import rundeck.controllers.ScheduledExecutionController
  * Created: 6/22/11 5:55 PM
  *
  */
-class ScheduledExServiceSpec extends HibernateSpec {
+class ScheduledExServiceSpec extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification]}
 

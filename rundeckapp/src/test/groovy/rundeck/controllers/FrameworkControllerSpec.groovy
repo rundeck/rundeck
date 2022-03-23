@@ -52,13 +52,14 @@ import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import static org.rundeck.core.auth.AuthConstants.*
 
 /**
  * Created by greg on 7/28/15.
  */
-class FrameworkControllerSpec extends HibernateSpec implements ControllerUnitTest<FrameworkController> {
+class FrameworkControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<FrameworkController> {
 
     List<Class> getDomainClasses() { [NodeFilter, User] }
 

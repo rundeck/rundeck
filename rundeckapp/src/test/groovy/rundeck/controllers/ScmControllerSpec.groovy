@@ -40,11 +40,12 @@ import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ScmService
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 /**
  * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
  */
-class ScmControllerSpec extends HibernateSpec implements ControllerUnitTest<ScmController>{
+class ScmControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ScmController>{
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec] }
 

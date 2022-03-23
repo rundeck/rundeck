@@ -5,8 +5,9 @@ import org.rundeck.app.components.jobs.ImportedJob
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import testhelper.RundeckHibernateSpec
 
-class RundeckJobDefinitionManagerSpec extends HibernateSpec   {
+class RundeckJobDefinitionManagerSpec extends RundeckHibernateSpec   {
     RundeckJobDefinitionManager rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
 
     List<Class> getDomainClasses() { [Workflow, ScheduledExecution, CommandExec] }

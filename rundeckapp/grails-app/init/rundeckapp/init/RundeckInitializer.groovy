@@ -432,7 +432,7 @@ class RundeckInitializer {
             properties.put("server.hostname", localhostname);
         }
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, config.baseDir);
-        properties.put(RundeckInitConfig.SERVER_DATASTORE_PATH, forwardSlashPath(config.dataDir) + "/grailsdb");
+        properties.put(RundeckInitConfig.SERVER_DATASTORE_PATH, forwardSlashPath(config.dataDir) + "/grailsdb;NON_KEYWORDS=MONTH,HOUR,MINUTE,YEAR,SECONDS");
         properties.put(RundeckInitConfig.LOG_DIR, forwardSlashPath(config.logDir));
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         properties.put(RundeckInitConfig.LAUNCHER_JAR_LOCATION, forwardSlashPath(thisJar.getAbsolutePath()));

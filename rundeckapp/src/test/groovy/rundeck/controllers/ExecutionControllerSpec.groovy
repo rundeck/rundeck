@@ -56,6 +56,7 @@ import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -64,7 +65,7 @@ import java.text.SimpleDateFormat
 /**
  * Created by greg on 1/6/16.
  */
-class ExecutionControllerSpec extends HibernateSpec implements ControllerUnitTest<ExecutionController> {
+class ExecutionControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ExecutionController> {
 
     List<Class> getDomainClasses() { [Execution] }
 

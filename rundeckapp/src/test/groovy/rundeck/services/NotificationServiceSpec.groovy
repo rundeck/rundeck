@@ -60,11 +60,12 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
+import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 7/12/16.
  */
-class NotificationServiceSpec extends HibernateSpec implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest {
+class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest {
 
     List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
 

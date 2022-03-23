@@ -27,6 +27,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import testhelper.RundeckHibernateSpec
 
 /**
  * $INTERFACE is ...
@@ -34,7 +35,7 @@ import rundeck.Workflow
  * Date: 8/7/13
  * Time: 3:07 PM
  */
-class ExecutionServiceTests extends HibernateSpec {
+class ExecutionServiceTests extends RundeckHibernateSpec {
 
     List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec]}
 

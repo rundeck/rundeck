@@ -23,8 +23,9 @@ import rundeck.Execution
 import rundeck.Workflow
 import rundeck.services.workflow.StateMapping
 import spock.lang.Specification
+import testhelper.RundeckHibernateSpec
 
-class WorkflowServiceSpec extends HibernateSpec implements ServiceUnitTest<WorkflowService>{
+class WorkflowServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<WorkflowService>{
 
     @Override
     List<Class> getDomainClasses() {
