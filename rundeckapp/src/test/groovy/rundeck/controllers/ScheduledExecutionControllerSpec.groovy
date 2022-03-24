@@ -3735,4 +3735,28 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.response.redirectedUrl == null
         flash.message != null
     }
+
+    def "test special chars in URL user-password"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        controller.getRemoteJSON(url, 100, 100, 5,false)
+
+        then:
+        def e = thrown(UnknownHostException)
+        e.message.contains("web.server")
+
+        where:
+        url                                                         |_
+        'https://admin:my^$!pass1@web.server/option.json'           |_
+        'https://admin:m^^y^^$!pass1@web.server/option.json'        |_
+        'https://ad^^min:m^^y^^$!pass1@web.server/option.json'      |_
+        'https://ad^^min:m^^y^^$!pass1@web.server/option.json'      |_
+        'https://admin:my@@^$!pas^s1@web.server/param%40o.com/get'  |_
+        'https://admin:my@@^$!pas^s1@web.server/geto'               |_
+        'https://web.server/geto'                                   |_
+        'http://web.server/geto'                                    |_
+    }
 }
