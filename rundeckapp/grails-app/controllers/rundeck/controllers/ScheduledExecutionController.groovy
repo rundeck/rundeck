@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import org.apache.commons.collections.list.TreeList
+import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
 import org.apache.http.auth.AuthScope
@@ -849,11 +850,12 @@ class ScheduledExecutionController  extends ControllerBase{
             URL urlo
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
+                url = encodeUserPasswordIfExists(url)
                 urlo = new URL(url)
                 client.setUri(urlo.toURI())
                 if(urlo.userInfo){
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    client.setBasicAuthCredentials(cred.userName,cred.password)
+                    client.setBasicAuthCredentials(decodeSpecialChars(cred.userName),decodeSpecialChars(cred.password))
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
@@ -948,6 +950,28 @@ class ScheduledExecutionController  extends ControllerBase{
         } else {
             throw new Exception("Unsupported protocol: " + url)
         }
+    }
+
+    static String encodeUserPasswordIfExists(String url) {
+        if (url.indexOf("://") != -1 && url.lastIndexOf("@") != -1) {
+            String userPassword = url.substring(url.indexOf("://") + 3, url.lastIndexOf("@"))
+            if (!StringUtils.isEmpty(userPassword) && userPassword.indexOf(":") != -1) {
+                String user = encodeSpecialChars(userPassword.substring(0, userPassword.indexOf(":")))
+                String password = encodeSpecialChars(userPassword.substring(userPassword.indexOf(":") + 1))
+                String scheme = url.substring(0, url.indexOf("://") + 3)
+                String host = url.substring(url.lastIndexOf("@"))
+                return scheme + user + ":" + password + host
+            }
+        }
+        return url
+    }
+
+    static String encodeSpecialChars(String param) {
+        return param ? URLEncoder.encode(param, "UTF-8") : param
+    }
+
+    static String decodeSpecialChars(String param) {
+        return param ? URLDecoder.decode(param, "UTF-8") : param
     }
 
     static int copyToWriter(Reader read, Writer writer){
