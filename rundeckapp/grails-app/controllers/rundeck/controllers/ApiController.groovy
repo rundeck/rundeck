@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
+import com.sun.management.OperatingSystemMXBean
 import grails.web.mapping.LinkGenerator
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
@@ -474,7 +475,7 @@ class ApiController extends ControllerBase{
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")
         String appVersion= grailsApplication.metadata['info.app.version']
         String sUUID= frameworkService.getServerUUID()
-        double load= ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
+        double load= ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class).getSystemCpuLoad()
         int processorsCount= ManagementFactory.getOperatingSystemMXBean().availableProcessors
         String osName= ManagementFactory.getOperatingSystemMXBean().name
         String osVersion= ManagementFactory.getOperatingSystemMXBean().version
