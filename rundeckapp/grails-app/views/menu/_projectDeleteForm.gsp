@@ -17,9 +17,6 @@
 <div class="row">
   <div class="col-xs-12">
     <div class="card">
-      <div class="card-header">
-        <h3 class="card-title"><g:message code="delete.project" /></h3>
-      </div>
       <div class="card-content" style="padding: 2em 1em;">
         <g:if test="${flash.error}">
           <div class="alert alert-warning">

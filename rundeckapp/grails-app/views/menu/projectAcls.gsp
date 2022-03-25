@@ -109,6 +109,9 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-unlock-alt"></i> ${g.message(code:"gui.menu.AccessControl")}</span>
+  </div>
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-12">

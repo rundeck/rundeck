@@ -64,6 +64,9 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-user"></i> ${g.message(code:"profile")}</span>
+  </div>
 <div class="container-fluid">
   <input id="loginName" name="loginName" type="hidden" value="${user.login}">
   <div class="row">

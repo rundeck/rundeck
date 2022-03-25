@@ -35,6 +35,9 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-download"></i> ${g.message(code:"export.archive")}</span>
+  </div>
   <div class="container-fluid">
     <div class="row">
         <div class="col-xs-12">

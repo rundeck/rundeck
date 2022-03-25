@@ -32,6 +32,6 @@
         <g:ifExecutionMode passive="true">
             <g:icon name="pause" css="text-warning"/>
         </g:ifExecutionMode>
-        <g:message code="execution.mode.ellipsis"/>
+        <g:message code="gui.menu.ExecutionMode"/>
     </bs:menuitem>
 </auth:resourceAllowed>

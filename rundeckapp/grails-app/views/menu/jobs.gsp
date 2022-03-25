@@ -418,19 +418,12 @@ search
 
 <div class="content">
 <div id="layoutBody">
-<div style="margin-bottom: 20px;">
+<div class="title">
         <div class="subtitle-head-item flex-container flex-align-items-baseline">
             <div class="flex-item-auto text-h3">
 
-                <span
-                    class="label label-secondary has_tooltip"
-                    data-container="#section-content"
-                    data-placement="auto bottom"
-                    title="${totalauthorized} Jobs Found">
-                        <g:enc>${totalauthorized}</g:enc>
-                </span>
-
-
+                <i class="fas fa-tasks"></i>
+                
                 <g:if test="${wasfiltered && wasfiltered.contains('groupPath') && !filterName}">
                     <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:paginateParams.groupPath,project:params.project]"/>
 
@@ -524,7 +517,13 @@ search
 
                 </g:if>
 
-
+                <span
+                    class="label label-secondary has_tooltip"
+                    data-container="#section-content"
+                    data-placement="auto bottom"
+                    title="${totalauthorized} Jobs Found">
+                        <g:enc>${totalauthorized}</g:enc>
+                </span>
 
             </div>
 

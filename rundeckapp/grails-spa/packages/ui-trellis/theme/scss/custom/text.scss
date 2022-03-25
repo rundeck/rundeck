@@ -37,6 +37,7 @@
   color: var(--font-color);
   a {
     color: var(--font-color) !important;
+    font-weight: bold !important;
   }
 }
 
@@ -103,4 +104,8 @@ pre.snippet .line{
   &.error{
     color: red;
   }
+}
+
+.title {
+  margin-bottom: 20px;
 }

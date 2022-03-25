@@ -104,6 +104,9 @@
 <body>
 <div class="content">
 <div id="layoutBody">
+  <div class="title">
+    <span class="text-h3"><i class="fas fa-cog"></i> ${g.message(code:"edit.configuration")}</span>
+  </div>
 <div class="container-fluid">
   <div class="row">
       <div class="col-sm-12">
