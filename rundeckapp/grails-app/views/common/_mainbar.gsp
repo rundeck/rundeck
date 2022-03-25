@@ -32,11 +32,11 @@
       <g:set var="safeUserSmallLogo" value="${userDefinedSmallLogo.toString().encodeAsSanitizedHTML()}" />
 
       <g:if test="${userDefinedLogo && !userDefinedSmallLogo}">
-        <img src="${createLink(uri:userAssetBase+"/"+safeUserLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+        <img src="${createLink(uri:userAssetBase+"/"+safeUserLogo)}" height="40px" style="float: left; margin-right: 20px;">
 
       </g:if>
       <g:elseif test="${userDefinedLogo && userDefinedSmallLogo}">
-        <img src="${createLink(uri:userAssetBase+"/"+safeUserSmallLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+        <img src="${createLink(uri:userAssetBase+"/"+safeUserSmallLogo)}" height="40px" style="float: left; margin-right: 20px;">
       </g:elseif>
 
       <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
