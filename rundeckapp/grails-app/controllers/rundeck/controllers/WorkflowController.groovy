@@ -800,6 +800,9 @@ class WorkflowController extends ControllerBase {
         }
         def modifyItemFromParams={moditem,params->
             if (params.pluginItem) {
+                if (!params.keepgoingOnSuccess) {
+                    params.keepgoingOnSuccess = 'false'
+                }
                 moditem.properties=params.subMap(['keepgoingOnSuccess','description'])
                 moditem.configuration = cleanLineEndings(params.pluginConfig)
             } else {

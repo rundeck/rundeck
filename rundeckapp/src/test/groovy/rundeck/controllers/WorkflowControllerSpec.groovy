@@ -661,7 +661,39 @@ class WorkflowControllerSpec extends RundeckHibernateSpec implements ControllerU
 
     }
 
+    def "modify step without keepgoingOnSuccess parameter"() {
+        given:
+        def pluginWorkflowStepProps = [type: 'WorkflowStep', nodeStep: true, keepgoingOnSuccess: true]
+        Workflow wf = new Workflow(
+                threadcount: 1,
+                keepgoing: true,
+                commands: [
+                        new PluginStep(pluginWorkflowStepProps)
+                ]
+        )
+        CommandExec item = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
+        wf.addToCommands(item)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
 
+        params.pluginItem = pItem
+        params.pluginConfig = config
+
+        when:
+        def result = controller._applyWFEditAction(
+                wf,
+                [action: 'modify', num: 0, params: params]
+        )
+
+        then:
+        result.error
+        result.item
+        result.item.keepgoingOnSuccess == keepgoingonsuccess
+
+        where:
+        pItem  | config   | keepgoingonsuccess
+        'true' | [a: 'b'] | false
+    }
 
     public ScheduledExecution createBasicJob() {
         new ScheduledExecution(
