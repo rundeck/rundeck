@@ -100,6 +100,7 @@ import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 import java.nio.charset.Charset
 import java.sql.Time
+import java.sql.Timestamp
 import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
@@ -4058,22 +4059,32 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         // get data and calculate
         def metricsData = Execution.createCriteria().get(metricCriteria)
 
-        def totalCount = metricsData?.count ? metricsData.count : 0
+        return metricsDataFromCriteriaResult(metricsData)
+
+    }
+
+    /**
+     * Input map contains count: long, durationMax: Time, durationMin: Time, durationSum: Time
+     * @param metricsData
+     * @return
+     */
+    Map<String,Object> metricsDataFromCriteriaResult(Map<String,Object> metricsData) {
+        long totalCount = metricsData?.count ? metricsData.count : 0
 
         Long maxDuration = sqlTimeToMillis(metricsData?.durationMax)
         Long minDuration = sqlTimeToMillis(metricsData?.durationMin)
         Long durationSum = sqlTimeToMillis(metricsData?.durationSum)
-        double avgDuration = totalCount != 0 ? durationSum / totalCount : 0
+        double avgDuration = totalCount != 0 ? (durationSum / totalCount) : 0
 
         // Build response
-        def metrics = [
-                total: totalCount,
+        return [
+            total   : totalCount,
 
-                duration: [
-                        average: avgDuration,
-                        max: maxDuration,
-                        min: minDuration
-                ]
+            duration: [
+                average: avgDuration,
+                max    : maxDuration,
+                min    : minDuration
+            ]
         ]
 
     }
@@ -4089,8 +4100,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 property("dateCompleted","dateCompleted")
             }
         }
-        List<Map<String, java.sql.Timestamp>> result =  Execution.createCriteria().list(metricCriteria2)
-        List<Long> timeSpent = result?.collect {Map<String, java.sql.Timestamp> dataResult ->
+        List<Map<String, Timestamp>> result =  Execution.createCriteria().list(metricCriteria2)
+        return metricsDataFromProjectionResult(result)
+    }
+
+    /**
+     * input: List of Map of String to Timestamp, containing keys dateCompleted and dateStarted
+     * @param result
+     * @return
+     */
+    Map<String,Object> metricsDataFromProjectionResult(List<Map<String, Timestamp>> result) {
+        List<Long> timeSpent = result?.collect { Map<String, Timestamp> dataResult ->
             dataResult.dateCompleted.getTime() - dataResult.dateStarted.getTime()
         }
         def totalCount = result?.size()
@@ -4098,14 +4118,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Long minDuration = timeSpent?.min()
         double avgDuration = totalCount != 0 ? (timeSpent?.sum() / totalCount) : 0
 
-        def metrics = [
-                total: totalCount,
+        return  [
+            total   : totalCount,
 
-                duration: [
-                        average: avgDuration,
-                        max: maxDuration,
-                        min: minDuration
-                ]
+            duration: [
+                average: avgDuration,
+                max    : maxDuration,
+                min    : minDuration
+            ]
         ]
     }
 
