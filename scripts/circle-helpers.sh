@@ -168,8 +168,9 @@ fetch_commit_common_artifacts() {
 }
 
 docker_login() {
-    docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-    $(aws ecr get-login --no-include-email --region us-west-2)
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 481311893001.dkr.ecr.us-west-2.amazonaws.com
+
 }
 
 build_rdtest() {

@@ -57,6 +57,7 @@ slack-fail-post-step: &slack-fail-post-step
 
 orbs:
   docker-publish: circleci/docker-publish@0.1.6
+  aws-cli: circleci/aws-cli@1.0.0
   node: circleci/node@5.0.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
@@ -174,6 +175,19 @@ commands:
             nvm alias default $NODE_VERSION
             echo 'nvm use default &>/dev/null' >> "$BASH_ENV"
 
+  install-java:
+    description: Install Java via SDKman
+    steps:
+      - run:
+          name: Install Java
+          command: |
+            curl -s "https://get.sdkman.io" | bash
+            echo -e '\nsource "$HOME/.sdkman/bin/sdkman-init.sh"' >> $BASH_ENV
+            source "/home/circleci/.sdkman/bin/sdkman-init.sh"
+            bash -l -c 'yes | sdk install groovy'
+            sdk install java 8.0.302-open
+            sdk use java 8.0.302-open
+
 jobs:
   build:
     <<: *defaults
@@ -243,10 +257,12 @@ jobs:
 
   test-gradle:
     <<: *defaults
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
       - install-node
+      - install-java
       - restore-gradle-cache
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
@@ -283,13 +299,17 @@ jobs:
 
   test-docker-machine:
     <<: *defaults
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     parameters:
       command:
         description: Command that will execute the docker tests
         type: string
     steps:
       - checkout
+      - install-java
+      - aws-cli/install:
+          skip-install-check: false
       - fetch-common-artifacts
       - run:
           name: Test
@@ -299,9 +319,13 @@ jobs:
 
   test-selenium:
     <<: *defaults
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     steps:
       - checkout
+      - install-java
+      - aws-cli/install:
+          skip-install-check: false
       - install-node:
           version: v12.16.3
       - run:
@@ -322,7 +346,8 @@ jobs:
 
   test-deps:
     <<: *defaults
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-02
     parameters:
       continue:
         description: Continue if check fails
@@ -331,6 +356,7 @@ jobs:
     steps:
       - checkout
       - restore-gradle-cache
+      - install-java
       - run: ./gradlew --no-daemon dependencyCheckAggregate --stacktrace --info || << parameters.continue >>
       - store_test_results:
           path: build/owasp-reports
@@ -340,7 +366,8 @@ jobs:
 
   trigger-packaging:
     <<: *defaults
-    machine: true
+    docker:
+      - image: cimg/node:lts
     resource_class: small
     steps:
       - trigger/trigger:
