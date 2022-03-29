@@ -1,0 +1,20 @@
+{
+  "baseUrl": "http://localhost:4000/",
+  "chromeWebSecurity": false,
+  "fixturesFolder": "tests/common/cypress/fixtures",
+  "fileServerFolder": "dist",
+  "pluginsFile": "tests/common/cypress/plugins/index.ts",
+  "projectId": "pagerduty-process-automation",
+  "screenshotsFolder": "tests/common/cypress/screenshots",
+  "videosFolder": "tests/common/cypress/videos",
+  "component": {
+    "componentFolder": "tests/ct",
+    "supportFile": "tests/ct/cypress/support/index.ts",
+    "testFiles": "*.spec.{js,jsx,ts,tsx}"
+  },
+  "e2e": {
+    "integrationFolder": "tests/e2e",
+    "supportFile": "tests/e2e/cypress/support/index.ts",
+    "testFiles": "*.spec.{js,jsx,ts,tsx}"
+  }
+}

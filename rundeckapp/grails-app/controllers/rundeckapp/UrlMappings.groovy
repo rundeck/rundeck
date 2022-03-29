@@ -301,6 +301,7 @@ class UrlMappings {
         "/tour/get/$loaderName/$tour"(controller:'tour',action:'getTour')
 
         "/community-news"(controller:'communityNews',action:'index')
+        "/spa"(controller:'Spa',action:'index')
         "/community-news/register"(controller:'communityNews') {
             action = [POST: 'register']
         }
