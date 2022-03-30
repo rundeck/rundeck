@@ -67,7 +67,7 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
 
     def "basic command"() {
         given:
-        def fwkProps = ['rundeck.feature.quoting': 'false']
+        def fwkProps = ['rundeck.feature.quoting.compatibility': 'false']
         def iFrameworkMock = Mock(IFramework){
             getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
         }

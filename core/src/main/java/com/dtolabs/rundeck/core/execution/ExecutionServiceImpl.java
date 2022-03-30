@@ -385,8 +385,8 @@ class ExecutionServiceImpl implements ExecutionService {
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node) {
 
-        boolean featureQuoting = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting"));
-        return executeCommand(context, ExecArgList.fromStrings(featureQuoting, DataContextUtils
+        boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting.compatibility"));
+        return executeCommand(context, ExecArgList.fromStrings(featureQuotingBackwardCompatible, DataContextUtils
                 .stringContainsPropertyReferencePredicate, command), node);
     }
 

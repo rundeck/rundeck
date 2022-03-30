@@ -58,7 +58,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
-        def fwkProps = ['rundeck.feature.quoting': 'false']
+        def fwkProps = ['rundeck.feature.quoting.compatibility': 'false']
         def iFrameworkMock = Mock(IFramework){
             getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
         }
@@ -133,7 +133,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
-        def fwkProps = ['rundeck.feature.quoting': 'false']
+        def fwkProps = ['rundeck.feature.quoting.compatibility': 'false']
         def iFrameworkMock = Mock(IFramework){
             getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
         }
@@ -210,7 +210,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
         ExecutionLogger executionLogger = Mock(ExecutionLogger)
-        def fwkProps = ['rundeck.feature.quoting': 'false']
+        def fwkProps = ['rundeck.feature.quoting.compatibility': 'false']
         def iFrameworkMock = Mock(IFramework){
             getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
         }
@@ -297,7 +297,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         scriptFile.deleteOnExit()
         ExecutionLogger executionLogger = Mock(ExecutionLogger)
 
-        def fwkProps = ['rundeck.feature.quoting': 'false']
+        def fwkProps = ['rundeck.feature.quoting.compatibility': 'false']
         def iFrameworkMock = Mock(IFramework){
             getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
         }
@@ -381,7 +381,7 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
-        def fwkProps = ['rundeck.feature.quoting': 'false']
+        def fwkProps = ['rundeck.feature.quoting.compatibility': 'false']
         def iFrameworkMock = Mock(IFramework){
             getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
         }

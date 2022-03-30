@@ -33,7 +33,11 @@ public abstract class ExecArg {
 
     private boolean quoted = true;
 
-    private boolean featureQuoting = false;
+    /**
+     * @return true if using quoting backward compatibility
+     *
+     */
+    private boolean featureQuotingBackwardCompatible = false;
 
     /**
      * @return the sublist of args, if {@link #isList()} returns true, null otherwise
@@ -71,17 +75,17 @@ public abstract class ExecArg {
     /**
      * @return true if should use old quoting behavior < 3.4.1
      */
-    public boolean isFeatureQuoting() {
-        return featureQuoting;
+    public boolean isFeatureQuotingBackwardCompatible() {
+        return featureQuotingBackwardCompatible;
     }
 
     /**
      * Set whether this arg should be quoted using old quoting behavior < 3.4.1
      *
-     * @param featureQuoting featureQuoting
+     * @param featureQuotingBackwardCompatible featureQuotingBackwardCompatible
      */
-    void setFeatureQuoting(boolean featureQuoting) {
-        this.featureQuoting = featureQuoting;
+    void setFeatureQuotingBackwardCompatible(boolean featureQuotingBackwardCompatible) {
+        this.featureQuotingBackwardCompatible = featureQuotingBackwardCompatible;
     }
 
     /**
@@ -98,9 +102,9 @@ public abstract class ExecArg {
 
         final String arg;
 
-        public StringArg(String arg, boolean quoted, boolean featureQuoting) {
+        public StringArg(String arg, boolean quoted, boolean featureQuotingBackwardCompatible) {
             this.arg = arg;
-            this.setFeatureQuoting(featureQuoting);
+            this.setFeatureQuotingBackwardCompatible(featureQuotingBackwardCompatible);
             if(SharedDataContextUtils.UNQUOTEDPROPERTY_REF_PATTERN.matcher(arg).matches()) {
                 setQuoted(false);
             } else {
@@ -183,7 +187,7 @@ public abstract class ExecArg {
         }
     }
 
-    public static ExecArg fromString(String arg, boolean quoted, boolean featureQuoting) {
-        return new StringArg(arg, quoted, featureQuoting);
+    public static ExecArg fromString(String arg, boolean quoted, boolean featureQuotingBackwardCompatible) {
+        return new StringArg(arg, quoted, featureQuotingBackwardCompatible);
     }
 }
