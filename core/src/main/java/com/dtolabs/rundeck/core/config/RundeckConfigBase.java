@@ -412,6 +412,7 @@ public class RundeckConfigBase {
         Ldap ldap;
         HttpHeaders headers;
         InterceptorHelperConfig interceptor;
+        Oauth oauth;
 
         @Data
         public static class InterceptorHelperConfig {
@@ -475,6 +476,23 @@ public class RundeckConfigBase {
         public static class HttpHeaders {
             Boolean enabled;
             Map<String,Object> provider; //very complex structure
+        }
+        @Data
+        public static class Oauth {
+            Okta okta;
+            Ping ping;
+        }
+        @Data
+        public static class Okta {
+            String clientId;
+            String clientSecret;
+            String autoConfigUrl;
+        }
+        @Data
+        public static class Ping {
+            String clientId;
+            String clientSecret;
+            String autoConfigUrl;
         }
     }
 
