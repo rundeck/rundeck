@@ -8,13 +8,15 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import HelloWorld from './components/HelloWorld.vue';
 import copybox from './components/containers/copybox/CopyBox.vue';
 
 
 export default Vue.extend({
   name: 'App',
   components: {
-    copybox
+    HelloWorld,
+    copybox,
   }
 });
 </script>
