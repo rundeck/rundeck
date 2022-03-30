@@ -96,3 +96,14 @@ pre {
 .ace_scroller{
   background-color: var(--background-color);
 }
+[data-color-theme="dark"] {
+  .ace_text{
+    color: #fff;
+  }
+  .ace_operator{
+    color: magenta;
+  }
+  .ace_keyword{
+    color: magenta;
+  }
+}
