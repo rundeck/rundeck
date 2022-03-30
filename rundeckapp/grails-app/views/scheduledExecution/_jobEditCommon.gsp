@@ -79,6 +79,28 @@
     scheduledExecution.property.nodesSelectedByDefault.label,
     scheduledExecution.property.nodesSelectedByDefault.true.description,
     scheduledExecution.property.nodesSelectedByDefault.false.description,
+    scheduledExecution.property.retry.delay.description,
+    loglevel.normal,
+    loglevel.debug,
+    scheduledExecution.property.loglevel.help,
+    scheduledExecution.property.multipleExecutions.description,
+    scheduledExecution.property.maxMultipleExecutions.label,
+    scheduledExecution.property.maxMultipleExecutions.description,
+    scheduledExecution.property.timeout.description,
+    scheduledExecution.property.retry.description,
+    scheduledExecution.property.logOutputThresholdStatus.placeholder,
+    scheduledExecution.property.logOutputThreshold.placeholder,
+    scheduledExecution.property.logOutputThresholdAction.truncate.description,
+    scheduledExecution.property.logOutputThreshold.label,
+    scheduledExecution.property.logOutputThreshold.description,
+    scheduledExecution.property.logOutputThresholdAction.label,
+    scheduledExecution.property.logOutputThresholdAction.halt.label,
+    scheduledExecution.property.logOutputThresholdAction.truncate.label,
+    scheduledExecution.property.logOutputThresholdAction.description,
+    scheduledExecution.property.defaultTab.description,
+    scheduledExecution.property.defaultTab.label,
+    execution.show.mode.Log.title,
+    execution.page.show.tab.Nodes.title,
     loading.matched.nodes,
     results.truncated.count.results.shown,
     node.metadata.os,
@@ -148,13 +170,28 @@
                      useCrontabString:scheduledExecution?.crontabString?true:scheduledExecution?.shouldUseCrontabString()?true:false,
                      timeZones:timeZones ?: []
              ]}"/>
+<g:embedJSON id="jobOtherJSON"
+             data="${ [
+                     multipleExecutions:scheduledExecution.multipleExecutions ? true: false,
+                     loglevel:scheduledExecution?.loglevel,
+                     maxMultipleExecutions:scheduledExecution?.maxMultipleExecutions,
+                     timeout:scheduledExecution?.timeout,
+                     retry:scheduledExecution?.retry,
+                     retryDelay:scheduledExecution?.retryDelay,
+                     logOutputThreshold:scheduledExecution?.logOutputThreshold,
+                     logOutputThresholdStatus:scheduledExecution?.logOutputThresholdStatus,
+                     logOutputThresholdAction:scheduledExecution?.logOutputThresholdAction?scheduledExecution?.logOutputThresholdAction:'halt',
+                     defaultTab:scheduledExecution.defaultTab,
+                     uuid:scheduledExecution?.uuid
+             ]}"/>
 
 <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
             notificationData: loadJsonData('jobNotificationsJSON'),
             resourcesData: loadJsonData('jobResourcesJSON'),
-            schedulesData: loadJsonData('jobSchedulesJSON')
+            schedulesData: loadJsonData('jobSchedulesJSON'),
+            otherData: loadJsonData('jobOtherJSON')
         }
     })
     var workflowEditor = new WorkflowEditor();

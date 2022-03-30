@@ -6,6 +6,7 @@ import VueCookies from 'vue-cookies'
 import NotificationsEditorSection from './NotificationsEditorSection'
 import ResourcesEditorSection from './ResourcesEditorSection'
 import SchedulesEditorSection from './SchedulesEditorSection'
+import OtherEditorSection from './OtherEditorSection'
 import * as uiv from 'uiv'
 import international from './i18n'
 import VueI18n from 'vue-i18n'
@@ -79,4 +80,19 @@ for (var i = 0; i < scsels.length; i++) {
     components: { SchedulesEditorSection },
     i18n
   })
+
+  const othels = document.body.getElementsByClassName('job-editor-other-vue')
+
+  for (var i = 0; i < othels.length; i++) {
+    const e = othels[i]
+    /* eslint-disable no-new */
+    new Vue({
+      el: e,
+      data() {
+        return {EventBus,}
+      },
+      components: {OtherEditorSection},
+      i18n
+    })
+  }
 }
