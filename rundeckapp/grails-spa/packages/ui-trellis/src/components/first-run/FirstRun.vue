@@ -19,7 +19,7 @@
              To get started, create a new project.
             </p>
             <p>
-              <a :href="links.frameworkCreateProject" class="btn  btn-cta btn-lg ">
+              <a :href="links.frameworkCreateProject" class="btn  btn-primary btn-lg ">
                   Create New Project <b class="glyphicon glyphicon-plus"></b>
               </a>
             </p>
@@ -33,7 +33,7 @@
           <div class="l3">Automation</div>
         </div>
         <div style="margin-top:12px;text-align:center;">
-          <a href="https://docs.rundeck.com/docs/learning/" target="_blank" class="btn  btn-success btn-lg">Learn Here</a>
+          <a href="https://docs.rundeck.com/docs/learning/" target="_blank" class="btn  btn-default btn-lg">Learn Here</a>
         </div>
       </div>
     </div>
