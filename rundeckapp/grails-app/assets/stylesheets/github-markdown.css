@@ -212,7 +212,7 @@
 }
 
 .markdown-body a {
-  color: #0366d6;
+  color: var(--link-color);
   text-decoration: none;
 }
 
@@ -568,16 +568,16 @@
 .markdown-body table th,
 .markdown-body table td {
   padding: 6px 13px;
-  border: 1px solid #dfe2e5;
+  border: 1px solid var(--input-outline-color);
 }
 
 .markdown-body table tr {
-  background-color: #fff;
-  border-top: 1px solid #c6cbd1;
+  background-color: var(--background-color-lvl2);
+  border-top: 1px solid var(--input-outline-color);
 }
 
 .markdown-body table tr:nth-child(2n) {
-  background-color: #f6f8fa;
+  background-color: var(--background-color);
 }
 
 .markdown-body img {
@@ -592,7 +592,7 @@
   padding-bottom: 0.2em;
   margin: 0;
   font-size: 85%;
-  background-color: rgba(27,31,35,0.05);
+  background-color: var(--background-color);
   border-radius: 3px;
 }
 
@@ -631,8 +631,10 @@
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa;
+  background-color: var(--background-color);
+  color: var(--font-color);
   border-radius: 3px;
+  border-color: var(--input-outline-color);
 }
 
 .markdown-body pre code {
