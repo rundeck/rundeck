@@ -315,7 +315,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
         boolean retryExecuteCommand = false; //retry if chmod command continues to lock the file the moment it is executed
         if (!"windows".equalsIgnoreCase(node.getOsFamily())) {
             //perform chmod+x for the file
-            boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting.compatibility"));
+            boolean featureQuotingBackwardCompatible = Boolean.valueOf(context.getIFramework().getPropertyRetriever().getProperty("rundeck.feature.quoting.backwardCompatible"));
             final NodeExecutorResult nodeExecutorResult = framework.getExecutionService().executeCommand(
                     context, ExecArgList.fromStrings(featureQuotingBackwardCompatible, false, "chmod", "+x", filepath), node);
 
