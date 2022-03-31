@@ -2634,7 +2634,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if(params.followdetail=='html'){
                 redirect(controller: "execution", action: "renderOutput", id: results.id, params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
             }else{
-                redirect(controller: "execution", action: "show", id: results.id, params:[outdetails: params.followdetail])
+                redirect(controller: "execution", action: "show", id: results.id, fragment: params.followdetail)
             }
         } else {
             redirect(controller: "scheduledExecution", action: "show", id: params.id)
