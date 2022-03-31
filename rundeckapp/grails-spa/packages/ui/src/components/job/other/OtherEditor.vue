@@ -155,7 +155,6 @@
         </div>
 
         <div class="input-group">
-          <!--<g:helpTooltip code="scheduledExecution.property.logOutputThresholdAction.halt.description" placement="left"/>-->
           <input type='text' name="logOutputThresholdStatus"
                  v-model="modelData.logOutputThresholdStatus"
                  id="schedJobLogOutputThresholdStatus" class="form-control"
@@ -225,13 +224,16 @@
         UUID
       </label>
 
-      <div :class="fieldColSize">
-        <p class="form-control-static text-primary" v-if="modelData.uuid">
+      <div :class="fieldColSize" v-if="modelData.uuid">
+        <p class="form-control-static text-primary">
             {{modelData.uuid}}
         </p>
-          <input type='text' name="uuid" v-model="!modelData.uuid"
+      </div>
+      <div :class="fieldColSize" v-if="!modelData.uuid">
+          <input type='text' name="uuid" v-model="modelData.uuid"
                  id="schedJobUuid" size="36" class="form-control"/>
       </div>
+
     </div>
   </div>
 </template>
@@ -263,12 +265,14 @@ export default class OtherEditor extends Vue {
 
   modelData: any = {}
 
-  nodeSummary: any = {}
-
   async mounted() {
     this.modelData = Object.assign({}, this.value)
-    if(this.modelData.defaultTab in ['summary','monitor','nodes']){
+    if(!this.modelData.defaultTab || this.modelData.defaultTab in ['summary','monitor','nodes']) {
       this.modelData.defaultTab = 'nodes'
+    }
+
+    if(!this.modelData.logOutputThresholdAction) {
+      this.modelData.logOutputThresholdAction = 'halt'
     }
   }
 
