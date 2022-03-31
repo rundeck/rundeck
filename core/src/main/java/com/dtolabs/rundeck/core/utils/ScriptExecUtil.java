@@ -337,7 +337,7 @@ public class ScriptExecUtil {
                     args.add(arg);
                 }
             }
-            builder.args(args, false, false);
+            builder.args(args, false);
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
             ExecArgList.Builder sub = builder.subList(true);
@@ -361,12 +361,12 @@ public class ScriptExecUtil {
             ExecArgList.Builder builder, Predicate quoted
     ) {
         if (null != filepath) {
-            builder.arg(filepath, false, false);
+            builder.arg(filepath, false);
         }
         if (null != scriptargs) {
-            builder.args(OptsUtil.burst(scriptargs), quoted, false);
+            builder.args(OptsUtil.burst(scriptargs), quoted);
         } else if (null != scriptargsarr) {
-            builder.args(scriptargsarr, quoted, false);
+            builder.args(scriptargsarr, quoted);
         }
     }
 

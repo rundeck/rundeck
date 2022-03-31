@@ -51,37 +51,37 @@ public class ExecArgListTest {
 
     @Test
     public void buildSimpleCommandNoOSFamily() {
-        testBuildCommandForNode(ExecArgList.fromStrings(false, true, "a", "command"), list("a", "command"), null, null);
+        testBuildCommandForNode(ExecArgList.fromStrings(true, "a", "command"), list("a", "command"), null, null);
     }
 
     @Test
     public void buildSsimpleSpaceNoOSFamilyUnixQuotes() {
-        testBuildCommandForNode(ExecArgList.fromStrings(false, true, "a", "test command"), list("a", "'test command'"), null,
+        testBuildCommandForNode(ExecArgList.fromStrings(true, "a", "test command"), list("a", "'test command'"), null,
                 null);
     }
 
     @Test
     public void buildUnixSpace() {
-        testBuildCommandForNode(ExecArgList.fromStrings(false, true, "a", "test command"), list("a", "'test command'"), null,
+        testBuildCommandForNode(ExecArgList.fromStrings(true, "a", "test command"), list("a", "'test command'"), null,
                 "unix");
     }
 
     @Test
     public void buildUnixSpaceUnquoted() {
-        testBuildCommandForNode(ExecArgList.fromStrings(false, false, "a", "test command"), list("a", "test command"), null,
+        testBuildCommandForNode(ExecArgList.fromStrings(false, "a", "test command"), list("a", "test command"), null,
                 "unix");
     }
 
     @Test
     public void buildQuoteUnquote() {
-        ExecArgList a = ExecArgList.builder().arg("a test", false, false).arg("b test", true, false).build();
+        ExecArgList a = ExecArgList.builder().arg("a test", false).arg("b test", true).build();
         testBuildCommandForNode(a, list("a test", "'b test'"), null,
                 "unix");
     }
     @Test
     public void buildExpandOptionRef() {
         testBuildCommandForNode(
-                ExecArgList.fromStrings(false, true, "a", "command", "${option.test}"),
+                ExecArgList.fromStrings(true, "a", "command", "${option.test}"),
                 list("a", "command", "test1"),
                 DataContextUtils.addContext("option", map("test", "test1"), null),
                 null);
@@ -90,25 +90,7 @@ public class ExecArgListTest {
     @Test
     public void buildExpandOptionRefWhitespace() {
         testBuildCommandForNode(
-                ExecArgList.fromStrings(false, true, "a", "command", "${option.test}"),
-                list("a", "command", "'test with blank'"),
-                DataContextUtils.addContext("option", map("test", "test with blank"), null),
-                null);
-    }
-
-    @Test
-    public void buildExpandOptionRefWhitespaceNoLegacy() {
-        testBuildCommandForNode(
-                ExecArgList.fromStrings(false, false, "a", "command", "${option.test}"),
-                list("a", "command", "test with blank"),
-                DataContextUtils.addContext("option", map("test", "test with blank"), null),
-                null);
-    }
-
-    @Test
-    public void buildExpandOptionRefWhitespaceWithLegacy() {
-        testBuildCommandForNode(
-                ExecArgList.fromStrings(true, false, "a", "command", "${option.test}"),
+                ExecArgList.fromStrings(true, "a", "command", "${option.test}"),
                 list("a", "command", "'test with blank'"),
                 DataContextUtils.addContext("option", map("test", "test with blank"), null),
                 null);
@@ -117,17 +99,8 @@ public class ExecArgListTest {
     @Test
     public void buildExpandUnquotedOptionRefWhitespace() {
         testBuildCommandForNode(
-                ExecArgList.fromStrings(false, true, "a", "command", "${unquotedoption.test}"),
+                ExecArgList.fromStrings(true, "a", "command", "${unquotedoption.test}"),
                 list("a", "command", "test with blank"),
-                DataContextUtils.addContext("option", map("test", "test with blank"), null),
-                null);
-    }
-
-    @Test
-    public void buildExpandUnquotedOptionRefWhitespaceAndFeatureQuoting() {
-        testBuildCommandForNode(
-                ExecArgList.fromStrings(true, true, "a", "command", "${unquotedoption.test}"),
-                list("a", "command", "'test with blank'"),
                 DataContextUtils.addContext("option", map("test", "test with blank"), null),
                 null);
     }
@@ -135,7 +108,7 @@ public class ExecArgListTest {
     @Test
     public void buildExpandOptionRefMissingIsBlank() {
         testBuildCommandForNode(
-                ExecArgList.fromStrings(false, true, "a", "command", "${option.test2}"),
+                ExecArgList.fromStrings(true, "a", "command", "${option.test2}"),
                 list("a", "command", ""),
                 DataContextUtils.addContext("option", map("test", "test1"), null),
                 null);
@@ -143,7 +116,7 @@ public class ExecArgListTest {
     @Test
     public void buildExpandNodeRef() {
         testBuildCommandForNode(
-                ExecArgList.fromStrings(false, true, "a", "command", "${node.name}"),
+                ExecArgList.fromStrings(true, "a", "command", "${node.name}"),
                 list("a", "command", "node1"),
                 DataContextUtils.addContext("node", map("name", "node1"), null),
                 null);
@@ -151,7 +124,7 @@ public class ExecArgListTest {
     @Test
     public void buildExpandNodeRefMissing() {
         testBuildCommandForNode(
-                ExecArgList.fromStrings(false, true, "a", "command", "${node.blah}"),
+                ExecArgList.fromStrings(true, "a", "command", "${node.blah}"),
                 list("a", "command", "'${node.blah}'"),
                 DataContextUtils.addContext("node", map("name", "node1"), null),
                 null);
@@ -162,11 +135,11 @@ public class ExecArgListTest {
     public void buildSubListUnquoted() {
         ExecArgList.Builder builder =
                 ExecArgList.builder()
-                        .arg("a test", false, false)
-                        .arg("b test", true, false)
+                        .arg("a test", false)
+                        .arg("b test", true)
                         .subList(false)
-                        .arg("alpha beta", true, false)
-                        .arg("delta gamma", false, false)
+                        .arg("alpha beta", true)
+                        .arg("delta gamma", false)
                         .parent();
         ExecArgList a = builder.build();
         testBuildCommandForNode(a, list("a test", "'b test'", "'alpha beta' delta gamma"), null,
@@ -177,11 +150,11 @@ public class ExecArgListTest {
     public void buildSubListQuoted() {
         ExecArgList.Builder builder =
                 ExecArgList.builder()
-                        .arg("a test", false, false)
-                        .arg("b test", true, false)
+                        .arg("a test", false)
+                        .arg("b test", true)
                         .subList(true)
-                        .arg("alpha beta", true, false)
-                        .arg("delta gamma", false, false)
+                        .arg("alpha beta", true)
+                        .arg("delta gamma", false)
                         .parent();
         ExecArgList a = builder.build();
         testBuildCommandForNode(a, list("a test", "'b test'", "''\"'\"'alpha beta'\"'\"' delta gamma'"), null,

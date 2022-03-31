@@ -34,12 +34,6 @@ public abstract class ExecArg {
     private boolean quoted = true;
 
     /**
-     * @return true if using quoting backward compatibility
-     *
-     */
-    private boolean featureQuotingBackwardCompatible = false;
-
-    /**
      * @return the sublist of args, if {@link #isList()} returns true, null otherwise
      */
     public abstract List<ExecArg> getList();
@@ -73,22 +67,6 @@ public abstract class ExecArg {
     }
 
     /**
-     * @return true if should use old quoting behavior < 3.4.1
-     */
-    public boolean isFeatureQuotingBackwardCompatible() {
-        return featureQuotingBackwardCompatible;
-    }
-
-    /**
-     * Set whether this arg should be quoted using old quoting behavior < 3.4.1
-     *
-     * @param featureQuotingBackwardCompatible featureQuotingBackwardCompatible
-     */
-    void setFeatureQuotingBackwardCompatible(boolean featureQuotingBackwardCompatible) {
-        this.featureQuotingBackwardCompatible = featureQuotingBackwardCompatible;
-    }
-
-    /**
      * Visitor to visit args
      */
     public static interface Visitor {
@@ -102,9 +80,8 @@ public abstract class ExecArg {
 
         final String arg;
 
-        public StringArg(String arg, boolean quoted, boolean featureQuotingBackwardCompatible) {
+        public StringArg(String arg, boolean quoted) {
             this.arg = arg;
-            this.setFeatureQuotingBackwardCompatible(featureQuotingBackwardCompatible);
             if(SharedDataContextUtils.UNQUOTEDPROPERTY_REF_PATTERN.matcher(arg).matches()) {
                 setQuoted(false);
             } else {
@@ -187,7 +164,7 @@ public abstract class ExecArg {
         }
     }
 
-    public static ExecArg fromString(String arg, boolean quoted, boolean featureQuotingBackwardCompatible) {
-        return new StringArg(arg, quoted, featureQuotingBackwardCompatible);
+    public static ExecArg fromString(String arg, boolean quoted) {
+        return new StringArg(arg, quoted);
     }
 }

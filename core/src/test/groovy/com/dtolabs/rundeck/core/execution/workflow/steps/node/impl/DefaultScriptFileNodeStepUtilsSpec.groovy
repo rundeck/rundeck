@@ -18,7 +18,6 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IFrameworkServices
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.execution.ExecArgList
@@ -28,7 +27,6 @@ import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.FileBasedGeneratedScript
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import spock.lang.Specification
 
@@ -58,14 +56,9 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
-        def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
             getFrameworkProject() >> PROJECT_NAME
-            getIFramework() >> iFrameworkMock
         }
         ExecutionService executionService = Mock(ExecutionService)
         framework.frameworkServices = Mock(IFrameworkServices) {
@@ -133,14 +126,9 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
-        def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
             getFrameworkProject() >> PROJECT_NAME
-            getIFramework() >> iFrameworkMock
         }
         ExecutionService executionService = Mock(ExecutionService)
         framework.frameworkServices = Mock(IFrameworkServices) {
@@ -210,15 +198,11 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
         ExecutionLogger executionLogger = Mock(ExecutionLogger)
-        def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
+
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
             getFrameworkProject() >> PROJECT_NAME
             getExecutionLogger() >> executionLogger
-            getIFramework() >> iFrameworkMock
         }
         ExecutionService executionService = Mock(ExecutionService)
         framework.frameworkServices = Mock(IFrameworkServices) {
@@ -297,15 +281,10 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
         scriptFile.deleteOnExit()
         ExecutionLogger executionLogger = Mock(ExecutionLogger)
 
-        def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
             getFrameworkProject() >> PROJECT_NAME
             getExecutionLogger() >> executionLogger
-            getIFramework() >> iFrameworkMock
         }
         ExecutionService executionService = Mock(ExecutionService)
         framework.frameworkServices = Mock(IFrameworkServices) {
@@ -381,14 +360,9 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
 
         File scriptFile = File.createTempFile("test", ".script");
         scriptFile.deleteOnExit()
-        def fwkProps = ['rundeck.feature.quoting.backwardCompatible': 'false']
-        def iFrameworkMock = Mock(IFramework){
-            getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
-        }
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
             getFrameworkProject() >> PROJECT_NAME
-            getIFramework() >> iFrameworkMock
         }
         ExecutionService executionService = Mock(ExecutionService)
         framework.frameworkServices = Mock(IFrameworkServices) {

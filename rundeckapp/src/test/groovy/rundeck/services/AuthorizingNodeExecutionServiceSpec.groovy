@@ -36,7 +36,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
                 Mock(UserAndRolesAuthContext)
             )
             def node = new NodeEntryImpl('testnode1')
-            def cmd = ExecArgList.fromStrings(false, false, 'cmd1')
+            def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
 
             def emptyset = new NodeSetImpl()
@@ -66,7 +66,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
                 Mock(UserAndRolesAuthContext)
             )
             def node = new NodeEntryImpl('testnode1')
-            def cmd = ExecArgList.fromStrings(false, false, 'cmd1')
+            def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
 
             def resultSet = new NodeSetImpl()
@@ -96,7 +96,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
                 Mock(UserAndRolesAuthContext)
             )
             def node = new NodeEntryImpl('testnode1')
-            def cmd = ExecArgList.fromStrings(false, false, 'cmd1')
+            def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
 
             def emptyset = new NodeSetImpl()
@@ -131,7 +131,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
                 Mock(UserAndRolesAuthContext)
             )
             def node = new NodeEntryImpl('testnode1')
-            def cmd = ExecArgList.fromStrings(false, false, 'cmd1')
+            def cmd = ExecArgList.fromStrings(false, 'cmd1')
             def ctx = Mock(ExecutionContext)
 
             def resultSet = new NodeSetImpl()
