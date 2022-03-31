@@ -146,7 +146,7 @@
       <div :class="fieldColShortSize">
         <div class="radio">
           <input type="radio" name="logOutputThresholdAction"
-            :value="halt"
+            :value="'halt'"
             v-model="modelData.logOutputThresholdAction"
             id="logOutputThresholdAction"/>
           <label for="logOutputThresholdAction" >
@@ -163,7 +163,7 @@
         </div>
         <div class="radio">
           <input type="radio" name="logOutputThresholdAction"
-                 :value="truncate"
+                 :value="'truncate'"
                  v-model="modelData.logOutputThresholdAction"
                  id="logOutputThresholdActionTruncateAndContinue"/>
           <label for="logOutputThresholdActionTruncateAndContinue">
@@ -183,7 +183,7 @@
       <div :class="fieldColSize">
         <div class="radio radio-inline">
           <input type="radio" name="defaultTab"
-                 :value="nodes"
+                 :value="'nodes'"
                  v-model="modelData.defaultTab"
                  id="tabSummary"/>
           <label for="tabSummary">
@@ -194,7 +194,7 @@
 
         <div class="radio radio-inline">
           <input type="radio" name="defaultTab"
-                 :value="output"
+                 :value="'output'"
                  v-model="modelData.defaultTab"
                  id="tabOutput"/>
           <label for="tabOutput">
@@ -203,7 +203,7 @@
         </div>
         <div class="radio radio-inline">
           <input type="radio" name="defaultTab"
-                 :value="html"
+                 :value="'html'"
                  v-model="modelData.defaultTab"
                  id="tabHTML"/>
           <label for="tabHTML">
