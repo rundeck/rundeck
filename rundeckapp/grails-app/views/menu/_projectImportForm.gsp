@@ -132,7 +132,7 @@
                 </div>
             </div>
           </auth:resourceAllowed>
-          <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" any="true" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT_ACL}" has="false" name="${params.project}">
+          <auth:resourceAllowed action="${[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT_ACL}" has="false" name="${params.project}">
             <div class="list-group-item">
               <h4 class="list-group-item-heading">ACL Policies</h4>
               <span class="help-block">

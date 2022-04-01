@@ -97,7 +97,7 @@
                     <label for="exportAcls">ACL Policies</label>
                   </div>
                 </auth:resourceAllowed>
-                <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" any="true" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT_ACL}" has="false" name="${params.project}">
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]}" context="${AuthConstants.CTX_APPLICATION}" type="${AuthConstants.TYPE_PROJECT_ACL}" has="false" name="${params.project}">
                   <div class="checkbox disabled text-strong">
                     <i class="glyphicon glyphicon-ban-circle"></i> ACL Policies (Unauthorized)
                   </div>
