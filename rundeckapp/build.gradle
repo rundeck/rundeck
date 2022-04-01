@@ -185,7 +185,7 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql:42.2.13'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
-    runtimeOnly "org.springframework:spring-jcl:${project.'spring-jcl'}"
+    runtimeOnly "org.springframework:spring-jcl:${springVersion}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
