@@ -69,6 +69,17 @@ public class ExecArgList {
     }
 
     /**
+     * @return an ExecArgList from a list of strings, and a predicate to determine whether the argument needs to be
+     * quoted
+     *
+     * @param quoteDetect predicate
+     * @param args args
+     */
+    public static ExecArgList fromStrings(Predicate quoteDetect, String... args) {
+        return fromStrings(false, quoteDetect, args);
+    }
+
+    /**
      * @return Create an ExecArgList from a list of strings
      *
      * @param featureQuotingBackwardCompatible indicates whether to use old quoting behavior < 3.4.1
