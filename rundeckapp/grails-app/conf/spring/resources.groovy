@@ -117,6 +117,7 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import rundeck.GrailsIssue12460PostProcessor
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.ExecutionValidatorService
@@ -774,4 +775,8 @@ beans={
     rundeckConfigReloader(RundeckConfigReloader)
     pluginCachePreloader(PluginCachePreloader)
     interceptorHelper(DefaultInterceptorHelper)
+
+    //workaround for issue with grails 5.1.6 https://github.com/grails/grails-core/issues/12460
+    //https://github.com/rainboyan/grails-issue-12460-demo
+    grailsIssue12460PostProcessor(GrailsIssue12460PostProcessor)
 }
