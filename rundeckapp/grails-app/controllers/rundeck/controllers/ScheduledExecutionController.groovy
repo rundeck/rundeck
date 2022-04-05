@@ -850,10 +850,10 @@ class ScheduledExecutionController  extends ControllerBase{
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
                 urlo = new URL(url)
-                client.setUri(urlo.toURI())
+                client.setUri(new URL(cleanUrl).toURI())
                 if(urlo.userInfo){
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    client.setBasicAuthCredentials(cred.userName,cred.password)
+                    client.setBasicAuthCredentials(cred.userName, cred.password)
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
