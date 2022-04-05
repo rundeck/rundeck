@@ -852,8 +852,11 @@ class ScheduledExecutionController  extends ControllerBase{
                 urlo = new URL(url)
                 client.setUri(new URL(cleanUrl).toURI())
                 if(urlo.userInfo){
+                    client.setUri(new URL(cleanUrl).toURI())
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
                     client.setBasicAuthCredentials(cred.userName, cred.password)
+                } else {
+                    client.setUri(urlo.toURI())
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
