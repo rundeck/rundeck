@@ -205,6 +205,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         groupPath type: 'string'
 //        orchestrator type: 'text'
         //options lazy: false
+        notifications sort: 'id', order: 'asc'
         timeout(type: 'text')
         retry(type: 'text')
         retryDelay(type: 'text')
