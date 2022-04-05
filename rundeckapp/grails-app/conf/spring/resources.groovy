@@ -757,6 +757,8 @@ beans={
         initParams = configParams?.toProperties()?.collectEntries {
             [it.key.toString(), it.value.toString()]
         }
+
+        useForwardHeaders = Boolean.getBoolean('rundeck.jetty.connector.forwarded')
     }
 
     rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {

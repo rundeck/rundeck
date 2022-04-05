@@ -35,6 +35,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
      * Set of init parameters to set in the web app context
      */
     Map<String, String> initParams = [:]
+    Boolean useForwardHeaders
 
     @Override
     void customize(final JettyServletWebServerFactory factory) {
@@ -49,6 +50,7 @@ class JettyServletContainerCustomizer implements WebServerFactoryCustomizer<Jett
             }
         })
         factory.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
+        factory.useForwardHeaders=useForwardHeaders
     }
 }
 
