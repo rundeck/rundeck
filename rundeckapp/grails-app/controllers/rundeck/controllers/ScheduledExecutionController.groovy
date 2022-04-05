@@ -850,7 +850,6 @@ class ScheduledExecutionController  extends ControllerBase{
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
                 urlo = new URL(url)
-                client.setUri(new URL(cleanUrl).toURI())
                 if(urlo.userInfo){
                     client.setUri(new URL(cleanUrl).toURI())
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
