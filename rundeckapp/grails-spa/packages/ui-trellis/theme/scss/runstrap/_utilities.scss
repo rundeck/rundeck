@@ -128,6 +128,9 @@
 .px-row{
   padding:0 15px;
 }
+.mr-2{
+  margin-right: 0.5rem;
+}
 .pr-2{
   padding-right: 0.5rem;
 }
@@ -154,8 +157,13 @@
   .w-full{
     width: 100%;
   }
-  
-  
+
+// -------------------------------------
+//   7. Cursor
+// -------------------------------------
+.cursor-pointer{
+  cursor: pointer;
+}
 
 //
 // Utility classes (-Legacy Bootstrap 3)

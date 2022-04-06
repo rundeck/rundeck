@@ -1,7 +1,7 @@
 <template>
   <span>
     <dropdown v-if="query.recentFilter!=='-' && displayOpts.showRecentFilter">
-      <span class="dropdown-toggle text-info">
+      <span class="dropdown-toggle text-info cursor-pointer mr-2">
         <i18n :path="'period.label.'+period.name" />
         <span class="caret"></span>
       </span>
