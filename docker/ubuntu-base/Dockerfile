@@ -37,7 +37,6 @@ RUN set -euxo pipefail \
     && chmod 0775 /home/rundeck \
     && passwd -d rundeck \
     && addgroup rundeck sudo \
-    && echo | sudo -u rundeck ssh-keygen -N '' \
     && chmod g+w /etc/passwd
 
 # Add Tini
