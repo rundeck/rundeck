@@ -753,12 +753,13 @@ beans={
 
     jettyServletCustomizer(JettyServletContainerCustomizer) {
         def configParams = grailsApplication.config.getProperty("rundeck.web.jetty.servlet.initParams", String.class)
+        def useForwardHeadersConfig = grailsApplication.config.getProperty("server.useForwardHeaders")
 
         initParams = configParams?.toProperties()?.collectEntries {
             [it.key.toString(), it.value.toString()]
         }
 
-        useForwardHeaders = Boolean.getBoolean('rundeck.jetty.connector.forwarded')
+        useForwardHeaders = ["true", true].contains(useForwardHeadersConfig) ?: Boolean.getBoolean('rundeck.jetty.connector.forwarded')
     }
 
     rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
