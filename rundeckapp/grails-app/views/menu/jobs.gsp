@@ -472,7 +472,7 @@ search
                 <g:if test="${wasfiltered || filterName || filterset}">
                     <div class="btn-group " data-ko-bind="jobFilters">
                         <button type="button"
-                                class="btn btn-secondary btn-sm dropdown-toggle "
+                                class="btn btn-default btn-sm dropdown-toggle"
                                 title="Saved Filters"
                                 data-toggle="dropdown"
                                 aria-expanded="false">
@@ -527,10 +527,12 @@ search
 
             </div>
 
-            <span title="Click to modify filter" class="btn btn-secondary btn-sm query " data-toggle="modal" data-target="#jobs_filters">
-                <g:message code="search.ellipsis" />
+            <span title="Click to modify filter" class="btn btn-default btn-md query" data-toggle="modal" data-target="#jobs_filters" style="margin-right:10px">
+                <g:message code="advanced.search" />
             </span>
-
+            <g:form action="jobs" params="[project:params.project, jobListType:params.jobListType]" method="POST">
+                <input type="search" name="jobFilter" placeholder="&#xF002 Search" class="form-control input-md fas"/>
+            </g:form>
         </div>
     </div>
 <g:jsonToken id="ajaxFilterTokens" />

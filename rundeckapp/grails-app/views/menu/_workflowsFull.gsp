@@ -172,7 +172,7 @@
                   <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
 
                      <a
-                     class="btn btn-success pull-right"
+                     class="btn btn-default pull-right"
                      data-dismiss="modal"
                      data-toggle="modal"
                      href="#saveJobFilterKOModal"
