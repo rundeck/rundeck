@@ -472,7 +472,7 @@ search
                 <g:if test="${wasfiltered || filterName || filterset}">
                     <div class="btn-group " data-ko-bind="jobFilters">
                         <button type="button"
-                                class="btn btn-secondary btn-sm dropdown-toggle "
+                                class="btn btn-default btn-sm dropdown-toggle "
                                 title="Saved Filters"
                                 data-toggle="dropdown"
                                 aria-expanded="false">
