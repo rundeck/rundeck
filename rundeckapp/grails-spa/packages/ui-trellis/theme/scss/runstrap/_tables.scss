@@ -4,8 +4,10 @@
 
 
 table {
-  background-color: $table-bg;
-
+  border-radius: 6px;
+  th{
+    background-color: var(--background-color);
+  }
   // Table cell sizing
   //
   // Reset default table behavior
@@ -23,6 +25,9 @@ table {
       display: table-cell;
       float: none;
     }
+  }
+  .h5{
+    font-size: 1em;
   }
 }
 
@@ -45,11 +50,18 @@ th {
   max-width: 100%;
   margin-bottom: $line-height-computed;
   // Cells
+  th{
+    &:first-child{
+      border-top-left-radius: 6px;
+    }
+    &:last-child{
+      border-top-right-radius: 6px;
+    }
+  }
   > thead,
   > tbody,
   > tfoot {
     > tr {
-      > th,
       > td {
         padding: $table-cell-padding;
         line-height: $line-height-base;
@@ -103,21 +115,12 @@ th {
 // Add borders all around the table and between all the columns.
 
 .table-bordered {
-  border: 1px solid $table-border-color;
-  > thead,
-  > tbody,
-  > tfoot {
-    > tr {
-      > th,
-      > td {
-        border: 1px solid $table-border-color;
+  border: 1px solid var(--grey-300);
+  tbody{
+    tr{
+      td:not(:last-child), th:not(:last-child){
+        border-right: 1px solid var(--grey-400);
       }
-    }
-  }
-  > thead > tr {
-    > th,
-    > td {
-      border-bottom-width: 2px;
     }
   }
 }
@@ -236,7 +239,6 @@ th {
   thead,
   tbody,
   tfoot{
-    tr > th,
     tr > td{
       border-top: 1px solid var(--table-line-color);
     }
