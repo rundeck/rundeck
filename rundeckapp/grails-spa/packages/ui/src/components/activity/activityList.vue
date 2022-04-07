@@ -37,7 +37,7 @@
               <label for="auto-refresh" class="pr-2">{{$t('Auto refresh')}}</label>
             </span>
             <!-- bulk edit controls -->
-            <span  v-if="auth.deleteExec && pagination.total>0 && showBulkDelete">
+            <span  v-if="auth.deleteExec && pagination.total>0 && showBulkDelete" class="spacing-x">
                 <span v-if="bulkEditMode" >
                   <i18n path="bulk.selected.count">
                     <strong>{{bulkSelectedIds.length}}</strong>
@@ -924,5 +924,10 @@ $since-bg: #ccf;
   background-color: var(--warning-bg-color);
   --text-muted-color: var(--font-color);
   --text-secondary-color: var(--font-color);
+}
+.spacing-x{
+  * + *{
+    margin-left: 1rem;
+  }
 }
 </style>
