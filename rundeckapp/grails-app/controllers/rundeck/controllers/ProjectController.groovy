@@ -410,7 +410,7 @@ class ProjectController extends ControllerBase{
                         flash.message=message(code:"archive.successfully.imported")
                     }
                 }else{
-                    flash.error=message(code:"failed.to.import.some.jobs")
+                    flash.error=result.joberrors
                     flash.joberrors=result.joberrors
                 }
                 def warning = []
