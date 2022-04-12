@@ -235,3 +235,23 @@ select.input-sm{
     height: 43px;
   }
 }
+.subtitle-head-item {
+  .search {
+    padding: 5px;
+    ::placeholder {
+      color: var(--font-color);
+    }
+    span {
+      position:absolute;
+      padding:9px 10px 10px 10px;
+    }
+    input {
+      padding-left:30px; 
+      background-color:var(--background-color-lvl2);
+    }
+    .input-md {
+      border: 1.5px solid var(--default-states-color);
+      height: auto;
+    }
+  }
+}
