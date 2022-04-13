@@ -115,7 +115,7 @@
         <g:set var="userDefinedInstanceName" value="${cfg.getString(config: "gui.instanceName")}"/>
         <g:if test="${userDefinedInstanceName}">
           <li>
-            <span class="label label-default instance-label" style="float:left;font-size: 20px;margin: 10px 15px 0 0;">
+            <span class="label label-default instance-label" style="float:left;font-size: 14px;margin-right: 15px;border-radius: 3px;padding-left: 15px;padding-right: 15px">
                 ${enc(sanitize:userDefinedInstanceName)}
             </span>
           </li>
