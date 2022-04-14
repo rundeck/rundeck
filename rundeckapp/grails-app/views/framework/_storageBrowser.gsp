@@ -9,8 +9,17 @@ implied. - See the License for the specific language governing permissions and -
 <div class="row text-info ">
   <div class="form-group col-sm-12" data-bind="css: invalid()?'has-error':'' ">
     <div class="input-group">
-      <div class="input-group-addon" data-bind="if: staticRoot()">
-        <span data-bind="text: rootBasePath()"></span>
+      <div class="input-group-addon rs-tooltip bottom" data-bind="if: staticRoot()">
+        <span data-bind="text: rootBasePath()" 
+        class="text-ellipsis"
+        style="
+          max-width: 300px;
+          display: inline-block;"
+        >
+        </span>
+        <div class="rs-tooltip--message" data-bind="text: rootBasePath()" ></div>
+    
+
       </div>
       <input type="text" class="form-control" style="padding-left:18px" data-bind="value: inputPath, valueUpdate: 'input', attr: {disabled: loading() }, executeOnEnter: browseToInputPath" placeholder="Enter a path"/>
 
