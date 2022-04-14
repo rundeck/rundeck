@@ -1,3 +1,4 @@
 rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 rundeckapp.init.prebootstrap.AddonClasspathInjectorPrebootstrap
 rundeckapp.init.prebootstrap.ServerLibInjectorPreBoostrap
+rundeckapp.init.prebootstrap.UpgradeH2DatabasePreBootstrap
