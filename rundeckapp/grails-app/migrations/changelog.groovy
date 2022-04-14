@@ -17,7 +17,8 @@ databaseChangeLog = {
         property name: "text.type", global: "true", value: "longtext", dbms: "mysql,mariadb"
         property name: "text.type", global: "true", value: "text", dbms: "postgresql"
         property name: "text.type", global: "true", value: "CLOB", dbms: "oracle"
-        property name: "text.type", global: "true", value: "varchar(1048576)", dbms: "mssql,h2"
+        property name: "text.type", global: "true", value: "varchar(max)", dbms: "mssql"
+        property name: "text.type", global: "true", value: "varchar(1048576)", dbms: "h2"
 
         property name: "timestamp.type", global: "true", value: "datetime(6)", dbms: "mysql,mariadb"
         property name: "timestamp.type", global: "true", value: "TIMESTAMP WITHOUT TIME ZONE", dbms: "postgresql"

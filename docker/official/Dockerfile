@@ -1,4 +1,4 @@
-FROM rundeck/ubuntu-base:20.04@sha256:f91fea48e850964001e1307546611f004ce0adc789fa62f6da7101b36f8068b8
+FROM rundeck/ubuntu-base@sha256:b985e4561ce61dc0865750394885f9afd9a1dffb56d4f72a8b6b575f2a342509
 
 COPY --chown=rundeck:root .build .
 RUN java -jar rundeck.war --installonly \
