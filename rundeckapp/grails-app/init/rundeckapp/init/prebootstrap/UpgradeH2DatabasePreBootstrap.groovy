@@ -33,7 +33,7 @@ class UpgradeH2DatabasePreBootstrap implements PreBootstrap{
         def loadedProperties = loadConfigProperties()
         String dbUrl = loadedProperties.getProperty("dataSource.url")
 
-        if(!enabled || !loadedProperties.getProperty("dataSource.driverClassName").startsWith("jdbc:h2")) return
+        if(!enabled || !dbUrl.startsWith("jdbc:h2")) return
 
         logger.warn("H2 Database Upgrade enabled. The database will be upgraded to v2.x version")
 
