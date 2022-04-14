@@ -19,7 +19,6 @@ package com.dtolabs.rundeck.core.utils;
 
 import org.apache.tools.ant.Project;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -84,184 +83,129 @@ public class PropertyUtil {
      * expand a keyString that may contain referecnes to other properties
      * @param keyString string containing props
      * @param project Ant project
-     * @return expanded string                    
+     * @return expanded string
      */
     public static String expand(String keyString, Project project) {
         return expand(keyString, project.getProperties());
     }
 
     /**
-     * parse the given keyString and expand each reference to a property from the given
-     * map object.
+     * simple state for parsing "${token}" for expansion
+     */
+    static private enum State {
+        /**
+         * init state
+         */
+        NoToken(null),
+        /**
+         * "$" seen
+         */
+        Dollar(NoToken),
+        /**
+         * "${" seen
+         */
+        DollarLeftbracket(Dollar),
+        /**
+         * "${prop" seen
+         */
+        PropertyName(DollarLeftbracket),
+        /**
+         * "${prop}" seen
+         */
+        Final(PropertyName);
+
+        /**
+         * allow transition from this previous state
+         */
+        final State allowed;
+
+        State(State allowed) {
+            this.allowed = allowed;
+        }
+
+        /**
+         * @param token input string
+         * @return next state for input token
+         */
+        State newStateForToken(String token) {
+            if ("$".equals(token)) {
+                return transitionTo(Dollar);
+            } else if ("{".equals(token)) {
+                return transitionTo(DollarLeftbracket);
+            } else if ("}".equals(token)) {
+                return transitionTo(Final);
+            } else {
+                return transitionTo(PropertyName);
+            }
+        }
+
+        /**
+         * @param previous from state
+         * @return true if this state accepts transition from previous state
+         */
+        boolean allowedFrom(State previous) {
+            return null == this.allowed || this.allowed == previous;
+        }
+
+        /**
+         * Transition to the next state
+         * @param next next state
+         * @return next state if acceptable to transition there, otherwise None
+         */
+        State transitionTo(State next) {
+            if (next.allowedFrom(this)) {
+                return next;
+            }
+            return NoToken;
+        }
+    }
+
+    /**
+     * parse the given keyString and expand each reference to a property from the given map object.
      */
     private static String lineExpand(String keyString, Map properties) {
-
-        //System.out.println("DEBUG : expand(String, Properties), keyString: " + keyString);
-
-        //if ("".equals(keyString))
-        //throw new Exception("empty key string");
-
         if (resolvesToLiteral(keyString)) {
-            //System.out.println("DEBUG : keyString: " + keyString + " is a literal");
             return keyString;
         }
-        //System.out.println("DEBUG : expand(String, Properties), keyString: " + keyString + " does not resolve to literal");
-
         // look for ${<propName>}'s
         StringTokenizer keyStringTokenizer = new StringTokenizer(keyString, "${}", true);
 
-        // return buffer
-        StringBuffer sb = new StringBuffer();
-
-        if (keyStringTokenizer.countTokens() == 1) {
-            // we are done here since there is nothing but the final to be expanded string (no real
-            // parsing necessary.
-
-
-            //String rtnString = (String)properties.get(keyString);
-            //if (null == rtnString)
-
-            if (!properties.containsKey(keyString)) {
-                //System.out.println("unresolved property key : " + keyString);
-                return "";
-            }
-            return (String) properties.get(keyString);
-
-            //throw new Exception("value for property: " + keyString + " is null");
-            //System.out.println("quick and dirty, returning: " + rtnString);
-            //return rtnString;
-        }
-
-
-        // set all token indicators to false
-        boolean dollar = false;
-        boolean lp = false;
-        boolean rp = false;
-
+        StringBuilder output = new StringBuilder();
+        State state = State.NoToken;
+        String propName = null;
+        StringBuilder tokenbuff = new StringBuilder();
 
         while (keyStringTokenizer.hasMoreTokens()) {
-            //System.out.println("got a token");
-
-            // the token matching <propName> in ${<propName>}
-            String expTok;
-
-            // seen all tokens, so reset them for next occurrance
-            if (dollar == true && lp == true && rp == true) {
-                dollar = false;
-                lp = false;
-                rp = false;
+            String nextToken = keyStringTokenizer.nextToken();
+            tokenbuff.append(nextToken);
+            State newState = state.newStateForToken(nextToken);
+            if (newState == State.PropertyName) {
+                propName = nextToken;
+            } else if (newState == State.Final) {
+                String expVal = (String) properties.get(propName);
+                if (expVal != null) {
+                    tokenbuff = new StringBuilder(expVal);
+                }
+                propName = null;
+                newState = State.NoToken;
             }
-
-            // get next token based on any of $, {, } characters
-            String tok = keyStringTokenizer.nextToken();
-
-            // all token indicators false, means we have a passthru token, so just append to return buffer
-            if (dollar == false && lp == false && rp == false) {
-                if (!tok.equals("$")) {
-                    sb.append(tok);
-                }
+            if (newState == State.NoToken) {
+                output.append(tokenbuff);
+                tokenbuff = new StringBuilder();
             }
-
-            // seen ${, but not } => we should have a token here to expand
-            if (dollar == true && lp == true && rp == false) {
-                // the prop to expand
-                if (!tok.equals("}")) {
-                    expTok = tok;
-                    // append getProperty result of expTok
-                    String expVal = (String) properties.get(expTok);
-                    if (expVal == null) {
-                        //throw new Exception("token expTok " + expTok + " is null");
-                        //System.out.println("token expTok \"" + expTok + "\" is null");
-                        sb.append("${").append(expTok).append("}");
-                    }else{
-                        sb.append(expVal);
-                    }
-                } else {
-                    // the } token is now encountered
-                    rp = true;
-                    continue;
-                }
-            }
-
-            // ensure we don't see $$, {$, }$
-            if (tok.equals("$")) {
-                if (dollar == true) {
-                    //throw new Exception("parsing error: $$ invalid");
-                    throw new PropertyUtilException("parsing error: $$ invalid");
-                }
-                if (lp == true) {
-                    //throw new Exception("parsing error: {$ invalid");
-                    throw new PropertyUtilException("parsing error: {$ invalid");
-                }
-                if (rp == true) {
-                    //throw new Exception("parsing error: }$ invalid");
-                    throw new PropertyUtilException("parsing error: }$ invalid");
-                }
-                dollar = true;
-                continue;
-            }
-
-            // ensure $ is before {, and no {{ or }{
-            if (tok.equals("{")) {
-                if (dollar == false) {
-                    //throw new Exception("parsing error: $ symbol must occur before { symbol");
-                    throw new PropertyUtilException("parsing error: $ symbol must occur before { symbol");
-                }
-                if (lp == true) {
-                    //throw new Exception("parsing error: {{ invalid");
-                    throw new PropertyUtilException("parsing error: {{ invalid");
-                }
-                if (rp == true) {
-                    //throw new Exception("parsing error: }{ invalid");
-                    throw new PropertyUtilException("parsing error: }{ invalid");
-                }
-                lp = true;
-                continue;
-            }
-
-            // ensure ${ is before }, and no }{
-            if (tok.equals("}")) {
-                if (dollar == false) {
-                    //throw new Exception("parsing error: $ symbol must occur before } symbol");
-                    throw new PropertyUtilException("parsing error: $ symbol must occur before } symbol");
-                }
-                if (lp == false) {
-                    //throw new Exception("parsing error: { symbol must occur before } symbol");
-                    throw new PropertyUtilException("parsing error: { symbol must occur before } symbol");
-                }
-                if (rp == true) {
-                    //throw new Exception("parsing error: }} invalid");
-                    throw new PropertyUtilException("parsing error: }} invalid");
-                }
-                rp = true;
-                continue;
-            }
-
+            state = newState;
         }
 
-        if (null == sb.toString() || "".equals(sb.toString()))
-        //throw new Exception("null string return:" + keyString);
-            throw new PropertyUtilException("null string return:" + keyString);
+        output.append(tokenbuff);
 
-        //System.out.println("PropertyUtil.expand(), returning: " + sb.toString());
-        return sb.toString();
-
+        return output.toString();
     }
 
     /**
      * determine if the provided keyString contains any references to properties
      */
     private static boolean resolvesToLiteral(String keyString) {
-
-        //System.out.println("DEBUG : resolvesToLiteral(), entering");
-
-        if (keyString.indexOf("${") > -1) {
-            //System.out.println("DEBUG : resolvesToLiteral(), returning false");
-            return false;
-        }
-        //System.out.println("DEBUG : resolvesToLiteral(), returning true");
-        return true;
-
+        return !keyString.contains("${");
     }
 
     public static class PropertyUtilException extends RuntimeException {
