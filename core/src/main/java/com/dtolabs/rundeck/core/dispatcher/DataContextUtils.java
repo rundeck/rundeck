@@ -53,7 +53,14 @@ public class DataContextUtils {
                                                                  "[^}\\s]+?" +
                                                                  Pattern.quote("}") +
                                                                  "$");
-
+    private static final Pattern optionPatterWithOtherCharacters = Pattern.compile("\\$\\{" +
+        Pattern.quote("option.") +
+                    "[^}\\s]+?" +
+                    Pattern.quote("}") + "$");                                   
+    public static boolean hasOptionsInString(String evalString){
+        Matcher matcher = optionPatterWithOtherCharacters.matcher(evalString);
+        return matcher.find();
+    }
     /**
      * A converter which replaces '${option.*}' with blank when replacing data references
      */

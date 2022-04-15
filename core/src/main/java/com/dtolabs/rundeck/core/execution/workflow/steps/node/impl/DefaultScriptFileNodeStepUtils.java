@@ -188,7 +188,15 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     expandTokens
             );
         } else if (null != serverScriptFilePath) {
-            File serverScriptFile = new File(serverScriptFilePath);
+            File serverScriptFile;
+            if( DataContextUtils.hasOptionsInString(serverScriptFilePath) ){
+                Map<String, Map<String, String>> optionsContext = new HashMap();
+                optionsContext.put("option", context.getDataContext().get("option"));
+                String expandedVarsInURL = DataContextUtils.replaceDataReferencesInString(serverScriptFilePath, optionsContext);
+                serverScriptFile = new File(expandedVarsInURL);
+            }else{
+                serverScriptFile = new File(serverScriptFilePath);
+            }
             if(expandTokens){
                 try(InputStream inputStream = new FileInputStream(serverScriptFile)) {
                     serverScriptFile = fileCopierUtil.writeScriptTempFile(
