@@ -68,9 +68,8 @@ class StorageTreeCreator {
             }
         }
         factory.configuration=finalconfigMap
-        if(finalconfigMap != configuration){
-            factory.createTree()
-        }
+        configuration=finalconfigMap
+        factory.createTree()
     }
 
     StorageTree createOnStartup(){
