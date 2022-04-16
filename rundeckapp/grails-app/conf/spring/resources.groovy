@@ -26,6 +26,8 @@ import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFilesystemProjectImporter
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
+import com.dtolabs.rundeck.app.tree.DelegateStorageTree
+import com.dtolabs.rundeck.app.tree.StorageTreeCreator
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
@@ -527,7 +529,22 @@ beans={
         defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
         loggerName='org.rundeck.storage.events'
     }
-    rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
+    rundeckStorageTreeCreator(StorageTreeCreator){
+        storageTreeFactory=ref('rundeckStorageTreeFactory')
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        storagePluginProviderService=ref('storagePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        storageConfigPrefix='provider'
+        converterConfigPrefix='converter'
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
+        defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
+        loggerName='org.rundeck.storage.events'
+    }
+    rundeckStorageTree(DelegateStorageTree){
+        creator=ref('rundeckStorageTreeCreator')
+    }
     if(grailsApplication.config.getProperty("rundeck.feature.projectKeyStorage.enabled", Boolean.class, false)) {
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
     }else{
