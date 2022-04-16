@@ -14,15 +14,21 @@ class DelegateStorageTree implements StorageTree, InitializingBean {
     StorageTree delegate
 
     StorageTreeCreator creator
+    Map<String,String> configuration
 
     @Override
     void afterPropertiesSet() {
         delegate = creator.createOnStartup()
+        configuration=creator.configuration
     }
 
     @Subscriber('rundeck.configuration.refreshed')
     @CompileDynamic
     def updateTreeConfig(def event) {
-        delegate = creator.create()
+        Map<String, String> config = creator.getStorageConfigMap()
+        if(configuration != config){
+            delegate = creator.create()
+            configuration = config
+        }
     }
 }

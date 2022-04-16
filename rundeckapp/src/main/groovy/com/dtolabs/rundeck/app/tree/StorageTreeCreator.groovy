@@ -44,32 +44,37 @@ class StorageTreeCreator {
         factory.loggerName=loggerName
         factory.defaultConverters=defaultConverters.toSet()
 
+        Map<String, String> finalconfigMap = getStorageConfigMap()
+
+        factory.configuration=finalconfigMap
+        configuration=finalconfigMap
+        factory.createTree()
+    }
+
+    Map<String, String> getStorageConfigMap(){
         Map<String, String> finalconfigMap = [:]
         Map<String, Map> storageMap = configurationService.getAppConfig().get("storage") as Map<String, Map>
         Map<String, Map> providerMap = storageMap.get("provider") as Map<String, Map>
 
         finalconfigMap.put("default", "deleteMe")
         providerMap.each {
-            if(it.key.toString().isInteger()){
+            if (it.key.toString().isInteger()) {
                 int index = it.key.toInteger()
                 Map<String, Map> finalMap = it.value as Map<String, Map>
                 finalMap.each {
-                    if(it.key == "config"){
-                        Map<String, String> configMap = it.value as Map<String,String>
+                    if (it.key == "config") {
+                        Map<String, String> configMap = it.value as Map<String, String>
                         configMap.each {
                             finalconfigMap.put("provider." + index + "." + "config." + it.key, it.value.toString())
                         }
-                    }
-                    else{
+                    } else {
                         finalconfigMap.put("provider." + index + "." + it.key, it.value.toString())
                     }
 
                 }
             }
         }
-        factory.configuration=finalconfigMap
-        configuration=finalconfigMap
-        factory.createTree()
+        return finalconfigMap
     }
 
     StorageTree createOnStartup(){
