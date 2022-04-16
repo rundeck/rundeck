@@ -20,8 +20,6 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
@@ -30,7 +28,6 @@ import org.grails.plugins.metricsweb.MetricService
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
-import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.ReportService
 
@@ -155,28 +152,18 @@ class ReportsController extends ControllerBase{
             query.startafterFilter=new Date(session.creationTime)
         }
         if(params.includeJobRef && params.jobIdFilter){
-            ScheduledExecution.withTransaction {
-                ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
-                def list = ReferencedExecution.executionIdList(sched)
-                def include = []
-                list.each {refex ->
-                    boolean add = true
-                    if(refex.project != params.project){
-                        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_EVENT, AuthConstants.ACTION_READ,
-                                params.project), AuthConstants.ACTION_READ,'Events in project',refex.project)){
-                            log.debug('Cant read executions on project '+refex.project)
-                        }else{
-                            include << String.valueOf(refex.executionId)
-                        }
-                    }else{
-                        include << String.valueOf(refex.executionId)
-                    }
-                }
-                if(include){
-                    query.execIdFilter = include
-                }
-            }
+            query.authProjsFilter = []
+            frameworkService.projectNames(authContext).each {proj ->
+                if (rundeckAuthContextProcessor.authorizeProjectResource(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_EVENT,
+                        AuthConstants.ACTION_READ,
+                        proj))
+                    query.authProjsFilter << proj
 
+            }
+            if(query.authProjsFilter.size() < 1)
+                query.authProjsFilter = null
         }
 
         Map<Explanation.Code, List> authorizations = reportService.jobHistoryAuthorizations(authContext, params.project)

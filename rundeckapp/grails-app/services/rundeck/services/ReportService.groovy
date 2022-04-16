@@ -21,11 +21,13 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.google.common.collect.Lists
+import grails.gorm.DetachedCriteria
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
+import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 
 import javax.sql.DataSource
@@ -295,18 +297,26 @@ class ReportService  {
                     }
                 }
 
-                if (query.execIdFilter) {
+                if (query.authProjsFilter && query.jobIdFilter) {
                     or {
-                        if(isOracleDatasource()){
-                            //Hack to avoid error: ORA-01795: maximum number of expressions in a list is 1000
-                            or {
-                                List execIdFilterPartioned = Lists.partition(query.execIdFilter, 1000)
-                                execIdFilterPartioned.each { List partition ->
-                                    'in'('jcExecId', partition)
+                        and{
+                            'in'('jcExecId', new DetachedCriteria(ReferencedExecution).build {
+                                projections {
+                                    property 'exId'
                                 }
+                                eq('seId', ScheduledExecution.getByIdOrUUID(query.jobIdFilter).id)
+                            })
+                            if(isOracleDatasource()){
+                                //Hack to avoid error: ORA-01795: maximum number of expressions in a list is 1000
+                                or {
+                                    List authProjsFilterPartioned = Lists.partition(query.authProjsFilter, 1000)
+                                    authProjsFilterPartioned.each { List partition ->
+                                        'in'('ctxProject', partition)
+                                    }
+                                }
+                            } else {
+                                'in'('ctxProject', query.authProjsFilter)
                             }
-                        } else {
-                            'in'('jcExecId', query.execIdFilter)
                         }
                         and{
                                     jobfilters.each { key, val ->
@@ -446,6 +456,8 @@ class ReportService  {
             }
             if(found) {
                 query.jobIdFilter = found.id.toString()
+            }else{
+                query.jobIdFilter = null
             }
         }
 
@@ -456,7 +468,7 @@ class ReportService  {
         def runlist=ExecReport.createCriteria().list {
 
             if (query?.max) {
-                maxResults(query?.max.toInteger())
+                maxResults(query.max.toInteger())
             } else {
                 maxResults(configurationService.getInteger("pagination.default.max",20))
             }

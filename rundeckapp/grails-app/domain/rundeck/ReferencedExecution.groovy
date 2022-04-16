@@ -8,6 +8,8 @@ class ReferencedExecution {
     ScheduledExecution scheduledExecution
     String status
     Execution execution
+    Long seId
+    String exId
 
     static belongsTo=[Execution]
 
@@ -15,11 +17,13 @@ class ReferencedExecution {
         scheduledExecution(nullable:true)
         status(nullable:true)
         execution(nullable: false)
-
+        seId(nullable: true)
+        exId(nullable: true)
     }
 
     static mapping = {
-
+        seId formula: 'scheduled_Execution_Id'
+        exId formula: 'execution_Id'
         DomainIndexHelper.generate(delegate) {
             index 'REFEXEC_IDX_1', ['scheduledExecution', 'status']
         }

@@ -30,7 +30,7 @@ class ExecQuery extends ReportQuery implements Validateable{
     String cmdFilter
     String groupPathFilter
     String groupPathExactFilter
-    List execIdFilter
+    List authProjsFilter //NULL IF NO REFEXEC ARE REQUIRED
 
     static constraints = {
         abortedByFilter(nullable: true)
@@ -59,7 +59,7 @@ class ExecQuery extends ReportQuery implements Validateable{
         excludeJobListFilter(nullable: true)
         statFilter(nullable:true,inList:["succeed","fail","cancel","missed"])
         execnodeFilter(nullable: true)
-        execIdFilter(nullable:true)
+        authProjsFilter(nullable:true)
         sortBy(nullable:true,inList:[
             "jobFilter",
             "jobIdFilter",

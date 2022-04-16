@@ -19,13 +19,9 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import grails.gorm.DetachedCriteria
-import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.grails.datastore.mapping.query.Query
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -36,7 +32,6 @@ import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import spock.lang.Specification
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
@@ -87,7 +82,7 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
         }
         def jobname = 'abc'
         def group = 'path'
-        def project = 'AProject'
+        String project = 'Project-child'
         ScheduledExecution job = new ScheduledExecution(
                 jobName: jobname,
                 project: project,
@@ -104,11 +99,12 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
         )
         job.save()
 
-        List execIds = []
+        List authProjsNames = []
 
         (0..1001).each {
+            String projectParentName = "p-parent-" + String.valueOf(it)
             Execution e1 = new Execution(
-                    project: project,
+                    project: projectParentName,
                     user: 'bob',
                     dateStarted: new Date(),
                     dateCompleted: new Date(),
@@ -116,7 +112,7 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
 
             )
             e1.save()
-            execIds.push("${e1.id}")
+            authProjsNames.push(projectParentName)
 
             ReferencedExecution refexec = new ReferencedExecution(status: 'running',scheduledExecution: job, execution: e1)
             refexec.save()
@@ -124,7 +120,7 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
             ExecReport execReport = new ExecReport(
                     jcExecId: e1.id,
                     jcJobId: job.id,
-                    ctxProject: "AProject",
+                    ctxProject: projectParentName,
                     author: 'admin',
                     title: "title",
                     message: "message",
@@ -136,9 +132,10 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
             execReport.save(flush: true, failOnError: true)
         }
         ExecQuery query =  new ExecQuery()
-        query.execIdFilter = execIds
+        query.authProjsFilter = authProjsNames
         query.projFilter = "AProject"
         query.jobIdFilter = "${job.id}"
+
         when:
         List result = ExecReport.createCriteria().list {
             service.applyExecutionCriteria(query, delegate)
@@ -149,11 +146,11 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
         }
 
 
-        def criteria = detachedCriteria1.getCriteria()[0].criteria[0]
+        def criteria = detachedCriteria1.getCriteria()[0].criteria[0].criteria[1]
 
         then:
         result
-        result.size() == query.execIdFilter.size()
+        result.size() == query.authProjsFilter.size()
         criteriaQuery.isCase(criteria)
 
         where:
