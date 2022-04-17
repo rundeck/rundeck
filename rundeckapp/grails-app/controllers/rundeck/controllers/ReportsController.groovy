@@ -20,6 +20,8 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
@@ -28,6 +30,7 @@ import org.grails.plugins.metricsweb.MetricService
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
+import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.ReportService
 

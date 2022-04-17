@@ -17,8 +17,11 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.*
 import rundeck.services.FrameworkService

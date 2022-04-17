@@ -19,9 +19,13 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.Attribute
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import grails.gorm.DetachedCriteria
+import grails.test.hibernate.HibernateSpec
+import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.grails.datastore.mapping.query.Query
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -32,6 +36,7 @@ import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import spock.lang.Specification
 import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
