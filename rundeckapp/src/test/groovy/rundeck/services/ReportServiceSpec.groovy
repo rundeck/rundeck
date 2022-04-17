@@ -159,6 +159,110 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
         false   | Query.In
     }
 
+    def "should return executions of authorized projects only"() {
+        given:
+        service.applicationContext = Mock(ApplicationContext){
+            getBean(_, _) >> Mock(DataSource){
+                getConnection() >> Mock(Connection){
+                    getMetaData() >> Mock(DatabaseMetaData){
+                        getDatabaseProductName() >> ("otherDB")
+                    }
+                }
+            }
+        }
+        service.configurationService = Mock(ConfigurationService){
+            getString("min.isolation.level", _) >> 'UNCOMMITTED'
+        }
+
+        def jobname = 'jobChild'
+        String childUuid = "a1b"
+        def group = 'path'
+        String childProj = 'Project-child'
+        ScheduledExecution childJob = new ScheduledExecution(
+                jobName: jobname,
+                project: childProj,
+                groupPath: group,
+                uuid: childUuid,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        childJob.save()
+
+        List authProjsNames = [childProj]
+
+        (0..1).each {
+            String projectParentName = "p-parent-" + String.valueOf(it)
+            def parentJob = new ScheduledExecution(
+                    jobName: "job-parent",
+                    project: projectParentName,
+                    groupPath: group,
+                    description: 'parent job',
+                    argString: '-args b -args2 d',
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [new CommandExec(
+                                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                            )]
+                    ),
+                    retry: '1'
+            ).save()
+
+            Execution e1 = new Execution(
+                    project: projectParentName,
+                    user: 'bob',
+                    dateStarted: new Date(),
+                    dateCompleted: new Date(),
+                    status: 'successful'
+            )
+
+            e1.save()
+            if(it == 0 || (bothAuthorized && it == 1))
+                authProjsNames.push(projectParentName)
+
+            ReferencedExecution refexec = new ReferencedExecution(status: 'running',scheduledExecution: childJob, execution: e1)
+            refexec.save()
+
+            ExecReport execReport = new ExecReport(
+                    jcExecId: e1.id,
+                    jcJobId: parentJob.id,
+                    ctxProject: parentJob.project,
+                    author: 'admin',
+                    title: "title",
+                    message: "message",
+                    dateCompleted: e1.dateCompleted,
+                    dateStarted: e1.dateStarted,
+                    status: 'success',
+                    actionType: "type"
+            )
+            execReport.save(flush: true, failOnError: true)
+        }
+
+        ExecQuery query =  new ExecQuery()
+        query.authProjsFilter = authProjsNames
+        query.projFilter = childProj
+        query.jobIdFilter = "${childJob.uuid}"
+        query.max = 20
+        query.offset = 0
+
+        when:
+        def result = service.getExecutionReports(query, true)
+
+        then:
+        result.reports.size() == expectedReports
+
+        where:
+        bothAuthorized | expectedReports
+        true           | 2
+        false          | 1
+    }
+
     private Decision newDecisionInstance(
             Explanation.Code explanation,
             boolean authorized,
