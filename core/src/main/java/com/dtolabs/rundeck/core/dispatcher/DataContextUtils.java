@@ -53,12 +53,9 @@ public class DataContextUtils {
                                                                  "[^}\\s]+?" +
                                                                  Pattern.quote("}") +
                                                                  "$");
-    private static final Pattern optionPatterWithOtherCharacters = Pattern.compile("\\$\\{" +
-        Pattern.quote("option.") +
-                    "[^}\\s]+?" +
-                    Pattern.quote("}") + "$");                                   
+    private static final Pattern optionPatternEntireString = Pattern.compile( "\\$\\{option.([^}]*?)\\}" );                                   
     public static boolean hasOptionsInString(String evalString){
-        Matcher matcher = optionPatterWithOtherCharacters.matcher(evalString);
+        Matcher matcher = optionPatternEntireString.matcher(evalString);
         return matcher.find();
     }
     /**
