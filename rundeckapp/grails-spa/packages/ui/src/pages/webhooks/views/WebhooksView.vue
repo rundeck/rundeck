@@ -1,21 +1,25 @@
 <template>
-<div id="wh-view" style="display: flex;flex-direction: column; height: calc(100vh - 69px); overflow: hidden; margin: -2rem">
-  <div id="wh-title" class="screen-title" style="display: flex;">
-    <span class="text-h3"><i class="fas fa-plug"></i> {{ $t('message.webhookPageTitle') }}</span>
-    <div style="margin-left: auto;">
-      <a class="btn btn-primary"
-        :class="{'btn-primary': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
-        style="font-weight: 800"
-        @click="handleAddNew"><i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}</a>
-    </div>
-  </div>
-
-  <div style="display: flex; height: 100%;overflow: hidden;">
-    <div id="wh-list" style="flex-basis: 250px;flex-grow: 0; padding: 20px;overflow-x: hidden;overflow-y: auto;">
-      <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
-    </div>
-
-    <div id="wh-details" class="wh-details" style="flex-grow: 1;overflow-y: auto;overflow-x: hidden; height: 100%">
+  <div class="container-flex">
+    <aside>
+      <div class="flex--none bg-grey-100">
+        <span class="title"><i class="fas fa-plug"></i> {{ $t('message.webhookPageTitle') }}</span>
+      </div>
+      <div class="flex--grow navs">
+        <div id="wh-list" class="px-3">
+          <WebhookPicker :selected="curHook ? curHook.uuid : ''" :project="projectName" @item:selected="(item) => handleSelect(item)"/>
+        </div>
+      </div>
+      <div class="flex--none bg-grey-100">
+        <button 
+          type="button"
+          class="btn btn-primary btn-full"
+          :class="{'btn-primary': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
+          @click="handleAddNew">
+            <i class="fas fa-plus-circle"/> {{ $t('message.webhookCreateBtn') }}
+        </button>
+      </div>
+    </aside>
+    <main id="mainconfig">
       <div>
         <div id="wh-edit" v-if="curHook">
           <div id="wh-header">
@@ -149,9 +153,9 @@
           </Tabs>
         </div>
       </div>
-    </div>
+
+    </main>
   </div>
-</div>
 </template>
 
 <script>
@@ -464,11 +468,58 @@ export default observer(Vue.extend({
 }))
 </script>
 
-<style scoped>
-
-</style>
 
 <style lang="scss" scoped>
+// Layout Classes
+.font-heading{
+  font-family: Jost, Helvetica, Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+.container-flex{
+  position:relative;
+  margin:-2rem;
+  display: flex;
+  justify-content: space-between;
+  height: calc(100vh - 69px);
+}
+aside{
+  height:100%;
+  background-color: var(--background-color-lvl3);
+  width: 300px;
+  flex: none;
+  overflow: none;
+  border-right:1.5px solid var(--grey-400);
+  display: flex;
+  flex-direction: column;
+  > div{
+    border-bottom:1.5px solid var(--grey-400);
+    padding: 1.6rem;
+    &:last-child{
+      border-bottom:0 solid;
+    }
+  }
+  > .navs{
+    padding: 12px 0;
+    overflow: scroll;
+  }
+}
+main{
+  flex-grow: 1;
+  background-color: var(--background-color);
+  overflow: scroll;
+  padding-bottom: 3rem;
+}
+
+.bg-grey-100{
+  background-color: var(--background-color);
+}
+.title{
+  @extend .font-heading;
+  font-weight: 600;
+  font-size: 2.2rem;
+}
+
+
+////////////////////////////////////////////////
   #wh-view {
     box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.11);
   }
@@ -489,11 +540,7 @@ export default observer(Vue.extend({
     background-color: var(--background-color-lvl2);
   }
 
-  #wh-list {
-    background-color: var(--background-color);
-    border-right: 0.1em solid #d3dbe5;
-    flex-shrink: 0;
-  }
+ 
 
   #wh-edit {
     display: flex;
