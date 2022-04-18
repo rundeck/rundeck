@@ -190,6 +190,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     expandTokens
             );
         } else if (null != serverScriptFilePath) {
+            // if the filepath has option tokens, they will be expanded.
             File serverScriptFile;
             if( DataContextUtils.hasOptionsInString(serverScriptFilePath) ){
                 Map<String, Map<String, String>> optionsContext = new HashMap();
