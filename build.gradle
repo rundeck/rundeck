@@ -24,17 +24,20 @@
 
 buildscript {
     repositories {
-        maven {
-            name 'mavenCentralProxy'
-            url mavenCentralUrl
-            if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
-                credentials {
-                    username mavenUser
-                    password mavenPassword
+        if(project.findProperty('mavenCentralUrl')) {
+            maven {
+                name 'mavenCentralProxy'
+                url mavenCentralUrl
+                if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+                    credentials {
+                        username mavenUser
+                        password mavenPassword
+                    }
                 }
             }
+        }else{
+            mavenCentral()
         }
-        mavenCentral()
     }
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
