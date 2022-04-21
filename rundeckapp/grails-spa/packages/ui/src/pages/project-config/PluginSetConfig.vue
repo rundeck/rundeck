@@ -20,12 +20,12 @@
 
     <plugin-config
       v-if="typeof(pluginData[provider.name])!=='undefined'"
-      :mode="editMode===true?'edit':'show'"
+      :mode="editMode[provider.name]===true?'edit':'show'"
       :serviceName="serviceName"
       v-model="pluginData[provider.name]"
       :provider="provider.name"
-      :config="pluginData[provider.name]"
-      :key="provider.name+'_config/'+index"
+      :config="projectSettings[provider.name]"
+      :key="provider.name+'_config/'+index+updateKey"
       :show-title="false"
       :show-description="false"
       :validation="pluginValidation[provider.name]"
@@ -40,8 +40,12 @@
       Remove
       <i class="glyphicon glyphicon-mins text-muted"></i>
     </btn>
-    <btn v-if="typeof(pluginData[provider.name])!=='undefined' && showSave" @click="saveConfig(provider.name, serviceName)">
-      Save
+    <btn v-if="typeof(pluginData[provider.name])!=='undefined' && !showSave[provider.name]" @click="addConfig(provider.name)">
+      Edit
+      <i class="glyphicon glyphicon-mins text-muted"></i>
+    </btn>
+    <btn v-if="typeof(pluginData[provider.name])!=='undefined' && showSave[provider.name]" @click="saveConfig(provider.name, serviceName)">
+      Close
       <i class="glyphicon glyphicon-mins text-muted"></i>
     </btn>
 
@@ -84,14 +88,17 @@ export default Vue.extend({
   },
   data(){
     return {
-      pluginProviders:[],
+      pluginProviders:[] as any,
       pluginLabels:{},
       pluginData:{} as {[key:string]:PluginConf},
       pluginValidation:{},
       projectSettings: {},
       pluginGroupSettings: {},
-      editMode: false,
-      showSave: false
+      editMode: {} as any,
+      showSave: {} as any,
+      updateKey: Date.now(),
+      buttonName: '',
+      testString: ''
     }
   },
   computed:{
@@ -106,9 +113,13 @@ export default Vue.extend({
   },
   methods:{
     async addConfig(name:string, service:string){
-      this.editMode=true
-      this.showSave=true
+      this.editMode[name]=true
+      this.showSave[name]=true
+      this.updateKey = Date.now()
 
+      await this.setConfig(name, service)
+    },
+    async setConfig(name: string, service:string){
       const pluginPath = "project.plugin.PluginGroup." + name +"."
 
       let config ={} as any
@@ -132,8 +143,9 @@ export default Vue.extend({
       })
     },
     async saveConfig(name:string, service:string){
-      this.editMode=false
-      this.showSave=false
+      this.editMode[name]=false
+      this.showSave[name]=false
+      this.updateKey = Date.now()
     },
     async removeConfig(name:string){
       Vue.delete(this.pluginData,name)
@@ -156,18 +168,30 @@ export default Vue.extend({
   async mounted() {
     (this.configList as PluginConf[])?.forEach((val: PluginConf) => this.pluginData[val.type] = val)
     //this.editMode(false)
-    this.editMode=false
+    //this.editMode=false
 
+    await this.getProjectProperties()
     pluginService
       .getPluginProvidersForService(this.serviceName)
       .then(data => {
         if (data.service) {
           this.pluginProviders = data.descriptions;
           this.pluginLabels = data.labels;
+          this.pluginProviders.forEach((provider: any, index: any)=>{
+            this.pluginProviders[index]["created"]=false
+            Object.keys(this.projectSettings).forEach((key2: string)=>{
+              if(key2.includes("project.plugin.PluginGroup." + provider.name)){
+                this.pluginProviders[index]["created"]=true
+                this.setConfig(provider.name, this.serviceName)
+              }
+            });
+            console.log("Made it here")
+            console.log(index)
+            console.log(this.pluginProviders)
+          });
         }
-      }).catch(error => console.error(error));
 
-    await this.getProjectProperties()
+      }).catch(error => console.error(error));
   }
 })
 
