@@ -344,6 +344,7 @@
                     :event-bus="EventBus"
                     service-name="PluginGroup"
                     :config-list="[]"
+                    project="${project}"
                     config-prefix="pluginValues.PluginGroup."
             ></plugin-set-config>
         </div>
