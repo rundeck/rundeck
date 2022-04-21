@@ -25,27 +25,39 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.SerializableExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.http.ApacheHttpClient;
+import com.dtolabs.rundeck.core.http.HttpClient;
+import com.dtolabs.rundeck.core.http.RequestProcessor;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.HttpResponse;
 import org.rundeck.app.spi.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.*;
+import java.net.URI;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -58,6 +70,12 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
     protected static Logger  log = LoggerFactory.getLogger(NodeStepPluginAdapter.class.getName());
     private          String  serviceName;
     private          boolean blankIfUnexpanded;
+    private static final ObjectMapper mapper = new ObjectMapper();
+    String remotePluginService = System.getenv("RD_REMOTE_PLUGIN_SERVICE");
+    List<String> REMOTABLE_PLUGINS = Arrays.asList("org.rundeck.sqlrunner.SQLRunnerNodeStepPlugin",
+            "com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowNodeStep",
+            "com.batix.rundeck.plugins.AnsiblePlaybookWorflowNodeStep");
+    private static final Pattern LOG_LEVEL_MARKER = Pattern.compile("^==([0-5])==$");
 
     @Override
     public Description getDescription() {
@@ -162,6 +180,53 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
                                                                                                   getServiceName(),
                                                                                                   providerName);
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
+        if(isRemoteable()) {
+            context.getExecutionLogger().log(4, "Executing on remote plugin service");
+            String oid = null;
+            ApacheHttpClient client = new ApacheHttpClient();
+            try {
+                oid = serializeContext(client, remotePluginService, item, node, instanceConfiguration, pluginContext);
+                context.getExecutionLogger().log(4, String.format("Saved workflow context with key %s", oid));
+            } catch (Exception ex) {
+                return new NodeStepResultImpl(ex, StepFailureReason.RemoteFailed, "Unable to serialize context for remote plugin execution", node);
+            }
+            CompletableFuture<NodeStepResultImpl> ftr = new CompletableFuture<>();
+            try {
+                client.setUri(URI.create(String.format("%s/run/%s", remotePluginService, oid)));
+                client.setMethod(HttpClient.Method.POST);
+                client.execute(new RequestProcessor<HttpResponse>() {
+                    @Override
+                    public void accept(HttpResponse httpResponse) throws Exception {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent()));
+                        Matcher m;
+                        int logLevel = 3;
+                        String line = null;
+                        while((line = reader.readLine()) != null) {
+                            m = LOG_LEVEL_MARKER.matcher(line);
+                            if(m.matches()) {
+                                logLevel = Integer.parseInt(m.group(1));
+                            } else {
+                                pluginContext.getLogger().log(logLevel, line);
+                            }
+                        }
+                        if(httpResponse.getStatusLine().getStatusCode() == 200) {
+                            ftr.complete(new NodeStepResultImpl(node));
+                        } else {
+                            ftr.complete(new NodeStepResultImpl(new Exception("Remote plugin service returned error"), StepFailureReason.RemoteFailed, String.format("Remote plugin service returned http code: %d", httpResponse.getStatusLine().getStatusCode()), node));
+                        }
+                    }
+                });
+            } catch (Exception ex) {
+                ftr.complete(new NodeStepResultImpl(ex, StepFailureReason.PluginFailed, "Exception when executing remote plugin service call", node));
+            }
+            try {
+                return ftr.get();
+            } catch (Exception ex) {
+                pluginContext.getLogger().log(Constants.ERR_LEVEL,
+                        "Failed executing step plugin [" + providerName + "]: remote service failed");
+                return new NodeStepResultImpl(ex, StepFailureReason.RemoteFailed, ex.getMessage(), node);
+            }
+        }
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
         try {
             plugin.executeNodeStep(pluginContext, config, node);
@@ -187,11 +252,43 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
         return new NodeStepResultImpl(node);
     }
 
+    private boolean isRemoteable() {
+        return remotePluginService != null &&
+                REMOTABLE_PLUGINS.contains(getDescription().getName());
+    }
+
     private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
         if (item instanceof ConfiguredStepExecutionItem) {
             return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
         } else {
             return null;
+        }
+    }
+
+    private String serializeContext(ApacheHttpClient client, String remotePluginService, NodeStepExecutionItem item, INodeEntry node, Map<String, Object> instanceConfiguration, PluginStepContext context) throws Exception {
+        try {
+            SerializableExecutionContext scontext = new SerializableExecutionContext();
+            scontext.setProjectProperties(context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()).getProperties());
+            scontext.setPlugin(item.getNodeStepType());
+            scontext.setProject(context.getFrameworkProject());
+            scontext.setLogLevel(context.getExecutionContext().getLoglevel());
+            scontext.setPluginService(ServiceNameConstants.WorkflowNodeStep);
+            scontext.setInstanceConfiguration(instanceConfiguration);
+            scontext.setDataContext(context.getExecutionContext().getDataContext());
+            scontext.setPrivateContext(context.getExecutionContext().getPrivateDataContext());
+            scontext.setNodeContext(context.getExecutionContext().getSharedDataContext().consolidate().getData(ContextView.node(node.getNodename())).getData());
+            scontext.setNode(node);
+            client.setUri(URI.create(String.format("%s/set/%s", remotePluginService, scontext.getOid())));
+            client.setMethod(HttpClient.Method.POST);
+            client.addPayload("application/json", mapper.writeValueAsString(scontext));
+            client.execute(new RequestProcessor<HttpResponse>() {
+                @Override
+                public void accept(HttpResponse httpResponse) throws Exception {}
+            });
+            return scontext.getOid();
+        } catch(Exception ex) {
+            log.error("failed to serialize context",ex);
+            throw ex;
         }
     }
 }

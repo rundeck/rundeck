@@ -46,6 +46,10 @@ public enum StepFailureReason implements FailureReason{
      */
     PluginFailed,
     /**
+     * Remote failed
+     */
+    RemoteFailed,
+    /**
      * Cause was not identified
      */
     Unknown,
