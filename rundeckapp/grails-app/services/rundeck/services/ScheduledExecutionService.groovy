@@ -3274,7 +3274,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ].each {
             scheduledExecution."$it" = null
         }
-
+        deleteExistingOptions(scheduledExecution)
         scheduledExecution.properties = basicProps
         if (scheduledExecution.groupPath) {
             def re = /^\/*(.+?)\/*$/
