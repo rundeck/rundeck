@@ -178,8 +178,8 @@ dependencies {
     }
 
     // OpenApi Dependencies
-    annotationProcessor "io.micronaut.openapi:micronaut-openapi:4.0.0"
-    implementation "io.swagger.core.v3:swagger-annotations:2.1.1"
+    compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
+    implementation "io.swagger.core.v3:swagger-annotations:2.1.13"
     compileOnly    "io.micronaut.openapi:micronaut-openapi:4.0.0"
     implementation "io.micronaut:micronaut-http-server:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject:${micronautVersion}"
