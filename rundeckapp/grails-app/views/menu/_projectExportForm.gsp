@@ -273,7 +273,7 @@
                                     <label for="preserveuuid"><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
                                 </div>
                                 <div class="col-sm-10">
-                                    <input type='checkbox' name="preserveuuid" value="preserveuuid" id="preserveuuid" class="form-control"/>
+                                    <g:checkBox name="preserveuuid" value="false" checked="${params.preserveuuid}" id="preserveuuid" class="form-control"/>
                                     <span class="help-block">
                                         <g:message code="project.archive.import.jobUuidOption.preserve.description"/>
                                     </span>
