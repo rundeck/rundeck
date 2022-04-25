@@ -1357,10 +1357,21 @@ class ProjectController2Spec extends RundeckHibernateSpec implements ControllerU
         given:
             controller.apiService=Mock(ApiService)
             controller.frameworkService =Mock(FrameworkService){
-                _*updateFrameworkProjectConfig(_,["prop1": "value1"],_)>> [success: true]
-                _*loadProjectProperties(_)>>["prop1": "value1", "prop2": "value2"]
+                updateFrameworkProjectConfig(_, ["prop1": "value1"],_)>> [success: true]
             }
-            setupGetResource()
+
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+            controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+                1 * project(_, _) >> Mock(AuthorizingProject) {
+                    1 * getResource() >> Stub(IRundeckProject){
+                        getName()>>'test1'
+                        getProperty('prop1') >>> [null, 'value1']
+                    }
+                    0*_(*_)
+                }
+                0*_(*_)
+            }
+
             request.api_version = 11
             params.project = 'test1'
             params.keypath = 'prop1'
@@ -1390,10 +1401,10 @@ class ProjectController2Spec extends RundeckHibernateSpec implements ControllerU
                 }
             }
         where:
-            format |input|expected
+            format |input                                   |expected
             'xml'  |'<property key="prop1" value="value1"/>'|"<property key='prop1' value='value1' />"
-            'json' |'{"key":"prop1","value":"value1"}'|'{"key":"prop1","value":"value1"}'
-            'text' |'value1'|'value1'
+            'json' |'{"key":"prop1","value":"value1"}'      |'{"key":"prop1","value":"value1"}'
+            'text' |'value1'                                |'value1'
     }
 
 

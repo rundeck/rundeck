@@ -1463,7 +1463,7 @@ class ProjectController extends ControllerBase{
             ])
         }
         def resultValue= project.getProperty(key_)
-        checkScheduleChanges(project, new Properties([(key_): propValueBefore]), new Properties([(key_): resultValue]))
+        checkScheduleChanges(project, propValueBefore?new Properties([(key_): propValueBefore]):new Properties([(key_): '']), new Properties([(key_): resultValue]))
 
         switch (respFormat) {
             case 'text':
