@@ -3227,6 +3227,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 !it.key.startsWith( 'nodeExclude')
             }
         }else{
+            deleteExistingOptions(scheduledExecution)
             final Collection foundprops = input.properties.keySet().findAll {
                 it != 'lastUpdated' &&
                 it != 'dateCreated' &&
@@ -3274,7 +3275,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ].each {
             scheduledExecution."$it" = null
         }
-        deleteExistingOptions(scheduledExecution)
         scheduledExecution.properties = basicProps
         if (scheduledExecution.groupPath) {
             def re = /^\/*(.+?)\/*$/
