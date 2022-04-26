@@ -1203,10 +1203,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
                             )
                             results.errjobs.each {
-                                loadjoberrors << "Job at index [${it.entrynum}] at archive path: ${path}${name} had " +
-                                "errors: ${it.errmsg}"
-
-                                log.error("Job at index [${it.entrynum}] had errors: ${it.errmsg}")
+                                // Cleaning and separating the Job's name
+                                String rawFailedExecutionOutput = it.scheduledExecution;
+                                String[] jobContent;
+                                jobContent = rawFailedExecutionOutput.split("/");
+                                String singleJob = jobContent[1];
+                                String cleanJobInfo = singleJob.replaceAll("[/ \\- ]", "");
+                                // Separating the Job's uuid
+                                String failedJobUuid = jobset.collect { it.job.uuid }
+                                // Separating the Job's Workflow details
+                                String failedJobWorkflow = jobset.collect { it.job.workflow.toString() }
+                                //Populate error object
+                                String loggingOutput = "There was a problem with the Job: " +
+                                        "[ Name: ${cleanJobInfo}, UUID: ${failedJobUuid}, Workflow Data: ${failedJobWorkflow} ], error detail: ${it.errmsg}"
+                                loadjoberrors << loggingOutput
+                                // Logging Output
+                                log.error(loggingOutput)
                                 if (it.entrynum != null && oldids[it.entrynum - 1]) {
                                     skipJobIds << oldids[it.entrynum - 1]
                                 }
