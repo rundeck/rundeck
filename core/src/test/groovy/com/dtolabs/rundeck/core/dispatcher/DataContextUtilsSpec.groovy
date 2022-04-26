@@ -212,4 +212,36 @@ class DataContextUtilsSpec extends Specification {
         result.get('test2').get('key2') != null
         result.get('test2').get('key2') == 'value2'
     }
+
+    def testHasOptionsInString() {
+        given:
+        String urlScenario1 = '/tmp/${option.path1}/${option.path2}/file' //perfect expectation
+        //no opening braces
+        String urlScenario2 = '/tmp/$option.path1}/${option.path2}/file' //true
+        String urlScenario3 = '/tmp/$option.path1}/$option.path2}/file' //false
+        //no closing braces
+        String urlScenario4 = '/tmp/${option.path1/${option.path2}/file' //true
+        String urlScenario5 = '/tmp/${option.path1/${option.path2/file' //false
+        //no $ sign
+        String urlScenario6 = '/tmp/{option.path1}/${option.path2}/file' //true
+        String urlScenario7 = '/tmp/{option.path1}/{option.path2}/file' //false
+        //no 'option.'
+        String urlScenario8 = '/tmp/${path1}/${option.path2}/file' //true
+        String urlScenario9 = '/tmp/${path1}/${path2}/file' //false
+
+        expect:
+        DataContextUtils.hasOptionsInString(urlScenario1) == true //perfect expectation
+
+        DataContextUtils.hasOptionsInString(urlScenario2) == true //true
+        DataContextUtils.hasOptionsInString(urlScenario3) == false //false
+
+        DataContextUtils.hasOptionsInString(urlScenario4) == true //true
+        DataContextUtils.hasOptionsInString(urlScenario5) == false //false
+
+        DataContextUtils.hasOptionsInString(urlScenario6) == true //true
+        DataContextUtils.hasOptionsInString(urlScenario7) == false //false
+
+        DataContextUtils.hasOptionsInString(urlScenario8) == true //true
+        DataContextUtils.hasOptionsInString(urlScenario9) == false //false
+    }
 }
