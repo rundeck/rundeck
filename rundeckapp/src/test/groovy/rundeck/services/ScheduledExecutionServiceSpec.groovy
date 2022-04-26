@@ -16,7 +16,8 @@
 
 package rundeck.services
 
-
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
@@ -43,6 +44,7 @@ import org.springframework.context.ConfigurableApplicationContext
 import rundeck.Orchestrator
 import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
+import rundeck.User
 import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
@@ -84,7 +86,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
 
     List<Class> getDomainClasses() { [Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
-                                      WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator] }
+                                      WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User] }
 
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
@@ -5399,6 +5401,59 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         output[3].jobId
         output[3].workflow == [[script:"script"]]
 
+    }
+
+    def "load remote options timeout configuration"(){
+        given:
+            def fwkservice=Mock(FrameworkService)
+            defineBeans{
+                frameworkService(InstanceFactoryBean,fwkservice)
+            }
+            service.configurationService = Mock(ConfigurationService)
+            service.frameworkService = fwkservice
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+            se.addToOptions(new Option(
+                name:'test',
+                realValuesUrl: new URL('file://test')
+            ))
+            se.save()
+            def input=[:]
+            ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+                input.url=url
+                input.timeout=vtimeout
+                input.contimeout=vcontimeout
+                input.retry=vretry
+                [
+                    json: [
+                        'some', 'option', 'values'
+                    ]
+                ]
+            }
+        when:
+            def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+        then:
+            input.url=='file://test'
+            input.timeout==expectTimeout
+            input.contimeout==expectConTimeout
+            input.retry==expectRetry
+            result.values==['some','option','values']
+            1 * service.configurationService.getString("jobs.options.remoteUrlTimeout")>>timeout?.toString()
+            _ * service.configurationService.getInteger("jobs.options.remoteUrlTimeout", null) >> timeout
+            1 * service.configurationService.getString("jobs.options.remoteUrlConnectionTimeout")>>conTimeout?.toString()
+            _ * service.configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout", null) >> conTimeout
+            1 * service.configurationService.getString("jobs.options.remoteUrlRetry")>>retry?.toString()
+            _ * service.configurationService.getInteger("jobs.options.remoteUrlRetry", null) >> retry
+            1 * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
+                1 * getFrameworkProjectMgr()>>Mock(ProjectManager){
+                    1 * loadProjectConfig('testProject')
+                }
+            }
+
+        where:
+            timeout | conTimeout | retry | expectTimeout | expectConTimeout | expectRetry
+            1       | 1          | 1     | 1             | 1                | 1
+            2       | 2          | 2     | 2             | 2                | 2
+            null    | null       | null  | 10            | 0                | 5
     }
 }
 
