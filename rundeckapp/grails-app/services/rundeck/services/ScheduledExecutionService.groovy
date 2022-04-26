@@ -3930,7 +3930,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         try {
             def framework = frameworkService.getRundeckFramework()
-            def projectConfig = framework.projectManager.loadProjectConfig(scheduledExecution.project)
+            def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
             boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
             remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
