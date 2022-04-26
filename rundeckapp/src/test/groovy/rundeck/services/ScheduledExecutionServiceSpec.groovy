@@ -3966,7 +3966,6 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             [scheduleEnabled: true, executionEnabled: true] | false
     }
 
-
     @Unroll
     def "do update job with job lifecycle plugin, error thrown"(){
         given:
@@ -4596,6 +4595,60 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             null                  | [:]
             [jobName: 'zocaster'] | null
     }
+
+    @Unroll
+    def "job definition basic should remove options when updating"() {
+
+        given: "a job with options"
+
+        Map params = [:]
+        setupDoUpdate()
+        def auth = Mock(UserAndRolesAuthContext)
+        def baseJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+                .save(flush:true)
+        def  emptyOptionsJob = new ScheduledExecution(createJobParams(options:[]))
+
+        when: "same job is uploaded with no options "
+
+        service.jobDefinitionBasic(baseJob,emptyOptionsJob,params,auth)
+        baseJob.save(flush:true)
+        def options = Option.findAll()
+
+        then: "job options are empty"
+
+        options.size() == 0
+
+    }
+    @Unroll
+    def "job definition basic should update options"() {
+
+        given: "a job with options"
+
+        Map params = [:]
+        setupDoUpdate()
+        def auth = Mock(UserAndRolesAuthContext)
+        def baseJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test2', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])
+        ])).save(flush:true)
+        def  updatedJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+                .save(flush:true)
+
+        when: "same job with diferents options"
+
+        service.jobDefinitionBasic(baseJob,updatedJob,params,auth)
+        baseJob.save(flush:true)
+        def options = Option.findAll()
+
+        then: "baseJob options should be equals to updatedJob "
+
+        options.size() == 1
+
+    }
+
+
 
     @Unroll
     def "job definition basic blank #propName should be set to #expect"() {
