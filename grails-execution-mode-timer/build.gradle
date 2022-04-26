@@ -1,0 +1,119 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://repo.grails.org/grails/core" }
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
+    }
+}
+
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"org.grails.grails-plugin"
+apply plugin:"asset-pipeline"
+apply plugin:"org.grails.grails-gsp"
+
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url "https://repo.grails.org/grails/core" }
+}
+
+configurations{
+    //define libs needed to be bundled into the WEB-INF/lib dir of the war
+    exportedLibs
+    compile{
+        extendsFrom exportedLibs
+    }
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+        exclude group: 'ch.qos.logback', module: 'logback-core'
+    }
+    provided
+}
+
+
+dependencies {
+
+    if (findProject(":core")) {
+        implementation project(":core")
+    }else{
+        implementation "org.rundeck:rundeck-core:${rundeckVersion}"
+    }
+
+    implementation 'org.quartz-scheduler:quartz:2.3.1'
+    implementation 'org.grails.plugins:quartz:2.0.13'
+
+    implementation "org.springframework.boot:spring-boot-starter-log4j2"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.grails:grails-core"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.grails:grails-web-boot"
+    implementation "org.grails:grails-logging"
+    implementation "org.grails:grails-plugin-rest"
+    implementation "org.grails:grails-plugin-databinding"
+    implementation "org.grails:grails-plugin-i18n"
+    implementation "org.grails:grails-plugin-services"
+    implementation "org.grails:grails-plugin-url-mappings"
+    implementation "org.grails:grails-plugin-interceptors"
+    implementation "org.grails.plugins:cache:5.0.1"
+    implementation "org.grails.plugins:async"
+    implementation "org.grails.plugins:scaffolding"
+    implementation "org.grails.plugins:gsp"
+    console "org.grails:grails-console"
+    implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    implementation "org.codehaus.groovy:groovy-dateutil:$groovyVersion"
+
+    profile "org.grails.profiles:web-plugin"
+    provided "org.grails:grails-plugin-services"
+    provided "org.grails:grails-plugin-domain-class"
+    provided "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
+
+    testImplementation "org.grails:grails-gorm-testing-support"
+    testImplementation "org.mockito:mockito-core"
+    testImplementation "org.grails:grails-web-testing-support"
+}
+
+bootRun {
+    ignoreExitValue true
+    jvmArgs(
+            '-Dspring.output.ansi.enabled=always',
+            '-noverify',
+            '-XX:TieredStopAtLevel=1',
+            '-Xmx1024m')
+    sourceResources sourceSets.main
+    String springProfilesActive = 'spring.profiles.active'
+    systemProperty springProfilesActive, System.getProperty(springProfilesActive)
+}
+// enable if you wish to package this plugin as a standalone application
+bootJar.enabled = false
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+assets {
+    minifyJs = false
+    minifyCss = false
+    verbose = true
+    packagePlugin = project.findProperty('packagePlugin')?: false
+    configOptions = [commonJs:false]
+    assetsPath = "grails-app"
+
+    includes = ['**/*.js', '**/*.css', '**/*.png', '**/*.svg']
+}
+
+jar {
+    enabled = true
+    archiveClassifier = '' //use empty string
+}

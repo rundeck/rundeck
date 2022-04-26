@@ -239,6 +239,7 @@ grails{
         implementation project(':grails-securityheaders')
         implementation project(':grails-repository')
         implementation project(':grails-webhooks')
+        implementation project(':grails-execution-mode-timer')
 
         /** It's important that the configuration addition follow the form 'compile project("")'
          * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
@@ -263,6 +264,7 @@ bootRun {
         implementation project(':grails-securityheaders')
         implementation project(':grails-repository')
         implementation project(':grails-webhooks')
+        implementation project(':grails-execution-mode-timer')
     }
     dependsOn 'copySpa', copyRuntimeLibs, 'vendorAssetDeps'
     main 'rundeckapp.Application'
