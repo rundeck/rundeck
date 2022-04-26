@@ -8,29 +8,25 @@ class StorageTreeCreatorSpec extends Specification{
     def "getStorageConfigMap"(){
         given:
         int index =1
+
         Map<String, String> configProps = ["address":"testaddress", "prefix":"somePrefix"]
         Map<String, Object> configMap = ["type":"test-type", "path": "testPath"]
         configMap.put("config", configProps)
+        Map<String, Map> indexMap = ["1":configMap]
+        Map<String, Map> providerMap = ["provider":indexMap]
+        Map<String, Map> storageMap = ["storage":providerMap]
 
-        StorageTreeCreator creator = Mock(StorageTreeCreator)
+
+        StorageTreeCreator creator = new StorageTreeCreator()
         creator.configurationService = Mock(ConfigurationService){
-            getAppConfig() >> Mock(Map){
-                get("storage") >> Mock(Map){
-                    get("provider") >> Mock(Map){
-                        each {
-                            it.key.toString().isInteger() >> true
-                            it.key.toInteger() >> index
-                            it.value >> configMap
-                        }
-                    }
-                }
-            }
+            getAppConfig() >> storageMap
         }
+
         when:
            def result = creator.getStorageConfigMap()
 
         then:
-            result.size()==4
+            result.size()==5
             result.containsKey("provider.1.type")
             result.containsKey("provider.1.config.address")
 

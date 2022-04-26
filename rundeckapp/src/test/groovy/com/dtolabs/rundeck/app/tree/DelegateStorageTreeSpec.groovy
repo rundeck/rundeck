@@ -11,9 +11,9 @@ class DelegateStorageTreeSpec extends Specification {
                 StorageTreeCreator creator = Mock(StorageTreeCreator){
                     getStorageConfigMap() >> ["config1": "config1Def", "config2": "config2Def"]
                 }
-                creator.configuration = ["config1": "config1Def", "config2": "config2Def"]
                 DelegateStorageTree tree = new DelegateStorageTree()
                 tree.configuration = ["config1": "config1Def", "config2": "config2Def"]
+                tree.creator=creator
 
             when:
                 tree.updateTreeConfig(null)
@@ -27,16 +27,17 @@ class DelegateStorageTreeSpec extends Specification {
         given:
         StorageTreeCreator creator = Mock(StorageTreeCreator){
             getStorageConfigMap() >> ["config1": "config1Def", "config2": "config2Def"]
+            create() >> Mock(StorageTree)
         }
         DelegateStorageTree tree = new DelegateStorageTree()
-        tree.creator = creator
-        tree.configuration = ["config1": "config1DefUpdate", "config2": "config2Def"]
+        tree.configuration = ["config1": "config1Def", "config3": "config3Def"]
+        tree.creator=creator
 
         when:
         tree.updateTreeConfig(null)
 
         then:
-        tree.delegate == null
+        tree.delegate != null
     }
 
 }
