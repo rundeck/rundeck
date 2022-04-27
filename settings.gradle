@@ -49,4 +49,5 @@ include	'rundeck-storage',
     'grails-securityheaders',
     'grails-repository',
     'grails-webhooks',
+    'grails-execution-mode-timer',
     'docker'

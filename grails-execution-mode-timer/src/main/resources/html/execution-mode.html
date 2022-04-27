@@ -1,0 +1,67 @@
+
+<div class="row">
+  <div class="col-md-6">
+    <hr>
+    <h4 class="card-title" >Change Execution Mode Later </h4>
+     <!-- ko if: executionMode() == 'passive' -->
+    <div>
+      <div class="checkbox">
+        <input type="checkbox" name="activeLater" value="active" id="activelater" data-bind="checked: activeLater">
+        <label for="activelater">
+          <i class="glyphicon glyphicon-play "></i>
+          ACTIVE MODE LATER
+        </label>
+        <p class="help-block ">
+          The execution mode will be ACTIVE after X time.
+        </p>
+      </div>
+
+
+      <label for="activeLaterValue">
+        <i class="glyphicon glyphicon-calendar "></i>
+        <b>Execution Mode</b> will be ACTIVE after X: 2h, 2m, 30s
+      </label>
+
+      <input name="activeLaterValue" type="text" class="form-control" id="activeLaterValue" data-bind="value: activeLaterValue, enable: activeLater">
+
+      <!-- ko if: activeLater() == true && message() != null  -->
+      <br>
+      <div class='alert alert-success'><span data-bind="text: message"></span></div>
+      <!-- /ko -->
+
+    </div>
+    <!-- /ko -->
+
+
+    <!-- ko if: executionMode() == 'active' -->
+    <div>
+      <div class="checkbox">
+
+        <input type="checkbox" name="passiveLater" value="passive" id="passiveLater" data-bind="checked: passiveLater" >
+        <label for="passiveLater">
+          <i class="glyphicon glyphicon-pause "></i>
+          PASSIVE MODE LATER
+        </label>
+        <p class="help-block ">
+          The execution mode will be PASSIVE after X time.
+        </p>
+      </div>
+
+
+      <label for="passiveLaterValue">
+        <i class="glyphicon glyphicon-calendar "></i>
+        <b>Execution Mode</b> will be PASSIVE after X: 2h, 2m, 30s
+      </label>
+
+      <input name="passiveLaterValue" type="text" class="form-control" id="passiveLaterValue" data-bind="value: passiveLaterValue, enable: passiveLater">
+
+      <!-- ko if: passiveLater() == true && message() != null -->
+      <br>
+      <div class='alert alert-danger'><span data-bind="text: message"></span></div>
+      <!-- /ko -->
+    </div>
+    <!-- /ko -->
+
+
+  </div>
+</div>
