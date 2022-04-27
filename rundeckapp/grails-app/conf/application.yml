@@ -54,6 +54,29 @@ management:
         enabled-by-default: false
         jmx:
             unique-names: true
+        web:
+            exposure:
+                include: "*"
+    health:
+        defaults:
+            enabled: true
+    endpoint:
+        health:
+            probes:
+                enabled: true
+            enabled: true
+            show-details: always
+            group:
+                liveness:
+                    include:
+                        - livenessState
+                        - ping
+                readiness:
+                    include:
+                        - livenessState
+                        - db
+
+
 ---
 
 grails:
@@ -204,6 +227,10 @@ rundeck:
                     - /favicon.ico
                     - /health
                     - /user/reset
+                    - /actuator/health
+                    - /actuator/health/liveness
+                    - /actuator/health/readiness
+                    - /actuator/health/custom
     storage:
         default: deleteMe
     execution:

@@ -102,6 +102,8 @@ import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
+import org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator
+import org.springframework.boot.jdbc.metadata.DataSourcePoolMetadataProvider
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -771,6 +773,13 @@ beans={
             configurationService = ref('configurationService')
         }
     }
+
+
+    // Activate Spring Actuator DataSourceHealthIndicator
+    db(DataSourceHealthIndicator) {
+        dataSource = ref("dataSource")
+    }
+
     rundeckConfig(RundeckConfig)
     if(!Environment.isWarDeployed()) {
         appRestarter(AppRestarter)
