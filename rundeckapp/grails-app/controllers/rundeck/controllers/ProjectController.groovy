@@ -1417,7 +1417,6 @@ class ProjectController extends ControllerBase{
                 )
             }
         }
-        log.info("TERMINANDO DE SETEAR SCHEDULE")
     }
 
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
@@ -1453,6 +1452,12 @@ class ProjectController extends ControllerBase{
             ])
         }
         def propValueBefore = project.getProperty(key_)
+        if(propValueBefore){
+            propValueBefore = new Properties([(key_): propValueBefore])
+        }else{
+            propValueBefore = new Properties([(key_): ''])
+        }
+
         def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
 
         if(!result.success){
@@ -1463,7 +1468,8 @@ class ProjectController extends ControllerBase{
             ])
         }
         def resultValue= project.getProperty(key_)
-        checkScheduleChanges(project, propValueBefore?new Properties([(key_): propValueBefore]):new Properties([(key_): '']), new Properties([(key_): resultValue]))
+        propValueBefore
+        checkScheduleChanges(project, propValueBefore, new Properties([(key_): resultValue]))
 
         switch (respFormat) {
             case 'text':
