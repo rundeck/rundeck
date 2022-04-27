@@ -335,6 +335,11 @@ export default class ScheduleEditor extends Vue {
       selectedMonths: [],
       useCrontabString: this.useCrontabString
     }, this.value)
+    
+    if(this.modelData.useCrontabString)
+      this.showCronExpression()
+    else
+      this.showSimpleCron()
   }
 
   loadScheduleIntoSimpleTab (decomposedSchedule:any){
