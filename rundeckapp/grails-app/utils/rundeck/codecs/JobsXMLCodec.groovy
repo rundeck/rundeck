@@ -356,8 +356,10 @@ class JobsXMLCodec {
                 final def xmlNotif = map.notification[trigger]
                 map.notification[trigger] = []
                 if(isOldFormat && xmlNotif['webhook']){
-                    xmlNotif['webhook']['format'] = xmlNotif.remove('format')
-                    xmlNotif['webhook']['httpMethod'] = xmlNotif.remove('httpMethod')
+                    if(xmlNotif['format'] && xmlNotif['httpMethod']){
+                        xmlNotif['webhook']['format'] = xmlNotif.remove('format')
+                        xmlNotif['webhook']['httpMethod'] = xmlNotif.remove('httpMethod')
+                    }
                 }
 
                 xmlNotif.each { notifEntry ->
