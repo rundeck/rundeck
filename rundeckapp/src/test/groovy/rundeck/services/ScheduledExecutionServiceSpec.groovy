@@ -4948,7 +4948,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         when: "same job is uploaded with no options "
 
-        service.jobDefinitionOptions(baseJob,emptyOptionsJob,params,auth)
+        service.jobDefinitionBasic(baseJob,emptyOptionsJob,params,auth)
         baseJob.save(flush:true)
         def options = Option.findAll()
 
@@ -4959,6 +4959,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
     }
     @Unroll
     def "job definition option should update options"() {
+        //this test is failing it gets 0 options should get 1
 
         given: "a job with options"
 
