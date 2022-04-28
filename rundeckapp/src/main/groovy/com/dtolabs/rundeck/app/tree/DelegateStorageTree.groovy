@@ -26,7 +26,17 @@ class DelegateStorageTree implements StorageTree, InitializingBean {
     @CompileDynamic
     def updateTreeConfig(def event) {
         Map<String, String> config = creator.getStorageConfigMap()
-        if(configuration != config){
+        Boolean typeSet = false
+        Boolean pathSet = false
+        for(entry in config){
+            if(entry.getKey().toString().endsWith("path")){
+                pathSet=true
+            }
+            else if(entry.getKey().toString().endsWith("type")){
+                typeSet=true
+            }
+        }
+        if(configuration != config && typeSet && pathSet){
             delegate = creator.create(false)
             configuration = config
         }

@@ -63,7 +63,7 @@ class StorageTreeCreator {
         Map<String, Map> providerMap = storageMap.get("provider") as Map<String, Map>
 
         finalconfigMap.put("default", "deleteMe")
-        providerMap.each {
+        providerMap?.each {
             if (it.key.toString().isInteger()) {
                 int index = it.key.toInteger()
                 Map<String, Map> finalMap = it.value as Map<String, Map>

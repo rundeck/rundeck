@@ -29,13 +29,13 @@ class DelegateStorageTreeSpec extends Specification {
         DelegateStorageTree tree = new DelegateStorageTree()
         tree.configuration = ["config1": "config1Def", "config3": "config3Def"]
         tree.creator = Mock(StorageTreeCreator)
-        1 * tree.creator.getStorageConfigMap() >> ["config1": "config1Def", "config2": "config2Def"]
+        1 * tree.creator.getStorageConfigMap() >> ["test.path": "config1Def", "test.type": "config2Def"]
 
         when:
         tree.updateTreeConfig(null)
 
         then:
-        1 * tree.creator.create()
+        1 * tree.creator.create(false)
     }
 
 }
