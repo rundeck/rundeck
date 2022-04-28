@@ -223,7 +223,6 @@ rundeck:
                     - /actuator/health
                     - /actuator/health/liveness
                     - /actuator/health/readiness
-                    - /actuator/health/custom
     storage:
         default: deleteMe
     execution:
@@ -350,4 +349,3 @@ hibernate:
     allow_update_outside_transaction: true
     physical_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
     implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
-
