@@ -160,4 +160,104 @@ class JobYAMLFormatSpec extends Specification {
             '1,23' | '- a: \'1,23\'\n'
             'a,bc' | '- a: \'a,bc\'\n'
     }
+    @Unroll
+    def "should return a notification map with email and webhook notifs"() {
+        given:
+        def input = "" +
+                "- defaultTab: nodes\n" +
+                "  description: ''\n" +
+                "  executionEnabled: true\n" +
+                "  loglevel: INFO\n" +
+                "  name: a\n" +
+                "  nodeFilterEditable: false\n" +
+                "  notification:\n" +
+                "    onsuccess:\n" +
+                "    - email:\n" +
+                "        attachLog: true\n" +
+                "        attachLogInFile: true\n" +
+                "        recipients: leojesus.juarez@gmail.com\n" +
+                "        subject: RD-SUCCESS\n" +
+                "    - email:\n" +
+                "        attachLog: true\n" +
+                "        attachLogInline: true\n" +
+                "        recipients: 2@gmail.com\n" +
+                "        subject: RD-SUCCESS\n" +
+                "    - format: xml\n" +
+                "      httpMethod: get\n" +
+                "      urls: http://localhost:4440/project\n" +
+                "    - format: json\n" +
+                "      httpMethod: post\n" +
+                "      urls: http://localhost:4440/project\n" +
+                "  notifyAvgDurationThreshold: null\n" +
+                "  plugins:\n" +
+                "    ExecutionLifecycle: null\n" +
+                "  scheduleEnabled: true\n" +
+                "  schedules: []\n" +
+                "  sequence:\n" +
+                "    commands:\n" +
+                "    - exec: asd\n" +
+                "    keepgoing: false\n" +
+                "    strategy: node-first"
+        def sut = new JobYAMLFormat()
+        when:
+        def result = sut.decode(new StringReader(input))
+        then:
+        result[0].notification['onsuccess'].size() == 4
+        result[0].notification['onsuccess'].findAll{ it['email'] != null }.size() == 2
+        result[0].notification['onsuccess'].findAll{ it['urls'] != null }.size() == 2
+    }
+
+    @Unroll
+    def "should return an xml str with email and webhook tags"() {
+        given:
+        List<Map> input = [[
+                                   id: 0,
+                                   defaultTab: "nodes",
+                                   description: "",
+                                   loglevel: "INFO",
+                                   name: "a",
+                                   nodeFilterEditable: false,
+                                   notification: [
+                                           onsuccess: [
+                                                   [email: [recipients: "mail@example.com"]],
+                                                   [email: [recipients: "mail2@example.com"]],
+                                                   [
+                                                           format: "xml",
+                                                           httpMethod: "get",
+                                                           urls: "http://example1.com/1"
+                                                   ],
+                                                   [
+                                                           format: "json",
+                                                           httpMethod: "post",
+                                                           urls: "https://example2.com/2"
+                                                   ]
+                                           ]
+                                   ],
+                                   notifyAvgDurationThreshold: "",
+                                   plugins: "",
+                                   scheduledEnabled: "true",
+                                   schedules: "",
+                                   sequence: [
+                                           keepgoing: false,
+                                           strategy: "node-first",
+                                           commands: [[exec:"asd"]]
+                                   ],
+                                   executionEnabled: true,
+                                   multipleExecutions: false
+                           ]]
+        def sut = new JobYAMLFormat()
+        def writer = new StringWriter()
+        def options = JobFormat.options(true, [:], (String) null)
+
+        when:
+        sut.encode(input, options, writer)
+        String notifStr = writer.toString()
+        notifStr = notifStr.substring(notifStr.indexOf("onsuccess:") + "onsuccess:".length()).replaceAll("\\s","")
+
+        then:
+        notifStr.contains("-email:recipients:mail@example.com")
+        notifStr.contains("-email:recipients:mail@example.com")
+        notifStr.contains("urls:http://example1.com/1")
+        notifStr.contains("urls:https://example2.com/2")
+    }
 }
