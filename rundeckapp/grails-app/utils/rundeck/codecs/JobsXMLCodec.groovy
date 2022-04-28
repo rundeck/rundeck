@@ -108,6 +108,37 @@ class JobsXMLCodec {
     }
 
     /**
+     * Checks if the given notification map follows or should follow the old format
+     */
+    static boolean useOldFormat(Map notificationMap, boolean isScheduleMap){
+        boolean useOld
+        if(isScheduleMap) {
+            def hasMany = notificationMap.find { Map.Entry triggerEntry ->
+                Map notifsAmount = [:]
+                return triggerEntry.value.find{ Map notifEntry ->
+                    def notifType = notifEntry.keySet()[0]
+                    if(notifsAmount[notifType] || (notifType == 'plugin' && (notifEntry[notifType] as List).size() > 1))
+                        return notifEntry
+                    else
+                        notifsAmount[notifType] = 1
+                    return
+                }
+            }
+            useOld = hasMany?false:true
+        }
+        else
+            useOld = notificationMap.find { Map.Entry entry ->
+                if(entry.value instanceof Map){
+                    if (entry.value['format'] != null) {
+                        return true
+                    }
+                }else
+                    return
+            }
+        return useOld
+    }
+
+    /**
      * Convert the XMap (Map produced by XmlParserUtil) to canonical Job definition Map
      */
     static convertXMapToJobMap={ Map map->
@@ -316,27 +347,34 @@ class JobsXMLCodec {
                 }
             }
 
+            boolean isOldFormat = useOldFormat(map.notification, false)
             triggers.each{trigger->
                 if((map.notification[trigger].size() < 1) || (map.notification[trigger].email==null && map.notification[trigger].webhook==null && map.notification[trigger].plugin==null)){
                     throw new JobXMLException("notification '${trigger}' element had missing 'email' or 'webhook' or 'plugin' element")
                 }
+
                 final def xmlNotif = map.notification[trigger]
                 map.notification[trigger] = []
+                if(isOldFormat && xmlNotif['webhook']){
+                    xmlNotif['webhook']['format'] = xmlNotif.remove('format')
+                    xmlNotif['webhook']['httpMethod'] = xmlNotif.remove('httpMethod')
+                }
+
                 xmlNotif.each { notifEntry ->
-                    final String notifType = notifEntry.getKey()
-                    if(notifType.equals("email") || notifType.equals("webhook") || notifType.equals("plugin")) {
-                        def notifVal = notifEntry.getValue()
-                        if (notifVal instanceof Collection) {
-                            notifVal.each { notif ->
-                                setValidNotifData(notif, notifType, trigger)
+                        final String notifType = notifEntry.getKey()
+                        if(notifType.equals("email") || notifType.equals("webhook") || notifType.equals("plugin")) {
+                            def notifVal = notifEntry.getValue()
+                            if (notifVal instanceof Collection) {
+                                notifVal.each { notif ->
+                                    setValidNotifData(notif, notifType, trigger)
+                                }
+                            }else {
+                                setValidNotifData(notifVal, notifType, trigger)
                             }
                         }else {
-                            setValidNotifData(notifVal, notifType, trigger)
+                            throw new JobXMLException("${notifType} is not a valid/supported notification definition")
                         }
-                    }else {
-                        throw new JobXMLException("${notifType} is not a valid/supported notification definition")
                     }
-                }
             }
         }
         if(map.retry instanceof Map){
@@ -619,6 +657,7 @@ class JobsXMLCodec {
                     pluginMap['configuration']['entry'] <<  entryMap
                 }
             }
+            boolean useOldWebhookFormat = useOldFormat(map.notification, true)
             map.notification.keySet().sort().findAll { it.startsWith('on') }.each { trigger ->
                 ArrayList triggerNotifs = map.notification[trigger]
                 map.notification[trigger] = [:]
@@ -634,9 +673,11 @@ class JobsXMLCodec {
                         }else{
                             throw new JobXMLException("unknown notification xmlNotifType")
                         }
-                        //for notifications translated to inline tags
-                        notif.each{k,v->
-                            BuilderUtil.addAttribute(xmlNotif,k,v)
+                        if(!(useOldWebhookFormat && xmlNotifType=='webhook')){
+                            //for notifications translated to inline tags
+                            notif.each{k,v->
+                                BuilderUtil.addAttribute(xmlNotif,k,v)
+                            }
                         }
                     }else{
                         notif.plugin.each{Map plugin->
@@ -645,12 +686,20 @@ class JobsXMLCodec {
                         xmlNotifType = 'plugin'
                         xmlNotif = notif.plugin
                     }
-                    if(!map.notification[trigger][xmlNotifType]) map.notification[trigger][xmlNotifType] = []
-                    if(notif.xmlNotif instanceof Collection)
-                        map.notification[trigger][xmlNotifType].addAll(xmlNotif)
-                    else
-                        map.notification[trigger][xmlNotifType].add(xmlNotif)
+                    if(useOldWebhookFormat && xmlNotifType=='webhook'){
+                        map.notification[trigger][xmlNotifType] = BuilderUtil.toAttrMap('urls',notif.remove('urls'))
+                        notif.each { entry ->
+                            xmlNotif = [:]
+                            map.notification[trigger][entry.key] = entry.value
+                        }
 
+                    }else{
+                        if(!map.notification[trigger][xmlNotifType]) map.notification[trigger][xmlNotifType] = []
+                        if(notif.xmlNotif instanceof Collection)
+                            map.notification[trigger][xmlNotifType].addAll(xmlNotif)
+                        else
+                            map.notification[trigger][xmlNotifType].add(xmlNotif)
+                    }
                 }
             }
         }

@@ -245,7 +245,7 @@ public class JobsYAMLCodecTests  {
         assertNotNull doc
         assertEquals(1,doc[0].notification.size())
         assertEquals(1,doc[0].notification.onsuccess.size())
-        assertEquals([type:'test1', configuration:['blah':'blee']],doc[0].notification.onsuccess.plugin[0][0])
+        assertEquals([type:'test1', configuration:['blah':'blee']],doc[0].notification.onsuccess.plugin)
 
     }
 
