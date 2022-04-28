@@ -48,23 +48,17 @@ spring:
                 - '**/*.gson'
                 - 'logback.groovy'
                 - '*.properties'
-                -
 management:
     endpoints:
         enabled-by-default: false
-        jmx:
-            unique-names: true
-        web:
-            exposure:
-                include: "*"
     health:
         defaults:
             enabled: true
     endpoint:
         health:
+            enabled: false
             probes:
                 enabled: true
-            enabled: true
             show-details: always
             group:
                 liveness:
@@ -73,9 +67,8 @@ management:
                         - ping
                 readiness:
                     include:
-                        - livenessState
-                        - db
-
+                        - readinessState
+                        - rundeckDataSourceHeathIndicator
 
 ---
 
@@ -328,6 +321,8 @@ rundeck:
             enabled: false #FYI FALSE
         fileUploadPlugin:
             enabled: true
+    health:
+        databaseValidationQuery: "SELECT 1"
 ---
 
 beans:
@@ -355,3 +350,4 @@ hibernate:
     allow_update_outside_transaction: true
     physical_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
     implicit_naming_strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+
