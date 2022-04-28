@@ -19,6 +19,7 @@ class StorageTreeCreator {
     StorageTreeFactory storageTreeFactory
     PluggableProviderService<StoragePlugin> storagePluginProviderService
     PluggableProviderService<StorageConverterPlugin> storageConverterPluginProviderService
+    Map<String, String> startupConfiguration
 
     @Autowired
     ConfigurationService configurationService
@@ -31,7 +32,7 @@ class StorageTreeCreator {
     def loggerName='org.rundeck.storage.events'
     Map<String, String> configuration
 
-    StorageTree create(){
+    StorageTree create(Boolean startup){
         def factory = new StorageTreeFactory()
         factory.frameworkPropertyLookup = frameworkPropertyLookup
         factory.pluginRegistry=pluginRegistry
@@ -44,10 +45,15 @@ class StorageTreeCreator {
         factory.loggerName=loggerName
         factory.defaultConverters=defaultConverters.toSet()
 
-        Map<String, String> finalconfigMap = getStorageConfigMap()
-
-        factory.configuration=finalconfigMap
-        configuration=finalconfigMap
+        if(startup){
+            factory.configuration=startupConfiguration
+            configuration=startupConfiguration
+        }
+        else{
+            Map<String, String> storageConfigMap = getStorageConfigMap()
+            factory.configuration=storageConfigMap
+            configuration=storageConfigMap
+        }
         factory.createTree()
     }
 
@@ -75,10 +81,5 @@ class StorageTreeCreator {
             }
         }
         return finalconfigMap
-    }
-
-    StorageTree createOnStartup(){
-        configuration=storageTreeFactory.configuration
-        storageTreeFactory.createTree()
     }
 }

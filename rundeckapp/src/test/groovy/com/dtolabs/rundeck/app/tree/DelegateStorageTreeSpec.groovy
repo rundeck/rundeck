@@ -19,25 +19,23 @@ class DelegateStorageTreeSpec extends Specification {
                 tree.updateTreeConfig(null)
 
             then:
-                tree.delegate == null
+            0 * creator.create()
+
         }
 
     def "updateTreeConfig w storage updates"(){
 
         given:
-        StorageTreeCreator creator = Mock(StorageTreeCreator){
-            getStorageConfigMap() >> ["config1": "config1Def", "config2": "config2Def"]
-            create() >> Mock(StorageTree)
-        }
         DelegateStorageTree tree = new DelegateStorageTree()
         tree.configuration = ["config1": "config1Def", "config3": "config3Def"]
-        tree.creator=creator
+        tree.creator = Mock(StorageTreeCreator)
+        1 * tree.creator.getStorageConfigMap() >> ["config1": "config1Def", "config2": "config2Def"]
 
         when:
         tree.updateTreeConfig(null)
 
         then:
-        tree.delegate != null
+        1 * tree.creator.create()
     }
 
 }

@@ -18,7 +18,7 @@ class DelegateStorageTree implements StorageTree, InitializingBean {
 
     @Override
     void afterPropertiesSet() {
-        delegate = creator.createOnStartup()
+        delegate = creator.create(true)
         configuration=creator.configuration
     }
 
@@ -27,7 +27,7 @@ class DelegateStorageTree implements StorageTree, InitializingBean {
     def updateTreeConfig(def event) {
         Map<String, String> config = creator.getStorageConfigMap()
         if(configuration != config){
-            delegate = creator.create()
+            delegate = creator.create(false)
             configuration = config
         }
     }

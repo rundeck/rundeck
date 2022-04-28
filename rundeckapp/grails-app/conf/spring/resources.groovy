@@ -530,12 +530,12 @@ beans={
         loggerName='org.rundeck.storage.events'
     }
     rundeckStorageTreeCreator(StorageTreeCreator){
-        storageTreeFactory=ref('rundeckStorageTreeFactory')
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
         storageConfigPrefix='provider'
+        startupConfiguration = application.config.rundeck?.storage?.toFlatConfig()
         converterConfigPrefix='converter'
         baseStorageType='file'
         baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
