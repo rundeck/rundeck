@@ -148,7 +148,7 @@
           </g:ifExecutionMode>
           <li id="appAdmin">
             <div class="dropdown">
-              <a data-toggle="dropdown" class="dropdown-toggle">
+              <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer">
                 <i class="fas fa-cog fa-lg"></i>
               </a>
               <g:render template="/menu/sysConfigNavMenu"/>
@@ -156,7 +156,7 @@
           </li>
           <li id="appUser">
             <div class="dropdown">
-              <a data-toggle="dropdown" class="dropdown-toggle" id="userLabel">
+              <a data-toggle="dropdown" class="dropdown-toggle cursor-pointer" id="userLabel">
                 <i class="fas fa-user fa-lg"></i>
               </a>
               <g:render template="/menu/appUserMenu"/>

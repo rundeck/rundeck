@@ -204,7 +204,7 @@
         </select>
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='RUNDECK_JOB'" class="col-sm-5">
-        <job-config-picker v-model="currentValue"></job-config-picker>
+        <job-config-picker v-model="currentValue" :btnClass="`btn-primary`"></job-config-picker>
       </div>
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
