@@ -4958,30 +4958,29 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
     }
     @Unroll
-    def "job definition option should update options"() {
-        //this test is failing it gets 0 options should get 1
+    def "update job definition should update options"() {
 
         given: "a job with options"
 
+        setupDoValidate()
         Map params = [:]
-        setupDoUpdate()
-        def auth = Mock(UserAndRolesAuthContext)
         def baseJob = new ScheduledExecution(createJobParams(options:[
                 new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
                 new Option(name: 'test2', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])
-        ])).save(flush:true)
+        ])).save()
         def  updatedJob = new ScheduledExecution(createJobParams(options:[
                 new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
 
-        when: "same job with diferents options"
+        when: "same job with different options"
 
-        service.jobDefinitionOptions(baseJob,updatedJob,params,auth)
+        def importedJob = RundeckJobDefinitionManager.importedJob(updatedJob, [:])
+        service.updateJobDefinition(importedJob, params, mockAuth(), baseJob)
         baseJob.save(flush:true)
-        def options = Option.findAll()
+        def options = Option.findAll().size()
 
-        then: "baseJob options should be equals to updatedJob "
+        then: "baseJob should have 1 option remaining"
 
-        options.size() == 1
+        options == 1
 
     }
 
