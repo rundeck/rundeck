@@ -20,10 +20,6 @@ Override the version to use:
 
 	RUNDECK_VERSION=2.6.10 bash test.sh
 
-Override the download URL:
-	
-	LAUNCHER_URL=http://... bash test.sh
-
 Or use a local launcher jar file
 
 	cp /some/path/rundeck-launcher-x.y.z.jar ./rundeck-launcher.war

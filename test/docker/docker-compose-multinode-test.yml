@@ -11,8 +11,6 @@ services:
       - RUNDECK_NODE=rundeck1
       - REMOTE_NODE=hostnode
       - RUNDECK_URL=http://rundeck1:4440
-      - LAUNCHER_URL=${LAUNCHER_URL}
-      - CLI_DEB_URL=${CLI_DEB_URL}
       - CLI_VERS=${CLI_VERS}
       - SETUP_SSH_KEY=1
       - WAIT_NODES=rundeck1 hostnode

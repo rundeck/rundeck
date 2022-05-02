@@ -6,7 +6,6 @@ ENV USERNAME=rundeck \
     LOGNAME=$USERNAME \
     TERM=xterm-256color
 
-ARG CLI_DEB_URL
 ARG CLI_VERS
 
 #Add PAM test user
@@ -27,7 +26,6 @@ WORKDIR $HOME
 COPY --chown=rundeck:rundeck data $HOME
 COPY --chown=rundeck:rundeck api_test $HOME/api_test
 
-ARG LAUNCHER_URL
 ARG RUNDECK_NODE=rundeck1
 RUN \
     java \
