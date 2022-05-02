@@ -14,7 +14,6 @@ buildscript {
         classpath("org.grails.plugins:database-migration:$dbMigrationPluginVersion"){
             exclude group: 'org.spockframework', module: 'spock-core'
         }
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 plugins {
@@ -24,7 +23,6 @@ plugins {
     id "war"
 }
 
-apply plugin:"com.jfrog.bintray"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"war"
