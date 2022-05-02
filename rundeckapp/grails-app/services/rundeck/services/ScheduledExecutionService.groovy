@@ -3041,6 +3041,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    /**
+     *Remove and delete all existing options from a scheduledExecution, setting options param to null
+     * @param scheduledExecution
+     */
     public void deleteExistingOptions(ScheduledExecution scheduledExecution) {
         if (scheduledExecution.options) {
             def todelete = []
