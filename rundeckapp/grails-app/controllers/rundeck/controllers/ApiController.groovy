@@ -21,7 +21,11 @@ import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
-
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import org.rundeck.app.api.model.ApiErrorResponse
+import org.rundeck.app.api.model.LinkListResponse
 import org.rundeck.app.api.model.SystemInfoModel
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
@@ -111,6 +115,47 @@ class ApiController extends ControllerBase{
         value = RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN,
         description = 'Read System Metrics'
     )
+
+    @Get(
+        uri= "/metrics/{name}",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get Rundeck metrics",
+        description = "Return metrics and information",
+        parameters = [
+            @Parameter(
+                name='name',
+                in = ParameterIn.PATH,
+                description = 'Metric name, or blank to receive list of metrics',
+                allowEmptyValue = true,
+                required = false,
+                schema = @Schema(
+                    type='string',
+                    allowableValues=['metrics', 'ping', 'threads', 'healthcheck']
+                )
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "List of metrics available if not specified",
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(implementation = LinkListResponse)
+        )
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Error response",
+        content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = ApiErrorResponse),
+            examples = @ExampleObject('{"error":true,"errorCode":"api.error.code","message":"not ok","apiversion":41}')
+        )
+    )
+    @Tag(name = "system")
     def apiMetrics(String name) {
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
@@ -120,29 +165,21 @@ class ApiController extends ControllerBase{
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
         def globalEnabled=configurationService.getBoolean("metrics.enabled", true) &&
                           configurationService.getBoolean("metrics.api.enabled", true)
-        def enabled =
-            names.collectEntries { mname ->
-                [mname,
-                 globalEnabled && configurationService.getBoolean("metrics.api.${mname}.enabled", true)
-                ]
+        Map<String,Boolean> enabled = new HashMap<>()
+        LinkListResponse links = new LinkListResponse()
+        names.each { mname ->
+            enabled[mname] = globalEnabled && configurationService.getBoolean("metrics.api.${mname}.enabled", true)
+            if (enabled[mname]) {
+                links.addLink(
+                    mname,
+                    grailsLinkGenerator
+                        .link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/$mname", absolute: true)
+                )
             }
+        }
         if (!name) {
             //list enabled endpoints
-            return respond(
-                [
-                    '_links':
-                        enabled.findAll { it.value }.collectEntries {
-                            [
-                                it.key,
-                                [
-                                    href: grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/$it.key", absolute: true)
-                                ]
-                            ]
-                        }
-                ]
-                ,
-                formats: ['json']
-            )
+            return respond(links, formats: ['json'])
         }
         if (!enabled[name]) {
             return apiService.renderErrorFormat(
