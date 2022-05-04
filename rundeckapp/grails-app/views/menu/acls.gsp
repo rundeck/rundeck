@@ -32,6 +32,13 @@
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
+<g:set var="hasOpsAdminAuth" value="${auth.resourceAllowedTest([
+        any    : true,
+        action : [AuthConstants.ACTION_OPS_ADMIN],
+        context: AuthConstants.CTX_APPLICATION,
+        kind   : AuthConstants.TYPE_SYSTEM_ACL,
+]
+)}"/>
 <g:set var="hasEditAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_UPDATE],
@@ -76,7 +83,14 @@
             };
         }
         jQuery(function () {
-            var filepolicies = loadJsonData('aclFileList');
+            var filepolicies
+            <g:if test="${hasOpsAdminAuth}">
+                filepolicies = loadJsonData('aclFileList')
+            </g:if>
+            <g:else>
+               filepolicies = null
+            </g:else>
+
             jQuery.extend(filepolicies,{
                 pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
                 paging:{
@@ -85,7 +99,7 @@
             })
             window.fspolicies = new PolicyFiles(filepolicies);
             new PagerVueAdapter(window.fspolicies.paging, 'acl-file')
-            <g:if test="${clusterMode}">
+            <g:if test="${clusterMode && hasOpsAdminAuth}">
             window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
             ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
             </g:if>
@@ -290,7 +304,7 @@
                                  null
               ]"/>
           </div>
-          <g:if test="${clusterMode}">
+          <g:if test="${clusterMode && hasOpsAdminAuth}">
               <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
                   <div class="card-header">
                     <h4 class="card-title" data-bind="click: toggleShow" style="cursor: pointer;">
