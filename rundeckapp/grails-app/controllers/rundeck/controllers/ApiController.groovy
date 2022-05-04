@@ -16,14 +16,20 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.tokens.CreateToken
 import com.dtolabs.rundeck.app.api.tokens.ListTokens
 import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import groovy.transform.CompileStatic
+import io.micronaut.http.annotation.Delete
+import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.api.model.LinkListResponse
 import org.rundeck.app.api.model.SystemInfoModel
@@ -67,7 +73,9 @@ class ApiController extends ControllerBase{
             info                 : ['GET'],
             apiTokenList         : ['GET'],
             apiTokenCreate       : ['POST'],
-            apiTokenRemoveExpired: ['POST']
+            apiTokenRemoveExpired: ['POST'],
+            apiTokenGet          : ['GET'],
+            apiTokenDelete       : ['DELETE']
     ]
     def info () {
         respond((Object) [
@@ -262,49 +270,168 @@ class ApiController extends ControllerBase{
     /**
      * /api/11/token/$tokenid
      */
-    def apiTokenManage() {
-        if (!apiService.requireApi(request, response)) {
+
+    @Get(
+        uri= "/token/{tokenid}",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get Token Information",
+        description = "API Token information",
+        parameters = [
+            @Parameter(
+                name='tokenid',
+                in = ParameterIn.PATH,
+                description = 'Token ID (UUID)',
+                schema = @Schema(
+                    type='string',
+                    format='uuid'
+                )
+            )
+        ],
+        responses=[
+            @ApiResponse(
+                responseCode = "200",
+                description = "Token Information for GET request",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = Token)
+                )
+            ),
+            @ApiResponse(
+                responseCode = "404",
+                description = "Not Found",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ApiErrorResponse)
+                )
+            )
+
+        ]
+    )
+    @Tag(name = "tokens")
+
+    @CompileStatic
+    def apiTokenGet(String tokenid) {
+        AuthToken oldtoken = validateTokenRequest(tokenid)
+
+        if (!oldtoken) {
             return
+        }
+
+        return respond(new Token(oldtoken), [formats: ['xml', 'json']])
+    }
+
+    @CompileStatic
+    private AuthToken validateTokenRequest(String tokenid){
+        if (!apiService.requireApi(request, response)) {
+            return null
         }
 
         // API V18 and earlier require showing token data which is not possible
         // anymore.
         if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
-            return
+            return null
         }
 
-        if (!apiService.requireParameters(params, response, ['tokenid'])) {
-            return
-        }
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        requireParam('tokenid')
+
+        UserAndRolesAuthContext authContext = systemAuthContext
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
 
         //admin: search by token ID
         //user: search for token ID owned by user
         AuthToken oldtoken = adminAuth ?
-                apiService.findTokenId(params.tokenid) :
-                apiService.findUserTokenId(authContext.username, params.tokenid)
+                             apiService.findTokenId(tokenid) :
+                             apiService.findUserTokenId(authContext.username, tokenid)
 
-        if (!apiService.requireExistsFormat(response, oldtoken, ['Token', params.tokenid])) {
+        if (!apiService.requireExistsFormat(response, oldtoken, ['Token', tokenid])) {
+            return null
+        }
+        return oldtoken
+    }
+
+    @Delete(uri= "/token/{tokenid}")
+    @Operation(
+        method = "DELETE",
+        summary = "Delete API Token",
+        parameters = [
+            @Parameter(
+                name='tokenid',
+                in = ParameterIn.PATH,
+                description = 'Token ID (UUID)',
+                schema = @Schema(
+                    type='string',
+                    format='uuid'
+                )
+            )
+        ],
+        responses=[
+            @ApiResponse(responseCode = "204", description = "No Content (DELETE successful)"),
+
+            @ApiResponse(
+                responseCode = "404",
+                description = "Not Found",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ApiErrorResponse)
+                )
+            )
+        ]
+    )
+
+    @Tag(name = "tokens")
+    @CompileStatic
+    def apiTokenDelete(String tokenid) {
+        AuthToken oldtoken = validateTokenRequest(tokenid)
+
+        if (!oldtoken) {
             return
         }
 
-        switch (request.method) {
-            case 'GET':
-                return respond(new Token(oldtoken), [formats: ['xml', 'json']])
-                break;
-            case 'DELETE':
-                apiService.removeToken(oldtoken)
-                return render(status: HttpServletResponse.SC_NO_CONTENT)
-                break;
-        }
+        apiService.removeToken(oldtoken)
+        return render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
+
+    @Get(uri= "/tokens/{user}")
+    @Operation(
+        method = "GET",
+        summary = "Get List of API Tokens",
+        parameters = [
+            @Parameter(
+                name='user',
+                in = ParameterIn.PATH,
+                description = 'username',
+                allowEmptyValue = true,
+                required = false,
+                schema = @Schema(
+                    type='string'
+                )
+            )
+        ],
+        responses=[
+            @ApiResponse(
+                responseCode = "200",
+                description = "Token List Response",
+
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ListTokens)
+                )
+            ),
+
+        ]
+    )
+
+    @Tag(name = "tokens")
     /**
      * GET /api/11/tokens/$user?
      */
-    def apiTokenList() {
+    @CompileStatic
+    def apiTokenList(String user) {
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -315,32 +442,24 @@ class ApiController extends ControllerBase{
             return
         }
 
-        AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = systemAuthContext
 
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
-/*
-        if (request.api_version < ApiVersions.V19 && !adminAuth) {
-            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
-        }
-*/
 
-        if (!adminAuth && params.user && params.user != authContext.username) {
-            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'User', params.user])
+        if (!adminAuth && user && user != authContext.username) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'User', user])
         }
         def tokenlist
-        if (params.user) {
-            tokenlist = apiService.findUserTokensCreator(params.user)
+        if (user) {
+            tokenlist = apiService.findUserTokensCreator(user)
         } else if (!adminAuth) {
             tokenlist = apiService.findUserTokensCreator(authContext.username)
         } else {
             tokenlist = AuthToken.list()
         }
 
-        // From now on we always mask tokens.
-//        def apiv19 = request.api_version >= ApiVersions.V19
-
-        def data = new ListTokens(params.user, !params.user, tokenlist.findAll {
+        def data = new ListTokens(user, !user, tokenlist.findAll {
             it.type != AuthTokenType.WEBHOOK
         }.collect {
             new Token(it)
@@ -350,17 +469,55 @@ class ApiController extends ControllerBase{
     }
 
 
+    @Post(uri= "/tokens/{user}", processes = MediaType.APPLICATION_JSON)
+    @Operation(
+        method = "POST",
+        summary = "Create API Token",
+        description = 'Create API Token for a specific username, or for current user',
+        parameters = [
+            @Parameter(
+                name = 'user',
+                in = ParameterIn.PATH,
+                description = 'username',
+                allowEmptyValue = true,
+                required = false,
+                schema = @Schema(
+                    type = 'string'
+                )
+            )
+        ],
+        requestBody = @RequestBody(
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = CreateToken)
+            )
+        ),
+        responses=[
+            @ApiResponse(
+                responseCode = "201",
+                description = "Token Created",
+
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = Token)
+                )
+            ),
+
+        ]
+    )
+
+    @Tag(name = "tokens")
     /**
      * POST /api/11/tokens/$user?
      * @return
      */
-    def apiTokenCreate() {
+    def apiTokenCreate(String user) {
         if (!apiService.requireApi(request, response)) {
             return
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
             //parse input json or xml
-        String tokenuser = params.user ?: authContext.username
+        String tokenuser = user ?: authContext.username
         def roles = null
         def tokenDuration = null
         def tokenName = null
@@ -371,7 +528,7 @@ class ApiController extends ControllerBase{
         if (tokenRolesV19Enabled || request.getHeader("Content-Type")) {
             def parsed = apiService.parseJsonXmlWith(request, response, [
                     json: { data ->
-                        if (!params.user) {
+                        if (!user) {
                             tokenuser = data.user
                             if (!tokenuser) {
                                 errors << " json: expected 'user' property"
@@ -389,7 +546,7 @@ class ApiController extends ControllerBase{
                         }
                     },
                     xml : { xml ->
-                        if (!params.user) {
+                        if (!user) {
                             tokenuser = xml.'@user'.text()
                             if (!tokenuser) {
                                 errors << " xml: expected 'user' attribute"
@@ -466,10 +623,39 @@ class ApiController extends ControllerBase{
         respond(new Token(token, false), [formats: ['xml', 'json']])
     }
 
+    @Post(uri= "/tokens/{user}/removeExpired", processes = MediaType.APPLICATION_JSON)
+    @Operation(
+        method = "POST",
+        summary = "Remove Expired Tokens",
+        description = 'Remove expired tokens for the specified User',
+        parameters = [
+            @Parameter(
+                name = 'user',
+                in = ParameterIn.PATH,
+                description = 'username, or special value `*`',
+                schema = @Schema(
+                    type = 'string'
+                )
+            )
+        ],
+        responses=[
+            @ApiResponse(
+                responseCode = "200",
+                description = "Remove expired tokens result",
+
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = RemoveExpiredTokens)
+                )
+            ),
+
+        ]
+    )
+    @Tag(name = "tokens")
     /**
-     * /api/19/tokens/$user?/removeExpired
+     * /api/19/tokens/$user/removeExpired
      */
-    def apiTokenRemoveExpired() {
+    def apiTokenRemoveExpired(String user) {
         if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
             return
         }
@@ -479,7 +665,6 @@ class ApiController extends ControllerBase{
         if (!apiService.requireParameters(params, response, ['user'])) {
             return
         }
-        def user = params.user
         def alltokens = user == '*'
 
         if (!adminAuth && alltokens) {

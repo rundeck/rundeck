@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.api.marshall.CollectionElement
 import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
+import io.swagger.v3.oas.annotations.media.Schema
 import rundeck.AuthToken
 
 /**
@@ -30,6 +31,7 @@ import rundeck.AuthToken
  * @since 3/23/17
  */
 @ApiResource
+@Schema
 class Token {
 
     @ApiVersion(37)
@@ -46,11 +48,6 @@ class Token {
     @XmlAttribute
     String token;
 
-    @Ignore(onlyIfNull = true)
-    @XmlAttribute("id")
-    @ApiVersion(max = 18)
-    String v18TokenId;
-
     @ApiVersion(19)
     @XmlAttribute
     String creator;
@@ -64,7 +61,7 @@ class Token {
 
     @Ignore(onlyIfNull = true)
     @ApiVersion(19)
-    FormattedDate expiration;
+    Date expiration
 
     @ApiVersion(19)
     Boolean expired;
@@ -75,11 +72,10 @@ class Token {
         this.token = masked ? null :
                      (authToken.tokenMode == null || authToken.tokenMode == AuthTokenMode.LEGACY) ? authToken.token :
                      authToken.clearToken
-        this.v18TokenId = this.token
         this.creator = authToken.creator
         this.user = authToken.user.login
         this.roles = authToken.authRolesSet()
-        this.expiration = authToken.expiration ? new FormattedDate(authToken.expiration) : null
+        this.expiration = authToken.expiration
         this.expired = authToken.tokenIsExpired()
     }
 }
