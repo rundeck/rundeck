@@ -1596,7 +1596,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         [
                 fwkConfigDir : fwkConfigDir,
                 aclFileList  : (hasOpsAdmin || hasAdmin) ? fslist: [],
-                aclStoredList: (hasAppAdmin || hasAdmin) ? stored: [:],
+                aclStoredList: (hasAppAdmin || hasAdmin) ? stored: [],
                 clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
     }

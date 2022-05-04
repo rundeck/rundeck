@@ -37,7 +37,9 @@ import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.Action
 import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.auth.CoreTypedRequestAuthorizer
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -47,6 +49,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.auth.app.NamedAuthRequestUtil
 import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
@@ -1079,7 +1082,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             result.access() == access
         where:
             endpoint | type                          | access
-            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_APP_READ
+            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_ANY_ADMIN
     }
 
     def "acls does not load metadata for policies"() {
@@ -1093,6 +1096,14 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id]
         }
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * system(_) >> Mock(AuthorizingSystem){
+                isAuthorized(RundeckAccess.General.OPS_ADMIN) >> true
+                isAuthorized(RundeckAccess.General.APP_ADMIN) >> true
+            }
+            0 * _(*_)
+        }
+
 
 
         when:
@@ -1119,6 +1130,14 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
+        }
+
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * system(_) >> Mock(AuthorizingSystem){
+                isAuthorized(RundeckAccess.General.OPS_ADMIN) >> true
+                isAuthorized(RundeckAccess.General.APP_ADMIN) >> true
+            }
+            0 * _(*_)
         }
 
 
