@@ -27,14 +27,14 @@
 <html>
 <g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,
-        action : [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+        action : [AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_ADMIN],
         context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
 <g:set var="hasOpsAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,
-        action : [AuthConstants.ACTION_OPS_ADMIN],
+        action : [AuthConstants.ACTION_OPS_ADMIN, AuthConstants.ACTION_ADMIN],
         context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
@@ -83,13 +83,7 @@
             };
         }
         jQuery(function () {
-            var filepolicies
-            <g:if test="${hasOpsAdminAuth}">
-                filepolicies = loadJsonData('aclFileList')
-            </g:if>
-            <g:else>
-               filepolicies = null
-            </g:else>
+            var filepolicies = loadJsonData('aclFileList')
 
             jQuery.extend(filepolicies,{
                 pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
@@ -188,7 +182,7 @@
   <div class="row">
       <div class="col-sm-12">
           <div class="card">
-              <g:if test="${!clusterMode}">
+              <g:if test="${!clusterMode && hasOpsAdminAuth}">
                   <div class="card-header clearfix">
                       <span class="panel-title pull-left">
                           <span class="text-info">${aclFileList.size()}</span>
@@ -249,6 +243,7 @@
 
               </g:if>
 
+              <g:if test="${hasAdminAuth}">
               <div class="card-header clearfix" id="storedPolicies_header">
                   <h3 class="card-title pull-left">
                       <g:message code="stored.acl.policy.files.title"/>
@@ -303,6 +298,7 @@
                                  [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
                                  null
               ]"/>
+              </g:if>
           </div>
           <g:if test="${clusterMode && hasOpsAdminAuth}">
               <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
