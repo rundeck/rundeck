@@ -520,7 +520,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
      * @return set of keys which are changed, added, or removed
      */
     @CompileStatic
-    Set<String> getKeyDiff(Properties orig, Properties newval) {
+    static Set<String> getKeyDiff(Properties orig, Properties newval) {
         Set<String> vals = new HashSet<>()
         if(orig){
             for (String key : orig.propertyNames()) {
