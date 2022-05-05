@@ -277,7 +277,9 @@ export default Vue.extend({
           this.loadPluginData(data)
         }
       }catch(e){
-        this.error=e.message
+        let message = 'Unknown Error'
+        if (e instanceof Error) message = e.message
+        this.error=message
       }
     },
     isPropVisible(testProp: any): boolean {
