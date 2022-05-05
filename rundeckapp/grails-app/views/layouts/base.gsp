@@ -75,8 +75,7 @@
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
-    <asset:stylesheet href="static/css/components/version.css"/>
-    <asset:stylesheet href="static/css/components/server-identity.css"/>
+
     <asset:stylesheet href="static/css/components/tour.css"/>
     <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
 
