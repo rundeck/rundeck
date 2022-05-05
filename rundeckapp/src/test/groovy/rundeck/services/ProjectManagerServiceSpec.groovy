@@ -31,6 +31,7 @@ import grails.events.bus.EventBus
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
 import org.apache.commons.fileupload.util.Streams
+import org.rundeck.app.grails.events.AppEvents
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -291,10 +292,11 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         1*service.projectCache.invalidate('test1')
         1*service.rundeckNodeService.refreshProjectNodes('test1')
         0*service.rundeckNodeService.getNodes('test1')
-        1*service.eventBus.notify('project.config.changed', {
+        1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
             it.project=='test1'
             it.props.abc=='def'
             it.props.'project.name'=='test1'
+            it.changedKeys.containsAll(it.props.keySet())
         })
 
         result.name=='test1'
@@ -422,6 +424,7 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         setup:
         Properties props1 = new Properties()
         props1['def']='ghi'
+        props1['abc']=abcval
         new Project(name:'test1').save()
         service.configStorageService=Stub(ConfigStorageService){
             existsFileResource("projects/test1/etc/project.properties") >> true
@@ -437,7 +440,7 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
                 tprops['def']=='ghi'
             },[(StorageUtil.RES_META_RUNDECK_CONTENT_TYPE):ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES]) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def\ndef=ghi').bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc='+abcval+'\ndef=ghi').bytes)
                 }
             }
         }
@@ -451,16 +454,22 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         then:
         1*service.projectCache.invalidate('test1')
         1*service.rundeckNodeService.refreshProjectNodes('test1')
-        1*service.eventBus.notify('project.config.changed', {
+        1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
             it.project=='test1'
-            it.props==[abc:'def',def:'ghi','project.name':'test1']
+            it.props==[abc:abcval,def:'ghi','project.name':'test1']
+            it.changedKeys.size()==changekeys.size()
+            it.changedKeys.containsAll(changekeys)
         })
 
         res != null
         res.config.size() == 3
-        'def' == res.config['abc']
+        abcval == res.config['abc']
         'ghi' == res.config['def']
         'test1' == res.config['project.name']
+        where:
+            abcval | changekeys
+            'def' | ['def','project.name']
+            'zzz' | ['abc','def','project.name']
     }
 
     @Unroll
@@ -518,7 +527,7 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
             existsFileResource("projects/test1/etc/project.properties") >> true
             getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def').bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nabc=def\nproject.name=test1').bytes)
                 }
             }
             updateFileResource("projects/test1/etc/project.properties",{InputStream inputStream->
@@ -545,9 +554,11 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
 
         1*service.projectCache.invalidate('test1')
         1*service.rundeckNodeService.refreshProjectNodes('test1')
-        1*service.eventBus.notify('project.config.changed', {
+        1*service.eventBus.notify(AppEvents.PROJECT_CONFIG_CHANGED, {
             it.project=='test1'
             it.props==[def:'ghi','project.name':'test1']
+            it.changedKeys.size()==2
+            it.changedKeys.containsAll(['abc', 'def'])
         })
         res!=null
         res.config.size()==2
@@ -562,7 +573,12 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
         props1['project.name']='not-right'
         new Project(name:'test1').save(flush: true)
         service.configStorageService=Mock(ConfigStorageService){
-            1 * existsFileResource("projects/test1/etc/project.properties") >> true
+            _ * existsFileResource("projects/test1/etc/project.properties") >> true
+            1 * getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
+                getContents() >> Stub(ResourceMeta){
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\na=b').bytes)
+                }
+            }
             1 * updateFileResource("projects/test1/etc/project.properties",{ins->
                 def tprops=new Properties()
                 tprops.load(ins)
