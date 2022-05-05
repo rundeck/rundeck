@@ -1107,4 +1107,24 @@ class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceU
             'a description' | 'a description'
             null            | null
     }
+
+    def "getKeyDiff"() {
+        given:
+            Properties orig = new Properties()
+            orig.putAll([a: 'aaa', b: 'bbb'])
+            Properties newvals = new Properties()
+            newvals.putAll(newprops)
+        when:
+            def result = ProjectManagerService.getKeyDiff(orig, newvals)
+        then:
+            result == expected.toSet()
+        where:
+            newprops             | expected
+            [a: 'aaa', b: 'bbb'] | []
+            [a: 'XXX', b: 'bbb'] | ['a']
+            [b: 'bbb']           | ['a']
+            [a: 'aaa', b: 'XXX'] | ['b']
+            [a: 'aaa']           | ['b']
+            [:]                  | ['a', 'b']
+    }
 }
