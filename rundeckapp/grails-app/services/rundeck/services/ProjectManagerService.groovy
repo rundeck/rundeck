@@ -499,7 +499,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         rundeckNodeService.refreshProjectNodes(projectName)
 
         eventBus.notify(
-            'project.config.changed',
+            AppEvents.PROJECT_CONFIG_CHANGED,
             [
                 project    : projectName,
                 props      : properties,
