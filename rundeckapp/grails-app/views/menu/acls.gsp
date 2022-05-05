@@ -115,9 +115,10 @@
                 ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
                 ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
                 <g:if test="${hasCreateAuth}" >
-                window.aclstorageupload = new PolicyUpload({policies: stpolicies.policies()});
-                stpolicies.fileUpload = aclstorageupload;
-                ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
+                    window.aclstorageupload = new PolicyUpload({policies: stpolicies.policies()});
+                    stpolicies.fileUpload = aclstorageupload;
+                    ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
+                </g:if>
             </g:if>
 
             <g:if test="${!clusterMode && hasOpsAdminAuth}">
@@ -130,7 +131,6 @@
             <g:if test="${hasUploadValidationError}" >
             window.uploadedpolicy = new PolicyDocument(loadJsonData('uploadedPolicy'));
             ko.applyBindings(uploadedpolicy, jQuery('#uploadedPolicyValidation')[0]);
-            </g:if>
             </g:if>
         });
     </script>
