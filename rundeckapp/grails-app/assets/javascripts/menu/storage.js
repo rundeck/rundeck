@@ -13,6 +13,7 @@ function init () {
     storageBrowse.staticRoot(true)
     storageBrowse.browseMode('browse')
     storageBrowse.allowUpload(true)
+    storageBrowse.downloadenabled(data.downloadenabled)
     if (data.project) {
         storageBrowse.basePath('project/' + data.project)
     }
