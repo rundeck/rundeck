@@ -102,16 +102,11 @@
             new PagerVueAdapter(window.fspolicies.paging, 'acl-file')
             <g:if test="${clusterMode && (hasOpsAdminAuth || hasAdminAuth) }">
             window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
-            console.log("1")
             ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
-            console.log("2")
             </g:if>
             <g:if test="${!clusterMode && (hasOpsAdminAuth || hasAdminAuth)}">
-            console.log("3")
             ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
-            console.log("4")
             ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
-            console.log("5")
             </g:if>
 
             <g:if test="${hasAdminAuth || hasAppAdminAuth}">
@@ -124,34 +119,24 @@
                 })
                 window.stpolicies = new PolicyFiles(storedpolicies,_rundeck.rdBase+'/menu/ajaxSystemAclMeta');
                 new PagerVueAdapter(window.stpolicies.paging, 'acl-stored')
-                console.log("6")
                 ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
-                console.log("7")
                 ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
-                console.log("8")
                 <g:if test="${hasCreateAuth}" >
                     window.aclstorageupload = new PolicyUpload({policies: stpolicies.policies()});
                     stpolicies.fileUpload = aclstorageupload;
-                    console.log("9")
                     ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
-                    console.log("10")
                 </g:if>
             </g:if>
-            console.log("clusterMode: " + "${clusterMode}")
             <g:if test="${!clusterMode && (hasOpsAdminAuth || hasAdminAuth)}">
 
             window.aclfsupload = new PolicyUpload({ policies: fspolicies.policies()});
             fspolicies.fileUpload = aclfsupload;
-            console.log("11")
             ko.applyBindings(aclfsupload, jQuery('#aclFSUploadForm')[0]);
-            console.log("12")
 
             </g:if>
             <g:if test="${hasUploadValidationError}" >
             window.uploadedpolicy = new PolicyDocument(loadJsonData('uploadedPolicy'));
-            console.log("13")
             ko.applyBindings(uploadedpolicy, jQuery('#uploadedPolicyValidation')[0]);
-            console.log("14")
             </g:if>
         });
     </script>
