@@ -27,40 +27,33 @@
 <html>
 <g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,
-        action : [AuthConstants.ACTION_ADMIN],
-        context: AuthConstants.CTX_APPLICATION,
-        kind   : AuthConstants.TYPE_SYSTEM_ACL,
-]
-)}"/>
-<g:set var="hasAppAdminAuth" value="${auth.resourceAllowedTest([
-        any    : true,
-        action : [AuthConstants.ACTION_APP_ADMIN],
+        action : [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
         context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
 <g:set var="hasOpsAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,
-        action : [AuthConstants.ACTION_OPS_ADMIN],
+        action : [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN],
         context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
-<g:set var="hasEditAuth" value="${hasAdminAuth || hasAppAdminAuth || auth.resourceAllowedTest([
+<g:set var="hasEditAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_UPDATE],
         context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
-<g:set var="hasCreateAuth" value="${hasAdminAuth || hasAppAdminAuth || auth.resourceAllowedTest([
+<g:set var="hasCreateAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_CREATE],
         context: AuthConstants.CTX_APPLICATION,
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
-<g:set var="hasDeleteAuth" value="${hasAdminAuth || hasAppAdminAuth || auth.resourceAllowedTest([
+<g:set var="hasDeleteAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_DELETE],
         context: AuthConstants.CTX_APPLICATION,
@@ -100,16 +93,16 @@
             })
             window.fspolicies = new PolicyFiles(filepolicies);
             new PagerVueAdapter(window.fspolicies.paging, 'acl-file')
-            <g:if test="${clusterMode && (hasOpsAdminAuth || hasAdminAuth) }">
-            window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
-            ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
+            <g:if test="${clusterMode && hasOpsAdminAuth}">
+                window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
+                ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
             </g:if>
-            <g:if test="${!clusterMode && (hasOpsAdminAuth || hasAdminAuth)}">
-            ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
-            ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
+            <g:if test="${!clusterMode && hasOpsAdminAuth}">
+                ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
+                ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
             </g:if>
 
-            <g:if test="${hasAdminAuth || hasAppAdminAuth}">
+            <g:if test="${hasAdminAuth}">
                 let storedpolicies = loadJsonData('aclStoredList');
                 jQuery.extend(storedpolicies,{
                     pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
@@ -127,16 +120,14 @@
                     ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
                 </g:if>
             </g:if>
-            <g:if test="${!clusterMode && (hasOpsAdminAuth || hasAdminAuth)}">
-
-            window.aclfsupload = new PolicyUpload({ policies: fspolicies.policies()});
-            fspolicies.fileUpload = aclfsupload;
-            ko.applyBindings(aclfsupload, jQuery('#aclFSUploadForm')[0]);
-
+            <g:if test="${!clusterMode && hasOpsAdminAuth}">
+                window.aclfsupload = new PolicyUpload({ policies: fspolicies.policies()});
+                fspolicies.fileUpload = aclfsupload;
+                ko.applyBindings(aclfsupload, jQuery('#aclFSUploadForm')[0]);
             </g:if>
             <g:if test="${hasUploadValidationError}" >
-            window.uploadedpolicy = new PolicyDocument(loadJsonData('uploadedPolicy'));
-            ko.applyBindings(uploadedpolicy, jQuery('#uploadedPolicyValidation')[0]);
+                window.uploadedpolicy = new PolicyDocument(loadJsonData('uploadedPolicy'));
+                ko.applyBindings(uploadedpolicy, jQuery('#uploadedPolicyValidation')[0]);
             </g:if>
         });
     </script>
@@ -191,7 +182,7 @@
   <div class="row">
       <div class="col-sm-12">
           <div class="card">
-              <g:if test="${!clusterMode && (hasOpsAdminAuth || hasAdminAuth)}">
+              <g:if test="${!clusterMode && hasOpsAdminAuth}">
                   <div class="card-header clearfix">
                       <span class="panel-title pull-left">
                           <span class="text-info">${aclFileList.size()}</span>
@@ -252,7 +243,7 @@
 
               </g:if>
 
-              <g:if test="${hasAdminAuth || hasAppAdminAuth}">
+              <g:if test="${hasAdminAuth}">
                   <div class="card-header clearfix" id="storedPolicies_header">
                       <h3 class="card-title pull-left">
                           <g:message code="stored.acl.policy.files.title"/>
@@ -309,7 +300,7 @@
                 ]"/>
               </g:if>
           </div>
-          <g:if test="${clusterMode && (hasOpsAdminAuth || hasAdminAuth)}">
+          <g:if test="${clusterMode && hasOpsAdminAuth}">
               <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
                   <div class="card-header">
                     <h4 class="card-title" data-bind="click: toggleShow" style="cursor: pointer;">
