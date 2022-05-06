@@ -1516,7 +1516,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 log.error("[${reportxmlnames[rxml]}] Unable to save report: ${report.errors}")
                 return
             }
-            execids.remove(Long.parseLong(report.jcExecId))
+            execids.remove(report.jcExecId)
             loadedreports << report
         }
         //generate reports for executions without matching reports

@@ -9,7 +9,7 @@ class ReferencedExecution {
     String status
     Execution execution
     Long seId
-    String exId
+    Long exId
 
     static belongsTo=[Execution]
 
@@ -17,8 +17,6 @@ class ReferencedExecution {
         scheduledExecution(nullable:true)
         status(nullable:true)
         execution(nullable: false)
-        seId(nullable: true)
-        exId(nullable: true)
     }
 
     static mapping = {

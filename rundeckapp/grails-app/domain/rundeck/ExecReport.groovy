@@ -23,7 +23,7 @@ class ExecReport extends BaseReport{
 
     String ctxCommand
     String ctxController
-    String jcExecId
+    Long jcExecId
     String jcJobId
     Boolean adhocExecution
     String adhocScript
@@ -48,7 +48,7 @@ class ExecReport extends BaseReport{
         adhocExecution(nullable:true)
         ctxCommand(nullable:true,blank:true)
         ctxController(nullable:true,blank:true)
-        jcExecId(nullable:true,blank:true)
+        jcExecId(nullable:true)
         jcJobId(nullable:true,blank:true)
         adhocScript(nullable:true,blank:true)
         abortedByUser(nullable:true,blank:true)

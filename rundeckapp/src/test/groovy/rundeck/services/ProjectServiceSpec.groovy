@@ -2269,7 +2269,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
-            jcExecId:'123',
+            jcExecId: 123,
             jcJobId: oldJobId.toString(),
             node:'1/0/0',
             title: 'blah',
@@ -2355,7 +2355,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
             ctxController: 'ct',
-            jcExecId: '123',
+            jcExecId: 123,
             jcJobId: '321',
             node: '1/0/0',
             title: 'blah',
