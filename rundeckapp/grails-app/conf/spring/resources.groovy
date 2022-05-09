@@ -26,6 +26,8 @@ import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFilesystemProjectImporter
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
+import com.dtolabs.rundeck.app.tree.DelegateStorageTree
+import com.dtolabs.rundeck.app.tree.StorageTreeCreator
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
@@ -102,6 +104,8 @@ import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
+import org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator
+import org.springframework.boot.jdbc.metadata.DataSourcePoolMetadataProvider
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -117,7 +121,6 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
-import rundeck.GrailsIssue12460PostProcessor
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.ExecutionValidatorService
@@ -527,7 +530,22 @@ beans={
         defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
         loggerName='org.rundeck.storage.events'
     }
-    rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
+    rundeckStorageTreeCreator(StorageTreeCreator){
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        storagePluginProviderService=ref('storagePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        storageConfigPrefix='provider'
+        startupConfiguration = application.config.rundeck?.storage?.toFlatConfig()
+        converterConfigPrefix='converter'
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
+        defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
+        loggerName='org.rundeck.storage.events'
+    }
+    rundeckStorageTree(DelegateStorageTree){
+        creator=ref('rundeckStorageTreeCreator')
+    }
     if(grailsApplication.config.getProperty("rundeck.feature.projectKeyStorage.enabled", Boolean.class, false)) {
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
     }else{
@@ -771,6 +789,15 @@ beans={
             configurationService = ref('configurationService')
         }
     }
+
+
+    // Activate Spring Actuator DataSourceHealthIndicator with a Rundeck specific bean name `rundeckDataSourceHeathIndicator`
+    rundeckDataSourceHeathIndicator(DataSourceHealthIndicator) {
+        dataSource = ref("dataSource")
+        // Get the validation query from config, if not provided the Spring DataSourceHealthIndicator will use the Connection.isValid() to test the database connection.
+        query = grailsApplication.config.getProperty("rundeck.health.databaseValidationQuery")
+    }
+
     rundeckConfig(RundeckConfig)
     if(!Environment.isWarDeployed()) {
         appRestarter(AppRestarter)
@@ -779,7 +806,4 @@ beans={
     pluginCachePreloader(PluginCachePreloader)
     interceptorHelper(DefaultInterceptorHelper)
 
-    //workaround for issue with grails 5.1.6 https://github.com/grails/grails-core/issues/12460
-    //https://github.com/rainboyan/grails-issue-12460-demo
-    grailsIssue12460PostProcessor(GrailsIssue12460PostProcessor)
 }

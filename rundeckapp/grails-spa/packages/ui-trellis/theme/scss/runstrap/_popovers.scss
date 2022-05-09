@@ -124,3 +124,34 @@
 .popover-content {
   padding: 9px 14px;
 }
+
+.daterangepicker {
+  background-color: var(--background-color) !important;
+  border: 1px solid var(--border-color) !important;
+  // td, th{
+  //   background-color: var(--background-color) !important;
+  // }
+  .calendar-table{
+    background-color: var(--background-color) !important;
+    border-color: var(--background-color) !important;
+  }
+  td {
+    background-color: var(--background-color) !important;
+  }
+  td.today{
+    color: var(--accent-color);
+  }
+  th {
+    background-color: var(--background-color-lvl-2) !important;
+  }
+  th.available span{
+    border-color: var(--font-color) !important;
+  }
+  td.in-range {
+    background-color: var(--background-color-lvl3) !important;
+    color: var(--font-color) !important;
+  }
+  td.active.start-date.in-range, td.active.end-date.in-range{
+    background-color: var(--grey-900) !important;
+  }
+}

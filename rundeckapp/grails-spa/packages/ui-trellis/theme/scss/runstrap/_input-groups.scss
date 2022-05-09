@@ -74,6 +74,10 @@
 
 // Text input groups
 // -------------------------
+.tags-list-follows-focus{
+  background-color: var(--background-color);
+}
+
 .input-group-addon {
   padding: $padding-base-vertical $padding-base-horizontal;
   font-size: $font-size-base;
@@ -81,7 +85,7 @@
   line-height: 1;
   color: $input-color;
   text-align: center;
-  background-color: $input-group-addon-bg;
+  background-color: var(--background-color);
   border: 1px solid var(--input-outline-color);
   border-radius: $input-border-radius;
 
@@ -237,7 +241,7 @@ select.input-sm{
 }
 .subtitle-head-item {
   .search {
-    padding: 5px;
+    margin:0 5px;
     ::placeholder {
       color: var(--font-color);
     }

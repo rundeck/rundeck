@@ -183,7 +183,7 @@ dependencies {
     // Database drivers
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtimeOnly 'org.postgresql:postgresql:42.2.13'
+    runtimeOnly 'org.postgresql:postgresql:42.3.3'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
@@ -239,6 +239,7 @@ grails{
         implementation project(':grails-securityheaders')
         implementation project(':grails-repository')
         implementation project(':grails-webhooks')
+        implementation project(':grails-execution-mode-timer')
 
         /** It's important that the configuration addition follow the form 'compile project("")'
          * so the Gradle magic happens. Other forms(ie 'compile proj' or 'compile project(proj)'
@@ -263,6 +264,7 @@ bootRun {
         implementation project(':grails-securityheaders')
         implementation project(':grails-repository')
         implementation project(':grails-webhooks')
+        implementation project(':grails-execution-mode-timer')
     }
     dependsOn 'copySpa', copyRuntimeLibs, 'vendorAssetDeps'
     main 'rundeckapp.Application'

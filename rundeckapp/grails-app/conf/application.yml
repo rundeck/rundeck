@@ -48,12 +48,28 @@ spring:
                 - '**/*.gson'
                 - 'logback.groovy'
                 - '*.properties'
-                -
 management:
     endpoints:
         enabled-by-default: false
-        jmx:
-            unique-names: true
+    health:
+        defaults:
+            enabled: true
+    endpoint:
+        health:
+            enabled: false
+            probes:
+                enabled: true
+            show-details: always
+            group:
+                liveness:
+                    include:
+                        - livenessState
+                        - ping
+                readiness:
+                    include:
+                        - readinessState
+                        - rundeckDataSourceHeathIndicator
+
 ---
 
 grails:
@@ -204,6 +220,9 @@ rundeck:
                     - /favicon.ico
                     - /health
                     - /user/reset
+                    - /actuator/health
+                    - /actuator/health/liveness
+                    - /actuator/health/readiness
     storage:
         default: deleteMe
     execution:
@@ -301,6 +320,8 @@ rundeck:
             enabled: false #FYI FALSE
         fileUploadPlugin:
             enabled: true
+    health:
+        databaseValidationQuery: "SELECT 1"
 ---
 
 beans:

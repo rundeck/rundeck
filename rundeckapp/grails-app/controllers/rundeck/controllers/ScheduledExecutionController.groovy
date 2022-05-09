@@ -850,10 +850,12 @@ class ScheduledExecutionController  extends ControllerBase{
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
             try{
                 urlo = new URL(url)
-                client.setUri(urlo.toURI())
                 if(urlo.userInfo){
+                    client.setUri(new URL(cleanUrl).toURI())
                     UsernamePasswordCredentials cred = new UsernamePasswordCredentials(urlo.userInfo)
-                    client.setBasicAuthCredentials(cred.userName,cred.password)
+                    client.setBasicAuthCredentials(cred.userName, cred.password)
+                } else {
+                    client.setUri(urlo.toURI())
                 }
             }catch(MalformedURLException e){
                 throw new Exception("Failed to configure base URL for authentication: "+e.getMessage(),e)
@@ -2634,7 +2636,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if(params.followdetail=='html'){
                 redirect(controller: "execution", action: "renderOutput", id: results.id, params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
             }else{
-                redirect(controller: "execution", action: "show", id: results.id, params:[outdetails: params.followdetail])
+                redirect(controller: "execution", action: "show", id: results.id, fragment: params.followdetail)
             }
         } else {
             redirect(controller: "scheduledExecution", action: "show", id: params.id)

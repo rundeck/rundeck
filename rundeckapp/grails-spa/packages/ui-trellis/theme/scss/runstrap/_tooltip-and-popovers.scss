@@ -264,3 +264,50 @@
      @include opacity(1.0);
      transition-delay: 0s;
 }
+
+
+.rs-tooltip {
+  .rs-tooltip--message{
+    margin: 15px;
+    text-align: center;
+    background-color: var(--grey-900);
+    color: var(--white);
+    border-radius: 6px;
+    display: none;
+    padding: 10px 15px;
+    position: absolute;
+    text-align: center;
+    z-index: 999;
+    &:before{
+      background-color: var(--grey-900);
+      content: ' ';
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      z-index: 999;
+      top: 13px;
+      left: 32px;
+      transform: translate(-50%, calc(-100% - 5px)) rotate(45deg);
+    }
+  }
+  &:hover {
+    .rs-tooltip--message{
+      display: block;
+    }
+  }
+
+  &.bottom{
+    .rs-tooltip--message{
+        position: absolute;
+        bottom: -8px;
+        left: 38.5%;
+        transform: translate(-50%, calc(100% + 10px));
+    }
+  }
+}
+
+.text-ellipsis{
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}

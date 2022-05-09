@@ -32,12 +32,12 @@
           <activity-filter v-model="query" :event-bus="eventBus" :opts="filterOpts" v-if="showFilters"></activity-filter>
 
           <div class="pull-right">
-            <span v-if="runningOpts.allowAutoRefresh">
+            <span v-if="runningOpts.allowAutoRefresh" class="pr-2">
               <input type=checkbox id=auto-refresh v-model=autorefresh />
-              <label for="auto-refresh">{{$t('Auto refresh')}}</label>
+              <label for="auto-refresh" class="pr-2">{{$t('Auto refresh')}}</label>
             </span>
             <!-- bulk edit controls -->
-            <span  v-if="auth.deleteExec && pagination.total>0 && showBulkDelete">
+            <span  v-if="auth.deleteExec && pagination.total>0 && showBulkDelete" class="spacing-x">
                 <span v-if="bulkEditMode" >
                   <i18n path="bulk.selected.count">
                     <strong>{{bulkSelectedIds.length}}</strong>
@@ -924,5 +924,10 @@ $since-bg: #ccf;
   background-color: var(--warning-bg-color);
   --text-muted-color: var(--font-color);
   --text-secondary-color: var(--font-color);
+}
+.spacing-x{
+  * + *{
+    margin-left: 1rem;
+  }
 }
 </style>

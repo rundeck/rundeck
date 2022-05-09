@@ -295,7 +295,7 @@
   <section class="section-space-lg">
 
       <div class="job-editor-schedules-vue" id="job-editor-schedules-vue">
-          <schedules-editor-section :event-bus="EventBus" />
+          <schedules-editor-section :event-bus="EventBus" :use-crontab-string="${scheduledExecution?.shouldUseCrontabString()?:false}"/>
       </div>
 
       <g:render template="jobComponentProperties"

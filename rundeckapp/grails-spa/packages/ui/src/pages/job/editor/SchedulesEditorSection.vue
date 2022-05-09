@@ -1,6 +1,6 @@
 <template>
   <div >
-    <schedule-editor v-model="updatedData" :event-bus="eventBus" v-if="updatedData"/>
+    <schedule-editor v-model="updatedData" :event-bus="eventBus" v-if="updatedData" :use-crontab-string="useCrontabString"/>
     <json-embed :output-data="updatedData" field-name="schedulesJsonData"/>
   </div>
 </template>
@@ -16,7 +16,7 @@ import {
 
 export default {
   name: 'App',
-  props:['eventBus' ],
+  props:['eventBus','useCrontabString' ],
   components: {
     ScheduleEditor,
     JsonEmbed

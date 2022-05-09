@@ -53,7 +53,13 @@ public class DataContextUtils {
                                                                  "[^}\\s]+?" +
                                                                  Pattern.quote("}") +
                                                                  "$");
-
+    //Evaluate an entire string for tokens
+    private static final Pattern optionPatternEntireString = Pattern.compile( "\\$\\{option.([^}]*?)\\}" );
+    //Uses the pattern above to return a boolean if there's a token in the given string
+    public static boolean hasOptionsInString(String evalString){
+        Matcher matcher = optionPatternEntireString.matcher(evalString);
+        return matcher.find();
+    }
     /**
      * A converter which replaces '${option.*}' with blank when replacing data references
      */

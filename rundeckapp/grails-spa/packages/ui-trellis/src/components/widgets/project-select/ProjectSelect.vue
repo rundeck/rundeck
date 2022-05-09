@@ -25,7 +25,7 @@
                     <div role="button" tabindex="0" class="scroller__item" :title="item.name" 
                         @click="itemClicked(item)"
                         @keypress.enter="itemClicked(item)">
-                        <span>{{item.label || item.name}}</span>
+                        <span class="text-ellipsis">{{item.label || item.name}}</span>
                     </div>
                 </RecycleScroller>
             </Skeleton>
@@ -179,5 +179,9 @@ export default class ProjectSelect extends Vue {
     --skel-color: #eeeeee !important;
     margin: 0 10px 0 10px;
 }
-
+.text-ellipsis{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
 </style>

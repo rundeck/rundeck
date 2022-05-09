@@ -58,6 +58,7 @@ public class RundeckConfigBase {
     RundeckNotificationConfig notification;
     RundeckApiConfig api;
     ScmLoader scmLoader;
+    RundeckHealthIndicatorConfig health;
 
     @Data
     public static class UserSessionProjectsCache {
@@ -654,6 +655,17 @@ public class RundeckConfigBase {
     public static class ScmLoader {
         Long delay;
         Long interval;
+    }
+
+    /**
+     * This is a configuration proxy for Spring boot health indicator configurations.
+     * Configuration parameters here are used to manually configure Spring Boot Health endpoints.
+     */
+    @Data
+    public static class RundeckHealthIndicatorConfig {
+        // The validation SQL Query to check if the database is still in good status
+        // This is a parameter necessary to configure Spring DataSourceHealthIndicator bean.
+        String databaseValidationQuery;
     }
 
     public static final Map<String,String> DEPRECATED_PROPS = ImmutableMap.of(

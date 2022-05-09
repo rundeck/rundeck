@@ -410,7 +410,7 @@ class ProjectController extends ControllerBase{
                         flash.message=message(code:"archive.successfully.imported")
                     }
                 }else{
-                    flash.error=message(code:"failed.to.import.some.jobs")
+                    flash.error=result.joberrors
                     flash.joberrors=result.joberrors
                 }
                 def warning = []
@@ -1340,29 +1340,9 @@ class ProjectController extends ControllerBase{
             }
             configProps.putAll(config)
         }
-        def currentProps = project.getProjectProperties() as Properties
-        def disableEx = currentProps.get("project.disable.executions")
-        def disableSched = currentProps.get("project.disable.schedule")
-        boolean isExecutionDisabledNow  = disableEx && disableEx == 'true'
-        boolean isScheduleDisabledNow = disableSched && disableSched == 'true'
-        def newExecutionDisabledStatus =
-                configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
-        def newScheduleDisabledStatus =
-                configProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+        Properties currentProps = project.getProjectProperties() as Properties
 
         def result=frameworkService.setFrameworkProjectConfig(project.name,configProps)
-
-        def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
-                || (isScheduleDisabledNow != newScheduleDisabledStatus))
-        if(reschedule){
-            frameworkService.handleProjectSchedulingEnabledChange(
-                    project?.getName(),
-                    isExecutionDisabledNow,
-                    isScheduleDisabledNow,
-                    newExecutionDisabledStatus,
-                    newScheduleDisabledStatus
-            )
-        }
 
         if(!result.success){
             return apiService.renderErrorFormat(response,[
@@ -1371,7 +1351,7 @@ class ProjectController extends ControllerBase{
                     format:respFormat
             ])
         }
-
+        checkScheduleChanges(project, currentProps, configProps)
         respondProjectConfig(respFormat, project)
     }
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
@@ -1409,6 +1389,36 @@ class ProjectController extends ControllerBase{
                 break
         }
     }
+
+    private void checkScheduleChanges(IRundeckProject project, Map propsBeforeChange, Map changedProps){
+        def execDisabledChange = changedProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION]
+        def schedDisabledChange = changedProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE]
+
+        if(execDisabledChange != null || schedDisabledChange != null){
+            def disableEx = propsBeforeChange.get("project.disable.executions")
+            def disableSched = propsBeforeChange.get("project.disable.schedule")
+
+            boolean isExecutionDisabledNow  = disableEx && disableEx == 'true'
+            boolean isScheduleDisabledNow = disableSched && disableSched == 'true'
+            def newExecutionDisabledStatus =
+                    execDisabledChange == 'true'
+            def newScheduleDisabledStatus =
+                    schedDisabledChange == 'true'
+
+            boolean reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                    || (isScheduleDisabledNow != newScheduleDisabledStatus))
+            if(reschedule){
+                frameworkService.handleProjectSchedulingEnabledChange(
+                        project?.getName(),
+                        isExecutionDisabledNow,
+                        isScheduleDisabledNow,
+                        newExecutionDisabledStatus,
+                        newScheduleDisabledStatus
+                )
+            }
+        }
+    }
+
     @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
     def apiProjectConfigKeyPut() {
         if(!apiService.requireApi(request,response)){
@@ -1441,6 +1451,12 @@ class ProjectController extends ControllerBase{
                     format:respFormat
             ])
         }
+        def propValueBefore = project.getProperty(key_)
+        if(propValueBefore){
+            propValueBefore = new Properties([(key_): propValueBefore])
+        }else{
+            propValueBefore = new Properties([(key_): ''])
+        }
 
         def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
 
@@ -1451,8 +1467,9 @@ class ProjectController extends ControllerBase{
                     format: respFormat
             ])
         }
-        def properties = frameworkService.loadProjectProperties(project)
-        def resultValue= properties.get(key_)
+        def resultValue= project.getProperty(key_)
+        propValueBefore
+        checkScheduleChanges(project, propValueBefore, new Properties([(key_): resultValue]))
 
         switch (respFormat) {
             case 'text':

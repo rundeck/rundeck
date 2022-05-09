@@ -96,7 +96,9 @@
 .subtitlebar.standard {
   height: 100%;
 }
-
+#subtitlebar.has-content{
+  margin-bottom: 20px;
+}
 .subtitlebar.has-content {
   .navbar-header {
     padding: 5px 5px 5px 0;
