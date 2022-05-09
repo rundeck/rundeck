@@ -30,6 +30,7 @@ class XXSSPSecurityHeaderProvider implements SecurityHeaderProvider {
     public static final String X_XSS_PROTECTION_HEADER_NAME = 'X-XSS-Protection'
     String name = 'xxssp'
     Boolean defaultEnabled = true
+    String protectionValue = '0'
 
     @Override
     List<SecurityHeader> getSecurityHeaders(
@@ -37,11 +38,11 @@ class XXSSPSecurityHeaderProvider implements SecurityHeaderProvider {
             final HttpServletResponse response,
             final Map config
     ) {
-        def value = '1'
+        def value = protectionValue
         if (config.block in ['true', true]) {
-            value = '1; mode=block'
+            value += '; mode=block'
         } else if (config.report) {
-            value = '1; report=' + config.report
+            value += '; report=' + config.report
         }
 
         [
