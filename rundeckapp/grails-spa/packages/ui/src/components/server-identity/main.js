@@ -3,19 +3,17 @@
 import Vue from 'vue'
 import ServerDisplay from '@rundeck/ui-trellis/lib/components/version/ServerDisplay'
 import { getRundeckContext } from '@rundeck/ui-trellis'
-import {ServerInfo}  from '@rundeck/ui-trellis/src/stores/System'
+import { ServerInfo }  from '@rundeck/ui-trellis/src/stores/System'
 
 Vue.config.productionTip = false
 
 
 /* eslint-disable no-new */
 
-const serveruuid = document.body.getElementsByClassName('rundeck-server-uuid')
-for (var i = 0; i < serveruuid.length; i++) {
-    const e = serveruuid[i]
-
+const serverCollection = Array.from(document.body.getElementsByClassName('rundeck-server-uuid'))
+serverCollection.forEach( serverElement => {
     new Vue({
-        el: e,
+        el: serverElement,
         components: {
             ServerDisplay
         },
@@ -27,11 +25,11 @@ for (var i = 0; i < serveruuid.length; i++) {
             }
         },
         async mounted () {
-            this.showId = e.attributes['data-show-id']?e.attributes['data-show-id'].value !== 'false':true
-            this.nameClass = e.attributes['data-name-class']?e.attributes['data-name-class'].value:''
-            if (e.attributes['data-server-name'] && e.attributes['data-server-uuid']) {
+            this.showId = serverElement.attributes['data-show-id']?serverElement.attributes['data-show-id'].value !== 'false':true
+            this.nameClass = serverElement.attributes['data-name-class']?serverElement.attributes['data-name-class'].value:''
+            if (serverElement.attributes['data-server-name'] && serverElement.attributes['data-server-uuid']) {
                 this.serverInfo =
-                    new ServerInfo(e.attributes['data-server-name'].value, e.attributes['data-server-uuid'].value)
+                    new ServerInfo(serverElement.attributes['data-server-name'].value, serverElement.attributes['data-server-uuid'].value)
             } else {
                 const rootStore=getRundeckContext().rootStore
                 try {
@@ -41,7 +39,7 @@ for (var i = 0; i < serveruuid.length; i++) {
                 this.serverInfo = rootStore.system.serverInfo
             }
         },
-        template:`<server-display :uuid="serverInfo.uuid" 
+        template:`<server-display :uuid="serverInfo.uuid"
                                   :name="serverInfo.name"
                                   :name-class="nameClass"
                                   :glyphicon="serverInfo.icon"
@@ -49,4 +47,4 @@ for (var i = 0; i < serveruuid.length; i++) {
                                   v-if="serverInfo">
         </server-display>`
     })
-}
+})
