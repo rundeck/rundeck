@@ -6,14 +6,12 @@ buildscript {
     }
     dependencies {
         classpath "org.grails:grails-gradle-plugin:$grailsGradlePluginVersion"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:$assetPluginVersion"
     }
 }
 
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"org.grails.grails-plugin"
-apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
 
 
@@ -77,7 +75,6 @@ dependencies {
     profile "org.grails.profiles:web-plugin"
     provided "org.grails:grails-plugin-services"
     provided "org.grails:grails-plugin-domain-class"
-    provided "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
 
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
@@ -100,17 +97,6 @@ bootJar.enabled = false
 
 tasks.withType(Test) {
     useJUnitPlatform()
-}
-
-assets {
-    minifyJs = false
-    minifyCss = false
-    verbose = true
-    packagePlugin = project.findProperty('packagePlugin')?: false
-    configOptions = [commonJs:false]
-    assetsPath = "grails-app"
-
-    includes = ['**/*.js', '**/*.css', '**/*.png', '**/*.svg']
 }
 
 jar {
