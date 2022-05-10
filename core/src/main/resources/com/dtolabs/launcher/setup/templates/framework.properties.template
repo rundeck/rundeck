@@ -11,6 +11,12 @@ framework.server.port = @framework.server.port@
 framework.server.url = @framework.rundeck.url@
 
 # ----------------------------------------------------------------
+# Pager Duty Event Service URL
+# ----------------------------------------------------------------
+
+framework.pagerduty.service.url = @framework.pagerduty.service.url@
+
+# ----------------------------------------------------------------
 # Installation locations
 # ----------------------------------------------------------------
 

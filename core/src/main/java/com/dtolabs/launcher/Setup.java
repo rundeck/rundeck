@@ -50,6 +50,7 @@ public class Setup implements CLIToolLogger {
     public static final boolean FORCE_FLAG = true;
     private Parameters parameters = new Parameters();
     public static final String TEMPLATE_RESOURCES_PATH = "com/dtolabs/launcher/setup/templates";
+    public static final String PAGERDUTY_DEFAULT_SERVICE_URL = "https://events.pagerduty.com";
 
     /**
      * default constructor
@@ -419,6 +420,7 @@ public class Setup implements CLIToolLogger {
             properties.setProperty("rdeck.base", Preferences.forwardSlashPath(baseDir));
             properties.setProperty("framework.server.hostname", serverHostname);
             properties.setProperty("framework.server.name", serverName);
+            properties.setProperty("framework.pagerduty.service.url", PAGERDUTY_DEFAULT_SERVICE_URL);
         }
 
         public String getNodeHostnameArg() {
