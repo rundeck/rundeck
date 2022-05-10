@@ -3,7 +3,7 @@
     <div class v-if="title">
       <h3 class>
         {{title}}
-        <a class="btn btn-info btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
+        <a class="btn btn-primary btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
           <i class="glyphicon glyphicon-pencil"></i>
           {{editButtonText || $t('Edit')}}
         </a>
@@ -17,7 +17,7 @@
         </ul>
       </div>
       <div>
-        <a class="btn btn-info btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
+        <a class="btn btn-primary btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
           <i class="glyphicon glyphicon-pencil"></i>
           {{editButtonText || $t('Edit')}}
         </a>

@@ -1,7 +1,13 @@
 package rundeckapp
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
+import io.swagger.v3.oas.annotations.OpenAPIDefinition
+import io.swagger.v3.oas.annotations.info.Info
+import io.swagger.v3.oas.annotations.info.License
+import io.swagger.v3.oas.annotations.servers.Server
+import io.swagger.v3.oas.annotations.servers.ServerVariable
 import org.rundeck.app.bootstrap.PreBootstrap
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -19,6 +25,28 @@ import rundeckapp.init.prebootstrap.InitializeRundeckPreboostrap
 
 import java.nio.file.Files
 import java.nio.file.Paths
+
+@OpenAPIDefinition(
+    info = @Info(
+        title = "Rundeck",
+        version = ApiVersions.API_CURRENT_VERSION_STR,
+        description = "Rundeck provides a Web API for use with your applications.",
+        license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0.html")
+    ),
+    servers = @Server(
+        url = '{host}/api/{apiversion}',
+        variables = [
+            @ServerVariable(
+                name = 'apiversion',
+                defaultValue = '41' //NB: spec generation doesn't seem to accept a constant string :(
+            ),
+            @ServerVariable(
+                name = 'host',
+                defaultValue = 'http://localhost:4440'
+            )
+        ]
+    )
+)
 
 @EnableAutoConfiguration(exclude = [SecurityFilterAutoConfiguration])
 class Application extends GrailsAutoConfiguration implements EnvironmentAware {
