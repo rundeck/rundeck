@@ -19,6 +19,7 @@
     "browser-sync": "^2.26.14",
     "browser-sync-webpack-plugin": "^2.3.0",
     "laravel-mix": "^6.0.16",
+    "node-forge": "^1.3.1",
     "postcss": "^8.2.12",
     "run-script-os": "^1.1.1",
     "typescript": "^4.2.4",
@@ -40,5 +41,10 @@
     "vue": "2.6.14",
     "vue-property-decorator": "^9.1.2",
     "vuex": "^3.6.2"
+  },
+  "overrides": {
+     "selfsigned": { 
+         "node-forge": "^1.3.1"
+     }
   }
 }
