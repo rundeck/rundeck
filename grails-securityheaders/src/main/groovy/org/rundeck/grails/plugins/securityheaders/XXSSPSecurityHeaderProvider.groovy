@@ -39,10 +39,10 @@ class XXSSPSecurityHeaderProvider implements SecurityHeaderProvider {
             final Map config
     ) {
         def value = protectionValue
-        if (config.block in ['true', true]) {
+        if (config.get('block') in ['true', true]) {
             value += '; mode=block'
-        } else if (config.report) {
-            value += '; report=' + config.report
+        } else if (config.get('report')) {
+            value += '; report=' + config.get('report')
         }
 
         [
