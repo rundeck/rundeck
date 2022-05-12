@@ -15,87 +15,34 @@ It lets you easily run automation tasks across a set of nodes.
 
 * Get Help: <https://docs.rundeck.com/docs/introduction/getting-help.html>
 
+* Installation: <https://docs.rundeck.com/docs/administration/install/installing-rundeck.html>
+
 
 See the [Release Notes](https://docs.rundeck.com/docs/history/) for the latest version information.
 
 
-To Build:
+How To Build:
 =====
 
 Primary build is supported with gradle. More info in the [wiki](https://github.com/rundeck/rundeck/wiki/Building-and-Testing).
 
-Gradle Build
-=====
+Requirements: Java 1.8, NodeJs 16
+
+Build with Gradle
+---
+
+Produces: `rundeckapp/build/libs/rundeck-X.Y.war`
 
     ./gradlew build
 
-Artifacts:
+Docker Build
+---
 
-* `rundeckapp/build/libs/rundeck-X.Y.war`
+Uses the war artifact and produces a docker image.
 
+Creates image `rundeck/rundeck:SNAPSHOT`, you can define `-PdockerTags` to add additional tags
 
-
-RPM and DEB package builds
-=======
-
-To build .rpm and .deb packages, you must first clone [the rundeck packaging repo](https://github.com/rundeck/packaging) into the rundeck repo.
-A sample list of simple build steps is below, where $RELEASE_VERSION is the version you want
-to build, i.e. 3.4.3
-
-    git clone https://github.com/rundeck/rundeck
-    cd rundeck
-    git checkout refs/tags/v$RELEASE_VERSION
-    git clone https://github.com/rundeck/packaging
-    ./gradlew build -Penvironment=release
-    cd packaging
-
-For 3.2.x builds, check out the `maint-3.4.x` branch of `packaging`
-
-    git checkout maint-3.4.x
-    mkdir -p artifacts
-    cp ../rundeckapp/build/libs/rundeck*.war artifacts/
-    ./gradlew -PpackageRelease=$RELEASE_VERSION clean packageArtifacts
-
-To build clean:
-
-    make clean
-
-Installation
-======
-
-There are several install options: a self-contained war file, or RPM, or Debian.
-
-To start from the rundeck-X.Y.war, put it in a directory named ~/rundeck, then execute:
-
-    java -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server -jar rundeck-X.Y.war
-
-If you'd like to install via RPM, you can use Yum:
-
-    rpm -Uvh http://repo.rundeck.org/latest.rpm
-    yum install rundeck
-
-OR install directly from RPM:
-
-    rpm -ivh rundeck-2.0.0-xxx.rpm rundeck-config-2.0.0-xxx.rpm
-
-Once the RPM is installed, execute:
-
-    sudo /etc/init.d/rundeckd start
-
-The server should launch on port 4440, with default username/password of `admin/admin`.
-
-For Debian, download the .deb from the [downloads page](https://www.rundeck.com/downloads), then run:
-
-    dpkg -i rundeck-2.0.0-x.deb
-
-* For more info and configuration information, see the [Rundeck docs](https://docs.rundeck.com/docs).
-
-Requirements
-=======
-
-Java 8 (openjdk, oracle)
-
-Node JS 12
+    ./gradlew :docker:officialBuild
 
 Documentation
 ======
