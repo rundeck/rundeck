@@ -33,7 +33,6 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
-    <asset:stylesheet href="static/css/components/server-identity.css"/>
 
     <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
         <asset:javascript src="vendor/vue.js"/>
