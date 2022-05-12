@@ -3973,7 +3973,6 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             [scheduleEnabled: true, executionEnabled: true] | false
     }
 
-
     @Unroll
     def "do update job with job lifecycle plugin, error thrown"(){
         given:
@@ -4939,6 +4938,57 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             job.errors.hasErrors()
             !job.errors.hasFieldErrors('options')
             job.errors.hasFieldErrors('jobName')
+    }
+
+    @Unroll
+    def "job definition option should remove options when updating"() {
+
+        given: "a job with options"
+
+        Map params = [:]
+        setupDoUpdate()
+        def auth = Mock(UserAndRolesAuthContext)
+        def baseJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+                .save(flush:true)
+        def  emptyOptionsJob = new ScheduledExecution(createJobParams(options:[]))
+
+        when: "same job is uploaded with no options "
+
+        service.jobDefinitionBasic(baseJob,emptyOptionsJob,params,auth)
+        baseJob.save(flush:true)
+        def options = Option.findAll()
+
+        then: "job options are empty"
+
+        options.size() == 0
+
+    }
+    @Unroll
+    def "update job definition should update options"() {
+
+        given: "a job with options"
+
+        setupDoValidate()
+        Map params = [:]
+        def baseJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test2', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])
+        ])).save()
+        def  updatedJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+
+        when: "same job with different options"
+
+        def importedJob = RundeckJobDefinitionManager.importedJob(updatedJob, [:])
+        service.updateJobDefinition(importedJob, params, mockAuth(), baseJob)
+        baseJob.save(flush:true)
+        def options = Option.findAll().size()
+
+        then: "baseJob should have 1 option remaining"
+
+        options == 1
+
     }
 
     def "job definition notifications from input job"() {
