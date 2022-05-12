@@ -44,7 +44,6 @@
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
-    <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="ansi24.css"/>
     %{-- Vendor CSS styles--}%
     <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
