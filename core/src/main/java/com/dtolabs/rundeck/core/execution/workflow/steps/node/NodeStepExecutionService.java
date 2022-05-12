@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 
@@ -120,8 +121,7 @@ public class NodeStepExecutionService
         serviceList.add(remoteScriptAdaptedNodeStepPluginService);
 
         //convert (original)NodeStepPlugin -> NodeStepExecutor
-        nodeStepPluginAdaptedNodeStepExecutorService =
-                getNodeStepPluginService().adapter(NodeStepPluginAdapter.CONVERT_TO_NODE_STEP_EXECUTOR);
+        nodeStepPluginAdaptedNodeStepExecutorService = getNodeStepPluginService().adapter(getNodeStepAdapter());
 
 
         chainedNodeStepPluginService = new ChainedNodeStepPluginService(
@@ -273,5 +273,9 @@ public class NodeStepExecutionService
 
     public RemoteScriptNodeStepPluginService getRemoteScriptNodeStepPluginService() {
         return remoteScriptNodeStepPluginService;
+    }
+
+    public Converter<NodeStepPlugin, NodeStepExecutor> getNodeStepAdapter(){
+        return NodeStepPluginAdapter.CONVERT_TO_NODE_STEP_EXECUTOR;
     }
 }
