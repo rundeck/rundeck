@@ -2,6 +2,7 @@
   border: 1px solid var(--border-color);
   background: var(--background-color);
   overflow: auto;
+  display: none !important;
 }
 
 .autocomplete-suggestion {
