@@ -41,7 +41,7 @@
     "vue-i18n": "^8.22.4",
     "vue-multiselect": "^2.1.6",
     "vue-property-decorator": "^9.1.2",
-    "vue-router": "^3.3.2",
+    "vue-router": "^3.5.3",
     "vue-virtual-scroller": "^1.0.10",
     "webpack-node-externals": "^3.0.0"
   },
