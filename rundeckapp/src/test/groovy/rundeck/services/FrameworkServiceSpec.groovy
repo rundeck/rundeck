@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
@@ -398,8 +399,30 @@ class FrameworkServiceSpec extends Specification implements ServiceUnitTest<Fram
         when:
             def result = service.getServicePropertiesMapForType(type, svc, props)
         then:
-            1 * service.pluginService.getPluginDescriptor(type, svc) >> null
+            1 * service.pluginService.getPluginDescriptor(type, svc) >> retval
             result == [:]
+        where:
+            retval                                   | _
+            null                                     | _
+            new DescribedPlugin(null, null, 'atype') | _
+    }
+
+    def "remapReportProperties missing provider"() {
+        given:
+            service.pluginService = Mock(PluginService)
+            def type = 'atype'
+            def svc = Mock(PluggableProviderRegistryService)
+        when:
+            def result = service.remapReportProperties(null, type, svc)
+        then:
+            1 * service.pluginService.getPluginDescriptor(type, svc) >> retval
+            result != null
+            result.errors == [:]
+
+        where:
+            retval                                   | _
+            null                                     | _
+            new DescribedPlugin(null, null, 'atype') | _
     }
 
     def "addProjectNodeExecutorPropertiesForType missing provider"() {
