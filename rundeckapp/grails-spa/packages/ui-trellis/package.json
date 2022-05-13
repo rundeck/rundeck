@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "dependencies": {
-    "@popperjs/core": "^2.8.4",
+    "@popperjs/core": "^2.11.5",
     "@rundeck/client": "^0.2.5",
     "ace-builds": "^1.4.12",
     "axios": "^0.21.3",
