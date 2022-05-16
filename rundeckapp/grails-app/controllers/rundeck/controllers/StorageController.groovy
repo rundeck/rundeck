@@ -33,6 +33,7 @@ import org.rundeck.storage.api.StorageException
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
 
@@ -59,6 +60,8 @@ class StorageController extends ControllerBase{
     StorageService storageService
     FrameworkService frameworkService
     AuthContextProvider rundeckAuthContextProvider
+    ConfigurationService configurationService
+
     static allowedMethods = [
             apiKeys: ['GET','POST','PUT','DELETE'],
             keyStorageAccess:['GET'],
@@ -250,6 +253,12 @@ class StorageController extends ControllerBase{
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageDownload(StorageParams storageParams){
+
+        Boolean downloadenabled = configurationService.getBoolean("gui.keystorage.downloadenabled", true)
+        if(!downloadenabled){
+            response.status=403
+            return renderError("download is not enabled")
+        }
         if (!storageParams.resourcePath ) {
             storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
         }

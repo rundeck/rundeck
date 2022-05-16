@@ -208,6 +208,7 @@ function StorageBrowser(baseUrl, rootPath) {
     self.allowSelection=ko.observable(true);
     self.allowNotFound=ko.observable(false);
     self.notFound=ko.observable(false);
+    self.downloadenabled=ko.observable(true);
 
     //computed properties
     self.files = ko.computed(function () {
@@ -343,6 +344,9 @@ function StorageBrowser(baseUrl, rootPath) {
                 self.selectedPath(res.path());
                 self.selectedResource(res);
                 candownload = ( res.metaValue('Rundeck-key-type') != 'private' && res.metaValue('Rundeck-data-type')!='password') ;
+            }
+            if(!self.downloadenabled()){
+                candownload=false;
             }
             self.selectedIsDownloadable(candownload);
         }
