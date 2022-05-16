@@ -204,7 +204,7 @@ class WebhookService {
         }
         if(hookData.shouldImportToken) {
             if(!importIsAllowed(hook,hookData)){
-                throw new Exception("Cannot import webhook: auth token already in use")
+                throw new Exception("Cannot import webhook: imported auth token does not exist or was changed")
             }
             try {
                 rundeckAuthTokenManagerService.importWebhookToken(authContext, hookData.authToken, hookData.user, roles)
