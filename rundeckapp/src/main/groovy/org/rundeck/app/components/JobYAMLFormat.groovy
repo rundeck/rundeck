@@ -43,12 +43,31 @@ class JobYAMLFormat implements JobFormat {
     @CompileStatic(TypeCheckingMode.SKIP)
     List<Map> decode(final Reader reader) throws JobDefinitionException {
         Yaml yaml = new Yaml(new SafeConstructor())
-        def data = yaml.load(reader)
+        Collection<Map> data = yaml.load(reader)
         if (!(data instanceof List)) {
             throw new JobDefinitionException("Yaml: Expected list data")
         }
         if (!data.every { it instanceof Map }) {
             throw new JobDefinitionException("Yaml: Expected list of Maps")
+        }
+        data.each { jobMap ->
+            Map notifTriggers = jobMap['notification']
+            if(notifTriggers) {
+                (notifTriggers as Map).keySet().each { trigger ->
+                    def notifsMap = notifTriggers[trigger]
+
+                    if (notifsMap instanceof Map) {
+                        def notifList = []
+
+                        notifsMap.each {
+                            Map notifToAdd = [:]
+                            notifToAdd.put(it.key, it.value)
+                            notifList.add(notifToAdd)
+                        }
+                        notifTriggers[trigger] = notifList
+                    }
+                }
+            }
         }
         return data
     }

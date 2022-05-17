@@ -297,7 +297,7 @@ class JobsXMLCodec {
             if(!map.notification || !(map.notification instanceof Map)){
                 throw new JobXMLException("notification section had no trigger elements")
             }
-            def triggers = map.notification?.keySet().findAll { it.startsWith('on') }
+            def triggers = map.notification?.keySet()
             if( !triggers){
                 throw new JobXMLException("notification section had no trigger elements")
             }
@@ -660,7 +660,7 @@ class JobsXMLCodec {
                 }
             }
             boolean useOldWebhookFormat = useOldFormat(map.notification, true)
-            map.notification.keySet().sort().findAll { it.startsWith('on') }.each { trigger ->
+            map.notification.keySet().sort()?.each { trigger ->
                 ArrayList triggerNotifs = map.notification[trigger]
                 map.notification[trigger] = [:]
                 triggerNotifs?.each {notif ->

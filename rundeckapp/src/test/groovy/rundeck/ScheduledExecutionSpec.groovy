@@ -67,7 +67,9 @@ class ScheduledExecutionSpec extends RundeckHibernateSpec
             def map = [
                     jobName: 'abc',
                     notification: [
-                            onFailure: [urls:"url1", format: "JSON", httpMethod: "POST"]
+                            onFailure: [
+                                [urls:"url1", format: "JSON", httpMethod: "POST"]
+                            ]
                     ]
             ]
         when:
