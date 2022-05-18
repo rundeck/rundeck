@@ -1,5 +1,4 @@
 import Vue from 'vue'
-import {array ,object, withKnobs} from '@storybook/addon-knobs'
 
 import NavBar from './NavBar.vue'
 
@@ -9,8 +8,7 @@ import {RootStore} from '../../stores/RootStore'
 import {observable} from 'mobx'
 
 export default {
-    title: 'Navigation Bar',
-    decorators: [withKnobs]
+    title: 'Navigation Bar'
 }
 
 export const navBar = () => {

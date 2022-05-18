@@ -1,5 +1,4 @@
 import Vue, {VueConstructor, PropType} from 'vue'
-import {withKnobs, object} from '@storybook/addon-knobs'
 import * as uiv from 'uiv'
 
 import {RundeckVcr, Cassette} from '@rundeck/client/dist/util/RundeckVcr'
@@ -16,8 +15,7 @@ import { RootStore } from '../../stores/RootStore'
 const rootStore = new RootStore(window._rundeck.rundeckClient)
 
 export default {
-    title: 'ExecutionViewer',
-    decorators: [withKnobs]
+    title: 'ExecutionViewer'
 }
 
 function playback<T>(component: T, fixture: string): () => Promise<T> {

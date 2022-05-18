@@ -1,11 +1,9 @@
 import Vue from 'vue'
 import { addons } from '@storybook/addons'
-import { CHANGE, array, object, boolean, withKnobs, select } from '@storybook/addon-knobs'
 
 
 export default {
-    title: 'Inputs/Text',
-    decorators: [withKnobs({ disableDebounce: true })]
+    title: 'Inputs/Text'
 }
 
 export const InputTextHorizontal = () => (Vue.extend({
