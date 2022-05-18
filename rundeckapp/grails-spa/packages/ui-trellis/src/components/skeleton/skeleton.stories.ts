@@ -39,7 +39,7 @@ export const list = () => {
 export const listWithAvatar = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
 
-    const loading = boolean('loading', true)
+    const loading = true
     
     return Vue.extend({
         template: `<Skeleton v-bind="$props"><h1>Foo</h1><h1>Bar</h1></Skeleton>`,
