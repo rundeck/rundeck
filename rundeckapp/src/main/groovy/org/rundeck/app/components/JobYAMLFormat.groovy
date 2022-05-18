@@ -43,7 +43,7 @@ class JobYAMLFormat implements JobFormat {
     @CompileStatic(TypeCheckingMode.SKIP)
     List<Map> decode(final Reader reader) throws JobDefinitionException {
         Yaml yaml = new Yaml(new SafeConstructor())
-        Collection<Map> data = yaml.load(reader)
+        def data = yaml.load(reader)
         if (!(data instanceof List)) {
             throw new JobDefinitionException("Yaml: Expected list data")
         }
