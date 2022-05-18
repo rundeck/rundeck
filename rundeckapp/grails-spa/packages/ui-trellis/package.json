@@ -46,11 +46,10 @@
     "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {
-    "@storybook/addon-backgrounds": "^6.2.9",
-    "@storybook/addon-docs": "^6.2.9",
-    "@storybook/addon-knobs": "^6.2.9",
+    "@storybook/addon-backgrounds": "^6.5.0",
+    "@storybook/addon-docs": "^6.5.0",
     "@storybook/preset-typescript": "^3.0.0",
-    "@storybook/vue": "^6.2.9",
+    "@storybook/vue": "^6.5.0",
     "@types/node": "^14.0.13",
     "@types/uuid": "^8.3.0",
     "@vue/cli-plugin-babel": "^4.5.8",
@@ -77,9 +76,6 @@
   },
   "peerDependencies": {
     "@rundeck/client": "^0.2.5",
-    "@storybook/addon-backgrounds": "^6.2.9",
-    "@storybook/addon-docs": "^6.2.9",
-    "@storybook/addon-knobs": "^6.2.9",
     "ace-builds": "^1.4.12",
     "mobx": "^5.15.4",
     "mobx-utils": "^5.6.1",
