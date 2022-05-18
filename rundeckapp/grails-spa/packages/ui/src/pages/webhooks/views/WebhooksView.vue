@@ -10,7 +10,7 @@
         </div>
       </div>
       <div class="flex--none bg-grey-100">
-        <button 
+        <button
           type="button"
           class="btn btn-primary btn-full"
           :class="{'btn-primary': this.rootStore.webhooks.loaded.get(projectName) && this.rootStore.webhooks.webhooksForProject(projectName).length == 0 && !this.curHook}"
@@ -369,7 +369,7 @@ export default observer(Vue.extend({
       const data = resp.parsedBody
 
       if (data?.err) {
-        this.setError("Failed to save!" + data.err)
+        this.setError("Failed to save!\n" + data.err)
         this.setValidation(false, data.errors)
       } else {
         this.setMessage("Saved!")
@@ -540,7 +540,7 @@ main{
     background-color: var(--background-color-lvl2);
   }
 
- 
+
 
   #wh-edit {
     display: flex;

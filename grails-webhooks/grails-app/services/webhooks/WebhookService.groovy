@@ -182,7 +182,7 @@ class WebhookService {
         def (ValidatedPlugin vPlugin, boolean isCustom) = validatePluginConfig(hook.eventPlugin,pluginConfig)
         if(!vPlugin.valid) {
             def errMsg = isCustom ?
-                    "Validation errors" :
+                    "Validation errors: " + vPlugin.report.errors:
                     "Invalid plugin configuration: " + vPlugin.report.errors.collect { k, v -> "$k : $v" }.join("\n")
             hook.discard()
 
