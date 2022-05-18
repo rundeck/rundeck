@@ -116,17 +116,17 @@ commands:
           name: Install aws cli
           command: pip install awscli --upgrade --user
 
-  restore-gradle-cache:
-    description: Restore Gradle cache
-    steps:
-      - restore_cache:
-          keys:
-            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
-      - restore_cache:
-          keys:
-            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
-            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-
-            - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-
+  #restore-gradle-cache:
+  #  description: Restore Gradle cache
+  #  steps:
+  #    - restore_cache:
+  #        keys:
+  #          - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+  #    - restore_cache:
+  #        keys:
+  #          - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-<<pipeline.number>>
+  #          - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-{{ .Branch }}-
+  #          - cache-{{ .Environment.GRADLE_CACHE_VERSION }}-gradle-cache-
 
   save-gradle-cache:
     description: Save Gradle cache
