@@ -195,7 +195,7 @@ jobs:
 
     executor:
       name: gradle-docker
-      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check publishToMavenLocal --stacktrace --info --parallel --build-cache
+      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 --stacktrace --info --parallel --build-cache --dependency-verification=off
       resourceClass: xlarge
 
     steps:
@@ -240,7 +240,7 @@ jobs:
                   seal_artifacts
             - run:
                 name: Publish snapshot
-                command: ./gradlew publish -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
+                command: ./gradlew publish -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info --dependency-verification=off
       - when:
           condition:
             matches: { pattern: "/^v.*/", value: <<pipeline.git.tag>> }
@@ -264,7 +264,7 @@ jobs:
       - install-node
       - install-java
       - restore-gradle-cache
-      - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
+      - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache --dependency-verification=off
       - collect-gradle-tests
 
   test-docker:
@@ -357,12 +357,30 @@ jobs:
       - checkout
       - restore-gradle-cache
       - install-java
-      - run: ./gradlew --no-daemon dependencyCheckAggregate --stacktrace --info || << parameters.continue >>
+      - run: ./gradlew --no-daemon dependencyCheckAggregate --stacktrace --info  --dependency-verification=off || << parameters.continue >>
       - store_test_results:
           path: build/owasp-reports
       - store_artifacts:
           path: build/owasp-reports
           prefix: owasp-reports
+
+  deps-verify:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+    parameters:
+      continue:
+        description: Continue if check fails
+        type: string
+        default: 'false'
+    steps:
+      - checkout
+      - restore-gradle-cache
+      - install-java
+      - run: ./gradlew --no-daemon help --dependency-verification=strict -Porg.gradle.dependency.verification.console=verbose || << parameters.continue >>
+      - store_artifacts:
+          path: build/reports/dependency-verification/
+          prefix: dependency-verification
 
   trigger-packaging:
     <<: *defaults
@@ -540,6 +558,14 @@ workflows:
           context:
             - slack-secrets
           <<: *slack-fail-post-step
+      - deps-verify:
+          <<: *filter-no-tags
+          name: Dependency Verification
+          requires: *stage-build
+          continue: 'true'
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - trigger-packaging:
           name: Trigger packaging-core
           requires: *stage-build
@@ -675,3 +701,11 @@ workflows:
             context:
               - slack-secrets
             <<: *slack-fail-post-step
+      - deps-verify:
+          <<: *filter-no-tags
+          name: Dependency Verification
+          requires: *stage-build
+          continue: 'false'
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
