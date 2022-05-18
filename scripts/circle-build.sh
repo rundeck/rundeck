@@ -42,7 +42,7 @@ buildDocker() {
     local ECR_BUILD_TAG=${ECR_REPO}:${ECR_IMAGE_PREFIX}-build-${RUNDECK_BUILD_NUMBER}
     local ECR_BRANCH_TAG=${ECR_REPO}:${BRANCH_AS_TAG}
 
-    ./gradlew officialBuild -Penvironment=${ENV} -PdockerTags=latest,SNAPSHOT
+    ./gradlew officialBuild -Penvironment=${ENV} -PdockerTags=latest,SNAPSHOT ${RUNDECK_GRADLE_OPTS:-}
 
     docker tag rundeck/rundeck:latest $ECR_BUILD_TAG
     docker tag rundeck/rundeck:latest $ECR_BRANCH_TAG
@@ -58,7 +58,7 @@ buildDocker() {
     fi
 
     if [[ "${RUNDECK_MAIN_BUILD}" = true && -z "${RUNDECK_TAG}" ]] ; then
-        ./gradlew officialPush -PdockerTags=SNAPSHOT
+        ./gradlew officialPush -PdockerTags=SNAPSHOT ${RUNDECK_GRADLE_OPTS:-}
     fi
 }
 
