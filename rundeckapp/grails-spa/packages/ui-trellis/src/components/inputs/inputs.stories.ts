@@ -1,14 +1,12 @@
 import Vue from 'vue'
 import {addons} from '@storybook/addons'
-import {CHANGE, array ,object, boolean, withKnobs} from '@storybook/addon-knobs'
 
 import '../../stories/setup'
 
 import InputSwitch from './Switch.vue'
 
 export default {
-    title: 'Inputs/Switch',
-    decorators: [withKnobs({disableDebounce: true})]
+    title: 'Inputs/Switch'
 }
 
 function setupStory(vue: Vue) {
@@ -27,15 +25,15 @@ export const inputSwitch = () => {
         template: `<InputSwitch @input="handleChecked" :value="checked"/>`,
         components: {InputSwitch},
         props: {
-            checked: {default: boolean('checked', false)},
-            disabled: {default: boolean('disabled', false)}
+            checked: {default:  false},
+            disabled: {default:  false}
         },
         mounted() {
             setupStory(this)
         },
         methods: {
             handleChecked(val: boolean) {
-                chan.emit(CHANGE, {name: 'checked', value: val})
+                chan.emit('checked', val)
             }
         }
     })
@@ -75,15 +73,15 @@ export const inputSwitchContrast = () => {
         `,
         components: {InputSwitch},
         props: {
-            checked: {default: boolean('checked', false)},
-            disabled: {default: boolean('disabled', false)}
+            checked: {default:  false},
+            disabled: {default:  false}
         },
         mounted() {
             setupStory(this)
         },
         methods: {
             handleChecked(val: boolean) {
-                chan.emit(CHANGE, {name: 'checked', value: val})
+                chan.emit('checked', val)
             }
         }
     })

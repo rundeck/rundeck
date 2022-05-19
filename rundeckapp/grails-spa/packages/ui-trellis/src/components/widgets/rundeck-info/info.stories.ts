@@ -1,5 +1,4 @@
 import Vue from 'vue'
-import {array ,object, withKnobs} from '@storybook/addon-knobs'
 
 import {RootStore} from '../../../stores/RootStore'
 import { ServerInfo, VersionInfo } from '../../../stores/System'
@@ -9,8 +8,7 @@ import RundeckInfo from './RundeckInfo.vue'
 import RundeckInfoWidget from './RundeckInfoWidget.vue'
 
 export default {
-    title: 'Widgets/Rundeck Info',
-    decorators: [withKnobs]
+    title: 'Widgets/Rundeck Info'
 }
 
 export const infoDisplay = () => {
