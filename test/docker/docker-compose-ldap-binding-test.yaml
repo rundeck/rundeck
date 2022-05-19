@@ -9,8 +9,6 @@ services:
     environment:
       - RUNDECK_NODE=rundeck1
       - RUNDECK_URL=http://rundeck1:4440
-      - LAUNCHER_URL=${LAUNCHER_URL}
-      - CLI_DEB_URL=${CLI_DEB_URL}
       - CLI_VERS=${CLI_VERS}
       - WAIT_NODES=rundeck1
       - CONFIG_SCRIPT_PRESTART=scripts/config-jaas.sh

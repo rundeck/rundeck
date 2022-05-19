@@ -9,8 +9,6 @@ services:
       - RUNDECK_NODE=rundeck1
       - RUNDECK_PORT=4443
       - RUNDECK_URL=https://rundeck1:4443
-      - LAUNCHER_URL=${LAUNCHER_URL}
-      - CLI_DEB_URL=${CLI_DEB_URL}
       - CLI_VERS=${CLI_VERS}
       - SETUP_TEST_PROJECT=test
       - SETUP_SSL=1

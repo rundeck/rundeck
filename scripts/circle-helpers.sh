@@ -11,10 +11,6 @@
 # RUNDECK_PREV_RELEASE_VERSION = same as above extracted from second oldest tag in git history
 # RUNDECK_MAIN_BUILD = (true|false) resolves TCI funkyness to determine if this is a true main build
 
-# BINTRAY_DEB_REPO = selected deb bintray repo based on release tag
-# BINTRAY_RPM_REPO = selected rpm bintray repo based on release tag
-# BINTRAY_MAVEN_REPO = selected maven(jar,war) bintray repo based on release tag
-
 set -eo pipefail
 shopt -s globstar
 
@@ -81,15 +77,6 @@ export_tag_info() {
     export RUNDECK_PREV_RELEASE_TAG="${PREV_TAG_PARTS[1]:-SNAPSHOT}"
 }
 
-export_repo_info() {
-    local deb_repo=$(release_tag_repo deb ${RUNDECK_RELEASE_TAG})
-    local rpm_repo=$(release_tag_repo rpm ${RUNDECK_RELEASE_TAG})
-    local maven_repo=$(release_tag_repo maven ${RUNDECK_RELEASE_TAG})
-
-    export BINTRAY_DEB_REPO=$deb_repo
-    export BINTRAY_RPM_REPO=$rpm_repo
-    export BINTRAY_MAVEN_REPO=$maven_repo
-}
 
 sync_from_s3() {
     aws s3 sync --delete "${S3_ARTIFACT_PATH}" artifacts
@@ -220,7 +207,6 @@ pull_rundeck() {
 }
 
 export_tag_info
-export_repo_info
 
 export -f sync_to_s3
 export -f sync_commit_to_s3
