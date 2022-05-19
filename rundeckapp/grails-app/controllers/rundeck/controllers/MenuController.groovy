@@ -44,6 +44,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.AuthActions
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
@@ -103,6 +104,16 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             listExport                     : 'POST',
             ajaxProjectAclMeta             : 'POST',
             ajaxSystemAclMeta              : 'POST',
+    ]
+
+    static final enum ConfigAccess{
+        app_admin,
+        ops_admin
+    }
+
+    public static final Map<ConfigAccess, AuthActions> CONFIG_ACCESS_CHECKS = [
+            (ConfigAccess.app_admin): RundeckAccess.General.APP_ADMIN,
+            (ConfigAccess.ops_admin): RundeckAccess.General.OPS_ADMIN
     ]
 
     @CompileStatic
@@ -536,6 +547,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         log.debug("jobsFragment(tot): "+(System.currentTimeMillis()-start));
         return results
     }
+
+    @PackageScope
+    Map<String, Boolean> authorizedAdminMap() {
+        def auth = authorizingSystem
+        Map<String, Boolean> results = new HashMap<>()
+        CONFIG_ACCESS_CHECKS.each {
+            results[it.key.toString()] = auth.isAuthorized(it.value)
+        }
+        results
+    }
+
     /**
      * Presents the jobs tree and can pass the jobsjscallback parameter
      * to the be a javascript callback for clicked jobs, instead of normal behavior.
@@ -1533,7 +1555,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     @RdAuthorizeApplicationType(
         type = AuthConstants.TYPE_SYSTEM_ACL,
-        access = RundeckAccess.General.AUTH_APP_READ
+        access = RundeckAccess.General.AUTH_ANY_ADMIN
     )
     def acls() {
         systemAclsModel()
@@ -1546,6 +1568,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     private Map systemAclsModel() {
+        def authMap = authorizedAdminMap()
         def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def fslist = fwkConfigDir.listFiles().grep { it.name =~ /\.aclpolicy$/ }.sort().collect { file ->
             def validation = validateSystemPolicyFSFile(file.name)
@@ -1566,11 +1589,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     valid: true
             ]
         }
+        boolean hasOpsAdmin = authMap[AuthConstants.ACTION_OPS_ADMIN]
+        boolean hasAppAdmin = authMap[AuthConstants.ACTION_APP_ADMIN]
+        boolean hasAdmin = authMap[AuthConstants.ACTION_ADMIN]
 
         [
                 fwkConfigDir : fwkConfigDir,
-                aclFileList  : fslist,
-                aclStoredList: stored,
+                aclFileList  : (hasOpsAdmin || hasAdmin) ? fslist: [],
+                aclStoredList: (hasAppAdmin || hasAdmin) ? stored: [],
                 clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
     }

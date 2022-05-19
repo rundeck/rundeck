@@ -25,8 +25,10 @@ import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
+import com.dtolabs.rundeck.core.authorization.providers.BaseValidator
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesValidation
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
@@ -36,8 +38,11 @@ import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.Action
+import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.auth.CoreTypedRequestAuthorizer
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -47,6 +52,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.auth.app.NamedAuthRequestUtil
 import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
@@ -1079,7 +1085,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             result.access() == access
         where:
             endpoint | type                          | access
-            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_APP_READ
+            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_ANY_ADMIN
     }
 
     def "acls does not load metadata for policies"() {
@@ -1093,6 +1099,14 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id]
         }
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * system(_) >> Mock(AuthorizingSystem){
+                isAuthorized(RundeckAccess.General.OPS_ADMIN) >> true
+                isAuthorized(RundeckAccess.General.APP_ADMIN) >> true
+            }
+            0 * _(*_)
+        }
+
 
 
         when:
@@ -1108,6 +1122,35 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         result.aclStoredList[0].name=='test'
         result.aclStoredList[0].valid
     }
+
+    def "acls does not load metadata for policies, no stored policies"() {
+        given:
+        def id = 'test.aclpolicy'
+        File confdir= Files.createTempDirectory('menuControllerSpec').toFile()
+        // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+        controller.frameworkService = Mock(FrameworkService){
+            getFrameworkConfigDir()>>confdir
+        }
+        controller.aclFileManagerService = Mock(AclFileManagerService){
+            1 * listStoredPolicyFiles(AppACLContext.system())>>[id]
+        }
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * system(_) >> Mock(AuthorizingSystem){
+                isAuthorized(RundeckAccess.General.OPS_ADMIN) >> true
+                isAuthorized(RundeckAccess.General.APP_ADMIN) >> false
+            }
+            0 * _(*_)
+        }
+
+        when:
+        def result = controller.acls()
+        then:
+        0 * controller.aclFileManagerService.validatePolicyFile(*_)
+        result
+        result.fwkConfigDir==confdir
+        result.aclFileList==[]
+        result.aclStoredList==[]
+    }
     def "acls are sorted by name"() {
         given:
         def id = 'test.aclpolicy'
@@ -1119,6 +1162,95 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
+        }
+
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * system(_) >> Mock(AuthorizingSystem){
+                isAuthorized(RundeckAccess.General.OPS_ADMIN) >> true
+                isAuthorized(RundeckAccess.General.APP_ADMIN) >> true
+            }
+            0 * _(*_)
+        }
+
+
+        when:
+        def result = controller.acls()
+        then:
+        0 * controller.aclFileManagerService.validatePolicyFile(*_)
+        result
+        result.fwkConfigDir==confdir
+        result.aclFileList==[]
+        result.aclStoredList
+        result.aclStoredList.size() == 2
+        result.aclStoredList[0].id==id2
+        result.aclStoredList[0].name=='btest'
+        result.aclStoredList[0].valid
+        result.aclStoredList[1].id==id
+        result.aclStoredList[1].name=='test'
+        result.aclStoredList[1].valid
+    }
+
+    def "acls are sorted by name, no app admin"() {
+        given:
+        def id = 'test.aclpolicy'
+        def id2 = 'btest.aclpolicy'
+        File confdir= Files.createTempDirectory('menuControllerSpec').toFile()
+        // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+        controller.frameworkService = Mock(FrameworkService){
+            getFrameworkConfigDir()>>confdir
+        }
+        controller.aclFileManagerService = Mock(AclFileManagerService){
+            1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
+        }
+
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * system(_) >> Mock(AuthorizingSystem){
+                isAuthorized(RundeckAccess.General.OPS_ADMIN) >> true
+                isAuthorized(RundeckAccess.General.APP_ADMIN) >> false
+            }
+            0 * _(*_)
+        }
+
+
+        when:
+        def result = controller.acls()
+        then:
+        0 * controller.aclFileManagerService.validatePolicyFile(*_)
+        result
+        result.fwkConfigDir==confdir
+        result.aclFileList==[]
+        result.aclStoredList==[]
+    }
+
+    def "acls are sorted by name, no ops admin"() {
+        given:
+        def id = 'test.aclpolicy'
+        def id2 = 'btest.aclpolicy'
+        File confdir= Files.createTempDirectory('menuControllerSpec').toFile()
+        File test1 = Files.createTempFile(confdir.toPath(), "test1.aclpolicy", ".aclpolicy").toFile()
+        File test2 = Files.createTempFile(confdir.toPath(), "test2.aclpolicy", ".aclpolicy").toFile()
+        // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+        controller.frameworkService = Mock(FrameworkService){
+            getFrameworkConfigDir()>>confdir
+            }
+        controller.aclFileManagerService = Mock(AclFileManagerService){
+            1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
+            forContext(_)>>Mock(ACLFileManager){
+                getValidator()>>Mock(Validator) {
+                    validateYamlPolicy( _, _) >> Mock(RuleSetValidation) {
+                        isValid() >> true
+                    }
+                }
+            }
+        }
+
+
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * system(_) >> Mock(AuthorizingSystem){
+                isAuthorized(RundeckAccess.General.OPS_ADMIN) >> false
+                isAuthorized(RundeckAccess.General.APP_ADMIN) >> true
+            }
+            0 * _(*_)
         }
 
 

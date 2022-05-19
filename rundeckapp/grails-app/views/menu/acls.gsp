@@ -32,6 +32,13 @@
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
+<g:set var="hasOpsAdminAuth" value="${auth.resourceAllowedTest([
+        any    : true,
+        action : [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN],
+        context: AuthConstants.CTX_APPLICATION,
+        kind   : AuthConstants.TYPE_SYSTEM_ACL,
+]
+)}"/>
 <g:set var="hasEditAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_UPDATE],
@@ -77,6 +84,7 @@
         }
         jQuery(function () {
             var filepolicies = loadJsonData('aclFileList');
+
             jQuery.extend(filepolicies,{
                 pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
                 paging:{
@@ -85,41 +93,41 @@
             })
             window.fspolicies = new PolicyFiles(filepolicies);
             new PagerVueAdapter(window.fspolicies.paging, 'acl-file')
-            <g:if test="${clusterMode}">
-            window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
-            ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
+            <g:if test="${clusterMode && hasOpsAdminAuth}">
+                window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
+                ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
             </g:if>
-            <g:else>
-            ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
-            ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
-            </g:else>
-            let storedpolicies = loadJsonData('aclStoredList');
-            jQuery.extend(storedpolicies,{
-                pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
-                paging:{
-                    max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30)}
-                }
-            })
-            window.stpolicies = new PolicyFiles(storedpolicies,_rundeck.rdBase+'/menu/ajaxSystemAclMeta');
-            new PagerVueAdapter(window.stpolicies.paging, 'acl-stored')
-            ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
-            ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
-            <g:if test="${hasCreateAuth}" >
-            window.aclstorageupload = new PolicyUpload({policies: stpolicies.policies()});
-            stpolicies.fileUpload = aclstorageupload;
-            ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
+            <g:if test="${!clusterMode && hasOpsAdminAuth}">
+                ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
+                ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
+            </g:if>
 
-            <g:if test="${!clusterMode}">
-
-            window.aclfsupload = new PolicyUpload({ policies: fspolicies.policies()});
-            fspolicies.fileUpload = aclfsupload;
-            ko.applyBindings(aclfsupload, jQuery('#aclFSUploadForm')[0]);
-
+            <g:if test="${hasAdminAuth}">
+                let storedpolicies = loadJsonData('aclStoredList');
+                jQuery.extend(storedpolicies,{
+                    pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
+                    paging:{
+                        max: ${params.getInt('pagingMax')?:cfg.getInteger(config: 'gui.system.aclList.pagingMax', default: 30)}
+                    }
+                })
+                window.stpolicies = new PolicyFiles(storedpolicies,_rundeck.rdBase+'/menu/ajaxSystemAclMeta');
+                new PagerVueAdapter(window.stpolicies.paging, 'acl-stored')
+                ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
+                ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
+                <g:if test="${hasCreateAuth}" >
+                    window.aclstorageupload = new PolicyUpload({policies: stpolicies.policies()});
+                    stpolicies.fileUpload = aclstorageupload;
+                    ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
+                </g:if>
+            </g:if>
+            <g:if test="${!clusterMode && hasOpsAdminAuth}">
+                window.aclfsupload = new PolicyUpload({ policies: fspolicies.policies()});
+                fspolicies.fileUpload = aclfsupload;
+                ko.applyBindings(aclfsupload, jQuery('#aclFSUploadForm')[0]);
             </g:if>
             <g:if test="${hasUploadValidationError}" >
-            window.uploadedpolicy = new PolicyDocument(loadJsonData('uploadedPolicy'));
-            ko.applyBindings(uploadedpolicy, jQuery('#uploadedPolicyValidation')[0]);
-            </g:if>
+                window.uploadedpolicy = new PolicyDocument(loadJsonData('uploadedPolicy'));
+                ko.applyBindings(uploadedpolicy, jQuery('#uploadedPolicyValidation')[0]);
             </g:if>
         });
     </script>
@@ -174,7 +182,7 @@
   <div class="row">
       <div class="col-sm-12">
           <div class="card">
-              <g:if test="${!clusterMode}">
+              <g:if test="${!clusterMode && hasOpsAdminAuth}">
                   <div class="card-header clearfix">
                       <span class="panel-title pull-left">
                           <span class="text-info">${aclFileList.size()}</span>
@@ -235,62 +243,64 @@
 
               </g:if>
 
-              <div class="card-header clearfix" id="storedPolicies_header">
-                  <h3 class="card-title pull-left">
-                      <g:message code="stored.acl.policy.files.title"/>
-                      <span class="badge" style="font-size:1em">${aclStoredList.size()}</span>
-                  </h3>
-                  <g:if test="${hasCreateAuth}">
-                      <div class="btn-group pull-right">
-                          <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload"
-                                id="storage_acl_upload_btn">
-                              <g:icon name="upload"/>
-                              <g:message code="button.action.Upload"/>
-                          </span>
-                          <g:link controller="menu"
-                                  id="storage_acl_create_btn"
-                                  action="createSystemAclFile"
-                                  params="${[fileType: 'storage']}"
-                                  class="btn btn-sm btn-primary">
-                              <g:icon name="plus"/>
-                              <g:message code="access.control.action.create.acl.policy.button.title"/>
-                          </g:link>
-                      </div>
-                  </g:if>
-              </div>
-
-              <div class="card-content" id="storedPolicies">
-                  <div>
-                      <g:render template="aclsPagingKO" model="[name: 'acl-stored']"/>
-                      <g:render template="aclKOTemplates"/>
-                      <div data-bind="foreach: policiesView" id="storedPolicies_list">
-                          <g:render template="/menu/aclValidationRowKO"
-                                    model="${[
-                                            hasEditAuth  : hasEditAuth,
-                                            hasDeleteAuth: hasDeleteAuth,
-                                            editHref     : g.createLink(
-                                                    [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'storage', id: '<$>']]
-                                            ),
-                                            deleteModalId: 'deleteStorageAclPolicy',
-                                            uploadModalId: 'aclStorageUpload',
-                                    ]}"/>
-
-                      </div>
+              <g:if test="${hasAdminAuth}">
+                  <div class="card-header clearfix" id="storedPolicies_header">
+                      <h3 class="card-title pull-left">
+                          <g:message code="stored.acl.policy.files.title"/>
+                          <span class="badge" style="font-size:1em">${aclStoredList.size()}</span>
+                      </h3>
+                      <g:if test="${hasCreateAuth}">
+                          <div class="btn-group pull-right">
+                              <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload"
+                                    id="storage_acl_upload_btn">
+                                  <g:icon name="upload"/>
+                                  <g:message code="button.action.Upload"/>
+                              </span>
+                              <g:link controller="menu"
+                                      id="storage_acl_create_btn"
+                                      action="createSystemAclFile"
+                                      params="${[fileType: 'storage']}"
+                                      class="btn btn-sm btn-primary">
+                                  <g:icon name="plus"/>
+                                  <g:message code="access.control.action.create.acl.policy.button.title"/>
+                              </g:link>
+                          </div>
+                      </g:if>
                   </div>
 
-              </div>
-              <g:render template="/menu/aclManageKO" model="[
-                  deleteModalId: 'deleteStorageAclPolicy',
-                  deleteAction :
-                      [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
-                  uploadModalId: 'aclStorageUpload',
-                  uploadFormId: 'aclStorageUploadForm',
-                  uploadAction : hasCreateAuth || hasEditAuth ?
-                                 [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
-                                 null
-              ]"/>
+                  <div class="card-content" id="storedPolicies">
+                      <div>
+                          <g:render template="aclsPagingKO" model="[name: 'acl-stored']"/>
+                          <g:render template="aclKOTemplates"/>
+                          <div data-bind="foreach: policiesView" id="storedPolicies_list">
+                              <g:render template="/menu/aclValidationRowKO"
+                                        model="${[
+                                                hasEditAuth  : hasEditAuth,
+                                                hasDeleteAuth: hasDeleteAuth,
+                                                editHref     : g.createLink(
+                                                        [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'storage', id: '<$>']]
+                                                ),
+                                                deleteModalId: 'deleteStorageAclPolicy',
+                                                uploadModalId: 'aclStorageUpload',
+                                        ]}"/>
+
+                          </div>
+                      </div>
+
+                  </div>
+                <g:render template="/menu/aclManageKO" model="[
+                    deleteModalId: 'deleteStorageAclPolicy',
+                    deleteAction :
+                        [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
+                    uploadModalId: 'aclStorageUpload',
+                    uploadFormId: 'aclStorageUploadForm',
+                    uploadAction : hasCreateAuth || hasEditAuth ?
+                                    [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
+                                    null
+                ]"/>
+              </g:if>
           </div>
-          <g:if test="${clusterMode}">
+          <g:if test="${clusterMode && hasOpsAdminAuth}">
               <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
                   <div class="card-header">
                     <h4 class="card-title" data-bind="click: toggleShow" style="cursor: pointer;">
