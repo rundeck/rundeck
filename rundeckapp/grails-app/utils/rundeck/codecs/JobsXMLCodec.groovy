@@ -109,10 +109,13 @@ class JobsXMLCodec {
 
     /**
      * Checks if the given notification map follows or should follow the old format
+     * @param notificationMap
+     * @param isCanonicalJobMap true if the given map is a canonical scheduled execution map
+     * @return false if notificationMap has more than one notification of the same type in any trigger
      */
-    static boolean useOldFormat(Map notificationMap, boolean isScheduleMap){
+    static boolean useOldFormat(Map notificationMap, boolean isCanonicalJobMap){
         boolean useOld
-        if(isScheduleMap) {
+        if(isCanonicalJobMap) {
             def hasMany = notificationMap.find { Map.Entry triggerEntry ->
                 Map notifsAmount = [:]
                 return triggerEntry.value.find{ Map notifEntry ->
@@ -694,7 +697,6 @@ class JobsXMLCodec {
                             xmlNotif = [:]
                             map.notification[trigger][entry.key] = entry.value
                         }
-
                     }else{
                         if(!map.notification[trigger][xmlNotifType]) map.notification[trigger][xmlNotifType] = []
                         if(notif.xmlNotif instanceof Collection)

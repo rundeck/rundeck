@@ -128,6 +128,8 @@ class JobYAMLFormat implements JobFormat {
 
     /**
      * Checks if the given notification map follows or should follow the old format
+     * @param notificationMap canonical job map
+     * @return false if notificationMap has more than one notification of the same type in any trigger
      */
     static boolean useOldFormat(Map notificationMap){
         boolean useOld
