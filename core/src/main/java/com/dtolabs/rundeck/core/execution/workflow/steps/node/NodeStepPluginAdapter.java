@@ -187,7 +187,7 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         return new NodeStepResultImpl(node);
     }
 
-    private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
+    public Map<String, Object> getStepConfiguration(StepExecutionItem item) {
         if (item instanceof ConfiguredStepExecutionItem) {
             return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
         } else {
