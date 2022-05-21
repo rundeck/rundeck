@@ -160,6 +160,63 @@ class JobYAMLFormatSpec extends Specification {
             '1,23' | '- a: \'1,23\'\n'
             'a,bc' | '- a: \'a,bc\'\n'
     }
+
+    def "should return false on multiple notifs of same type in same trigger"(){
+        given:
+        Map notifMap
+        if (manySameTypePerTrigger){
+            notifMap = [
+                    onfailure: [
+                            [email: [recipients: "mail@example.com"]],
+                            [
+                                    format: "xml",
+                                    httpMethod: "get",
+                                    urls: "http://example1.com/1"
+                            ],
+                    ],
+                    onsuccess: [
+                            [email: [recipients: "mail@example.com"]],
+                            [email: [recipients: "mail2@example.com"]],
+                            [
+                                    format: "xml",
+                                    httpMethod: "get",
+                                    urls: "http://example1.com/1"
+                            ],
+                            [
+                                    format: "json",
+                                    httpMethod: "post",
+                                    urls: "https://example2.com/2"
+                            ]
+                    ]
+            ]
+        }else {
+            notifMap = [
+                    onsuccess: [
+                            [email: [recipients: "mail@example.com"]],
+                            [
+                                    format: "xml",
+                                    httpMethod: "get",
+                                    urls: "http://example1.com/1"
+                            ],
+                    ],
+                    onfailure:[
+                            [email: [recipients: "mail@example.com"]]
+                    ]
+            ]
+        }
+
+        when:
+        def hasManySameTypePerTrigger = JobYAMLFormat.useOldFormat(notifMap)
+
+        then:
+        hasManySameTypePerTrigger == expected
+
+        where:
+        manySameTypePerTrigger | expected
+        true                   | false
+        false                  | true
+    }
+
     @Unroll
     def "should return a notification map with email and webhook notifs"() {
         given:
@@ -208,7 +265,7 @@ class JobYAMLFormatSpec extends Specification {
     }
 
     @Unroll
-    def "should return an xml str with email and webhook tags"() {
+    def "should return an yaml str with list of objects in notification trigger"() {
         given:
         List<Map> input = [[
                                    id: 0,
@@ -256,8 +313,8 @@ class JobYAMLFormatSpec extends Specification {
 
         then:
         notifStr.contains("-email:recipients:mail@example.com")
-        notifStr.contains("-email:recipients:mail@example.com")
-        notifStr.contains("urls:http://example1.com/1")
-        notifStr.contains("urls:https://example2.com/2")
+        notifStr.contains("-email:recipients:mail2@example.com")
+        notifStr.contains("-format:xml")
+        notifStr.contains("-format:json")
     }
 }
