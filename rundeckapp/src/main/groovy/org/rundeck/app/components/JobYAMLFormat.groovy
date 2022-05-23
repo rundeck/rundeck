@@ -50,6 +50,25 @@ class JobYAMLFormat implements JobFormat {
         if (!data.every { it instanceof Map }) {
             throw new JobDefinitionException("Yaml: Expected list of Maps")
         }
+        data.each { jobMap ->
+            Map notifTriggers = jobMap['notification']
+            if(notifTriggers) {
+                (notifTriggers as Map).keySet().each { trigger ->
+                    def notifsMap = notifTriggers[trigger]
+
+                    if (notifsMap instanceof Map) {
+                        def notifList = []
+
+                        notifsMap.each {
+                            Map notifToAdd = [:]
+                            notifToAdd.put(it.key, it.value)
+                            notifList.add(notifToAdd)
+                        }
+                        notifTriggers[trigger] = notifList
+                    }
+                }
+            }
+        }
         return data
     }
 
@@ -106,20 +125,59 @@ class JobYAMLFormat implements JobFormat {
             this.representers.put(String,new CommaStringQuotedRepresent(this.representers.get(String)))
         }
     }
+
+    /**
+     * Checks if the given notification map follows or should follow the old format
+     * @param notificationMap canonical job map
+     * @return false if notificationMap has more than one notification of the same type in any trigger
+     */
+    static boolean useOldFormat(Map notificationMap){
+        boolean useOld
+
+        def hasMany = notificationMap.find { Map.Entry triggerEntry ->
+            Map notifsAmount = [:]
+            return triggerEntry.value.find{ Map notifEntry ->
+                def notifType = notifEntry.keySet()[0]
+
+                if(notifsAmount[notifType] || (notifType == 'plugin' && (notifEntry[notifType] as List).size() > 1))
+                    return notifEntry
+                else
+                    notifsAmount[notifType] = 1
+
+                return
+            }
+        }
+        useOld = hasMany?false:true
+        return useOld
+    }
+
     @Override
     void encode(final List<Map> list, Options options, final Writer writer) {
         final DumperOptions dumperOptions = new DumperOptions()
         dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
-        dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
         final Representer representer = new CommaStringQuotedRepresenter()
         Yaml yaml = new Yaml(representer,dumperOptions)
         def mapping = { Map<String, Object> map ->
+            boolean shouldUseOldFormat = map['notification']? useOldFormat(map['notification'] as Map) : false
             if (options.replaceIds && options.replaceIds.get(map['id'])) {
                 map['id'] = options.replaceIds.get(map.remove('id'))
                 map['uuid'] = options.replaceIds.get(map.remove('uuid'))
             } else if (!options.preserveUuid) {
                 map.remove('id')
                 map.remove('uuid')
+            }
+            if(shouldUseOldFormat){
+                (map['notification'] as Map).keySet().sort().findAll { (it as String).startsWith('on') }.each { trigger ->
+                    String trigger_ = trigger as String
+                    def notifs = map['notification'][trigger_]
+                    map['notification'][trigger_] = [:]
+                    notifs.each { Map it ->
+                        if(it['plugin'])
+                            it['plugin'] = (it['plugin'] as List)[0]
+                        map['notification'][trigger_] = (map['notification'][trigger_] as Map) + it
+                    }
+                }
             }
             map
         }

@@ -108,6 +108,40 @@ class JobsXMLCodec {
     }
 
     /**
+     * Checks if the given notification map follows or should follow the old format
+     * @param notificationMap
+     * @param isCanonicalJobMap true if the given map is a canonical scheduled execution map
+     * @return false if notificationMap has more than one notification of the same type in any trigger
+     */
+    static boolean useOldFormat(Map notificationMap, boolean isCanonicalJobMap){
+        boolean useOld
+        if(isCanonicalJobMap) {
+            def hasMany = notificationMap.find { Map.Entry triggerEntry ->
+                Map notifsAmount = [:]
+                return triggerEntry.value.find{ Map notifEntry ->
+                    def notifType = notifEntry.keySet()[0]
+                    if(notifsAmount[notifType] || (notifType == 'plugin' && (notifEntry[notifType] as List).size() > 1))
+                        return notifEntry
+                    else
+                        notifsAmount[notifType] = 1
+                    return
+                }
+            }
+            useOld = hasMany?false:true
+        }
+        else
+            useOld = notificationMap.find { Map.Entry entry ->
+                if(entry.value instanceof Map){
+                    if (entry.value['format'] != null) {
+                        return true
+                    }
+                }else
+                    return
+            }
+        return useOld
+    }
+
+    /**
      * Convert the XMap (Map produced by XmlParserUtil) to canonical Job definition Map
      */
     static convertXMapToJobMap={ Map map->
@@ -266,7 +300,7 @@ class JobsXMLCodec {
             if(!map.notification || !(map.notification instanceof Map)){
                 throw new JobXMLException("notification section had no trigger elements")
             }
-            def triggers = map.notification?.keySet().findAll { it.startsWith('on') }
+            def triggers = map.notification?.keySet()
             if( !triggers){
                 throw new JobXMLException("notification section had no trigger elements")
             }
@@ -282,42 +316,70 @@ class JobsXMLCodec {
                 }
                 plugin['configuration']=confMap
             }
+
+            def setValidNotifData = { notifData, String notifType, String trigger ->
+                if(!notifType.equals('plugin')){
+                    Map notifItem = [:]
+                    if(notifType.equals('webhook')){
+                        if(notifData.urls==null){
+                            throw new JobXMLException("${trigger} webhook had blank or missing 'urls' attribute")
+                        }
+                        notifItem = notifData
+                    }
+                    else if(notifType.equals('email')){
+                        if(notifData.size() < 1 || notifData.recipients==null || notifData.recipients.size() < 1){
+                            throw new JobXMLException("${trigger} email had blank or missing 'recipients' attribute")
+                        }
+                        notifItem[notifType] = notifData
+                    }
+                    map.notification[trigger].add(notifItem)
+                }else {
+                    if (notifData.size() < 1) {
+                        throw new JobXMLException("${trigger} plugin element was empty")
+                    }
+                    if (notifData.type==null) {
+                        throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
+                    }
+                    if (notifData.configuration==null) {
+                        throw new JobXMLException("${trigger} plugin had blank or missing 'configuration' element")
+                    }
+                    convertPluginToMap(notifData)
+                    Map plugNotifs = map.notification[trigger].find {notif -> notif.plugin}
+                    if(!plugNotifs)  map.notification[trigger].add(['plugin':[notifData]])
+                    else             plugNotifs.plugin.add(notifData)
+                }
+            }
+
+            boolean isOldFormat = useOldFormat(map.notification, false)
             triggers.each{trigger->
-                if(null!=map.notification[trigger]){
-                    if(!map.notification[trigger] || null==map.notification[trigger].email && null == map.notification[trigger].webhook
-                            && null == map.notification[trigger].plugin
-                    ){
-                        throw new JobXMLException("notification '${trigger}' element had missing 'email' or 'webhook' or 'plugin' element")
-                    }
-                    if(null!=map.notification[trigger].email && (!map.notification[trigger].email || !map.notification[trigger].email.recipients)){
-                        throw new JobXMLException("${trigger} email had blank or missing 'recipients' attribute")
-                    }
-                    if(null !=map.notification[trigger].webhook && (!map.notification[trigger].webhook || !map.notification[trigger].webhook.urls)){
-                        throw new JobXMLException("${trigger} webhook had blank or missing 'urls' attribute")
-                    }
-                    if(null !=map.notification[trigger].plugin){
-                        if(!map.notification[trigger].plugin){
-                            throw new JobXMLException("${trigger} plugin element was empty")
-                        }
-                        if(map.notification[trigger].plugin instanceof Map && !map.notification[trigger].plugin.type){
-                            throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
-                        }
-                        if(map.notification[trigger].plugin instanceof Collection && !map.notification[trigger].plugin.every{it.type}){
-                            throw new JobXMLException("${trigger} plugin had blank or missing 'type' attribute")
-                        }
-                    }
-                    if(map.notification[trigger].webhook){
-                        map.notification[trigger].urls = map.notification[trigger].webhook.remove('urls')
-                        map.notification[trigger].remove('webhook')
-                    }
-                    if(map.notification[trigger].plugin && map.notification[trigger].plugin instanceof Map){
-                        convertPluginToMap(map.notification[trigger].plugin)
-                    }else if(map.notification[trigger].plugin && map.notification[trigger].plugin instanceof Collection){
-                        map.notification[trigger].plugin.each{
-                            convertPluginToMap(it)
-                        }
+                if((map.notification[trigger].size() < 1) || (map.notification[trigger].email==null && map.notification[trigger].webhook==null && map.notification[trigger].plugin==null)){
+                    throw new JobXMLException("notification '${trigger}' element had missing 'email' or 'webhook' or 'plugin' element")
+                }
+
+                final def xmlNotif = map.notification[trigger]
+                map.notification[trigger] = []
+                if(isOldFormat && xmlNotif['webhook']){
+                    if(xmlNotif['format'] && xmlNotif['httpMethod']){
+                        xmlNotif['webhook']['format'] = xmlNotif.remove('format')
+                        xmlNotif['webhook']['httpMethod'] = xmlNotif.remove('httpMethod')
                     }
                 }
+
+                xmlNotif.each { notifEntry ->
+                        final String notifType = notifEntry.getKey()
+                        if(notifType.equals("email") || notifType.equals("webhook") || notifType.equals("plugin")) {
+                            def notifVal = notifEntry.getValue()
+                            if (notifVal instanceof Collection) {
+                                notifVal.each { notif ->
+                                    setValidNotifData(notif, notifType, trigger)
+                                }
+                            }else {
+                                setValidNotifData(notifVal, notifType, trigger)
+                            }
+                        }else {
+                            throw new JobXMLException("${notifType} is not a valid/supported notification definition")
+                        }
+                    }
             }
         }
         if(map.retry instanceof Map){
@@ -600,27 +662,47 @@ class JobsXMLCodec {
                     pluginMap['configuration']['entry'] <<  entryMap
                 }
             }
-            map.notification.keySet().sort().findAll { it.startsWith('on') }.each { trigger ->
-                if(map.notification[trigger]){
-                    if(map.notification[trigger]?.email){
-                        def mail= map.notification[trigger].remove('email')
-                        map.notification[trigger].email=[:]
-                        mail.each{k,v->
-                            BuilderUtil.addAttribute(map.notification[trigger].email,k,v)
+            boolean useOldWebhookFormat = useOldFormat(map.notification, true)
+            map.notification.keySet().sort()?.each { trigger ->
+                ArrayList triggerNotifs = map.notification[trigger]
+                map.notification[trigger] = [:]
+                triggerNotifs?.each {notif ->
+                    def xmlNotif = [:]
+                    def xmlNotifType
+                    if(!notif.plugin){
+                        if(notif.email){
+                            notif = notif.email
+                            xmlNotifType = 'email'
+                        }else if(notif.urls){
+                            xmlNotifType = 'webhook'
+                        }else{
+                            throw new JobXMLException("unknown notification xmlNotifType")
                         }
-                    }
-                    if(map.notification[trigger]?.urls){
-                        map.notification[trigger].webhook=BuilderUtil.toAttrMap('urls',map.notification[trigger].remove('urls'))
-                    }
-                    if(map.notification[trigger]?.plugin){
-                        if(map.notification[trigger]?.plugin instanceof Map){
-                            convertNotificationPlugin(map.notification[trigger]?.plugin)
-                        }else if(map.notification[trigger]?.plugin instanceof Collection){
-                            //list of plugins,
-                            map.notification[trigger].plugin.each{Map plugin->
-                                convertNotificationPlugin(plugin)
+                        if(!(useOldWebhookFormat && xmlNotifType=='webhook')){
+                            //for notifications translated to inline tags
+                            notif.each{k,v->
+                                BuilderUtil.addAttribute(xmlNotif,k,v)
                             }
                         }
+                    }else{
+                        notif.plugin.each{Map plugin->
+                            convertNotificationPlugin(plugin)
+                        }
+                        xmlNotifType = 'plugin'
+                        xmlNotif = notif.plugin
+                    }
+                    if(useOldWebhookFormat && xmlNotifType=='webhook'){
+                        map.notification[trigger][xmlNotifType] = BuilderUtil.toAttrMap('urls',notif.remove('urls'))
+                        notif.each { entry ->
+                            xmlNotif = [:]
+                            map.notification[trigger][entry.key] = entry.value
+                        }
+                    }else{
+                        if(!map.notification[trigger][xmlNotifType]) map.notification[trigger][xmlNotifType] = []
+                        if(notif.xmlNotif instanceof Collection)
+                            map.notification[trigger][xmlNotifType].addAll(xmlNotif)
+                        else
+                            map.notification[trigger][xmlNotifType].add(xmlNotif)
                     }
                 }
             }

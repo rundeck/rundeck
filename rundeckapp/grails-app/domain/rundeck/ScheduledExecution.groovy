@@ -205,6 +205,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         groupPath type: 'string'
 //        orchestrator type: 'text'
         //options lazy: false
+        notifications sort: 'id', order: 'asc'
         timeout(type: 'text')
         retry(type: 'text')
         retryDelay(type: 'text')
@@ -371,33 +372,28 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
         if(notifications){
             map.notification=[:]
-            notifications.each{
-                if(!map.notification[it.eventTrigger]){
-                    map.notification[it.eventTrigger]=[:]
+            notifications.each{ Notification notif ->
+                if(!map.notification[notif.eventTrigger]){
+                    map.notification[notif.eventTrigger]=[]
                 }
-                def trigger= map.notification[it.eventTrigger]
-                def map1 = it.toMap()
-                if(map1.type){
-                    //plugin notification with a type
-                    if(!trigger['plugin']){
-                        trigger['plugin']=map1
-                    }else if(trigger['plugin'] instanceof Map){
-                        trigger['plugin']=[trigger.remove('plugin'),map1]
-                    }else if(trigger['plugin'] instanceof Collection){
-                        trigger['plugin'] << map1
+                Collection notifsInTrigger = map.notification[notif.eventTrigger]
+
+                Map notifMap = notif.toMap()
+                if(notifMap['type']){
+                    Map prevPluginNotif = notifsInTrigger.find { notifEntry -> notifEntry['plugin']}
+                    if(prevPluginNotif){
+                        prevPluginNotif['plugin'].add(notifMap)
                     }
+                    else
+                        notifsInTrigger.add(['plugin':[notifMap]])
                 }else{
                     //built-in notification, urls or recipients subelements
-                    trigger.putAll(map1)
+                    notifsInTrigger.add(notifMap)
                 }
             }
-            notifications.each {
-                if (map.notification[it.eventTrigger].plugin instanceof Collection) {
-                    map.notification[it.eventTrigger].plugin =
-                            map.notification[it.eventTrigger].plugin.sort { a, b -> a.type <=> b.type }
-                }
+            map.notification.keySet()?.each { trigger ->
+                map.notification[trigger].find{ notif -> notif.plugin }?.plugin?.sort{ a, b -> a.type <=> b.type }
             }
-
             map.notifyAvgDurationThreshold = notifyAvgDurationThreshold
         }
         def config = pluginConfigMap
@@ -563,34 +559,34 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }
         if(data.notification){
             def nots=[]
-            data.notification.keySet().findAll{it.startsWith('on')}.each{ name->
-                if(data.notification[name]){
-                        //support for built-in notification types
-                    ['urls','email'].each{ subkey->
-                        if(data.notification[name][subkey]){
-                            Map notificationData = [
-                                    format    : data.notification[name]["format"],
-                                    httpMethod: data.notification[name]["httpMethod"],
-                                    (subkey)  : data.notification[name][subkey]
-                            ]
-
-                            nots << Notification.fromMap(name, notificationData)
+            data.notification.keySet()?.each{ name->
+                def notifications = data.notification[name]
+                if(notifications){
+                    //support for built-in notification types
+                    notifications.each { notifMap ->
+                        ['urls','email'].each{ subkey->
+                            if(notifMap[subkey]){
+                                Map notificationData = [
+                                        format    : notifMap["format"],
+                                        httpMethod: notifMap["httpMethod"],
+                                        (subkey)  : notifMap[subkey]
+                                ]
+                                nots << Notification.fromMap(name, notificationData)
+                            }
                         }
-                    }
-                    if(data.notification[name]['plugin']){
-                        def pluginElement=data.notification[name]['plugin']
-                        def plugins=[]
-                        if(pluginElement instanceof Map){
-                            plugins=[pluginElement]
-                        }else if(pluginElement instanceof Collection){
-                            plugins= pluginElement
-                        }else{
-
-                        }
-                        plugins.each{ plugin->
-                            def n=Notification.fromMap(name, plugin)
-                            if(n){
-                                nots << n
+                        if(notifMap['plugin']){
+                            def pluginElement=notifMap['plugin']
+                            def plugins=[]
+                            if(pluginElement instanceof Map){
+                                plugins=[pluginElement]
+                            }else if(pluginElement instanceof Collection){
+                                plugins= pluginElement
+                            }
+                            plugins.each{ plugin->
+                                def n=Notification.fromMap(name, plugin)
+                                if(n){
+                                    nots << n
+                                }
                             }
                         }
                     }

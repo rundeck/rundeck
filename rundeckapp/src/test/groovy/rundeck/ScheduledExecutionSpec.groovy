@@ -19,7 +19,6 @@ package rundeck
 import grails.test.hibernate.HibernateSpec
 import org.eclipse.jetty.util.ajax.JSON
 import testhelper.RundeckHibernateSpec
-
 import static org.junit.Assert.*
 
 /**
@@ -68,7 +67,9 @@ class ScheduledExecutionSpec extends RundeckHibernateSpec
             def map = [
                     jobName: 'abc',
                     notification: [
-                            onFailure: [urls:"url1", format: "JSON", httpMethod: "POST"]
+                            onFailure: [
+                                [urls:"url1", format: "JSON", httpMethod: "POST"]
+                            ]
                     ]
             ]
         when:

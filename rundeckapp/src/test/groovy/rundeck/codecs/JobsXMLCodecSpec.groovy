@@ -2,6 +2,7 @@ package rundeck.codecs
 
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import groovy.xml.MarkupBuilder
+import org.rundeck.app.components.JobYAMLFormat
 import rundeck.codecs.JobsXMLCodec
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
@@ -1879,5 +1880,127 @@ inside]]></aproperty>
         doc.job[0].sequence.command[0].jobref.useName!='true'
         doc.job[0].sequence.command[0].jobref.uuid=='xxxxxxxxx'
 
+    }
+
+    def "should return false on multiple notifs of same type in same trigger canonical jobmap"(){
+        given:
+        Map notifMap
+        if (manySameTypePerTrigger){
+            notifMap = [
+                    onfailure: [
+                            [email: [recipients: "mail@example.com"]],
+                            [
+                                    format: "xml",
+                                    httpMethod: "get",
+                                    urls: "http://example1.com/1"
+                            ],
+                    ],
+                    onsuccess: [
+                            [email: [recipients: "mail@example.com"]],
+                            [email: [recipients: "mail2@example.com"]],
+                            [
+                                    format: "xml",
+                                    httpMethod: "get",
+                                    urls: "http://example1.com/1"
+                            ],
+                            [
+                                    format: "json",
+                                    httpMethod: "post",
+                                    urls: "https://example2.com/2"
+                            ]
+                    ]
+            ]
+        }else {
+            notifMap = [
+                    onsuccess: [
+                            [email: [recipients: "mail@example.com"]],
+                            [
+                                    format: "xml",
+                                    httpMethod: "get",
+                                    urls: "http://example1.com/1"
+                            ],
+                    ],
+                    onfailure:[
+                            [email: [recipients: "mail@example.com"]]
+                    ]
+            ]
+        }
+
+        when:
+        def hasManySameTypePerTrigger = JobsXMLCodec.useOldFormat(notifMap, true)
+
+        then:
+        hasManySameTypePerTrigger == expected
+
+        where:
+        manySameTypePerTrigger | expected
+        true                   | false
+        false                  | true
+    }
+
+    def "should return false on multiple notifs of same type in same trigger xml map"(){
+        given:
+        Map notifMap
+        if (manySameTypePerTrigger){
+            notifMap = [
+                    onfailure: [
+                            email: [
+                                    [recipients: "mail@example.com"]
+                            ],
+                            webhook: [
+                                    [
+                                            format: "xml",
+                                            httpMethod: "get",
+                                            urls: "http://example1.com/1"
+                                    ]
+                            ]
+                    ],
+                    onsuccess: [
+                            email: [
+                                    [recipients: "mail@example.com"],
+                                    [recipients: "mail2@example.com"]
+                            ],
+                            webhook: [
+                                    [
+                                            format: "xml",
+                                            httpMethod: "get",
+                                            urls: "http://example1.com/1"
+                                    ],
+                                    [
+                                            format: "json",
+                                            httpMethod: "post",
+                                            urls: "https://example2.com/2"
+                                    ]
+                            ]
+                    ]
+            ]
+        }else {
+            notifMap = [
+                    onsuccess: [
+                            email: [
+                                    [recipients: "mail@example.com"]
+                            ],
+                            format: "xml",
+                            httpMethod: "get",
+                            urls: "http://example1.com/1"
+                    ],
+                    onfailure:[
+                            email: [
+                                    [recipients: "mail@example.com"]
+                            ]
+                    ]
+            ]
+        }
+
+        when:
+        def hasManySameTypePerTrigger = JobsXMLCodec.useOldFormat(notifMap, false)
+
+        then:
+        hasManySameTypePerTrigger == expected
+
+        where:
+        manySameTypePerTrigger | expected
+        true                   | false
+        false                  | true
     }
 }
