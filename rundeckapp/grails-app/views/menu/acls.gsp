@@ -97,7 +97,7 @@
                 window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
                 ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
             </g:if>
-            <g:if test="${!clusterMode && hasOpsAdminAuth}">
+            <g:if test="${!clusterMode}">
                 ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
                 ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
             </g:if>
@@ -117,7 +117,7 @@
                     stpolicies.fileUpload = aclstorageupload;
                     ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
                 </g:if>
-            <g:if test="${!clusterMode && hasOpsAdminAuth}">
+            <g:if test="${!clusterMode}">
                 window.aclfsupload = new PolicyUpload({ policies: fspolicies.policies()});
                 fspolicies.fileUpload = aclfsupload;
                 ko.applyBindings(aclfsupload, jQuery('#aclFSUploadForm')[0]);
@@ -179,7 +179,7 @@
   <div class="row">
       <div class="col-sm-12">
           <div class="card">
-              <g:if test="${!clusterMode && hasOpsAdminAuth}">
+              <g:if test="${!clusterMode}">
                   <div class="card-header clearfix">
                       <span class="panel-title pull-left">
                           <span class="text-info">${aclFileList.size()}</span>
