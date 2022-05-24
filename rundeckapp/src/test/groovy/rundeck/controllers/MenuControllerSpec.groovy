@@ -1172,6 +1172,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
         controller.frameworkService = Mock(FrameworkService){
             getFrameworkConfigDir()>>confdir
+            isClusterModeEnabled()>>true
             }
         controller.aclFileManagerService = Mock(AclFileManagerService){
             1 * listStoredPolicyFiles(AppACLContext.system())>>[id,id2]
