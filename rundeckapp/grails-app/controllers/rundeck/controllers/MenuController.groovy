@@ -1555,7 +1555,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     @RdAuthorizeApplicationType(
         type = AuthConstants.TYPE_SYSTEM_ACL,
-        access = RundeckAccess.General.AUTH_ANY_ADMIN
+        access = RundeckAccess.General.AUTH_APP_READ
     )
     def acls() {
         systemAclsModel()
@@ -1596,7 +1596,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         [
                 fwkConfigDir : fwkConfigDir,
                 aclFileList  : (hasOpsAdmin || hasAdmin) ? fslist: [],
-                aclStoredList: (hasAppAdmin || hasAdmin) ? stored: [],
+                aclStoredList: stored,
                 clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
     }
