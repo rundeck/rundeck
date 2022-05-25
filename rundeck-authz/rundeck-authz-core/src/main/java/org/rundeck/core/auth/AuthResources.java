@@ -125,6 +125,21 @@ public class AuthResources {
             AuthConstants.ACTION_APP_ADMIN,
             AuthConstants.ACTION_OPS_ADMIN
     );
+
+    public static final List<String> appRunnerActions = Arrays.asList(
+            AuthConstants.ACTION_READ,
+            AuthConstants.ACTION_CREATE,
+            AuthConstants.ACTION_UPDATE,
+            AuthConstants.ACTION_DELETE,
+            AuthConstants.ACTION_RUNNER_PING,
+            AuthConstants.ACTION_RUNNER_REGENERATE_CREDENTIALS
+    );
+
+    public static final List<String> appRunnerKindActions = Arrays.asList(
+            AuthConstants.ACTION_READ,
+            AuthConstants.ACTION_ADMIN
+    );
+
     public static final List<String> appWebhookKindActions = Arrays.asList(
             AuthConstants.ACTION_READ,
             AuthConstants.ACTION_CREATE,
@@ -141,6 +156,7 @@ public class AuthResources {
         appResActionsByType.put(AuthConstants.TYPE_PROJECT_ACL, appProjectAclActions);
         appResActionsByType.put(AuthConstants.TYPE_STORAGE, storageActions);
         appResActionsByType.put(AuthConstants.TYPE_APITOKEN, appApitokenActions);
+        appResActionsByType.put(AuthConstants.TYPE_RUNNER, appRunnerActions);
     }
 
     static {
@@ -149,6 +165,7 @@ public class AuthResources {
         appResAttrsByType.put(AuthConstants.TYPE_PROJECT_ACL, Collections.singletonList("name"));
         appResAttrsByType.put(AuthConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
         appResAttrsByType.put(AuthConstants.TYPE_APITOKEN, Arrays.asList("username", "roles"));
+        appResAttrsByType.put(AuthConstants.TYPE_RUNNER, Arrays.asList("username", "roles"));
 
     }
 
@@ -164,6 +181,7 @@ public class AuthResources {
         appKindActionsByType.put(AuthConstants.TYPE_JOB, appJobKindActions);
         appKindActionsByType.put(AuthConstants.TYPE_APITOKEN, appApitokenKindActions);
         appKindActionsByType.put(AuthConstants.TYPE_PLUGIN, appPluginActions);
+        appKindActionsByType.put(AuthConstants.TYPE_RUNNER, appRunnerKindActions);
         appKindActionsByType.put(AuthConstants.TYPE_WEBHOOK, appWebhookKindActions);
     }
 
