@@ -19,7 +19,6 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.Validator
@@ -34,24 +33,18 @@ import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.jetbrains.annotations.NotNull
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.BaseAuthContextEvaluator
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
-import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.AuthConstants
-import rundeck.BaseReport
-import rundeck.CommandExec
-import rundeck.ExecReport
-import rundeck.Execution
-import rundeck.Project
-import rundeck.ScheduledExecution
-import rundeck.Workflow
+import rundeck.*
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
@@ -59,6 +52,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 import static org.junit.Assert.*
@@ -74,6 +68,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         mockDomain ScheduledExecution
         mockDomain Execution
         mockDomain CommandExec
+        mockDomain JobFileRecord
         mockCodec JobsXMLCodec
 
         def configService = Stub(ConfigurationService) {
@@ -1165,6 +1160,77 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             1 * listener.total('export', 0)
             0 * listener.inc('export', _)
             1 * listener.done()
+        cleanup:
+            temp.delete()
+
+
+    }
+    def "basic export executions only to stream"() {
+        given:
+
+            File temp = File.createTempFile("test", "zip")
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>(){
+                Map<String, ProjectComponent> beans=[:]
+            }
+
+            Execution exec = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                nodeInclude: 'test1',
+                nodeExcludeTags: 'monkey',
+                status: 'true',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
+
+            )
+            assertNotNull exec.save()
+            ExecReport er = ExecReport.fromExec(exec).save()
+            assert null!=er
+
+            def project = Mock(IRundeckProject){
+                getName()>>'testproj'
+            }
+            def framework = Mock(IFramework)
+            List<String> entries=[]
+            def output = new ZipOutputStream(temp.newOutputStream()){
+                @Override
+                void putNextEntry(@NotNull final ZipEntry e) throws IOException {
+                    entries<<e.name
+                    super.putNextEntry(e)
+                }
+            }
+            def options = Mock(ProjectArchiveExportRequest){
+                isAll()>>false
+                isExecutionsOnly()>>true
+                getExecutionIds()>>[
+                    exec.id.toString()
+                ]
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener){
+
+            }
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
+            service.loggingService = Mock(LoggingService)
+            service.workflowService = Mock(WorkflowService)
+            service.executionUtilService=Mock(ExecutionUtilService){
+                1 * exportExecutionXml(_, _, _)>>{
+                    it[1].write('test\n')
+                }
+            }
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', 4)
+            _ * listener.inc('export', _)
+            1 * listener.done()
+            entries.contains("rundeck-testproj/executions/execution-${exec.id}.xml".toString())
+            entries.contains("rundeck-testproj/reports/report-${exec.id}.xml".toString()    )
         cleanup:
             temp.delete()
 
