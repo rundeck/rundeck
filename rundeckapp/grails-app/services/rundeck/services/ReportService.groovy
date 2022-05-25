@@ -302,11 +302,11 @@ class ReportService  {
                             or {
                                 List execIdFilterPartioned = Lists.partition(query.execIdFilter, 1000)
                                 execIdFilterPartioned.each { List partition ->
-                                    'in'('jcExecId', partition)
+                                    'in'('executionId', partition.collect{Long.parseLong(it)})
                                 }
                             }
                         } else {
-                            'in'('jcExecId', query.execIdFilter)
+                            'in'('executionId', query.execIdFilter.collect{Long.parseLong(it)})
                         }
                         and{
                                     jobfilters.each { key, val ->
@@ -395,11 +395,11 @@ class ReportService  {
             if (isJobs) {
                 or {
                     isNotNull("jcJobId")
-                    isNotNull("jcExecId")
+                    isNotNull("executionId")
                 }
             } else {
                 isNull("jcJobId")
-                isNull("jcExecId")
+                isNull("executionId")
             }
 
             if(query.execnodeFilter){

@@ -111,5 +111,5 @@ databaseChangeLog = {
         include file: 'core/Tag-3.4.7.groovy'
         include file: 'core/H2AlterIdColumnsToAutoIncrementByDefault.groovy'
         include file: 'core/Tag-4.0.0.groovy'
-
+        include file: 'core/ExecReportJcExecIdToExecutionId.groovy'
 }

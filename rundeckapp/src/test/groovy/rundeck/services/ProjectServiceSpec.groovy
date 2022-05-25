@@ -2238,7 +2238,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <message>Report message</message>
   <dateStarted>1970-01-01T00:00:00Z</dateStarted>
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
-  <jcExecId>123</jcExecId>
+  <executionId>123</executionId>
   <jcJobId>test-job-uuid</jcJobId>
   <adhocExecution />
   <adhocScript />
@@ -2269,7 +2269,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
-            jcExecId:'123',
+            executionId:123L,
             jcJobId: oldJobId.toString(),
             node:'1/0/0',
             title: 'blah',
@@ -2305,11 +2305,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def ExecReport result = service.loadHistoryReport(REPORT_XML_TEST1,[(123):'456'],[(oldUuid):se],'test')
+        def ExecReport result = service.loadHistoryReport(REPORT_XML_TEST1,[(123):456],[(oldUuid):se],'test')
         then:
         assertNotNull result
         def expected = [
-            jcExecId: '456',
+            executionId: 456L,
             jcJobId: newJobId.toString(),
             node: '1/0/0',
             title: 'blah',
@@ -2355,7 +2355,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
             ctxController: 'ct',
-            jcExecId: '123',
+            executionId: 123,
             jcJobId: '321',
             node: '1/0/0',
             title: 'blah',
@@ -2380,7 +2380,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         assertNotNull result
         def keys = [
-            jcExecId: '456',
+            executionId: 456,
             jcJobId: '321',
             node: '1/0/0',
             title: 'blah',

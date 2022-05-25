@@ -500,7 +500,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         )
 
         then:
-        params.jcExecId == 11
+        params.executionId == 11
         params.jcJobId == 'abc'
         params.reportId == 'job1'
         params.adhocExecution == false
