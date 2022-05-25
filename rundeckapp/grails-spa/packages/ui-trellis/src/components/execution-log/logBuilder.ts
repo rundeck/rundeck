@@ -44,18 +44,11 @@ export class LogBuilder {
   constructor(readonly executionOutput: ExecutionOutput,readonly rootElem: HTMLElement, opts: IBuilderOpts) {
     this.opts = Object.assign(LogBuilder.DefaultOpts(), opts)
 
-    let output: IObservableArray<ExecutionOutputEntry>
-
     const {node, stepCtx} = this.opts
 
-    if (node) {
-      this.observeFiltered(() => {
-        return executionOutput.getEntriesByNodeCtx(node, stepCtx)
-      })
-    } else {
-      output = executionOutput.entries
-      this.observeOutput(output)
-    }
+    this.observeFiltered(() => {
+      return executionOutput.getEntriesFiltered(node, stepCtx)
+    })
   }
 
   onNewLines(handler: (entries: Array<Vue>) => void) {
