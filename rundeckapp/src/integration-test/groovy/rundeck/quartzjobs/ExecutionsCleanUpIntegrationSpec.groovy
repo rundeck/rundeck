@@ -34,6 +34,7 @@ import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.LogFileStorageService
+import spock.lang.Specification
 
 /**
  * $INTERFACE is ...
@@ -44,10 +45,10 @@ import rundeck.services.LogFileStorageService
 
 @Integration
 @Rollback
-class ExecutionsCleanUpTest extends GroovyTestCase{
+class ExecutionsCleanUpIntegrationSpec extends Specification{
 
-    @Test
-    void testExecuteJobCleanerNoExecutionsToDelete(){
+    def testExecuteJobCleanerNoExecutionsToDelete(){
+        given:
         String projName = 'projectTest'
         int maxDaysToKeep = 10
         int minimumExecutionsToKeep = 0
@@ -64,22 +65,23 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         ExecutionsCleanUp job = new ExecutionsCleanUp()
 
+        when:
         List execIdsToExclude = job.searchExecutions(
                 frameworkService,
                 new ExecutionService(),
                 new JobSchedulerService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
-
-        Assert.assertEquals(0, execIdsToExclude.size())
+        then:
+        execIdsToExclude.size() == 0
     }
 
-    @Test
-    void testExecuteJobCleanerWithExecutionsToDelete(){
+    def testExecuteJobCleanerWithExecutionsToDelete(){
+        given:
         String projName = 'projectTest'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        def logFileStorageService = new MockFor(LogFileStorageService)
+        def logFileStorageService = Mock(LogFileStorageService)
 
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
@@ -90,24 +92,25 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
 
-        def executionFile = new MockFor(ExecutionFile)
+        def executionFile = Mock(ExecutionFile)
 
         FrameworkService frameworkService = initNonClusterFrameworkService()
         List execIdsToExclude = job.searchExecutions(frameworkService,
                 new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
 
 
-        logFileStorageService.demand.getExecutionFiles(1..999) { e , filters, endpoint ->  [:] }
+        _*logFileStorageService.getExecutionFiles(_,_,_)>>[:]
 
-        Assert.assertEquals(true, execIdsToExclude.size() > 0)
 
-        int sucessTotal = job.deleteByExecutionList(
-                execIdsToExclude, new FileUploadService(), logFileStorageService.proxyInstance())
+        when:
+        int sucessTotal = job.deleteByExecutionList(execIdsToExclude, new FileUploadService(), logFileStorageService)
 
-        Assert.assertEquals(sucessTotal, execIdsToExclude.size())
+        then:
+        execIdsToExclude.size() > 0
+        execIdsToExclude.size() == sucessTotal
     }
 
-    FrameworkService initNonClusterFrameworkService() {
+    private FrameworkService initNonClusterFrameworkService() {
         NavigableMap cfg = new NavigableMap()
         cfg.setProperty("clusterMode.enabled",false)
         ConfigurationService cfgSvc = new ConfigurationService()
@@ -115,19 +118,15 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         return new FrameworkService(configurationService: cfgSvc)
     }
 
-    @Test
-    void testExecuteJobCleanerOnClusterDeleteNullServerUUID(){
+
+    def testExecuteJobCleanerOnClusterDeleteNullServerUUID(){
+        given:
         String projName = 'projectTest'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        def logFileStorageService = new MockFor(LogFileStorageService)
-        logFileStorageService.demand.getFileForExecutionFiletype(1..999){Execution execution,
-                                                                         String filetype,
-                                                                         boolean useStoredPath,
-                                                                         boolean partial ->
-            null
-        }
+        def logFileStorageService = Mock(LogFileStorageService)
+
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
         ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
@@ -138,32 +137,27 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         Execution execution = setupExecution(se, projName, execDate, execDate)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
 
-        def mockfs=new MockFor(FrameworkService)
-        mockfs.demand.getServerUUID(1..1){
-            "aaaa"
-        }
-        mockfs.demand.isClusterModeEnabled(1..5){
-            true
+        def mockfs=Mock(FrameworkService){
+            getServerUUID()>> "aaaa"
+            isClusterModeEnabled()>> true
         }
 
-        FrameworkService frameworkService = mockfs.proxyInstance()
 
-        def mockjs=new MockFor(JobSchedulerService)
-        mockjs.demand.getDeadMembers(0..1){
-            ["null","bbbb"]
+        def mockjs=Mock(JobSchedulerService) {
+            _*getDeadMembers(_) >> ["null", "bbbb"]
         }
 
-        JobSchedulerService jobSchedulerService = mockjs.proxyInstance()
 
 
-        List execIdsToExclude = job.searchExecutions(frameworkService,
-                new ExecutionService(), jobSchedulerService, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
-
-        Assert.assertEquals(true, execIdsToExclude.size() > 0)
+        when:
+        List execIdsToExclude = job.searchExecutions(mockfs,
+                new ExecutionService(), mockjs, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+        then:
+        execIdsToExclude.size() > 0
 
     }
 
-    Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
+    private Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
         Execution e
         Execution.withNewTransaction {
             e = new Execution(
