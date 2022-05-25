@@ -2247,6 +2247,30 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <failedNodeList />
   <filterApplied />
 </report>'''
+    /**
+     * uses deprecated jcExecId
+     */
+    static String REPORT_XML_TEST1_DEPRECATED='''<report>
+  <node>1/0/0</node>
+  <title>blah</title>
+  <status>succeed</status>
+  <actionType>succeed</actionType>
+  <ctxProject>testproj1</ctxProject>
+  <reportId>test/job</reportId>
+  <tags>a,b,c</tags>
+  <author>admin</author>
+  <message>Report message</message>
+  <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+  <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+  <jcExecId>123</jcExecId>
+  <jcJobId>test-job-uuid</jcJobId>
+  <adhocExecution />
+  <adhocScript />
+  <abortedByUser />
+  <succeededNodeList />
+  <failedNodeList />
+  <filterApplied />
+</report>'''
     def testExportReport() {
 
         def newJobId = 'test-job-uuid'
@@ -2305,9 +2329,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def ExecReport result = service.loadHistoryReport(REPORT_XML_TEST1,[(123):456],[(oldUuid):se],'test')
+        def ExecReport result = service.loadHistoryReport(rptxml,[(123):456],[(oldUuid):se],'test')
         then:
-        assertNotNull result
+        result!=null
         def expected = [
             executionId: 456L,
             jcJobId: newJobId.toString(),
@@ -2324,6 +2348,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             message: 'Report message',
         ]
         assertPropertiesEquals expected, result
+        where:
+            rptxml<<[
+                REPORT_XML_TEST1,
+                REPORT_XML_TEST1_DEPRECATED
+            ]
     }
     def testLoadReportSkippedExecution() {
 
@@ -2337,9 +2366,14 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def ExecReport result = service.loadHistoryReport(REPORT_XML_TEST1,[:],[(oldUuid):se],'test')
+        def ExecReport result = service.loadHistoryReport(rptxml,[:],[(oldUuid):se],'test')
         then:
         assertNull result
+        where:
+            rptxml<<[
+                REPORT_XML_TEST1,
+                REPORT_XML_TEST1_DEPRECATED
+            ]
     }
     def testReportRoundtrip() {
         given:
