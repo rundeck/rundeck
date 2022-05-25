@@ -25,6 +25,7 @@ import org.junit.Assert
 import org.junit.Test
 import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
+import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -49,7 +50,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
     def testExecuteJobCleanerNoExecutionsToDelete(){
         given:
-        String projName = 'projectTest'
+        String projName = 'projectTest1'
         int maxDaysToKeep = 10
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
@@ -62,8 +63,13 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         FrameworkService frameworkService = initNonClusterFrameworkService()
 
         ScheduledExecution se = setupJob(projName)
-        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         ExecutionsCleanUp job = new ExecutionsCleanUp()
+        when:
+        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
+        then:
+        1 == Execution.countByProject(projName)
+        1 == ExecReport.countByCtxProject(projName)
+
 
         when:
         List execIdsToExclude = job.searchExecutions(
@@ -73,11 +79,13 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
         then:
         execIdsToExclude.size() == 0
+        1 == Execution.countByProject(projName)
+        1 == ExecReport.countByCtxProject(projName)
     }
 
     def testExecuteJobCleanerWithExecutionsToDelete(){
         given:
-        String projName = 'projectTest'
+        String projName = 'projectTest2'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
@@ -95,19 +103,23 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         def executionFile = Mock(ExecutionFile)
 
         FrameworkService frameworkService = initNonClusterFrameworkService()
-        List execIdsToExclude = job.searchExecutions(frameworkService,
+        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
+        when:
+        List execIds = job.searchExecutions(frameworkService,
                 new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
 
 
-        _*logFileStorageService.getExecutionFiles(_,_,_)>>[:]
-
-
-        when:
-        int sucessTotal = job.deleteByExecutionList(execIdsToExclude, new FileUploadService(), logFileStorageService)
 
         then:
-        execIdsToExclude.size() > 0
-        execIdsToExclude.size() == sucessTotal
+        execIds.size() > 0
+
+        when:
+        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService)
+
+        then:
+        execIds.size() == sucessTotal
+        0 == Execution.countByProject(projName)
+        0 == ExecReport.countByCtxProject(projName)
     }
 
     private FrameworkService initNonClusterFrameworkService() {
@@ -121,11 +133,10 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
     def testExecuteJobCleanerOnClusterDeleteNullServerUUID(){
         given:
-        String projName = 'projectTest'
+        String projName = 'projectTest3'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        def logFileStorageService = Mock(LogFileStorageService)
 
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
@@ -134,9 +145,6 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         }
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
-        Execution execution = setupExecution(se, projName, execDate, execDate)
-        ExecutionsCleanUp job = new ExecutionsCleanUp()
-
         def mockfs=Mock(FrameworkService){
             getServerUUID()>> "aaaa"
             isClusterModeEnabled()>> true
@@ -146,6 +154,13 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         def mockjs=Mock(JobSchedulerService) {
             _*getDeadMembers(_) >> ["null", "bbbb"]
         }
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
+        when:
+        Execution execution = setupExecution(se, projName, execDate, execDate)
+
+        then:
+        1 == Execution.countByProject(projName)
+        1 == ExecReport.countByCtxProject(projName)
 
 
 
@@ -153,7 +168,10 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         List execIdsToExclude = job.searchExecutions(mockfs,
                 new ExecutionService(), mockjs, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
         then:
-        execIdsToExclude.size() > 0
+        execIdsToExclude.size() ==1
+        execIdsToExclude.contains(execution.id)
+        1 == Execution.countByProject(projName)
+        1 == ExecReport.countByCtxProject(projName)
 
     }
 
@@ -178,7 +196,10 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
                 e.serverNodeUUID = serverUUID
             }
             e.save()
+            def er=ExecReport.fromExec(e)
+            er.save()
         }
+
         return e
     }
 
