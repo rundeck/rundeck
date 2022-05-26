@@ -44,9 +44,7 @@ class ExecutionServiceParseJobOptsSpec extends Specification implements ServiceU
         se.addToOptions(new Option(name: 'opt1', enforced: false, multivalued: true, delimiter: ','))
         final opt2 = new Option(name: 'opt2', enforced: true, multivalued: true, delimiter: ' ')
         opt2.delimiter = ' '
-        opt2.addToValues('a')
-        opt2.addToValues('b')
-        opt2.addToValues('abc')
+        opt2.valuesList = 'a,b,abc'
         se.addToOptions(opt2)
 
 

@@ -37,7 +37,6 @@ class EditOptsControllerTests  {
             assertNull option.description
             assertFalse option.required
             assertFalse option.enforced
-            assertNull option.values
             assertNull option.valuesList
             assertNull option.realValuesUrl
             assertNull option.regex
@@ -82,7 +81,6 @@ class EditOptsControllerTests  {
             assertEquals 'a description', option.description
             assertFalse option.required
             assertFalse option.enforced
-            assertNull option.values
             assertNull option.valuesList
             assertNotNull option.realValuesUrl
             assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()
@@ -103,7 +101,6 @@ class EditOptsControllerTests  {
             assertEquals 'a description', option.description
             assertFalse option.required
             assertTrue option.enforced
-            assertNull option.values
             assertNull option.valuesList
             assertNotNull option.realValuesUrl
             assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()
@@ -124,7 +121,6 @@ class EditOptsControllerTests  {
             assertEquals 'a description', option.description
             assertFalse option.required
             assertFalse option.enforced
-            assertNull option.values
             assertNull option.valuesList
             assertNotNull option.realValuesUrl
             assertEquals 'http://test.com', option.realValuesUrl.toExternalForm()

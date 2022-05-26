@@ -1309,7 +1309,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                                               enforced: true,
                                               multivalued:true,
                                               delimiter: ',',
-                                              values:['val1','val2','val3']
+                                              valuesList: 'val1,val2,val3'
                                       ]
                       ]
         ]
@@ -1339,7 +1339,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                                               enforced: true,
                                               multivalued:true,
                                               delimiter: ',',
-                                              values:['val1','val2','val3']
+                                              valuesList: 'val1,val2,val3'
                                       ]+data
                       ]
         ]
@@ -1627,13 +1627,13 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         given:
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         def newjob=new ScheduledExecution(createJobParams(
                 options: [
                         new Option(name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3", multivalued: true),
-                        new Option(name: 'test2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd'], multivalued: true, delimiter: "testdelim")
+                        new Option(name: 'test2', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d', multivalued: true, delimiter: "testdelim")
                 ]
         ))
         service.fileUploadService = Mock(FileUploadService)
@@ -1889,7 +1889,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'a', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'a', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         service.fileUploadService = Mock(FileUploadService)
@@ -1908,7 +1908,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         def inputOptions = input?.options ?: input?._sessionEditOPTSObject
 
         for(def i=0;i<inputOptions?.size();i++){
-            for(def prop:['name','defaultValue','enforced','realValuesUrl','values']){
+            for(def prop:['name','defaultValue','enforced','realValuesUrl','valuesList']){
                 results.scheduledExecution.options[i]."$prop"==inputOptions["options[$i]"]."$prop"
             }
         }
@@ -1917,7 +1917,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         input|expectSize|isSuccess
         //modify existing options
         [options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"],
-                   "options[1]": [name: 'test2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']]]] |  2 | true
+                   "options[1]": [name: 'test2', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d']]] |  2 | true
         //replace with a new option
         [options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]] |  1  | true
         //remove all options
@@ -1933,7 +1933,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'a', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'a', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
 
@@ -1958,7 +1958,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         input|_
         //invalid test1 option delimiter
         [options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false, multivalued: true],
-                   "options[1]": [name: 'test2', defaultValue: 'val2', enforced: false, values: ['a', 'b', 'c', 'd'], multivalued: true, delimiter: "testdelim"]]] |  _
+                   "options[1]": [name: 'test2', defaultValue: 'val2', enforced: false, valuesList: 'a,b,c,d', multivalued: true, delimiter: "testdelim"]]] |  _
 
     }
     def "do update job valid options"(){
@@ -1967,7 +1967,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         def newJob = new ScheduledExecution(createJobParams(
@@ -1986,7 +1986,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         results.scheduledExecution.options?.size() == input?.size()
 
         for(def i=0;i<input?.size();i++){
-            for(def prop:['name','defaultValue','enforced','realValuesUrl','values']){
+            for(def prop:['name','defaultValue','enforced','realValuesUrl','valuesList']){
                 results.scheduledExecution.options[0]."$prop"==input[i]."$prop"
             }
         }
@@ -1994,7 +1994,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         where:
         input|_
         [new Option(name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"),
-                new Option(name: 'test3', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']),
+                new Option(name: 'test3', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d'),
         ] |  _
         null |  _
 
@@ -2075,7 +2075,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 command: 'aCommand'
         )
         def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, valuesUrl: "http://test.com/test")
-        def opt2 = new Option(name: 'test2', defaultValue: 'val2', enforced: true, values: ['a', 'b', 'c'])
+        def opt2 = new Option(name: 'test2', defaultValue: 'val2', enforced: true, valuesList: 'a,b,c')
         se.addToOptions(opt1)
         se.addToOptions(opt2)
         se.save()
@@ -3397,7 +3397,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         def newJob = new ScheduledExecution(createJobParams(
@@ -3427,7 +3427,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         where:
         input|_
         [new Option(name: 'test1', label: 'label1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"),
-         new Option(name: 'test3', label: 'label2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']),
+         new Option(name: 'test3', label: 'label2', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d'),
         ] |  _
         null |  _
 
@@ -4949,7 +4949,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
         def auth = Mock(UserAndRolesAuthContext)
         def baseJob = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c')]))
                 .save(flush:true)
         def  emptyOptionsJob = new ScheduledExecution(createJobParams(options:[]))
 
@@ -4972,11 +4972,11 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoValidate()
         Map params = [:]
         def baseJob = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
-                new Option(name: 'test2', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
+                new Option(name: 'test2', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c')
         ])).save()
         def  updatedJob = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c')]))
 
         when: "same job with different options"
 

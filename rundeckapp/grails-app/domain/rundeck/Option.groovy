@@ -57,8 +57,6 @@ public class Option implements Comparable{
     Boolean required
     Boolean isDate
     String dateFormat
-    SortedSet<String> values
-    static hasMany = [values:String]
     URL valuesUrl
     String label
     /**
@@ -94,7 +92,6 @@ public class Option implements Comparable{
         required(nullable:true)
         isDate(nullable:true)
         dateFormat(nullable: true, maxSize: 30)
-        values(nullable:true)
         valuesUrl(nullable:true)
         valuesUrlLong(nullable:true)
         regex(nullable:true)
@@ -264,15 +261,14 @@ public class Option implements Comparable{
             opt.regex=data.regex
         }
         if(data.values){
-            opt.values=data.values instanceof Collection?new TreeSet(data.values):new TreeSet([data.values])
+            def values=data.values instanceof Collection?new TreeSet(data.values):new TreeSet([data.values])
             if(data.valuesListDelimiter){
                 opt.valuesListDelimiter=data.valuesListDelimiter
             }else{
                 opt.valuesListDelimiter=DEFAULT_DELIMITER
             }
-            opt.optionValues=new ArrayList<String>(data.values);
+            opt.optionValues=new ArrayList<String>(values);
             opt.valuesList = opt.produceValuesList()
-            opt.values = null
         }
         if(data.multivalued){
             opt.multivalued=true
@@ -309,10 +305,6 @@ public class Option implements Comparable{
 
         if(optionValues) {
             valuesList = optionValues.join(valuesListDelimiter)
-        } else if(values) {
-            valuesList = values.join(valuesListDelimiter)
-            values = null
-            return valuesList
         }else{
             return ''
         }
@@ -395,14 +387,14 @@ public class Option implements Comparable{
     public Option createClone(){
         Option opt = new Option()
         ['name', 'description', 'defaultValue', 'defaultStoragePath', 'sortIndex', 'enforced', 'required', 'isDate',
-         'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
+         'dateFormat', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
          'multivalueAllSelected', 'label',
          'delimiter', 'optionValuesPluginType',
          'secureInput', 'secureExposed', 'optionType', 'configData', 'hidden','sortValues','valuesListDelimiter'].
                 each { k ->
             opt[k]=this[k]
         }
-        if(!opt.valuesList && values){
+        if(!opt.valuesList){
             opt.valuesList=this.produceValuesList()
         }
         return opt
@@ -422,11 +414,7 @@ public class Option implements Comparable{
 
     List<String> getOptionValues(){
         if(optionValues==null){
-            if(values !=null && values.size()> 0 && valuesList == null){
-                produceValuesList()
-                convertValuesList()
-                values = null
-            }else if(valuesList){
+            if(valuesList){
                 convertValuesList()
             }
         }
@@ -451,7 +439,6 @@ public class Option implements Comparable{
         ", required=" + required +
         ", isDate=" + isDate +
         ", dateFormat=" + dateFormat +
-        ", values=" + values +
         ", valuesUrl=" + getRealValuesUrl() +
         ", regex='" + regex + '\'' +
         ", multivalued='" + multivalued + '\'' +
