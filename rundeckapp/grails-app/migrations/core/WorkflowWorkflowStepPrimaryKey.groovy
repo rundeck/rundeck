@@ -1,5 +1,5 @@
 databaseChangeLog = {
-    changeSet(author: "rundeckuser (generated)", id: "1653585641550-1") {
+    changeSet(author: "rundeckuser (generated)", id: "1653585641550-1", dbms: 'mysql,mariadb') {
         comment { 'add primary key to workflow_workflow_step' }
         preConditions(onFail: 'MARK_RAN') {
             not {
