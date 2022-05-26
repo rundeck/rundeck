@@ -23,7 +23,6 @@ databaseChangeLog = {
     }
     changeSet(author: "gschueler (generated)", id: "1653344096108-53", dbms: 'mssql') {
         sql("""update base_report set execution_id = cast(JC_EXEC_ID as bigint)""")
-//        sql("""update base_report set execution_id = IIF(isnumeric(JC_EXEC_ID) = 1, cast(JC_EXEC_ID as bigint), null)""")
     }
     changeSet(author: "gschueler (generated)", id: "1653344096108-54", dbms: 'oracle') {
         sql("""update base_report set execution_id = CAST(JC_EXEC_ID as NUMBER(19, 0))""")
