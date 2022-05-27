@@ -49,6 +49,12 @@ public class RundeckAccess {
          */
         public static final AuthActions APP_READ = or(AuthConstants.ACTION_READ, APP_ADMIN);
 
+        public static final String AUTH_ADMIN_OR_READ = "adminOrRead";
+        /**
+         * Read or any Admin level
+         */
+        public static final AuthActions ADMIN_OR_READ = or(AuthConstants.ACTION_READ, ALL_ADMIN);
+
         public static final String AUTH_APP_UPDATE = "appUpdate";
         /**
          * Update or AppAdmin
@@ -70,6 +76,7 @@ public class RundeckAccess {
                 put(AUTH_OPS_ADMIN, OPS_ADMIN);
                 put(AUTH_APP_CREATE, APP_CREATE);
                 put(AUTH_APP_READ, APP_READ);
+                put(AUTH_ADMIN_OR_READ, ADMIN_OR_READ);
                 put(AUTH_APP_UPDATE, APP_UPDATE);
                 put(AUTH_APP_DELETE, APP_DELETE);
             }};

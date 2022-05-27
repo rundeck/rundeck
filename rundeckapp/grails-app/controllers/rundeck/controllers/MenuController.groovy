@@ -1555,7 +1555,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     @RdAuthorizeApplicationType(
         type = AuthConstants.TYPE_SYSTEM_ACL,
-        access = RundeckAccess.General.AUTH_APP_READ
+        access = RundeckAccess.General.AUTH_ADMIN_OR_READ
     )
     def acls() {
         systemAclsModel()
