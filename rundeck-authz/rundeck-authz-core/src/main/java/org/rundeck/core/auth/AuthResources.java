@@ -94,7 +94,8 @@ public class AuthResources {
                     AuthConstants.ACTION_UPDATE,
                     AuthConstants.ACTION_DELETE,
                     AuthConstants.ACTION_ADMIN,
-                    AuthConstants.ACTION_APP_ADMIN
+                    AuthConstants.ACTION_APP_ADMIN,
+                    AuthConstants.ACTION_OPS_ADMIN
             );
     public static final List<String> appUserKindActions =
             Arrays.asList(
