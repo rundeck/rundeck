@@ -1085,7 +1085,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             result.access() == access
         where:
             endpoint | type                          | access
-            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_APP_READ
+            'acls'   | AuthConstants.TYPE_SYSTEM_ACL | RundeckAccess.General.AUTH_ADMIN_OR_READ
     }
 
     def "acls does not load metadata for policies"() {
