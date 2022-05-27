@@ -1596,7 +1596,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //always return acl filelist, unless in clustermode and opsadmin/admin auth isnt present
         [
                 fwkConfigDir : fwkConfigDir,
-                aclFileList  : !(frameworkService.isClusterModeEnabled() && !(hasOpsAdmin || hasAdmin)) ? fslist: [],
+                aclFileList  : !frameworkService.isClusterModeEnabled() || hasOpsAdmin || hasAdmin ? fslist : [],
                 aclStoredList: stored,
                 clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
