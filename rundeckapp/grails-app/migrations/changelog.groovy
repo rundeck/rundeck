@@ -113,4 +113,5 @@ databaseChangeLog = {
         include file: 'core/Tag-4.0.0.groovy'
         include file: 'core/WorkflowWorkflowStepPrimaryKey.groovy'
         include file: 'core/OptionRemoveValues.groovy'
+        include file: 'core/DBChangelogPrimaryKey.groovy'
 }
