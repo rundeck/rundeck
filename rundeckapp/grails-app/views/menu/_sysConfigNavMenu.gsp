@@ -16,10 +16,10 @@
 
 <%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
-<g:set var="authRead" value="${auth.resourceAllowedTest(
+<g:set var="authAclRead" value="${auth.resourceAllowedTest(
         type: AuthConstants.TYPE_RESOURCE,
-        kind: AuthConstants.TYPE_SYSTEM,
-        action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN],
+        kind: AuthConstants.TYPE_SYSTEM_ACL,
+        action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN, AuthConstants.ACTION_OPS_ADMIN],
         any: true,
         context: AuthConstants.CTX_APPLICATION
 )}"/>
@@ -71,7 +71,7 @@
         <g:message code="gui.menu.KeyStorage"/>
     </g:link>
   </li>
-  <g:if test="${authRead}">
+  <g:if test="${authAclRead}">
     <li>
       <g:link controller="menu" action="acls">
         <g:message code="gui.menu.AccessControl"/>
