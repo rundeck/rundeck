@@ -33,6 +33,7 @@ repositories {
         url='https://oss.sonatype.org/content/repositories/snapshots/'
     }
     mavenCentral()
+    maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -44,6 +45,13 @@ dependencies {
     }
     implementation 'org.slf4j:slf4j-api:1.7.29'
     implementation "org.codehaus.groovy:groovy:${groovyVersion}"
+    implementation group: 'com.hierynomus', name: 'sshj', version: '0.33.0'
+    implementation group: 'com.hierynomus', name: 'asn-one', version: '0.6.0'
+    implementation 'net.i2p.crypto:eddsa:0.3.0'
+
+    pluginLibs group: 'com.hierynomus', name: 'sshj', version: '0.33.0', ext: 'jar'
+    pluginLibs group: 'com.hierynomus', name: 'asn-one', version: '0.6.0', ext: 'jar'
+    pluginLibs 'net.i2p.crypto:eddsa:0.3.0'
 
     implementation ("org.bouncycastle:bcprov-jdk15on:${bouncyCastleVersion}")
     implementation ("org.bouncycastle:bcpg-jdk15on:${bouncyCastleVersion}")
