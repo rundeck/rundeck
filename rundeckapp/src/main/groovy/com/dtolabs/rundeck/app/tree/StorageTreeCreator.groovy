@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.ConfigurationService
 
 @CompileStatic
-class StorageTreeCreator {
+class StorageTreeCreator implements TreeCreator{
     IPropertyLookup frameworkPropertyLookup
     PluginRegistry pluginRegistry
     StorageTreeFactory storageTreeFactory
