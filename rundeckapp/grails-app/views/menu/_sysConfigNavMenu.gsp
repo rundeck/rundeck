@@ -64,7 +64,7 @@
 }
 </style>
 
-<ul class="dropdown-menu dropdown-menu-right">
+<ul class="dropdown-menu dropdown-menu-right scroll-area" style="max-height: 85vh">
   <li class="dropdown-header">System</li>
   <li>
     <g:link controller="menu" action="storage">
