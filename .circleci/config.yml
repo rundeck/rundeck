@@ -201,7 +201,7 @@ jobs:
     steps:
       - checkout
       - install-node
-      - restore-gradle-cache
+      # - restore-gradle-cache
       - run:
           name: Build
           command: |
@@ -263,7 +263,7 @@ jobs:
       - checkout
       - install-node
       - install-java
-      - restore-gradle-cache
+      # - restore-gradle-cache
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
 
@@ -355,7 +355,7 @@ jobs:
         default: 'false'
     steps:
       - checkout
-      - restore-gradle-cache
+      # - restore-gradle-cache
       - install-java
       - run: ./gradlew --no-daemon dependencyCheckAggregate --stacktrace --info || << parameters.continue >>
       - store_test_results:
