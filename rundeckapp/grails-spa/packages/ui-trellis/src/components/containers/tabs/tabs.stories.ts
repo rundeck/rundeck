@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import {addons} from '@storybook/addons'
-import {CHANGE, array ,object, boolean, withKnobs, select} from '@storybook/addon-knobs'
 
 import '../../../stories/setup'
 
@@ -9,8 +8,7 @@ import Tab from './Tab'
 import TabContent from './TabContent.vue'
 
 export default {
-    title: 'Containers/Tabs',
-    decorators: [withKnobs({disableDebounce: true})]
+    title: 'Containers/Tabs'
 }
 
 function setupStory(vue: Vue) {
@@ -35,14 +33,14 @@ export const tabs = () => {
         </Tabs>`,
         components: {Tabs, Tab, TabContent},
         props: {
-            type: {default: select('style', {standard: 'standard', card: 'card'}, 'standard')}
+            type: {default: 'standard'}
         },
         mounted() {
             setupStory(this)
         },
         methods: {
             handleChecked(val: boolean) {
-                chan.emit(CHANGE, {name: 'checked', value: val})
+                chan.emit('checked',val)
             }
         }
     })
@@ -63,14 +61,14 @@ export const cardTabs = () => {
         </div>`,
         components: {Tabs, Tab, TabContent},
         props: {
-            type: {default: select('style', {standard: 'standard', card: 'card'}, 'card')}
+            type: {default:  'card'}
         },
         mounted() {
             setupStory(this)
         },
         methods: {
             handleChecked(val: boolean) {
-                chan.emit(CHANGE, {name: 'checked', value: val})
+                chan.emit('checked', val)
             }
         }
     })
