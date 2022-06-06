@@ -482,7 +482,7 @@ class WorkflowControllerSpec extends RundeckHibernateSpec implements ControllerU
         null        | 'ble/ble'| null       | 'jobName'
         'blah'      | null     | null       | null
         'blah'      | 'ble/ble'| 'proj'     | null
-        'blah'      | null     | 'projx'    | 'jobProject'
+        'blah'      | null     | 'projx'    | null
 
     }
 
@@ -567,7 +567,6 @@ class WorkflowControllerSpec extends RundeckHibernateSpec implements ControllerU
         where:
         jobUuid | jobproject   | fieldname
         'blah'  | 'proj'       | null
-        'blah'  | 'projx'      | 'jobProject'
 
     }
 
