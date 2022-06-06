@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import {array ,object, withKnobs} from '@storybook/addon-knobs'
 import {observable} from 'mobx'
 
 import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
@@ -15,7 +16,8 @@ window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.
 
 
 export default {
-    title: 'Filter List'
+    title: 'Filter List',
+    decorators: [withKnobs]
 }
 
 

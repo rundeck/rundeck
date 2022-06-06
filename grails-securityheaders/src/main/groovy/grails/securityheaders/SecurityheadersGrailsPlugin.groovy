@@ -55,13 +55,11 @@ Brief summary/description of the plugin.
             }
 
             /**
-             * X-XSS-Protection: 0
-             * (value 1 is deprecated, see https://owasp.org/www-project-secure-headers/#x-xss-protection )
+             * X-XSS-Protection: 1
              */
             xxsspSecurityHeaderProvider(XXSSPSecurityHeaderProvider) {
                 name = 'xxssp'
                 defaultEnabled = true
-                protectionValue = '0'
             }
 
             /**

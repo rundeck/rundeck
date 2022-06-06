@@ -1,3 +1,12 @@
+# Build remco from specific commit
+##################################
+FROM golang:1.14
+
+RUN go get github.com/HeavyHorst/remco/cmd/remco
+RUN cd $GOPATH/src/github.com/HeavyHorst/remco && \
+    git checkout 21f6edc4190bacf315d738bc3cf5b95e8e121c0c
+RUN go install github.com/HeavyHorst/remco/cmd/remco
+
 # Build base container
 ######################
 FROM ubuntu:20.04
@@ -22,13 +31,13 @@ RUN set -euxo pipefail \
         openjdk-11-jdk-headless \
         uuid-runtime \
         wget \
-        unzip \
     && rm -rf /var/lib/apt/lists/* \
     # Setup rundeck user
     && adduser --gid 0 --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck \
     && chmod 0775 /home/rundeck \
     && passwd -d rundeck \
     && addgroup rundeck sudo \
+    && echo | sudo -u rundeck ssh-keygen -N '' \
     && chmod g+w /etc/passwd
 
 # Add Tini
@@ -39,12 +48,7 @@ RUN gpg --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 595E85A6B1
  && gpg --batch --verify /tini.asc /tini
 RUN chmod +x /tini
 
-RUN curl --request GET -sL \
-    --url 'https://github.com/HeavyHorst/remco/releases/download/v0.12.3/remco_0.12.3_linux_amd64.zip'\
-    --output 'remco.zip'
-RUN echo '45f7073e02ce967e9bdc1e4f4a0b5c52b48a3085be4c2b9d04c912f839439c24  remco.zip' > remco.zip.sha
-RUN sha256sum -c remco.zip.sha
-RUN unzip remco.zip && cp remco_linux /usr/local/bin/remco
+COPY --from=0 /go/bin/remco /usr/local/bin/remco
 
 USER rundeck
 

@@ -1,11 +1,13 @@
 import Vue from 'vue'
+import {text, withKnobs} from '@storybook/addon-knobs'
 
 import RundeckVersionDisplay from './RundeckVersionDisplay.vue'
 import ServerDisplay from './ServerDisplay.vue'
 import VersionDisplay from './VersionDisplay.vue'
 
 export default {
-    title: 'Rundeck Version Atoms'
+    title: 'Rundeck Version Atoms',
+    decorators: [withKnobs]
 }
 
 export const serverInfo = () => ({
@@ -30,9 +32,9 @@ export const rundeckVersion = () => ({
 export const rundeckVersionDisplay = () => ({
     components: { VersionDisplay },
     props: {
-        version: {default: '4.0.0'},
+        version: {default: text('version', '4.0.0')},
         date:{default:'2022-03-09'},
-        appName:{default: 'Rundeck'}
+        appName:{default:text('name','Rundeck')}
     },
     template: `<VersionDisplay v-bind="$props"/>`
 })
@@ -40,7 +42,7 @@ export const rundeckVersionArray = () => ({
     components: { VersionDisplay },
     props: {
         date:{default:'2022-03-09'},
-        appName:{default:'Rundeck'}
+        appName:{default:text('name','Rundeck')}
     },
     template: `
         <table >

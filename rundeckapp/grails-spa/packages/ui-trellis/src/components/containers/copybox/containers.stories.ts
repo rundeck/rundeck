@@ -1,10 +1,12 @@
 import Vue from 'vue'
 import {addons} from '@storybook/addons'
+import {CHANGE, array ,object, boolean, withKnobs, select} from '@storybook/addon-knobs'
 
 import CopyBox from './CopyBox.vue'
 
 export default {
-    title: 'Containers'
+    title: 'Containers',
+    decorators: [withKnobs({disableDebounce: true})]
 }
 
 function setupStory(vue: Vue) {

@@ -113,9 +113,6 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
     def "key storage download with params"() {
         given:
 
-        controller.configurationService = Mock(ConfigurationService){
-            getBoolean("gui.keystorage.downloadenabled", true)>>true
-        }
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
@@ -148,9 +145,6 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
     def "key storage download with params directory format #format"() {
         given:
 
-        controller.configurationService = Mock(ConfigurationService){
-            getBoolean("gui.keystorage.downloadenabled", true)>>true
-        }
         controller.storageService = Mock(StorageService)
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
@@ -172,26 +166,6 @@ class StorageControllerSpec extends Specification implements ControllerUnitTest<
         0 * controller.apiService._(*_)
         where:
             format<<['xml','json']
-    }
-
-    @Unroll
-    def "key storage download disabled"() {
-        given:
-
-        controller.storageService = Mock(StorageService)
-        controller.frameworkService = Mock(FrameworkService)
-        controller.rundeckAuthContextProvider=Mock(AuthContextProvider)
-        controller.configurationService = Mock(ConfigurationService)
-        response.format="json"
-        when:
-        params.relativePath = 'donuts/'
-
-        def result = controller.keyStorageDownload()
-
-        then:
-        1 * controller.configurationService.getBoolean("gui.keystorage.downloadenabled", true)>>false
-        response.status == 403
-
     }
 
     def "key storage delete with relativePath"() {

@@ -51,7 +51,6 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.grails.events.AppEvents
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.storage.api.PathUtil
@@ -485,7 +484,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
-    private Map storeProjectConfig(String projectName, Properties oldprops, Properties properties) {
+    private Map storeProjectConfig(String projectName, Properties properties) {
         def storagePath = ETC_PROJECT_PROPERTIES_PATH
         def baos = new ByteArrayOutputStream()
         properties['project.name']=projectName
@@ -499,11 +498,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         rundeckNodeService.refreshProjectNodes(projectName)
 
         eventBus.notify(
-            AppEvents.PROJECT_CONFIG_CHANGED,
+            'project.config.changed',
             [
-                project    : projectName,
-                props      : properties,
-                changedKeys: getKeyDiff(oldprops, properties)
+                project: projectName,
+                props  : properties
             ]
         )
         return [
@@ -511,32 +509,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 lastModified: resource.contents.modificationTime,
                 creationTime: resource.contents.creationTime
         ]
-    }
-
-    /**
-     *
-     * @param orig
-     * @param newval
-     * @return set of keys which are changed, added, or removed
-     */
-    @CompileStatic
-    static Set<String> getKeyDiff(Properties orig, Properties newval) {
-        Set<String> vals = new HashSet<>()
-        if(orig){
-            for (String key : orig.propertyNames()) {
-                if (newval.getProperty(key) != orig.getProperty(key)) {
-                    vals.add(key)
-                }
-            }
-            for (String key : newval.propertyNames()) {
-                if (newval.getProperty(key) != orig.getProperty(key)) {
-                    vals.add(key)
-                }
-            }
-        } else if (newval) {
-            vals.addAll(newval.propertyNames().collect())
-        }
-        vals
     }
     @CompileStatic(TypeCheckingMode.SKIP)
     private void deleteProjectResources(String projectName) {
@@ -599,7 +571,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             }
             storedProps.putAll(newProps)
         }
-        def res = storeProjectConfig(projectName, null, storedProps)
+        def res = storeProjectConfig(projectName, storedProps)
         def rdprojectconfig = new RundeckProjectConfig(projectName,
                                                        createProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
@@ -675,7 +647,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def res = loadProjectConfigResource(projectName)
         Properties oldprops = res?.config?:new Properties()
         Properties newprops = mergeProperties(removePrefixes, oldprops, properties)
-        Map newres=storeProjectConfig(projectName, oldprops, newprops)
+        Map newres=storeProjectConfig(projectName, newprops)
         newres
     }
 
@@ -723,8 +695,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             found.save(flush: true)
 
         }
-        def res = loadProjectConfigResource(projectName)
-        Map resource=storeProjectConfig(projectName, res?.config, properties)
+        Map resource=storeProjectConfig(projectName, properties)
         resource
     }
 

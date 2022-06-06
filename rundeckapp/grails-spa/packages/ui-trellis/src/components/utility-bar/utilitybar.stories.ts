@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import {withKnobs, number} from '@storybook/addon-knobs'
 
 import UtilityBar from './UtilityBar.vue'
 import RundeckInfo from '../widgets/rundeck-info/RundeckInfo.vue'
@@ -9,7 +10,8 @@ import { UtilityBarItem } from 'src/stores/UtilityBar'
 import { ServerInfo, VersionInfo } from '../../stores/System'
 
 export default {
-    title: 'Utility Bar'
+    title: 'Utility Bar',
+    decorators: [withKnobs]
 }
 
 export const navBar = () => {
@@ -123,7 +125,7 @@ export const widgetCounter = () => {
             rootStore: rootStore,
         }),
         props: {
-            count: {default:  5}
+            count: {default: number('Count', 5)}
         },
         watch: {
             count(newVal, oldVal) {

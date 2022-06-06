@@ -177,17 +177,6 @@ dependencies {
         exclude(group:"org.grails.profiles",module:"web")
     }
 
-    // OpenApi Dependencies
-    compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
-    implementation "io.swagger.core.v3:swagger-annotations:2.1.13"
-    compileOnly    "io.micronaut.openapi:micronaut-openapi:4.0.0"
-    implementation "io.micronaut:micronaut-http-server:${micronautVersion}"
-    implementation "io.micronaut:micronaut-inject:${micronautVersion}"
-    implementation "io.micronaut:micronaut-inject-java:${micronautVersion}"
-    implementation "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
-    implementation "io.micronaut:micronaut-core:${micronautVersion}"
-
-
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     runtimeOnly "com.h2database:h2:2.1.210"
 
@@ -296,12 +285,8 @@ bootRun {
 }
 
 tasks.withType(GroovyCompile) {
-    def additionalSpecDir = new File(project.buildDir, 'openapi')
-    doFirst {
-        additionalSpecDir.mkdirs()
-    }
     configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m',"-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()]
+        forkOptions.jvmArgs = ['-Xmx1024m']
     }
 }
 

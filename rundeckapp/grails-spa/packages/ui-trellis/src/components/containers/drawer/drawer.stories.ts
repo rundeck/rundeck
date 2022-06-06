@@ -1,12 +1,14 @@
 import Vue from 'vue'
 import {addons} from '@storybook/addons'
+import {CHANGE, array ,object, boolean, withKnobs, select, text} from '@storybook/addon-knobs'
 
 import '../../../stories/setup'
 
 import Drawer from './Drawer.vue'
 
 export default {
-    title: 'Containers/Drawer'
+    title: 'Containers/Drawer',
+    decorators: [withKnobs({disableDebounce: true})]
 }
 
 function setupStory(vue: Vue) {
@@ -29,15 +31,15 @@ export const drawer = () => {
         components: {Drawer},
         props: {
             title: {default: 'Settings'},
-            visible: {default:  true},
-            placement: {default: 'left'}
+            visible: {default: boolean('Open', true)},
+            placement: {default: select('Placement', {left: 'left', right: 'right', top: 'top'}, 'left')}
         },
         mounted() {
             setupStory(this)
         },
         methods: {
             close() {
-                chan.emit('Open', false)
+                chan.emit(CHANGE, {name: 'Open', value: false})
             }
         }
     })
@@ -54,17 +56,17 @@ export const autoSize = () => {
         components: {Drawer},
         props: {
             title: {default: 'Settings'},
-            visible: {default:  true},
-            width: {default: '50%'},
-            height: {default:  '50%'},
-            placement: {default:  'left'}
+            visible: {default: boolean('Open', true)},
+            width: {default: text('Width', '50%')},
+            height: {default: text('Height', '50%')},
+            placement: {default: select('Placement', {left: 'left', right: 'right', top: 'top'}, 'left')}
         },
         mounted() {
             setupStory(this)
         },
         methods: {
             close() {
-                chan.emit( 'Open', false)
+                chan.emit(CHANGE, {name: 'Open', value: false})
             }
         }
     })

@@ -29,21 +29,20 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * LocalFileCopier is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-@Plugin(name = LocalFileCopier.SERVICE_PROVIDER_TYPE, service = ServiceNameConstants.FileCopier)
-@PluginDescription(title = "Local", description = "Copies files locally on the Rundeck server")
 public class LocalFileCopier extends BaseFileCopier implements FileCopier {
     public static final String SERVICE_PROVIDER_TYPE = "local";
     private boolean disableLocalExecutor = false;

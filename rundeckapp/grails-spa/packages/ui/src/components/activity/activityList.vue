@@ -664,9 +664,8 @@ export default Vue.extend({
         this.loadActivity(this.pagination.offset)
 
       }catch(error){
-        this.bulkEditProgress = false
-        //@ts-ignore
-        this.bulkEditError = error
+        this.bulkEditProgress=false
+        this.bulkEditError=error
       }
     },
     performBulkDelete(){
@@ -689,7 +688,6 @@ export default Vue.extend({
             this.sincecount=response.data.since.count
         }
       }catch(error){
-        //@ts-ignore
         this.loadError = error.message
       }
     },
@@ -721,7 +719,6 @@ export default Vue.extend({
         this.eventBus.$emit('activity-nowrunning-count', executions.length)
       }catch(error){
         this.loadingRunning=false
-        //@ts-ignore
         this.loadError = error.message
       }
     },
@@ -756,7 +753,6 @@ export default Vue.extend({
         }
       }catch(error){
         this.loading=false
-        //@ts-ignore
         this.loadError=error.message
       }
     },

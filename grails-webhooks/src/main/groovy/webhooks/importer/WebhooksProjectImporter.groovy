@@ -37,7 +37,7 @@ class WebhooksProjectImporter implements ProjectDataImporter {
     final List<Property> importProperties = [
         PropertyBuilder.builder().
             booleanType(WHK_REGEN_AUTH_TOKENS).
-            title('Create and overwrite a new Webhook Auth Token').
+            title('Regenerate Webhook Auth Tokens').
             description(
                 'Regenerate all webhook auth tokens. If unchecked only webhooks without defined auth tokens will have' +
                 ' their auth tokens regenerated.'

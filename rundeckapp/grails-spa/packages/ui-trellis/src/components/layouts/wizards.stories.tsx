@@ -1,9 +1,11 @@
 import Vue from 'vue'
 import { addons } from '@storybook/addons'
+import { CHANGE, array, object, boolean, withKnobs, select } from '@storybook/addon-knobs'
 
 
 export default {
-    title: 'Layouts/Wizards'
+    title: 'Layouts/Wizards',
+    decorators: [withKnobs({ disableDebounce: true })]
 }
 
 export const Wizard = () => (Vue.extend({

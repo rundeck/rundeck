@@ -557,7 +557,6 @@ public class RundeckConfigBase {
         Boolean realJobTree;
         String logoSmall;
         Integer matchedNodesMaxCount;
-        Keystorage keystorage;
 
         @Data
         public static class GuiSystemConfig{
@@ -629,11 +628,6 @@ public class RundeckConfigBase {
         public static class Login {
             String welcome;
             String welcomeHtml;
-        }
-
-        @Data
-        public static class Keystorage{
-            Boolean downloadenabled;
         }
     }
 

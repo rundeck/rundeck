@@ -1,9 +1,11 @@
 import Vue from 'vue'
 import { addons } from '@storybook/addons'
+import { CHANGE, array, object, boolean, withKnobs, select } from '@storybook/addon-knobs'
 
 
 export default {
-    title: 'Inputs/MultiInput'
+    title: 'Inputs/MultiInput',
+    decorators: [withKnobs({ disableDebounce: true })]
 }
 
 export const MultiInput = () => (Vue.extend({

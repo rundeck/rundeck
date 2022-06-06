@@ -1,12 +1,19 @@
 {
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "cd packages/ui && npm run dev",
     "dev:ui-trellis": "cd packages/ui-trellis && npm run dev",
     "dev:all": "concurrently --restart-tries 10 --restart-after 5000 -n ui,trellis \"cd packages/ui; npm run dev\" \"cd packages/ui-trellis; npm run dev\""
   },
   "devDependencies": {
-    "concurrently": "^5.2.0"
+    "@types/node": "^14.0.4",
+    "@yarnpkg/pnpify": "^2.0.0-rc.22",
+    "concurrently": "^5.2.0",
+    "lerna": "^3.21.0",
+    "typescript": "3.8.3"
   },
   "name": "grails-spa"
 }

@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import { array, object, withKnobs } from '@storybook/addon-knobs'
 
 import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
 import { BrowserFetchHttpClient } from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
@@ -16,7 +17,8 @@ window._rundeck.rundeckClient = new Rundeck(new TokenCredentialProvider(process.
 
 
 export default {
-    title: 'First Run'
+    title: 'First Run',
+    decorators: [withKnobs]
 }
 
 export const firstRun = () => {

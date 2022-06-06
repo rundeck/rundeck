@@ -44,6 +44,7 @@
     %{-- Core theme styles from ui-trellis --}%
     <asset:stylesheet href="static/css/components/theme.css"/>
 
+    <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="ansi24.css"/>
     %{-- Vendor CSS styles--}%
     <asset:stylesheet href="vendor/perfect-scrollbar.css"/>
@@ -74,7 +75,8 @@
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
-
+    <asset:stylesheet href="static/css/components/version.css"/>
+    <asset:stylesheet href="static/css/components/server-identity.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
     <g:set var="communityNewsDisabled" value="${cfg.getBoolean(config: 'communityNews.disabled', default: false)}"/>
 

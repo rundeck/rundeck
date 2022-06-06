@@ -1,7 +1,9 @@
 import Vue from 'vue'
+import {withKnobs, object,select} from '@storybook/addon-knobs'
 
 export default {
-    title: 'Class Components'
+    title: 'Class Components',
+    decorators: [withKnobs]
 }
 
 export const typography = () => (Vue.extend({
@@ -161,7 +163,7 @@ export const buttons = () => (Vue.extend({
 export const table = () => (Vue.extend({
   props: {
     rowStyle: {
-      default:  'table-bordered'
+      default: select('Table Style', {bordered: 'table-bordered', striped: 'table-striped'}, 'table-bordered')
     }
   },
   template:`

@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import {array ,object, withKnobs} from '@storybook/addon-knobs'
 
 import { Rundeck, RundeckClient, TokenCredentialProvider } from '@rundeck/client'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
@@ -14,7 +15,8 @@ window._rundeck.rundeckClient = new RundeckClient(new TokenCredentialProvider(pr
 
 
 export default {
-    title: 'Widgets/Webhook Select'
+    title: 'Widgets/Webhook Select',
+    decorators: [withKnobs]
 }
 
 
