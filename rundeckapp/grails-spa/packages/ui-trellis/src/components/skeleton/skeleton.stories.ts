@@ -1,5 +1,4 @@
 import Vue from 'vue'
-import {boolean, withKnobs} from '@storybook/addon-knobs'
 
 import { Rundeck, TokenCredentialProvider } from '@rundeck/client'
 import {BrowserFetchHttpClient} from '@azure/ms-rest-js/es/lib/browserFetchHttpClient'
@@ -11,14 +10,13 @@ import {RootStore} from '../../stores/RootStore'
 import Skeleton from './Skeleton.vue'
 
 export default {
-    title: 'Skeleton',
-    decorators: [withKnobs]
+    title: 'Skeleton'
 }
 
 export const list = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
 
-    const loading = boolean('loading', true)
+    const loading =  true
     
     return Vue.extend({
         template: `<Skeleton v-bind="$props"><h1>Foo</h1><h1>Bar</h1></Skeleton>`,
@@ -41,7 +39,7 @@ export const list = () => {
 export const listWithAvatar = () => {
     const rootStore = new RootStore(window._rundeck.rundeckClient)
 
-    const loading = boolean('loading', true)
+    const loading = true
     
     return Vue.extend({
         template: `<Skeleton v-bind="$props"><h1>Foo</h1><h1>Bar</h1></Skeleton>`,

@@ -349,6 +349,7 @@ export default Vue.extend({
           this.$emit("saved", result);
         }
       } catch (error) {
+        //@ts-ignore
         this.notifyError(error.message, []);
       }
     },

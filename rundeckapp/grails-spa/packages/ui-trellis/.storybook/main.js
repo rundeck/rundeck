@@ -25,7 +25,7 @@ module.exports = {
                 },
             },
         },
-        '@storybook/addon-knobs',
+       // '@storybook/addon-knobs',
         'storybook-dark-mode',
         '@storybook/addon-backgrounds'
     ],

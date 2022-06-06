@@ -16,15 +16,18 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.test.hibernate.HibernateSpec
 import grails.testing.services.ServiceUnitTest
+import groovy.transform.CompileStatic
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.quartz.SchedulerException
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -34,6 +37,8 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.spi.AuthorizedServicesProvider
+import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
@@ -3968,7 +3973,6 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             [scheduleEnabled: true, executionEnabled: true] | false
     }
 
-
     @Unroll
     def "do update job with job lifecycle plugin, error thrown"(){
         given:
@@ -4936,6 +4940,57 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             job.errors.hasFieldErrors('jobName')
     }
 
+    @Unroll
+    def "job definition option should remove options when updating"() {
+
+        given: "a job with options"
+
+        Map params = [:]
+        setupDoUpdate()
+        def auth = Mock(UserAndRolesAuthContext)
+        def baseJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+                .save(flush:true)
+        def  emptyOptionsJob = new ScheduledExecution(createJobParams(options:[]))
+
+        when: "same job is uploaded with no options "
+
+        service.jobDefinitionBasic(baseJob,emptyOptionsJob,params,auth)
+        baseJob.save(flush:true)
+        def options = Option.findAll()
+
+        then: "job options are empty"
+
+        options.size() == 0
+
+    }
+    @Unroll
+    def "update job definition should update options"() {
+
+        given: "a job with options"
+
+        setupDoValidate()
+        Map params = [:]
+        def baseJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test2', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])
+        ])).save()
+        def  updatedJob = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+
+        when: "same job with different options"
+
+        def importedJob = RundeckJobDefinitionManager.importedJob(updatedJob, [:])
+        service.updateJobDefinition(importedJob, params, mockAuth(), baseJob)
+        baseJob.save(flush:true)
+        def options = Option.findAll().size()
+
+        then: "baseJob should have 1 option remaining"
+
+        options == 1
+
+    }
+
     def "job definition notifications from input job"() {
 
         given:
@@ -5403,6 +5458,71 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
     }
 
+    def "test Create Job Exclude InactivePlugins"(){
+        given:
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+            se.save()
+
+            def auth = Mock(UserAndRolesAuthContext) {
+                getUsername() >> 'test'
+            }
+
+            def iRundeckProject = Mock(IRundeckProject){
+            }
+
+            def properties = new Properties()
+            properties.setProperty("fwkprop","fwkvalue")
+
+
+            def pluginControlService = Mock(PluginControlService){
+                isDisabledPlugin("test",_)>>true
+            }
+
+            def frameworkService  = Mock(FrameworkService){
+                getRundeckFramework()>>Mock(Framework){
+                    getFrameworkNodeName()>>'fwnode'
+                    getFrameworkProjectMgr()>> Mock(ProjectManager) {
+                        existsFrameworkProject(se.project) >> true
+                        getFrameworkProject(_) >> iRundeckProject
+                    }
+                    getPropertyLookup() >> PropertyLookup.create(properties)
+                }
+                getProjectGlobals(_) >> [:]
+                getPluginControlService(_) >> pluginControlService
+                getNodeStepPluginDescriptions() >> [[name:'test'],[name:'test2']]
+            }
+
+            service.frameworkService = frameworkService
+            service.pluginService = Mock(PluginService){
+                listPlugins() >> []
+            }
+            service.jobSchedulesService = Mock(SchedulesManager){
+            }
+
+            service.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider){
+                getServicesWith(_)>> Mock(Services)
+            }
+
+            service.notificationService = Mock(NotificationService){
+            }
+            service.orchestratorPluginService=Mock(OrchestratorPluginService)
+            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+            service.configurationService=Mock(ConfigurationService)
+
+        when:
+
+            Map params = [id: se.id, project: se.project]
+
+            def result = service.prepareCreateEditJob(params, se, "create", auth)
+
+        then:
+            result!=null
+            result.nodeStepDescriptions !=null
+            result.nodeStepDescriptions.size() == 1
+            result.nodeStepDescriptions[0].name=='test2'
+
+    }
     def "load remote options timeout configuration"(){
         given:
             def fwkservice=Mock(FrameworkService)
@@ -5457,11 +5577,12 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
     }
 }
 
+@CompileStatic
 class TriggersExtenderImpl implements TriggersExtender {
 
-    def job
+    ScheduledExecution job
 
-    TriggersExtenderImpl(job) {
+    TriggersExtenderImpl(ScheduledExecution job) {
         this.job = job
     }
 
@@ -5472,7 +5593,7 @@ class TriggersExtenderImpl implements TriggersExtender {
             LocalJobSchedulesManager schedulesManager = new LocalJobSchedulesManager()
             @Override
             Object getTriggerBuilder() {
-                schedulesManager.createTriggerBuilder(this.job).getTriggerBuilder()
+                schedulesManager.createTriggerBuilder(job).getTriggerBuilder()
             }
 
             @Override
@@ -5487,67 +5608,4 @@ class TriggersExtenderImpl implements TriggersExtender {
         }
     }
 
-    def "test Create Job Exclude InactivePlugins"(){
-        given:
-        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
-        se.save()
-
-        def auth = Mock(UserAndRolesAuthContext) {
-            getUsername() >> 'test'
-        }
-
-        def iRundeckProject = Mock(IRundeckProject){
-        }
-
-        def properties = new Properties()
-        properties.setProperty("fwkprop","fwkvalue")
-
-
-        def pluginControlService = Mock(PluginControlService){
-            isDisabledPlugin("test",_)>>true
-        }
-
-        def frameworkService  = Mock(FrameworkService){
-            getRundeckFramework()>>Mock(Framework){
-                getFrameworkNodeName()>>'fwnode'
-                getFrameworkProjectMgr()>> Mock(ProjectManager) {
-                    existsFrameworkProject(se.project) >> true
-                    getFrameworkProject(_) >> iRundeckProject
-                }
-                getPropertyLookup() >> PropertyLookup.create(properties)
-            }
-            getProjectGlobals(_) >> [:]
-            getPluginControlService(_) >> pluginControlService
-            getNodeStepPluginDescriptions() >> [[name:'test'],[name:'test2']]
-        }
-
-        service.frameworkService = frameworkService
-        service.pluginService = Mock(PluginService){
-            listPlugins() >> []
-        }
-        service.jobSchedulesService = Mock(SchedulesManager){
-        }
-
-        service.rundeckAuthorizedServicesProvider = Mock(AuthorizedServicesProvider){
-            getServicesWith(_)>> Mock(Services)
-        }
-
-        service.notificationService = Mock(NotificationService){
-        }
-        service.orchestratorPluginService=Mock(OrchestratorPluginService)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-        service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
-
-        when:
-
-        Map params = [id: se.id, project: se.project]
-
-        def result = service.prepareCreateEditJob(params, se, "create", auth)
-
-        then:
-        result!=null
-        result.nodeStepDescriptions !=null
-        result.nodeStepDescriptions.size() == 1
-
-    }
 }

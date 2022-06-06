@@ -42,10 +42,10 @@ class XFOSecurityHeaderProvider implements SecurityHeaderProvider {
             final Map config
     ) {
         def value = defaultValue
-        if (config?.sameorigin in ['true', true]) {
+        if (config.get('sameorigin') in ['true', true]) {
             value = XFO_VALUE_SAME_ORIGIN
-        } else if (config?.allowFrom instanceof String) {
-            value = XFO_VALUE_ALLOW_FROM_PREFIX + config.allowFrom
+        } else if (config.get('allowFrom') instanceof String) {
+            value = XFO_VALUE_ALLOW_FROM_PREFIX + config.get('allowFrom')
         }
         [
                 new SecurityHeaderImpl(name: XFO_HEADER_NAME, value: value)

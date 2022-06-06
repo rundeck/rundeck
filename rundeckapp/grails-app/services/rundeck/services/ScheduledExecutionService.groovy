@@ -3041,6 +3041,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    /**
+     *Remove and delete all existing options from a scheduledExecution, setting options param to null
+     * @param scheduledExecution
+     */
     public void deleteExistingOptions(ScheduledExecution scheduledExecution) {
         if (scheduledExecution.options) {
             def todelete = []
@@ -3227,6 +3231,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 !it.key.startsWith( 'nodeExclude')
             }
         }else{
+            deleteExistingOptions(scheduledExecution)
             final Collection foundprops = input.properties.keySet().findAll {
                 it != 'lastUpdated' &&
                 it != 'dateCreated' &&
@@ -3274,7 +3279,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ].each {
             scheduledExecution."$it" = null
         }
-
         scheduledExecution.properties = basicProps
         if (scheduledExecution.groupPath) {
             def re = /^\/*(.+?)\/*$/

@@ -1,11 +1,9 @@
 import Vue from 'vue'
 import { addons } from '@storybook/addons'
-import { CHANGE, array, object, boolean, withKnobs, select } from '@storybook/addon-knobs'
 
 
 export default {
-    title: 'Layouts/Sidebars',
-    decorators: [withKnobs({ disableDebounce: true })]
+    title: 'Layouts/Sidebars'
 }
 
 export const Sidebar = () => (Vue.extend({
