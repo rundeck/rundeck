@@ -435,7 +435,11 @@ export default Vue.extend({
       return convertArrayInput(cleanConfigInput(this.exportInputs()))
     },
     computedConfig(): any {
-      return Object.assign({}, this.value.config)
+        if(this.value){
+            return Object.assign({}, this.value.config || {})
+        }else{
+            return null
+        }
     }
   },
   beforeMount () {
