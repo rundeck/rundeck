@@ -31,7 +31,7 @@ class DummyEmailNotificationPlugin implements NotificationPlugin {
     static class EmailValidator implements PropertyValidator{
         @Override
         boolean isValid(final String value) throws ValidationException {
-            def arr = value?.split(",")
+            def arr = value?.replaceAll(", ",",")?.split(",")
             boolean failed=false
             def validator = new AnyDomainEmailValidator()
             def validcount=0

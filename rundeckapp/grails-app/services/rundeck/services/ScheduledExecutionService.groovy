@@ -2249,7 +2249,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def fieldNames = NOTIFICATION_FIELD_NAMES
         def fieldAttachedNames = NOTIFICATION_FIELD_ATTACHED_NAMES
         Map conf = notif.mailConfiguration()
-        def arr = conf?.recipients?.split(",")
+        def arr = conf?.recipients?.replaceAll(", ",",")?.split(",")
         def validator = new AnyDomainEmailValidator()
         def validcount=0
         arr?.each { email ->
@@ -2655,7 +2655,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.notifications?.each {Notification notif ->
             def trigger = notif.eventTrigger
 
-            def String failureField
+            String failureField
             if (notif && notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
                 failed|=validateDefinitionEmailNotification(scheduledExecution,trigger,notif)
                 failureField= fieldNames[trigger]
