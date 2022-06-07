@@ -4,7 +4,7 @@ rundeck:
   - "com.github.rundeck-plugins:ansible-plugin:3.2.0"
   - "com.github.rundeck-plugins:aws-s3-model-source:v1.0.7"
   - "com.github.rundeck-plugins:py-winrm-plugin:2.0.15"
-  - "com.github.rundeck-plugins:openssh-node-execution:2.0.1"
+  - "com.github.rundeck-plugins:openssh-node-execution:2.0.2"
   - "com.github.rundeck-plugins:multiline-regex-datacapture-filter:1.1.0"
   - "com.github.rundeck-plugins:attribute-match-node-enhancer:v0.1.5"
   - "com.github.rundeck-plugins:sshj-plugin:v0.1.2"
