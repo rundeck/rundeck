@@ -19,6 +19,7 @@ class SshjSessionFactory extends SshSessionFactory {
     Map<String, String> sshConfig
     private OpenSshConfig config
     private String privateKeyFile
+    private SSHClient sshClient
 
     SshjSessionFactory(byte[] privateKey, Map<String, String> sshConfig) {
         this.privateKey = privateKey
@@ -49,8 +50,15 @@ class SshjSessionFactory extends SshSessionFactory {
         if (user == null)
             user = hc.getUser()
 
-        SSHClient sshClient = createConnection(user, host,port)
+        sshClient = createConnection(user, host,port)
         return new SshjSession(sshClient, uri)
+    }
+
+    @Override
+    void releaseSession(RemoteSession session) {
+        super.releaseSession(session)
+        sshClient.close()
+
     }
 
     SSHClient createConnection(String user, String host, int port){

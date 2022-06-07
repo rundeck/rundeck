@@ -142,6 +142,26 @@ If `yes`, require remote host SSH key is defined in the `~/.ssh/known_hosts` fil
     String strictHostKeyChecking
 
     @PluginProperty(
+            title = "SSH Library",
+            description = '''Select SSH library.''',
+            required = true,
+            defaultValue = 'jsch'
+    )
+    @SelectValues(values = ['jsch', 'sshj'])
+    @RenderingOptions([
+
+            @RenderingOption(
+                    key = StringRenderingConstants.GROUP_NAME,
+                    value = "Authentication"
+            ),
+            @RenderingOption(
+                    key = StringRenderingConstants.GROUPING,
+                    value = "secondary"
+            )
+    ])
+    String sshLibrary
+
+    @PluginProperty(
 
             title = "SSH Key Storage Path",
             description = '''Path can include variable references

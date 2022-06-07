@@ -689,20 +689,24 @@ class BaseGitPlugin {
             def expandedPath = expandContextVarsInPath(context, commonConfig.sshPrivateKeyPath)
             def keyData = loadStoragePathData(context, expandedPath)
 
-            //def factory = new PluginSshSessionFactory(keyData)
-            //factory.sshConfig = sshConfig
-            //command.setTransportConfigCallback(factory)
+            def sshLib = commonConfig.sshLibrary
+            if(sshLib == "jsch"){
+                def factory = new PluginSshSessionFactory(keyData)
+                factory.sshConfig = sshConfig
+                command.setTransportConfigCallback(factory)
+            }
 
-            command.setTransportConfigCallback(new TransportConfigCallback() {
-                @Override
-                void configure(final Transport transport) {
-                    if (transport instanceof SshTransport) {
-                        SshTransport sshTransport = (SshTransport) transport
-                        sshTransport.setCredentialsProvider(new SshjCredentialsProvider())
-                        sshTransport.setSshSessionFactory(new SshjSessionFactory(keyData, sshConfig))
+            if(sshLib == "sshj") {
+                command.setTransportConfigCallback(new TransportConfigCallback() {
+                    @Override
+                    void configure(final Transport transport) {
+                        if (transport instanceof SshTransport) {
+                            SshTransport sshTransport = (SshTransport) transport
+                            sshTransport.setSshSessionFactory(new SshjSessionFactory(keyData, sshConfig))
+                        }
                     }
-                }
-            })
+                })
+            }
         } else if (u.user && commonConfig.gitPasswordPath) {
             //setup password authentication
             logger.debug("using password path ${commonConfig.gitPasswordPath}")
