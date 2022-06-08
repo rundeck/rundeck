@@ -560,7 +560,7 @@ beans={
     rundeckBootstrapStorageTreeUpdater(RundeckBootstrapStorageTreeUpdater){
         storageTree = ref('rundeckStorageTree')
         updaterConfig = ref('rundeckJasyptConverterUpdaterConfig')
-        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, false)
+        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, true)
         basePath = grailsApplication.config.getProperty('rundeck.storage.rewrite.basePath', String.class, 'keys')
     }
 
