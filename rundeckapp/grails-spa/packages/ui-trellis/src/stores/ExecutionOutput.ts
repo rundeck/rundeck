@@ -76,12 +76,18 @@ export class ExecutionOutput {
     private jobWorkflowProm!: Promise<JobWorkflow>
     private executionStatusProm!: Promise<ExecutionStatusGetResponse>
 
-    /** Get an observable list of entries grouped by node or node and step */
-    getEntriesByNodeCtx(node: string, stepCtx?: string) {
-        if (stepCtx)
-            return this.entriesbyNodeCtx.get(`${node}:${JobWorkflow.cleanContextId(stepCtx)}`)
-        else
-            return this.entriesByNode.get(node)
+    /**
+     * Get an observable list of entries grouped by node or node and step.
+     * If no node filter given, all entries are returned
+     **/
+    getEntriesFiltered(node?: string, stepCtx?: string) {
+        if(node){
+            if (stepCtx)
+                return this.entriesbyNodeCtx.get(`${node}:${JobWorkflow.cleanContextId(stepCtx)}`)
+            else
+                return this.entriesByNode.get(node)
+        } else
+            return this.entries
     }
 
     /** Optional method to populate information about execution output */
