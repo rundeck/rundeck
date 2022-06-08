@@ -49,7 +49,6 @@ import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
-import org.rundeck.plugin.scm.git.ssh.SshjCredentialsProvider
 import org.rundeck.plugin.scm.git.ssh.SshjSessionFactory
 import org.rundeck.storage.api.StorageException
 import org.slf4j.Logger

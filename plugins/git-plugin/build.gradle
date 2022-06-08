@@ -33,7 +33,6 @@ repositories {
         url='https://oss.sonatype.org/content/repositories/snapshots/'
     }
     mavenCentral()
-    maven { url "https://jitpack.io" }
 }
 
 dependencies {
