@@ -3960,7 +3960,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else if (result instanceof JSONObject) {
                 JSONObject jobject = result
                 result = []
-                jobject.keys().sort().each { k ->
+                jobject.keys().each { k ->
                     result << [name: k, value: jobject.get(k)]
                 }
             } else {
@@ -3972,6 +3972,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 err.message = "Failed parsing remote option values: ${validationerrors.join('\n')}"
                 err.code = 'invalid'
             }
+            result = sortRemoteOptions(result, opt.sortValues?opt.sortValues:false)
         } else if (!err) {
             err.message = "Empty result"
             err.code = 'empty'
@@ -3984,6 +3985,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ]
     }
 
+    /**
+     * It sorts the url options based on the option label
+     * @param List optionValues
+     * @param boolean sortValues
+     * @return List
+     */
+    def sortRemoteOptions(List<JSONObject> optionValues, boolean sortValues){
+        if(optionValues && sortValues){
+            Collections.sort(optionValues, new Comparator<Map<String, String>>() {
+                public int compare(final Map<String, String> o1, final Map<String, String> o2) {
+                    return o1.get("name").compareTo(o2.get("name"))
+                }
+            })
+        }
+        return optionValues
+    }
 
     static Logger optionsLogger = LoggerFactory.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
     private logRemoteOptionStats(stats,jobdata){
