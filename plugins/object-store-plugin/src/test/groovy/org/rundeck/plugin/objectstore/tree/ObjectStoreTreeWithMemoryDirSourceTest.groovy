@@ -39,7 +39,7 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     public MinioContainer minio = new MinioContainer()
 
     void setupSpec() {
-        minio.start()
+//        minio.start()
         mClient = minio.client()
     }
 

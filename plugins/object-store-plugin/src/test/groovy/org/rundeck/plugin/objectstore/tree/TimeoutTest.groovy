@@ -40,7 +40,7 @@ class TimeoutTest extends Specification {
         then:
         def ex = thrown(RuntimeException)
         ex.message == "Unable to connect to the server. Please check your firewall, or make sure your server is accepting connections."
-        (System.currentTimeMillis()-start) >= 5000
+        (System.currentTimeMillis()-start) >= 4500
 
     }
 

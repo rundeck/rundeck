@@ -31,7 +31,7 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
 
 
     def setupSpec() {
-        minio.start()
+//        minio.start()
         mClient = minio.client()
     }
 

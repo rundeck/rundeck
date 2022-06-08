@@ -44,7 +44,7 @@ class MinioContainer extends GenericContainer<MinioContainer> {
     }
 
     MinioClient client() {
-        new MinioClient("http://${containerIpAddress}:${firstMappedPort}", accessKey, secretKey)
+        new MinioClient("http://localhost:9000", "TEST_KEY", "TEST_PASSWORD")
     }
 
     @Override

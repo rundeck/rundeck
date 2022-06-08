@@ -32,7 +32,7 @@ class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
     ObjectStoreDirectAccessDirectorySource directory
 
     def setupSpec() {
-        minio.start()
+//        minio.start()
         mClient = minio.client()
         String bucket = "direct-access-dir-bucket"
         if(!mClient.bucketExists(bucket)) mClient.makeBucket(bucket)
