@@ -340,7 +340,7 @@ jobs:
             bash test/ci-test-docker-selenium.sh
       - run:
           name: Logs
-          working_directory: ~/repo/test/selenium
+          working_directory: ~/repo/test
           when: always
           command: |
             docker-compose -f selenium-docker-compose.yml logs rundeck
