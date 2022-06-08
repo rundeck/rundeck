@@ -4,6 +4,7 @@ import groovy.transform.CompileStatic
 import net.schmizz.keepalive.KeepAliveProvider
 import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 import net.schmizz.sshj.userauth.keyprovider.KeyProvider
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.transport.CredentialsProvider
@@ -12,6 +13,7 @@ import org.eclipse.jgit.transport.RemoteSession
 import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.util.FS
+
 
 @CompileStatic
 class SshjSessionFactory extends SshSessionFactory {
@@ -67,10 +69,10 @@ class SshjSessionFactory extends SshSessionFactory {
         defaultConfig.setKeepAliveProvider(KeepAliveProvider.KEEP_ALIVE)
         SSHClient ssh = new SSHClient(defaultConfig)
 
-        try {
+        if(sshConfig.get("StrictHostKeyChecking") == "yes"){
             ssh.loadKnownHosts()
-        } catch (IOException e) {
-            println(e.getMessage())
+        }else{
+            ssh.addHostKeyVerifier(new PromiscuousVerifier())
         }
 
         if (port != null) {
