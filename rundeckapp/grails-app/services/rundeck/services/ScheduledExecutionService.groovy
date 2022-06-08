@@ -2249,7 +2249,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def fieldNames = NOTIFICATION_FIELD_NAMES
         def fieldAttachedNames = NOTIFICATION_FIELD_ATTACHED_NAMES
         Map conf = notif.mailConfiguration()
-        def arr = conf?.recipients?.replaceAll(", ",",")?.split(",")
+        def arr = conf?.recipients?.split(",")
         def validator = new AnyDomainEmailValidator()
         def validcount=0
         arr?.each { email ->
