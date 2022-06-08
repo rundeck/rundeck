@@ -144,7 +144,7 @@ If `yes`, require remote host SSH key is defined in the `~/.ssh/known_hosts` fil
     @PluginProperty(
             title = "SSH Library",
             description = '''Select SSH library.''',
-            required = true,
+            required = false,
             defaultValue = 'jsch'
     )
     @SelectValues(values = ['jsch', 'sshj'])

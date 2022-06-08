@@ -689,7 +689,7 @@ class BaseGitPlugin {
             def expandedPath = expandContextVarsInPath(context, commonConfig.sshPrivateKeyPath)
             def keyData = loadStoragePathData(context, expandedPath)
 
-            def sshLib = commonConfig.sshLibrary
+            def sshLib = commonConfig.sshLibrary?commonConfig.sshLibrary:"jsch"
             if(sshLib == "jsch"){
                 def factory = new PluginSshSessionFactory(keyData)
                 factory.sshConfig = sshConfig
