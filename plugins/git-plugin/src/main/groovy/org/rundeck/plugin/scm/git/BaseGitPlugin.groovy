@@ -77,6 +77,7 @@ class BaseGitPlugin {
     JobFileMapper mapper
     RawTextComparator COMP = RawTextComparator.DEFAULT
     Map<String, Map> jobStateMap = Collections.synchronizedMap([:])
+    String defaultSshLib = "sshj"
 
     BaseGitPlugin(Common commonConfig) {
         this.input = commonConfig.rawInput
@@ -689,14 +690,13 @@ class BaseGitPlugin {
             def expandedPath = expandContextVarsInPath(context, commonConfig.sshPrivateKeyPath)
             def keyData = loadStoragePathData(context, expandedPath)
 
-            def sshLib = "sshj"//commonConfig.sshLibrary?commonConfig.sshLibrary:"jsch"
-            if(sshLib == "jsch"){
+            if(defaultSshLib == "jsch"){
                 def factory = new PluginSshSessionFactory(keyData)
                 factory.sshConfig = sshConfig
                 command.setTransportConfigCallback(factory)
             }
 
-            if(sshLib == "sshj") {
+            if(defaultSshLib == "sshj") {
                 command.setTransportConfigCallback(new TransportConfigCallback() {
                     @Override
                     void configure(final Transport transport) {
