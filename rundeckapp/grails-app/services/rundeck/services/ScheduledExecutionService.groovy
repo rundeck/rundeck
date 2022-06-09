@@ -2655,7 +2655,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.notifications?.each {Notification notif ->
             def trigger = notif.eventTrigger
 
-            def String failureField
+            String failureField
             if (notif && notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
                 failed|=validateDefinitionEmailNotification(scheduledExecution,trigger,notif)
                 failureField= fieldNames[trigger]
