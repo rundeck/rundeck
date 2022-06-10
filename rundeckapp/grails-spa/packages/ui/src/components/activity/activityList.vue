@@ -249,7 +249,7 @@
         <tr class="link activity_row autoclickable"
             @click="autoBulkEdit(rpt)"
             @click.middle="middleClickRow(rpt)"
-            :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',missed:rpt.status==='missed',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}"
+            :class="[`ali-${rpt.execution.id}`,{succeed:rpt.status==='succeed',fail:rpt.status==='fail',missed:rpt.status==='missed',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}]"
             v-for="rpt in reports"
             :key="rpt.execution.id"
           >
@@ -264,7 +264,11 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date " v-tooltip.bottom="$t(rpt.status==='missed'?'info.missed.0.1':'info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
+            <td class="right date"
+              v-tooltip.bottom="{
+                text: $t(rpt.status==='missed'?'info.missed.0.1':'info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)]),
+                'viewport': `.ali-${rpt.execution.id}`
+            }">
                 <span v-if="rpt.dateCompleted">
                     <span class="timeabs ">
                         {{rpt.dateCompleted | moment(momentJobFormat)}}
