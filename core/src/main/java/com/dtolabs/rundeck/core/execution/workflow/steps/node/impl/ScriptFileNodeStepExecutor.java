@@ -25,6 +25,9 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
@@ -65,11 +68,21 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
             expandTokens = command.isExpandTokenInScriptFile();
         }
 
+        String expandedVarsInURL = SharedDataContextUtils.replaceDataReferences(
+                command.getServerScriptFilePath(),
+                context.getSharedDataContext(),
+                //add node name to qualifier to read node-data first
+                ContextView.node(node.getNodename()),
+                ContextView::nodeStep,
+                DataContextUtils.replaceMissingOptionsWithBlank,
+                false,
+                false
+        );
         return scriptUtils.executeScriptFile(
                 context,
                 node,
                 command.getScript(),
-                command.getServerScriptFilePath(),
+                expandedVarsInURL,
                 command.getScriptAsStream(),
                 command.getFileExtension(),
                 command.getArgs(),
