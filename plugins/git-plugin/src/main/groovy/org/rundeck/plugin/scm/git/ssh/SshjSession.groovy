@@ -129,7 +129,7 @@ class SshjSession implements RemoteSession {
 
         @Override
         void destroy() {
-            cmd.close()
+            if(cmd != null) cmd.close()
             closeOutputStream()
             session.close()
         }
