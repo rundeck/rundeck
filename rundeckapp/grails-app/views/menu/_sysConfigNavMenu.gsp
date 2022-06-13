@@ -147,7 +147,6 @@ jQuery(document).ready(function($){
   pluginsMenu.css("top", pluginsMenuButton.parent().offset().top + 10 + "px")
 
   pluginsMenu.prev().on("scroll", function (){
-    console.log(pluginsMenuButton.offset());
     pluginsMenu.css("display","none")
     pluginsMenu.css("top", (pluginsMenuButton.offset().top - pluginsMenuButton.parent().height()/2) + "px");
   });
