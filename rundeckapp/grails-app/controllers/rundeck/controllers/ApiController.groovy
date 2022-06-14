@@ -475,10 +475,6 @@ class ApiController extends ControllerBase{
     /**
      * /api/1/system/info: display stats and info about the server
      */
-    @RdAuthorizeSystem(
-        value = RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN,
-        description = 'Read System Info'
-    )
     @Get(uri="/system/info", produces = MediaType.APPLICATION_JSON)
     @Operation(method = "GET", summary = "Get Rundeck server information and stats",
             description = "Display stats and info about the rundeck server"
@@ -526,36 +522,43 @@ class ApiController extends ControllerBase{
         ServiceLoader.load(ApplicationExtension).each {
             extMeta[it.name] = it.infoMetadata
         }
-        SystemInfoModel systemInfoModel = new SystemInfoModel(
+        Map systemInfoMap = [
             system:[
-                timestamp: [ epoch:nowDate.getTime(), unit:'ms', datetime:g.w3cDateValue(date:nowDate)],
                 rundeck: [ version: appVersion,
                            build: grailsApplication.metadata['build.ident'],
                            buildGit:grailsApplication.metadata['build.core.git.description'],
                            node: nodeName, base: servletContext.getAttribute("RDECK_BASE"),
                            apiversion: ApiVersions.API_CURRENT_VERSION,
-                           serverUUID:sUUID ],
-                executions: [active:executionModeActive, executionMode:executionModeActive?'active':'passive'],
-                os: [arch:osArch, name:osName, version:osVersion],
-                jvm:[name:vmName, vendor:javaVendor,version:javaVersion,implementationVersion:vmVersion],
-                stats: [uptime:
-                               [ duration:durationTime, unit: 'ms', since: [epoch: startupDate.getTime(), unit:'ms',
-                                                                           datetime:(g.w3cDateValue(date: startupDate))]
-                               ],
-                       cpu: [loadAverage:[unit:'percent',average:load], processors:(processorsCount)],
-                       memory:[unit:'byte', max:(Runtime.getRuntime().maxMemory()),
-                               free:(Runtime.getRuntime().freeMemory()), total:(Runtime.getRuntime().totalMemory())],
-                       scheduler: [running:quartzScheduler.getCurrentlyExecutingJobs().size(),
-                                   threadPoolSize:quartzScheduler.getMetaData().threadPoolSize],
-                       threads: [active: threadActiveCount]
-                  ],
-                metrics: [href:metricsJsonUrl,contentType:'application/json'],
-                threadDump: [href:metricsThreadDumpUrl,contentType:'text/plain'],
-                healthcheck: [href:metricsHealthcheckUrl,contentType:'application/json'],
-                ping: [href:metricsPingUrl, contentType:'text/plain'],
-                extended:extMeta?:null
+                           serverUUID:sUUID ]
             ]
-        )
+        ]
+
+        if(authorizingSystem.isAuthorized(RundeckAccess.System.READ_OR_OPS_ADMIN)){
+             systemInfoMap.system += [timestamp: [ epoch:nowDate.getTime(), unit:'ms', datetime:g.w3cDateValue(date:nowDate)],
+                                      executions: [active:executionModeActive, executionMode:executionModeActive?'active':'passive'],
+                                      os: [arch:osArch, name:osName, version:osVersion],
+                                      jvm:[name:vmName, vendor:javaVendor,version:javaVersion,implementationVersion:vmVersion],
+                                      stats: [uptime:
+                                                      [ duration:durationTime, unit: 'ms', since: [epoch: startupDate.getTime(), unit:'ms',
+                                                                                                   datetime:(g.w3cDateValue(date: startupDate))]
+                                                      ],
+                                              cpu: [loadAverage:[unit:'percent',average:load], processors:(processorsCount)],
+                                              memory:[unit:'byte', max:(Runtime.getRuntime().maxMemory()),
+                                                      free:(Runtime.getRuntime().freeMemory()), total:(Runtime.getRuntime().totalMemory())],
+                                              scheduler: [running:quartzScheduler.getCurrentlyExecutingJobs().size(),
+                                                          threadPoolSize:quartzScheduler.getMetaData().threadPoolSize],
+                                              threads: [active: threadActiveCount]
+                                      ],
+                                      metrics: [href:metricsJsonUrl,contentType:'application/json'],
+                                      threadDump: [href:metricsThreadDumpUrl,contentType:'text/plain'],
+                                      healthcheck: [href:metricsHealthcheckUrl,contentType:'application/json'],
+                                      ping: [href:metricsPingUrl, contentType:'text/plain'],
+                                      extended:extMeta?:null
+             ]
+        }
+
+        SystemInfoModel systemInfoModel = new SystemInfoModel(systemInfoMap)
+
         withFormat{
             xml{
                 return apiService.renderSuccessXml(request,response){
