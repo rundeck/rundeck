@@ -320,7 +320,7 @@ class ApiController extends ControllerBase{
             return
         }
 
-        return respond(new Token(oldtoken), [formats: ['xml', 'json']])
+        return respond(new Token(oldtoken, true, apiVersion < ApiVersions.V19), [formats: ['xml', 'json']])
     }
 
     @CompileStatic
@@ -462,7 +462,7 @@ class ApiController extends ControllerBase{
         def data = new ListTokens(user, !user, tokenlist.findAll {
             it.type != AuthTokenType.WEBHOOK
         }.collect {
-            new Token(it)
+            new Token(it, true, apiVersion < ApiVersions.V19)
         })
 
         respond(data, [formats: ['xml', 'json']])
@@ -620,7 +620,7 @@ class ApiController extends ControllerBase{
             )
         }
         response.status = HttpServletResponse.SC_CREATED
-        respond(new Token(token, false), [formats: ['xml', 'json']])
+        respond(new Token(token, false, apiVersion < ApiVersions.V19), [formats: ['xml', 'json']])
     }
 
     @Post(uri= "/tokens/{user}/removeExpired", processes = MediaType.APPLICATION_JSON)

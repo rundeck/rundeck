@@ -39,7 +39,6 @@ class Token {
     @XmlAttribute
     String name;
 
-    @ApiVersion(19)
     @XmlAttribute
     String id;
 
@@ -66,12 +65,15 @@ class Token {
     @ApiVersion(19)
     Boolean expired;
 
-    Token(AuthToken authToken, boolean masked = true) {
+    Token(AuthToken authToken, boolean masked = true, boolean legacyApiMode=false) {
         this.name = authToken.name
         this.id = authToken.uuid ?: authToken.id
         this.token = masked ? null :
                      (authToken.tokenMode == null || authToken.tokenMode == AuthTokenMode.LEGACY) ? authToken.token :
                      authToken.clearToken
+        if(legacyApiMode){
+            this.id = this.token
+        }
         this.creator = authToken.creator
         this.user = authToken.user.login
         this.roles = authToken.authRolesSet()
