@@ -37,6 +37,7 @@ import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
 import java.lang.annotation.Annotation
 
 class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
@@ -48,6 +49,10 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         def apiMarshallerRegistrar = new ApiMarshallerRegistrar()
         apiMarshallerRegistrar.registerMarshallers()
         apiMarshallerRegistrar.registerApiMarshallers()
+        session.subject = new Subject()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
     }
 
     def "api token list does not include webhook tokens"() {
@@ -78,7 +83,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             hasTokenAdminAuth(_) >> { true }
         }
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         request.api_version = 33
         request.addHeader('accept', 'application/json')
         JSON.use('v' + request.api_version)
