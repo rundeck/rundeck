@@ -339,7 +339,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         1 * controller.apiService.renderSuccessJson(_,_) >> {
             JSONBuilder builder = new JSONBuilder();
             JSON json = builder.build(it[1]);
-            json
+            json.toString() == jsonResult
         }
 
         where:
