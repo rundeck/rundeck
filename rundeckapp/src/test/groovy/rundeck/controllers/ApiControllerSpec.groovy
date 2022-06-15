@@ -311,7 +311,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     }
 
     @Unroll
-    def "api system info"() {
+    def "api system info should return only basic data if user doesnt have read authorizarion"() {
         given:
         request.api_version = ApiVersions.V14
         request.addHeader('accept', 'application/json')
