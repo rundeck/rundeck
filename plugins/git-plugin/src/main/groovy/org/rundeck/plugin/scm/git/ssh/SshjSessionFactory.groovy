@@ -9,25 +9,19 @@ import org.eclipse.jgit.transport.SshSessionFactory
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.util.FS
 
+import java.nio.charset.StandardCharsets
+
 
 @CompileStatic
 class SshjSessionFactory extends SshSessionFactory {
     private byte[] privateKey
     Map<String, String> sshConfig
     private OpenSshConfig config
-    private String privateKeyFile
+    //private String privateKeyFile
 
     SshjSessionFactory(byte[] privateKey, Map<String, String> sshConfig) {
         this.privateKey = privateKey
         this.sshConfig = sshConfig
-
-        if(privateKey){
-            File tempFile = File.createTempFile("tmp", "key")
-            tempFile.deleteOnExit()
-            FileOutputStream fos = new FileOutputStream(tempFile)
-            fos.write(privateKey)
-            privateKeyFile = tempFile.getAbsolutePath()
-        }
     }
 
     @Override
@@ -35,7 +29,8 @@ class SshjSessionFactory extends SshSessionFactory {
         if (config == null)
             config = OpenSshConfig.get(fs)
 
-        return new SshjSession(uri, sshConfig, config, privateKeyFile )
+        String keyContent = new String(privateKey, StandardCharsets.UTF_8)
+        return new SshjSession(uri, sshConfig, config, keyContent )
     }
 
 

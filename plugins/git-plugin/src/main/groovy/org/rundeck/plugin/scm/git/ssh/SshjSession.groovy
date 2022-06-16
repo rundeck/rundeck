@@ -4,9 +4,12 @@ import groovy.transform.CompileStatic
 import net.schmizz.keepalive.KeepAliveProvider
 import net.schmizz.sshj.DefaultConfig
 import net.schmizz.sshj.SSHClient
+import net.schmizz.sshj.common.Factory
 import net.schmizz.sshj.connection.channel.direct.Session
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
-import net.schmizz.sshj.userauth.keyprovider.KeyProvider
+import net.schmizz.sshj.userauth.keyprovider.FileKeyProvider
+import net.schmizz.sshj.userauth.keyprovider.KeyFormat
+import net.schmizz.sshj.userauth.keyprovider.KeyProviderUtil
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.transport.OpenSshConfig
 import org.eclipse.jgit.transport.RemoteSession
@@ -19,14 +22,14 @@ class SshjSession implements RemoteSession {
     Session session
     SSHClient sshClient
     URIish uri
-    private String privateKeyFile
+    private String privateKey
     Map<String, String> sshConfig
     private OpenSshConfig config
 
-    SshjSession(URIish uri, Map<String, String> sshConfig, OpenSshConfig config, String privateKeyFile) {
+    SshjSession(URIish uri, Map<String, String> sshConfig, OpenSshConfig config, String privateKey) {
         this.sshConfig = sshConfig
         this.config = config
-        this.privateKeyFile = privateKeyFile
+        this.privateKey = privateKey
         this.uri = uri
 
         this.sshClient = createConnection()
@@ -76,9 +79,11 @@ class SshjSession implements RemoteSession {
                 ssh.connect(host);
             }
 
-            if(privateKeyFile){
-                KeyProvider key = ssh.loadKeys(privateKeyFile)
-                ssh.authPublickey(user, key)
+            if(privateKey){
+                KeyFormat format = KeyProviderUtil.detectKeyFileFormat(privateKey,true);
+                FileKeyProvider keys = Factory.Named.Util.create(ssh.getTransport().getConfig().getFileKeyProviderFactories(), format.toString());
+                keys.init(new StringReader(privateKey), null)
+                ssh.authPublickey(user, keys)
             }
 
             return ssh
