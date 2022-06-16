@@ -16,6 +16,7 @@
 
 package org.rundeck.app.services
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.common.FrameworkProjectMgr
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -60,8 +61,8 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             sut.frameworkService = Mock(FrameworkService)
             sut.pluginService = Mock(PluginService)
             sut.frameworkService.getRundeckFramework() >> Mock(IFramework) {
-                1 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                    1 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
+                2 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    2 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
                         getProjectProperties() >> projProps
                     }
                 }
@@ -102,8 +103,8 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             sut.frameworkService = Mock(FrameworkService)
             sut.pluginService = Mock(PluginService)
             sut.frameworkService.getRundeckFramework() >> Mock(IFramework) {
-                1 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                    1 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
+                2 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    2 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
                         getProjectProperties() >> projProps
                     }
                 }

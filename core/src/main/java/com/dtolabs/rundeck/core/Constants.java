@@ -163,4 +163,10 @@ public final class Constants {
     public static final String SSH_KEYRESOURCE_PROP = "framework.ssh.key.resource";
     public static final String SSH_USER_PROP = "framework.ssh.user";
 
+    /**
+     * Health check properties
+     */
+    public static final String PROJECT_PROPERTY_HEALTHCHECK_ENABLED = "project.healthcheck.enabled";
+    public static final String HEALTH_STATUS_PROVIDER_NAME = "healthstatus";
+
 }

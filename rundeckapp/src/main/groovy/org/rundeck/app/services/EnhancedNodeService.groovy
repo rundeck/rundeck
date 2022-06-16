@@ -16,6 +16,7 @@
 
 package org.rundeck.app.services
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IProjectNodesFactory
@@ -78,7 +79,12 @@ class EnhancedNodeService
     }
 
     IProjectNodes getNodes(final String name) {
-        this.getNodes(name, null)
+        def projectConfig = frameworkService.rundeckFramework.frameworkProjectMgr.loadProjectConfig(name)
+        if(projectConfig.hasProperty(Constants.PROJECT_PROPERTY_HEALTHCHECK_ENABLED) && 'true'.equals(projectConfig.getProperty(Constants.PROJECT_PROPERTY_HEALTHCHECK_ENABLED))){
+            this.getNodes(name, null)
+        }else{
+            this.getNodes(name, [Constants.HEALTH_STATUS_PROVIDER_NAME])
+        }
     }
 
     private ProjectNodesEnhancer loadPlugins(final String project) {
