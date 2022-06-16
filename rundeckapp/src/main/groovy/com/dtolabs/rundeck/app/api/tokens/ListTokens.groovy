@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.api.marshall.ElementName
 import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.SubElement
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Schema
 
 /**
@@ -29,7 +30,9 @@ import io.swagger.v3.oas.annotations.media.Schema
  */
 @ApiResource
 @ElementName('tokens')
-@Schema
+@ArraySchema(
+    schema = @Schema(implementation = Token)
+)
 class ListTokens {
     @XmlAttribute
     int count;

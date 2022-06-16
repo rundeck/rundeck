@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.tokens.CreateToken
+import com.dtolabs.rundeck.app.api.tokens.CreateTokenStringRoles
 import com.dtolabs.rundeck.app.api.tokens.ListTokens
 import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
@@ -28,6 +29,7 @@ import io.micronaut.http.annotation.Delete
 import io.micronaut.http.annotation.Post
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.parameters.RequestBody
 import org.rundeck.app.api.model.ApiErrorResponse
@@ -277,7 +279,7 @@ class ApiController extends ControllerBase{
     )
     @Operation(
         method = "GET",
-        summary = "Get Token Information",
+        summary = "Get a specified auth token metadata",
         description = "API Token information",
         parameters = [
             @Parameter(
@@ -293,7 +295,7 @@ class ApiController extends ControllerBase{
         responses=[
             @ApiResponse(
                 responseCode = "200",
-                description = "Token Information for GET request",
+                description = '''The token includes the `creator` of the token, as well as the `user` (the effective username) of the token.''',
                 content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = Token)
@@ -311,7 +313,6 @@ class ApiController extends ControllerBase{
         ]
     )
     @Tag(name = "tokens")
-
     @CompileStatic
     def apiTokenGet(String tokenid) {
         AuthToken oldtoken = validateTokenRequest(tokenid)
@@ -356,7 +357,7 @@ class ApiController extends ControllerBase{
     @Delete(uri= "/token/{tokenid}")
     @Operation(
         method = "DELETE",
-        summary = "Delete API Token",
+        summary = "Delete a specified auth token.",
         parameters = [
             @Parameter(
                 name='tokenid',
@@ -381,7 +382,6 @@ class ApiController extends ControllerBase{
             )
         ]
     )
-
     @Tag(name = "tokens")
     @CompileStatic
     def apiTokenDelete(String tokenid) {
@@ -399,7 +399,7 @@ class ApiController extends ControllerBase{
     @Get(uri= "/tokens/{user}")
     @Operation(
         method = "GET",
-        summary = "Get List of API Tokens",
+        summary = "List all tokens or all tokens for a specific user.",
         parameters = [
             @Parameter(
                 name='user',
@@ -419,13 +419,12 @@ class ApiController extends ControllerBase{
 
                 content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ListTokens)
+                    array = @ArraySchema(schema = @Schema(implementation = Token))
                 )
             ),
 
         ]
     )
-
     @Tag(name = "tokens")
     /**
      * GET /api/11/tokens/$user?
@@ -473,7 +472,18 @@ class ApiController extends ControllerBase{
     @Operation(
         method = "POST",
         summary = "Create API Token",
-        description = 'Create API Token for a specific username, or for current user',
+        description = '''Create a new token for a specific user. Specify custom roles and duration if authorized.
+
+The user specified must either be part of the URL, or be part of the request content.
+
+A content body is expected, and `roles` must be specified, and `duration` is optional.
+If unset, duration will be the maximum allowed token duration.
+
+If the `roles` value is the string `*` (asterisk), and the token is generated for oneself (i.e. the authenticated user),
+then the generated token will have all roles as the authenticated user.
+
+Since: v11
+''',
         parameters = [
             @Parameter(
                 name = 'user',
@@ -487,25 +497,48 @@ class ApiController extends ControllerBase{
             )
         ],
         requestBody = @RequestBody(
+            required = true,
             content = @Content(
                 mediaType = MediaType.APPLICATION_JSON,
-                schema = @Schema(implementation = CreateToken)
+                schema = @Schema(oneOf = [CreateToken, CreateTokenStringRoles]),
+                examples = [
+                    @ExampleObject(
+                        name='list of roles',
+                        summary = "Using a list of roles",
+                        value = '''{
+                                  "user": "alice",
+                                  "roles": [
+                                    "sre",
+                                    "dev"
+                                  ],
+                                  "duration": "120d",
+                                  "name": "Example Token"
+                                }'''
+                    ),
+                    @ExampleObject(
+                        name = 'string roles',
+                        summary = "Using a comma-separated string for roles",
+                        value = '''{
+                              "user": "alice",
+                              "roles": "sre,dev",
+                              "duration": "120d",
+                              "name": "Example Token"
+                            }'''
+                    )
+                ]
             )
         ),
         responses=[
             @ApiResponse(
                 responseCode = "201",
                 description = "Token Created",
-
                 content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
                     schema = @Schema(implementation = Token)
                 )
-            ),
-
+            )
         ]
     )
-
     @Tag(name = "tokens")
     /**
      * POST /api/11/tokens/$user?
@@ -627,7 +660,7 @@ class ApiController extends ControllerBase{
     @Operation(
         method = "POST",
         summary = "Remove Expired Tokens",
-        description = 'Remove expired tokens for the specified User',
+        description = 'Remove expired tokens for the specified User. Since: v19',
         parameters = [
             @Parameter(
                 name = 'user',

@@ -37,32 +37,40 @@ class Token {
     @ApiVersion(37)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
+    @Schema(description = "since: v37")
     String name;
 
     @XmlAttribute
+    @Schema(description = "unique ID")
     String id;
 
     @ApiVersion(19)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
+    @Schema(description = "Token value (only available at creation time). since: v19")
     String token;
 
     @ApiVersion(19)
     @XmlAttribute
+    @Schema(description = "Token creator. since: v19")
     String creator;
 
     @XmlAttribute
+    @Schema(description = "Token effective username")
     String user;
 
     @ApiVersion(19)
     @CollectionElement('role')
+    @Schema(description = "since: v19")
     Set<String> roles;
 
     @Ignore(onlyIfNull = true)
     @ApiVersion(19)
+    @Schema(description = "since: v19", implementation = String, format = 'iso')
     Date expiration
 
     @ApiVersion(19)
+    @Schema(description = "since: v19")
     Boolean expired;
 
     Token(AuthToken authToken, boolean masked = true, boolean legacyApiMode=false) {
