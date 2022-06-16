@@ -18,24 +18,21 @@ databaseChangeLog = {
         sql("""update base_report set execution_id = (IF(jc_exec_id REGEXP '^[0-9]+\$', CAST(jc_exec_id as unsigned),
  null))""")
     }
-    changeSet(author: "gschueler (generated)", id: "1653344096108-52", dbms: 'h2,postgresql') {
-        sql("""update base_report set execution_id = CAST(JC_EXEC_ID as bigint)""")
-    }
-    changeSet(author: "gschueler (generated)", id: "1653344096108-53", dbms: 'mssql') {
+    changeSet(author: "gschueler (generated)", id: "1653344096108-52", dbms: 'h2,postgresql,mssql') {
         sql("""update base_report set execution_id = cast(JC_EXEC_ID as bigint)""")
     }
-    changeSet(author: "gschueler (generated)", id: "1653344096108-54", dbms: 'oracle') {
+    changeSet(author: "gschueler (generated)", id: "1653344096108-53", dbms: 'oracle') {
         sql("""update base_report set execution_id = CAST(JC_EXEC_ID as NUMBER(19, 0))""")
     }
 
-    changeSet(author: "gschueler (generated)", id: "1653344096108-55") {
+    changeSet(author: "gschueler (generated)", id: "1653344096108-54") {
         dropIndex(indexName: "EXEC_REPORT_IDX_0", tableName: "base_report")
     }
-    changeSet(author: "gschueler (generated)", id: "1653344096108-56") {
+    changeSet(author: "gschueler (generated)", id: "1653344096108-55") {
         dropIndex(indexName: "EXEC_REPORT_IDX_2", tableName: "base_report")
     }
 
-    changeSet(author: "gschueler (generated)", id: "1653344096108-57") {
+    changeSet(author: "gschueler (generated)", id: "1653344096108-56") {
         preConditions(onFail: 'MARK_RAN') {
             columnExists(tableName: "base_report", columnName: 'jc_exec_id')
         }
