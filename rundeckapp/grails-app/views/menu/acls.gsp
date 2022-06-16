@@ -97,12 +97,10 @@
                 window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
                 ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
             </g:if>
-            <g:if test="${!clusterMode && hasOpsAdminAuth}">
+            <g:if test="${!clusterMode}">
                 ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
                 ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
             </g:if>
-
-            <g:if test="${hasAdminAuth}">
                 let storedpolicies = loadJsonData('aclStoredList');
                 jQuery.extend(storedpolicies,{
                     pagingEnabled: ${params.getBoolean('pagingEnabled',cfg.getBoolean(config: 'gui.system.aclList.pagingEnabled',default: true))},
@@ -119,8 +117,7 @@
                     stpolicies.fileUpload = aclstorageupload;
                     ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
                 </g:if>
-            </g:if>
-            <g:if test="${!clusterMode && hasOpsAdminAuth}">
+            <g:if test="${!clusterMode}">
                 window.aclfsupload = new PolicyUpload({ policies: fspolicies.policies()});
                 fspolicies.fileUpload = aclfsupload;
                 ko.applyBindings(aclfsupload, jQuery('#aclFSUploadForm')[0]);
@@ -182,7 +179,7 @@
   <div class="row">
       <div class="col-sm-12">
           <div class="card">
-              <g:if test="${!clusterMode && hasOpsAdminAuth}">
+              <g:if test="${!clusterMode}">
                   <div class="card-header clearfix">
                       <span class="panel-title pull-left">
                           <span class="text-info">${aclFileList.size()}</span>
@@ -242,8 +239,6 @@
                   ]"/>
 
               </g:if>
-
-              <g:if test="${hasAdminAuth}">
                   <div class="card-header clearfix" id="storedPolicies_header">
                       <h3 class="card-title pull-left">
                           <g:message code="stored.acl.policy.files.title"/>
@@ -298,7 +293,6 @@
                                     [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
                                     null
                 ]"/>
-              </g:if>
           </div>
           <g:if test="${clusterMode && hasOpsAdminAuth}">
               <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">

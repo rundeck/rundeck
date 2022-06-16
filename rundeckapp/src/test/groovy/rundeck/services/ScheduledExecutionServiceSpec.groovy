@@ -5575,6 +5575,37 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             2       | 2          | 2     | 2             | 2                | 2
             null    | null       | null  | 10            | 0                | 5
     }
+
+    def "sort url options result"(){
+        given:
+
+        def result = []
+        result << [name: "testName4", value: "value4"]
+        result << [name: "exampleName", value: "16"]
+        result << [name: "someOptionName", value: "cake"]
+        result << [name: "sweet", value: "sugar"]
+
+        when:
+        def sortedOptions = service.sortRemoteOptions(result, sort)
+        then:
+        sortedOptions.size() == size
+        if(sort){
+            sortedOptions[0].name == "exampleName" && sortedOptions[0].value == "16"
+            sortedOptions[1].name == "someOptionName" && sortedOptions[1].value == "cake"
+            sortedOptions[2].name == "sweet" && sortedOptions[2].value == "sugar"
+            sortedOptions[3].name == "testName4" && sortedOptions[3].value == "value4"
+        }else{
+            sortedOptions[0].name == "testName4" && sortedOptions[0].value == "value4"
+            sortedOptions[1].name == "exampleName" && sortedOptions[1].value == "16"
+            sortedOptions[2].name == "someOptionName" && sortedOptions[2].value == "cake"
+            sortedOptions[3].name == "sweet" && sortedOptions[3].value == "sugar"
+        }
+        where:
+            sort    | size
+            true    | 4
+            false   | 4
+    }
+
 }
 
 @CompileStatic

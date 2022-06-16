@@ -19,7 +19,7 @@
                     :item-size="itemSize"
                     :key="items.length"
                     v-slot="{ item }"
-                    key-field="name"
+                    key-field="id"
                     class="scroller"
                 >
                     <div style="height: 100%;" :ref="item[idField]" role="button" tabindex="0" class="scroller__item" :class="{'scroller__item--selected': item[idField] == selected}" @click="() => itemClicked(item)" @keypress.enter="itemClicked(item)">
