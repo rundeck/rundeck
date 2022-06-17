@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.api.marshall.CollectionElement
 import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
+import io.swagger.v3.oas.annotations.media.Schema
 import rundeck.AuthToken
 
 /**
@@ -30,56 +31,61 @@ import rundeck.AuthToken
  * @since 3/23/17
  */
 @ApiResource
+@Schema
 class Token {
 
     @ApiVersion(37)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
+    @Schema(description = "since: v37")
     String name;
 
-    @ApiVersion(19)
     @XmlAttribute
+    @Schema(description = "unique ID")
     String id;
 
     @ApiVersion(19)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
+    @Schema(description = "Token value (only available at creation time). since: v19")
     String token;
-
-    @Ignore(onlyIfNull = true)
-    @XmlAttribute("id")
-    @ApiVersion(max = 18)
-    String v18TokenId;
 
     @ApiVersion(19)
     @XmlAttribute
+    @Schema(description = "Token creator. since: v19")
     String creator;
 
     @XmlAttribute
+    @Schema(description = "Token effective username")
     String user;
 
     @ApiVersion(19)
     @CollectionElement('role')
+    @Schema(description = "since: v19")
     Set<String> roles;
 
     @Ignore(onlyIfNull = true)
     @ApiVersion(19)
-    FormattedDate expiration;
+    @Schema(description = "since: v19", implementation = String, format = 'iso')
+    Date expiration
 
     @ApiVersion(19)
+    @Schema(description = "since: v19")
     Boolean expired;
 
-    Token(AuthToken authToken, boolean masked = true) {
+    Token(AuthToken authToken, boolean masked = true, boolean legacyApiMode=false) {
         this.name = authToken.name
         this.id = authToken.uuid ?: authToken.id
         this.token = masked ? null :
                      (authToken.tokenMode == null || authToken.tokenMode == AuthTokenMode.LEGACY) ? authToken.token :
                      authToken.clearToken
-        this.v18TokenId = this.token
+        if(legacyApiMode){
+            this.id = this.token
+        }
         this.creator = authToken.creator
         this.user = authToken.user.login
         this.roles = authToken.authRolesSet()
-        this.expiration = authToken.expiration ? new FormattedDate(authToken.expiration) : null
+        this.expiration = authToken.expiration
         this.expired = authToken.tokenIsExpired()
     }
 }

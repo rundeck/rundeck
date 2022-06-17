@@ -201,7 +201,12 @@ class UrlMappings {
             ]
         }
         "/api/$api_version/tokens/$user/removeExpired"(controller: 'api', action: 'apiTokenRemoveExpired')
-        "/api/$api_version/token/$tokenid"(controller: 'api', action: 'apiTokenManage')
+        "/api/$api_version/token/$tokenid"(controller: 'api'){
+            action=[
+                GET:"apiTokenGet",
+                DELETE:"apiTokenDelete"
+            ]
+        }
 
         "/api/$api_version/storage/keys/$resourcePath**"(controller: 'storage', action: 'apiKeys')
         "/api/$api_version/storage/keys"(controller: 'storage', action: 'apiKeys')
