@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import org.rundeck.app.data.tokens.v1.Token
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
@@ -33,6 +34,11 @@ import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.grails.web.converters.exceptions.ConverterException
+import org.rundeck.spi.data.DataManager
+import org.rundeck.spi.data.DataProvider
+import org.rundeck.spi.data.DataQuery
+import org.rundeck.spi.data.DataType
+import org.rundeck.spi.data.Query
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
@@ -54,6 +60,12 @@ class ApiService implements WebUtilService{
     def userService
     @Delegate
     WebUtilService rundeckWebUtil
+    DataManager rundeckDataManager
+
+    private DataProvider<Token, DataType<Token>> getTokenProvider() {
+        rundeckDataManager.getProviderForType(Token)
+    }
+
 
     public static final Map<String,String> HTTP_METHOD_ACTIONS = Collections.unmodifiableMap (
             POST: AuthConstants.ACTION_CREATE,
@@ -158,8 +170,30 @@ class ApiService implements WebUtilService{
     /**
      * Find a token by UUID and creator
      */
-    AuthToken findUserTokenId(String creator, String id) {
-        AuthToken.findByUuidAndCreator(id, creator)
+    Token findUserTokenId(String creator, String id) {
+        def result = tokenProvider.query(
+            Query.builder().with {
+                queryType(DataQuery.QueryType.Get)
+                criterion(
+                    Query.Criterion.builder().with {
+                        property('creator')
+                        value(creator)
+                        type(DataQuery.Criterion.MatchType.Eq)
+                        build()
+                    }
+                )
+                criterion(
+                    Query.Criterion.builder().with {
+                        property('uuid')
+                        value(id)
+                        type(DataQuery.Criterion.MatchType.Eq)
+                        build()
+                    }
+                )
+                build()
+            }
+        )
+        result.single
     }
 
     /**
@@ -172,17 +206,11 @@ class ApiService implements WebUtilService{
     /**
      * Find a token by UUID
      */
-    AuthToken findTokenId(String id) {
-        AuthToken.findByUuid(id)
+    Token findTokenId(String id) {
+        tokenProvider.getData(id)
     }
 
     /**
-     * Find a token by UUID
-     */
-    AuthToken findUserTokenValue(String token) {
-        AuthToken.findByToken(token)
-    }
-
     /**
      * Generate an auth token
      * @param authContext user's own auth context
