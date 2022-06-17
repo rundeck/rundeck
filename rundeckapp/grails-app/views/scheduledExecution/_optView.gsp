@@ -36,7 +36,7 @@
         </span>
         <span class="desc"><g:strip>${option.description}</g:strip></span>
     </span>
-    <g:if test="${option?.values || option.valuesList}">
+    <g:if test="${option.optionValues}">
         <g:set var="opts" value="${option.optionValues}"/>
         <div class="popout detailpopup" id="vls_${rkey}_tooltip" style="width:200px;display:none;" >
             <div class="info note">Allowed Values</div>
