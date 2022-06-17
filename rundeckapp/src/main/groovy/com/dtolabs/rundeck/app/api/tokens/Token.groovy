@@ -88,4 +88,15 @@ class Token {
         this.expiration = authToken.expiration
         this.expired = authToken.tokenIsExpired()
     }
+    Token(org.rundeck.app.data.tokens.v1.Token authToken, boolean masked = true) {
+        this.name = authToken.name
+        this.id = authToken.uuid
+        this.token = masked ? null : authToken.token
+        this.v18TokenId = this.token
+        this.creator = authToken.creator
+        this.user = authToken.ownerName
+        this.roles = authToken.getAuthRolesSet()
+        this.expiration = authToken.expiration ? new FormattedDate(authToken.expiration) : null
+        this.expired = authToken.tokenIsExpired(authToken)
+    }
 }

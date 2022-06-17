@@ -1,0 +1,19 @@
+apply plugin: "groovy"
+apply plugin: "java-library"
+
+dependencies {
+    api project(":rundeck-data-spi")
+    testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+
+    compileOnly "org.projectlombok:lombok:1.18.20"
+    annotationProcessor "org.projectlombok:lombok:1.18.20"
+}
+
+ext.description = "Rundeck project ${project.name}"
+ext.publishName = project.name
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}

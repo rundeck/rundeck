@@ -344,9 +344,10 @@ class ApiController extends ControllerBase{
 
         //admin: search by token ID
         //user: search for token ID owned by user
-        AuthToken oldtoken = adminAuth ?
-                             apiService.findTokenId(tokenid) :
-                             apiService.findUserTokenId(authContext.username, tokenid)
+
+        org.rundeck.app.data.tokens.v1.Token oldtoken = adminAuth ?
+                apiService.findTokenId(params.tokenid) :
+                apiService.findUserTokenId(authContext.username, params.tokenid)
 
         if (!apiService.requireExistsFormat(response, oldtoken, ['Token', tokenid])) {
             return null

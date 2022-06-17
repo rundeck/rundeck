@@ -75,6 +75,8 @@ dependencies {
     // Rundeck project dependencies.
     implementation project(':core')
     implementation project(':rundeck-storage:rundeck-storage-filesys')
+    implementation project(':rundeck-data-model')
+    implementation project(':rundeck-data-spi')
 
 
     /** It's important that the configuration addition follow the form 'compile project("")'
