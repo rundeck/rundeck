@@ -248,7 +248,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
                         dataContext,
                         ContextView.node(nodename),
                         ContextView::nodeStep,
-                        urlPathEncoder,
+                        DataContextUtils.replaceMissingOptionsWithBlank,
                         true,
                         false
                 ));

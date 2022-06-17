@@ -97,7 +97,7 @@ class ScriptURLNodeStepExecutorSpec extends Specification {
         url                                                                            | curnode     | expected
 
         'http://example.com/path/${node.name}?query=${data.value}'                     | "anodename" |
-                'http://example.com/path/node%2Fname?query=some%20value%20%3F%20for%20things%20%26%20stuff'
+                'http://example.com/path/node/name?query=some%20value%20%3F%20for%20things%20%26%20stuff'
         'http://example.com/path/${node.name}?query=${data.value}'                     | "bnodename" |
                 'http://example.com/path/bogus?query=hotenntot'
         'http://example.com/path/${node.name@bnodename}?query=${data.value}'           | "anodename" |
