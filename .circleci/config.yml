@@ -683,8 +683,8 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-      - build_and_publish:
-          name: Build and publish
+#      - build_and_publish:
+#          name: Build and publish
 
   nightly:
     triggers:
