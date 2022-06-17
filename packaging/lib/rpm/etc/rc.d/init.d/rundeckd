@@ -1,0 +1,83 @@
+#!/bin/bash 
+#
+# rundeckd    Startup script for the rundeck
+#
+# chkconfig: 2345 90 10
+# description: rundeckd, providing rundeckd
+# pidfile: /var/run/rundeckd.pid
+
+# Source function library
+
+prog="rundeckd"
+RETVAL=0
+PID_FILE=/var/run/${prog}.pid
+servicelog=/var/log/rundeck/service.log
+
+. /etc/rc.d/init.d/functions
+
+. /etc/rundeck/profile
+
+start() {
+	status -p $PID_FILE $prog >/dev/null
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		echo Already started.
+		return $RETVAL
+	fi
+	echo -n $"Starting $prog: "
+	if ! touch $servicelog; then
+		echo No access to $servicelog. This usually means you need to be root
+		echo_failure
+		echo
+		return 1
+	fi
+	nohup runuser -s /bin/bash -l rundeck -c "$rundeckd" >>$servicelog 2>&1 &
+	RETVAL=$?	
+	PID=$!
+	echo $PID > $PID_FILE
+	if [ $RETVAL -eq 0 ]; then
+		touch /var/lock/subsys/$prog
+		echo_success
+	else
+		echo_failure
+	fi
+	echo
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc -p $PID_FILE "$rundeckd"
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog
+	return $RETVAL
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	condrestart)
+		if [ -f /var/lock/subsys/$prog ]; then
+			stop
+			start
+		fi
+		;;
+	status)
+		status -p $PID_FILE $prog
+		RETVAL=$?
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|condrestart|status}"
+		RETVAL=1
+esac
+
+exit $RETVAL

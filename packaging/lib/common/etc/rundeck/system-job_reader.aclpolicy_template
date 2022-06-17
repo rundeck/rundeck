@@ -1,0 +1,27 @@
+description: Allow groups to list projects
+context:
+  application: 'rundeck'
+for:
+  project:
+  - allow: read
+    match:
+      name: '.*'
+by:
+  group: job_reader
+
+---
+
+description: Global read access to job_reader role
+context:
+  project: '.*'
+for:
+  job:
+  - allow: [read]
+    match:
+      name: '.*'
+  resource:
+  - allow: read
+    equals:
+      kind: event
+by:
+  group: job_reader
