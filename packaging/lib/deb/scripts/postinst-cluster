@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# enabling cluster mode
+cat >>/etc/rundeck/rundeck-config.properties <<END
+
+rundeck.clusterMode.enabled=true
+END
