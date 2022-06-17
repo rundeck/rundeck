@@ -212,6 +212,6 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
                 "http://example.com/path/${node.name}?query=${data.value}",
                 stringMapMap,
                 "anodename");
-            assertEquals("http://example.com/path/node%2Fname?query=some%20value%20%3F%20for%20things%20%26%20stuff", value);
+            assertEquals("http://example.com/path/node/name?query=some%20value%20%3F%20for%20things%20%26%20stuff", value);
     }
 }
