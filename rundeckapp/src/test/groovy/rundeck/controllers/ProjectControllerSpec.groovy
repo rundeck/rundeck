@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
@@ -343,6 +344,31 @@ class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUn
         where:
         all  | jobs  | execs | configs | readmes | acls
         true | false | false | false   | false   | false
+    }
+
+    def "api v34 exportAll include webhooks auth tokens when whkIncludeAuthTokens is set to true"(){
+
+        given:"a project to be exported"
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        setupGetResource()
+        params.project = 'aproject'
+
+        when:"exporting the project using the API"
+        params.exportAll = "true"
+        params.whkIncludeAuthTokens = "true"
+        request.api_version = ApiVersions.V34
+        controller.apiProjectExport()
+
+        then:"webhooks auth tokens should be exported"
+        response.status == 200
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, { ArchiveOptions opts ->
+                    opts.all == true &&
+                    opts.exportOpts[WebhooksProjectComponent.COMPONENT_NAME]==[(WebhooksProjectExporter.INLUDE_AUTH_TOKENS):"true"]
+        },_
+        )
     }
 
     def "api export component params"() {
