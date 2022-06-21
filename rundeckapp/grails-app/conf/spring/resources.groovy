@@ -257,7 +257,6 @@ beans={
     frameworkFactory(RundeckFrameworkFactory){
         frameworkFilesystem=frameworkFilesystem
         propertyLookup=ref('frameworkPropertyLookup')
-        type=application.config.getProperty("rundeck.projectsStorageType", String.class,'db')
         dbProjectManager=ref('projectManagerService')
         pluginManagerService=ref('rundeckServerServiceProviderLoader')
     }
@@ -335,7 +334,6 @@ beans={
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
         projectPattern = ContextACLStorageFileManagerFactory.ACL_PROJECT_STORAGE_PATH_PATTERN
-        projectsStorageType=application.config.getProperty("rundeck.projectsStorageType", String.class, 'db')
         validatorFactory=ref('rundeckYamlAclValidatorFactory')
     }
 

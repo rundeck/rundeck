@@ -25,7 +25,6 @@ import java.util.Map;
 public class RundeckConfigBase {
 
     String executionMode;
-    String projectsStorageType;
     String primaryServerId;
 
     Map<String,Object> mail;  //mail is a very dynamic config
