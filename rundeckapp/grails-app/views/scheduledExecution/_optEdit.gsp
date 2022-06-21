@@ -429,8 +429,6 @@
 
             </div>
             <div class="col-sm-7">
-                <g:set var="listvalue" value="${option?.valuesList}"/>
-                <g:set var="listjoin" value="${option?.values }"/>
                 <div id="vlist_${rkey}_section" style="${wdgt.styleVisible(if: valueTypeListChecked)}">
 
                     <g:textField name="valuesList"
@@ -781,6 +779,8 @@
         </div>
         <g:jsonToken id="reqtoken_${rkey}" url="${request.forwardURI}"/>
     </div>
+    <g:set var="listvalue" value="${option?.valuesList}"/>
+    <g:set var="listjoin" value="${option?.optionValues }"/>
     <g:javascript>
       fireWhenReady('optedit_${enc(js: rkey)}',function(){
           var isRegex = ${null!=option?.regex};
@@ -791,8 +791,6 @@
           } else if(isRegex) {
               currentEnforceType = "regex";
           }
-          var listvalue = "${option?.valuesList}";
-          var listjoin = "${option?.values}";
 
           var editor=new OptionEditor({name:"${option?.name}",
           bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',

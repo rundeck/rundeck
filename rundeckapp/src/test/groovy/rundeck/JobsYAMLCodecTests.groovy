@@ -44,7 +44,7 @@ public class JobsYAMLCodecTests  {
                                                                                      new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
                                                                                      new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
                 ]]),
-                options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+                options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, valuesList:'a,b')] as TreeSet,
                 nodeThreadcount: 1,
                 nodeKeepgoing: true,
                 doNodedispatch: true,
@@ -90,7 +90,7 @@ public class JobsYAMLCodecTests  {
                                                                                      new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
                                                                                      new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
                 ]]),
-                options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+                options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, valuesList:'a,b')] as TreeSet,
                 nodeThreadcount: 1,
                 nodeKeepgoing: true,
                 doNodedispatch: true,
@@ -218,7 +218,7 @@ public class JobsYAMLCodecTests  {
             workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [
                 new CommandExec([adhocFilepath: 'http://example.com/blah'])
             ]]),
-            options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+            options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, valuesList:'a,b')] as TreeSet,
             nodeThreadcount: 1,
             nodeKeepgoing: true,
             doNodedispatch: true,

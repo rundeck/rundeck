@@ -2984,7 +2984,7 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect defaultValue", "789", opt1.defaultValue
             assertEquals "incorrect enforced", "false", opt1.enforced.toString()
             assertEquals "incorrect regex", "abc", opt1.regex
-            assertNull "incorrect values size", opt1.values
+            assertNull "incorrect values size", opt1.valuesList
             assertNotNull "missing valuesUrl", opt1.realValuesUrl
             assertTrue "missing valuesUrl", opt1.realValuesUrl instanceof URL
             assertEquals "incorrect valuesUrl", "http://monkey/somewhere",opt1.realValuesUrl.toExternalForm()
@@ -3036,7 +3036,7 @@ void testDecodeBasic__no_group(){
         assertFalse "incorrect secureInput", opt1.secureInput
         assertFalse "incorrect secureExposed", opt1.secureExposed
         assertNull "incorrect regex", opt1.regex
-        assertNull "incorrect values size", opt1.values
+        assertNull "incorrect values size", opt1.valuesList
         assertNull "missing valuesUrl", opt1.realValuesUrl
 
         def xml2 = """<joblist>
@@ -3160,7 +3160,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect secure", "true", opt1.secureInput.toString()
         assertFalse "incorrect secureExposed", opt1.secureExposed
         assertNull "incorrect regex", opt1.regex
-        assertNull "incorrect values size", opt1.values
+        assertNull "incorrect values size", opt1.valuesList
         assertNull "missing valuesUrl", opt1.realValuesUrl
     }
 
@@ -3206,7 +3206,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect secure", "true", opt2.secureInput.toString()
         assertEquals "incorrect secureExposed", 'true', opt2.secureExposed.toString()
         assertNull "incorrect regex", opt2.regex
-        assertNull "incorrect values size", opt2.values
+        assertNull "incorrect values size", opt2.valuesList
         assertNull "missing valuesUrl", opt2.realValuesUrl
     }
 
@@ -3252,7 +3252,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect secure", "true", opt3.secureInput.toString()
         assertEquals "incorrect secureExposed", 'false', opt3.secureExposed.toString()
         assertNull "incorrect regex", opt3.regex
-        assertNull "incorrect values size", opt3.values
+        assertNull "incorrect values size", opt3.valuesList
         assertNull "missing valuesUrl", opt3.realValuesUrl
     }
 
@@ -3298,7 +3298,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect secure", "false", opt4.secureInput.toString()
         assertEquals "incorrect secureExposed", 'false',opt4.secureExposed.toString()
         assertNull "incorrect regex", opt4.regex
-        assertNull "incorrect values size", opt4.values
+        assertNull "incorrect values size", opt4.valuesList
         assertNull "missing valuesUrl", opt4.realValuesUrl
 
     }
@@ -5778,7 +5778,7 @@ void testDecodeBasic__no_group(){
                         nodeThreadcount:1,
                         nodeKeepgoing:true,
                         options:[
-                            new Option(name:'test1',defaultValue:'monkey',values:['a','b','c'] as TreeSet,enforced:true,regex:'abcdefg',required:true),
+                            new Option(name:'test1',defaultValue:'monkey',valuesList:'a,b,c' ,enforced:true,regex:'abcdefg',required:true),
                             new Option(name:'delay',defaultValue:'12')
                         ] as TreeSet,
                 )

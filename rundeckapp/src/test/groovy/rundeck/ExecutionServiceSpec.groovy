@@ -1849,9 +1849,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', enforced: true)
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         when:
@@ -1872,9 +1870,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', enforced: true)
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         service.messageSource = Mock(MessageSource) {
@@ -1902,9 +1898,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', enforced: true, multivalued: true, delimiter: ',')
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         when:
@@ -1927,9 +1921,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', enforced: true, multivalued: true, delimiter: ',')
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         service.messageSource = Mock(MessageSource) {
@@ -2019,9 +2011,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', required: true)
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         when:
@@ -2043,9 +2033,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', required: true)
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
         final Option option2 = new Option(name: 'test2', required: true)
         se.addToOptions(option2)

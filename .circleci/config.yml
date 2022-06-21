@@ -338,6 +338,12 @@ jobs:
           command: |
             source .circleci/circle-shim.sh
             bash test/ci-test-docker-selenium.sh
+      - run:
+          name: Logs
+          working_directory: ~/repo/test
+          when: always
+          command: |
+            docker-compose -f selenium-docker-compose.yml logs rundeck
       - store_artifacts:
           path: test/selenium/test_out/images
           destination: images

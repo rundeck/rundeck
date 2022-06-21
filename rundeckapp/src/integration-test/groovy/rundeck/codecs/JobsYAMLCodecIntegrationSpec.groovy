@@ -82,7 +82,7 @@ class JobsYAMLCodecIntegrationSpec extends Specification {
                         defaultValue: "xyz",
                         enforced: true,
                         required: true,
-                        values: new TreeSet(["a", "b"])
+                        valuesList: 'a,b'
                     )] as TreeSet,
                     nodeThreadcount: 1,
                     nodeKeepgoing  : true,
@@ -216,7 +216,7 @@ class JobsYAMLCodecIntegrationSpec extends Specification {
                         defaultValue: "xyz",
                         enforced: true,
                         required: true,
-                        values: new TreeSet(["a", "b"])
+                        valuesList: 'a,b'
                     )] as TreeSet,
                     nodeThreadcount: 1,
                     nodeKeepgoing  : true,
@@ -340,7 +340,7 @@ class JobsYAMLCodecIntegrationSpec extends Specification {
                         defaultValue: "xyz",
                         enforced: true,
                         required: true,
-                        values: new TreeSet(["a", "b"])
+                        valuesList: 'a,b'
                     )] as TreeSet,
                     nodeThreadcount: 1,
                     nodeKeepgoing  : true,
