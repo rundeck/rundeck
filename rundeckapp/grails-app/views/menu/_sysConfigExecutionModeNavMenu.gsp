@@ -18,7 +18,7 @@
 
 <g:set var="authAction" value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS :
         AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
-<auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN]}"
+<auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_OPS_ADMIN, AuthConstants.ACTION_APP_ADMIN]}"
                       any="true"
                       context="${AuthConstants.CTX_APPLICATION}"
                       kind="${AuthConstants.TYPE_SYSTEM}">

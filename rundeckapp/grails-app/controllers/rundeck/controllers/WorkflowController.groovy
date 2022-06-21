@@ -1233,7 +1233,7 @@ class WorkflowController extends ControllerBase {
                 }
             }
             if(exec.jobProject){
-                if(authProjects && !authProjects.contains(exec.jobProject)){
+                if(authProjects && !authProjects.contains(exec.jobProject) && strict){
                     exec.errors.rejectValue('jobProject', 'commandExec.jobProject.unauth.message')
                 }
             }

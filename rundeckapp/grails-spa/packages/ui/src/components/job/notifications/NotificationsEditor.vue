@@ -411,6 +411,12 @@ export default {
         this.editError='Choose a Notification Type'
         return
       }
+
+      if(this.editNotification.config.recipients != null){
+        let recipientsStr = this.editNotification.config.recipients
+        this.editNotification.config.recipients = recipientsStr.split(",").map( mail => mail.trim()).join(",")
+      }
+
       const validation = await pluginService.validatePluginConfig(
           'Notification',
           this.editNotification.type,

@@ -230,4 +230,19 @@ public class Notification {
         '}' ;
     }
 
+    def beforeValidate() {
+        if(this.type == 'email'){
+            if (content.startsWith('{') && content.endsWith('}')) {
+                //parse as json
+                Map<String,String> mailConf = getConfiguration()
+                String trimmedRecipients = mailConf['recipients'].split(",").collect{ mail->mail.trim() }.join(",")
+                if(trimmedRecipients != mailConf['recipients']){
+                    mailConf['recipients'] = trimmedRecipients
+                    setConfiguration(mailConf)
+                }
+            } else{
+                this.content = this.content.split(",").collect{mail->mail.trim() }.join(",")
+            }
+        }
+    }
 }

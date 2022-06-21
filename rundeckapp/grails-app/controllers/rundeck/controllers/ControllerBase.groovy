@@ -140,6 +140,13 @@ class ControllerBase {
         rundeckAppAuthorizer.projectType(subject,project, type)
     }
 
+    protected int getApiVersion(){
+        if(request.api_version instanceof Integer){
+            return request.api_version
+        }
+        0
+    }
+
     protected Subject getSubject(){
         if(session.subject instanceof Subject){
             return session.subject

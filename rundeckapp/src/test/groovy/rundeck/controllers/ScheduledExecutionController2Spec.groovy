@@ -1998,7 +1998,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 description: 'desc',
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
-                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
+                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', valuesList: 'a,b,c')]
         )
         def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
@@ -2098,7 +2098,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 description: 'desc',
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
-                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
+                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', valuesList: 'a,b,c')]
         )
 
         //create mock of FrameworkService
@@ -2181,7 +2181,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 description: 'a job',
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
-                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
+                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', valuesList: 'a,b,c')]
         )
         def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
@@ -2276,7 +2276,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 description: 'a job',
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
-                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
+                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', valuesList: 'a,b,c')]
         )
         def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
@@ -2381,7 +2381,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 description: 'a job',
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
-                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
+                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', valuesList: 'a,b,c')]
         )
         def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 
@@ -2487,7 +2487,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 description: 'desc',
                 argString: '-a b -c d',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
-                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', values: ['a', 'b', 'c'])]
+                options: [new Option(name: 'testopt', defaultValue: '`ls -t1 /* | head -n1`', valuesList: 'a,b,c')]
         )
         def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:expectedJob,associations: [:])
 

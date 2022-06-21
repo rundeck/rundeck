@@ -1,6 +1,10 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl
 
-import com.dtolabs.rundeck.core.common.*;
+import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.data.BaseDataContext
+import com.dtolabs.rundeck.core.data.DataContext
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
@@ -1526,6 +1530,93 @@ public class ScriptFileNodeStepExecutorSpec extends Specification {
         assertEquals("del", strings3[0]);
         assertEquals(filepath, strings3[1]);
         assertEquals(test1, testexec.testNode.get(1));
+    }
+
+    /**
+     * Use script file specifier in execution item and replaces tokens in file path
+     */
+    def 'testInterpretCommandScriptFileLocal with replace token in file path'() throws Exception {
+        given:
+        final Framework frameworkInstance = AbstractBaseTest.createTestFramework();
+        ScriptFileNodeStepExecutor interpret = new ScriptFileNodeStepExecutor(frameworkInstance);
+
+        //setup nodeexecutor for local node
+        MultiTestNodeExecutorMock testexec = new MultiTestNodeExecutorMock();
+        NodeExecutorService service = NodeExecutorService.getInstanceForFramework(frameworkInstance);
+        service.registerInstance("local", testexec);
+
+        FileCopierMock testcopier = new FileCopierMock();
+        FileCopierService copyservice = FileCopierService.getInstanceForFramework(frameworkInstance);
+        copyservice.registerInstance("local", testcopier);
+
+        //execute command interpreter on local node
+        final NodeEntryImpl test1 = new NodeEntryImpl("testhost1", "test1");
+        test1.setOsFamily("unix");
+
+        def sharedctx = SharedDataContextUtils.sharedContext()
+        sharedctx.merge(ContextView.global(), DataContextUtils.context('data', [fileName: 'Testfile']))
+
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+                .sharedDataContext(sharedctx)
+                .frameworkProject(PROJ_NAME)
+                .framework(frameworkInstance)
+                .user("blah")
+                .threadCount(1)
+                .build()
+        final File testScriptFile = new File("Testfile");
+
+
+        ScriptFileCommand command = new ScriptFileCommandBase() {
+
+            public String getServerScriptFilePath() {
+                return testScriptFile.getAbsolutePath().replace('Testfile', '${data.fileName}')
+            }
+
+        };
+        when:
+        final ArrayList<NodeExecutorResult> nodeExecutorResults = new ArrayList<NodeExecutorResult>();
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+        nodeExecutorResults.add(NodeExecutorResultImpl.createSuccess(null));
+        testexec.testResult = nodeExecutorResults;
+        testcopier.testResult = "/test/file/path";
+        final NodeStepResult interpreterResult = interpret.executeNodeStep(context, command, test1);
+        then:
+        assertNotNull(interpreterResult);
+        assertTrue(interpreterResult.isSuccess());
+        assertEquals(interpreterResult, nodeExecutorResults.get(1));
+
+        assertEquals(context, testcopier.testContext);
+        assertNull(testcopier.testScript);
+        assertNull(testcopier.testInput);
+        assertEquals(testScriptFile.getAbsolutePath(), testcopier.testFile.getAbsolutePath());
+        assertEquals(test1, testcopier.testNode);
+
+        //test nodeexecutor was called twice
+        assertEquals(3, testexec.index);
+        //first call is chmod +x filepath
+        final String[] strings = testexec.testCommand.get(0);
+        assertEquals(3, strings.length);
+        assertEquals("chmod", strings[0]);
+        assertEquals("+x", strings[1]);
+        String filepath = strings[2];
+        assertTrue(filepath.endsWith("." + UNIX_FILE_EXT));
+        assertEquals(test1, testexec.testNode.get(0));
+
+        //second call is to exec the filepath
+        final String[] strings2 = testexec.testCommand.get(1);
+        assertEquals(1, strings2.length);
+        assertEquals(strings2[0], filepath);
+        assertEquals(filepath, strings2[0]);
+        assertEquals(test1, testexec.testNode.get(1));
+        //second call is to exec the filepath
+        final String[] strings3 = testexec.testCommand.get(2);
+        assertEquals(3, strings3.length);
+        assertEquals("rm", strings3[0]);
+        assertEquals("-f", strings3[1]);
+        assertEquals(filepath, strings3[2]);
+        assertEquals(test1, testexec.testNode.get(2));
+
     }
 
 }

@@ -1014,7 +1014,7 @@ class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitT
         )
         assertNotNull(se.save())
         def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, realValuesUrl: "http://test.com/test")
-        def opt2 = new Option(name: 'test2', defaultValue: 'val2a', enforced: true, values: ['val2c', 'val2a', 'val2b'])
+        def opt2 = new Option(name: 'test2', defaultValue: 'val2a', enforced: true, valuesList: 'val2c,val2a,val2b')
         def opt3 = new Option(name: 'test3', defaultValue: 'val3', enforced: false, required: true, regex: '^.*3$')
         def opt4 = new Option(name: 'test4', defaultValue: 'val4', enforced: false, required: true, secureInput: true)
         assertTrue(opt1.validate())
