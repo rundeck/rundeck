@@ -24,7 +24,6 @@ import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
-import com.dtolabs.rundeck.app.internal.framework.RundeckFilesystemProjectImporter
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
 import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
@@ -253,14 +252,6 @@ beans={
 
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
-    }
-    //NB: retained for compatibilty for upgrading from <3.4, should be removed after 3.4
-    filesystemProjectManager(FrameworkFactory,frameworkFilesystem,ref('rundeckNodeService')){ bean->
-        bean.factoryMethod='createProjectManager'
-    }
-    rundeckFilesystemProjectImporter(RundeckFilesystemProjectImporter){
-        importFilesOption = application.config.getProperty("rundeck.projectsStorageImportFilesOption", String.class, 'known')
-        importStartupMode = application.config.getProperty("rundeck.projectsStorageImportStartupMode", String.class,'bootstrap')
     }
 
     frameworkFactory(RundeckFrameworkFactory){
