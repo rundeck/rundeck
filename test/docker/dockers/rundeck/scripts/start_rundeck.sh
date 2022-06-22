@@ -135,25 +135,6 @@ sed -i -e "s:admin:api_token_group:" $HOME/etc/apitoken.aclpolicy
 
 #sudo chown -R $USERNAME:$USERNAME $HOME;
 
-mkdir -p $HOME/projects/testproj1/etc
-
-cat > $HOME/projects/testproj1/etc/project.properties <<END
-project.name=testproj1
-project.nodeCache.delay=30
-project.nodeCache.enabled=true
-project.ssh-authentication=privateKey
-project.ssh-keypath=/home/rundeck/.ssh/id_rsa
-resources.source.1.config.file=$HOME/projects/testproj1/etc/resources.xml
-resources.source.1.config.format=resourcexml
-resources.source.1.config.generateFileAutomatically=true
-resources.source.1.config.includeServerNode=true
-resources.source.1.config.requireFileExists=false
-resources.source.1.type=file
-resources.source.2.config.directory=/home/rundeck/resources
-resources.source.2.type=directory
-service.FileCopier.default.provider=jsch-scp
-service.NodeExecutor.default.provider=jsch-ssh
-END
 
 
 setup_project_api(){
@@ -316,6 +297,20 @@ do
 done
 echo "RUNDECK NODE $RUNDECK_NODE started successfully!!"
 
+
+### default project testproj1
+
+mkdir -p $HOME/projects/testproj1/etc
+
+cat > $HOME/projects/testproj1/etc/partial-project.properties <<END
+project.ssh-keypath=/home/rundeck/.ssh/id_rsa
+resources.source.2.config.directory=/home/rundeck/resources
+resources.source.2.type=directory
+END
+
+setup_project_api $RDECK_BASE testproj1 $API_KEY $HOME/projects/testproj1/etc/partial-project.properties
+
+###
 
 if [ -n "$SETUP_TEST_PROJECT" ] ; then
     setup_project_api $RDECK_BASE $SETUP_TEST_PROJECT $API_KEY $CONFIG_TEST_PROJECT_FILE
