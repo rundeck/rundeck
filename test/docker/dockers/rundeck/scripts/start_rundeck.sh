@@ -212,6 +212,7 @@ setup_ssl(){
   if [ ! -f $TRUSTSTORE ]; then
      echo "=>Generating ssl cert"
      sudo -u rundeck keytool -keystore $KEYSTORE -alias $RUNDECK_NODE -genkey -keyalg RSA \
+      -ext san=dns:$RUNDECK_NODE \
       -keypass adminadmin -storepass adminadmin -dname "cn=$RUNDECK_NODE, o=test, o=rundeck, o=org, c=US" && \
      cp $KEYSTORE $TRUSTSTORE
   fi
