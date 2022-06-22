@@ -11,11 +11,15 @@ configurations{
   uiTrellis {
       canBeConsumed(true)
   }
+  uiTrellisVite {
+      canBeConsumed(true)
+  }
 }
 
 dependencies {
     lib project(path: ':rundeckapp:grails-spa:packages:ui-trellis', configuration: 'lib')
     uiTrellis project(path: ':rundeckapp:grails-spa:packages:ui-trellis', configuration: 'packages')
+    uiTrellisVite project(path: ':rundeckapp:grails-spa:packages:ui-trellis-vite', configuration: 'packages')
 }
 
 node{
@@ -64,6 +68,22 @@ tasks.register("runNpmBuild", NpmTask) {
     execOverrides {
       it.workingDir = './packages/ui'
     }
+}
+
+tasks.register("runNpmBuildVite", NpmTask) {
+    dependsOn configurations.uiTrellisVite
+
+    inputs.files(configurations.uiTrellisVite.allArtifacts)
+    inputs.file 'packages/ui-trellis-vite/build/package/rundeck-ui-trellis-vite.tgz'
+
+    outputs.dir(file("$spaBuildDir"))
+    outputs.cacheIf { true }
+
+    def npmCommand = System.env.CI ?
+      'ci:build' :
+      'dev:build'
+
+    args = ['run', npmCommand]
 }
 
 assemble.dependsOn runNpmBuild
