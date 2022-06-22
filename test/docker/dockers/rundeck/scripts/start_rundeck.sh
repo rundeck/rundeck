@@ -23,14 +23,6 @@ rm -fv $HOME/testdata/*
 # configure hostname, nodename, url
 
 
-# RUN TEST PRESTART SCRIPT
-if [[ ! -z "$CONFIG_SCRIPT_PRESTART" && -f $CONFIG_SCRIPT_PRESTART ]];
-then
-  . $CONFIG_SCRIPT_PRESTART
-else
-  echo "### Prestart config not set. skipping..."
-fi
-
 export RDECK_BASE=$HOME
 LOGFILE=$RDECK_BASE/var/log/service.log
 mkdir -p $(dirname $LOGFILE)
@@ -164,27 +156,42 @@ service.NodeExecutor.default.provider=jsch-ssh
 END
 
 
-setup_project(){
+setup_project_api(){
   local FARGS=("$@")
   local DIR=${FARGS[0]}
   local PROJ=${FARGS[1]}
+  local TOK=${FARGS[2]}
+  local XFILE=${FARGS[3]}
   echo "setup test project: $PROJ in dir $DIR"
+  local XJSON=
+  if [ -n "$XFILE" ] ; then
+    XJSON=$(cat "$XFILE" | grep -v '^#' | sed 's/^/"/' | sed 's/=/":"/' | sed 's/$/",/' )
+  fi
   mkdir -p $DIR/projects/$PROJ/etc
-  cat >$DIR/projects/$PROJ/etc/project.properties<<END
-project.name=$PROJ
-project.nodeCache.delay=30
-project.nodeCache.enabled=true
-project.ssh-authentication=privateKey
-#project.ssh-keypath=
-resources.source.1.config.file=$DIR/projects/\${project.name}/etc/resources.xml
-resources.source.1.config.format=resourcexml
-resources.source.1.config.generateFileAutomatically=true
-resources.source.1.config.includeServerNode=true
-resources.source.1.config.requireFileExists=false
-resources.source.1.type=file
-service.FileCopier.default.provider=jsch-scp
-service.NodeExecutor.default.provider=jsch-ssh
+  cat >$DIR/projects/$PROJ/etc/project.json<<END
+{
+  "name":"$PROJ",
+  "config":{
+    $XJSON
+    "project.name":"$PROJ",
+    "project.nodeCache.delay":"30",
+    "project.nodeCache.enabled":"true",
+    "project.ssh-authentication":"privateKey",
+    "resources.source.1.config.file":"$DIR/projects/\${project.name}/etc/resources.xml",
+    "resources.source.1.config.format":"resourcexml",
+    "resources.source.1.config.generateFileAutomatically":"true",
+    "resources.source.1.config.includeServerNode":"true",
+    "resources.source.1.config.requireFileExists":"false",
+    "resources.source.1.type":"file",
+    "service.FileCopier.default.provider":"jsch-scp",
+    "service.NodeExecutor.default.provider":"jsch-ssh"
+    }
+  }
 END
+  curl -H "X-rundeck-auth-token:$TOK" -H "content-type:application/json" -H "accept:application/json" \
+    --data-binary @$DIR/projects/$PROJ/etc/project.json \
+    http://localhost:4440/api/41/projects
+
 }
 
 append_project_config(){
@@ -213,13 +220,6 @@ cat >> $HOME/etc/profile <<END
 export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=$DIR/server/config/ssl.properties -Dserver.https.port=$RUNDECK_PORT"
 END
 }
-
-if [ -n "$SETUP_TEST_PROJECT" ] ; then
-    setup_project $RDECK_BASE $SETUP_TEST_PROJECT
-    if [ -n "$CONFIG_TEST_PROJECT_FILE" ] ; then
-      append_project_config $RDECK_BASE $SETUP_TEST_PROJECT $CONFIG_TEST_PROJECT_FILE
-    fi
-fi
 
 if [ -n "$SETUP_SSL" ] ; then
     setup_ssl $RDECK_BASE
@@ -317,6 +317,11 @@ do
 
 done
 echo "RUNDECK NODE $RUNDECK_NODE started successfully!!"
+
+
+if [ -n "$SETUP_TEST_PROJECT" ] ; then
+    setup_project_api $RDECK_BASE $SETUP_TEST_PROJECT $API_KEY $CONFIG_TEST_PROJECT_FILE
+fi
 
 
 ### POST CONFIG
