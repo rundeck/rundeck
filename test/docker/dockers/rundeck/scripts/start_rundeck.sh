@@ -170,8 +170,6 @@ setup_project_api(){
   mkdir -p $DIR/projects/$PROJ/etc
   cat >$DIR/projects/$PROJ/etc/project.json<<END
 {
-  "name":"$PROJ",
-  "config":{
     $XJSON
     "project.name":"$PROJ",
     "project.nodeCache.delay":"30",
@@ -185,12 +183,11 @@ setup_project_api(){
     "resources.source.1.type":"file",
     "service.FileCopier.default.provider":"jsch-scp",
     "service.NodeExecutor.default.provider":"jsch-ssh"
-    }
   }
 END
-  curl -H "X-rundeck-auth-token:$TOK" -H "content-type:application/json" -H "accept:application/json" \
-    --data-binary @$DIR/projects/$PROJ/etc/project.json \
-    http://localhost:4440/api/41/projects
+
+  RD_OPTS="-Djavax.net.ssl.trustStore=$DIR/etc/truststore" \
+  RD_URL=$RUNDECK_URL RD_TOKEN=$TOK rd projects create -p "$PROJ" -f $DIR/projects/$PROJ/etc/project.json -F json
 
 }
 

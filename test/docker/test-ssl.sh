@@ -13,6 +13,7 @@ fi
 if [ -f rd.deb ] ; then
 	mv rd.deb dockers/rundeck/data/
 fi
+export CLI_VERS=1.4.3-1
 
 build_rdtest_docker
 
