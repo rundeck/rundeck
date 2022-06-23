@@ -3,7 +3,8 @@ ARG TOMCAT_TAG
 FROM tomcat:${TOMCAT_TAG:-8}
 
 RUN apt-get update && \
-    apt-get -y install coreutils file jq netcat xmlstarlet
+    apt-get -y install coreutils file jq netcat xmlstarlet && \
+    apt-get -y install unzip
 
 RUN mkdir -p /usr/local/tomcat/webapps/rundeck/rundeck/server/config \
     && mkdir -p /usr/local/tomcat/webapps/rundeck/rundeck/var/log
