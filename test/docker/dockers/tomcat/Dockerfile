@@ -1,6 +1,6 @@
 ARG TOMCAT_TAG
 
-FROM tomcat:${TOMCAT_TAG:-8}
+FROM tomcat:${TOMCAT_TAG:-8.5.81-jdk11}
 
 RUN apt-get update && \
     apt-get -y install coreutils file jq netcat xmlstarlet unzip
@@ -14,7 +14,7 @@ COPY log4j2.properties /usr/local/tomcat/webapps/rundeck/rundeck/server/config
 
 COPY data/rundeck-launcher.war /usr/local/tomcat/webapps/rundeck.war
 
-RUN cd /usr/local/tomcat/webapps/rundeck && unzip ../rundeck.war
+RUN cd /usr/local/tomcat/webapps/rundeck && jar xvf ../rundeck.war
 
 COPY entry.sh /root
 
