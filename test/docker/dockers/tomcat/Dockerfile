@@ -1,6 +1,6 @@
 ARG TOMCAT_TAG
 
-FROM tomcat:${TOMCAT_TAG:-"8.5.79-jdk11"}
+FROM tomcat:${TOMCAT_TAG:-8.5.79-jdk11}
 
 RUN apt-get update && \
     apt-get -y install coreutils file jq netcat xmlstarlet
