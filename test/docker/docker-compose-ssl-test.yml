@@ -10,7 +10,6 @@ services:
       - RUNDECK_PORT=4443
       - RUNDECK_URL=https://rundeck1:4443
       - CLI_VERS=${CLI_VERS}
-      - SETUP_TEST_PROJECT=testproj1
       - SETUP_SSL=1
       - WAIT_NODES=rundeck1
     volumes:
