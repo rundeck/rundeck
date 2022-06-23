@@ -151,7 +151,6 @@ setup_project_api(){
   mkdir -p $DIR/projects/$PROJ/etc
   cat >$DIR/projects/$PROJ/etc/project.json<<END
 {
-    $XJSON
     "project.name":"$PROJ",
     "project.nodeCache.delay":"30",
     "project.nodeCache.enabled":"true",
@@ -163,7 +162,9 @@ setup_project_api(){
     "resources.source.1.config.requireFileExists":"false",
     "resources.source.1.type":"file",
     "service.FileCopier.default.provider":"jsch-scp",
-    "service.NodeExecutor.default.provider":"jsch-ssh"
+    "service.NodeExecutor.default.provider":"jsch-ssh",
+    $XJSON
+    "dummy":"x"
   }
 END
 
