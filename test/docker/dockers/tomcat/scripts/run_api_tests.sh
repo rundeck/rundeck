@@ -43,38 +43,43 @@ wait_for(){
 
 setup_project_api(){
   local FARGS=("$@")
-  local DIR=${FARGS[0]}
-  local PROJ=${FARGS[1]}
-  local TOK=${FARGS[2]}
-  local XFILE=${FARGS[3]}
-  echo "setup test project: $PROJ in dir $DIR"
+    local DIR=${FARGS[0]}
+    local PROJ=${FARGS[1]}
+    local TOK=${FARGS[2]}
+    local XFILE=${FARGS[3]}
+    echo "setup test project: $PROJ in dir $DIR"
+    local XJSON=
+    if [ -n "$XFILE" ] ; then
+      XJSON=$(cat "$XFILE" | grep -v '^#' | sed 's/^/"/' | sed 's/=/":"/' | sed 's/$/",/' )
+    fi
+    local PDIR=$DIR/projects/$PROJ/etc
 
-  local PDIR=$DIR/projects/$PROJ/etc
-
-  mkdir -p "$PDIR"
-  local PFILE=$DIR/projects/$PROJ/etc/project-import.properties
-  cat >"$PFILE" <<END
-project.name=$PROJ
-project.nodeCache.delay=30
-project.nodeCache.enabled=true
-project.ssh-authentication=privateKey
-resources.source.1.config.file=$DIR/projects/\${project.name}/etc/resources.xml
-resources.source.1.config.format=resourcexml
-resources.source.1.config.generateFileAutomatically=true
-resources.source.1.config.includeServerNode=true
-resources.source.1.config.requireFileExists=false
-resources.source.1.type=file
-service.FileCopier.default.provider=jsch-scp
-service.NodeExecutor.default.provider=jsch-ssh
+    mkdir -p "$PDIR"
+    local PFILE=$DIR/projects/$PROJ/etc/project.json
+    cat >"$PFILE"<<END
+  {
+    "name":"$PROJ",
+    "config":{
+      "project.name":"$PROJ",
+      "project.nodeCache.delay":"30",
+      "project.nodeCache.enabled":"true",
+      "project.ssh-authentication":"privateKey",
+      "resources.source.1.config.file":"$DIR/projects/\${project.name}/etc/resources.xml",
+      "resources.source.1.config.format":"resourcexml",
+      "resources.source.1.config.generateFileAutomatically":"true",
+      "resources.source.1.config.includeServerNode":"true",
+      "resources.source.1.config.requireFileExists":"false",
+      "resources.source.1.type":"file",
+      "service.FileCopier.default.provider":"jsch-scp",
+      "service.NodeExecutor.default.provider":"jsch-ssh",
+      $XJSON
+      "_":"ignored"
+      }
+    }
 END
-
-  if [ -n "$XFILE" ] ; then
-    cat "$XFILE" >> "$PFILE"
-  fi
-
-  RD_OPTS="-Djavax.net.ssl.trustStore=$DIR/etc/truststore" \
-  RD_URL=$RUNDECK_URL RD_TOKEN=$TOK rd projects create -p "$PROJ" -f "$PFILE" -F properties
-
+    curl -H "X-rundeck-auth-token:$TOK" -H "content-type:application/json" -H "accept:application/json" \
+      --data-binary @"$PFILE" \
+      $RD_URL/api/41/projects
 }
 
 wait_for
