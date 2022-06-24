@@ -6,11 +6,15 @@ RUN apt-get update && \
     apt-get -y install coreutils file jq netcat xmlstarlet unzip curl
 
 RUN mkdir -p /usr/local/tomcat/webapps/rundeck/rundeck/server/config \
-    && mkdir -p /usr/local/tomcat/webapps/rundeck/rundeck/var/log
+    && mkdir -p /usr/local/tomcat/webapps/rundeck/rundeck/var/log\
+    && mkdir -p /usr/local/tomcat/webapps/rundeck/rundeck/etc
 
 
 COPY rundeck-config.properties /usr/local/tomcat/webapps/rundeck/rundeck/server/config
 COPY log4j2.properties /usr/local/tomcat/webapps/rundeck/rundeck/server/config
+COPY framework.properties /usr/local/tomcat/webapps/rundeck/rundeck/etc
+COPY tokens.properties /usr/local/tomcat/webapps/rundeck/rundeck/etc
+COPY admin.aclpolicy /usr/local/tomcat/webapps/rundeck/rundeck/etc
 
 COPY data/rundeck-launcher.war /usr/local/tomcat/webapps/rundeck.war
 
