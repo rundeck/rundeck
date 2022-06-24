@@ -6,7 +6,7 @@ IFS=$'\n\t'
 readonly ARGS=("$@")
 DOCKER_DIR=$PWD/test/docker
 
-TOMCAT_TAG="${1:-8.5.79-jdk11}"
+TOMCAT_TAG="${1:-8}"
 
 usage() {
       grep '^#/' <"$0" | cut -c4- # prints the #/ lines above as usage info

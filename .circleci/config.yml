@@ -471,7 +471,7 @@ workflows:
           <<: *filter-no-tags
           name: Tomcat 9 API Test
           requires: *stage-build
-          command: bash test/run-docker-tomcat-tests.sh 9.0.63-jdk11
+          command: bash test/run-docker-tomcat-tests.sh 9
           context:
             - slack-secrets
           <<: *slack-fail-post-step
