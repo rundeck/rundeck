@@ -463,7 +463,7 @@ workflows:
           <<: *filter-no-tags
           name: Tomcat 8 API Test
           requires: *stage-build
-          command: bash test/run-docker-tomcat-tests.sh
+          command: bash test/run-docker-tomcat-tests.sh 8-jdk11
           context:
             - slack-secrets
           <<: *slack-fail-post-step
@@ -471,7 +471,7 @@ workflows:
           <<: *filter-no-tags
           name: Tomcat 9 API Test
           requires: *stage-build
-          command: bash test/run-docker-tomcat-tests.sh 9
+          command: bash test/run-docker-tomcat-tests.sh 9-jdk11
           context:
             - slack-secrets
           <<: *slack-fail-post-step
