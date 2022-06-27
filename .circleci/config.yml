@@ -6,15 +6,15 @@ version: 2.1
 
 # config.yml packaging core
 
-parameters:
-  CIRCLE_UPSTREAM_PIPELINE_NUMBER: {type: string, default: ""}
-  CIRCLE_UPSTREAM_BRANCH: {type: string, default: ""}
-  CIRCLE_UPSTREAM_TAG: {type: string, default: ""}
-
-upstream-env: &upstream
-  CIRCLE_UPSTREAM_PIPELINE_NUMBER: <<pipeline.parameters.CIRCLE_UPSTREAM_PIPELINE_NUMBER>>
-  CIRCLE_UPSTREAM_BRANCH: <<pipeline.parameters.CIRCLE_UPSTREAM_BRANCH>>
-  CIRCLE_UPSTREAM_TAG: <<pipeline.parameters.CIRCLE_UPSTREAM_TAG>>
+#parameters:
+#  CIRCLE_UPSTREAM_PIPELINE_NUMBER: {type: string, default: ""}
+#  CIRCLE_UPSTREAM_BRANCH: {type: string, default: ""}
+#  CIRCLE_UPSTREAM_TAG: {type: string, default: ""}
+#
+#upstream-env: &upstream
+#  CIRCLE_UPSTREAM_PIPELINE_NUMBER: <<pipeline.parameters.CIRCLE_UPSTREAM_PIPELINE_NUMBER>>
+#  CIRCLE_UPSTREAM_BRANCH: <<pipeline.parameters.CIRCLE_UPSTREAM_BRANCH>>
+#  CIRCLE_UPSTREAM_TAG: <<pipeline.parameters.CIRCLE_UPSTREAM_TAG>>
 
 slack-fail-post-step: &slack-fail-post-step
   post-steps:
@@ -805,4 +805,4 @@ workflows:
             continue: 'false'
             context:
               - slack-secrets
-            <<: *slack-fail-post-step
+#            <<: *slack-fail-post-step
