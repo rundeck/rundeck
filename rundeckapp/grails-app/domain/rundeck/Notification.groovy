@@ -198,6 +198,7 @@ public class Notification {
         if(data.type=='email'){
             def map=data.config
             if(map['attachLog']) {
+                map['attachLog'] = true
                 if (map.attachType=='inline') {
                     map['attachLogInline'] = true
                 }else{
