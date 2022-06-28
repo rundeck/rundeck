@@ -2,12 +2,14 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 
 
 class PasswordUtilityEncrypterLoaderService {
 
+    def ServiceProviderLoader rundeckServerServiceProviderLoader
     def rundeckPluginRegistry
     def pluginService
     def frameworkService
@@ -31,6 +33,6 @@ class PasswordUtilityEncrypterLoaderService {
     }
 
     PluggableProviderService<PasswordUtilityEncrypterPlugin> getPasswordUtilityEncrypterService() {
-        rundeckPluginRegistry.createPluggableService(PasswordUtilityEncrypterPlugin)
+        rundeckServerServiceProviderLoader.createPluggableService(PasswordUtilityEncrypterPlugin)
     }
 }

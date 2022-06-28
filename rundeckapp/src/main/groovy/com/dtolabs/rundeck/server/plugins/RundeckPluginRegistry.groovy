@@ -118,7 +118,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     }
 
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
-        String found = ServiceTypes.pluginTypesMap.find { it.value == type }?.key
+        String found = ServiceTypes.getServiceNameForClass(type)
         def name = found ?: createServiceName(type.getSimpleName())
         rundeckServerServiceProviderLoader.createPluginService(type, name)
     }

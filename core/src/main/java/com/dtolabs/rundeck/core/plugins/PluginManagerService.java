@@ -58,6 +58,19 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
 
     }
 
+    String createServiceName(final String simpleName) {
+        if (simpleName.endsWith("Plugin")) {
+            return simpleName.substring(0, simpleName.length() - "Plugin".length());
+        }
+        return simpleName;
+    }
+
+    public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
+        String found = ServiceTypes.getServiceNameForClass(type);
+        String name = found!=null ? found : createServiceName(type.getSimpleName());
+        return createPluginService(type, name);
+    }
+    
     /**
      * Create
      * @param type

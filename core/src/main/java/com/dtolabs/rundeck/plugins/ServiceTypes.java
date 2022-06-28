@@ -126,6 +126,14 @@ public class ServiceTypes {
     public static Class<?> getPluginType(String name) {
         return getPluginTypesMap().get(name);
     }
+    public static String getServiceNameForClass(Class<?> clazz) {
+        for (Map.Entry<String, Class<?>> entry : getPluginTypesMap().entrySet()) {
+            if(entry.getValue().equals(clazz)){
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
 
     private static ServiceLoader<PluginProviderServices>
         pluginProviderServiceLoader =

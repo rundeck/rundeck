@@ -32,14 +32,6 @@ import java.util.Map;
 public interface PluginRegistry {
 
     /**
-     * Create PluggableProviderService for plugin type that doesn't require Framework
-     * @param type
-     * @param <T>
-     * @return
-     */
-    public <T> PluggableProviderService<T> createPluggableService(Class<T> type);
-
-    /**
      * Test if a type requires framework argument for plugin provider service
      * @param type type
      * @param <T> type

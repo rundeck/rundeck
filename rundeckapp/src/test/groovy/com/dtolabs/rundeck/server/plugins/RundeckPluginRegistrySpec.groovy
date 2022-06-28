@@ -47,24 +47,6 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     }
 
-    def "create pluggable service"() {
-        given:
-        def sut = new RundeckPluginRegistry()
-        sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
-        when:
-        def result = sut.createPluggableService(type)
-
-        then:
-
-        1 * sut.rundeckServerServiceProviderLoader.createPluginService(type, expectedName)
-
-        where:
-        type           | expectedName
-        NodeExecutor   | 'NodeExecutor'
-        NodeStepPlugin | 'WorkflowNodeStep'
-        TestPlugin     | 'Test'
-
-    }
 
     @Unroll
     def "configure plugin by name with different property scopes"() {

@@ -1,20 +1,20 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 
 class TourLoaderService {
-
-    def rundeckPluginRegistry
+    def ServiceProviderLoader rundeckServerServiceProviderLoader
     def pluginService
     def frameworkService
 
     def listAllTourManifests(String project = null) {
         def tourManifest = []
-        PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
+        PluggableProviderService tourLoaderProviderService = rundeckServerServiceProviderLoader.createPluggableService(TourLoaderPlugin.class)
 
        pluginService.listPlugins(TourLoaderPlugin).each { prov ->
             TourLoaderPlugin tourLoader = pluginService.configurePlugin(prov.key, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
@@ -48,7 +48,7 @@ class TourLoaderService {
     }
 
     Map listTours(String loaderName, String project = null) {
-        PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
+        PluggableProviderService tourLoaderProviderService = rundeckServerServiceProviderLoader.createPluggableService(TourLoaderPlugin.class)
         TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
 
         if(project) return tourLoader.getTourManifest(project)
@@ -56,7 +56,7 @@ class TourLoaderService {
     }
 
     Map getTour(String loaderName, String tourKey, String project = null) {
-        PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
+        PluggableProviderService tourLoaderProviderService = rundeckServerServiceProviderLoader.createPluggableService(TourLoaderPlugin.class)
         TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
 
         if(tourKey && project) return tourLoader.getTour(tourKey,project)

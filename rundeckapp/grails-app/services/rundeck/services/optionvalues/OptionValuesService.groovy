@@ -2,6 +2,7 @@ package rundeck.services.optionvalues
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
@@ -12,6 +13,7 @@ import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 class OptionValuesService {
 
     def pluginService
+    def ServiceProviderLoader rundeckServerServiceProviderLoader
     def rundeckPluginRegistry
     def frameworkService
     def storageService
@@ -45,6 +47,6 @@ class OptionValuesService {
     }
 
     PluggableProviderService<OptionValuesPlugin> getOptionValuesPluginService() {
-        rundeckPluginRegistry.createPluggableService(OptionValuesPlugin)
+        rundeckServerServiceProviderLoader.createPluggableService(OptionValuesPlugin)
     }
 }

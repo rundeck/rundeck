@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -47,6 +48,7 @@ import org.rundeck.app.spi.Services
 @CompileStatic
 class PluginService implements ResourceFormats {
 
+    def ServiceProviderLoader rundeckServerServiceProviderLoader
     def PluginRegistry rundeckPluginRegistry
     def FrameworkService frameworkService
     static transactional = false
@@ -273,7 +275,7 @@ class PluginService implements ResourceFormats {
             )
         }
         if(type == StoragePlugin) return frameworkService.storageProviderPluginService
-        rundeckPluginRegistry?.createPluggableService(type)
+        rundeckServerServiceProviderLoader?.createPluggableService(type)
     }
 
     /**
@@ -315,7 +317,7 @@ class PluginService implements ResourceFormats {
      */
     def <T> ConfiguredPlugin<T> configurePlugin(String name, String service, Map configuration) {
         Class serviceType = getPluginTypeByService(service)
-        configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService((Class) serviceType))
+        configurePlugin(name, configuration, rundeckServerServiceProviderLoader?.createPluggableService((Class<T>) serviceType))
     }
 
     def <T> SimplePluginProviderLoader<T> createSimplePluginLoader(

@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -54,6 +55,10 @@ import spock.lang.Unroll
  * @since 6/12/17
  */
 class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginService> {
+    def setup(){
+        service.rundeckPluginRegistry = Mock(PluginRegistry)
+        service.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+    }
     def "configure plugin does not exist"() {
         given:
         service.rundeckPluginRegistry = Mock(PluginRegistry)
@@ -96,25 +101,23 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
 
     def "get plugin"() {
         given:
-            service.rundeckPluginRegistry = Mock(PluginRegistry)
             def providerService = Mock(PluggableProviderService)
         when:
             def result = service.getPlugin('blah', String)
         then:
-            1 * service.rundeckPluginRegistry.createPluggableService(String) >> providerService
+            1 * service.rundeckServerServiceProviderLoader.createPluggableService(String) >> providerService
             1 * service.rundeckPluginRegistry.loadPluginByName('blah', providerService) >> 'bloo'
             result == 'bloo'
     }
 
     def "get plugin descriptor"() {
         given:
-            service.rundeckPluginRegistry = Mock(PluginRegistry)
             def providerService = Mock(PluggableProviderService)
             def describedPlugin = new DescribedPlugin(null, null, 'blah')
         when:
             def result = service.getPluginDescriptor('blah', ServiceNameConstants.LogFilter)
         then:
-            1 * service.rundeckPluginRegistry.createPluggableService(LogFilterPlugin) >> providerService
+            1 * service.rundeckServerServiceProviderLoader.createPluggableService(LogFilterPlugin) >> providerService
             1 * service.rundeckPluginRegistry.loadPluginDescriptorByName('blah', providerService) >> describedPlugin
             result == describedPlugin
     }
@@ -153,13 +156,12 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
 
     def "configure plugin"() {
         given:
-            service.rundeckPluginRegistry = Mock(PluginRegistry)
             def providerService = Mock(PluggableProviderService)
             def configuredPlugin = new ConfiguredPlugin<String>('blah', config)
         when:
             def result = service.configurePlugin(provider, config, String)
         then:
-            1 * service.rundeckPluginRegistry.createPluggableService(String) >> providerService
+            1 * service.rundeckServerServiceProviderLoader.createPluggableService(String) >> providerService
             1 * service.rundeckPluginRegistry.validatePluginByName(provider, providerService, config/*, null*/)
             1 * service.rundeckPluginRegistry.configurePluginByName(provider, providerService, config/*, null*/) >>
             configuredPlugin

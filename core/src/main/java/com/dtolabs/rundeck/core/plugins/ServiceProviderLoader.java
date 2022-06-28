@@ -72,6 +72,7 @@ public interface ServiceProviderLoader {
      */
     <T> PluggableProviderService<T> createPluginService(Class<T> type, final String serviceName);
 
+    <T> PluggableProviderService<T> createPluggableService(Class<T> type);
     /**
      * @return the available providers
      */

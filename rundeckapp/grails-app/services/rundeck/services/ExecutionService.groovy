@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -144,6 +145,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     ExecutionValidator executionValidatorService
     def fileUploadService
     def pluginService
+    def ServiceProviderLoader rundeckServerServiceProviderLoader
     def executorService
     JobLifecyclePluginService jobLifecyclePluginService
     def executionLifecyclePluginService
@@ -1075,7 +1077,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def logFilterPluginLoader = pluginService.createSimplePluginLoader(
                     execution.project,
                     framework,
-                    pluginService.getRundeckPluginRegistry().createPluggableService(LogFilterPlugin)
+                    rundeckServerServiceProviderLoader.createPluggableService(LogFilterPlugin)
             )
 
             //Root level override allows plugins to filter all output, even outside a workflow step (e.g.

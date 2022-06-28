@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -34,6 +35,10 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
 
     List<Class> getDomainClasses() { [JobFileRecord, Execution, ScheduledExecution, Workflow, Option, CommandExec] }
     def setup() {
+
+        service.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader) {
+            createPluggableService(_) >> Mock(PluggableProviderService)
+        }
     }
 
     def cleanup() {
@@ -153,12 +158,7 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
             getString('fileupload.plugin.type', _) >> { it[1] }
             getLong('fileUploadService.tempfile.expiration', _) >> 30000L
         }
-        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
-            createPluggableService(_) >> Mock(PluggableProviderService)
-        }
-        service.frameworkService = Mock(FrameworkService) {
-            getRundeckPluginRegistry() >> rundeckPluginRegistry
-        }
+        service.frameworkService = Mock(FrameworkService)
         service.pluginService = Mock(PluginService)
         service.taskService = Mock(TaskService)
 
@@ -384,12 +384,7 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
 
         ScheduledExecution job = mkjob(jobid)
         job.validate()
-        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
-            createPluggableService(_) >> Mock(PluggableProviderService)
-        }
-        service.frameworkService = Mock(FrameworkService) {
-            getRundeckPluginRegistry() >> rundeckPluginRegistry
-        }
+        service.frameworkService = Mock(FrameworkService)
         service.pluginService = Mock(PluginService)
         service.configurationService = Mock(ConfigurationService) {
             getString('fileupload.plugin.type', _) >> { it[1] }
@@ -446,12 +441,7 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
                 execution: exec
         ).save()
 
-        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
-            createPluggableService(_) >> Mock(PluggableProviderService)
-        }
-        service.frameworkService = Mock(FrameworkService) {
-            getRundeckPluginRegistry() >> rundeckPluginRegistry
-        }
+        service.frameworkService = Mock(FrameworkService)
         service.pluginService = Mock(PluginService)
         service.configurationService = Mock(ConfigurationService) {
             getString('fileupload.plugin.type', _) >> { it[1] }
@@ -508,12 +498,7 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
                 execution: exec
         ).save()
 
-        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
-            createPluggableService(_) >> Mock(PluggableProviderService)
-        }
-        service.frameworkService = Mock(FrameworkService) {
-            getRundeckPluginRegistry() >> rundeckPluginRegistry
-        }
+        service.frameworkService = Mock(FrameworkService)
         service.pluginService = Mock(PluginService)
         service.configurationService = Mock(ConfigurationService) {
             getString('fileupload.plugin.type', _) >> { it[1] }

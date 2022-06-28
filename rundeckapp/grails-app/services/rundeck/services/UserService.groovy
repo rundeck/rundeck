@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import grails.events.annotation.Subscriber
@@ -31,6 +32,7 @@ class UserService {
     public static final String G_EVENT_LOGIN_PROFILE_CHANGE = 'user.login.profile.change'
     ConfigurationService configurationService
     FrameworkService frameworkService
+    ServiceProviderLoader rundeckServerServiceProviderLoader
     public static final int DEFAULT_TIMEOUT = 30
     public static final String SESSION_ID_ENABLED = 'userService.login.track.sessionId.enabled'
     public static final String SESSION_ID_METHOD = 'userService.login.track.sessionId.method'
@@ -193,7 +195,7 @@ class UserService {
     }
 
     List<String> getUserGroupSourcePluginRoles(String username) {
-        PluggableProviderService groupSourcePluginService = frameworkService.getRundeckPluginRegistry().createPluggableService(UserGroupSourcePlugin)
+        PluggableProviderService groupSourcePluginService = rundeckServerServiceProviderLoader.createPluggableService(UserGroupSourcePlugin)
 
         List<String> roles = []
 

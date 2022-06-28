@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
@@ -32,6 +33,7 @@ class FileUploadService {
     public static final long DEFAULT_TEMP_EXPIRATION = 10 * 60 * 1000 //10 minutes
     public static final String DEFAULT_MAX_SIZE = '200MB'
     PluginService pluginService
+    ServiceProviderLoader rundeckServerServiceProviderLoader
     ConfigurationService configurationService
     TaskService taskService
     FrameworkService frameworkService
@@ -91,7 +93,7 @@ class FileUploadService {
 
 
     FileUploadPlugin getPlugin() {
-        PluggableProviderService fileUploadProviderService = frameworkService.getRundeckPluginRegistry().createPluggableService(FileUploadPlugin.class)
+        PluggableProviderService fileUploadProviderService = rundeckServerServiceProviderLoader.createPluggableService(FileUploadPlugin.class)
         def configured = pluginService.configurePlugin(pluginType, fileUploadProviderService, frameworkService.getFrameworkPropertyResolver(),
                                                        PropertyScope.Framework)
         def plugin = configured.instance

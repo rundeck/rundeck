@@ -86,11 +86,6 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         service.frameworkService = Mock(MockFrameworkService) {
             getFrameworkPropertyResolver(_,_) >> { mockPropertyResolver }
         }
-        service.rundeckPluginRegistry = Mock(PluginRegistry) {
-            createPluggableService(WebhookEventPlugin) >> {
-                webhookProviderService
-            }
-        }
 
         TestWebhookEventPlugin testPlugin = new TestWebhookEventPlugin()
 
