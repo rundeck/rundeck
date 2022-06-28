@@ -113,6 +113,7 @@ logger.lifecycle("Building version {}", project.resolvedVersion)
 
 allprojects {
     version = project.resolvedVersion
+    ext["spring.version"] = springVersion
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
