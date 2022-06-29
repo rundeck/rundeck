@@ -7,7 +7,7 @@
 
     <dropdown v-if="filters && filters.length > 0">
       <span class="dropdown-toggle btn btn-secondary btn-sm" :class="query && query.filterName?'text-info':'text-secondary'">
-        
+
         {{$t('Filters')}}
         <span class="caret"></span>
       </span>
@@ -118,6 +118,9 @@ export default {
             this.query
           )
         });
+        if(response.parsedBody.error){
+          this.$notify.error(response.parsedBody.message);
+        }
         if (response.parsedBody && response.parsedBody.success) {
           const newfilter=Object.assign({ name: name }, this.query)
           this.filters.push(newfilter);
