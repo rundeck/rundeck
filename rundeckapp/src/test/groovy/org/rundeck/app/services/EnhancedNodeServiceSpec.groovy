@@ -61,8 +61,8 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             sut.frameworkService = Mock(FrameworkService)
             sut.pluginService = Mock(PluginService)
             sut.frameworkService.getRundeckFramework() >> Mock(IFramework) {
-                2 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                    2 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
+                1 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    1 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
                         getProjectProperties() >> projProps
                     }
                 }
@@ -103,8 +103,8 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             sut.frameworkService = Mock(FrameworkService)
             sut.pluginService = Mock(PluginService)
             sut.frameworkService.getRundeckFramework() >> Mock(IFramework) {
-                2 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                    2 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
+                1 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    1 * loadProjectConfig('AProject') >> Mock(IRundeckProjectConfig) {
                         getProjectProperties() >> projProps
                     }
                 }
@@ -124,15 +124,20 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             def testNodeA = resultNodes.getNode('nodeA')
             testNodeA != null
             testNodeA.attributes['test1'] == 'blah'
-            testNodeA.attributes['monkey'] == 'disaster'
+            if(!skip){
+                testNodeA.attributes['monkey'] == 'disaster'
+            }else {
+                testNodeA.attributes['monkey'] == null
+            }
             1 * sut.pluginService.validatePluginConfig('NodeEnhancer', 'asdf', [:]) >> new ValidatedPlugin(valid: true)
             1 * sut.pluginService.configurePlugin('asdf', 'NodeEnhancer', [:]) >>
-            new ConfiguredPlugin<NodeEnhancerPlugin>(new AddAddtributesPlugin(attributes: [monkey: 'disaster']), [:])
+            new ConfiguredPlugin<NodeEnhancerPlugin>(new AddAddtributesPlugin(attributes: [monkey: 'disaster'], skip: skip), [:])
 
 
         where:
-            projProps                       | _
-            ['nodes.plugin.1.type': 'asdf'] | _
+            projProps                       | skip
+            ['nodes.plugin.1.type': 'asdf'] | false
+            ['nodes.plugin.1.type': 'asdf'] | true
     }
 
     def "project with skipping enhanced nodes plugin"() {
@@ -179,13 +184,52 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
         ['nodes.plugin.1.type': 'asdf'] | ['asdf']  | [nodename:'nodeA', test1:'blah']
     }
 
+    def "get excluded plugins list"(){
+        given:
+        def ens = new EnhancedNodeService()
+        TypedNodeEnhancerPlugin enhancerPlugin1 = Mock(TypedNodeEnhancerPlugin){
+            shouldSkip(_) >> true
+            type >> 'example1'
+        }
+        TypedNodeEnhancerPlugin enhancerPlugin2 = Mock(TypedNodeEnhancerPlugin){
+            shouldSkip(_) >> true
+            type >> 'example2'
+        }
+        TypedNodeEnhancerPlugin enhancerPlugin3 = Mock(TypedNodeEnhancerPlugin){
+            shouldSkip(_) >> false
+            type >> 'example3'
+        }
+        ProjectNodesEnhancer projectNodesEnhancer = Mock(ProjectNodesEnhancer){
+            plugins >> [enhancerPlugin1, enhancerPlugin2, enhancerPlugin3]
+        }
+
+        when:
+        def excludedList = ens.getExcludedPlugins("Aproject", projectNodesEnhancer, excluded)
+        then:
+        excludedList.size() == excludedResult.size()
+        excludedList.each {
+            excludedResult.contains(it)
+        }
+
+        where:
+        excludedResult                          | excluded
+        ['example1', 'example2', 'example4']    | ['example4']
+
+    }
+
     static class AddAddtributesPlugin implements NodeEnhancerPlugin {
         Map<String, String> attributes = [:]
+        boolean skip
 
         @Override
         void updateNode(final String project, final IModifiableNodeEntry node) {
             node.attributes.putAll(attributes)
             node
+        }
+
+        @Override
+        boolean shouldSkip(String projectName){
+            return skip
         }
     }
 }

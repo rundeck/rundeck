@@ -29,4 +29,13 @@ public interface NodeEnhancerPlugin {
      * @param node     node
      */
     void updateNode(String project, IModifiableNodeEntry node);
+
+    /**
+     * It allows the node enhancer to indicate that it should be skipped
+     * @param projectName project name
+     * @return boolean indicates whether this enhancer should be skipped
+     */
+    default boolean shouldSkip(String projectName){
+        return false;
+    }
 }

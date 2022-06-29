@@ -59,32 +59,39 @@ class EnhancedNodeService
     String serviceName = ServiceNameConstants.NodeEnhancer
     String propertyPrefix = ProjectNodeSupport.NODE_ENHANCER_PROP_PREFIX
 
-    IProjectNodes getNodes(final String name, List<String> excludePlugin) {
+    IProjectNodes getNodes(final String projectName, List<String> excludePlugin) {
         if (!enabled) {
-            return nodeService.getNodes(name)
+            return nodeService.getNodes(projectName)
         }
 
-        def enhancer = loadedPlugins[name]
+        def enhancer = loadedPlugins[projectName]
         if (null == enhancer) {
-            enhancer = loadPlugins(name)
+            enhancer = loadPlugins(projectName)
         }
 
-        if(excludePlugin){
-            enhancer.setIgnorePlugins(excludePlugin)
-        }else{
-            enhancer.setIgnorePlugins(null)
-        }
+        enhancer.setIgnorePlugins(getExcludedPlugins(projectName, enhancer, excludePlugin))
+        return enhancer.withProjectNodes(nodeService.getNodes(projectName))
+    }
 
-        return enhancer.withProjectNodes(nodeService.getNodes(name))
+    /**
+     * It iterates over the node enhancer plugins checking if the plugins should be skipped or not
+     * @param projectName project name
+     * @param enhancer project node enhancer
+     * @param excludePlugin already excluded plugins
+     * @return List with all of the plugins to skip
+     */
+    List getExcludedPlugins(String projectName, ProjectNodesEnhancer enhancer, List excludePlugin){
+        if(!excludePlugin) excludePlugin = []
+        enhancer?.plugins?.each {TypedNodeEnhancerPlugin plugin ->
+            if(plugin.shouldSkip(projectName) && !excludePlugin.contains(plugin.type)){
+                excludePlugin.add(plugin.type)
+            }
+        }
+        return excludePlugin
     }
 
     IProjectNodes getNodes(final String name) {
-        def projectConfig = frameworkService.rundeckFramework.frameworkProjectMgr.loadProjectConfig(name)
-        if(projectConfig.hasProperty(Constants.PROJECT_PROPERTY_HEALTHCHECK_ENABLED) && 'true'.equals(projectConfig.getProperty(Constants.PROJECT_PROPERTY_HEALTHCHECK_ENABLED))){
-            this.getNodes(name, null)
-        }else{
-            this.getNodes(name, [Constants.HEALTH_STATUS_PROVIDER_NAME])
-        }
+        this.getNodes(name, null)
     }
 
     private ProjectNodesEnhancer loadPlugins(final String project) {
