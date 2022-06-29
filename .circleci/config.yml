@@ -6,15 +6,15 @@ version: 2.1
 
 # config.yml packaging core
 
-#parameters:
-#  CIRCLE_UPSTREAM_PIPELINE_NUMBER: {type: string, default: ""}
-#  CIRCLE_UPSTREAM_BRANCH: {type: string, default: ""}
-#  CIRCLE_UPSTREAM_TAG: {type: string, default: ""}
-#
-#upstream-env: &upstream
-#  CIRCLE_UPSTREAM_PIPELINE_NUMBER: <<pipeline.parameters.CIRCLE_UPSTREAM_PIPELINE_NUMBER>>
-#  CIRCLE_UPSTREAM_BRANCH: <<pipeline.parameters.CIRCLE_UPSTREAM_BRANCH>>
-#  CIRCLE_UPSTREAM_TAG: <<pipeline.parameters.CIRCLE_UPSTREAM_TAG>>
+parameters:
+  CIRCLE_UPSTREAM_PIPELINE_NUMBER: {type: string, default: ""}
+  CIRCLE_UPSTREAM_BRANCH: {type: string, default: ""}
+  CIRCLE_UPSTREAM_TAG: {type: string, default: ""}
+
+upstream-env: &upstream
+  CIRCLE_UPSTREAM_PIPELINE_NUMBER: <<pipeline.parameters.CIRCLE_UPSTREAM_PIPELINE_NUMBER>>
+  CIRCLE_UPSTREAM_BRANCH: <<pipeline.parameters.CIRCLE_UPSTREAM_BRANCH>>
+  CIRCLE_UPSTREAM_TAG: <<pipeline.parameters.CIRCLE_UPSTREAM_TAG>>
 
 slack-fail-post-step: &slack-fail-post-step
   post-steps:
@@ -118,110 +118,110 @@ commands:
       - store_artifacts:
           path: ~/test-results/junit
 
-#  install-packages:
-#    description: Install apt packages
-#    steps:
-#      - run:
-#          name: Apt install
-#          command: |
-#            sudo apt-get update
-#            sudo apt-get -y install expect
-#            sudo apt-get -y install rpm
-#            sudo apt-get -y install dpkg-sig
-#            sudo apt-get -y install gnupg
-#  docker-login:
-#    description: Login to docker
-#    steps:
-#      - run:
-#          name: Login to docker
-#          command: docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
-#  git-modules:
-#    description: Git modules step
-#    steps:
-#      - checkout
-#      - run:
-#          name: Git modules
-#          command: |
-#            sudo sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-#  submodule-update:
-#    description: Update submodule
-#    steps:
-#      - run:
-#          name: Update submodule
-#          command: git submodule update --init --recursive --remote
-#  aws-install:
-#    description: Install aws cli
-#    steps:
-#      - run:
-#          name: Install aws cli
-#          command: pip install awscli --upgrade --user
-#
-#  package-cloud-install:
-#    description: Install package cloud
-#    steps:
-#      - run:
-#          name: Install package cloud
-#          command: |
-#            rvm install 2.4.10
-#            echo . $(rvm 2.4.10 do rvm env --path) >> $BASH_ENV
-#            rvm use ruby-2.4.10
-#            gem install package_cloud
-#
-#  echo-package-cloud:
-#    description: Echo Package cloud token
-#    steps:
-#      - run:
-#          name: Echo Package cloud token
-#          command: echo "{\"url\":\"https://packagecloud.io\",\"token\":\"${PKGCLD_WRITE_TOKEN}\"}" > ~/.packagecloud
-#
-#  build:
-#    description: Build war
-#    steps:
-#      - run:
-#          name: Build war
-#          command: |
-#            source .circleci/circle-shim.sh
-#            bash scripts/circle-build.sh build
-#  sign:
-#    description: Sign war
-#    steps:
-#      - run:
-#          name: Sign war
-#          command: |
-#            GPG_TTY=$(tty)
-#            export GPG_TTY
-#            source .circleci/circle-shim.sh
-#            bash scripts/circle-build.sh sign
-#      - store_artifacts:
-#          path: ~/repo/packaging/build/distributions
-#      - store_artifacts:
-#          path: ~/repo/packaging/artifacts
-#  test:
-#    description: Test war
-#    steps:
-#      - run:
-#          name: Test war
-#          command: |
-#            source .circleci/circle-shim.sh
-#            bash scripts/circle-build.sh test
-#  publish:
-#    description: Publish
-#    steps:
-#      - run:
-#          name: Publish
-#          command: |
-#            rvm use ruby-2.4.10
-#            source .circleci/circle-shim.sh
-#            bash scripts/circle-build.sh publish
-#  publish_war:
-#    description: Publish war
-#    steps:
-#      - run:
-#          name: Publish war
-#          command: |
-#            rvm use ruby-2.4.10
-#            source .circleci/circle-shim.sh
-#            bash scripts/circle-build.sh publish_war
+  install-packages:
+    description: Install apt packages
+    steps:
+      - run:
+          name: Apt install
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install expect
+            sudo apt-get -y install rpm
+            sudo apt-get -y install dpkg-sig
+            sudo apt-get -y install gnupg
+  docker-login:
+    description: Login to docker
+    steps:
+      - run:
+          name: Login to docker
+          command: docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+  git-modules:
+    description: Git modules step
+    steps:
+      - checkout
+      - run:
+          name: Git modules
+          command: |
+            sudo sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  submodule-update:
+    description: Update submodule
+    steps:
+      - run:
+          name: Update submodule
+          command: git submodule update --init --recursive --remote
+  aws-install:
+    description: Install aws cli
+    steps:
+      - run:
+          name: Install aws cli
+          command: pip install awscli --upgrade --user
+
+  package-cloud-install:
+    description: Install package cloud
+    steps:
+      - run:
+          name: Install package cloud
+          command: |
+            rvm install 2.4.10
+            echo . $(rvm 2.4.10 do rvm env --path) >> $BASH_ENV
+            rvm use ruby-2.4.10
+            gem install package_cloud
+
+  echo-package-cloud:
+    description: Echo Package cloud token
+    steps:
+      - run:
+          name: Echo Package cloud token
+          command: echo "{\"url\":\"https://packagecloud.io\",\"token\":\"${PKGCLD_WRITE_TOKEN}\"}" > ~/.packagecloud
+
+  build:
+    description: Build war
+    steps:
+      - run:
+          name: Build war
+          command: |
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh build
+  sign:
+    description: Sign war
+    steps:
+      - run:
+          name: Sign war
+          command: |
+            GPG_TTY=$(tty)
+            export GPG_TTY
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh sign
+      - store_artifacts:
+          path: ~/repo/packaging/build/distributions
+      - store_artifacts:
+          path: ~/repo/packaging/artifacts
+  test:
+    description: Test war
+    steps:
+      - run:
+          name: Test war
+          command: |
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh test
+  publish:
+    description: Publish
+    steps:
+      - run:
+          name: Publish
+          command: |
+            rvm use ruby-2.4.10
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh publish
+  publish_war:
+    description: Publish war
+    steps:
+      - run:
+          name: Publish war
+          command: |
+            rvm use ruby-2.4.10
+            source .circleci/circle-shim.sh
+            bash scripts/circle-build.sh publish_war
   setup-environment:
     steps:
       - run:
@@ -567,10 +567,10 @@ filters:
   ignore-tags: &filter-no-tags
     filters:
       tags: { ignore: '/^v.*/' }
-#  tags: &filter-tags
-#    filters:
-#      branches: { ignore: /.*/ }
-#      tags: { only: '/^v.*/' }
+  tags: &filter-tags
+    filters:
+      branches: { ignore: /.*/ }
+      tags: { only: '/^v.*/' }
 
 workflows:
   version: 2
@@ -823,7 +823,7 @@ workflows:
             continue: 'false'
             context:
               - slack-secrets
-#            <<: *slack-fail-post-step
+            <<: *slack-fail-post-step
       - twistlock-scan-image:
           name: Twistlock Scan
           requires: *stage-build
