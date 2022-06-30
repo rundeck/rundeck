@@ -696,6 +696,7 @@ class ScheduledExecutionTest  {
         assertTrue(new ScheduledExecution(minute: '12,14').shouldUseCrontabString())
         assertTrue(new ScheduledExecution(hour: '06,08,10,12,14,16,18').shouldUseCrontabString())
         assertTrue(new ScheduledExecution(minute: '06,08,10,12,14,16,18').shouldUseCrontabString())
+        assertTrue(new ScheduledExecution(dayOfMonth: '06').shouldUseCrontabString())
         //example: 0 00 06,08,10,12,14,16,18 ? * * *
     }
 
