@@ -17,6 +17,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.core.audit.ActionTypes
+import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -96,6 +98,7 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
+import rundeck.services.audit.AuditEventsService
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
@@ -119,6 +122,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def JobScheduleManager rundeckJobScheduleManager
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    AuditEventsService auditEventsService
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -1015,10 +1019,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             //after delete job
             rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
-            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
 
             //issue event directly
+            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
             notify('jobChanged', event)
+
+            // publish audit event
+            if(auditEventsService) {
+                auditEventsService.eventBuilder()
+                    .setResourceType(ResourceTypes.JOB)
+                    .setActionType(ActionTypes.DELETE)
+                    .setResourceName("${scheduledExecution.project}:${scheduledExecution.generateFullName()}")
+                    .publish()
+            }
+
         }
         return new DeleteJobResult(success:success,error:errmsg)
     }
@@ -3409,6 +3423,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         boolean remoteSchedulingChanged = scheduleResult == null || scheduleResult == [null, null]
 
+        // publish audit event
+        if(auditEventsService) {
+            auditEventsService.eventBuilder()
+                .setResourceType(ResourceTypes.JOB)
+                .setActionType(ActionTypes.UPDATE)
+                .setResourceName("${scheduledExecution.project}:${scheduledExecution.generateFullName()}")
+                .publish()
+        }
+
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
         if (renamed) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
@@ -3498,6 +3521,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     .save(flush: true)
         }
         rescheduleJob(scheduledExecution)
+
+        // publish audit event
+        if(auditEventsService) {
+            auditEventsService.eventBuilder()
+                .setResourceType(ResourceTypes.JOB)
+                .setActionType(ActionTypes.CREATE)
+                .setResourceName("${scheduledExecution.project}:${scheduledExecution.generateFullName()}")
+                .publish()
+        }
+        
         def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.CREATE, scheduledExecution)
         return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
     }
