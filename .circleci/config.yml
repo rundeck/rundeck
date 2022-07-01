@@ -174,14 +174,14 @@ commands:
           name: Echo Package cloud token
           command: echo "{\"url\":\"https://packagecloud.io\",\"token\":\"${PKGCLD_WRITE_TOKEN}\"}" > ~/.packagecloud
 
-  build:
+  build-war:
     description: Build war
     steps:
       - run:
           name: Build war
           command: |
             source .circleci/circle-shim.sh
-            bash scripts/circle-build.sh build
+            bash packaging/scripts/circle-build.sh build
   sign:
     description: Sign war
     steps:
@@ -191,19 +191,19 @@ commands:
             GPG_TTY=$(tty)
             export GPG_TTY
             source .circleci/circle-shim.sh
-            bash scripts/circle-build.sh sign
+            bash packaging/scripts/circle-build.sh sign
       - store_artifacts:
-          path: ~/repo/packaging/build/distributions
+          path: ~/repo/packaging/packaging/build/distributions
       - store_artifacts:
-          path: ~/repo/packaging/artifacts
-  test:
+          path: ~/repo/packaging/packaging/artifacts
+  test-war:
     description: Test war
     steps:
       - run:
           name: Test war
           command: |
             source .circleci/circle-shim.sh
-            bash scripts/circle-build.sh test
+            bash packaging/scripts/circle-build.sh test
   publish:
     description: Publish
     steps:
@@ -212,7 +212,7 @@ commands:
           command: |
             rvm use ruby-2.4.10
             source .circleci/circle-shim.sh
-            bash scripts/circle-build.sh publish
+            bash packaging/scripts/circle-build.sh publish
   publish_war:
     description: Publish war
     steps:
@@ -221,7 +221,7 @@ commands:
           command: |
             rvm use ruby-2.4.10
             source .circleci/circle-shim.sh
-            bash scripts/circle-build.sh publish_war
+            bash packaging/scripts/circle-build.sh publish_war
   setup-environment:
     steps:
       - run:
@@ -508,6 +508,43 @@ jobs:
           path: build/owasp-reports
           prefix: owasp-reports
 
+  build_and_publish:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: large
+
+    parameters:
+      submodule:
+        description: Should the build use submodules?
+        type: boolean
+        default: true
+
+    steps:
+      - run:
+          name: Apt install
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install expect
+            sudo apt-get -y install rpm
+            sudo apt-get -y install dpkg-sig
+            sudo apt-get -y install gnupg
+      - docker-login
+      - git-modules
+      - submodule-update
+      - aws-install
+      - echo-package-cloud
+      - build-war
+      - sign
+      - test-war
+      - package-cloud-install
+      - when:
+          condition:
+            matches: { pattern: "/^v.*/", value: <<pipeline.parameters.CIRCLE_UPSTREAM_TAG>> }
+          steps:
+            - publish
+            - publish_war
+
   trigger-packaging:
     <<: *defaults
     docker:
@@ -702,8 +739,11 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-#      - build_and_publish:
-#          name: Build and publish
+      - build_and_publish:
+          name: Build and publish
+          filters:
+            branches: { ignore: /.*/ }
+            tags: { only: /^v.*$/ }
   nightly:
     triggers:
       - schedule:
