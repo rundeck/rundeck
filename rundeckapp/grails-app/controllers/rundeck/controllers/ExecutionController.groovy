@@ -241,7 +241,7 @@ class ExecutionController extends ControllerBase{
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
-        String max = getGrailsApplication().config.get("rundeck.logviewer.trimOutput")
+        String max = getGrailsApplication().config.getProperty("rundeck.logviewer.trimOutput", String)
         Long trimOutput = Sizes.parseFileSize(max)
 
         return loadExecutionViewPlugins() + [
