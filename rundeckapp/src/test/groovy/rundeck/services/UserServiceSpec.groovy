@@ -18,9 +18,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
@@ -203,13 +203,12 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
     def "Get User Group Source Plugin Roles"() {
         when:
         TestUserGroupSourcePlugin testPlugin = new TestUserGroupSourcePlugin(groups)
-        RundeckPluginRegistry rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         PluginService pluginService = Mock(PluginService) {
             listPlugins(UserGroupSourcePlugin) >> { [testPlugin:testPlugin] }
             configurePlugin(_,_,_,_) >> { new ConfiguredPlugin<UserGroupSourcePlugin>(testPlugin,[:]) }
         }
         FrameworkService fwkService = Mock(FrameworkService) {
-            getRundeckPluginRegistry() >> rundeckPluginRegistry
             getPluginService() >> pluginService
         }
         service.frameworkService = fwkService
@@ -232,13 +231,12 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         }
 
         TestUserGroupSourcePlugin testPlugin = new TestUserGroupSourcePlugin([])
-        RundeckPluginRegistry rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+            service.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         PluginService pluginService = Mock(PluginService) {
             listPlugins(UserGroupSourcePlugin) >> { [testPlugin:testPlugin] }
             configurePlugin(_,_,_,_) >> { null }
         }
         FrameworkService fwkService = Mock(FrameworkService) {
-            getRundeckPluginRegistry() >> rundeckPluginRegistry
             getPluginService() >> pluginService
         }
         service.frameworkService = fwkService

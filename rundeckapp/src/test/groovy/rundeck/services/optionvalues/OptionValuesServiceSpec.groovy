@@ -1,11 +1,11 @@
 package rundeck.services.optionvalues
 
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
@@ -15,7 +15,7 @@ import spock.lang.Specification
 class OptionValuesServiceSpec extends Specification implements ServiceUnitTest<OptionValuesService>{
 
     def setup() {
-        service.rundeckPluginRegistry = Stub(RundeckPluginRegistry)
+        service.rundeckServerServiceProviderLoader = Stub(ServiceProviderLoader)
         service.frameworkService = Mock(FrameworkService)
         service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
             @Override

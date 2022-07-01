@@ -3,9 +3,9 @@ package rundeck.services.passwordencrypt
 import com.dtolabs.rundeck.core.encrypter.EncrypterResponse
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
 import rundeck.services.FrameworkService
 import rundeck.services.PasswordUtilityEncrypterLoaderService
@@ -15,7 +15,7 @@ import spock.lang.Specification
 class PasswordUtilityEncrypterLoaderServiceSpec extends Specification implements ServiceUnitTest<PasswordUtilityEncrypterLoaderService> {
 
     def setup() {
-        service.rundeckPluginRegistry = Stub(RundeckPluginRegistry)
+        service.rundeckServerServiceProviderLoader = Stub(ServiceProviderLoader)
         service.frameworkService = Mock(FrameworkService)
         service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
             @Override

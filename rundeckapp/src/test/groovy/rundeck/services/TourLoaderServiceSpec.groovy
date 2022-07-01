@@ -2,17 +2,17 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<TourLoaderService>{
 
     def setup() {
-        service.rundeckPluginRegistry = Stub(RundeckPluginRegistry)
+        service.rundeckServerServiceProviderLoader = Stub(ServiceProviderLoader)
         service.frameworkService = Mock(FrameworkService)
     }
 

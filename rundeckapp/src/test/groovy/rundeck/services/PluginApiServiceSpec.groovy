@@ -18,6 +18,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -25,7 +26,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
 import grails.web.mapping.LinkGenerator
 import spock.lang.Specification
@@ -43,7 +43,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         fwksvc.getRundeckFramework() >> fwk
         fwk.getPluginManager() >> Mock(ServiceProviderLoader)
         service.frameworkService = fwksvc
-        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.rundeckPluginRegistry = Mock(PluginRegistry)
         service.uiPluginService = Mock(UiPluginService)
         service.grailsLinkGenerator = Mock(LinkGenerator)
 
