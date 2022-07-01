@@ -16,9 +16,11 @@
 
 package com.dtolabs.rundeck.server.plugins
 
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
+import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import com.dtolabs.utils.Streams
 import grails.spring.BeanBuilder
 import org.rundeck.security.RundeckPluginBlocklist
@@ -26,7 +28,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
-import org.springframework.beans.factory.annotation.Autowire
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -40,7 +41,7 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
 
     ApplicationContext applicationContext
     File pluginTargetDir
-    RundeckPluginRegistry rundeckPluginRegistry
+    RundeckDynamicSpringPluginRegistryComponent rundeckDynamicSpringPluginRegistryComponent
     @Autowired
     Collection<PluginFileSource> pluginFileSources = []
 
@@ -55,6 +56,17 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
             pluginFileSources = [
                     new ApplicationContextPluginFileSource(applicationContext, '/WEB-INF/rundeck/plugins/')
             ]
+        }
+
+        def result =extractEmbeddedPlugins()
+        if (!result.success) {
+            log.error("Failed extracting embedded plugins: " + result.message)
+            result?.errors?.each {
+                log.error(it)
+            }
+        }
+        result?.logs?.each {
+            log.debug(it)
         }
     }
 
@@ -125,7 +137,10 @@ class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, Initial
         def result = context.getBean(beanName)
 
         log.debug("Loaded groovy plugin bean; type: ${result.class} ${result}")
-        rundeckPluginRegistry.registerDynamicPluginBean(beanName, context)
+        if(result instanceof PluginBuilder){
+            String serviceName= ServiceTypes.getServiceNameForClass(result.pluginClass)
+            rundeckDynamicSpringPluginRegistryComponent.registerDynamicPluginBean(serviceName, beanName, context)
+        }
 
         return result
     }

@@ -17,7 +17,7 @@
 package com.dtolabs.rundeck.server.plugins.logging
 
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.core.plugins.SpringPluginRegistryComponent
 import org.springframework.beans.factory.BeanNameAware
 import org.springframework.beans.factory.FactoryBean
 import org.springframework.beans.factory.InitializingBean
@@ -38,7 +38,7 @@ class PluginFactoryBean<T> implements FactoryBean<T>, InitializingBean, BeanName
     String provider
 
     @Autowired
-    RundeckPluginRegistry rundeckPluginRegistry
+    SpringPluginRegistryComponent rundeckSpringPluginRegistryComponent
 
     PluginFactoryBean(final Class<?> objectType) {
         this.objectType = objectType
@@ -48,7 +48,7 @@ class PluginFactoryBean<T> implements FactoryBean<T>, InitializingBean, BeanName
     void afterPropertiesSet() throws Exception {
         def annotation = objectType.getAnnotation(Plugin)
         if (annotation) {
-            rundeckPluginRegistry.registerPlugin(annotation.service(), annotation.name(), beanName)
+            rundeckSpringPluginRegistryComponent.registerPlugin(annotation.service(), annotation.name(), beanName)
         }
     }
 

@@ -13,11 +13,12 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.PropertyLookup
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.server.plugins.BaseSpringPluginRegistryComponent
+import com.dtolabs.rundeck.server.plugins.RundeckDynamicSpringPluginRegistryComponent
 import grails.spring.BeanBuilder
 import grails.testing.mixin.integration.Integration
 import grails.gorm.transactions.*
-import okhttp3.Request
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -37,7 +38,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
     NotificationService notificationService
     StorageService storageService
     PluginService pluginService
-    RundeckPluginRegistry rundeckPluginRegistry
+    RundeckDynamicSpringPluginRegistryComponent rundeckDynamicSpringPluginRegistryComponent
 
     def grailsApplication
 
@@ -52,7 +53,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         }
 
         def context = builder.createApplicationContext()
-        rundeckPluginRegistry.registerDynamicPluginBean(DummyNotificationPlugin.BEAN_NAME, context)
+        rundeckDynamicSpringPluginRegistryComponent.registerDynamicPluginBean(ServiceNameConstants.Notification, DummyNotificationPlugin.BEAN_NAME, context)
 
         ScheduledExecution job = new ScheduledExecution(createJobParams())
         job.addToOptions(new Option(name: 'optvals', optionValuesPluginType: 'test', required: true, enforced: false))

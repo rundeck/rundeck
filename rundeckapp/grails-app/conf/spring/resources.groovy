@@ -40,7 +40,9 @@ import com.dtolabs.rundeck.core.common.NodeSupport
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
+import com.dtolabs.rundeck.core.plugins.LoadingPluginRegistryComponent
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
+import com.dtolabs.rundeck.core.plugins.PluginRegistryImpl
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.plugins.WatchingPluginDirProvider
 import com.dtolabs.rundeck.core.resources.format.ResourceFormats
@@ -52,9 +54,11 @@ import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.server.plugins.BlocklistPluginRegistryComponent
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
+import com.dtolabs.rundeck.server.plugins.RundeckDynamicSpringPluginRegistryComponent
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.RundeckSpringPluginRegistryComponent
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.*
@@ -645,17 +649,46 @@ beans={
     rundeckPluginBlocklist(RundeckPluginBlocklist){
         blockListFileName= application.config.getProperty("rundeck.plugins.providerBlockListFile", String.class)
     }
+
+    ///Plugin registry components///
     /**
-     * Registry bean contains both kinds of plugin
+     * Allows blocklist to prevent plugin loading
      */
-    rundeckPluginRegistry(RundeckPluginRegistry){
-        rundeckEmbeddedPluginExtractor = ref('rundeckEmbeddedPluginExtractor')
-        pluginRegistryMap = ref('rundeckPluginRegistryMap')
-        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
-        pluginDirectory=pluginDir
-        pluginCacheDirectory=cacheDir
+    rundeckBlocklistPluginRegistryComponent(BlocklistPluginRegistryComponent){
         rundeckPluginBlocklist=ref("rundeckPluginBlocklist")
     }
+
+    /**
+     * runtime plugins registered via Spring
+     */
+    rundeckSpringPluginRegistryComponent(RundeckSpringPluginRegistryComponent){
+        pluginRegistryMap = ref('rundeckPluginRegistryMap')
+        pluginDirectory = pluginDir
+    }
+    /**
+     * runtime groovy plugins registered via embedded plugins loader
+     */
+    rundeckDynamicSpringPluginRegistryComponent(RundeckDynamicSpringPluginRegistryComponent){
+        pluginDirectory = pluginDir
+    }
+
+    /**
+     * plugins loaded via filesystem
+     */
+    rundeckLoadingPluginRegistryComponent(LoadingPluginRegistryComponent,ref('rundeckServerServiceProviderLoader'))
+
+    /**
+     * Registry bean loads plugins from multiple components
+     */
+    rundeckPluginRegistry(PluginRegistryImpl) {
+        components = [
+            ref('rundeckBlocklistPluginRegistryComponent'),
+            ref('rundeckSpringPluginRegistryComponent'),
+            ref('rundeckDynamicSpringPluginRegistryComponent'),
+            ref('rundeckLoadingPluginRegistryComponent')
+        ]
+    }
+
     hMacSynchronizerTokensManager(HMacSynchronizerTokensManager){
 
     }
