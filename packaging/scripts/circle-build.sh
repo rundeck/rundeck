@@ -58,17 +58,20 @@ build_pro() {
 }
 
 sign() {
-    bash packaging/scripts/sign-packages.sh
+  echo "sign packages"
+#    bash packaging/scripts/sign-packages.sh
 }
 
 test_packages() {
-    bash test/test-docker-install-deb.sh
-    bash test/test-docker-install-rpm.sh
+  echo "test_packages"
+#    bash test/test-docker-install-deb.sh
+#    bash test/test-docker-install-rpm.sh
 }
 
 test_pro_packages() {
-    docker_login
-    test_packages
+  echo "test_pro_packages"
+#    docker_login
+#    test_packages
 }
 
 publish() {
