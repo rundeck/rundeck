@@ -182,17 +182,17 @@ public interface PluginRegistry {
     /**
      * List all plugin type definitions that are either ServiceProvider plugins of the given service name,
      * or are groovy plugins of the given type
-     * @param groovyPluginType
+     * @param type
      * @return
      */
-    public <T> Map<String, Object> listPlugins(Class groovyPluginType, PluggableProviderService<T> service);
+    public <T> Map<String, Object> listPlugins(Class<T> type, PluggableProviderService<T> service);
     /**
      * List all plugin type definitions that are either ServiceProvider plugins of the given service name,
      * or are groovy plugins of the given type
-     * @param groovyPluginType
+     * @param type
      * @return
      */
-    public <T> Map<String, DescribedPlugin<T>> listPluginDescriptors(Class groovyPluginType, PluggableProviderService<T> service) ;
+    public <T> Map<String, DescribedPlugin<T>> listPluginDescriptors(Class<T> type, PluggableProviderService<T> service) ;
 
     /**
      * Return plugin resource loader
@@ -217,6 +217,7 @@ public interface PluginRegistry {
      * @param type
      * @param name
      * @param beanName
+     * @deprecated see {@link SpringPluginRegistryComponent}
      */
     void registerPlugin(String type, String name, String beanName);
 }
