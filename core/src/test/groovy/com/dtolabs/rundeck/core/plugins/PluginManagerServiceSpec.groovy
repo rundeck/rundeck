@@ -24,4 +24,19 @@ class PluginManagerServiceSpec extends Specification {
 //            TestPlugin     | 'Test'
 
     }
+    def "service names"() {
+        given:
+            def sut = new PluginManagerService()
+        when:
+            def result = sut.createServiceName(input)
+
+        then:
+            result == expected
+
+        where:
+            input       | expected
+            'Abc'       | 'Abc'
+            'AbcPlugin' | 'Abc'
+
+    }
 }

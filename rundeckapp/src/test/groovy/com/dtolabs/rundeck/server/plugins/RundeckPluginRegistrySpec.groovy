@@ -27,21 +27,6 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest {
-    def "service names"() {
-        given:
-        def sut = new RundeckPluginRegistry()
-        when:
-        def result = sut.createServiceName(input)
-
-        then:
-        result == expected
-
-        where:
-        input       | expected
-        'Abc'       | 'Abc'
-        'AbcPlugin' | 'Abc'
-
-    }
 
     static interface TestPlugin {
 
