@@ -221,7 +221,7 @@ class PluginServiceTests extends Specification {
         }
 
         @Override
-        Map<String, Object> listPlugins(Class groovyPluginType, PluggableProviderService service) {
+        Map<String, Object> listPlugins(Class type, PluggableProviderService service) {
             listPluginsCalled=true
             return pluginListMap
         }

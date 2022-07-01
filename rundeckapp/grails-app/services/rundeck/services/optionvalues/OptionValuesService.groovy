@@ -14,7 +14,6 @@ class OptionValuesService {
 
     def pluginService
     def ServiceProviderLoader rundeckServerServiceProviderLoader
-    def rundeckPluginRegistry
     def frameworkService
     def storageService
 

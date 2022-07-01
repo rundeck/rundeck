@@ -43,7 +43,6 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.spi.Services

@@ -10,7 +10,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 class PasswordUtilityEncrypterLoaderService {
 
     def ServiceProviderLoader rundeckServerServiceProviderLoader
-    def rundeckPluginRegistry
     def pluginService
     def frameworkService
 
