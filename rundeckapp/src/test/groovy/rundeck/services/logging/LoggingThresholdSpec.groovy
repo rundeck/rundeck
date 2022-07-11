@@ -277,4 +277,14 @@ class LoggingThresholdSpec extends Specification {
         threshold.value == 2
         threshold.isThresholdExceeded() == true
     }
+
+    void "evaluate the minimum maxvalue"() {
+        when:
+        def thresholdGlobal = LoggingThreshold.fromMap([maxSizeBytes: 1, type: "size", description: "global"], "truncate")
+        def thresholdLocal = LoggingThreshold.fromMap([maxSizeBytes: 2, type: "size", description: "local"], "truncate")
+        def threshold = LoggingThreshold.createMinimum(thresholdLocal, thresholdGlobal)
+        then:
+        threshold.maxValue == 1
+        threshold.type == "size"
+    }
 }

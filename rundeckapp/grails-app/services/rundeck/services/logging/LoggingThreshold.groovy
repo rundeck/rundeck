@@ -101,6 +101,11 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         return t
     }
 
+    /**
+     * Evaluates which threshold object has the minimum maxValue attribute
+     * @param t LoggingThreshold to be filled
+     * @param thresholds objects to compare
+     */
     static void evalMaxValue(LoggingThreshold t, LoggingThreshold... thresholds) {
         LoggingThreshold min = thresholds.min{it.maxValue}
         if (min) {
