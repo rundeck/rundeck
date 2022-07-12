@@ -40,13 +40,34 @@ class JasyptEncryptionEnforcerUpdaterConfigSpec extends Specification {
             (result == null) == !modified
 
         where: "jasypt-encryption metadata values"
-            meta                                     | modified
-            [:]                                      | true
-            ['jasypt-encryption:encrypted': 'false'] | true
-            [blah: 'bloo']                           | true
-            ['jasypt-encryption:encrypted': 'true']  | false
+            meta                                                                    | modified
+            [:]                                                                     | true
+            ['jasypt-encryption:encrypted': 'false']                                | true
+            [blah: 'bloo']                                                          | true
+    }
 
+    def "modify Contents value when metadata indicates encrypted but the content size is the same as declared in metadata"() {
+        given:
+        def sut = new JasyptEncryptionEnforcerUpdaterConfig()
+        def resourceMeta = Mock(ResourceMeta) {
+            getMeta() >> meta
+            getInputStream() >> new ByteArrayInputStream(contentValue.getBytes());
+        }
+        def resource = Mock(Resource) {
+            getContents() >> resourceMeta
+        }
+        when: "modify contents called with resource"
+        def result = sut.getUpdatedContents(resource)
 
+        then: "result is the same as the input resource meta if the content should be modified, otherwise null"
+        (result == resourceMeta) == modified
+        (result == null) == !modified
+
+        where: "jasypt-encryption metadata values"
+        meta                                                                    | contentValue  | modified
+        ['jasypt-encryption:encrypted': 'true']                                 | "Abcdef"      | false
+        ['jasypt-encryption:encrypted': 'true', 'Rundeck-content-size': 42 ]    | "Abcdef"      | false
+        ['jasypt-encryption:encrypted': 'true', 'Rundeck-content-size': 6 ]     | "Abcdef"      | true
     }
 
 }
