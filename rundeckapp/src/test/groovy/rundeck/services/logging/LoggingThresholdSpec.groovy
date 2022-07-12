@@ -286,5 +286,6 @@ class LoggingThresholdSpec extends Specification {
         then:
         threshold.maxValue == 1
         threshold.type == "size"
+        threshold.description == "Maximum size in Bytes: 1, action: truncate"
     }
 }
