@@ -1,0 +1,242 @@
+// *************************************
+//
+//   Utilities
+//   -> Re-usable CSS classes
+//   - 1. Flex
+//   - 2. Text
+//   - 3. Spacing
+//   * (-Legacy Bootstrap 3)
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Flex
+// -------------------------------------
+
+.flex{
+    display: flex;
+}
+.md\:flex{
+  @media (min-width: $screen-md) {
+    display: flex;
+  }
+}
+.lg\:flex{
+  @media (min-width: $screen-lg) {
+    display: flex;
+  }
+}
+
+.flex--justify-start {
+    justify-content: flex-start;
+}
+.flex--justify-center {
+    justify-content: center;
+}
+.flex--justify-between {
+    justify-content: space-between;
+}
+.flex--items-center{
+    align-items: center;
+}
+
+.flex--direction-col{
+  flex-direction: column;
+}
+
+.flex--grow{
+  flex-grow: 1;
+}
+.flex--none{
+  flex: none;
+}
+.container--flex{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  @media (min-width: $screen-md) {
+    flex-direction: row;
+  }
+}
+
+.main-content-scroll{
+  height: 100%;
+  overflow-y: scroll;
+}
+
+
+// -------------------------------------
+//   2. Text
+// -------------------------------------
+.text-left{
+  text-align: left;
+}
+.text-right{
+  text-align: right;
+}
+
+.font-thin{
+  font-weight: 100;
+}	
+.font-extralight{
+  font-weight: 200;
+}	
+.font-light{
+  font-weight: 300;
+}	
+.font-normal{
+  font-weight: 400;
+}	
+.font-medium{
+  font-weight: 500;
+}	
+.font-semibold{
+  font-weight: 600;
+}	
+.font-bold{
+  font-weight: 700;
+}	
+.font-extrabold{
+  font-weight: 800;
+}	
+.font-black{
+  font-weight: 900;
+}	
+
+.font-size-lg{
+  font-size: var(--text-lg);
+}
+.font-size-xl{
+  font-size: var(--text-xl);
+}
+.font-size-2xl{
+  font-size: var(--text-2xl);
+}
+.font-size-3xl{
+  font-size: var(--text-3xl);
+}
+
+// -------------------------------------
+//   3. Spacing
+// -------------------------------------
+.mx-auto{
+  margin: 0 auto;
+}
+.mt-6{
+  margin-top: var(--spacing-6);
+}
+.px-row{
+  padding:0 15px;
+}
+.mr-2{
+  margin-right: 0.5rem;
+}
+.pr-2{
+  padding-right: 0.5rem;
+}
+.px-3{
+  padding: 0 0.75rem;
+}
+
+// -------------------------------------
+//   4. Max-Width
+// -------------------------------------
+  @each $key_name, $value in $max-width {
+    .#{$key_name} {
+      max-width: #{$value};
+    }
+  }
+
+// -------------------------------------
+//   5. Height
+// -------------------------------------
+  .h-full{
+    height: 100%;
+  }
+
+// -------------------------------------
+//   6. Width
+// -------------------------------------
+  .w-full{
+    width: 100%;
+  }
+
+// -------------------------------------
+//   7. Cursor
+// -------------------------------------
+.cursor-pointer{
+  cursor: pointer;
+}
+
+//
+// Utility classes (-Legacy Bootstrap 3)
+// --------------------------------------------------
+
+
+// Floats
+// -------------------------
+
+.clearfix {
+  @include clearfix;
+}
+.center-block {
+  @include center-block;
+}
+.pull-right {
+  float: right !important;
+}
+.pull-left {
+  float: left !important;
+}
+
+
+// Toggling content
+// -------------------------
+
+// Note: Deprecated .hide in favor of .hidden or .sr-only (as appropriate) in v3.0.1
+.hide {
+  display: none !important;
+}
+.show {
+  display: block !important;
+}
+.invisible {
+  visibility: hidden;
+}
+.text-hide {
+  @include text-hide;
+}
+
+
+// Hide from screenreaders and browsers
+//
+// Credit: HTML5 Boilerplate
+
+.hidden {
+  display: none !important;
+}
+
+
+// For Affix plugin
+// -------------------------
+
+.affix {
+  position: fixed;
+}
+
+
+.flex{
+    display: flex;
+}
+.justify-start {
+    justify-content: flex-start;
+}
+.justify-center {
+    justify-content: center;
+}
+.justify-between {
+    justify-content: space-between;
+}
+.items-center{
+    align-items: center;
+}

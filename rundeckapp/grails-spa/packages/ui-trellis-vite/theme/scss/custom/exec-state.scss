@@ -1,0 +1,168 @@
+@import '../runstrap/_variables';
+@import '_glyphicons';
+
+.execstate {
+  &[data-execstate=RETRY] {
+    color: var(--info-color);
+  }
+
+  &[data-execstate=FAILED-WITH-RETRY],
+  &[data-execstate=NODE_MIXED],
+  &[data-execstate=TIMEDOUT],
+  &[data-execstate=OTHER][data-statusstring=incomplete] {
+    color: orange;
+  }
+
+
+  &[data-execstate=ABORTED] {
+    color: var(--dark-gray);
+  }
+
+  &[data-execstate=SUCCEEDED] {
+    color: var(--success-color);
+  }
+
+  &[data-execstate=NODE_PARTIAL_SUCCEEDED] {
+    color: var(--dark-gray);
+  }
+
+  &[data-execstate=RUNNING],
+  &[data-execstate=RUNNING_HANDLER] {
+    color: var(--info-color);
+    // color: darken($info-color, 10%);
+  }
+
+  &[data-execstate=SCHEDULED] {
+    color: var(--info-color);
+    // color: darken($info-color, 20%);
+  }
+
+  &[data-execstate=QUEUED] {
+    color: var(--primary-color);
+    // color: darken($info-color, 20%);
+  }
+
+  &[data-execstate=RUNNING_HANDLER] {
+    border-bottom: 2px dotted orange;
+  }
+
+  &[data-execstate=FAILED] {
+    color: red;
+  }
+
+  &[data-execstate=NOT_STARTED],
+  &[data-execstate=WAITING] {
+    color: var(--dark-gray);
+  }
+
+  &[data-execstate=PASS] {
+    color: var(--medium-gray);
+  }
+
+  &.isnode[data-execstate] {
+    color: inherit;
+
+    &[data-execstate=RUNNING],
+    &[data-execstate=RUNNING_HANDLER] {
+      color: var(--info-color);
+    }
+  }
+
+  &.step {
+    &[data-execstate=SUCCEEDED] {
+      @extend .glyphicon;
+      @extend .glyphicon-check;
+    }
+
+    &[data-execstate=RUNNING],
+    &[data-execstate=RUNNING_HANDLER],
+    &[data-execstate=WAITING] {
+      @extend .glyphicon;
+      @extend .glyphicon-unchecked;
+    }
+
+    &[data-execstate=FAILED] {
+      @extend .glyphicon;
+      @extend .glyphicon-remove-circle;
+    }
+
+    &[data-execstate='FAILED-WITH-RETRY'] {
+      @extend .glyphicon;
+      @extend .glyphicon-repeat;
+    }
+  }
+}
+
+.execstate.execstatedisplay {
+  &:after{
+    font-weight: 900;
+  }
+  &[data-execstate=RUNNING]:after,
+  &[data-execstate=RUNNING_HANDLER]:after {
+    content: 'Running';
+  }
+
+  &[data-execstate=NODE_MIXED]:after {
+    content: 'Mixed';
+  }
+
+  &[data-execstate=SUCCEEDED]:after {
+    content: 'OK';
+  }
+
+  &[data-execstate=OTHER][data-statusstring=incomplete]:after {
+    content: 'Incomplete';
+    color: orange;
+  }
+
+  &[data-execstate=NODE_PARTIAL_SUCCEEDED]:after {
+    content: 'Partial';
+  }
+
+  &[data-execstate=FAILED]:after {
+    content: 'Failed';
+  }
+
+  &[data-execstate=FAILED-WITH-RETRY]:after {
+    content: 'Failed';
+  }
+
+  &[data-execstate=ABORTED]:after {
+    content: 'Killed';
+  }
+
+  &[data-execstate=TIMEDOUT]:after {
+    content: 'Timed Out';
+  }
+
+  &[data-execstate=WAITING]:after {
+    content: 'Waiting';
+  }
+
+  &[data-execstate=WAITING][data-next=true]:after {
+    content: 'Next Up';
+  }
+
+  &[data-execstate=NOT_STARTED]:after {
+    content: 'Not Started';
+  }
+
+  &[data-execstate=MISSED]:after {
+    content: 'Missed';
+  }
+
+  &.overall {
+    &[data-execstate=SUCCEEDED]:after {
+      content: 'Succeeded';
+      color: var(--success-color);
+    }
+  }
+
+  &[data-execstate=SCHEDULED]:after {
+    content: 'Scheduled';
+  }
+
+  &[data-execstate=QUEUED]:after {
+    content: 'Queued';
+  }
+}

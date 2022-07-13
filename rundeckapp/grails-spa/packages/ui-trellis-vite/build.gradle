@@ -1,0 +1,223 @@
+buildscript {
+    repositories {
+        maven { url "https://repo.grails.org/grails/core" }
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "com.github.node-gradle:gradle-node-plugin:3.1.1"
+    }
+}
+
+// plugins {
+//   id "com.github.node-gradle.node"
+//   id 'base'
+// }
+apply plugin: 'com.github.node-gradle.node'
+apply plugin: 'base'
+
+configurations{
+  lib
+  packages
+}
+
+node{
+    // Whether to download and install a specific Node.js version or not
+    // If false, it will use the globally installed Node.js
+    // If true, it will download node using above parameters
+    // Note that npm is bundled with Node.js
+    download = false
+    
+    // Version of node to download and install (only used if download is true)
+    // It will be unpacked in the workDir
+    version = "v16.13.0"
+    
+    // // Version of npm to use
+    // // If specified, installs it in the npmWorkDir
+    // // If empty, the plugin will use the npm command bundled with Node.js
+    // npmVersion = ""
+    
+    // // Version of Yarn to use
+    // // Any Yarn task first installs Yarn in the yarnWorkDir
+    // // It uses the specified version if defined and the latest version otherwise (by default)
+    // yarnVersion = ""
+    
+    // // Base URL for fetching node distributions
+    // // Only used if download is true
+    // // Change it if you want to use a mirror
+    // // Or set to null if you want to add the repository on your own.
+    // distBaseUrl = "https://nodejs.org/dist"
+    
+    // // The npm command executed by the npmInstall task
+    // // By default it is install but it can be changed to ci
+    // npmInstallCommand = "install"
+    
+    
+    // // The directory where npm is installed (when a specific version is defined)
+    // npmWorkDir = file("${project.projectDir}/.gradle/npm")
+    
+    
+    // // The Node.js project directory location
+    // // This is where the package.json file and node_modules directory are located
+    // // By default it is at the root of the current project
+    // nodeProjectDir = file("${project.projectDir}")
+    
+    // // Whether the plugin automatically should add the proxy configuration to npm and yarn commands
+    // // according the proxy configuration defined for Gradle
+    // // Disable this option if you want to configure the proxy for npm or yarn on your own
+    // // (in the .npmrc file for instance)
+    // nodeProxySettings = ProxySettings.SMART
+}
+
+def sourceDirs = [
+        'lib',
+        'src',
+        //'theme'
+]
+def sourceFiles = ['package.json', 'README.md']
+def sources = sourceDirs + sourceFiles
+
+def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
+    it.inputs.file 'package.json'
+    it.inputs.file 'package-lock.json'
+    it.inputs.file 'vite.config.js'
+    it.inputs.file 'tsconfig.json'
+
+    it.inputs.dir 'src'
+
+    it.outputs.dir(file("$buildDir"))
+    it.outputs.cacheIf { false }
+
+    def npmCommand = System.env.CI ?
+      'ci:build' :
+      'dev:build'
+
+    args = ['run', npmCommand]
+}
+
+/** Takes package.json and sets the version in it */
+def runNpmVersion = tasks.register('runNpmVersion', NpmTask) {t ->
+    t.dependsOn runNpmBuild
+
+    sourceDirs.each {t.inputs.dir it }
+    t.inputs.files sourceFiles
+    t.outputs.dir 'build/pack-version'
+    t.outputs.cacheIf {true}
+
+    args = [ 'version' ]
+
+    if (findProperty('environment')?:'development' == 'release') {
+        if (project.vTag == 'GA')
+            args.add("${project.vNum}".toString())
+        else
+            args.add("${project.vNum}-${project.vTag}.${new Date().getTime()}".toString())
+    }
+    else {
+        args.add("${project.vNum}-snapshot.${new Date().getTime()}".toString())
+    }
+
+    /** Copy to staging location where we will modify it */
+    t.doFirst {
+        copy {
+            from 'package.json'
+            into 'build/pack-version'
+        }
+    }
+
+    t.execOverrides {
+        it.workingDir = 'build/pack-version'
+    }
+}
+
+/** Gather all the build bits together for publishing or packing */
+def stagePackage = tasks.register('stagePackage') {t ->
+    t.dependsOn runNpmVersion
+
+    sourceDirs.each {t.inputs.dir it }
+    t.inputs.files sourceFiles
+    t.outputs.dir 'build/pack'
+    t.outputs.cacheIf {true}
+
+    t.doFirst {
+        project.delete('build/pack')
+    }
+
+    t.doLast {
+        sourceDirs.each { source ->
+            copy {
+                from source
+                into "build/pack/${source}"
+            }
+        }
+        sourceFiles.each {source ->
+            copy {
+                from source
+                into 'build/pack'
+            }
+        }
+        copy {
+            from 'build/pack-version/package.json'
+            into 'build/pack'
+        }
+    }
+}
+
+/** Creates a tarball package and copies to an output location */
+def runNpmPack = tasks.register('runNpmPack', NpmTask) {
+    it.group 'build'
+    it.dependsOn stagePackage
+
+    it.inputs.dir 'build/pack'
+
+    it.outputs.dir("build/package")
+    it.outputs.cacheIf { true }
+
+    args = ['pack']
+
+    it.execOverrides {
+        it.workingDir = 'build/pack'
+    }
+
+    it.doFirst {
+        project.delete('build/package')
+    }
+
+    it.doLast {
+        copy {
+            from 'build/pack'
+            into 'build/package'
+            include '*.tgz'
+            rename '(.+).tgz', 'rundeck-ui-trellis-vite.tgz'
+        }
+        /** Keeps the output dir pristine for Gradle caching */
+        project.delete fileTree('build/pack').matching {
+            include '*.tgz'
+        }
+    }
+}
+
+tasks.register('runNpmPublish', NpmTask) {t ->
+    t.dependsOn stagePackage
+
+    def dryRun = (findProperty('dryRun') as String ?: 'true').toBoolean()
+
+    List myArgs = ['publish', '--dry-run']
+
+    if (!dryRun)
+        myArgs = myArgs - '--dry-run'
+
+    if (project.findProperty('environment') != 'release') {
+        myArgs += ['--tag', 'snapshot']
+    }
+    args=myArgs
+
+    t.execOverrides {
+        it.workingDir = 'build/pack'
+    }
+}
+
+assemble.dependsOn runNpmBuild
+
+artifacts {
+  lib(file: file(buildDir), name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
+  packages(file: file("$projectDir/build/package/rundeck-ui-trellis-vite.tgz"), type: 'file', builtBy: runNpmPack)
+}

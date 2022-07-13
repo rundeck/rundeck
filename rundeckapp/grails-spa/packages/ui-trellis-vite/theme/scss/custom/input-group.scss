@@ -1,0 +1,33 @@
+.multiple-control-input-group {
+  .input-group-addon-title{
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    cursor: default;
+    width: 100px;
+  }
+  .input-group-addon + .input-group-btn {
+    > .btn {
+      border-radius: 0;
+    }
+    + .input-group-addon {
+      border-right: 0;
+      border-left: 0;
+    }
+  }
+  #runFormExec{
+    border: 1px solid var(--grey-500);
+  }
+  .act_adhoc_history_dropdown{
+    background-color: var(--grey-300);
+  }
+}
+
+.input-group {
+  &.tight {
+    margin-bottom: 0;
+  }
+}
+input.form-control.boxed{
+  border: 1px solid var(--grey-500);
+}

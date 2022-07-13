@@ -1,0 +1,176 @@
+/** Process Flow view styles **/
+// Technical Debt - Tech Debt
+// This file includes "!important" modifiers. These should be removed as soon as possible
+
+div {
+  &.pflowlist {
+    ol {
+      padding-left: 0;
+
+      li {
+        margin-left: 20px;
+        border: 1px solid #cfcfca;
+        padding: 10px !important;
+        margin-bottom: 10px;
+        border-radius: 5px;
+      }
+
+      ul.dropdown-menu {
+        li {
+          padding: 0 !important;
+          border-radius: 0;
+          border: none;
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    &.edit {
+      ol.flowlist {
+        li {
+          .wfitem {
+            border: 1px solid transparent;
+
+            &.autohilite.autoedit:hover {
+              border: 1px dotted #68B3C8;
+            }
+          }
+        }
+
+        ul.dropdown-menu li {
+          margin-left: 0;
+        }
+      }
+    }
+  }
+
+  &.pflow {
+
+    &.inactive {
+      color: gray;
+
+      a {
+        color: gray;
+      }
+    }
+
+    &.warn,
+    &.error {
+      color: red;
+      cursor: pointer;
+    }
+
+    &.missing,
+    &.missingfail {
+      color: gray;
+      font-style: italic;
+    }
+
+    div.error_msg {
+      color: black;
+      background: #eee;
+    }
+
+    span {
+      &.nodename {
+        color: gray;
+      }
+
+      &.item span.cmdname a {
+        /*color:blue;*/
+        font-weight: normal;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+
+    &.inactive span.item span.cmdname a,
+    &.missing span.item span.cmdname a,
+    &.missingfail span.item span.cmdname a {
+      color: gray;
+    }
+
+    pre {
+      margin: 0;
+    }
+  }
+}
+
+// /** Process Flow view styles **/
+//
+// div {
+//   &.pflowlist {
+//     padding: 10px 10px;
+//     border: 1px solid #ddd;
+//     width: auto;
+//     ol {
+//       margin: 0;
+//       padding-left: 0;
+//     }
+//     &.edit {
+//       width: 100%;
+//       margin-right: 10px;
+//       ol.flowlist li {
+//         padding: 2px;
+//       }
+//     }
+//     &.rounded.adhoc {
+//       border: 0;
+//       padding: 0;
+//       margin: 0;
+//     }
+//   }
+//   &.adhoc ol.flowlist li {
+//     list-style: none;
+//   }
+//   &.pflow {
+//     float: left;
+//     width: 100%;
+//     padding: 2px;
+//     padding-left: 20px;
+//     &.static {
+//       float: none;
+//       padding: 2px;
+//     }
+//     &.inactive {
+//       color: gray;
+//       a {
+//         color: gray;
+//       }
+//     }
+//     &.running, &.ok {}
+//     &.warn, &.error {
+//       color: red;
+//       cursor: pointer;
+//     }
+//     &.missing, &.missingfail {
+//       color: gray;
+//       font-style: italic;
+//     }
+//     div.error_msg {
+//       padding: 5px;
+//       color: black;
+//       background: #eee;
+//     }
+//     span {
+//       &.nodename {
+//         color: gray;
+//       }
+//       &.item span.cmdname a {
+//         /*color:blue;*/
+//         font-weight: normal;
+//         &:hover {
+//           text-decoration: underline;
+//         }
+//       }
+//     }
+//     &.inactive span.item span.cmdname a, &.missing span.item span.cmdname a, &.missingfail span.item span.cmdname a {
+//       color: gray;
+//     }
+//     pre {
+//       margin: 0;
+//     }
+//   }
+// }

@@ -1,0 +1,27 @@
+// .btn.arrow-button{
+//   &.btn-sm{
+//     padding: 5px 10px 7px 9px;
+//   }
+//   &.btn-xs{
+//     padding-top: 1px;
+//     padding-bottom: 3px;
+//   }
+//   i{
+//     vertical-align: middle;
+//   }
+// }
+@import "../runstrap/variables";
+
+.arrow-button{
+  color: #66615b;
+  &:hover{
+    color: #484541;
+  }
+}
+
+.buttons .btn + .btn{
+  margin-left: 1em;
+}
+// .dropdown-toggle{
+//   background-color: var(--default-color);
+// }

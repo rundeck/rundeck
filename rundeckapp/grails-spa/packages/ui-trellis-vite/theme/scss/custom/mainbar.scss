@@ -1,0 +1,237 @@
+@import "../runstrap/variables";
+.mainbar {
+  height: 45px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 0;
+  padding-right: 20px;
+  background: var(--mainbar-bg-color);
+
+  box-shadow: var(--box-shadow-bottom-lv1);
+
+  &.navbar {
+    border-bottom: 1px solid darken($bg-mainheader, 10%);
+  }
+
+  .navbar-minimize .btn,
+  li#projectSelect a.dropdown-toggle.btn {
+    margin: 10px 3px 0;
+    height: 38px;
+    width: 38px;
+  }
+
+
+  // Cog
+  .fa-cog,
+  .fa-user {
+    color: var(--font-color);
+  }
+
+  #projectHomeLink {
+    display: flex;
+    align-items: center;
+    align-content: center;
+    
+    span {
+      display: flex;
+    }
+  }
+
+  // #appAdmin {
+  //   margin: 10px 0 0;
+  // }
+
+  // #appUser {
+  //   margin: 5px 0 0 20px;
+  //   font-size: 32px;
+  //   font-weight: lighter;
+  // }
+
+  #appExecMode > span {
+    display: flex;
+  }
+
+  .motd-indicator {
+    .label {
+      font-size: 100%;
+    }
+  }
+}
+
+#nav-rd-home {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 65px;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.mainbar__group {
+  display: flex;
+  align-items: center;
+  height: 100%;
+
+  >li {
+    margin: 0 5px;
+  }
+}
+
+.mainbar__menu {
+  list-style: none;
+  margin-bottom: 0;
+
+  li {
+    position: relative;
+  }
+}
+
+// [Re]Design fit subtitle to content
+// .subtitlebar,
+// .mainbar {
+//   height: 100%;
+// }
+
+.subtitlebar.standard {
+  height: 100%;
+}
+#subtitlebar.has-content{
+  margin-bottom: 20px;
+}
+.subtitlebar.has-content {
+  .navbar-header {
+    padding: 5px 5px 5px 0;
+  }
+}
+
+#navbar-menu {
+  >li.user-button>a {
+    // padding: 10px 15px;
+  }
+
+  >li.user-button>a.btn {
+    margin: 8px 3px;
+  }
+}
+
+.subtitlebar {
+  clear: both;
+}
+
+.subtitlebar,
+.mainbar {
+  .primarylink {
+    display: flex;
+    font-size: 18px;
+
+    >a {
+      display: inline-block;
+    }
+    .primarylink-chevron{
+      margin: 0 8px;
+    }
+  }
+
+  .nav.navbar-nav {
+    li {
+      a {
+        padding: 0;
+
+        &.dropdown-toggle {
+          cursor: pointer;
+        }
+      }
+
+      &.primarylink {
+        a {
+          margin: 0 0 0 10px;
+
+          // @media screen and (max-width: 800px) {
+          //   // media query
+          //   white-space: nowrap;
+          //   overflow: hidden;
+          //   text-overflow: ellipsis;
+          //   width: calc(100% - 65px);
+          // }
+
+
+        }
+      }
+    }
+
+    li.primarylink+li.primarylink {
+      border-left: 1px solid darken($bg-subheader, 10%);
+      margin-left: 10px;
+
+      a {
+        margin-left: 10px;
+      }
+    }
+
+    .dropdown-menu {
+      li {
+        a {
+          padding: 10px 15px;
+        }
+      }
+    }
+  }
+
+  .navbar-toggle {
+    z-index: 1;
+    margin-top: 10px;
+  }
+
+  // sidebar open
+  i.fas.fa-ellipsis-v {
+    display: block;
+  }
+
+  i.fas.fa-ellipsis-h {
+    display: none;
+  }
+
+  // sidebar closed
+  .sidebar-mini & {
+    i.fas.fa-ellipsis-v {
+      display: none;
+    }
+
+    i.fas.fa-ellipsis-h {
+      display: block;
+    }
+  }
+
+}
+
+.subtitlebar {
+  background: var(--background-color-lvl2);
+
+  &.navbar {
+    border-bottom: 1px solid darken($bg-subheader, 10%);
+  }
+
+  &.plain {
+    background: var(--background-color-lvl3);
+  }
+}
+
+.subtitlebar {
+
+  .subtitle-head {
+    .subtitle-head-item {
+      padding: 15px;
+    }
+  }
+}
+
+.searchbar {
+
+  .subtitle-head {
+    .subtitle-head-item {
+      padding-bottom: 15px;
+    }
+  }
+}
+
