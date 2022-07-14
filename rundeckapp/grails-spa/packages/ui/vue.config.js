@@ -14,7 +14,7 @@ module.exports = {
     'components/tour': { entry: './src/components/tour/main.js'},
     'components/version-notification': { entry: './src/components/version-notification/main.js'},
     'components/version': { entry: './src/components/version/main.js'},
-    'components/server-identity': { entry: './src/components/server-identity/main.js'},
+    'components/server-identity': { entry: './src/components/server-identity/serverIdentity.js'},
     'components/community-news-notification': { entry: './src/components/community-news-notification/main.js'},
     'pages/login': { entry: './src/pages/login/main.ts'},
     'pages/project-dashboard': { entry: './src/pages/project-dashboard/main.js'},
