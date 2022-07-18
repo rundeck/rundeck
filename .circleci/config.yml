@@ -277,7 +277,8 @@ jobs:
         type: string
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.14
       - fetch-common-artifacts
       - run:
           name: Test
@@ -391,7 +392,8 @@ jobs:
       - checkout
       - install-node
       - restore-gradle-cache
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.14
       - fetch-common-artifacts
       - fetch-ci-resources
       - run:
