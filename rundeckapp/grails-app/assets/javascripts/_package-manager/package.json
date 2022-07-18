@@ -32,7 +32,7 @@
     "dotenv-webpack": "^7.0.2",
     "install": "^0.13.0",
     "jquery": "1.12.4",
-    "jquery-ui": "1.12.1",
+    "jquery-ui": "1.13.2",
     "jquery-ui-dist": "1.12.1",
     "jquery-ui-timepicker-addon": "1.6.3",
     "knockout": "3.5.1",
