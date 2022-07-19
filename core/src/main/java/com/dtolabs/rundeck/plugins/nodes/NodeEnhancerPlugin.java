@@ -32,6 +32,7 @@ public interface NodeEnhancerPlugin {
 
     /**
      * It allows the node enhancer to indicate that it should be skipped
+     * This provides a way to dinamically disable/enable the enhancer based on the implementation requirements
      * @param projectName project name
      * @return boolean indicates whether this enhancer should be skipped
      */
