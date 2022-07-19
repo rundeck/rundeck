@@ -299,6 +299,10 @@ public class StorageTreeFactory {
                                                                         REMOVE_PATH_PREFIX));
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
+
+        if (Boolean.parseBoolean(config.get("removePrefix")))
+            config.put("prefix", "");
+
         config = expandConfig(config);
         Tree<ResourceMeta> resourceMetaTree = loadPlugin(
                 pluginType,
