@@ -207,7 +207,8 @@ jobs:
           command: |
             source .circleci/circle-shim.sh
             bash scripts/circle-build.sh build
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: Build Docker Images
           command: |
@@ -277,7 +278,8 @@ jobs:
         type: string
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.14
       - fetch-common-artifacts
       - run:
           name: Test
@@ -391,7 +393,8 @@ jobs:
       - checkout
       - install-node
       - restore-gradle-cache
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.14
       - fetch-common-artifacts
       - fetch-ci-resources
       - run:
