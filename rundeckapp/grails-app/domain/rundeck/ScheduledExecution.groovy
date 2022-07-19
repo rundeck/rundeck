@@ -755,6 +755,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         if ('0' != seconds
                 || '*' != year
                 || ('*' in [minute, hour])
+                || dayOfMonth != '?'
                 || [minute, hour].any { it.contains(',') }
                 || [minute, hour, dayOfMonth, dayOfWeek].any { crontabSpecialValue(it) }
                 || crontabSpecialMonthValue(month)) {
