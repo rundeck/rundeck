@@ -33,6 +33,8 @@ import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 import testhelper.RundeckHibernateSpec
 
+import java.sql.Timestamp
+
 /**
  * Created by greg on 4/12/16.
  */
@@ -730,5 +732,101 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         1* es.avgDurationExceeded(_,content)
         result != null
 
+    }
+
+    def "scheduled job quartz checking the same format of dates"() {
+        def serverUUID = UUID.randomUUID().toString()
+        def jobUUID = UUID.randomUUID().toString()
+        def es = Mock(ExecutionService)
+        def eus = Mock(ExecutionUtilService)
+        def jobSchedulesService = Mock(JobSchedulesService)
+        def jobSchedulerService = Mock(JobSchedulerService)
+        def fs = Mock(FrameworkService) {
+            getServerUUID() >> serverUUID
+            getFrameworkProject('AProject')>>Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
+        }
+        AuthContextProvider authContextProvider = Mock(AuthContextProvider){
+            getAuthContextForUserAndRolesAndProject(_, _, _)>>Mock(UserAndRolesAuthContext)
+        }
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                serverNodeUUID: jobUUID,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                scheduled: true,
+                executionEnabled: true,
+                scheduleEnabled: true
+        )
+        se.save(flush:true)
+        Execution e = new Execution(
+                scheduledExecution: se,
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                project: se.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+                )
+        ).save(flush: true)
+        def dataMap = new JobDataMap(
+                [
+                        scheduledExecutionId: se.id.toString(),
+                        executionService    : es,
+                        executionUtilService: eus,
+                        frameworkService    : fs,
+                        bySchedule          : true,
+                        jobSchedulesService : jobSchedulesService,
+                        jobSchedulerService : jobSchedulerService,
+                        authContextProvider : authContextProvider,
+                ]
+        )
+        ExecutionJob job = new ExecutionJob()
+        def aJobKey = JobKey.jobKey('jobname', 'jobgroup')
+
+        def quartzScheduler = Mock(Scheduler)
+        def trigger=Mock(Trigger)
+        def context = Mock(JobExecutionContext) {
+            getJobDetail() >> Mock(JobDetail) {
+                getJobDataMap() >> dataMap
+                getKey() >> aJobKey
+            }
+
+            getScheduler() >> quartzScheduler
+            getTrigger() >> trigger
+        }
+        1 * es.executeAsyncBegin(_, _, e, se, _, _) >>
+                new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
+        given: "trigger has scheduleArgs"
+        1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
+
+        when: "job is executed"
+        job.execute(context)
+
+        then: "execution args are set"
+        0 * quartzScheduler.deleteJob(aJobKey)
+        1 * es.createExecution(_, _, null, { it.argString == '-opt1 test1' }) >> e
+
+        then: "verifying date format"
+        Execution newEx = job.fetchExecution(e.id)
+        checkFormatDate(newEx.dateStarted) && checkFormatDate(newEx.dateCompleted)
+    }
+
+    boolean checkFormatDate(Object dateVerify) {
+        if (dateVerify instanceof Timestamp) {
+            return true;
+        } else {
+            false
+        }
     }
 }
