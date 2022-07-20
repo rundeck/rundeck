@@ -21,7 +21,6 @@ export RD_OPTS="-Dfile.encoding=utf-8"
 echo "API_KEY=$API_KEY"
 
 wait_for(){
-    local FILE=$1
     # Wait for resource file to be created
     MAX_ATTEMPTS=30
     SLEEP=10
@@ -34,7 +33,7 @@ wait_for(){
 
         (( count += 1 ))  ; # increment attempts counter.
         (( count == MAX_ATTEMPTS )) && {
-            echo >&2 "FAIL: Reached max attempts to find see $FILE. Exiting."
+            echo >&2 "FAIL: Reached max attempts to start. Exiting."
             return 1
         }
         
@@ -42,12 +41,57 @@ wait_for(){
     done
 }
 
-wait_for
+setup_project_api(){
+  local FARGS=("$@")
+    local DIR=${FARGS[0]}
+    local PROJ=${FARGS[1]}
+    local TOK=${FARGS[2]}
+    local XFILE=${FARGS[3]}
+    echo "setup test project: $PROJ in dir $DIR"
+    local XJSON=
+    if [ -n "$XFILE" ] ; then
+      XJSON=$(cat "$XFILE" | grep -v '^#' | sed 's/^/"/' | sed 's/=/":"/' | sed 's/$/",/' )
+    fi
+    local PDIR=$DIR/projects/$PROJ/etc
 
-#sudo chown -R $USERNAME:$USERNAME $TEST_DIR
+    mkdir -p "$PDIR"
+    local PFILE=$DIR/projects/$PROJ/etc/project.json
+    cat >"$PFILE"<<END
+  {
+    "name":"$PROJ",
+    "config":{
+      "project.name":"$PROJ",
+      "project.nodeCache.delay":"30",
+      "project.nodeCache.enabled":"true",
+      "project.ssh-authentication":"privateKey",
+      "resources.source.1.config.file":"$DIR/projects/\${project.name}/etc/resources.xml",
+      "resources.source.1.config.format":"resourcexml",
+      "resources.source.1.config.generateFileAutomatically":"true",
+      "resources.source.1.config.includeServerNode":"true",
+      "resources.source.1.config.requireFileExists":"false",
+      "resources.source.1.type":"file",
+      "service.FileCopier.default.provider":"jsch-scp",
+      "service.NodeExecutor.default.provider":"jsch-ssh",
+      $XJSON
+      "_":"ignored"
+      }
+    }
+END
+    curl -H "X-rundeck-auth-token:$TOK" -H "content-type:application/json" -H "accept:application/json" \
+      --data-binary @"$PFILE" \
+      $RD_URL/api/41/projects
+}
+
+wait_for
 
 export PATH=$PATH:$HOME/tools/bin
 export RDECK_BASE=/usr/local/tomcat/webapps/rundeck/rundeck
+
+# create 'test' project
+setup_project_api $RDECK_BASE test $API_KEY
+
+#sudo chown -R $USERNAME:$USERNAME $TEST_DIR
+
 #source $RDECK_BASE/etc/profile
 
 echo "starting test.sh"

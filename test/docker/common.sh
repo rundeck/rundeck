@@ -3,7 +3,7 @@
 set -euo pipefail
 
 export RUNDECK_VERSION=${RUNDECK_VERSION:-2.9.2}
-export CLI_VERS=${CLI_VERS:-1.0.15-1}
+export CLI_VERS=${CLI_VERS:-1.4.3-1}
 
 # Builds the rdtest:latest image which is required as a base image by many test images
 build_rdtest_docker(){
