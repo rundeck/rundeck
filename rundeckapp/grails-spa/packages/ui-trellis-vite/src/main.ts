@@ -63,10 +63,17 @@ import RundeckVersion from './components/version/RundeckVersionDisplay.vue'
 // import WebhookSelectItem from './components/widgets/webhook-select/WebhookSelectItem.vue'
 // import WebhookSelect from './components/widgets/webhook-select/WebhookSelect.vue'
 // 
+
+/*
 import Tab from './components/containers/tabs/Tab'
 import TabBar from './components/containers/tabs/TabBar.vue'
 import TabContent from './components/containers/tabs/TabContent.vue'
 import Tabs from './components/containers/tabs/Tabs'
+*/
+
+
+import Tabs from './components/containers/tabs/Tabs.vue'
+import Tab from './components/containers/tabs/Tab.vue'
 
 import { URL } from 'url'
 import {RundeckToken} from './interfaces/rundeckWindow'
@@ -76,10 +83,14 @@ export {
   //@@FirstRun,
   CopyBox,
   Drawer,
+  /*
   Tab,
   TabBar,
   TabContent,
   Tabs,
+  */
+  Tabs,
+  Tab,
 //   logEntry,
 //   logEntryFlex,
 //   logViewer,

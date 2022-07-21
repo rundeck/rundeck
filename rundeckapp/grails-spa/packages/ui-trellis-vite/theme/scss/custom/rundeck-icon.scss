@@ -3,9 +3,9 @@
   display: inline-block;
   vertical-align: middle;
   background-repeat: no-repeat;
-
+  
   &.app-logo{
-    background-image: url("../images/logos/rundecklogo.svg");
+    background-image: url("/assets/static/ui-trellis-vite/app/img/rundecklogo.svg");
     // background-image: url("/static/images/rundeck2-icon-32.png");
     background-size: 20px 20px;
     height: 20px;

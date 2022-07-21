@@ -19,6 +19,7 @@
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "scripts": {
     "dev": "vite -c vite.dev.js",
+    "build:app": "vite build -c vite.app.js",
     "build": "vite build",
     "dev:build": "npm install && npm run build",
     "ci:build": "npm ci && npm run build"

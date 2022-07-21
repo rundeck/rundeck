@@ -51,6 +51,9 @@ export default Vue.extend({
 </script>
 
 <style scoped lang="scss">
+.caca-switch{
+    background-color: caca;
+}
 .switch {
     --animation-duration: calc(250ms * var(--animation-scale));
     background-color: var(--grey-500);
