@@ -89,7 +89,7 @@ class ExecutionsCleanUp implements InterruptableJob {
                 re.delete()
             }
             //delete all reports
-            ExecReport.findAllByJcExecId(e.id.toString()).each { rpt ->
+            ExecReport.findAllByExecutionId(e.id).each { rpt ->
                 rpt.delete()
             }
 

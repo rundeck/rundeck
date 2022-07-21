@@ -500,7 +500,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         )
 
         then:
-        params.jcExecId == 11
+        params.executionId == 11
         params.jcJobId == 'abc'
         params.reportId == 'job1'
         params.adhocExecution == false
@@ -1208,6 +1208,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateCompleted = new Date()
         execution.status = 'succeeded'
         assert execution.save()
+        ExecReport execReport = ExecReport.fromExec(execution).save()
+        assert execReport!=null
+        def erptid=execReport.id
         def eauth = Mock(AuthorizingExecution){
             getResource()>>execution
         }
@@ -1223,6 +1226,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         1 * service.logFileStorageService.getExecutionFiles(execution,_,_)>>[:]
         result.success
+        ExecReport.get(erptid)==null
     }
 
     def "delete execution running"() {
