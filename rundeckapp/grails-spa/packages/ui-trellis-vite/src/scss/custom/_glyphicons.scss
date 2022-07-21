@@ -6,13 +6,20 @@
 // inline element with the appropriate classes, like so:
 //
 // <a href="#"><span class="glyphicon glyphicon-star"></span> Star</a>
+$font-asset-url: '/assets/static/ui-trellis-vite/fonts';
+
 
 @at-root {
   // Import the fonts
   @font-face {
     font-family: 'Glyphicons Halflings';
-    src: url('../fonts/glyphicons-halflings-regular.eot');
-    src: url('../fonts/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), url('../fonts/glyphicons-halflings-regular.woff2') format('woff2'), url('../fonts/glyphicons-halflings-regular.woff') format('woff'), url('../fonts/glyphicons-halflings-regular.ttf') format('truetype'), url('../fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
+    src: url($font-asset-url+'/glyphicons-halflings-regular.eot');
+    src: 
+    url($font-asset-url+'/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), 
+    url($font-asset-url+'/glyphicons-halflings-regular.woff2') format('woff2'), 
+    url($font-asset-url+'/glyphicons-halflings-regular.woff') format('woff'), 
+    url($font-asset-url+'/glyphicons-halflings-regular.ttf') format('truetype'), 
+    url($font-asset-url+'/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
   }
 }
 
@@ -21,7 +28,7 @@
   position: relative;
   top: 1px;
   display: inline-block;
-  font-family: "Glyphicons Halflings";
+  font-family: 'Glyphicons Halflings';
   font-style: normal;
   font-weight: normal;
   line-height: 1;

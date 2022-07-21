@@ -18,8 +18,8 @@
   },
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "scripts": {
-    "dev": "vite -c vite.dev.js",
-    "build:app": "vite build -c vite.app.js",
+    "dev": "vite -c vite.dev.js --mode development",
+    "build:app": "vite build -c vite.app.js --mode production",
     "build": "vite build",
     "dev:build": "npm install && npm run build",
     "ci:build": "npm ci && npm run build"
@@ -52,7 +52,7 @@
     "unplugin-icons": "^0.13.3",
     "unplugin-vue-components": "^0.18.0",
     "unplugin-vue2-script-setup": "^0.10.0",
-    "vite": "^2.8.6",
+    "vite": "^2.9.14",
     "vite-plugin-vue2": "^1.9.3",
     "vite-plugin-windicss": "^1.8.3",
     "vue-template-compiler": "^2.6.14"

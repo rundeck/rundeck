@@ -1,4 +1,6 @@
 import path from "path";
+const pathSrc = path.resolve(__dirname, "./src");
+
 import { defineConfig } from "vite";
 import { createVuePlugin as Vue2 } from 'vite-plugin-vue2'
 
@@ -15,17 +17,8 @@ const config = defineConfig({
   plugins: [
     Vue2(),
   ],
-  /*css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: `
-          @import "./theme/scss/app.scss";
-        `
-      }
-    }
-  },*/
   build: {
-    outDir: '../../../grails-app/assets/provided/static/ui-trellis-vite/app/',
+    outDir: '../../../grails-app/assets/provided/static/ui-trellis-vite/',
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {

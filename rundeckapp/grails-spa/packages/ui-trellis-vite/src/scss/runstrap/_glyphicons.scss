@@ -6,23 +6,18 @@
 // inline element with the appropriate classes, like so:
 //
 // <a href="#"><span class="glyphicon glyphicon-star"></span> Star</a>
-$woff-glyphicons-url: '/assets/static/ui-trellis-vite/app/woff/';
-$woff2-glyphicons-url: '/assets/static/ui-trellis-vite/app/woff2/';
-$ttf-glyphicons-url: '/assets/static/ui-trellis-vite/app/ttf/';
-$eot-glyphicons-url: '/assets/static/ui-trellis-vite/app/eot/';
-$svg-glyphicons-url: '/assets/static/ui-trellis-vite/app/img/';
 
 @at-root {
   // Import the fonts
   @font-face {
     font-family: 'Glyphicons Halflings';
-    src: url($eot-glyphicons-url+'glyphicons-halflings-regular.eot');
+    src: url('#{$static-asset}/fonts/glyphicons-halflings-regular.eot');
     src: 
-    url($eot-glyphicons-url+'glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'), 
-    url($woff2-glyphicons-url+'glyphicons-halflings-regular.woff2') format('woff2'), 
-    url($woff-glyphicons-url+'glyphicons-halflings-regular.woff') format('woff'), 
-    url($ttf-glyphicons-url+'glyphicons-halflings-regular.ttf') format('truetype'), 
-    url($svg-glyphicons-url+'glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
+    url('#{$static-asset}/fonts/glyphicons-halflings-regular.eot?#iefix') format('embedded-opentype'),
+    url('#{$static-asset}/fonts/glyphicons-halflings-regular.woff2') format('woff2'),
+    url('#{$static-asset}/fonts/glyphicons-halflings-regular.woff') format('woff'),
+    url('#{$static-asset}/fonts/glyphicons-halflings-regular.ttf') format('truetype'),
+    url('#{$static-asset}/fonts/glyphicons-halflings-regular.svg#glyphicons_halflingsregular') format('svg');
   }
 }
 
@@ -31,7 +26,7 @@ $svg-glyphicons-url: '/assets/static/ui-trellis-vite/app/img/';
   position: relative;
   top: 1px;
   display: inline-block;
-  font-family: 'Glyphicons Halflings';
+  font-family: "Glyphicons Halflings";
   font-style: normal;
   font-weight: normal;
   line-height: 1;

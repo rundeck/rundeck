@@ -68,7 +68,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import '../theme/scss/app.scss';
+// import '../theme/scss/app.scss';
 import Tabs from '@/components/containers/tabs/Tabs.vue' 
 import Tab from '@/components/containers/tabs/Tab.vue' 
 import InputSwitch from '@/components/inputs/Switch.vue'
@@ -84,7 +84,8 @@ export default {
   data() {
     return {
       theme: 'light',
-      ivalue: true
+      ivalue: true,
+
     }
   },
   mounted(){
@@ -105,7 +106,9 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
+@import "@/scss/app.scss";
+
 #app {
   padding: 20px;
 }

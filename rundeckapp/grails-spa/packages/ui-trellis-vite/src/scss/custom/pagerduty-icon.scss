@@ -5,7 +5,7 @@
     background-repeat: no-repeat;
   
     &.app-logo{
-      background-image: url("../images/logos/pagerdutylogo.svg");
+      background-image: url("#{$logos-asset}/pagerdutylogo.svg");
       background-size: 20px 20px;
       height: 20px;
       width: 20px;

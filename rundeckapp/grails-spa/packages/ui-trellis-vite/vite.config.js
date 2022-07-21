@@ -27,7 +27,7 @@ const config = defineConfig({
     preprocessorOptions: {
       scss: {
         additionalData: `
-          @import "./theme/scss/app.scss";
+          @import "./src/scss/app.scss";
         `
       }
     }
