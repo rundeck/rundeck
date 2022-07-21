@@ -519,12 +519,8 @@ jobs:
       - sign
       - test-war
       - package-cloud-install
-      - when:
-          condition:
-            matches: { pattern: "/^v.*/", value: <<pipeline.parameters.CIRCLE_UPSTREAM_TAG>> }
-          steps:
-            - publish
-            - publish_war
+      - publish
+      - publish_war
 
   trigger-packaging:
     <<: *defaults

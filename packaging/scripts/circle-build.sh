@@ -33,60 +33,55 @@ docker_login() {
 
 build() {
     local RELEASE_NUM="1"
-    echo "build"
-#    bash packaging/scripts/circle-build.sh fetch_artifacts
-#    (
-#        cd packaging
-#        ./gradlew \
-#            -PpackageRelease=$RELEASE_NUM \
-#            clean packageArtifacts
-#    )
+    bash packaging/scripts/circle-build.sh fetch_artifacts
+    (
+        cd packaging
+        ./gradlew \
+            -PpackageRelease=$RELEASE_NUM \
+            clean packageArtifacts
+    )
 }
 
 build_pro() {
     local RELEASE_NUM="1"
-    echo "build pro"
 
-#    bash packaging/scripts/circle-build.sh fetch_artifacts
-#    (
-#        cd packaging
-#        ./gradlew \
-#            -PpackageRelease=$RELEASE_NUM \
-#            -PpackageInclude='.+(enterprise).+' \
-#            clean packageArtifacts
-#    )
+    bash packaging/scripts/circle-build.sh fetch_artifacts
+    (
+        cd packaging
+        ./gradlew \
+            -PpackageRelease=$RELEASE_NUM \
+            -PpackageInclude='.+(enterprise).+' \
+            clean packageArtifacts
+    )
 }
 
 sign() {
-  echo "sign packages"
-#    bash packaging/scripts/sign-packages.sh
+  bash packaging/scripts/sign-packages.sh
 }
 
 test_packages() {
-  echo "test_packages"
-#    bash test/test-docker-install-deb.sh
-#    bash test/test-docker-install-rpm.sh
+  bash test/test-docker-install-deb.sh
+  bash test/test-docker-install-rpm.sh
 }
 
 test_pro_packages() {
-  echo "test_pro_packages"
-#    docker_login
-#    test_packages
+  docker_login
+  test_packages
 }
 
 publish() {
   echo "publish function"
-#    (
-#        cd packaging
-#        for PACKAGE in deb rpm; do
-#            ./gradlew --info \
-#                -PpackagePrefix="rundeck-" \
-#                -PpackageType=$PACKAGE \
-#                -PpackageOrg=rundeck \
-#                -PpackageRevision=1 \
-#                publish
-#        done
-#    )
+    (
+        cd packaging
+        for PACKAGE in deb rpm; do
+            ./gradlew --info \
+                -PpackagePrefix="rundeck-" \
+                -PpackageType=$PACKAGE \
+                -PpackageOrg=rundeck \
+                -PpackageRevision=1 \
+                publish
+        done
+    )
 }
 
 publish_pro() {
@@ -108,14 +103,14 @@ publish_pro() {
 
 publish_war() {
   echo "publish war function"
-#    (
-#        cd packaging
-#        ./gradlew --info \
-#            -PpackageType=war \
-#            -PpackageOrg=rundeck \
-#            -PpackageRevision=1 \
-#            publishWar
-#    )
+    (
+        cd packaging
+        ./gradlew --info \
+            -PpackageType=war \
+            -PpackageOrg=rundeck \
+            -PpackageRevision=1 \
+            publishWar
+    )
 }
 
 publish_pro_war() {
