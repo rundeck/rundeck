@@ -159,7 +159,7 @@
     <asset:stylesheet href="static/css/chunk-vendors.css"/>
     <asset:stylesheet href="static/css/chunk-common.css"/>
     -->
-    <asset:stylesheet href="static/ui-trellis-vite/app/css/index.css"/>
+    <asset:stylesheet href="static/ui-trellis-vite/css/index.css"/>
     <asset:javascript src="static/js/chunk-common.js"/>
     <asset:javascript src="static/js/chunk-vendors.js"/>
     %{-- Central should be loaded as soon as before any other Vue project code --}%
