@@ -570,6 +570,7 @@ stages:
   - PAM Test
   build: &stage-build
     - Build
+    - Build and publish
 
 filters:
   all: &filter-default
@@ -597,6 +598,11 @@ workflows:
           <<: *slack-fail-post-step
           filters:
             tags: { ignore: /.*/ }
+      - build_and_publish:
+          name: Build and publish
+          filters:
+            branches: { ignore: /.*/ }
+            tags: { only: /^v.*$/ }
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
@@ -711,11 +717,6 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-      - build_and_publish:
-          name: Build and publish
-          filters:
-            branches: { ignore: /.*/ }
-            tags: { only: /^v.*$/ }
 
   nightly:
     triggers:
