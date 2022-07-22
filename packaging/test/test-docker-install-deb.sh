@@ -5,6 +5,8 @@ export DIR=test/docker/debinstall
 export COMMON="ubuntu1604"
 export PACKAGE_TYPE="deb"
 
+echo "$LDIR"
+
 . "$LDIR/test-docker-install-common.sh"
 
 build
