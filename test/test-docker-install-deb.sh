@@ -9,6 +9,7 @@ DIR=packaging/test/docker/debinstall
 TAG="rd$NAME"
 
 build(){
+  docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
 	docker build -t "$TAG-util" -f docker/installcommon/ubuntu.Dockerfile docker/installcommon
 	docker build "$DIR" -t "$TAG"
 }
