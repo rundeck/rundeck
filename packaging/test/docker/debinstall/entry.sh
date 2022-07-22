@@ -4,7 +4,7 @@
 set -e
 
 FLAV=${EDITION:-cluster}
-DIR=$HOME/build/distributions
+DIR=$HOME/packaging/packaging/build/distributions
 
 
 install_rundeck(){
