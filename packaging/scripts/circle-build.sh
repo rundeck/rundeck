@@ -67,8 +67,8 @@ sign() {
 }
 
 test_packages() {
-  bash test/test-docker-install-deb.sh
-  bash test/test-docker-install-rpm.sh
+  bash packaging/test/test-docker-install-deb.sh
+  bash packaging/test/test-docker-install-rpm.sh
 }
 
 test_pro_packages() {
