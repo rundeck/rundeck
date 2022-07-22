@@ -34,6 +34,11 @@ docker_login() {
 build() {
     local RELEASE_NUM="1"
     bash packaging/scripts/circle-build.sh fetch_artifacts
+    for file in packaging/*; do
+      echo "${file##*/}"
+    done
+    echo "--------WORKINGDIR--------"
+    echo "$PWD"
     (
         cd packaging
         ./gradlew \
