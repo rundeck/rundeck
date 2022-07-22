@@ -16,7 +16,7 @@ build(){
   echo "--------Enter .sh build method--------"
   echo "$PWD"
 	local TAG="rdpro-$COMMON"
-	docker build -t "$TAG-util" -f test/docker/installcommon/"$COMMON".Dockerfile test/docker/installcommon
+	docker build -t "$TAG-util" -f packaging/test/docker/installcommon/"$COMMON".Dockerfile packaging/test/docker/installcommon
 	docker build "$DIR" -t "$TAG"
 	echo "--------Leave .sh build method--------"
 }
