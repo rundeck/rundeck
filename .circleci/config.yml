@@ -590,7 +590,7 @@ stages:
   - Twistlock Scan
   build: &stage-build
     - Build
-    - Build and publish
+    - build_and_publish
 
 filters:
   all: &filter-default
