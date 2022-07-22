@@ -34,7 +34,7 @@ docker_login() {
 build() {
     local RELEASE_NUM="1"
     echo  "---------Entering fetch artifcts---------"
-    bash packaging/scripts/circle-build.sh fetch_artifacts
+    bash packaging/packaging/scripts/circle-build.sh fetch_artifacts
 #    for file in packaging/*; do
 #      echo "${file##*/}"
 #    done
