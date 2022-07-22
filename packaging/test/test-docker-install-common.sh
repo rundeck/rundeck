@@ -6,7 +6,7 @@ readonly ARGS=("$@")
 
 list_debs(){
   echo "$PWD"
-	PATTERN="packaging/packaging/build/distributions/*.${PACKAGE_TYPE}"
+	PATTERN="packaging/build/distributions/*.${PACKAGE_TYPE}"
 	echo $PATTERN
 }
 
