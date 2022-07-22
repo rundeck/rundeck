@@ -570,7 +570,6 @@ stages:
   - PAM Test
   build: &stage-build
     - Build
-    - build_and_publish
 
 filters:
   all: &filter-default
@@ -598,11 +597,6 @@ workflows:
           <<: *slack-fail-post-step
           filters:
             tags: { ignore: /.*/ }
-      - build_and_publish:
-          name: Build and publish
-          filters:
-            branches: { ignore: /.*/ }
-            tags: { only: /^v.*$/ }
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
@@ -711,6 +705,12 @@ workflows:
           context:
             - slack-secrets
           <<: *slack-fail-post-step
+      - build_and_publish:
+          name: Release Build
+          requires: *stage-build
+          filters:
+            branches: { ignore: /.*/ }
+            tags: { only: /^v.*$/ }
       - maven-publish:
           name: Maven Publish
           requires: *stage-build
@@ -733,6 +733,11 @@ workflows:
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
+      - build_and_publish:
+          name: Release Build
+          filters:
+            branches: { ignore: /.*/ }
+            tags: { only: /^v.*$/ }
       - test-gradle:
           <<: *filter-default
           name: Gradle Test
