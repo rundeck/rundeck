@@ -595,8 +595,6 @@ workflows:
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
-          filters:
-            tags: { ignore: /.*/ }
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
@@ -733,11 +731,6 @@ workflows:
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
-      - build_and_publish:
-          name: Release Build
-          filters:
-            branches: { ignore: /.*/ }
-            tags: { only: /^v.*$/ }
       - test-gradle:
           <<: *filter-default
           name: Gradle Test
