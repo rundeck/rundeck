@@ -595,6 +595,8 @@ workflows:
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
+          filters:
+            tags: { ignore: /.*/ }
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
@@ -703,12 +705,6 @@ workflows:
           context:
             - slack-secrets
           <<: *slack-fail-post-step
-      - trigger-packaging:
-          name: Trigger packaging-core
-          requires: *stage-build
-          filters:
-            branches: {ignore: /.*/}
-            tags: {only: /^v.*$/}
       - maven-publish:
           name: Maven Publish
           requires: *stage-build
