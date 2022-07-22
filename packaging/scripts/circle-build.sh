@@ -46,6 +46,7 @@ build() {
             -PpackageRelease=$RELEASE_NUM \
             clean packageArtifacts
     )
+      echo  "---------End of packaging build---------"
 }
 
 build_pro() {
