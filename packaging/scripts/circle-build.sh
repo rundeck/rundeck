@@ -34,13 +34,13 @@ docker_login() {
 build() {
     local RELEASE_NUM="1"
     bash packaging/scripts/circle-build.sh fetch_artifacts
-    for file in packaging/*; do
-      echo "${file##*/}"
-    done
-    echo "--------WORKINGDIR--------"
-    echo "$PWD"
+#    for file in packaging/*; do
+#      echo "${file##*/}"
+#    done
+#    echo "--------WORKINGDIR--------"
+#    echo "$PWD"
     (
-        cd packaging
+        cd packaging/packaging
         ./gradlew \
             -PpackageRelease=$RELEASE_NUM \
             clean packageArtifacts
@@ -52,7 +52,7 @@ build_pro() {
 
     bash packaging/scripts/circle-build.sh fetch_artifacts
     (
-        cd packaging
+        cd packaging/packaging
         ./gradlew \
             -PpackageRelease=$RELEASE_NUM \
             -PpackageInclude='.+(enterprise).+' \
@@ -77,7 +77,7 @@ test_pro_packages() {
 publish() {
   echo "publish function"
     (
-        cd packaging
+        cd packaging/packaging
         for PACKAGE in deb rpm; do
             ./gradlew --info \
                 -PpackagePrefix="rundeck-" \
@@ -109,7 +109,7 @@ publish_pro() {
 publish_war() {
   echo "publish war function"
     (
-        cd packaging
+        cd packaging/packaging
         ./gradlew --info \
             -PpackageType=war \
             -PpackageOrg=rundeck \
