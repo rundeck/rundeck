@@ -63,7 +63,7 @@ build_pro() {
 }
 
 sign() {
-  bash packaging/scripts/sign-packages.sh
+  bash packaging/packaging/scripts/sign-packages.sh
 }
 
 test_packages() {
