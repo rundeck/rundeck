@@ -5,7 +5,7 @@ set -euo pipefail
 readonly ARGS=("$@")
 
 list_debs(){
-  echo "$PWD"
+#  echo "$PWD"
 	PATTERN="packaging/build/distributions/*.${PACKAGE_TYPE}"
 	echo $PATTERN
 }
