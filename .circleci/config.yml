@@ -452,7 +452,9 @@ workflows:
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
-      - setup-twistlock-scan
+      - setup-twistlock-scan:
+          - requires:
+              - build
       - twistcli/scan-image:
           requires:
             - setup-twistlock-scan
