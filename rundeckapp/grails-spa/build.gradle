@@ -70,6 +70,25 @@ tasks.register("runNpmBuild", NpmTask) {
     }
 }
 
+tasks.register("runNpmBuildApp", NpmTask) {
+    dependsOn configurations.uiTrellisVite
+
+    inputs.files(configurations.uiTrellis.allArtifacts)
+
+    inputs.dir 'packages/ui-trellis-vite/src'
+
+
+    def npmCommand = System.env.CI ?
+      'ci:build:app' :
+      'dev:build:app'
+
+    args = ['run', npmCommand]
+
+    execOverrides {
+      it.workingDir = './packages/ui-trellis-vite'
+    }
+}
+
 tasks.register("runNpmBuildVite", NpmTask) {
     dependsOn configurations.uiTrellisVite
 
@@ -85,6 +104,7 @@ tasks.register("runNpmBuildVite", NpmTask) {
 
     args = ['run', npmCommand]
 }
+
 
 assemble.dependsOn runNpmBuild
 
