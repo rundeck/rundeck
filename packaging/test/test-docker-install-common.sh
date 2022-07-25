@@ -5,8 +5,7 @@ set -euo pipefail
 readonly ARGS=("$@")
 
 list_debs(){
-#  echo "$PWD"
-	PATTERN="packaging/build/distributions/*.${PACKAGE_TYPE}"
+	PATTERN="build/distributions/*.${PACKAGE_TYPE}"
 	echo $PATTERN
 }
 
@@ -19,6 +18,9 @@ build(){
 
 run(){
 	local TAG="rdpro-$COMMON"
+	echo "---------- PWD -------------"
+	echo "$PWD"
+	echo "---------- list_debs -------------"
 	# for EDITION in cluster dr team ; do
 	DEBS=$(list_debs)
 	for DEB in $DEBS; do
