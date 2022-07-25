@@ -458,7 +458,7 @@ workflows:
             - setup-twistlock-scan
           context: tl_scan_context
           image: 'rundeck/rundeck:latest'
-          imagetar: image.tar
+          image-tar: image.tar
           vuln-thresh: critical
           comp-thresh: ''
           only-fixed: true
