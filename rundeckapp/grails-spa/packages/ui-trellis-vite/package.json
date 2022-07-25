@@ -22,7 +22,9 @@
     "build:app": "vite build -c vite.app.js --mode production",
     "build": "vite build",
     "dev:build": "npm install && npm run build",
-    "ci:build": "npm ci && npm run build"
+    "dev:build:app": "npm install && npm run build:app",
+    "ci:build": "npm ci && npm run build",
+    "ci:build:app": "npm ci && npm run build:app"
   },
   "dependencies": {
     "@popperjs/core": "^2.8.4",
