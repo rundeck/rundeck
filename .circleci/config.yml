@@ -458,11 +458,8 @@ workflows:
           requires:
             - setup-twistlock-scan
           context: tl_scan_context
-          image: 'rundeck/rundeck:latest'
+          image: 'rundeck/rundeck:SNAPSHOT'
           image-tar: image.tar
-          vuln-thresh: critical
-          comp-thresh: ''
-          only-fixed: true
 #      - test-gradle:
 #          <<: *filter-no-tags
 #          name: Gradle Test
