@@ -61,6 +61,7 @@ orbs:
   node: circleci/node@5.0.0
   trigger: rundeck/trigger-pipeline@0.0.5
   slack: circleci/slack@4.4.0
+  twistcli: twistlock/twistcli-scan@1.0.5
 
 defaults: &defaults
   working_directory: ~/repo
@@ -256,6 +257,16 @@ jobs:
                   fetch_common_resources
                   DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
+  setup-twistlock-scan:
+    executor: twistcli/default
+    steps:
+      - run: mkdir -p workspace
+      - run: docker save rundeck/rundeck:latest -o workspace/image.tar
+      - persist_to_workspace:
+         root: workspace
+         paths:
+           - image.tar
+
   test-gradle:
     <<: *defaults
     machine:
@@ -441,6 +452,16 @@ workflows:
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
+      - setup-twistlock-scan
+      - twistcli/scan-image:
+          requires:
+            - setup-twistlock-scan
+          context: tl_scan_context
+          image: 'rundeck/rundeck:latest'
+          imagetar: image.tar
+          vuln-thresh: critical
+          comp-thresh: ''
+          only-fixed: true
       - test-gradle:
           <<: *filter-no-tags
           name: Gradle Test
