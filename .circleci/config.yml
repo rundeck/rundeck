@@ -257,16 +257,56 @@ jobs:
                   fetch_common_resources
                   DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
-  setup-twistlock-scan:
+#  setup-twistlock-scan:
+#    executor: twistcli/default
+#    steps:
+#      - run: mkdir -p workspace
+#      - run: docker pull rundeck/rundeck:SNAPSHOT
+#      - run: docker save rundeck/rundeck:SNAPSHOT -o workspace/image.tar
+#      - persist_to_workspace:
+#         root: workspace
+#         paths:
+#           - image.tar
+  twist-scan-image:
     executor: twistcli/default
+    parameters:
+      tl_user:
+        description: The Twistlock Console user with the CI User role
+        type: string
+        default: $TL_USER
+      tl_pass:
+        description: The Twistlock Console user's password
+        type: env_var_name
+        default: $TL_PASS
+      workspace-name:
+        description: Name of workspace to docker save the image-tar into so it can be scanned by orb
+        type: string
+        default: workspace
+      image-tar:
+        description: The name of the image tar file stored in the workspace -- defaults to image.tar
+        type: string
+        default: image.tar
+      image:
+        description: The name of the image to scan -- myimage or myorg/myimage or myorg/myimage:latest
+        type: string
     steps:
       - run: mkdir -p workspace
       - run: docker pull rundeck/rundeck:SNAPSHOT
       - run: docker save rundeck/rundeck:SNAPSHOT -o workspace/image.tar
       - persist_to_workspace:
-         root: workspace
-         paths:
-           - image.tar
+          root: workspace
+          paths:
+            - image.tar
+      - install:
+          tl_user: <<parameters.tl_user>>
+          tl_pass: <<parameters.tl_pass>>
+          tl_console_url: <<parameters.tl_console_url>>
+      - load:
+          tl_workspace_name: <<parameters.workspace-name>>
+          tl_image_tar: <<parameters.image-tar>>
+      - run: ./twistcli images scan --details -address <<parameters.tl_console_url>> -u <<parameters.tl_user>> -p ${<<parameters.tl_pass>>} --output-file scan_result.json <<parameters.tl_image>>
+      - run: exit "$(cat scan_result.json | jq '.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical')"
+
 
   test-gradle:
     <<: *defaults
@@ -453,10 +493,9 @@ workflows:
 #          <<: *filter-default
 #          name: Build
 #          <<: *slack-fail-post-step
-      - setup-twistlock-scan
       - twistcli/scan-image:
           requires:
-            - setup-twistlock-scan
+            - Build
           context: tl_scan_context
           image: 'rundeck/rundeck:SNAPSHOT'
           image-tar: image.tar
