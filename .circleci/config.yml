@@ -305,11 +305,11 @@ jobs:
           root: workspace
           paths:
             - image.tar
-      - install:
+      - twistcli/install:
           tl_user: <<parameters.tl_user>>
           tl_pass: <<parameters.tl_pass>>
           tl_console_url: <<parameters.tl_console_url>>
-      - load:
+      - twistcli/load:
           tl_workspace_name: <<parameters.workspace-name>>
           tl_image_tar: <<parameters.image-tar>>
       - run: ./twistcli images scan --details -address <<parameters.tl_console_url>> -u <<parameters.tl_user>> -p ${<<parameters.tl_pass>>} --output-file scan_result.json <<parameters.tl_image>>
