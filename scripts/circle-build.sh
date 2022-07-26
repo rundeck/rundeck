@@ -55,7 +55,6 @@ buildDocker() {
     echo "==> ECR_BUILD_TAG: $ECR_BUILD_TAG"
     echo "==> ECR_BRANCH_TAG: $ECR_BRANCH_TAG"
     echo "==> CLEAN_TAG: ${CLEAN_TAG}"
-    echo "==> CLEAN_TAG: $CI_BRANCH_TAG"
 
     # CircleCI tag builds do not have a branch set
     if [[ ! -z "${CLEAN_TAG}" ]] ; then
