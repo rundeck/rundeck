@@ -270,12 +270,10 @@ jobs:
 
   twistlock-scan-image:
     <<: *defaults
-    executor: gradle-docker
+    executor:
+      machine: true
 
     steps:
-      - checkout
-      - setup_remote_docker:
-          version: 20.10.14
       - fetch-common-artifacts
       - run:
           name: Pull Rundeck Image
