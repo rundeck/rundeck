@@ -256,65 +256,6 @@ jobs:
                   fetch_common_resources
                   DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
-#  setup-twistlock-scan:
-#    executor: twistcli/default
-#    steps:
-#      - run: mkdir -p workspace
-#      - run: docker pull rundeck/rundeck:SNAPSHOT
-#      - run: docker save rundeck/rundeck:SNAPSHOT -o workspace/image.tar
-#      - persist_to_workspace:
-#         root: workspace
-#         paths:
-#           - image.tar
-#  twistlock-scan-image:
-#    executor: twistcli/default
-#    parameters:
-#      tl_user:
-#        description: The Twistlock Console user with the CI User role
-#        type: string
-#        default: $TL_USER
-#      tl_pass:
-#        description: The Twistlock Console user's password
-#        type: env_var_name
-#        default: TL_PASS
-#      tl_console_url:
-#        description: The base URL for the console -- http://console.<my_company>.com:8083 -- without a trailing /
-#        type: string
-#        default: $TL_CONSOLE_URL
-#      tl_image:
-#        description: The name of the image to scan -- myimage or myorg/myimage or myorg/myimage:latest
-#        type: string
-#        default: rundeck/rundeck:SNAPSHOT
-#      workspace-name:
-#        description: Name of workspace to docker save the image-tar into so it can be scanned by orb
-#        type: string
-#        default: workspace
-#      image-tar:
-#        description: The name of the image tar file stored in the workspace -- defaults to image.tar
-#        type: string
-#        default: image.tar
-#      image:
-#        description: The name of the image to scan -- myimage or myorg/myimage or myorg/myimage:latest
-#        type: string
-#    steps:
-#      - run: mkdir -p workspace
-#      - run: docker pull rundeck/rundeck:SNAPSHOT
-#      - run: docker save rundeck/rundeck:SNAPSHOT -o workspace/image.tar
-#      - persist_to_workspace:
-#          root: workspace
-#          paths:
-#            - image.tar
-#      - twistcli/install:
-#          tl_user: <<parameters.tl_user>>
-#          tl_pass: <<parameters.tl_pass>>
-#          tl_console_url: <<parameters.tl_console_url>>
-#      - twistcli/load:
-#          tl_workspace_name: <<parameters.workspace-name>>
-#          tl_image_tar: <<parameters.image-tar>>
-#      - run: ./twistcli images scan --details -address <<parameters.tl_console_url>> -u <<parameters.tl_user>> -p ${<<parameters.tl_pass>>} --output-file scan_result.json <<parameters.tl_image>>
-#      - run: exit "$(cat scan_result.json | jq '.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical')"
-
-
   test-gradle:
     <<: *defaults
     machine:
@@ -326,6 +267,32 @@ jobs:
       - restore-gradle-cache
       - run: ./gradlew --no-daemon check --stacktrace --info --parallel --build-cache
       - collect-gradle-tests
+
+  twistlock-scan-image:
+    <<: *defaults
+    executor: gradle-docker
+
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - fetch-common-artifacts
+      - run:
+          name: Pull Rundeck Image
+          command: |
+            source .circleci/circle-shim.sh
+            pull_rdtest
+      - run:
+          name: Install Twistlock
+          command: |
+            curl -k -u $TL_USER:${TL_PASS} --output ./twistcli $TL_CONSOLE_URL/api/v1/util/twistcli
+            sudo chmod a+x ./twistcli
+      - run:
+          name: Scan Image
+          command: |
+            docker save rdtest:latest -o image.tar
+            ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file scan_result.json image.tar
+            exit "$(cat scan_result.json | jq '.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical')"
 
   test-docker:
     <<: *defaults
@@ -477,6 +444,7 @@ stages:
   - LDAP Test
   - LDAP Bind Test
   - PAM Test
+  - Twistlock Scan
   build: &stage-build
     - Build
 
@@ -497,16 +465,15 @@ workflows:
       - build:
           context:
             - slack-secrets
-            - tl_scan_context
           <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
-#      - twistlock-scan-image:
-#          requires:
-#            - Build
-#          context: tl_scan_context
-#          image: 'rundeck/rundeck:SNAPSHOT'
-#          image-tar: image.tar
+      - twistlock-scan-image:
+          name: Twistlock Scan
+          context:
+            - tl_scan_context
+          requires: *stage-build
+
 #      - test-gradle:
 #          <<: *filter-no-tags
 #          name: Gradle Test
