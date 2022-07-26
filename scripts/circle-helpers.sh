@@ -246,7 +246,7 @@ twistlock_scan() {
     local incidents=$(cat scan_result.json | jq "$reportSeverityFilter")
 
     if [[ $incidents > 0 ]] ; then
-      echo "==> Security Alert: found $incidents vulnerabilities. Please refer to the above report for detail."
+      echo "==> Security Alert: found vulnerabilities, $incidents of them must be mitigated before release. Please refer to the above report for detail."
       exit $incidents
     fi
 }
