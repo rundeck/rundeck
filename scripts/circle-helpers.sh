@@ -226,6 +226,8 @@ twistlock_scan() {
 
     ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file scan_result.json $RUNDECK_IMAGE_TAG
 
+    exit "$(cat scan_result.json | jq '.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical')"
+
 }
 
 export_tag_info
