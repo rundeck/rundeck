@@ -228,17 +228,21 @@ twistlock_scan() {
     ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file scan_result.json $RUNDECK_IMAGE_TAG
 
     local severity=("low" "medium" "high" "critical")
-    #report severity: high and critical
-    local reportSeverity='.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical'
+    #report severity filter to extract incidents count, default: high and critical
+    local reportSeverityFilter='.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical'
 
     if [[ ! -z "${TWISTLOCK_SEVERITY_THRESHOLD:-}" ]] ; then
-      reportSeverity= "0"
-      for sev in ${$severity[@]:$TWISTLOCK_SEVERITY_THRESHOLD} ; do
-        reportSeverity="${reportSeverity} + .results[0].vulnerabilityDistribution.${sev}"
+      reportSeverityFilter= ""
+      for sev in ${severity[@]:$TWISTLOCK_SEVERITY_THRESHOLD} ; do
+          if [[ ! -z "$reportSeverityFilter" ]]; then
+              reportSeverityFilter="$reportSeverityFilter + .results[0].vulnerabilityDistribution.$sev"
+          else
+              reportSeverityFilter=".results[0].vulnerabilityDistribution.$sev"
+          fi
       done
     fi
 
-    local incidents=$(cat scan_result.json | jq "$reportSeverity") > 0
+    local incidents=$(cat scan_result.json | jq "$reportSeverityFilter")
 
     if [[ $incidents > 0 ]] ; then
       echo "==> Security Alert: found $incidents vulnerabilities. Please refer to the above report for detail."
@@ -257,3 +261,4 @@ export -f docker_login
 export -f build_rdtest
 export -f pull_rdtest
 export -f pull_rundeck
+export -f twistlock_scan
