@@ -459,17 +459,17 @@ workflows:
   version: 2
   build_and_test:
     jobs:
-      - build:
-          context:
-            - slack-secrets
-          <<: *filter-default
-          name: Build
-          <<: *slack-fail-post-step
+#      - build:
+#          context:
+#            - slack-secrets
+#          <<: *filter-default
+#          name: Build
+#          <<: *slack-fail-post-step
       - twistlock-scan-image:
           name: Twistlock Scan
           context:
             - tl_scan_context
-          requires: *stage-build
+#          requires: *stage-build
 
 #      - test-gradle:
 #          <<: *filter-no-tags
