@@ -231,8 +231,8 @@ twistlock_scan() {
     #report severity filter to extract incidents count, default: high and critical
     local reportSeverityFilter='.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical'
 
-    if [[ ! -z "${TWISTLOCK_SEVERITY_THRESHOLD:-}" ]] ; then
-      reportSeverityFilter= ""
+    if [[ ! -z "${TWISTLOCK_SEVERITY_THRESHOLD:-}" && $TWISTLOCK_SEVERITY_THRESHOLD -ge 0 && $TWISTLOCK_SEVERITY_THRESHOLD -lt 4 ]] ; then
+      reportSeverityFilter=""
       for sev in ${severity[@]:$TWISTLOCK_SEVERITY_THRESHOLD} ; do
           if [[ ! -z "$reportSeverityFilter" ]]; then
               reportSeverityFilter="$reportSeverityFilter + .results[0].vulnerabilityDistribution.$sev"
@@ -241,6 +241,7 @@ twistlock_scan() {
           fi
       done
     fi
+
 
     local incidents=$(cat scan_result.json | jq "$reportSeverityFilter")
 
