@@ -278,6 +278,13 @@ jobs:
         description: The Twistlock Console user's password
         type: env_var_name
         default: TL_PASS
+      tl_console_url:
+        description: The base URL for the console -- http://console.<my_company>.com:8083 -- without a trailing /
+        type: string
+        default: $TL_CONSOLE_URL
+      tl_image:
+        description: The name of the image to scan -- myimage or myorg/myimage or myorg/myimage:latest
+        type: string
       workspace-name:
         description: Name of workspace to docker save the image-tar into so it can be scanned by orb
         type: string
