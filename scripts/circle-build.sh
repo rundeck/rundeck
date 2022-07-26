@@ -47,15 +47,12 @@ buildDocker() {
     docker tag rundeck/rundeck:latest $ECR_BUILD_TAG
     docker tag rundeck/rundeck:latest $ECR_BRANCH_TAG
 
-    mkdir -p twistlock_workspace
-    docker save rundeck/rundeck:latest -o twistlock_workspace/image.tar
-    curl -k -u $TL_USER:${TL_PASS} --output ./twistcli $TL_CONSOLE_URL/api/v1/util/twistcli
-    sudo chmod a+x ./twistcli
-
-    ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file scan_result.json twistlock_workspace/image.tar
-
     docker push $ECR_BUILD_TAG
     docker push $ECR_BRANCH_TAG
+
+    echo "==> ECR_BUILD_TAG: $ECR_BUILD_TAG"
+    echo "==> ECR_BRANCH_TAG: $ECR_BRANCH_TAG"
+    echo "==> CLEAN_TAG: ${CLEAN_TAG}"
 
     # CircleCI tag builds do not have a branch set
     if [[ ! -z "${CLEAN_TAG}" ]] ; then
