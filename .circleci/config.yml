@@ -725,7 +725,7 @@ workflows:
             - slack-secrets
           <<: *slack-fail-post-step
       - build_and_publish:
-          name: Release Build
+          name: Package and Release
           filters:
             branches: { ignore: /.*/ }
             tags: { only: /^v.*$/ }
