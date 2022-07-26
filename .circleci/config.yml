@@ -270,8 +270,7 @@ jobs:
 
   twistlock-scan-image:
     <<: *defaults
-    executor:
-      machine: true
+    machine: true
 
     steps:
       - fetch-common-artifacts
