@@ -502,8 +502,8 @@ workflows:
 #          name: Build
 #          <<: *slack-fail-post-step
       - twistlock-scan-image:
-          requires:
-            - Build
+#          requires:
+#            - Build
           context: tl_scan_context
           image: 'rundeck/rundeck:SNAPSHOT'
           image-tar: image.tar
