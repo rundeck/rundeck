@@ -126,6 +126,12 @@ allprojects {
         exclude group: 'ch.qos.logback', module: 'logback-classic'
         exclude group: 'ch.qos.logback', module: 'logback-core'
     }
+    normalization {
+        runtimeClasspath {
+            ignore '**/application.properties'
+            ignore '**/views.properties'
+        }
+    }
 }
 
 /**
@@ -140,7 +146,7 @@ subprojects {
 
 def buildConf  = new org.yaml.snakeyaml.Yaml().load( file('./build.yaml').newDataInputStream() )
 project(':rundeckapp') {
-    it.ext.bundledPlugins = buildConf.rundeck.plugins
+    it.ext.bundledPlugins = buildConf?.rundeck?.plugins?:[]
 
     it.ext.bundledPlugins += [
         project(':plugins:script-plugin'),

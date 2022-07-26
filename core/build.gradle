@@ -94,7 +94,7 @@ dependencies {
       exclude group:'commons-codec', module: 'commons-codec'
       exclude group:'org.apache.httpcomponents', module: 'httpcore'
     }
-    
+
     implementation ("org.apache.httpcomponents:httpcore:4.4.15")
 
     compileOnly "org.projectlombok:lombok:1.18.20"
@@ -156,22 +156,15 @@ jar.doFirst {
     }
 }
 
-task expandTemplate {
-    inputs.file "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
-    outputs.file "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties"
-
-    doLast {
-        ant.delete(file: "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties")
-        def datestring = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
-        println("Building: $version-$buildNum ($datestring)")
-        copy {
-            expand('version': version, 'version_build': buildNum, 'version_ident': version + '-' + buildNum, date: datestring)
-            from "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
-            into "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/"
-        }
-    }
+def expandTemplate = tasks.register('expandTemplate', Copy) {
+    def dateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
+    expand('version': version, 'version_build': buildNum, 'version_ident': version + '-' + buildNum, date: dateString)
+    from layout.projectDirectory.file('src/main/meta/com/dtolabs/rundeck/core/application.properties')
+    into layout.projectDirectory.file('src/main/resources/META-INF/com/dtolabs/rundeck/core')
 }
+
 processResources.dependsOn tasks.expandTemplate
+sourcesJar.dependsOn tasks.expandTemplate
 
 test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"

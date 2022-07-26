@@ -34,18 +34,6 @@ task testJar(type: Jar) {
     from sourceSets.test.java
 }
 
-// produce a jar file for our source files
-task sourceJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.java
-}
-
-// produce a jar file for our javadoc
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
 if (JavaVersion.current().isJava8Compatible()) {
     tasks.withType(Javadoc) {
         options.addStringOption('Xdoclint:none', '-quiet')
@@ -55,6 +43,9 @@ if (JavaVersion.current().isJava8Compatible()) {
 // add all of the artifacts above to our archives list
 artifacts {
     archives testJar
-    archives sourceJar
-    archives javadocJar
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
 }

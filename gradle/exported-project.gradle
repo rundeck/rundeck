@@ -117,8 +117,3 @@ if (project.hasProperty('signing.keyId') && project.hasProperty('signing.passwor
 }
 
 
-java {
-    withJavadocJar()
-    withSourcesJar()
-}
-

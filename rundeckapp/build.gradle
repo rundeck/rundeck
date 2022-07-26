@@ -293,12 +293,8 @@ bootRun {
 }
 
 tasks.withType(GroovyCompile) {
-    def additionalSpecDir = new File(project.buildDir, 'openapi')
-    doFirst {
-        additionalSpecDir.mkdirs()
-    }
     configure(groovyOptions) {
-        forkOptions.jvmArgs = ['-Xmx1024m',"-Dmicronaut.openapi.additional.files=${additionalSpecDir.absolutePath}".toString()]
+        forkOptions.jvmArgs = ['-Xmx1024m']
     }
 }
 
@@ -342,53 +338,74 @@ buildProperties.doLast {
     }
 }
 
-task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
-    println "copying plugin libs"
-    File libextDir = new File(buildDir, "WEB-INF/rundeck/plugins")
-    File manifestFile = new File(buildDir, "WEB-INF/rundeck/plugins/manifest.properties")
+abstract class CreatePluginBundleTask extends DefaultTask {
+    @Input
+    abstract Property<String> getManifestName()
 
-    def filelist=[]
-    libextDir.mkdirs()
-    configurations.pluginFiles.files.each { pluginFile ->
-        project.logger.info("Bundling libExt plugin ${pluginFile.name}")
+    @Input
+    abstract Property<Configuration> getPluginConfig()
 
+    @OutputDirectory
+    abstract DirectoryProperty getDestinationDir()
 
-        copy {
-            from pluginFile
-            into libextDir
-        }
-        filelist << pluginFile.name
+    @TaskAction
+    def execute() {
+        File destDir = destinationDir.get().asFile.absoluteFile
+        File manifestFile = new File(destDir, manifestName.get())
 
-        /** Mangle JAR plugin properties **/
-        if ( ['.jar','.zip'].contains(pluginFile.name[-4..-1]) ) {
-            def pluginProps = [:]
-            pluginFile.withInputStream {
-                def jarmf = new JarInputStream(it).manifest
-                jarmf.getMainAttributes().findAll { it.key.toString().startsWith('Rundeck-Plugin') }.each { k, v ->
-                    pluginProps[k.toString()] = v
+        def fileList=[]
+        def artifacts = pluginConfig.get().incoming.artifacts
+        project.logger.info("Found ${artifacts.size()} artifacts")
+        artifacts.each { artifact ->
+            def pluginFile = artifact.file
+            project.logger.info("Bundling libExt plugin ${pluginFile.name}")
+            fileList << pluginFile.name
+
+            /** Mangle JAR plugin properties **/
+            if ( ['.jar','.zip'].contains(pluginFile.name[-4..-1]) ) {
+                def pluginProps = [:]
+                pluginFile.withInputStream {
+                    def jarmf = new JarInputStream(it).manifest
+                    jarmf.getMainAttributes().findAll { it.key.toString().startsWith('Rundeck-Plugin') }.each { k, v ->
+                        pluginProps[k.toString()] = v
+                    }
+                }
+                def f = pluginFile.name
+                Properties fileProps = new Properties()
+                fileProps['plugin.name'] = pluginProps['Rundeck-Plugin-Name'] ?: f
+                fileProps['plugin.description'] = pluginProps['Rundeck-Plugin-Description'] ?: 'Rundeck bundled plugin'
+                fileProps['plugin.author'] = pluginProps['Rundeck-Plugin-Author'] ?: 'Rundeck, Inc.'
+                fileProps['plugin.version'] = pluginProps['Rundeck-Plugin-File-Version'] ?: version
+                fileProps['plugin.url'] = pluginProps['Rundeck-Plugin-URL'] ?: 'http://rundeck.com'
+                fileProps['plugin.date'] = pluginProps['Rundeck-Plugin-BuildDate'] ?: (new Date().toString())
+                fileProps['plugin.filename'] = f
+
+                //write properties file
+                new File(destDir, pluginFile.name + '.properties').withOutputStream {
+                    fileProps.store(it, "generated manifest")
                 }
             }
-            def f = pluginFile.name
-            Properties fileProps = new Properties()
-            fileProps['plugin.name'] = pluginProps['Rundeck-Plugin-Name'] ?: f
-            fileProps['plugin.description'] = pluginProps['Rundeck-Plugin-Description'] ?: 'Rundeck bundled plugin'
-            fileProps['plugin.author'] = pluginProps['Rundeck-Plugin-Author'] ?: 'Rundeck, Inc.'
-            fileProps['plugin.version'] = pluginProps['Rundeck-Plugin-File-Version'] ?: version
-            fileProps['plugin.url'] = pluginProps['Rundeck-Plugin-URL'] ?: 'http://rundeck.com'
-            fileProps['plugin.date'] = pluginProps['Rundeck-Plugin-BuildDate'] ?: (new Date().toString())
-            fileProps['plugin.filename'] = f
-
-            //write properties file
-            new File(libextDir, pluginFile.name + '.properties').withOutputStream {
-                fileProps.store(it, "generated manifest")
-            }
+        }
+        Properties manifestProps = new Properties()
+        manifestProps['pluginFileList'] = (fileList.join(','))
+        manifestFile.withWriter { w ->
+            manifestProps.store(w,"generated manifest")
         }
     }
-    Properties manifestProps = new Properties()
-    manifestProps['pluginFileList'] = (filelist.join(','))
-    manifestFile.withWriter { w ->
-        manifestProps.store(w,"generated manifest")
-    }
+}
+
+def pluginPropertiesTask = tasks.register('createPluginProperties', CreatePluginBundleTask) {
+    dependsOn configurations.pluginFiles
+    destinationDir = file(layout.buildDirectory.dir("pluginProperties"))
+    manifestName = "manifest.properties"
+    pluginConfig = configurations.pluginFiles
+}
+
+tasks.register('copyPluginLibs', Copy) {
+    dependsOn createPluginProperties
+    from configurations.pluginFiles
+    from pluginPropertiesTask
+    into layout.buildDirectory.dir("WEB-INF/rundeck/plugins")
 }
 
 task copySpa(type: Copy) {
@@ -542,3 +559,12 @@ if (project.hasProperty('signing.keyId') && project.hasProperty('signing.passwor
     }
 }
 
+normalization {
+    runtimeClasspath {
+        ignore '**/grails.build.info'
+    }
+}
+
+tasks.withType(org.grails.gradle.plugin.web.gsp.GroovyPageForkCompileTask).configureEach {
+    outputs.cacheIf { true }
+}

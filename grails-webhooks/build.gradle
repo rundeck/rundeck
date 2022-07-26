@@ -92,3 +92,7 @@ gradle.beforeProject {
 assets {
     packagePlugin = true
 }
+
+tasks.withType(org.grails.gradle.plugin.web.gsp.GroovyPageForkCompileTask).configureEach {
+    outputs.cacheIf { true }
+}

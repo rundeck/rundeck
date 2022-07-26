@@ -81,3 +81,7 @@ tasks.withType(Test) {
 
 // enable if you wish to package this plugin as a standalone application
 bootJar.enabled = false
+
+tasks.withType(org.grails.gradle.plugin.web.gsp.GroovyPageForkCompileTask).configureEach {
+    outputs.cacheIf { true }
+}
