@@ -66,6 +66,7 @@ defaults: &defaults
   working_directory: ~/repo
   environment:
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
+    CIRCLE_PIPELINE_GIT_TAG: << pipeline.git.tag >>
 
 executors:
   gradle-docker:
