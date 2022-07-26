@@ -285,6 +285,7 @@ jobs:
       tl_image:
         description: The name of the image to scan -- myimage or myorg/myimage or myorg/myimage:latest
         type: string
+        default: rundeck/rundeck:SNAPSHOT
       workspace-name:
         description: Name of workspace to docker save the image-tar into so it can be scanned by orb
         type: string
