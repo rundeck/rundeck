@@ -211,6 +211,7 @@ twistlock_scan() {
     echo "==> Git Tag: $CIRCLE_TAG"
 
 
+
     if [[ ! -z "${CIRCLE_TAG:-}" ]] ; then
         #If the build is triggered by a git Tag
         export RUNDECK_IMAGE_TAG="rundeck/rundeck:$CIRCLE_TAG"
@@ -226,13 +227,23 @@ twistlock_scan() {
 
     ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file scan_result.json $RUNDECK_IMAGE_TAG
 
-    local incidents=$(cat scan_result.json | jq '.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical') > 0
+    local severity=("low" "medium" "high" "critical")
+    #report severity: high and critical
+    local reportSeverity='.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical'
+
+    if [[ ! -z "${TWISTLOCK_SEVERITY_THRESHOLD:-}" ]] ; then
+      reportSeverity= "0"
+      for sev in ${$severity[@]:$TWISTLOCK_SEVERITY_THRESHOLD} ; do
+        reportSeverity="${reportSeverity} + .results[0].vulnerabilityDistribution.${sev}"
+      done
+    fi
+
+    local incidents=$(cat scan_result.json | jq "$reportSeverity") > 0
 
     if [[ $incidents > 0 ]] ; then
       echo "==> Security Alert: found $incidents vulnerabilities. Please refer to the above report for detail."
       exit $incidents
     fi
-
 }
 
 export_tag_info
