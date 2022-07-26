@@ -82,7 +82,6 @@ executors:
 
     resource_class: << parameters.resourceClass >>
 
-
     environment:
       CIRCLE_PIPELINE_NUM: << pipeline.number >>
       RUNDECK_GRADLE_OPTS: << parameters.RUNDECK_GRADLE_OPTS >>
@@ -273,7 +272,7 @@ jobs:
     machine: true
 
     steps:
-      - fetch-common-artifacts
+      - checkout
       - run:
           name: Pull Rundeck Image
           command: |
