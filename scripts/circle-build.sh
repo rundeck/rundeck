@@ -47,6 +47,7 @@ buildDocker() {
     docker tag rundeck/rundeck:latest $ECR_BUILD_TAG
     docker tag rundeck/rundeck:latest $ECR_BRANCH_TAG
 
+    mkdir -p twistlock_workspace
     docker save rundeck/rundeck:latest -o twistlock_workspace/image.tar
     curl -k -u $TL_USER:${TL_PASS} --output ./twistcli $TL_CONSOLE_URL/api/v1/util/twistcli
     sudo chmod a+x ./twistcli
