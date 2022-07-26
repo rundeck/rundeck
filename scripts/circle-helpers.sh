@@ -206,6 +206,28 @@ pull_rundeck() {
     docker tag $ECR_BUILD_TAG rundeck/rundeck
 }
 
+twistlock_scan() {
+    echo "==> Git Branch: $CIRCLE_BRANCH"
+    echo "==> Git Tag: $CIRCLE_TAG"
+
+
+    if [[ ! -z "${CIRCLE_TAG:-}" ]] ; then
+        #If the build is triggered by a git Tag
+        export RUNDECK_IMAGE_TAG="rundeck/rundeck:$CIRCLE_TAG"
+    elif [[ "${CIRCLE_BRANCH}" = "main" ]] ; then
+        export RUNDECK_IMAGE_TAG="rundeck/rundeck:SNAPSHOT"
+    else
+        export RUNDECK_IMAGE_TAG="rundeck/ci:$CIRCLE_BRANCH"
+    fi
+
+    echo "==> Scan Image: $RUNDECK_IMAGE_TAG"
+
+    docker pull $RUNDECK_IMAGE_TAG
+
+    ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file scan_result.json $RUNDECK_IMAGE_TAG
+
+}
+
 export_tag_info
 
 export -f sync_to_s3

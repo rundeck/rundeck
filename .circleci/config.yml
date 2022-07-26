@@ -66,7 +66,6 @@ defaults: &defaults
   working_directory: ~/repo
   environment:
     CIRCLE_PIPELINE_NUM: << pipeline.number >>
-    CIRCLE_PIPELINE_GIT_TAG: << pipeline.git.tag >>
 
 executors:
   gradle-docker:
@@ -244,7 +243,7 @@ jobs:
                 command: ./gradlew publish -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info
       - when:
           condition:
-            matches: { pattern: "/^v.*/", value: <<pipeline.git.tag>> }
+            matches: { pattern: "/^v.*/", value: << pipeline.git.tag >> }
           steps:
             - setup-environment
             - run:
@@ -275,20 +274,18 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Pull Rundeck Image
-          command: |
-            source .circleci/circle-shim.sh
-            pull_rdtest
-      - run:
           name: Install Twistlock
           command: |
             curl -k -u $TL_USER:${TL_PASS} --output ./twistcli $TL_CONSOLE_URL/api/v1/util/twistcli
             sudo chmod a+x ./twistcli
       - run:
-          name: Scan Image
+          name: Pull Rundeck Image
           command: |
-            docker save rdtest:latest -o image.tar
-            ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file scan_result.json image.tar
+            source .circleci/circle-shim.sh
+            twistlock_scan
+      - run:
+          name: Check Scan Result
+          command: |
             exit "$(cat scan_result.json | jq '.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical')"
 
   test-docker:
