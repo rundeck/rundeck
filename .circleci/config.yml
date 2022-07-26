@@ -267,7 +267,7 @@ jobs:
 #         root: workspace
 #         paths:
 #           - image.tar
-  twist-scan-image:
+  twistlock-scan-image:
     executor: twistcli/default
     parameters:
       tl_user:
@@ -277,7 +277,7 @@ jobs:
       tl_pass:
         description: The Twistlock Console user's password
         type: env_var_name
-        default: $TL_PASS
+        default: TL_PASS
       workspace-name:
         description: Name of workspace to docker save the image-tar into so it can be scanned by orb
         type: string
@@ -493,7 +493,7 @@ workflows:
 #          <<: *filter-default
 #          name: Build
 #          <<: *slack-fail-post-step
-      - twistcli/scan-image:
+      - twistlock-scan-image:
           requires:
             - Build
           context: tl_scan_context
