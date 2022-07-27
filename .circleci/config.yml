@@ -272,6 +272,8 @@ jobs:
           command: |
             source .circleci/circle-shim.sh
             twistlock_scan
+      - store_artifacts:
+          path: ~/scan_result.json
 
   test-gradle:
     <<: *defaults
