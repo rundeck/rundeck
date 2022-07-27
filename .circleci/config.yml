@@ -581,6 +581,7 @@ workflows:
             tags: {only: /^v.*$/}
       - twistlock-scan-image:
           name: Twistlock Scan
+          requires: *stage-build
           context:
             - tl_scan_context
 
