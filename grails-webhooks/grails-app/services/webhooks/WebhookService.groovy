@@ -160,7 +160,8 @@ class WebhookService {
         }
         hook.uuid = hookData.uuid ?: hook.uuid
         int countByNameInProject = Webhook.countByNameAndProject(hookData.name,hookData.project)
-        if(countByNameInProject > 0) {
+        def importFlag = (hook.hasProperty('importData') && hook.importData) ? hook.importData : false
+        if(countByNameInProject > 0 && importFlag ) {
             return [err: " A Webhook by that name already exists in this project"]
         }
         hook.name = hookData.name ?: hook.name
