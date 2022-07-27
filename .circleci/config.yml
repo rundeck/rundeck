@@ -256,6 +256,23 @@ jobs:
                   fetch_common_resources
                   DRY_RUN=false bash scripts/circle-build.sh publish_docker
 
+  twistlock-scan-image:
+    <<: *defaults
+    machine: true
+
+    steps:
+      - checkout
+      - run:
+          name: Install Twistlock
+          command: |
+            curl -k -u $TL_USER:${TL_PASS} --output ./twistcli $TL_CONSOLE_URL/api/v1/util/twistcli
+            sudo chmod a+x ./twistcli
+      - run:
+          name: Scan Image
+          command: |
+            source .circleci/circle-shim.sh
+            twistlock_scan
+
   test-gradle:
     <<: *defaults
     machine:
@@ -418,6 +435,7 @@ stages:
   - LDAP Test
   - LDAP Bind Test
   - PAM Test
+  - Twistlock Scan
   build: &stage-build
     - Build
 
@@ -561,7 +579,10 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-
+      - twistlock-scan-image:
+          name: Twistlock Scan
+          context:
+            - tl_scan_context
 
 
   nightly:
