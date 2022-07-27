@@ -223,7 +223,7 @@ twistlock_scan() {
 
     docker pull $RUNDECK_IMAGE_TAG
 
-    ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file scan_result.json $RUNDECK_IMAGE_TAG
+    ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file twistlock_scan_result.json $RUNDECK_IMAGE_TAG
 
     local severity=("low" "medium" "high" "critical")
     #report severity filter to extract incidents count, default: high and critical
@@ -241,7 +241,7 @@ twistlock_scan() {
     fi
 
 
-    local incidents=$(cat scan_result.json | jq "$reportSeverityFilter")
+    local incidents=$(cat twistlock_scan_result.json | jq "$reportSeverityFilter")
 
     if [[ $incidents > 0 ]] ; then
       echo "==> Security Alert: found vulnerabilities, $incidents of them must be mitigated before release. Please refer to the above report for detail."
