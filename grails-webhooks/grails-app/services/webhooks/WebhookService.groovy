@@ -159,11 +159,15 @@ class WebhookService {
             hook.uuid = UUID.randomUUID().toString()
         }
         hook.uuid = hookData.uuid ?: hook.uuid
+        // If there's an import, we validate that the name of the WH is not duplicated in the project.
         int countByNameInProject = Webhook.countByNameAndProject(hookData.name, hookData.project)
         if (countByNameInProject > 0) {
+            // If we find during the import a WH with a same name, we check for duplicated UUID.
             int countByUuidInProject = Webhook.countByUuidAndProject(hookData.uuid, hookData.project)
-            if( countByUuidInProject == 0 ) return [err: "A Webhook by that name already exists in project project"]
+            // If we find the UUID, it means that is different webhook with a duplicated name, so we prevent the import
+            if( countByUuidInProject == 0 ) return [err: "A Webhook by that name already exists in project"]
         }else{
+            // If we don't find the WH by name in the project, we check if the WH exists in other projects to prevent errors
             int countByUuidInDb = Webhook.countByUuid(hookData.uuid)
             if( countByUuidInDb > 0 ) return [err: "A Webhook by that uuid already exists in other project"]
         }
