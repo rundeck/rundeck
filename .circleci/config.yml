@@ -706,3 +706,8 @@ workflows:
             context:
               - slack-secrets
             <<: *slack-fail-post-step
+      - twistlock-scan-image:
+          name: Twistlock Scan
+          requires: *stage-build
+          context:
+            - tl_scan_context
