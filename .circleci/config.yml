@@ -581,13 +581,7 @@ workflows:
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-      - twistlock-scan-image:
-          name: Twistlock Scan
-          requires: *stage-build
-          context:
-            - tl_scan_context
-            - slack-secrets
-          <<: *slack-fail-post-step
+
 
   nightly:
     triggers:
