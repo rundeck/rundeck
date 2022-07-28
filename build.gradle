@@ -154,7 +154,6 @@ project(':rundeckapp') {
         project(':plugins:azure-object-store-plugin'),
         project(':plugins:orchestrator-plugin'),
         project(':plugins:git-plugin'),
-        project(':plugins:audit-logging-plugin'),
         project(':plugins:source-refresh-plugin'),
         project(':plugins:upvar-plugin')
     ]
