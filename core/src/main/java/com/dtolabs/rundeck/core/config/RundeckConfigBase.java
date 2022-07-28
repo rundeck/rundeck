@@ -58,6 +58,18 @@ public class RundeckConfigBase {
     RundeckApiConfig api;
     ScmLoader scmLoader;
     RundeckHealthIndicatorConfig health;
+    RundeckJobsConfig jobs;
+
+    @Data public static class RundeckJobsConfig{
+        JobOptionsConfig options;
+    }
+
+    @Data
+    public static class JobOptionsConfig{
+        int remoteUrlTimeout;
+        int remoteUrlConnectionTimeout;
+        int remoteUrlRetry;
+    }
 
     @Data
     public static class UserSessionProjectsCache {

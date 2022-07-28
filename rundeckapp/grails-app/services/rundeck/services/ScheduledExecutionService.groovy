@@ -3839,10 +3839,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def err = [:]
         int timeout = 10
         int contimeout = 0
-        int retryCount = 5
+        int retryCount = 3
         if (configurationService.getString("jobs.options.remoteUrlTimeout")) {
             try {
-                timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout", null)
+                timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout", 10)
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlTimeout is not a valid integer: "
@@ -3852,7 +3852,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if (configurationService.getString("jobs.options.remoteUrlConnectionTimeout")) {
             try {
-                contimeout = configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout", null)
+                contimeout = configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout", 0)
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlConnectionTimeout is not a valid integer: "
@@ -3862,7 +3862,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if (configurationService.getString("jobs.options.remoteUrlRetry")) {
             try {
-                retryCount = configurationService.getInteger("jobs.options.remoteUrlRetry", null)
+                retryCount = configurationService.getInteger("jobs.options.remoteUrlRetry", 3)
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "
@@ -3911,33 +3911,42 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
-        try {
-            def framework = frameworkService.getRundeckFramework()
-            def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
-            boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
-            remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
-            result = remoteResult.json
-            if (remoteResult.stats) {
-                remoteStats.putAll(remoteResult.stats)
+        int httpResponseCode = 0
+        do{
+            try {
+                def framework = frameworkService.getRundeckFramework()
+                def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
+                boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
+
+                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+                result = remoteResult.json
+                if (remoteResult.stats) {
+                    remoteStats.putAll(remoteResult.stats)
+                    if(remoteResult.stats.httpStatusCode){
+                        httpResponseCode = remoteResult.stats.httpStatusCode
+                    }
+                }
+            } catch (Exception e) {
+                err.message = "Failed loading remote option values"
+                err.exception = e
+                err.srcUrl = cleanUrl
+                log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
+                e.printStackTrace()
+                remoteStats.finishTime = System.currentTimeMillis()
+                remoteStats.durationTime = remoteStats.finishTime - remoteStats.startTime
             }
-        } catch (Exception e) {
-            err.message = "Failed loading remote option values"
-            err.exception = e
-            err.srcUrl = cleanUrl
-            log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
-            e.printStackTrace()
-            remoteStats.finishTime = System.currentTimeMillis()
-            remoteStats.durationTime = remoteStats.finishTime - remoteStats.startTime
-        }
-        if (remoteResult.error) {
-            err.message = "Failed loading remote option values"
-            err.exception = new Exception(remoteResult.error)
-            err.srcUrl = cleanUrl
-            log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
-        }
-        logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
-        //validate result contents
+            if (remoteResult.error) {
+                err.message = "Failed loading remote option values"
+                err.exception = new Exception(remoteResult.error)
+                err.srcUrl = cleanUrl
+                log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
+            }
+            logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
+            retryCount--
+        }while(retryCount > 0 && (httpResponseCode < 200 || httpResponseCode > 300 ))
+
+            //validate result contents
         boolean valid = true;
         def validationerrors = []
         if (result) {
