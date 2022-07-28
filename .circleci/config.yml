@@ -586,7 +586,8 @@ workflows:
           requires: *stage-build
           context:
             - tl_scan_context
-
+            - slack-secrets
+          <<: *slack-fail-post-step
 
   nightly:
     triggers:
@@ -713,3 +714,5 @@ workflows:
           requires: *stage-build
           context:
             - tl_scan_context
+            - slack-secrets
+          <<: *slack-fail-post-step
