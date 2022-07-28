@@ -11,12 +11,8 @@ import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
 import groovy.transform.PackageScope
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
-import org.rundeck.app.acl.ACLFileManagerListener
-import org.rundeck.app.acl.AppACLContext
-import org.rundeck.app.acl.ContextACLManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -27,13 +23,9 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.logout.LogoutHandler
 import rundeck.services.FrameworkService
 
-
-
-
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.function.Function
 import java.util.stream.Collectors
 
 /**
@@ -44,12 +36,11 @@ import java.util.stream.Collectors
  *
  */
 class AuditEventsService
-        implements LogoutHandler, InitializingBean {
+        implements LogoutHandler {
 
     static final Logger LOG = LoggerFactory.getLogger(AuditEventsService.class)
 
     FrameworkService frameworkService
-    ContextACLManager<AppACLContext> aclFileManagerService
 
     protected AsyncTaskExecutor asyncTaskExecutor
     protected final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
@@ -63,14 +54,9 @@ class AuditEventsService
         asyncTaskExecutor.setMaxPoolSize(1)
         asyncTaskExecutor.initialize()
     }
-    
 
-    @Override
-    void afterPropertiesSet() throws Exception {
-        // Set ACL listeners
-        this.aclFileManagerService?.addListenerMap(buildACLFileListeners())
-    }
-/**
+
+    /**
      * Returns the cache of listener plugins.
      * Cache is implemented lazily, so if the cache is not initialized, the plugins
      * will be instanced and configured, and the cache will be built.
@@ -109,41 +95,6 @@ class AuditEventsService
         plugin.instance.init()
 
         return new DescribedPlugin<AuditEventListenerPlugin>(plugin.instance, pluginDescription, pluginDescription.name)
-    }
-
-    /**
-     * Builds listeners to map ACL update events to audit events
-     * @return
-     */
-    private Function<AppACLContext, ACLFileManagerListener> buildACLFileListeners() {
-        return new Function<AppACLContext, ACLFileManagerListener>() {
-            @Override
-            ACLFileManagerListener apply(final AppACLContext appACLContext) {
-                
-                final AuditEventBuilder listenerAuditEventBuilder = eventBuilder()
-                    .setResourceType(appACLContext.isSystem() ? ResourceTypes.SYSTEM_ACL : ResourceTypes.PROJECT_ACL)
-                final String resNamePrefix = appACLContext.isSystem() ? "[SYSTEM] " :
-                    "[Project:${appACLContext.getProject()}] "
-                    
-                return new ACLFileManagerListener() {
-                    @Override
-                    void aclFileUpdated(String path) {
-                        listenerAuditEventBuilder
-                            .setActionType(ActionTypes.UPDATE)
-                            .setResourceName(resNamePrefix + path)
-                            .publish()
-                    }
-
-                    @Override
-                    void aclFileDeleted(String path) {
-                        listenerAuditEventBuilder
-                            .setActionType(ActionTypes.DELETE)
-                            .setResourceName(resNamePrefix + path)
-                            .publish()
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -271,7 +222,7 @@ class AuditEventsService
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Dispatching event to internal listener {" + listener + "}: " + event)
                 }
-                AuditEventDispatcher.dispatchToListener(event, listener)
+                dispatchToListener(event, listener)
             }
 
             // dispatch to plugins
@@ -283,11 +234,49 @@ class AuditEventsService
                         }
                     }
                     .map { it.instance }
-                    .forEach { AuditEventDispatcher.dispatchToListener(event, it) }
+                    .forEach { dispatchToListener(event, it) }
         }
     }
 
 
+    /**
+     * Dispatch an event to a listener.
+     */
+    private static dispatchToListener(AuditEvent event, AuditEventListener listener) {
+
+        try {
+
+            // Call general callback
+            listener.onEvent(event)
+
+            // Call specific callbacks
+            if (ResourceTypes.USER.equals(event.resourceInfo.type)) {
+                switch (event.actionType) {
+                    case ActionTypes.LOGIN_SUCCESS:
+                        listener.onLoginSuccess(event)
+                        break
+
+                    case ActionTypes.LOGIN_FAILED:
+                        listener.onLoginFailed(event)
+                        break
+
+                    case ActionTypes.LOGOUT:
+                        listener.onLogout(event)
+                        break
+                }
+            } else if (ResourceTypes.PROJECT.equals(event.resourceInfo.type)) {
+                switch (event.actionType) {
+                    case ActionTypes.VIEW:
+                        listener.onProjectView(event)
+                        break
+                }
+            }
+
+        }
+        catch (Exception e) {
+            LOG.error("Error dispatching event to handler plugin: " + e.getMessage(), e)
+        }
+    }
 
 
     /**

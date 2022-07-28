@@ -35,18 +35,6 @@ appender.audit.policies.type = Policies
 appender.audit.policies.time.type = TimeBasedTriggeringPolicy
 appender.audit.policies.time.interval = 1
 
-appender.audit_events.type = RollingFile
-appender.audit_events.name = audit_events
-appender.audit_events.fileName = ${baseDir}/rundeck.audit.events.log
-appender.audit_events.append = true
-appender.audit_events.bufferedIO = true
-appender.audit_events.filePattern = ${baseDir}/rundeck.audit.events.log.%d{yyyy-MM-dd}.gz
-appender.audit_events.layout.type = PatternLayout
-appender.audit_events.layout.pattern = ${prefix} - %m%n
-appender.audit_events.policies.type = Policies
-appender.audit_events.policies.time.type = TimeBasedTriggeringPolicy
-appender.audit_events.policies.time.interval = 1
-
 appender.options.type = RollingFile
 appender.options.name = options
 appender.options.fileName = ${baseDir}/rundeck.options.log
@@ -193,11 +181,6 @@ logger.authorization.name = com.dtolabs.rundeck.core.authorization
 logger.authorization.level = info
 logger.authorization.additivity = false
 logger.authorization.appenderRef.stdout.ref = audit
-
-logger.audit_events.name = org.rundeck.plugin.audit.AuditLoggerPlugin
-logger.audit_events.level = info
-logger.audit_events.additivity = false
-logger.audit_events.appenderRef.stdout.ref = audit_events
 
 logger.options.name = com.dtolabs.rundeck.remoteservice.http.options
 logger.options.level = info

@@ -3,7 +3,7 @@ package com.dtolabs.rundeck.plugins.audit;
 import com.dtolabs.rundeck.core.audit.AuditEvent;
 
 /**
- * Interface for implementing an Audit event listener plugins.
+ * Interface for implementing an Audit event listener plugin.
  *
  * @author alberto
  */
@@ -46,24 +46,6 @@ public interface AuditEventListener {
    * @param event Event descriptor.
    */
   default void onProjectView(AuditEvent event){}
-  
-  /** Called when a job is created */
-  default void onJobCreate(AuditEvent event) {}
 
-  /** Called when a job is updated */
-  default void onJobUpdate(AuditEvent event) {}
-
-  /** Called when a job is deleted */  
-  default void onJobDelete(AuditEvent event) {}
-
-  /** Called when a job is run */  
-  default void onJobRun(AuditEvent event) {}
-
-  /** Called when an acl is created */  
-  default void onAclCreate(AuditEvent event) {}
-  /** Called when an acl is updated */  
-  default void onAclUpdate(AuditEvent event) {}
-  /** Called when an acl is deleted */
-  default void onAclDelete(AuditEvent event) {}
 
 }
