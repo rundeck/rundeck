@@ -34,11 +34,6 @@ docker_login() {
 build() {
     local RELEASE_NUM="1"
     bash packaging/packaging/scripts/circle-build.sh fetch_artifacts
-#    for file in packaging/*; do
-#      echo "${file##*/}"
-#    done
-#    echo "--------WORKINGDIR--------"
-#    echo "$PWD"
     (
         cd packaging/packaging
         ./gradlew \
@@ -91,19 +86,19 @@ publish() {
 
 publish_pro() {
   echo "publish pro function"
-#    (
-#        cd packaging
-#        for BUNDLE in enterprise; do
-#            for PACKAGE in deb rpm; do
-#                ./gradlew --info \
-#                    -PpackageBundle=$BUNDLE \
-#                    -PpackageType=$PACKAGE \
-#                    -PpackageOrg=rundeckpro \
-#                    -PpackageRevision=1 \
-#                    publish
-#            done
-#        done
-#    )
+  (
+      cd packaging
+      for BUNDLE in enterprise; do
+          for PACKAGE in deb rpm; do
+              ./gradlew --info \
+                  -PpackageBundle=$BUNDLE \
+                  -PpackageType=$PACKAGE \
+                  -PpackageOrg=rundeckpro \
+                  -PpackageRevision=1 \
+                  publish
+          done
+      done
+  )
 }
 
 publish_war() {
@@ -120,33 +115,33 @@ publish_war() {
 
 publish_pro_war() {
   echo 'publish pro war'
-#    (
-#        cd packaging
-#        ./gradlew --info \
-#            -PpackageType=war \
-#            -PpackageGroup="com.rundeck.enterprise" \
-#            -PpackageOrg=rundeckpro \
-#            -PpackageRevision=1 \
-#            publishWar
-#    )
+  (
+      cd packaging
+      ./gradlew --info \
+          -PpackageType=war \
+          -PpackageGroup="com.rundeck.enterprise" \
+          -PpackageOrg=rundeckpro \
+          -PpackageRevision=1 \
+          publishWar
+  )
 }
 
 publish_to_s3() {
   echo 'publish to s3 function'
-#    (
-#        cd packaging
-#        # This is a flag that doesn't take a value
-#        S3_DRY_RUN="--dryrun"
-#        if [[ "$DRY_RUN" != true ]] ; then
-#            S3_DRY_RUN=""
-#        fi
-#
-#        if [[ -n "${UPSTREAM_TAG}" ]] ; then
-#            for PACKAGE in deb rpm; do
-#                aws s3 sync "${S3_DRY_RUN}" --exclude=* --include=*.$PACKAGE packaging/build/distributions/ s3://download.rundeck.org/$PACKAGE/
-#            done
-#        fi
-#    )
+  (
+      cd packaging
+      # This is a flag that doesn't take a value
+      S3_DRY_RUN="--dryrun"
+      if [[ "$DRY_RUN" != true ]] ; then
+          S3_DRY_RUN=""
+      fi
+
+      if [[ -n "${UPSTREAM_TAG}" ]] ; then
+          for PACKAGE in deb rpm; do
+              aws s3 sync "${S3_DRY_RUN}" --exclude=* --include=*.$PACKAGE packaging/packaging/build/distributions/ s3://download.rundeck.org/$PACKAGE/
+          done
+      fi
+  )
 }
 
 main "${@}"
