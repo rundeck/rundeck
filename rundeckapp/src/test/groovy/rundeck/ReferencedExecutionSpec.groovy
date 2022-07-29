@@ -60,11 +60,11 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
         def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
 
         when:
-        List l = ReferencedExecution.executionIdList(se)
+        List l = ReferencedExecution.executionProjectList(se)
 
         then:
         l.size() == 1
-        l == [[executionId:1, project:"project1"]]
+        l == ["project1"]
     }
 
     def "execution id list with max result"(){
@@ -137,19 +137,17 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
         def executionIdList = [[executionId: exec.id, project: exec.project], [executionId: exec2.id, project: exec2.project]]
 
         when:
-        List l = ReferencedExecution.executionIdList(se, max)
+        List l = ReferencedExecution.executionProjectList(se, max)
 
         then:
         l.size() == sizeList
-        (0..(sizeList-1)).each {
-            l.get(it) == executionIdList.get(it)
-        }
+        l == ["project1"]
 
         where:
         max  | sizeList
-        0    | 2
+        0    | 1
         1    | 1
-        2    | 2
+        2    | 1
     }
 
     def "parent list"(){

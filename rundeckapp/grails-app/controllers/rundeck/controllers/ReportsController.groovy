@@ -157,23 +157,22 @@ class ReportsController extends ControllerBase{
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
                 ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
-                def list = ReferencedExecution.executionIdList(sched)
-                def include = []
-                list.each {refex ->
-                    boolean add = true
-                    if(refex.project != params.project){
+                def list = ReferencedExecution.executionProjectList(sched)
+                def allowedProjects = []
+                list.each {project ->
+                    if(project != params.project){
                         if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_EVENT, AuthConstants.ACTION_READ,
-                                params.project), AuthConstants.ACTION_READ,'Events in project',refex.project)){
-                            log.debug('Cant read executions on project '+refex.project)
+                                params.project), AuthConstants.ACTION_READ,'Events in project', project)){
+                            log.debug('Cant read executions on project ' + project)
                         }else{
-                            include << String.valueOf(refex.executionId)
+                            allowedProjects << project
                         }
                     }else{
-                        include << String.valueOf(refex.executionId)
+                        allowedProjects << project
                     }
                 }
-                if(include){
-                    query.execIdFilter = include
+                if(allowedProjects){
+                    query.execProjects = allowedProjects
                 }
             }
 
