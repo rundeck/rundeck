@@ -169,7 +169,7 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
-    implementation 'org.liquibase:liquibase-core:4.6.2'
+    implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
