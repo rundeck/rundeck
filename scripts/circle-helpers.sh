@@ -206,6 +206,49 @@ pull_rundeck() {
     docker tag $ECR_BUILD_TAG rundeck/rundeck
 }
 
+twistlock_scan() {
+    echo "==> Git Branch: $CIRCLE_BRANCH"
+    echo "==> Git Tag: $CIRCLE_TAG"
+
+    if [[ ! -z "${CIRCLE_TAG:-}" ]] ; then
+        #If the build is triggered by a git Tag
+        export RUNDECK_IMAGE_TAG="rundeck/rundeck:$CIRCLE_TAG"
+    elif [[ "${CIRCLE_BRANCH}" = "main" ]] ; then
+        export RUNDECK_IMAGE_TAG="rundeck/rundeck:SNAPSHOT"
+    else
+        export RUNDECK_IMAGE_TAG="rundeck/ci:$CIRCLE_BRANCH"
+    fi
+
+    echo "==> Scan Image: $RUNDECK_IMAGE_TAG"
+
+    docker pull $RUNDECK_IMAGE_TAG
+
+    ./twistcli images scan --details -address ${TL_CONSOLE_URL} -u ${TL_USER} -p ${TL_PASS} --output-file twistlock_scan_result.json $RUNDECK_IMAGE_TAG
+
+    local severity=("low" "medium" "high" "critical")
+    #report severity filter to extract incidents count, default: high and critical
+    local reportSeverityFilter='.results[0].vulnerabilityDistribution.high + .results[0].vulnerabilityDistribution.critical'
+
+    if [[ ! -z "${TWISTLOCK_SEVERITY_THRESHOLD:-}" && $TWISTLOCK_SEVERITY_THRESHOLD -ge 0 && $TWISTLOCK_SEVERITY_THRESHOLD -lt 4 ]] ; then
+      reportSeverityFilter=""
+      for sev in ${severity[@]:$TWISTLOCK_SEVERITY_THRESHOLD} ; do
+          if [[ ! -z "$reportSeverityFilter" ]]; then
+              reportSeverityFilter="$reportSeverityFilter + .results[0].vulnerabilityDistribution.$sev"
+          else
+              reportSeverityFilter=".results[0].vulnerabilityDistribution.$sev"
+          fi
+      done
+    fi
+
+
+    local incidents=$(cat twistlock_scan_result.json | jq "$reportSeverityFilter")
+
+    if [[ $incidents > 0 ]] ; then
+      echo "==> Security Alert: found vulnerabilities, $incidents of them must be mitigated before release. Please refer to the above report for detail."
+      exit $incidents
+    fi
+}
+
 export_tag_info
 
 export -f sync_to_s3
@@ -217,3 +260,4 @@ export -f docker_login
 export -f build_rdtest
 export -f pull_rdtest
 export -f pull_rundeck
+export -f twistlock_scan
