@@ -128,7 +128,9 @@ allprojects {
     }
     normalization {
         runtimeClasspath {
-            ignore '**/application.properties'
+            properties {
+                ignoreProperty 'version.date'
+            }
             ignore '**/views.properties'
         }
     }
