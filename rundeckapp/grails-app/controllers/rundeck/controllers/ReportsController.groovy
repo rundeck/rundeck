@@ -159,10 +159,10 @@ class ReportsController extends ControllerBase{
                 ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
                 def list = ReferencedExecution.executionProjectList(sched)
                 def allowedProjects = []
-                list.each {project ->
+                list.each { project ->
                     if(project != params.project){
-                        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_EVENT, AuthConstants.ACTION_READ,
-                                params.project), AuthConstants.ACTION_READ,'Events in project', project)){
+                        if(!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_EVENT, AuthConstants.ACTION_READ,
+                                project)){
                             log.debug('Cant read executions on project ' + project)
                         }else{
                             allowedProjects << project
