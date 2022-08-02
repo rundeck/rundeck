@@ -22,4 +22,7 @@ import java.util.Map;
 
 public interface ProxySecretBundleCreator {
     SecretBundle prepareSecretBundle(ExecutionContext context, INodeEntry node);
+    default SecretBundle prepareSecretBundleWorkflowStep(ExecutionContext context, Map<String, Object> configuration){
+        return null;
+    }
 }

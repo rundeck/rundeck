@@ -108,6 +108,10 @@ public class StepExecutionService
         return serviceList;
     }
 
+    public void setServiceList(List<ProviderService<StepExecutor>> serviceList) {
+        this.serviceList = serviceList;
+    }
+
     public static StepExecutionService getInstanceForFramework(final Framework framework,
                                                                final IServicesRegistration registration) {
         if (null == registration.getService(SERVICE_NAME)) {

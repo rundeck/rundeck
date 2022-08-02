@@ -135,6 +135,38 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
                                           final NodeStepExecutionItem item,
                                           final INodeEntry node)
         throws NodeStepException {
+
+        final String providerName = item.getNodeStepType();
+        final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
+        final Map<String, Object> config = createConfig(context, item, node);
+
+        try {
+            plugin.executeNodeStep(pluginContext, config, node);
+        } catch (NodeStepException e) {
+            log.error("Error executing node step.", e);
+            return new NodeStepResultImpl(e,
+                    e.getFailureReason(),
+                    e.getMessage(),
+                    e.getFailureData(),
+                    node);
+        } catch (Throwable e) {
+            log.error("Uncaught throwable executing node step.", e);
+            final StringWriter stringWriter = new StringWriter();
+            e.printStackTrace(new PrintWriter(stringWriter));
+            context.getExecutionListener().log(Constants.DEBUG_LEVEL,
+                    "Failed executing node plugin ["+providerName+"] on node " + node.getNodename() + ": "
+                            + stringWriter.toString());
+            return new NodeStepResultImpl(e,
+                                          StepFailureReason.PluginFailed,
+                                          e.getMessage(),
+                                          node);
+        }
+        return new NodeStepResultImpl(node);
+    }
+
+    public Map<String, Object> createConfig( StepExecutionContext context,
+                                            NodeStepExecutionItem item,
+                                            INodeEntry node){
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         Description description = getDescription();
         Map<String,Boolean> blankIfUnexMap = new HashMap<>();
@@ -158,33 +190,10 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         final String providerName = item.getNodeStepType();
 
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
-                                                                                                  instanceConfiguration,
-                                                                                                  getServiceName(),
-                                                                                                  providerName);
-        final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
-        try {
-            plugin.executeNodeStep(pluginContext, config, node);
-        } catch (NodeStepException e) {
-            log.error("Error executing node step.", e);
-            return new NodeStepResultImpl(e,
-                    e.getFailureReason(),
-                    e.getMessage(),
-                    e.getFailureData(),
-                    node);
-        } catch (Throwable e) {
-            log.error("Uncaught throwable executing node step.", e);
-            final StringWriter stringWriter = new StringWriter();
-            e.printStackTrace(new PrintWriter(stringWriter));
-            context.getExecutionListener().log(Constants.DEBUG_LEVEL,
-                    "Failed executing node plugin ["+providerName+"] on node " + node.getNodename() + ": "
-                            + stringWriter.toString());
-            return new NodeStepResultImpl(e,
-                                          StepFailureReason.PluginFailed,
-                                          e.getMessage(),
-                                          node);
-        }
-        return new NodeStepResultImpl(node);
+                instanceConfiguration,
+                getServiceName(),
+                providerName);
+        return PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
     }
 
     public Map<String, Object> getStepConfiguration(StepExecutionItem item) {
