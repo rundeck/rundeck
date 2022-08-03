@@ -354,7 +354,7 @@
 
   >li>a {
     color: var(--font-color);
-    font-size: $font-size-base;
+    font-size: $font-size-small;
     padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
     @include transition-none();
 
