@@ -2,10 +2,12 @@ package com.dtolabs.rundeck.server.plugins
 
 
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
@@ -15,61 +17,60 @@ import spock.lang.Specification
 
 class RundeckSpringPluginRegistryComponentSpec extends Specification implements GrailsUnitTest {
 
-    def "load plugin using builder"() {
+    def "register plugin"(){
         given:
-            def sut = new BaseSpringPluginRegistryComponent()
+            def sut = new RundeckSpringPluginRegistryComponent()
             sut.applicationContext = applicationContext
-            def description = DescriptionBuilder.builder()
-                                                .name(provider)
-                                                .property(PropertyBuilder.builder().string('prop1').build())
-                                                .property(PropertyBuilder.builder().string('prop2').build())
 
-                                                .build()
-            def testPlugin = new TestPlugin2()
-            testPlugin.description = description
-            def beanBuilder = new TestBuilder(instance: testPlugin)
-            defineBeans {
-                testBeanBuilder(InstanceFactoryBean, beanBuilder)
-            }
-
-            sut.pluginRegistryMap = [(spec): 'testBeanBuilder']
-
-            def svc = Mock(PluggableProviderService) {
-                getName() >> 'TestSvc'
-            }
         when:
-            sut.loadPluginDescriptorByName(provider, svc)
+            sut.registerPlugin('svc','name','plugin')
         then:
+            sut.getPluginRegistryMap()['svc:name'] == 'plugin'
+
+    }
+
+    def "get provider beans"(){
+        given:
+            def sut = new RundeckSpringPluginRegistryComponent()
+            sut.applicationContext = applicationContext
+            def obj1 = new Object()
+            def obj2 = new Object()
+            defineBeans{
+                bean1(InstanceFactoryBean, obj1)
+
+                bean2(InstanceFactoryBean, obj2)
+            }
+            sut.pluginRegistryMap['a']='bean1'
+            sut.pluginRegistryMap['b']='bean2'
+        when:
+            def result=sut.getProviderBeans()
+        then:
+            result.keySet().size()==2
+            result.keySet().containsAll(['bean1','bean2'])
+            result.values().containsAll([obj1,obj2])
+
+    }
+
+    def "find provider bean"(){
+        given:
+            def sut = new RundeckSpringPluginRegistryComponent()
+            sut.applicationContext = applicationContext
+            def obj1 = new Object()
+            defineBeans{
+                bean1(InstanceFactoryBean, obj1)
+
+            }
+            sut.pluginRegistryMap[reg]='bean1'
+        when:
+            def result = sut.findProviderBean(type, name)
+        then:
+            (result==obj1) == found
         where:
-            provider  | spec
-            'aplugin' | 'aplugin'
-            'aplugin' | 'TestSvc:aplugin'
+            type  | name | reg     | found
+            'svc' | 'a' | 'svc:a' | true
+            'svc' | 'a' | 'a'     | true
+            'svc' | 'a' | 'c'     | false
+            'svc' | 'a' | 'svc:c' | false
     }
 
-
-    static class TestPlugin2 implements Configurable, Describable {
-        Properties configuration
-        Description description
-
-        @Override
-        void configure(final Properties configuration) throws ConfigurationException {
-            this.configuration = configuration
-        }
-    }
-
-
-    static class TestBuilder implements PluginBuilder<TestPlugin2> {
-        TestPlugin2 instance
-
-        @Override
-        TestPlugin2 buildPlugin() {
-            return instance
-        }
-
-
-        @Override
-        Class<TestPlugin2> getPluginClass() {
-            TestPlugin2
-        }
-    }
 }

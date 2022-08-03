@@ -86,6 +86,10 @@ abstract class BaseSpringPluginRegistryComponent
     @PackageScope
     abstract Object findProviderBean(String type, String name)
 
+    /**
+     *
+     * @return map of spring bean name to object for registered plugins
+     */
     abstract Map<String, Object> getProviderBeans()
 
     @Override
@@ -148,7 +152,7 @@ abstract class BaseSpringPluginRegistryComponent
         try {
             def bean = findProviderBean(service, provider)
             if (bean instanceof PluginBuilder) {
-                if (bean.pluginClass == clazz) {
+                if (((PluginBuilder)bean).pluginClass == clazz) {
                     if (bean instanceof PluginMetadata) {
                         def metadata = bean as PluginMetadata
                         return metadata

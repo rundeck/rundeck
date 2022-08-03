@@ -25,7 +25,7 @@ class RundeckSpringPluginRegistryComponent extends BaseSpringPluginRegistryCompo
     }
 
     String getProviderBeanName(final String type, final String name) {
-        pluginRegistryMap["${type}:${name}"] ?: pluginRegistryMap[name]
+        pluginRegistryMap["${type}:${name}".toString()] ?: pluginRegistryMap[name]
     }
 
     @Override
@@ -37,6 +37,7 @@ class RundeckSpringPluginRegistryComponent extends BaseSpringPluginRegistryCompo
 
     @Override
     def Object findProviderBean(final String type, final String name) {
-        applicationContext.getBean(getProviderBeanName(type, name))
+        def name1 = getProviderBeanName(type, name)
+        return name1 ? applicationContext.getBean(name1) : null
     }
 }

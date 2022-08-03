@@ -29,7 +29,7 @@ class RundeckDynamicSpringPluginRegistryComponent extends BaseSpringPluginRegist
     }
 
     String getProviderBeanName(final String type, final String name) {
-        pluginBeanNames["${type}:${name}"]
+        pluginBeanNames[type + ':' + name]
     }
 
     @Override
