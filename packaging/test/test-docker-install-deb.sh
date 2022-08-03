@@ -6,7 +6,7 @@ export COMMON="ubuntu1604"
 export PACKAGE_TYPE="deb"
 export PACKAGING_DIR_PARENT=""
 
-if [[ "${UPSTREAM_PROJECT}" != "rundeckpro" ]] ; then
+if [[ "${UPSTREAM_PROJECT}" == "rundeckpro" ]] ; then
   export PACKAGING_DIR_PARENT="rundeck/"
 fi
 
