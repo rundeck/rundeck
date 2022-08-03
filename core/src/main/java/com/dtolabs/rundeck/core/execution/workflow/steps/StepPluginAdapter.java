@@ -163,4 +163,7 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
         }
     }
 
+    public StepPlugin getPlugin() {
+        return plugin;
+    }
 }

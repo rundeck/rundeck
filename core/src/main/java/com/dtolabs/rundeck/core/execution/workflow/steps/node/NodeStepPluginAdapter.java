@@ -203,4 +203,9 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
             return null;
         }
     }
+
+    public NodeStepPlugin getPlugin(){
+        return this.plugin;
+    }
+
 }
