@@ -612,8 +612,7 @@ workflows:
       - build:
           context:
             - slack-secrets
-          filters:
-            tags: {ignore: /^v.*$/}
+          <<: *filter-default
           name: Build
           <<: *slack-fail-post-step
       - test-gradle:
