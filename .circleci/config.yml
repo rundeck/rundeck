@@ -725,11 +725,13 @@ workflows:
           <<: *slack-fail-post-step
       - build_and_publish:
           name: Package and Release
+          requires: *stage-build
           filters:
             branches: { ignore: /.*/ }
             tags: { only: /^v.*$/ }
       - maven-publish:
           name: Maven Publish
+          requires: *stage-build
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
