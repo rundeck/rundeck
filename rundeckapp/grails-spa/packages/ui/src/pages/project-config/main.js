@@ -7,10 +7,10 @@ import PageConfirm from '../../components/PageConfirm'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
-import {PluginConfig} from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue"
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 import {getRundeckContext} from '@rundeck/ui-trellis'
 import PluginSetConfig from './PluginSetConfig'
+import ProjectPluginGroups from "./ProjectPluginGroups";
 
 Vue.config.productionTip = false
 
@@ -54,7 +54,8 @@ for (var i = 0; i < els.length; i++) {
         },
         components: {
             PageConfirm,
-            PluginSetConfig
+            PluginSetConfig,
+            ProjectPluginGroups
         },
         i18n
     })

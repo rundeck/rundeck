@@ -343,6 +343,7 @@
                     class="project-config-plugins-vue"
                     :event-bus="EventBus"
                     service-name="PluginGroup"
+                    :mode-toggle="false"
                     :config-list="[]"
                     project="${project}"
                     config-prefix="pluginValues.PluginGroup."

@@ -1,60 +1,20 @@
 <template>
-<div>
-
-<div class="list-group" v-if="pluginProviders.length>0">
-  <div
-    class="list-group-item"
-    v-for="(provider,index) in pluginProviders"
-    :key="'projectGroupPlugin_'+index"
+  <project-plugin-groups
+    config-prefix="pluginValues.PluginGroup."
+    service-name="PluginGroup"
+    :edit-mode="true"
+    :help="help"
+    project=""
+    @saved="pluginsConfigWasSaved"
+    @modified="pluginsConfigWasModified"
+    @reset="pluginsConfigWasReset"
+    :edit-button-text="$t('Edit Plugin Groups')"
+    :mode-toggle="modeToggle"
   >
-
-    <plugin-config
-      :mode="'title'"
-      :serviceName="serviceName"
-      :provider="provider.name"
-      :key="provider.name+'title/'+index"
-      :show-description="true"
-    >
-    </plugin-config>
-
-
-    <plugin-config
-      v-if="typeof(pluginData[provider.name])!=='undefined'"
-      :mode="editMode[provider.name]===true?'edit':'show'"
-      :serviceName="serviceName"
-      v-model="pluginData[provider.name]"
-      :provider="provider.name"
-      :config="projectSettings[provider.name]"
-      :key="provider.name+'_config/'+index+updateKey"
-      :show-title="false"
-      :show-description="false"
-      :validation="pluginValidation[provider.name]"
-      :validation-warning-text="$t('Validation errors')"
-
-    />
-    <btn v-if="typeof(pluginData[provider.name])=='undefined'" @click="addConfig(provider.name, serviceName)">
-      Add
-      <i class="glyphicon glyphicon-plus text-muted"></i>
-    </btn>
-    <btn v-if="typeof(pluginData[provider.name])!=='undefined'" @click="removeConfig(provider.name)">
-      Remove
-      <i class="glyphicon glyphicon-mins text-muted"></i>
-    </btn>
-    <btn v-if="typeof(pluginData[provider.name])!=='undefined' && !showSave[provider.name]" @click="addConfig(provider.name)">
-      Edit
-      <i class="glyphicon glyphicon-mins text-muted"></i>
-    </btn>
-    <btn v-if="typeof(pluginData[provider.name])!=='undefined' && showSave[provider.name]" @click="saveConfig(provider.name, serviceName)">
-      Close
-      <i class="glyphicon glyphicon-mins text-muted"></i>
-    </btn>
-
-  </div>
-</div>
-<template v-if="exportedData">
-  <input type="hidden" :value="JSON.stringify(exportedData)" :name="configPrefix+'json'"/>
-</template>
-</div>
+  </project-plugin-groups>
+<!--  <template v-if="exportedData">-->
+<!--    <input type="hidden" :value="JSON.stringify(exportedData)" :name="configPrefix+'json'"/>-->
+<!--  </template>-->
 </template>
 <script lang="ts">
 import Vue from "vue";
@@ -64,6 +24,8 @@ import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vu
 import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue";
 import pluginService from "@rundeck/ui-trellis/lib/modules/pluginService";
 import {RundeckBrowser} from "@rundeck/client";
+import PluginValidation from "@rundeck/ui-trellis/lib/interfaces/PluginValidation";
+import ProjectPluginGroups from "./ProjectPluginGroups.vue";
 
 const client: RundeckBrowser = getRundeckContext().rundeckClient
 const rdBase = getRundeckContext().rdBase
@@ -72,17 +34,54 @@ interface PluginConf {
   readonly type: string;
   config: any;
 }
+interface ProjectPluginConfigEntry {
+  entry: PluginConf;
+  extra: PluginConf;
+  validation: PluginValidation;
+  create?: boolean;
+  origIndex?: number;
+  modified: boolean;
+}
 export default Vue.extend({
   name: "App",
   components: {
     PluginInfo,
     PluginConfig,
+    ProjectPluginGroups,
     Expandable
   },
   props:{
     serviceName:String,
-    configList: {default:[],type:Array },
-    EventBus:Object,
+    help: {
+      type: String,
+      required: false
+    },
+    modeToggle: {
+      type: Boolean,
+      default: true
+    },
+    showWriteableLinkMode: {
+      type: String,
+      default: "show"
+    },
+    // isWriteable(index: number): boolean {
+    //   return (
+    //     this.pluginProviders.length > index &&
+    //     this.pluginProviders[index].resources.writeable
+    //   );
+    // },
+    // editPermalink(index: number): string | undefined {
+    //   return this.sourcesData.length > index &&
+    //   this.sourcesData[index].resources.editPermalink
+    //     ? this.sourcesData[index].resources.editPermalink
+    //     : "#";
+    // },
+    // sourceErrors(index: number): string | undefined {
+    //   return this.sourcesData.length > index
+    //     ? this.sourcesData[index].errors
+    //     : undefined;
+    // },
+    eventBus: { type: Vue, required: false },
     configPrefix:String,
     project: String,
   },
@@ -93,6 +92,7 @@ export default Vue.extend({
       pluginData:{} as {[key:string]:PluginConf},
       pluginValidation:{},
       projectSettings: {},
+      pluginConfigs: [] as ProjectPluginConfigEntry[],
       pluginGroupSettings: {},
       editMode: {} as any,
       showSave: {} as any,
@@ -119,6 +119,23 @@ export default Vue.extend({
 
       await this.setConfig(name, service)
     },
+    editPermalink(index: number): string | undefined {
+      return this.pluginProviders.length > index &&
+      this.pluginProviders[index].resources.editPermalink
+        ? this.pluginProviders[index].resources.editPermalink
+        : "#";
+    },
+    pluginsConfigWasSaved() {
+      this.$emit("saved");
+      this.$emit("reset");
+      this.getProjectProperties().then();
+    },
+    pluginsConfigWasModified() {
+      this.$emit("modified");
+    },
+    pluginsConfigWasReset() {
+      this.$emit("reset");
+    },
     async setConfig(name: string, service:string){
       const pluginPath = "project.plugin.PluginGroup." + name +"."
 
@@ -141,6 +158,13 @@ export default Vue.extend({
         type:name,
         config:config
       })
+    },
+    createConfigEntry(entry: any, origIndex: number): ProjectPluginConfigEntry {
+      return {
+        extra: { config: Object.assign({}, entry.extra) },
+        entry: { type: entry.type, config: Object.assign({}, entry.config) },
+        origIndex: origIndex
+      } as ProjectPluginConfigEntry;
     },
     async saveConfig(name:string, service:string){
       this.editMode[name]=false
@@ -166,10 +190,8 @@ export default Vue.extend({
     }
   },
   async mounted() {
-    (this.configList as PluginConf[])?.forEach((val: PluginConf) => this.pluginData[val.type] = val)
-    //this.editMode(false)
-    //this.editMode=false
 
+    const projectPluginConfigList = [] as ProjectPluginConfigEntry[]
     await this.getProjectProperties()
     pluginService
       .getPluginProvidersForService(this.serviceName)
