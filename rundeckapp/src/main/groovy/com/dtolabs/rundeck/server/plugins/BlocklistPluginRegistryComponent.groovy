@@ -5,19 +5,23 @@ import com.dtolabs.rundeck.core.plugins.*
 import groovy.transform.CompileStatic
 import org.rundeck.security.RundeckPluginBlocklist
 
+/**
+ * Uses PluginBlocklist to determine if a plugin is allowed or not
+ */
 @CompileStatic
 class BlocklistPluginRegistryComponent implements PluginRegistryComponent {
-    RundeckPluginBlocklist rundeckPluginBlocklist
+    PluginBlocklist rundeckPluginBlocklist
 
+    @Override
+    def <T> boolean isAllowed(final String name, final PluggableProviderService<T> service) {
+        return !rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)
+    }
 
     @Override
     def <T> CloseableDescribedPlugin<T> retainPluginDescriptorByName(
         final String name,
         final PluggableProviderService<T> service
     ) {
-        if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)){
-            throw new Exception("Plugin is blocked")
-        }
         return null
     }
 
@@ -26,9 +30,6 @@ class BlocklistPluginRegistryComponent implements PluginRegistryComponent {
         final String name,
         final PluggableProviderService<T> service
     ) {
-        if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, name)){
-            throw new Exception("Plugin is blocked")
-        }
         return null
     }
 

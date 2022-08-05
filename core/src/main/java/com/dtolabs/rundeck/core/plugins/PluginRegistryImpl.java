@@ -149,12 +149,14 @@ public class PluginRegistryImpl
             PluggableProviderService<T> service
     )
     {
+        if (!components.stream().allMatch(c -> c.isAllowed(service.getName(), service))) {
+            return null;
+        }
         for (PluginRegistryComponent component : components) {
             CloseableDescribedPlugin<T> tDescribedPlugin = null;
             try {
                 tDescribedPlugin = component.retainPluginDescriptorByName(name, service);
             } catch (Exception e) {
-                //todo: allow blocklist to force null result
                 return null;
             }
             if (null != tDescribedPlugin) {
@@ -287,6 +289,9 @@ public class PluginRegistryImpl
             final PluggableProviderService<T> service
     )
     {
+        if (!components.stream().allMatch(c -> c.isAllowed(service.getName(), service))) {
+            return null;
+        }
         for (PluginRegistryComponent component : components) {
             DescribedPlugin<T> tDescribedPlugin = null;
             try {
