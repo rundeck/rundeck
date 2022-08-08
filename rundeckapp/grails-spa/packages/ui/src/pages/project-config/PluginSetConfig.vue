@@ -207,9 +207,9 @@ export default Vue.extend({
                 this.setConfig(provider.name, this.serviceName)
               }
             });
-            console.log("Made it here")
-            console.log(index)
-            console.log(this.pluginProviders)
+            // console.log("Made it here")
+            // console.log(index)
+            // console.log(this.pluginProviders)
           });
         }
 

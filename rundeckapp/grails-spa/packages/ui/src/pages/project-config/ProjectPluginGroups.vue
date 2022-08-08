@@ -187,7 +187,7 @@ const client: RundeckBrowser = getRundeckContext().rundeckClient
 const rdBase = getRundeckContext().rdBase
 
 interface PluginConf {
-  readonly type: string;
+  type: string;
   config: any;
 }
 interface ProjectPluginConfigEntry {
@@ -220,7 +220,7 @@ export default Vue.extend({
       modalAddOpen: false,
       pluginProviders: [] as any,
       pluginLabels: {},
-      projectSettings: [],
+      projectSettings: {},
       editFocus: -1,
       errors: [] as string[],
       pluginStorageAccess: [] as any[]
@@ -514,39 +514,41 @@ export default Vue.extend({
           this.pluginProviders = data.descriptions;
           this.pluginLabels = data.labels;
           this.pluginProviders.forEach((provider: any, index: any)=>{
+            let config ={} as any
+
+            let projectPluginConfig = {} as ProjectPluginConfigEntry
             this.pluginProviders[index]["created"]=false
-            Object.keys(this.projectSettings).forEach((key2: string)=>{
-              if(key2.includes("project.plugin.PluginGroup." + provider.name)){
+            Object.keys(this.projectSettings).forEach((key: string)=>{
+              if(key.includes("project.plugin.PluginGroup." + provider.name)){
                 this.pluginProviders[index]["created"]=true
                 const pluginPath = "project.plugin.PluginGroup." + provider.name +"."
 
-                let config ={} as any
-
-                Object.keys(this.projectSettings).forEach((key: string)=>{
                   if(key.includes(pluginPath)){
-                    let pluginConf = {} as PluginConf
-                    let projectPluginConfig = {} as ProjectPluginConfigEntry
-                    pluginConf.config[key.replace(pluginPath,"")] = (this.projectSettings as any)[key]
-                    projectPluginConfig.entry=pluginConf
-                    Vue.set(this.pluginData,provider.name,{
-                      type:provider.name,
-                      config:pluginConf
-                    })
-                    projectPluginConfigList.push(projectPluginConfig)
                     config[key.replace(pluginPath,"")]=(this.projectSettings as any)[key]
                   }
-                });
                 this.loaded = true;
                 this.notifyPluginConfigs();
               }
             });
-
+            console.log(provider.name)
+            console.log(config)
+            if(Object.keys(config).length!=0){
+              //projectPluginConfig.create=true
+              projectPluginConfig.entry= {type: provider.name, config: config} as PluginConf
+              Vue.set(this.pluginData,provider.name,{
+                type:provider.name,
+                config:config
+              })
+              projectPluginConfigList.push(projectPluginConfig)
+            }
           });
         }
       }).catch(error => console.error(error));
-    this.pluginConfigs = projectPluginConfigList.map((val: any, index: number) =>
-      this.createConfigEntry(val, index)
-    );
+    console.log("made it 1")
+    console.log(projectPluginConfigList)
+    this.pluginConfigs = projectPluginConfigList
+    console.log("made it 2")
+    console.log(this.pluginConfigs)
   }
 });
 </script>
