@@ -3839,7 +3839,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def err = [:]
         int timeout = 10
         int contimeout = 0
-        int retryCount = 3
+        int retryCount = 5
+        int httpResponseCode = 0
+
         if (configurationService.getString("jobs.options.remoteUrlTimeout")) {
             try {
                 timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout", 10)
@@ -3862,7 +3864,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if (configurationService.getString("jobs.options.remoteUrlRetry")) {
             try {
-                retryCount = configurationService.getInteger("jobs.options.remoteUrlRetry", 3)
+                retryCount = configurationService.getInteger("jobs.options.remoteUrlRetry", 5)
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "
@@ -3912,9 +3914,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
-        int httpResponseCode = 0
+        int count = retryCount
         do{
             try {
+                if (count > retryCount){
+                    if(count>0){
+                        Thread.sleep(contimeout*1000)
+                    }
+                }
                 def framework = frameworkService.getRundeckFramework()
                 def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
                 boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
@@ -3946,7 +3953,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             retryCount--
         }while(retryCount > 0 && (httpResponseCode < 200 || httpResponseCode > 300 ))
 
-            //validate result contents
+        //validate result contents
         boolean valid = true;
         def validationerrors = []
         if (result) {
