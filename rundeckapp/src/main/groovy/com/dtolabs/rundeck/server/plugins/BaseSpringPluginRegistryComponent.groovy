@@ -45,7 +45,7 @@ abstract class BaseSpringPluginRegistryComponent
         return loadBeanDescriptor(name, service.name) as DescribedPlugin<T>
     }
 
-    private DescribedPlugin<?> loadBeanDescriptor(String name, String type) {
+    DescribedPlugin<?> loadBeanDescriptor(String name, String type) {
         try {
             def bean = findProviderBean(type, name)
             if (!bean) {
