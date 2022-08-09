@@ -94,10 +94,8 @@ import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
-import org.rundeck.app.data.BaseAppContext
 import org.rundeck.app.data.ProviderRegistration
-import org.rundeck.app.data.RundeckDataAccessContext
-import org.rundeck.app.data.tokens.TokenDataProvider
+import org.rundeck.app.data.providers.TokenDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -815,14 +813,11 @@ beans={
     //provider implementations
     tokenDataProvider(TokenDataProvider)
 
-    //access context
-    rundeckDataAccessContext(RundeckDataAccessContext)
 
     //manager setup
     rundeckDataManager(BaseDataManager)
     rundeckDataProviderRegistration(ProviderRegistration) {
         dataManager = ref('rundeckDataManager')
-        accessContextProvider = ref('rundeckDataAccessContext')
         providers = [
             ref('tokenDataProvider')
         ]

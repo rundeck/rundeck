@@ -1,13 +1,15 @@
 apply plugin: "groovy"
 apply plugin: "java-library"
-
+repositories {
+    mavenCentral()
+}
 dependencies {
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
-    compileOnly "org.projectlombok:lombok:1.18.20"
-    annotationProcessor "org.projectlombok:lombok:1.18.20"
+    compileOnly "org.projectlombok:lombok:1.18.24"
+    annotationProcessor "org.projectlombok:lombok:1.18.24"
 }
 
 ext.description= "Rundeck project ${project.name}"

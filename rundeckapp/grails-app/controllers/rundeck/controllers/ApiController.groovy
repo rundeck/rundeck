@@ -341,11 +341,10 @@ class ApiController extends ControllerBase{
         UserAndRolesAuthContext authContext = systemAuthContext
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
-
         //admin: search by token ID
         //user: search for token ID owned by user
 
-        org.rundeck.app.data.tokens.v1.Token oldtoken = adminAuth ?
+        AuthToken oldtoken = adminAuth ?
                 apiService.findTokenId(params.tokenid) :
                 apiService.findUserTokenId(authContext.username, params.tokenid)
 

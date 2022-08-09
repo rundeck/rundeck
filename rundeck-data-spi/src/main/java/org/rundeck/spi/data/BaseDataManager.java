@@ -6,20 +6,20 @@ import java.util.Map;
 public class BaseDataManager
         implements DataManager
 {
-    private final Map<Class<?>, DataProvider<?, ?>> providers = new HashMap<>();
+    private final Map<String, DataProvider<?>> providers = new HashMap<>();
 
-    public <D, T extends DataType<D>, C> void registerDataProvider(
-            ContextDataProvider<C, D, T> dataProvider, AccessContextProvider<C> accessContextProvider
+    public <D> void registerDataProvider(
+            DataProvider<D> dataProvider
     )
     {
         providers.put(
-                dataProvider.getDataType().getJavaType(),
-                new ContextResolvedProvider<>(accessContextProvider, dataProvider)
+                dataProvider.getClass().getSimpleName(),
+                dataProvider
         );
 
     }
 
-    public <D, T extends DataType<D>> DataProvider<D, T> getProviderForType(Class<D> tClass) {
-        return (DataProvider<D, T>) providers.get(tClass);
+    public <D> DataProvider<D> getProviderForType(String className) {
+        return (DataProvider<D>) providers.get(className);
     }
 }

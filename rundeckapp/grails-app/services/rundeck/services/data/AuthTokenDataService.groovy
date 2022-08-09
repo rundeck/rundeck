@@ -10,9 +10,12 @@ interface AuthTokenDataService {
 
     AuthToken getByUuid(String uuid)
 
-    AuthToken save(AuthToken execution)
+    AuthToken save(AuthToken authToken)
 
-    Long countByUser(String user)
+    //Long countByUser(String user)
 
     void deleteByUuid(String uuid)
+
+    void delete(Serializable id)
+
 }

@@ -1,22 +1,30 @@
 package org.rundeck.spi.data;
 
+import java.io.Serializable;
+
 /**
  * Provide access to a data set for a type
  *
- * @param <T>
  */
-public interface DataProvider<D, T extends DataType<D>> {
-    T getDataType();
+public interface DataProvider<D> {
+    /**
+     * Retrieves an object the datastore
+     * @return Returns the instance
+     */
+    D get(Serializable id) throws DataAccessException;
 
-    D getData(String id) throws DataAccessException;
+    /**
+     * Saves an object the datastore
+     * @return Returns the instance
+     */
+    D create(D data) throws DataAccessException;
 
-    String create(D data) throws DataAccessException;
+    void update(Serializable id, D data) throws DataAccessException;
 
-    String createWithId(String id, D data) throws DataAccessException;
+    /**
+     * Saves an object the datastore
+     * @return Returns the instance
+     */
+    void delete(D data) throws DataAccessException;
 
-    void update(String id, D data) throws DataAccessException;
-
-    void delete(String id) throws DataAccessException;
-
-    QueryResult<D, T> query(DataQuery query) throws DataAccessException;
 }

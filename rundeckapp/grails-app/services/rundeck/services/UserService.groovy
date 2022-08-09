@@ -49,7 +49,7 @@ class UserService {
         }
     }
 
-    def findOrCreateUser(String login) {
+    User findOrCreateUser(String login) {
         def User user = User.findByLogin(login)
         if(!user){
             def User u = new User(login:login)

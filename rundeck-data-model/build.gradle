@@ -1,6 +1,8 @@
 apply plugin: "groovy"
 apply plugin: "java-library"
-
+repositories {
+    mavenCentral()
+}
 dependencies {
     api project(":rundeck-data-spi")
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"

@@ -1,11 +1,9 @@
 package org.rundeck.app.data
 
 import groovy.transform.CompileStatic
-import org.rundeck.spi.data.AccessContextProvider
-import org.rundeck.spi.data.ContextDataProvider
 import org.rundeck.spi.data.DataManager
+import org.rundeck.spi.data.DataProvider
 import org.springframework.beans.factory.InitializingBean
-import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * Bean to register specified data providers with a DataManager
@@ -14,16 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired
 class ProviderRegistration implements InitializingBean {
 
     DataManager dataManager
-    AccessContextProvider<?> accessContextProvider
-    List<ContextDataProvider<?, ?, ?>> providers = []
+    List <DataProvider<?>> providers = []
 
     @Override
     void afterPropertiesSet() throws Exception {
-        for (ContextDataProvider<?, ?, ?> provider : providers) {
-            dataManager.registerDataProvider(
-                provider,
-                accessContextProvider
-            )
+        for (def provider : providers) {
+            dataManager.registerDataProvider(provider);
         }
     }
 }
