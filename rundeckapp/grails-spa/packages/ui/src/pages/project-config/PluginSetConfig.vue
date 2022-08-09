@@ -1,6 +1,6 @@
 <template>
   <project-plugin-groups
-    config-prefix="pluginValues.PluginGroup."
+    configPrefix="pluginValues.PluginGroup."
     service-name="PluginGroup"
     :edit-mode="true"
     :help="help"

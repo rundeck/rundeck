@@ -39,18 +39,6 @@
             >
               <span slot="titlePrefix">{{index+1}}.</span>
             </plugin-config>
-
-            <div v-if="additionalProps && additionalProps.props.length>0">
-              <plugin-config
-                :mode="editFocus===(index) ? plugin.create?'create':'edit':'show'"
-                v-model="plugin.extra"
-                :config="plugin.extra.config"
-                :key="'additional_config_'+index+'/'+((editFocus===index)?'true':'false' )"
-                :show-title="false"
-                :show-description="false"
-                :plugin-config="additionalProps"
-              ></plugin-config>
-            </div>
             <plugin-config
               :mode="editFocus===(index) ? plugin.create?'create':'edit':'show'"
               :serviceName="serviceName"
@@ -122,7 +110,6 @@
             </slot>
           </div>
         </div>
-
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="primary" @click="modalAddOpen=true">
             {{pluginLabels && pluginLabels.addButton || serviceName}}
@@ -162,8 +149,8 @@
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>
-          <btn type="default" @click="cancelAction" v-else-if="modified">{{$t('Revert')}}</btn>
-          <a class="btn btn-cta" @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>
+<!--          <btn type="default" @click="cancelAction" v-else-if="modified">{{$t('Revert')}}</btn>-->
+<!--          <a class="btn btn-cta" @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>-->
           <span class="text-warning" v-if="modified">Changes have not been saved.</span>
         </div>
       </div>
@@ -229,9 +216,9 @@ export default Vue.extend({
   computed:{
     exportedData():any[]{
       let data = []
-      let inputData = this.pluginData
+      let inputData = this.pluginConfigs
       for (let key in inputData) {
-        data.push({type: key, config: inputData[key].config})
+        data.push({type: key, config: inputData[key].entry.config})
       }
       return data
     }
@@ -279,18 +266,15 @@ export default Vue.extend({
     },
     createConfigEntry(entry: any, origIndex: number): ProjectPluginConfigEntry {
       return {
-        extra: { config: Object.assign({}, entry.extra) },
-        entry: { type: entry.type, config: Object.assign({}, entry.config) },
-        origIndex: origIndex
+        entry: { type: entry.type, config: Object.assign({}, entry.config) }
       } as ProjectPluginConfigEntry;
     },
 
     serializeConfigEntry(entry: ProjectPluginConfigEntry): any {
       return {
-        extra: Object.assign({}, entry.extra.config),
         type: entry.entry.type,
+        serviceName: "PluginGroup",
         config: Object.assign({}, entry.entry.config),
-        origIndex: entry.origIndex
       };
     },
     addPlugin(provider: string) {
@@ -349,6 +333,7 @@ export default Vue.extend({
     },
     async savePlugins() {
       try {
+        console.log("into save plugins")
         const result = await this.saveProjectPluginConfig(
           this.project,
           this.configPrefix,
@@ -417,18 +402,16 @@ export default Vue.extend({
       serviceName: string,
       data: ProjectPluginConfigEntry[]
     ) {
+      console.log("into save project plugin configs")
+
       const serializedData = data.map(this.serializeConfigEntry);
 
-      const resp = await this.rundeckContext.rundeckClient.sendRequest({
-        pathTemplate: `/framework/saveProjectPluginsAjax`,
-        baseUrl: this.rdBase,
-        method: "POST",
-        queryParameters: {
-          project: `${window._rundeck.projectName}`,
-          configPrefix: this.configPrefix,
-          serviceName: this.serviceName
-        },
-        body: { plugins: serializedData }
+      const resp = await client.sendRequest({
+        baseUrl: rdBase,
+        pathTemplate: "/api/"+window._rundeck.apiVersion+"/project/"+window._rundeck.projectName+"/config",
+        method: "PUT",
+        headers: {"content-type": "application/json"},
+        body: serializedData
       });
 
       if (resp && resp.status >= 200 && resp.status < 300) {
@@ -533,7 +516,7 @@ export default Vue.extend({
             console.log(provider.name)
             console.log(config)
             if(Object.keys(config).length!=0){
-              //projectPluginConfig.create=true
+              projectPluginConfig.create=true
               projectPluginConfig.entry= {type: provider.name, config: config} as PluginConf
               Vue.set(this.pluginData,provider.name,{
                 type:provider.name,
