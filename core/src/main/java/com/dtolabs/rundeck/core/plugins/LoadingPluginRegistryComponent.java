@@ -51,13 +51,13 @@ public class LoadingPluginRegistryComponent
             }
         }
         if (null != instance) {
-            return new CloseableDescribedPlugin<T>(instance, loadPluginDescription(service, name), name);
+            return new CloseableDescribedPlugin<T>(instance, loadPluginDescription(instance), name);
         }
         return null;
     }
 
-    private Description loadPluginDescription(PluggableProviderService<?> service, String name) {
-        return DescribableServiceUtil.loadDescriptionForType(service, name, true);
+    private Description loadPluginDescription(Object instance) {
+        return DescribableServiceUtil.descriptionForProvider(true, instance);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class LoadingPluginRegistryComponent
             }
         }
         if (null != instance) {
-            return new DescribedPlugin<T>(instance, loadPluginDescription(service, name), name);
+            return new DescribedPlugin<T>(instance, loadPluginDescription(instance), name);
         }
         return null;
     }
