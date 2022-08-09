@@ -1,4 +1,5 @@
 <template>
+  <div>
   <project-plugin-groups
     configPrefix="pluginValues.PluginGroup."
     service-name="PluginGroup"
@@ -11,10 +12,11 @@
     :edit-button-text="$t('Edit Plugin Groups')"
     :mode-toggle="modeToggle"
   >
+  </project-plugin-groups>
     <template v-if="exportedData">
       <input type="hidden" :value="JSON.stringify(exportedData)" :name="configPrefix+'json'"/>
     </template>
-  </project-plugin-groups>
+  </div>
 
 </template>
 <script lang="ts">
@@ -104,15 +106,14 @@ export default Vue.extend({
   },
   computed:{
     exportedData():any[]{
-      console.log("into exported data")
-      let data = []
+      let data = [] as any
       let inputData = this.pluginConfigs
-      for (let key in inputData) {
-        if(inputData[key].modified){
-          data.push({type: key, config: inputData[key].entry.config})
-        }
-      }
+      inputData.forEach((plugin, index) => {
+          data.push({type: plugin.entry.type, config: plugin.entry.config})
+      });
+      console.log(data)
       return data
+
     }
   },
   methods:{
