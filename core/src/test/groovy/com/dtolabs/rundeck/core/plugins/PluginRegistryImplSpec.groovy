@@ -39,6 +39,7 @@ class PluginRegistryImplSpec extends Specification {
                         description,
                         'aplugin'
                     )
+                    _ * isAllowed(*_) >> true
                 }
             ]
 
@@ -56,7 +57,7 @@ class PluginRegistryImplSpec extends Specification {
                 getName() >> 'TestSvc'
             }
         when:
-            def result = sut.configurePluginByName('aplugin', svc, fwk, 'AProject', [:])
+            def result = sut.configurePluginByName('aplugin', svc, fwk, 'AProject', iconfig)
         then:
             result
             result.configuration != null
@@ -66,11 +67,15 @@ class PluginRegistryImplSpec extends Specification {
             provider = 'aplugin'
             project = 'AProject'
 
-            projProps | fwkProps | query | value
-            [:] | [:] | 'prop1' | null
-            [:] | [:] | 'prop1' | null
-            ['project.plugin.TestSvc.aplugin.prop1': 'propval'] | [:] | 'prop1' | 'propval'
-            [:] | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval'] | 'prop1' | 'fwkval'
+            iconfig|projProps | fwkProps | query | value
+            [:]| [:] | [:] | 'prop1' | null
+            [prop1:'aval']| [:] | [:] | 'prop1' | 'aval'
+            [:]|['project.plugin.TestSvc.aplugin.prop1': 'propval'] | [:] | 'prop1' | 'propval'
+            [:]|[:] | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval'] | 'prop1' | 'fwkval'
+            [:]|['project.plugin.TestSvc.aplugin.prop1': 'propval'] | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval'] | 'prop1' | 'propval'
+            [prop1:'aval']|['project.plugin.TestSvc.aplugin.prop1': 'propval'] | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval'] | 'prop1' | 'aval'
+            [prop1:'aval']|[:] | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval'] | 'prop1' | 'aval'
+            [prop1:'aval']|['project.plugin.TestSvc.aplugin.prop1': 'propval'] | [:] | 'prop1' | 'aval'
 
     }
 
@@ -84,23 +89,21 @@ class PluginRegistryImplSpec extends Specification {
                                                  .build()
 
             def testPlugin1 = new TestPluginWithAnnotation()
-            testPlugin1.description = description1
 
 
             def sut = new PluginRegistryImpl()
 
             sut.components = [
                 Mock(PluginRegistryComponent) {
-                    1 * loadPluginDescriptorByName('plugin2', _) >> {
-                        throw new Exception("plugin blocked")
-                    }
+                    1 * isAllowed('plugin2', _) >> false
                 },
                 Mock(PluginRegistryComponent) {
-                    1 * loadPluginDescriptorByName('plugin2', _) >> new DescribedPlugin<>(
+                    0 * loadPluginDescriptorByName('plugin2', _) >> new DescribedPlugin<>(
                         testPlugin1,
-                        description,
+                        description1,
                         'plugin2'
                     )
+                    _ * isAllowed(*_) >> true
                 }
             ]
             def svc = Mock(PluggableProviderService) {
@@ -124,23 +127,21 @@ class PluginRegistryImplSpec extends Specification {
                                                  .build()
 
             def testPlugin1 = new TestPluginWithAnnotation()
-            testPlugin1.description = description1
 
 
             def sut = new PluginRegistryImpl()
 
             sut.components = [
                 Mock(PluginRegistryComponent) {
-                    1 * loadPluginDescriptorByName('plugin2', _) >> {
-                        throw new Exception("plugin blocked")
-                    }
+                    1 * isAllowed('plugin2', _) >> false
                 },
                 Mock(PluginRegistryComponent) {
-                    1 * loadPluginDescriptorByName('plugin2', _) >> new DescribedPlugin<>(
+                    0 * loadPluginDescriptorByName('plugin2', _) >> new DescribedPlugin<>(
                         testPlugin1,
-                        description,
+                        description1,
                         'plugin2'
                     )
+                    _ * isAllowed(*_) >> true
                 }
             ]
             def svc = Mock(PluggableProviderService) {
@@ -184,9 +185,7 @@ class PluginRegistryImplSpec extends Specification {
             def testPlugin3 = new TestPluginWithAnnotation2()
             testPlugin3.description = description3
 
-            def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
-            def beanBuilder2 = new TestBuilder3(instance: testPlugin2)
-            def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
+
 
             def sut = new PluginRegistryImpl()
 
@@ -195,19 +194,21 @@ class PluginRegistryImplSpec extends Specification {
                     1 * isAllowed("plugin2", _) >> true
                     1 * isAllowed("plugin1", _) >> false
                     1 * isAllowed("plugin3", _) >> true
+                    1 * listPluginDescriptors(TestPluginWithAnnotation2, _)>>[:]
                 },
                 Mock(PluginRegistryComponent) {
-                    1 * listPluginDescriptors(_, _) >> [
-                        plugin1: testPlugin1,
-                        plugin2: testPlugin2
-                    ]
-                    1 * isAllowed(_, _) >> true
+                    1 * listPluginDescriptors(TestPluginWithAnnotation2, _) >> new HashMap<>([
+                        plugin1: new DescribedPlugin(testPlugin1,description1,'plugin1'),
+                        plugin2: new DescribedPlugin(testPlugin2,description2,'plugin2')
+                    ])
+                    _ * isAllowed(_, _) >> true
                 },
                 Mock(PluginRegistryComponent) {
-                    1 * listPluginDescriptors(_, _) >> [
-                        plugin3: testPlugin3
-                    ]
-                    1 * isAllowed(_, _) >> true
+
+                    1 * listPluginDescriptors(TestPluginWithAnnotation2, _) >> new HashMap<>([
+                        plugin3: new DescribedPlugin(testPlugin3,description3,'plugin3')
+                    ])
+                    _ * isAllowed(_, _) >> true
                 }
             ]
             def svc = Mock(PluggableProviderService) {
@@ -248,7 +249,7 @@ class PluginRegistryImplSpec extends Specification {
             testPlugin2.description = description2
 
             def description3 = DescriptionBuilder.builder()
-                                                 .name('plugin1')
+                                                 .name('plugin3')
                                                  .property(PropertyBuilder.builder().string('prop1').build())
                                                  .property(PropertyBuilder.builder().string('prop2').build())
                                                  .build()
@@ -261,20 +262,24 @@ class PluginRegistryImplSpec extends Specification {
             pluginsMap[testPlugin2.description.name] = testPlugin2
             pluginsMap['plugin3'] = testPlugin3
 
-            def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
-            def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
 
-            defineBeans {
-                testBeanBuilder(InstanceFactoryBean, beanBuilder1)
-                testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
-            }
             def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = ['plugin1': 'testBeanBuilder', 'otherservice:plugin1': 'testBeanBuilder3']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
-            sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist)
 
+            sut.components = [
+                Mock(PluginRegistryComponent) {
+                    1 * isAllowed(pluginname, _) >> true
+                },
+                Mock(PluginRegistryComponent) {
+                    _ * loadPluginDescriptorByName('plugin1', _) >> new DescribedPlugin(testPlugin1,description1,'plugin1')
+                    _ * loadPluginDescriptorByName('plugin2', _) >> new DescribedPlugin(testPlugin2,description2,'plugin2')
+                    _ * isAllowed(pluginname, _) >> true
+                },
+                Mock(PluginRegistryComponent) {
+                    _ * loadPluginDescriptorByName('plugin3', _) >> new DescribedPlugin(testPlugin3,description3,'plugin3')
+
+                    _ * isAllowed(pluginname, _) >> true
+                }
+            ]
             def svc = Mock(PluggableProviderService) {
                 getName() >> servicename
                 providerOfType("plugin2") >> testPlugin2
@@ -289,133 +294,15 @@ class PluginRegistryImplSpec extends Specification {
             result.instance == pluginsMap[pluginKey]
 
         where:
-            provider = 'aplugin'
             project = 'AProject'
 
             pluginname | servicename | pluginKey
             'plugin1' | 'aservicename' | 'plugin1'
             'plugin2' | 'otherservicename' | 'plugin2'
-            'plugin1' | 'otherservice' | 'plugin3'
+            'plugin3' | 'otherservice' | 'plugin3'
 
     }
 
-    @Unroll
-    def "loadBeanDescriptor not describable"() {
-        given:
-
-            defineBeans {
-                SomeBean(InstanceFactoryBean, 'test')
-            }
-            def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = [(pluginname): 'SomeBean']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
-
-
-        when:
-            def result = sut.loadBeanDescriptor(pluginname, servicename)
-
-        then:
-            result == null
-
-        where:
-
-            pluginname | servicename
-            'plugin1'  | 'aservicename'
-
-    }
-
-    @Unroll
-    def "loadBeanDescriptor builder returns null"() {
-        given:
-
-            def builder = Mock(PluginBuilder) {
-
-            }
-            defineBeans {
-                SomeBean(InstanceFactoryBean, builder)
-            }
-            def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = [(pluginname): 'SomeBean']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
-
-
-        when:
-            def result = sut.loadBeanDescriptor(pluginname, servicename)
-
-        then:
-            result == null
-
-        where:
-
-            pluginname | servicename
-            'plugin1'  | 'aservicename'
-
-    }
-
-    @Unroll
-    def "loadBeanDescriptor null from subcontext"() {
-        given:
-
-            def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = [(pluginname): 'SomeBean']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
-            sut.subContexts['SomeBean'] = Mock(ApplicationContext) {
-                getBean('SomeBean') >> null
-            }
-
-
-        when:
-            def result = sut.loadBeanDescriptor(pluginname, servicename)
-
-        then:
-            result == null
-
-        where:
-
-            pluginname | servicename
-            'plugin1'  | 'aservicename'
-
-    }
-
-    @Unroll
-    def "load plugin by name should load description by type"() {
-        given:
-
-            def description2 = DescriptionBuilder.builder()
-                                                 .name('plugin2')
-                                                 .property(PropertyBuilder.builder().string('prop1').build())
-                                                 .property(PropertyBuilder.builder().string('prop2').build())
-                                                 .build()
-
-            def testPlugin2 = new TestPluginWithAnnotation()
-            testPlugin2.description = description2
-
-            def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = [:]
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
-
-            def svc = Mock(PluggableProviderService) {
-                getName() >> "otherservicename"
-                providerOfType("plugin2") >> testPlugin2
-            }
-
-        when:
-            def result = sut.loadPluginDescription(svc, 'plugin2')
-
-        then:
-
-            result
-            result.name == 'plugin2'
-            result == description2
-    }
 
     @Unroll
     def "list plugin by type"() {
@@ -430,13 +317,13 @@ class PluginRegistryImplSpec extends Specification {
             testPlugin1.description = description1
 
             def description2 = DescriptionBuilder.builder()
-                                                 .name('plugin3')
+                                                 .name('plugin2')
                                                  .property(PropertyBuilder.builder().string('prop1').build())
                                                  .property(PropertyBuilder.builder().string('prop2').build())
                                                  .build()
 
             def description3 = DescriptionBuilder.builder()
-                                                 .name('plugin4')
+                                                 .name('plugin3')
                                                  .property(PropertyBuilder.builder().string('prop1').build())
                                                  .property(PropertyBuilder.builder().string('prop2').build())
                                                  .build()
@@ -447,34 +334,38 @@ class PluginRegistryImplSpec extends Specification {
             def testPlugin3 = new TestPluginWithAnnotation2()
             testPlugin3.description = description3
 
-            def beanBuilder1 = new TestBuilder2(instance: testPlugin1)
-            def beanBuilder2 = new TestBuilder3(instance: testPlugin2)
-            def beanBuilder3 = new TestBuilder3(instance: testPlugin3)
-
-            defineBeans {
-                testBeanBuilder(InstanceFactoryBean, beanBuilder1)
-                testBeanBuilder2(InstanceFactoryBean, beanBuilder2)
-                testBeanBuilder3(InstanceFactoryBean, beanBuilder3)
-            }
             def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut
-                .pluginRegistryMap = ['aservicename:plugin1': 'testBeanBuilder', 'otherservice:plugin2':
-                'testBeanBuilder2', 'otherservice:plugin3'  : 'testBeanBuilder3']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
-            sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist)
+            sut.components = [
+                Mock(PluginRegistryComponent) {
+                    _ * listPluginDescriptors(TestPluginWithAnnotation, _) >> [
+                        plugin1: new DescribedPlugin(testPlugin1, description1, 'plugin1'),
+                    ]
+                    _ * listPluginDescriptors(TestPluginWithAnnotation2, _) >> [
+                        plugin2: new DescribedPlugin(testPlugin2, description2, 'plugin2'),
+                    ]
+                    _ * isAllowed(*_) >> true
+                },
+                Mock(PluginRegistryComponent) {
+                    _ * listPluginDescriptors(TestPluginWithAnnotation2, _) >> [
+                        plugin3: new DescribedPlugin(testPlugin3, description3, 'plugin3')
+                    ]
+                    _ * isAllowed(*_) >> true
+                },
+            ]
 
             def svc = Mock(PluggableProviderService)
 
         when:
-            def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
+            def result = sut.listPluginDescriptors(type, svc)
 
         then:
             result
-            result.size() == 2
-            result["plugin2"].description == description2
-            result["plugin3"].description == description3
+            result.size() == names.size()
+            names.containsAll result.keySet()
+        where:
+            type                      | names
+            TestPluginWithAnnotation2 | ['plugin2', 'plugin3']
+            TestPluginWithAnnotation  | ['plugin1']
 
     }
 
@@ -499,32 +390,33 @@ class PluginRegistryImplSpec extends Specification {
             def testPlugin2 = new TestPluginMetaData()
             testPlugin2.description = description2
 
-            def beanBuilder1 = new TestBuilderMetadata2(instance: testPlugin1)
-            def beanBuilder2 = new TestBuilderMetadata2(instance: testPlugin2)
 
-            defineBeans {
-                testBeanBuilder(InstanceFactoryBean, beanBuilder1)
-                testBeanBuilder2(InstanceFactoryBean, beanBuilder2)
-            }
             GroovyMock(ServiceTypes, global: true)
             ServiceTypes.getPluginType(_) >> TestPluginMetaData
             def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = ['plugin1': 'testBeanBuilder', 'otherservice:plugin2': 'testBeanBuilder2']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+            sut.components = [
+                Mock(PluginRegistryComponent) {
+                    _ * getPluginMetadata('otherservice', 'plugin1') >> Mock(PluginMetadata)
+                    _ * isAllowed(*_) >> true
+                },
+                Mock(PluginRegistryComponent) {
+                    _ * getPluginMetadata('otherservice', 'plugin2') >> Mock(PluginMetadata)
+                    _ * isAllowed(*_) >> true
+                }
+            ]
+
 
         when:
             def result = sut.getPluginMetadata('otherservice', providerName)
 
         then:
             result
-            result instanceof TestBuilderMetadata2
+            result instanceof PluginMetadata
 
         where:
-            providerName | instanceClass
-            'plugin1'    | TestBuilderMetadata2
-            'plugin2'    | TestBuilderMetadata2
+            providerName | _
+            'plugin1'    | _
+            'plugin2'    | _
     }
 
     @Unroll
@@ -537,15 +429,18 @@ class PluginRegistryImplSpec extends Specification {
                 .build()
             def testPlugin = new TestPlugin2()
             testPlugin.description = description
-            def beanBuilder = new TestBuilder(instance: testPlugin)
-            defineBeans {
-                testBeanBuilder(InstanceFactoryBean, beanBuilder)
-            }
+
             def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = ['aplugin': 'testBeanBuilder']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+            sut.components = [
+                Mock(PluginRegistryComponent) {
+                    1 * loadPluginDescriptorByName('aplugin', _) >> new DescribedPlugin<>(
+                        testPlugin,
+                        description,
+                        'aplugin'
+                    )
+                    _ * isAllowed(*_) >> true
+                }
+            ]
             def fwk = Mock(IFramework) {
                 getFrameworkProjectMgr() >> Mock(ProjectManager) {
                     getFrameworkProject(project) >> Mock(IRundeckProject) {
@@ -584,15 +479,18 @@ class PluginRegistryImplSpec extends Specification {
                 .build()
             def testPlugin = new TestPlugin2()
             testPlugin.description = description
-            def beanBuilder = new TestBuilder(instance: testPlugin)
-            defineBeans {
-                testBeanBuilder(InstanceFactoryBean, beanBuilder)
-            }
+
             def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = ['aplugin': 'testBeanBuilder']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+            sut.components = [
+                Mock(PluginRegistryComponent) {
+                    1 * loadPluginDescriptorByName('aplugin', _) >> new DescribedPlugin<>(
+                        testPlugin,
+                        description,
+                        'aplugin'
+                    )
+                    _ * isAllowed(*_) >> true
+                }
+            ]
 
             def svc = Mock(PluggableProviderService) {
                 getName() >> 'TestSvc'
@@ -627,15 +525,18 @@ class PluginRegistryImplSpec extends Specification {
                 .build()
             def testPlugin = new TestPlugin2()
             testPlugin.description = description
-            def beanBuilder = new TestBuilder(instance: testPlugin)
-            defineBeans {
-                testBeanBuilder(InstanceFactoryBean, beanBuilder)
-            }
+
             def sut = new PluginRegistryImpl()
-            sut.pluginDirectory = File.createTempDir('test', 'dir')
-            sut.applicationContext = applicationContext
-            sut.pluginRegistryMap = ['aplugin': 'testBeanBuilder']
-            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
+            sut.components = [
+                Mock(PluginRegistryComponent) {
+                    1 * loadPluginDescriptorByName('aplugin', _) >> new DescribedPlugin<>(
+                        testPlugin,
+                        description,
+                        'aplugin'
+                    )
+                    _ * isAllowed(*_) >> true
+                }
+            ]
 
             def svc = Mock(PluggableProviderService) {
                 getName() >> 'TestSvc'
@@ -662,95 +563,24 @@ class PluginRegistryImplSpec extends Specification {
             provider = 'aplugin'
     }
 
-    @Unroll
-    def "getResourceLoader for UI plugin that implements PluginResourceLoader"() {
-        setup:
-            PluginRegistryImpl registry = new PluginRegistryImpl()
-            registry
-                .pluginRegistryMap = ["UI:MyUiPlugin": "myuipluginBean", "UI:MyUiPluginWResLoader": "myresloaderBean"]
-            registry.metaClass.findBean = { String beanName ->
-                if (beanName == "myuipluginBean") {
-                    return new MyUiPlugin()
-                } else if (beanName == "myresloaderBean") {
-                    return new MyUiPluginWResLoader()
-                }
-            }
-            registry.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader) {
-                getResourceLoader(_, _) >> new StandardPluginResourceLoader()
-            }
 
-        when:
-            def result = registry.getResourceLoader("UI", plugin)
-
-
-        then:
-            result.getClass() == expected
-
-        where:
-            plugin                 | expected
-            "notexist"             | StandardPluginResourceLoader
-            "MyUiPlugin"           | StandardPluginResourceLoader
-            "MyUiPluginWResLoader" | MyUiPluginWResLoader
-
-    }
-
-
-    def "Test UI plugin bean registry and resource loading."() {
-        setup:
-
-            PluginRegistryImpl registry = new PluginRegistryImpl()
-            registry.pluginRegistryMap = new HashMap()
-            registry.metaClass.findBean = { String beanName ->
-                if (beanName == "testUIBean") {
-                    return new MyUiPluginWResLoader() {
-                        @Override
-                        InputStream openResourceStreamFor(String name) throws PluginException, IOException {
-                            return new ByteArrayInputStream(name.getBytes());
-                        }
-                    }
-                } else {
-                    return null
-                }
-            }
-
-        when:
-            registry.registerPlugin(ServiceNameConstants.UI, "test-resource-ui-plugin", "testUIBean")
-
-            def result = registry.getResourceLoader(ServiceNameConstants.UI, "test-resource-ui-plugin")
-
-            def name = "Test Resource Name"
-            def stream = result.openResourceStreamFor(name)
-            def deserializedName = new InputStreamReader(stream).readLine()
-
-        then:
-            result instanceof UIPlugin
-            result instanceof PluginResourceLoader
-            result instanceof MyUiPluginWResLoader
-            name == deserializedName
-    }
 
 
     def "Ask for a resource on a plugin without resource loader gives null, not exception."() {
         setup:
 
-            PluginRegistryImpl registry = new PluginRegistryImpl()
-            registry.pluginRegistryMap = new HashMap()
-            registry.metaClass.findBean = { String beanName ->
-                if (beanName == "testUIBean") {
-                    return new MyUiPlugin()
-                } else {
-                    return null
+            PluginRegistryImpl sut = new PluginRegistryImpl()
+            sut.components = [
+                Mock(PluginRegistryComponent) {
+                    1 * getResourceLoader(*_)
+                    _ * isAllowed(*_) >> true
                 }
-            }
-            registry.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader) {
-                getResourceLoader(_, _) >> null
-            }
+            ]
 
 
         when:
-            registry.registerPlugin(ServiceNameConstants.UI, "test-resource-ui-plugin", "testUIBean")
 
-            def result = registry.getResourceLoader(ServiceNameConstants.UI, "test-resource-ui-plugin")
+            def result = sut.getResourceLoader(ServiceNameConstants.UI, "test-resource-ui-plugin")
 
         then:
             result == null
@@ -904,223 +734,6 @@ class PluginRegistryImplSpec extends Specification {
         @Override
         void configure(final Properties configuration) throws ConfigurationException {
             this.configuration = configuration
-        }
-    }
-
-    static class TestBuilder2 implements PluginBuilder<TestPluginWithAnnotation> {
-        TestPluginWithAnnotation instance
-
-        @Override
-        TestPluginWithAnnotation buildPlugin() {
-            return instance
-        }
-
-
-        @Override
-        Class<TestPluginWithAnnotation> getPluginClass() {
-            TestPluginWithAnnotation
-        }
-    }
-
-    static class TestBuilderMetadata2 implements PluginBuilder<TestPluginMetaData>, PluginMetadata {
-        TestPluginMetaData instance
-
-        @Override
-        TestPluginMetaData buildPlugin() {
-            return instance
-        }
-
-
-        @Override
-        Class<TestPluginMetaData> getPluginClass() {
-            TestPluginMetaData
-        }
-
-        @Override
-        String getFilename() {
-            return null
-        }
-
-        @Override
-        File getFile() {
-            return null
-        }
-
-        @Override
-        String getPluginArtifactName() {
-            return null
-        }
-
-        @Override
-        String getPluginAuthor() {
-            return null
-        }
-
-        @Override
-        String getPluginFileVersion() {
-            return null
-        }
-
-        @Override
-        String getPluginVersion() {
-            return null
-        }
-
-        @Override
-        String getPluginUrl() {
-            return null
-        }
-
-        @Override
-        Date getPluginDate() {
-            return null
-        }
-
-        @Override
-        Date getDateLoaded() {
-            return null
-        }
-
-        @Override
-        String getPluginName() {
-            return null
-        }
-
-        @Override
-        String getPluginDescription() {
-            return null
-        }
-
-        @Override
-        String getPluginId() {
-            return null
-        }
-
-        @Override
-        String getRundeckCompatibilityVersion() {
-            return null
-        }
-
-        @Override
-        String getTargetHostCompatibility() {
-            return null
-        }
-
-        @Override
-        List<String> getTags() {
-            return null
-        }
-
-        @Override
-        String getPluginLicense() {
-            return null
-        }
-
-        @Override
-        String getPluginThirdPartyDependencies() {
-            return null
-        }
-
-        @Override
-        String getPluginSourceLink() {
-            return null
-        }
-
-        @Override
-        String getPluginDocsLink() {
-            return null
-        }
-
-        @Override
-        String getPluginType() {
-            return null
-        }
-    }
-
-    static class TestBuilder3 implements PluginBuilder<TestPluginWithAnnotation2> {
-        TestPluginWithAnnotation2 instance
-
-        @Override
-        TestPluginWithAnnotation2 buildPlugin() {
-            return instance
-        }
-
-
-        @Override
-        Class<TestPluginWithAnnotation2> getPluginClass() {
-            TestPluginWithAnnotation2
-        }
-    }
-
-    static class StandardPluginResourceLoader implements PluginResourceLoader {
-        List<String> listResources() throws PluginException, IOException { return null }
-
-        InputStream openResourceStreamFor(final String name) throws PluginException, IOException { return null }
-    }
-
-    static class MyUiPlugin implements UIPlugin {
-
-        @Override
-        boolean doesApply(final String path) {
-            return false
-        }
-
-        @Override
-        List<String> resourcesForPath(final String path) {
-            return null
-        }
-
-        @Override
-        List<String> scriptResourcesForPath(final String path) {
-            return null
-        }
-
-        @Override
-        List<String> styleResourcesForPath(final String path) {
-            return null
-        }
-
-        @Override
-        List<String> requires(final String path) {
-            return null
-        }
-    }
-
-    static class MyUiPluginWResLoader implements UIPlugin, PluginResourceLoader {
-
-        @Override
-        List<String> listResources() throws PluginException, IOException {
-            return null
-        }
-
-        @Override
-        InputStream openResourceStreamFor(final String name) throws PluginException, IOException {
-            return null
-        }
-
-        @Override
-        boolean doesApply(final String path) {
-            return false
-        }
-
-        @Override
-        List<String> resourcesForPath(final String path) {
-            return null
-        }
-
-        @Override
-        List<String> scriptResourcesForPath(final String path) {
-            return null
-        }
-
-        @Override
-        List<String> styleResourcesForPath(final String path) {
-            return null
-        }
-
-        @Override
-        List<String> requires(final String path) {
-            return null
         }
     }
 }
