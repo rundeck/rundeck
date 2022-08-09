@@ -6,6 +6,7 @@
     :edit-mode="true"
     :help="help"
     project=""
+    @deleted="pluginsConfigWasDeleted"
     @saved="pluginsConfigWasSaved"
     @modified="pluginsConfigWasModified"
     @reset="pluginsConfigWasReset"
@@ -126,6 +127,9 @@ export default Vue.extend({
     },
     pluginsConfigWasSaved(pluginConfigs: ProjectPluginConfigEntry[]) {
       this.$emit("saved");
+      this.pluginConfigs=pluginConfigs
+    },
+    pluginsConfigWasDeleted(pluginConfigs: ProjectPluginConfigEntry[]) {
       this.pluginConfigs=pluginConfigs
     },
     pluginsConfigWasModified() {

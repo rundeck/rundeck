@@ -105,7 +105,7 @@
           <div class="list-group-item" v-if="pluginConfigs.length<1 && showEmpty">
             <slot name="empty-message">
               <span  class="text-muted">
-                {{$t('empty.message.default',[pluginLabels && pluginLabels.addButton || serviceName])}}
+                {{$t("No Plugin Groups Configured",[pluginLabels && pluginLabels.addButton || serviceName])}}
               </span>
             </slot>
           </div>
@@ -295,7 +295,17 @@ export default Vue.extend({
       this.editFocus = focus;
     },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
+      console.log("into save plugin now")
       this.$emit("saved", this.pluginConfigs);
+      const type = plugin.entry.type
+      console.log(type)
+      this.pluginProviders.forEach((item: any, index: any)=> {
+        if(item.name == type){
+          item.configSet=true
+        }
+
+      })
+      console.log(this.pluginProviders)
       //validate
       const validation: PluginValidation = await pluginService.validatePluginConfig(
         this.serviceName,
@@ -313,31 +323,21 @@ export default Vue.extend({
       this.setFocus(-1);
     },
     removePlugin(plugin: ProjectPluginConfigEntry, index: string) {
-      console.log("in remove")
+      this.$emit("deleted", this.pluginConfigs)
       const type = plugin.entry.type
-      console.log(type)
-      let config = {} as any
-      config=plugin.entry.config
-      Object.keys(config).forEach((key: string) => {
-        const configPath = "project.plugin.PluginGroup."+plugin.entry.type+"."+key
-        let result = client.sendRequest(
-          {
-            baseUrl: rdBase,
-            pathTemplate: "/api/"+window._rundeck.apiVersion+"/project/"+window._rundeck.projectName+"/config"+"/{keypath}",
-            method: "DELETE",
-            pathParameters: {keypath: configPath},
-            headers: {"content-type": "application/json"}
-          }
-        )
-        console.log(result)
+      this.pluginProviders.forEach((item: any, index: any)=> {
+        if(item.name == type){
+          item.configSet=false
+        }
+
       })
 
       const found = this.pluginConfigs.indexOf(plugin);
-      this.pluginConfigs.splice(found, 1);
-      if (!plugin.create) {
-        this.setPluginConfigsModified();
-      }
 
+      //this.pluginConfigs[found].configSet=false
+      this.pluginConfigs.splice(found, 1);
+
+      //this.getPluginConfigs()
       this.cleanStorageAccess(plugin);
       this.setFocus(-1);
     },
@@ -413,57 +413,56 @@ export default Vue.extend({
 
       this.pluginStorageAccess = pluginStorageAccess;
     },
+    getPluginConfigs(){
+      const projectPluginConfigList = [] as ProjectPluginConfigEntry[]
+      pluginService
+        .getPluginProvidersForService(this.serviceName)
+        .then(data => {
+          if (data.service) {
+            this.pluginProviders = data.descriptions;
+            this.pluginLabels = data.labels;
+            this.pluginProviders.forEach((provider: any, index: any)=>{
+              let config ={} as any
+
+              let projectPluginConfig = {} as ProjectPluginConfigEntry
+              this.pluginProviders[index]["created"]=false
+              Object.keys(this.projectSettings).forEach((key: string)=>{
+                if(key.includes("project.plugin.PluginGroup." + provider.name)){
+                  this.pluginProviders[index]["configSet"]=true
+                  const pluginPath = "project.plugin.PluginGroup." + provider.name +"."
+
+                  if(key.includes(pluginPath)){
+                    config[key.replace(pluginPath,"")]=(this.projectSettings as any)[key]
+                  }
+                  this.loaded = true;
+                  this.notifyPluginConfigs();
+                }
+              });
+              console.log(provider.name)
+              console.log(config)
+              if(Object.keys(config).length!=0){
+                projectPluginConfig.create=true
+                projectPluginConfig.configSet=true
+                projectPluginConfig.entry= {type: provider.name, config: config} as PluginConf
+                Vue.set(this.pluginData,provider.name,{
+                  type:provider.name,
+                  config:config
+                })
+                projectPluginConfigList.push(projectPluginConfig)
+              }
+            });
+          }
+        }).catch(error => console.error(error));
+      console.log(projectPluginConfigList)
+      this.pluginConfigs = projectPluginConfigList
+    }
   },
   async mounted() {
 
     this.project = window._rundeck.projectName;
     await this.getProjectProperties()
-    const projectPluginConfigList = [] as ProjectPluginConfigEntry[]
+    await this.getPluginConfigs()
 
-
-    pluginService
-      .getPluginProvidersForService(this.serviceName)
-      .then(data => {
-        if (data.service) {
-          this.pluginProviders = data.descriptions;
-          this.pluginLabels = data.labels;
-          this.pluginProviders.forEach((provider: any, index: any)=>{
-            let config ={} as any
-
-            let projectPluginConfig = {} as ProjectPluginConfigEntry
-            this.pluginProviders[index]["created"]=false
-            Object.keys(this.projectSettings).forEach((key: string)=>{
-              if(key.includes("project.plugin.PluginGroup." + provider.name)){
-                this.pluginProviders[index]["configSet"]=true
-                const pluginPath = "project.plugin.PluginGroup." + provider.name +"."
-
-                  if(key.includes(pluginPath)){
-                    config[key.replace(pluginPath,"")]=(this.projectSettings as any)[key]
-                  }
-                this.loaded = true;
-                this.notifyPluginConfigs();
-              }
-            });
-            console.log(provider.name)
-            console.log(config)
-            if(Object.keys(config).length!=0){
-              projectPluginConfig.create=true
-              projectPluginConfig.configSet=true
-              projectPluginConfig.entry= {type: provider.name, config: config} as PluginConf
-              Vue.set(this.pluginData,provider.name,{
-                type:provider.name,
-                config:config
-              })
-              projectPluginConfigList.push(projectPluginConfig)
-            }
-          });
-        }
-      }).catch(error => console.error(error));
-    console.log("made it 1")
-    console.log(projectPluginConfigList)
-    this.pluginConfigs = projectPluginConfigList
-    console.log("made it 2")
-    console.log(this.pluginConfigs)
   }
 });
 </script>
