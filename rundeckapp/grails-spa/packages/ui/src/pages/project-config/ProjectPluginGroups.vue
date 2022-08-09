@@ -313,6 +313,25 @@ export default Vue.extend({
       this.setFocus(-1);
     },
     removePlugin(plugin: ProjectPluginConfigEntry, index: string) {
+      console.log("in remove")
+      const type = plugin.entry.type
+      console.log(type)
+      let config = {} as any
+      config=plugin.entry.config
+      Object.keys(config).forEach((key: string) => {
+        const configPath = "project.plugin.PluginGroup."+plugin.entry.type+"."+key
+        let result = client.sendRequest(
+          {
+            baseUrl: rdBase,
+            pathTemplate: "/api/"+window._rundeck.apiVersion+"/project/"+window._rundeck.projectName+"/config"+"/{keypath}",
+            method: "DELETE",
+            pathParameters: {keypath: configPath},
+            headers: {"content-type": "application/json"}
+          }
+        )
+        console.log(result)
+      })
+
       const found = this.pluginConfigs.indexOf(plugin);
       this.pluginConfigs.splice(found, 1);
       if (!plugin.create) {
@@ -337,28 +356,8 @@ export default Vue.extend({
       }
     },
     async savePlugins() {
-      try {
         console.log("into save plugins")
         this.$emit("saved", this.pluginConfigs);
-        const result = await this.saveProjectPluginConfig(
-          this.project,
-          this.configPrefix,
-          this.serviceName,
-          this.pluginConfigs
-        );
-        if (result.success) {
-          this.didSave(true);
-          this.notifySuccess("Success", "Configuration Saved");
-          this.configOrig = result.data.plugins;
-          //copy
-          this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
-          this.pluginConfigsModifiedReset();
-
-        }
-      } catch (error) {
-        //@ts-ignore
-        this.notifyError(error.message, []);
-      }
     },
     async getProjectProperties(){
       let result = await client.sendRequest(
@@ -373,80 +372,6 @@ export default Vue.extend({
       if (result.status == 200) {
         this.projectSettings = result.parsedBody
       }
-    },
-    async loadProjectPluginConfig(
-      project: string,
-      configPrefix: string,
-      serviceName: string
-    ) {
-      const response = await axios({
-        method: "get",
-        headers: { "x-rundeck-ajax": true },
-        url: `${this.rdBase}framework/projectPluginsAjax`,
-        params: {
-          project: `${window._rundeck.projectName}`,
-          configPrefix: this.configPrefix,
-          serviceName: this.serviceName,
-          format: "json"
-        },
-        withCredentials: true
-      });
-      if (!response || response.status < 200 || response.status >= 300) {
-        throw new Error(
-          `Error reading project configuration for ${serviceName}: Response status: ${
-            response ? response.status : "None"
-          }`
-        );
-      }
-      if (response.data && response.data.plugins) {
-        return response.data.plugins;
-      }
-    },
-    async saveProjectPluginConfig(
-      project: string,
-      configPrefix: string,
-      serviceName: string,
-      data: ProjectPluginConfigEntry[]
-    ) {
-      console.log("into save project plugin configs")
-
-      const serializedData = data.map(this.serializeConfigEntry);
-
-      const resp = await client.sendRequest({
-        baseUrl: rdBase,
-        pathTemplate: "/api/"+window._rundeck.apiVersion+"/project/"+window._rundeck.projectName+"/config",
-        method: "PUT",
-        headers: {"content-type": "application/json"},
-        body: serializedData
-      });
-
-      if (resp && resp.status >= 200 && resp.status < 300) {
-        return { success: true, data: resp.parsedBody };
-      }
-      if (resp && resp.status == 422) {
-        //look for validation
-        if (resp.parsedBody && resp.parsedBody.errors instanceof Array) {
-          this.errors = resp.parsedBody.errors;
-          if (resp.parsedBody.reports) {
-            const reports = resp.parsedBody.reports as { [key: string]: any };
-            //console.log("reports ",resp.parsedBody.reports)
-            this.pluginConfigs.forEach((plugin, index) => {
-              if (reports[`${index}`] !== undefined) {
-                plugin.validation = {
-                  valid: false,
-                  errors: reports[`${index}`]
-                };
-              }
-            });
-          }
-          return { success: false };
-        }
-      }
-      throw new Error(
-        `Error saving project configuration for ${serviceName}: Response status: ${
-          resp ? resp.status : "None"
-        }`
-      );
     },
     cancelAction() {
       this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
