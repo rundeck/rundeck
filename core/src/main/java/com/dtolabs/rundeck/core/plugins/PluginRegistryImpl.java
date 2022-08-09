@@ -330,10 +330,12 @@ public class PluginRegistryImpl
         for (PluginRegistryComponent component : components) {
             Map<String, DescribedPlugin<T>> componentDescriptors = component.listPluginDescriptors(type, service);
             //remove disallowed items
-            for (String s : componentDescriptors.keySet()) {
-                DescribedPlugin<T> tDescribedPlugin = componentDescriptors.get(s);
-                if (components.stream().allMatch(c -> c.isAllowed(tDescribedPlugin.getName(), service))) {
-                    map.put(s, tDescribedPlugin);
+            if (componentDescriptors != null) {
+                for (String s : componentDescriptors.keySet()) {
+                    DescribedPlugin<T> tDescribedPlugin = componentDescriptors.get(s);
+                    if (components.stream().allMatch(c -> c.isAllowed(tDescribedPlugin.getName(), service))) {
+                        map.put(s, tDescribedPlugin);
+                    }
                 }
             }
         }
