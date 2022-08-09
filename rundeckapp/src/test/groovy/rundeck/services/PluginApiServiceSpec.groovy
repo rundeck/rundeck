@@ -97,7 +97,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
         fwk.getPluginManager() >> Mock(ServiceProviderLoader)
         service.frameworkService = fwksvc
         service.pluginService = Mock(PluginService)
-        service.rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        service.rundeckPluginRegistry = Mock(PluginRegistry)
         service.uiPluginService = Mock(UiPluginService)
         service.grailsLinkGenerator = Mock(LinkGenerator)
 
