@@ -149,7 +149,7 @@ public class PluginRegistryImpl
             PluggableProviderService<T> service
     )
     {
-        if (!components.stream().allMatch(c -> c.isAllowed(service.getName(), service))) {
+        if (!components.stream().allMatch(c -> c.isAllowed(name, service))) {
             return null;
         }
         for (PluginRegistryComponent component : components) {
@@ -289,7 +289,7 @@ public class PluginRegistryImpl
             final PluggableProviderService<T> service
     )
     {
-        if (!components.stream().allMatch(c -> c.isAllowed(service.getName(), service))) {
+        if (!components.stream().allMatch(c -> c.isAllowed(name, service))) {
             return null;
         }
         for (PluginRegistryComponent component : components) {
