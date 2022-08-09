@@ -11,10 +11,11 @@
     :edit-button-text="$t('Edit Plugin Groups')"
     :mode-toggle="modeToggle"
   >
+    <template v-if="exportedData">
+      <input type="hidden" :value="JSON.stringify(exportedData)" :name="configPrefix+'json'"/>
+    </template>
   </project-plugin-groups>
-<!--  <template v-if="exportedData">-->
-<!--    <input type="hidden" :value="JSON.stringify(exportedData)" :name="configPrefix+'json'"/>-->
-<!--  </template>-->
+
 </template>
 <script lang="ts">
 import Vue from "vue";
@@ -103,10 +104,13 @@ export default Vue.extend({
   },
   computed:{
     exportedData():any[]{
+      console.log("into exported data")
       let data = []
-      let inputData = this.pluginData
+      let inputData = this.pluginConfigs
       for (let key in inputData) {
-        data.push({type: key, config: inputData[key].config})
+        if(inputData[key].modified){
+          data.push({type: key, config: inputData[key].entry.config})
+        }
       }
       return data
     }
@@ -119,16 +123,9 @@ export default Vue.extend({
 
       await this.setConfig(name, service)
     },
-    editPermalink(index: number): string | undefined {
-      return this.pluginProviders.length > index &&
-      this.pluginProviders[index].resources.editPermalink
-        ? this.pluginProviders[index].resources.editPermalink
-        : "#";
-    },
-    pluginsConfigWasSaved() {
+    pluginsConfigWasSaved(pluginConfigs: ProjectPluginConfigEntry[]) {
       this.$emit("saved");
-      this.$emit("reset");
-      this.getProjectProperties().then();
+      this.pluginConfigs=pluginConfigs
     },
     pluginsConfigWasModified() {
       this.$emit("modified");

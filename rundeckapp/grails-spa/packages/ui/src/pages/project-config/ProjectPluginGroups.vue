@@ -127,6 +127,7 @@
             <div class="list-group">
               <a
                 v-for="plugin in pluginProviders"
+                v-if="!plugin['configSet']"
                 v-bind:key="plugin.name"
                 href="#"
                 @click="addPlugin(plugin.name)"
@@ -184,6 +185,7 @@ interface ProjectPluginConfigEntry {
   create?: boolean;
   origIndex?: number;
   modified: boolean;
+  configSet: boolean
 }
 export default Vue.extend({
   name: "App",
@@ -218,7 +220,9 @@ export default Vue.extend({
       let data = []
       let inputData = this.pluginConfigs
       for (let key in inputData) {
-        data.push({type: key, config: inputData[key].entry.config})
+        if(inputData[key].modified){
+          data.push({type: key, config: inputData[key].entry.config})
+        }
       }
       return data
     }
@@ -291,6 +295,7 @@ export default Vue.extend({
       this.editFocus = focus;
     },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
+      this.$emit("saved", this.pluginConfigs);
       //validate
       const validation: PluginValidation = await pluginService.validatePluginConfig(
         this.serviceName,
@@ -334,6 +339,7 @@ export default Vue.extend({
     async savePlugins() {
       try {
         console.log("into save plugins")
+        this.$emit("saved", this.pluginConfigs);
         const result = await this.saveProjectPluginConfig(
           this.project,
           this.configPrefix,
@@ -347,7 +353,7 @@ export default Vue.extend({
           //copy
           this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
           this.pluginConfigsModifiedReset();
-          this.$emit("saved", result);
+
         }
       } catch (error) {
         //@ts-ignore
@@ -503,7 +509,7 @@ export default Vue.extend({
             this.pluginProviders[index]["created"]=false
             Object.keys(this.projectSettings).forEach((key: string)=>{
               if(key.includes("project.plugin.PluginGroup." + provider.name)){
-                this.pluginProviders[index]["created"]=true
+                this.pluginProviders[index]["configSet"]=true
                 const pluginPath = "project.plugin.PluginGroup." + provider.name +"."
 
                   if(key.includes(pluginPath)){
@@ -517,6 +523,7 @@ export default Vue.extend({
             console.log(config)
             if(Object.keys(config).length!=0){
               projectPluginConfig.create=true
+              projectPluginConfig.configSet=true
               projectPluginConfig.entry= {type: provider.name, config: config} as PluginConf
               Vue.set(this.pluginData,provider.name,{
                 type:provider.name,
