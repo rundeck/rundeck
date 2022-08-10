@@ -3844,7 +3844,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (configurationService.getString("jobs.options.remoteUrlTimeout")) {
             try {
-                timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout", 10)
+                timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout", null)
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlTimeout is not a valid integer: "
@@ -3854,7 +3854,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if (configurationService.getString("jobs.options.remoteUrlConnectionTimeout")) {
             try {
-                contimeout = configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout", 0)
+                contimeout = configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout", null)
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlConnectionTimeout is not a valid integer: "
@@ -3864,7 +3864,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if (configurationService.getString("jobs.options.remoteUrlRetry")) {
             try {
-                retryCount = configurationService.getInteger("jobs.options.remoteUrlRetry", 5)
+                retryCount = configurationService.getInteger("jobs.options.remoteUrlRetry", null)
             } catch (NumberFormatException e) {
                 log.warn(
                         "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "

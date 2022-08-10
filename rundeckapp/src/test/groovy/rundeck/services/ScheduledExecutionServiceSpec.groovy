@@ -5601,11 +5601,11 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         when:
         service.configurationService.getString("jobs.options.remoteUrlTimeout") >> timeout
-        service.configurationService.getInteger("jobs.options.remoteUrlTimeout",10) >> timeout
+        service.configurationService.getInteger("jobs.options.remoteUrlTimeout",null) >> timeout
         service.configurationService.getString("jobs.options.remoteUrlConnectionTimeout") >> conTimeout
-        service.configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout",0) >> conTimeout
+        service.configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout",null) >> conTimeout
         service.configurationService.getString("jobs.options.remoteUrlRetry") >> retry
-        service.configurationService.getInteger("jobs.options.remoteUrlRetry",5) >> retry
+        service.configurationService.getInteger("jobs.options.remoteUrlRetry",null) >> retry
         _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
             _ * getFrameworkProjectMgr()>>Mock(ProjectManager){
                 _ * loadProjectConfig('testProject')
