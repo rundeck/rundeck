@@ -5523,7 +5523,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             result.nodeStepDescriptions[0].name=='test2'
 
     }
-    def "load remote options timeout configuration"(){
+    def "load remote options timeout configuration from url params"(){
         given:
             def fwkservice=Mock(FrameworkService)
             defineBeans{
@@ -5534,7 +5534,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
             se.addToOptions(new Option(
                 name:'test',
-                realValuesUrl: new URL('file://test')
+                realValuesUrl: new URL('file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry)
             ))
             se.save()
             def input=[:]
@@ -5550,30 +5550,81 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 ]
             }
         when:
+            _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
+                _ * getFrameworkProjectMgr()>>Mock(ProjectManager){
+                    _ * loadProjectConfig('testProject')
+                }
+            }
+
             def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
         then:
-            input.url=='file://test'
+            input.url=='file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry
             input.timeout==expectTimeout
             input.contimeout==expectConTimeout
             input.retry==expectRetry
             result.values==['some','option','values']
-            1 * service.configurationService.getString("jobs.options.remoteUrlTimeout")>>timeout?.toString()
-            _ * service.configurationService.getInteger("jobs.options.remoteUrlTimeout", null) >> timeout
-            1 * service.configurationService.getString("jobs.options.remoteUrlConnectionTimeout")>>conTimeout?.toString()
-            _ * service.configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout", null) >> conTimeout
-            1 * service.configurationService.getString("jobs.options.remoteUrlRetry")>>retry?.toString()
-            _ * service.configurationService.getInteger("jobs.options.remoteUrlRetry", null) >> retry
-            1 * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
-                1 * getFrameworkProjectMgr()>>Mock(ProjectManager){
-                    1 * loadProjectConfig('testProject')
-                }
-            }
 
         where:
             timeout | conTimeout | retry | expectTimeout | expectConTimeout | expectRetry
             1       | 1          | 1     | 1             | 1                | 1
             2       | 2          | 2     | 2             | 2                | 2
             null    | null       | null  | 10            | 0                | 5
+    }
+
+    def "load remote options timeout configuration from config.properties"(){
+
+        given:
+        def fwkservice=Mock(FrameworkService)
+        defineBeans{
+            frameworkService(InstanceFactoryBean,fwkservice)
+        }
+        service.configurationService = Mock(ConfigurationService)
+        service.frameworkService = fwkservice
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.addToOptions(new Option(
+                name:'test',
+                realValuesUrl: new URL('file://test')
+        ))
+        se.save()
+        def input=[:]
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+            input.url=url
+            input.timeout=vtimeout
+            input.contimeout=vcontimeout
+            input.retry=vretry
+            [
+                    json: [
+                            'some', 'option', 'values'
+                    ]
+            ]
+        }
+
+        when:
+        service.configurationService.getString("jobs.options.remoteUrlTimeout") >> timeout
+        service.configurationService.getInteger("jobs.options.remoteUrlTimeout",10) >> timeout
+        service.configurationService.getString("jobs.options.remoteUrlConnectionTimeout") >> conTimeout
+        service.configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout",0) >> conTimeout
+        service.configurationService.getString("jobs.options.remoteUrlRetry") >> retry
+        service.configurationService.getInteger("jobs.options.remoteUrlRetry",5) >> retry
+        _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
+            _ * getFrameworkProjectMgr()>>Mock(ProjectManager){
+                _ * loadProjectConfig('testProject')
+            }
+        }
+        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+
+        then:
+        input.url=='file://test'
+        input.timeout==expectTimeout
+        input.contimeout==expectConTimeout
+        input.retry==expectRetry
+        result.values==['some','option','values']
+
+        where:
+        timeout | conTimeout | retry | expectTimeout | expectConTimeout | expectRetry
+        1       | 1          | 1     | 1             | 1                | 1
+        2       | 2          | 2     | 2             | 2                | 2
+        null    | null       | null  | 10            | 0                | 5
     }
 
     def "sort url options result"(){

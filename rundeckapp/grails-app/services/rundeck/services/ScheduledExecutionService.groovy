@@ -3917,7 +3917,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         int count = retryCount
         do{
             try {
-                if (count > retryCount){
+                if ( retryCount > count ){
                     if(count>0){
                         Thread.sleep(contimeout*1000)
                     }
@@ -3950,8 +3950,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
             }
             logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
-            retryCount--
-        }while(retryCount > 0 && (httpResponseCode < 200 || httpResponseCode > 300 ))
+            count--
+        }while(count > 0 && (httpResponseCode < 200 || httpResponseCode > 300 ))
 
         //validate result contents
         boolean valid = true;
