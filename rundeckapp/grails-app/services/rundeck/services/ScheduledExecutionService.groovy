@@ -3915,8 +3915,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         int count = retryCount
+
+        //cycle to retry getting the JSON from a remoteURL
         do{
             try {
+                //validate is no the first attempt
                 if ( retryCount > count ){
                     if(count>0){
                         Thread.sleep(contimeout*1000)

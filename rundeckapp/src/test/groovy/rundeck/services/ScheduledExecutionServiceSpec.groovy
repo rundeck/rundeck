@@ -5524,19 +5524,15 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
     }
     def "load remote options timeout configuration from url params"(){
-        given:
+
+        given:"a option getting values from a URL"
             def fwkservice=Mock(FrameworkService)
             defineBeans{
                 frameworkService(InstanceFactoryBean,fwkservice)
             }
             service.configurationService = Mock(ConfigurationService)
             service.frameworkService = fwkservice
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
-            se.addToOptions(new Option(
-                name:'test',
-                realValuesUrl: new URL('file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry)
-            ))
-            se.save()
+
             def input=[:]
             ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
                 input.url=url
@@ -5549,7 +5545,15 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                     ]
                 ]
             }
-        when:
+
+        when:"the connection values are set directly on the URL"
+            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+            se.addToOptions(new Option(
+                name:'test',
+                realValuesUrl: new URL('file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry)
+            ))
+            se.save()
+
             _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
                 _ * getFrameworkProjectMgr()>>Mock(ProjectManager){
                     _ * loadProjectConfig('testProject')
@@ -5557,7 +5561,8 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             }
 
             def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
-        then:
+
+        then:"the values on the input should be the same as the spectec values "
             input.url=='file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry
             input.timeout==expectTimeout
             input.contimeout==expectConTimeout
@@ -5573,7 +5578,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
     def "load remote options timeout configuration from config.properties"(){
 
-        given:
+        given:"a option getting values from a URL"
         def fwkservice=Mock(FrameworkService)
         defineBeans{
             frameworkService(InstanceFactoryBean,fwkservice)
@@ -5599,7 +5604,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             ]
         }
 
-        when:
+        when:"the values are set on the config.properties"
         service.configurationService.getString("jobs.options.remoteUrlTimeout") >> timeout
         service.configurationService.getInteger("jobs.options.remoteUrlTimeout",null) >> timeout
         service.configurationService.getString("jobs.options.remoteUrlConnectionTimeout") >> conTimeout
@@ -5613,7 +5618,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         }
         def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
 
-        then:
+        then:"values setted on the config.properties should be equals to input values"
         input.url=='file://test'
         input.timeout==expectTimeout
         input.contimeout==expectConTimeout
