@@ -119,7 +119,7 @@ class UpdateModeProjectServiceSpec extends Specification implements ServiceUnitT
         service.scheduledExecutionService  = new MockScheduledExecutionService(isScheduledRegister: false)
 
         service.quartzScheduler = Mock(Scheduler){
-            2*scheduleJob(_,_)
+            1*scheduleJob(_,_)
         }
         when:
         def result = service.saveExecutionLaterSettings(project,properties)
@@ -185,7 +185,7 @@ class UpdateModeProjectServiceSpec extends Specification implements ServiceUnitT
         executionLater | schedulerLater | quartzCalls | resultStatus
         "false"       | "false"        |      0 | false
         "true"        | "false"        |      1 | true
-        "true"        | "true"         |      2 | true
+        "true"        | "true"         |      1 | true
 
 
     }

@@ -274,20 +274,7 @@ class UpdateModeProjectService implements ProjectConfigurable {
 
         }
 
-        if(compareLater(executionLater,newExecutionSettings )){
-            save = true
-            result.executions = newExecutionSettings
-            scheduleExecutionsLaterJob(project, "executions", [project: project,
-                                                               type: "executions",
-                                                               rundeckProject: rundeckProject,
-                                                               config: newExecutionSettings,
-                                                               editProjectService: this])
-
-        }else{
-            result.executions = executionLater
-        }
-
-
+        boolean mustChangeExecution = compareLater(executionLater,newExecutionSettings )
         if(removeScheduleLater){
             //remove schedule job
             save = true
@@ -297,18 +284,41 @@ class UpdateModeProjectService implements ProjectConfigurable {
                 scheduleLater.active = false
             }
         }
+        boolean mustChangeSchedule = compareLater(scheduleLater,newScheduleSettings )
 
-        if(compareLater(scheduleLater,newScheduleSettings )){
+        List<Map> execData = []
+
+        if(mustChangeExecution){
+            save = true
+            result.executions = newExecutionSettings
+            execData << [project: project,
+                         type: "executions",
+                         rundeckProject: rundeckProject,
+                         config: newExecutionSettings,
+                         editProjectService: this]
+        }else{
+            result.executions = executionLater
+        }
+
+        if(mustChangeSchedule){
             save = true
             result.schedule = newScheduleSettings
-            scheduleExecutionsLaterJob(project, "schedule", [project: project,
-                                                             type: "schedule",
-                                                             rundeckProject: rundeckProject,
-                                                             config: newScheduleSettings,
-                                                             editProjectService: this])
-
+            execData << [project: project,
+                         type: "schedule",
+                         rundeckProject: rundeckProject,
+                         config: newScheduleSettings,
+                         editProjectService: this]
         }else{
             result.schedule = scheduleLater
+        }
+
+        if(execData.size() > 1 && newExecutionSettings.value == newScheduleSettings.value){
+            execData[0]["type"] = "executions-schedule"
+            scheduleExecutionsLaterJob(project, "executions-schedule", execData[0])
+        }else{
+            for (Map data : execData){
+                scheduleExecutionsLaterJob(project, data["type"] as String, data)
+            }
         }
 
         result.global = [executionDisable: isExecutionDisabledNow, scheduleDisable: isScheduleDisabledNow]
@@ -550,7 +560,8 @@ class UpdateModeProjectService implements ProjectConfigurable {
         }
 
         String jobName = "${project}-${type}"
-        def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(jobName, EXECUTIONS_JOB_GROUP_NAME))
+        def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey("${project}-executions-schedule", EXECUTIONS_JOB_GROUP_NAME))
+        trigger = trigger ?: quartzScheduler.getTrigger(TriggerKey.triggerKey(jobName, EXECUTIONS_JOB_GROUP_NAME))
         def nextFireTime = trigger?.nextFireTime
 
         if(nextFireTime){

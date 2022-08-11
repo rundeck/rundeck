@@ -28,7 +28,7 @@ class ExecutionStatusJob implements InterruptableJob {
         def scheduleLater = [:]
         def result = [:]
 
-        if(type == "schedule"){
+        if(type.contains("schedule")){
             config.active = false
 
             executionLater = editProjectService.getExecutionLaterValues(rundeckProject, executionLaterPath)
@@ -40,14 +40,10 @@ class ExecutionStatusJob implements InterruptableJob {
                 isScheduleDisabledNow=true
             }
             editProjectService.editProject(rundeckProject, project, isScheduleDisabledNow, false, true)
-
-            config.action = null
-            config.value = null
-
         }
 
 
-        if(type == "executions"){
+        if(type.contains("executions")){
             config.active = false
 
             scheduleLater = editProjectService.getScheduleLaterValues(rundeckProject, executionLaterPath)
@@ -58,11 +54,10 @@ class ExecutionStatusJob implements InterruptableJob {
                 isExecutionDisabledNow=true
             }
             editProjectService.editProject(rundeckProject, project, isExecutionDisabledNow, true, false)
-
-            config.action = null
-            config.value = null
-
         }
+
+        config.action = null
+        config.value = null
 
         def currentStatus = editProjectService.getProjectExecutionStatus(rundeckProject)
         result.global = [executionDisable: currentStatus.isExecutionDisabled, scheduleDisable: currentStatus.isScheduleDisabled]
