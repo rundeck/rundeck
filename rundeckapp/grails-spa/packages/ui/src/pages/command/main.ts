@@ -3,7 +3,7 @@ import Vue from 'vue'
 import LogViewer from '@rundeck/ui-trellis/lib/components/execution-log/logViewer.vue'
 import {RootStore} from '@rundeck/ui-trellis/lib/stores/RootStore'
 
-const eventBus = window._rundeck.eventBus
+const eventBus = window._rundeck.eventBus || []
 
 const rootStore = new RootStore(window._rundeck.rundeckClient)
 

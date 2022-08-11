@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width,initial-scale=1.0">
+      <link rel="icon" href="/favicon.ico">
+      <title>Ui Vite - Command</title>
+  </head>
+  <body class="dark:bg-gray-800">
+  
+    <div id="runcontent" class="card card-modified  exec-output card-grey-header nodes_run_content" style="margin-top: 20px;">
+
+
+    
+
+
+
+    
+        
+    
+
+    
+        
+    
+
+    
+        
+    
+
+    
+        
+    
+
+
+
+
+
+
+
+
+
+
+
+      <script id="exec_cancel_token" type="text/json">{"TOKEN":"e2e402fee2f524e0f81d3436856a59afb847f8167331692c9c62353ae66b42b1","URI":"/execution/followFragment"}</script>
+  
+  
+  
+    <div class="card-header">
+      <div class="executionshow panel-heading-affix affix-top" data-affix="top" data-affix-padding-top="8" id="jobInfo_97">
+  
+        <div class="row">
+          <div class="col-xs-12 col-sm-6">
+            <i class="exec-status icon " data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }" data-execstate="RUNNING">
+            </i>
+            
+  
+  
+  
+              
+              
+              <span class=" wfitem exectype" title="">
+              
+                  
+                      
+                          <i class="rdicon shell icon-small"></i>
+                      
+                      <span class="argString">echo hello</span>
+                  
+                  
+                  
+                  
+                  
+              
+              </span>
+  
+        </div>
+  
+          <div class="col-xs-12 col-sm-6 text-right execution-action-links">
+            
+              
+                <a href="/project/zingbats-logistics-runbook/job/createFromExecution?executionId=97" class="btn btn-default btn-xs" data-bind="visible: completed() " title="Save as a Job" style="display: none;">
+                  Save as a Job
+                </a>
+              
+            
+  
+  
+            
+              <!-- ko if: canKillExec() -->
+  
+                <span data-bind="visible: !completed() " class="spacer">
+                  <!-- ko if: !killRequested() || killStatusFailed() -->
+                  <span class="btn btn-danger btn-xs" data-bind="click: killExecAction">
+                    Kill Job
+                    <i class="glyphicon glyphicon-remove"></i>
+                  </span>
+                  <!-- /ko -->
+                  <!-- ko if: killRequested() --><!-- /ko -->
+                </span>
+              <!-- /ko -->
+            
+  
+            
+  
+  <a href="/project/zingbats-logistics-runbook/execution/show/97" class="">
+      
+      <span class=" execstate " data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } " data-execstate="RUNNING">
+      
+          #97
+      
+      </span>
+  </a>
+  
+  
+            <span class="spacer">
+              <!-- ko if: executionState()=='RUNNING' -->
+              <img class="loading-spinner" width="12px" height="12px" src="/assets/spinner-gray.gif">
+              <!-- /ko -->
+              <span class=" execstate execstatedisplay overall" data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } " data-execstate="RUNNING">
+              </span>
+            </span>
+  
+  
+            <a class="close closeoutput " data-bind="bootstrapTooltip: true" title="" data-original-title="Close output">
+              <i class="fas fa-times-circle"></i>
+            </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+    <div data-v-4357a2bd="" class="execution-log execution-log--light"><div data-v-7ed849a0="" data-v-4357a2bd="" class="rd-drawer__wrapper" closable="true" wrap-style="[object Object]" style="--rd-drawer-width:256px; --rd-drawer-height:100%;"><div data-v-7ed849a0="" class="rd-drawer rd-drawer--left"><div data-v-7ed849a0="" class="rd-drawer__header"><div data-v-7ed849a0="" class="rd-drawer__title">Settings</div><div data-v-7ed849a0="" class="btn btn-default btn-link" style="margin-left: auto;">Close</div></div><form data-v-4357a2bd="" data-v-7ed849a0="" style="padding: 10px;"><div data-v-4357a2bd="" data-v-7ed849a0="" class="form-group"><label data-v-4357a2bd="" data-v-7ed849a0="">Theme</label><select data-v-4357a2bd="" data-v-7ed849a0="" class="form-control select"><option data-v-4357a2bd="" data-v-7ed849a0="" value="rundeck">Rundeck Theme</option><option data-v-4357a2bd="" data-v-7ed849a0="" value="light">Light</option><option data-v-4357a2bd="" data-v-7ed849a0="" value="dark">Dark</option><option data-v-4357a2bd="" data-v-7ed849a0="" value="none">None</option></select></div><div data-v-4357a2bd="" data-v-7ed849a0="" class="checkbox"><input data-v-4357a2bd="" data-v-7ed849a0="" type="checkbox" id="logview_gutter"><label data-v-4357a2bd="" data-v-7ed849a0="" for="logview_gutter">Display Gutter</label></div><div data-v-4357a2bd="" data-v-7ed849a0="" class="checkbox"><input data-v-4357a2bd="" data-v-7ed849a0="" type="checkbox" id="logview_timestamps"><label data-v-4357a2bd="" data-v-7ed849a0="" for="logview_timestamps">Display Timestamps</label></div><div data-v-4357a2bd="" data-v-7ed849a0="" class="checkbox"><input data-v-4357a2bd="" data-v-7ed849a0="" type="checkbox" id="logview_command"><label data-v-4357a2bd="" data-v-7ed849a0="" for="logview_command">Display Command</label></div><div data-v-4357a2bd="" data-v-7ed849a0="" class="checkbox"><input data-v-4357a2bd="" data-v-7ed849a0="" type="checkbox" id="logview_nodeBadge"><label data-v-4357a2bd="" data-v-7ed849a0="" for="logview_nodeBadge">Display Node Badge</label></div><div data-v-4357a2bd="" data-v-7ed849a0="" class="checkbox"><input data-v-4357a2bd="" data-v-7ed849a0="" type="checkbox" id="logview_ansiColor"><label data-v-4357a2bd="" data-v-7ed849a0="" for="logview_ansiColor">Render ANSI Colors</label></div><div data-v-4357a2bd="" data-v-7ed849a0="" class="checkbox"><input data-v-4357a2bd="" data-v-7ed849a0="" type="checkbox" id="logview_lineWrap"><label data-v-4357a2bd="" data-v-7ed849a0="" for="logview_lineWrap">Wrap Long Lines</label></div><div data-v-4357a2bd="" data-v-7ed849a0="" class="checkbox"><input data-v-4357a2bd="" data-v-7ed849a0="" type="checkbox" id="logview_stats"><label data-v-4357a2bd="" data-v-7ed849a0="" for="logview_stats">Display Stats</label></div></form></div><!----></div><div data-v-4357a2bd="" class="execution-log__scroller ansicolor-on"><div data-v-4357a2bd=""><!----><!----><!----><!----><div class="execution-log__node-chunk"><div class="execution-log__chunk"><div data-v-3b387136="" class="execution-log__line" title="#1 2022-08-10T14:47:16Z 1. Command"><div data-v-3b387136="" class="execution-log__gutter execution-log__gutter--slim"><span data-v-3b387136="" class="gutter line-number"><span data-v-3b387136="" pseudo-content="10:47:16" class="execution-log_gutter-entry"></span><!----><span data-v-3b387136="" pseudo-content="" class="execution-log_gutter-entry"></span></span></div><div data-v-3b387136="" class="execution-log__content execution-log__content--level-normal"><span data-v-3b387136="" class="execution-log__node-badge"><i data-v-3b387136="" class="fas fa-hdd"></i><span data-v-3b387136="" pseudo-content="localhost"></span></span><!----><span data-v-3b387136="" class="execution-log__content-text">hello</span></div></div></div></div></div></div><!----></div>
+  
+  
+  <div class="executionshow card-content tight inlineexecution">
+    <div data-bind="if: logoutput().loadingFile"></div>
+    <div data-bind="if: logoutput().running() &amp;&amp; !logoutput().loadingFile() &amp;&amp; !logoutput().fileLoadError()"></div>
+  
+    <div id="commandPerform" class="card-content-full-width ansicolor ansicolor-on" data-bind="css: {'-view-opt--node-inset-disabled': !logoutput().options.showNodeInset() }" style="display:none; overflow-x: auto;"></div>
+    <div id="log"></div>
+    <div id="commandPerform_empty" style="display: none">
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="well well-nobg inline">
+            <p class="text-strong">
+              <i class="glyphicon glyphicon-info-sign"></i>
+              <em>Execution has no log output</em>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="commandPerform_clusterinfo" style="display: none">
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="well well-nobg inline">
+            <p class="text-strong">
+              <i class="glyphicon glyphicon-info-sign"></i>
+              <em>This execution is running on another cluster member, so log output and execution summary data may be delayed.</em>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  </div>
+    <script type="module" src="../src/app/pages/command/command.ts"></script>
+    <script type="module" src="../src/app/pages/community-news/main.js"></script>
+    <script type="module" src="../src/app/pages/dynamic-form/main.js"></script>
+  </body>
+</html>

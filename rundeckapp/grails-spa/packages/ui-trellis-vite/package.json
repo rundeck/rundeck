@@ -18,12 +18,12 @@
   },
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "scripts": {
-    "dev": "vite -c vite.dev.js --mode development",
-    "build:app": "vite build -c vite.app.js --mode production",
-    "build": "vite build",
-    "dev:build": "npm install && npm run build",
+    "dev:app": "vite -c vite.config.app.js --mode development",
+    "build:app": "vite build -c vite.config.app.js --mode production",
+    "build:library": "vite build -c vite.config.library.js --mode production",
+    "dev:build": "npm install && npm run build:library",
     "dev:build:app": "npm install && npm run build:app",
-    "ci:build": "npm ci && npm run build",
+    "ci:build": "npm ci && npm run build:library",
     "ci:build:app": "npm ci && npm run build:app"
   },
   "dependencies": {
@@ -40,7 +40,8 @@
     "vue-multiselect": "^2.1.6",
     "vue-property-decorator": "^9.1.2",
     "vue-router": "^3.5.3",
-    "vue-virtual-scroller": "^1.0.10"
+    "vue-virtual-scroller": "^1.0.10",
+    "vue2-filters": "^0.9.1"
   },
   "devDependencies": {
     "@iconify/json": "^2.1.14",
@@ -48,6 +49,7 @@
     "@vue/runtime-dom": "^3.2.37",
     "mobx-utils": "^5.6.1",
     "mobx-vue": "^2.0.11",
+    "rollup-plugin-copy": "^3.4.0",
     "sass": "^1.52.1",
     "typescript": "^4.6.2",
     "unplugin-auto-import": "^0.6.4",
@@ -57,6 +59,7 @@
     "vite": "^2.9.14",
     "vite-plugin-vue2": "^1.9.3",
     "vite-plugin-windicss": "^1.8.3",
+    "vue-cookies": "^1.8.1",
     "vue-template-compiler": "^2.6.14"
   }
 }
