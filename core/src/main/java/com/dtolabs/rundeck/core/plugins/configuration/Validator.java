@@ -330,9 +330,7 @@ public class Validator {
         final Map<String, String> props = new HashMap<String, String>();
 
         for(final Map.Entry<String, String> entry : mapping.entrySet()){
-            if(null != input.get("project.plugin.PluginGroup" + "."+ provider+"." +entry.getKey())){
-                props.put(entry.getKey(), input.get("project.plugin.PluginGroup" + "." + provider+"." +entry.getKey()));
-            }
+            props.put(entry.getKey(), input.get("project.plugin.PluginGroup" + "." + provider+"." +entry.getKey()));
         }
 
         return props;

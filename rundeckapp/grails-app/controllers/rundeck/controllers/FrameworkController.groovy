@@ -1361,7 +1361,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             final pluginGroupConfig = frameworkService.getPluginGroupConfigurationForType("PluginGroup", project)
             List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
 
-
             //specific props for typed pluginValues
             if(params.pluginValues?.PluginGroup?.json){
                 removePrefixes.add("project.plugin.PluginGroup.".toString())
@@ -1373,8 +1372,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                             && data.config instanceof Map) {
                             String type = data.get('type')
                             Map config = data.get('config')
-                            execPasswordFieldsService.untrack([[config: [type: type, props: config], index: 0]],
-                                    pluginGroupDescs)
+                            obscurePasswordFieldsService.untrack([[config: [type: type, props: config], index: 0]], pluginGroupDescs)
                             for (String confKey : config.keySet()) {
                                 projProps.put(
                                     "project.plugin.PluginGroup.${type}.${confKey}".toString(),
@@ -2074,15 +2072,19 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
-        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+
 
         //get list of node executor, and file copier services
 
         final defaultNodeExec = frameworkService.getDefaultNodeExecutorService(project)
         final defaultFileCopy = frameworkService.getDefaultFileCopyService(project)
-        Map<String, String> pluginGroupConfig = [:]
+        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+        List<Map<String, Object>> pluginGroupConfig = []
         pluginGroupDescs.each {
-            pluginGroupConfig.putAll(frameworkService.getPluginGroupConfigurationForType(it.name, project))
+            Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
+            obscurePasswordFieldsService.reset()
+            obscurePasswordFieldsService.track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
+            pluginGroupConfig.add(["type": it.name, "config":providerConfig])
         }
 
         final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultNodeExec, project)
@@ -2113,7 +2115,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         fcopyPasswordFieldsService.reset()
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
-        execPasswordFieldsService.track([[type: "PluginGroup", props: pluginGroupConfig]], pluginGroupDescs)
         execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], execDesc)
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
         // resourceConfig CRUD rely on this session mapping

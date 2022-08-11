@@ -163,6 +163,7 @@ const context = getRundeckContext()
 interface PluginConf {
   type: string;
   config: any;
+  project: any;
 }
 interface ProjectPluginConfigEntry {
   entry: PluginConf;
@@ -188,6 +189,7 @@ export default Vue.extend({
       project: "",
       rdBase: "",
       cancelUrl: "",
+      contextConfig: [] as PluginConf[],
       pluginConfigs: [] as ProjectPluginConfigEntry[],
       pluginData:{} as {[key:string]:PluginConf},
       configOrig: [] as any[],
@@ -394,42 +396,50 @@ export default Vue.extend({
           if (data.service) {
             this.pluginProviders = data.descriptions;
             this.pluginLabels = data.labels;
-            this.pluginProviders.forEach((provider: any, index: any)=>{
-              let config ={} as any
 
-              let projectPluginConfig = {} as ProjectPluginConfigEntry
-              this.pluginProviders[index]["created"]=false
-              Object.keys(this.projectSettings).forEach((key: string)=>{
-                if(key.includes("project.plugin.PluginGroup." + provider.name)){
-                  this.pluginProviders[index]["configSet"]=true
-                  const pluginPath = "project.plugin.PluginGroup." + provider.name +"."
+              this.contextConfig.forEach((provider2: any, index: any) => {
 
-                  if(key.includes(pluginPath)){
-                    config[key.replace(pluginPath,"")]=(this.projectSettings as any)[key]
-                  }
-                  this.loaded = true;
-                  this.notifyPluginConfigs();
-                }
-              });
-              if(Object.keys(config).length!=0){
-                projectPluginConfig.create=true
-                projectPluginConfig.configSet=true
-                projectPluginConfig.entry= {type: provider.name, config: config} as PluginConf
-                Vue.set(this.pluginData,provider.name,{
-                  type:provider.name,
-                  config:config
-                })
-                projectPluginConfigList.push(projectPluginConfig)
-              }
-            });
+                    let projectPluginConfig = {} as ProjectPluginConfigEntry
+                    let configSet = false
+                    Object.values(provider2.config).forEach((entry: any)=> {
+                      if(entry!=null){
+                        projectPluginConfig.entry=provider2
+                        configSet=true
+                        projectPluginConfig.configSet=true
+                        projectPluginConfig.create=true
+                        this.loaded = true;
+                        this.notifyPluginConfigs();
+                      }
+                      else{
+                        projectPluginConfig.configSet=false
+                      }
+                    })
+                    if(projectPluginConfig.configSet){
+                      projectPluginConfigList.push(projectPluginConfig)
+                      this.pluginProviders.forEach((provider: any, index: any)=> {
+                        console.log(provider.name)
+                        console.log(provider2.type)
+                        if(provider.name===provider2.type){
+                          console.log("entered in")
+                          this.pluginProviders[index]["configSet"]=true
+                        }
+                      })
+                    }
+              })
           }
         }).catch(error => console.error(error));
       this.pluginConfigs = projectPluginConfigList
+      console.log("pluginconfigs")
+      console.log(this.pluginConfigs)
     }
   },
   async mounted() {
     this.project = window._rundeck.projectName;
-    console.log(context)
+    console.log("made it here")
+    const test = window._rundeck.data.testValue as PluginConf
+    console.log(test)
+    this.contextConfig = test.config
+    console.log(this.contextConfig)
     await this.getProjectProperties()
     await this.getPluginConfigs()
 
