@@ -42,6 +42,8 @@ import grails.events.bus.EventBus
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.acl.AppACLContext
+import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
@@ -79,6 +81,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     def fileUploadService
     def EventBus grailsEventBus
     def AuthContextEvaluator rundeckAuthContextEvaluator
+    def ContextACLManager<AppACLContext> aclFileManagerService
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
