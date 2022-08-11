@@ -51,7 +51,7 @@
 <g:set var="pluginSecurityEnabled" value="${cfg.getBoolean(config: "feature.pluginSecurity.enabled", default: false)}"/>
 
 <div>
-  <ul class="dropdown-menu dropdown-menu-right scroll-area" style="max-height: 85vh">
+  <ul class="dropdown-menu dropdown-menu-right scroll-area" style="max-height: 95vh">
     <li class="dropdown-header">System</li>
     <li>
       <g:link controller="menu" action="storage">
