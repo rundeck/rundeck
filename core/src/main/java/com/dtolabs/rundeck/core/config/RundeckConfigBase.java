@@ -628,6 +628,8 @@ public class RundeckConfigBase {
         public static class Login {
             String welcome;
             String welcomeHtml;
+            String footerMessageHtml;
+            String disclaimer;
         }
 
         @Data
