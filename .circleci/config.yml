@@ -589,8 +589,8 @@ workflows:
           cron: "0 0 * * *"
           filters:
             branches:
-              only:
-                - main
+              -main
+              -nightly_build_tomcat
     jobs:
       - build:
           context:
@@ -623,7 +623,7 @@ workflows:
           <<: *filter-default
           name: Tomcat 8 API Test
           requires: *stage-build
-          command: bash test/run-docker-tomcat-tests.sh
+          command: bash test/run-docker-tomcat-tests.sh 8-jdk11
           context:
             - slack-secrets
           <<: *slack-fail-post-step
@@ -631,7 +631,7 @@ workflows:
           <<: *filter-default
           name: Tomcat 9 API Test
           requires: *stage-build
-          command: bash test/run-docker-tomcat-tests.sh 9
+          command: bash test/run-docker-tomcat-tests.sh 9-jdk11
           context:
             - slack-secrets
           <<: *slack-fail-post-step
