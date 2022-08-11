@@ -313,8 +313,11 @@ class UpdateModeProjectService implements ProjectConfigurable {
         }
 
         if(execData.size() > 1 && newExecutionSettings.value == newScheduleSettings.value){
-            execData[0]["type"] = "executions-schedule"
-            scheduleExecutionsLaterJob(project, "executions-schedule", execData[0])
+            Map compundExecData = execData[0]
+            compundExecData["type"] = "executions-schedule"
+            compundExecData["config"]["executions.action"] = execData[0]["config"]["action"]
+            compundExecData["config"]["schedule.action"] = execData[1]["config"]["action"]
+            scheduleExecutionsLaterJob(project, compundExecData["type"] as String, compundExecData)
         }else{
             for (Map data : execData){
                 scheduleExecutionsLaterJob(project, data["type"] as String, data)
@@ -542,7 +545,8 @@ class UpdateModeProjectService implements ProjectConfigurable {
                 if(!settings.executions.active){
                     return [active: false, msg: null]
                 }
-                action = settings.executions.action
+                action = settings["executions"]["executions.action"]
+                action = action?:settings.executions.action
             }
 
         }
@@ -555,7 +559,8 @@ class UpdateModeProjectService implements ProjectConfigurable {
                 if(!settings.schedule.active){
                     return [active: false, msg: null]
                 }
-                action = settings.schedule.action
+                action = settings["executions"]["schedule.action"]
+                action = action?:settings.schedule.action
             }
         }
 

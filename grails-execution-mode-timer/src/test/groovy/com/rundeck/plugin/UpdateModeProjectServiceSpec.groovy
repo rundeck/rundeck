@@ -247,8 +247,67 @@ class UpdateModeProjectServiceSpec extends Specification implements ServiceUnitT
         "false"          | "false"         |     0 | false
         "true"           | "false"         |     1 | true
         "true"           | "true"          |     2 | true
+    }
 
+    def "should create one quartz job when schedule and execution changes are at same time"(){
+        given:
+        String project = "TestProject"
 
+        def propertiesData = ["project.disable.schedule": initialScheduleDisable.toString(),
+                              "project.disable.executions": initialExecutionDisable.toString(),
+                              "project.later.executions.enable": (!disableExecLat).toString(),
+                              "project.later.executions.disable": disableExecLat.toString(),
+                              "project.later.executions.enable.value": execTime,
+                              "project.later.executions.disable.value": execTime,
+                              "project.later.schedule.enable": enableSchedLat.toString(),
+                              "project.later.schedule.disable": (!enableSchedLat).toString(),
+                              "project.later.schedule.enable.value": schedTime,
+                              "project.later.schedule.disable.value": schedTime,
+        ]
+
+        Properties properties = new Properties()
+        propertiesData.each {key, value->
+            if(value){
+                properties.put(key,value)
+            }
+        }
+
+        String propertiesString = "{\"global\": {\"executionDisable\":"+initialExecutionDisable.toString()+",\"scheduleDisable\":"+initialScheduleDisable.toString()+"},\"executions\":{\"active\":false, \"action\":\"null\", \"value\":\"null\"}, \"schedule\":{\"active\":false, \"action\":\"null\", \"value\":\"null\"}}"
+
+        def rundeckProject = Mock(IRundeckProject){
+            existsFileResource(_) >> true
+            loadFileResource(_, _) >> { args ->
+                args[1].write(propertiesString.bytes)
+                propertiesString.length()
+            }
+        }
+
+        def mockFrameworkService = new MockFrameworkService(
+                frameworkProjectsTestData: [
+                        TestProject: [projectProperties: propertiesData]
+                ]
+        )
+        mockFrameworkService.setRundeckProject(rundeckProject)
+
+        service.frameworkService  = mockFrameworkService
+        service.scheduledExecutionService  = new MockScheduledExecutionService(isScheduledRegister: false)
+
+        service.quartzScheduler = Mock(Scheduler){
+            0*getTrigger(_) >> Mock(org.quartz.Trigger)
+            expectedQuartzCalls*scheduleJob(_,_) >> new Date(1355270400000)
+            0*deleteJob(_)
+        }
+        when:
+        def result = service.saveExecutionLaterSettings(project,properties)
+        then:
+        result==expectedResultStatus
+
+        where:
+        initialExecutionDisable | initialScheduleDisable | disableExecLat | execTime | enableSchedLat| schedTime | expectedQuartzCalls | expectedResultStatus
+        false                   | true                   |       true     |    "1m"  |       true    | "1m"      | 1                    | true
+        false                   | true                   |       true     |    "2m"  |       true    | "1m"      | 2                    | true
+        true                    | false                  |       false    |    "1m"  |       false   | "1m"      | 1                    | true
+        true                    | false                  |       false    |    "1h"  |       false   | "1m"      | 2                    | true
     }
 
     def "test editProject"() {
