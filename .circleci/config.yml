@@ -589,8 +589,9 @@ workflows:
           cron: "0 0 * * *"
           filters:
             branches:
-              -main
-              -nightly_build_tomcat
+              only:
+                -main
+                -nightly_build_tomcat
     jobs:
       - build:
           context:
