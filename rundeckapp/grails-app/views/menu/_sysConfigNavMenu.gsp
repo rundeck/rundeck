@@ -75,6 +75,25 @@
   <g:if test="${pluginRead && repoEnabled}">
     <li class="dropdown-submenu">
       <a href="#" id="plugins-menu-button">Plugins <span class="caret"></span></a>
+      <ul class="dropdown-menu dropdown-menu-right" id="plugins-menu" style="display: none">
+        <li>
+          <a href="${g.createLink(uri:'/artifact/index/repositories')}">
+            <g:message code="gui.menu.FindPlugins"/>
+          </a>
+        </li>
+        <li>
+          <a href="${g.createLink(uri:'/artifact/index/configurations')}">
+            <g:message code="gui.menu.InstalledPlugins"/>
+          </a>
+        </li>
+        <g:if test="${!pluginSecurityEnabled}">
+          <li>
+            <a href="${g.createLink(uri:'/artifact/index/upload')}">
+              <g:message code="gui.menu.UploadPlugin"/>
+            </a>
+          </li>
+        </g:if>
+      </ul>
     </li>
   </g:if>
   <g:if test="${pluginRead && !repoEnabled}">
@@ -118,32 +137,13 @@
       </g:forMenuItems>
     <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
   </ul>
-  <ul class="dropdown-menu dropdown-menu-right" id="plugins-menu" style="display: none">
-    <li>
-      <a href="${g.createLink(uri:'/artifact/index/repositories')}">
-        <g:message code="gui.menu.FindPlugins"/>
-      </a>
-    </li>
-    <li>
-      <a href="${g.createLink(uri:'/artifact/index/configurations')}">
-        <g:message code="gui.menu.InstalledPlugins"/>
-      </a>
-    </li>
-    <g:if test="${!pluginSecurityEnabled}">
-      <li>
-        <a href="${g.createLink(uri:'/artifact/index/upload')}">
-          <g:message code="gui.menu.UploadPlugin"/>
-        </a>
-      </li>
-    </g:if>
-  </ul>
 </div>
 
 <script>
 jQuery(document).ready(function($){
   let pluginsMenuButton = $('#plugins-menu-button')
   let pluginsMenu = $('#plugins-menu')
-  pluginsMenu.css("right", pluginsMenu.prev().width() + "px");
+  //pluginsMenu.css("right", pluginsMenu.prev().width() + "px");
 
   if(pluginsMenuButton.length && pluginsMenuButton.parent().length){
     pluginsMenu.css("top", pluginsMenuButton.top + 10 + "px")

@@ -577,7 +577,7 @@
 
 .scroll-area {
   max-height: 310px;
-  overflow-y: scroll;
+  //overflow-y: scroll;
   list-style: outside none none;
   padding: 0px;
 }
@@ -648,4 +648,15 @@
       text-decoration: none;
     }
   }
+}
+
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+  top: 0;
+  right: 100% !important;
+  margin-top: -1px;
+  display: none;
 }
