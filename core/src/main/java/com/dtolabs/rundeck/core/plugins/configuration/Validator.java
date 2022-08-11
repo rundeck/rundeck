@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig;
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import org.apache.commons.lang.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -323,6 +324,20 @@ public class Validator {
         return props;
     }
 
+    public static Map<String, String> performPluginGroupMapping(final Map<String, String> input,
+                                                     final Map<String, String> mapping, String provider, final boolean skip) {
+
+        final Map<String, String> props = new HashMap<String, String>();
+
+        for(final Map.Entry<String, String> entry : mapping.entrySet()){
+            if(null != input.get("project.plugin.PluginGroup" + "."+ provider+"." +entry.getKey())){
+                props.put(entry.getKey(), input.get("project.plugin.PluginGroup" + "." + provider+"." +entry.getKey()));
+            }
+        }
+
+        return props;
+    }
+
     /**
      * Reverses a set of properties mapped using the description's configuration to property mapping, or the same input
      * if the description has no mapping
@@ -333,6 +348,16 @@ public class Validator {
     public static Map<String, String> demapProperties(final Map<String, String> input, final Description desc) {
         final Map<String, String> mapping = desc.getPropertiesMapping();
         return demapProperties(input, mapping, true);
+    }
+
+    public static Map<String, String> demapPluginGroupProperties(final Map<String, String> input, final Description desc) {
+        List<Property> propList = desc.getProperties();
+        Map<String, String> mapping = new HashMap<>();
+        for(Property item : propList){
+            mapping.put(item.getName(), item.getName());
+        }
+
+        return demapPluginGroupProperties(input, desc.getName(), mapping, true);
     }
 
     /**
@@ -357,6 +382,23 @@ public class Validator {
             rev.put(entry.getValue(), entry.getKey());
         }
         return performMapping(input, rev, skip);
+    }
+
+    public static Map<String, String> demapPluginGroupProperties(
+            final Map<String, String> input,
+            String provider,
+            final Map<String, String> mapping,
+            final boolean skip
+    )
+    {
+        if (null == mapping) {
+            return input;
+        }
+        final Map<String, String> rev = new HashMap<String, String>();
+        for (final Map.Entry<String, String> entry : mapping.entrySet()) {
+            rev.put(entry.getValue(), entry.getKey());
+        }
+        return performPluginGroupMapping(input, rev, provider, skip);
     }
 
     public static PluginCustomConfigValidator createCustomPropertyValidator(PluginCustomConfig annotation) {

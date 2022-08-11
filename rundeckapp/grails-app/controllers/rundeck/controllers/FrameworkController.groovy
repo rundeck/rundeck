@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -1357,6 +1358,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
 
+            final pluginGroupConfig = frameworkService.getPluginGroupConfigurationForType("PluginGroup", project)
+            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+
+
             //specific props for typed pluginValues
             if(params.pluginValues?.PluginGroup?.json){
                 removePrefixes.add("project.plugin.PluginGroup.".toString())
@@ -1368,6 +1373,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                             && data.config instanceof Map) {
                             String type = data.get('type')
                             Map config = data.get('config')
+                            execPasswordFieldsService.untrack([[config: [type: type, props: config], index: 0]],
+                                    pluginGroupDescs)
                             for (String confKey : config.keySet()) {
                                 projProps.put(
                                     "project.plugin.PluginGroup.${type}.${confKey}".toString(),
@@ -2067,11 +2074,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
+        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
 
         //get list of node executor, and file copier services
 
         final defaultNodeExec = frameworkService.getDefaultNodeExecutorService(project)
         final defaultFileCopy = frameworkService.getDefaultFileCopyService(project)
+        Map<String, String> pluginGroupConfig = [:]
+        pluginGroupDescs.each {
+            pluginGroupConfig.putAll(frameworkService.getPluginGroupConfigurationForType(it.name, project))
+        }
 
         final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultNodeExec, project)
         final filecopyConfig = frameworkService.getFileCopyConfigurationForType(defaultFileCopy, project)
@@ -2101,6 +2113,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         fcopyPasswordFieldsService.reset()
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
+        execPasswordFieldsService.track([[type: "PluginGroup", props: pluginGroupConfig]], pluginGroupDescs)
         execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], execDesc)
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
         // resourceConfig CRUD rely on this session mapping
@@ -2124,6 +2137,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: SCHEDULE_DEFAULT,
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
+            pluginGroupConfig: pluginGroupConfig,
             defaultNodeExec: defaultNodeExec,
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: execDesc,

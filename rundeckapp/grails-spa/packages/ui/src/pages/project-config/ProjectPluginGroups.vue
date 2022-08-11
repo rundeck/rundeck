@@ -5,7 +5,7 @@
         {{title}}
         <a class="btn btn-primary btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
           <i class="glyphicon glyphicon-pencil"></i>
-          {{editButtonText || $t('Edit')}}
+          {{$t('Edit')}}
         </a>
       </h3>
     </div>
@@ -19,7 +19,7 @@
       <div>
         <a class="btn btn-primary btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
           <i class="glyphicon glyphicon-pencil"></i>
-          {{editButtonText || $t('Edit')}}
+          {{$t('Edit')}}
         </a>
         <div class="help-block" v-if="help">{{help}}</div>
 
@@ -37,7 +37,6 @@
               :show-description="true"
               @hasKeyStorageAccess="hasKeyStorageAccess"
             >
-              <span slot="titlePrefix">{{index+1}}.</span>
             </plugin-config>
             <plugin-config
               :mode="editFocus===(index) ? plugin.create?'create':'edit':'show'"
@@ -82,20 +81,6 @@
                       {{$t('Delete')}}
                       <i class="fas fa-minus"></i>
                     </btn>
-                    <btn
-                      class="btn-xs"
-                      @click="movePlugin(index,plugin,-1)"
-                      :disabled="editFocus!==-1 || index==0"
-                    >
-                      <i class="fas fa-arrow-up"></i>
-                    </btn>
-                    <btn
-                      class="btn-xs"
-                      @click="movePlugin(index,plugin,1)"
-                      :disabled="editFocus!==-1 || index>=pluginConfigs.length-1"
-                    >
-                      <i class="fas fa-arrow-down"></i>
-                    </btn>
                   </div>
                 </div>
               </div>
@@ -105,20 +90,20 @@
           <div class="list-group-item" v-if="pluginConfigs.length<1 && showEmpty">
             <slot name="empty-message">
               <span  class="text-muted">
-                {{$t("No Plugin Groups Configured",[pluginLabels && pluginLabels.addButton || serviceName])}}
+                {{$t("No Plugin Groups Configured",serviceName)}}
               </span>
             </slot>
           </div>
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="primary" @click="modalAddOpen=true">
-            {{pluginLabels && pluginLabels.addButton || serviceName}}
+            {{serviceName}}
             <i class="fas fa-plus"></i>
           </btn>
 
           <modal
             v-model="modalAddOpen"
-            :title="pluginLabels && pluginLabels.addButton || serviceName"
+            :title="serviceName"
             ref="modal"
             size="lg"
             id="add-new-modal"
@@ -149,7 +134,7 @@
           </modal>
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
-          <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>
+<!--          <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>-->
 <!--          <btn type="default" @click="cancelAction" v-else-if="modified">{{$t('Revert')}}</btn>-->
 <!--          <a class="btn btn-cta" @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>-->
           <span class="text-warning" v-if="modified">Changes have not been saved.</span>
@@ -173,6 +158,7 @@ import {RundeckBrowser} from "@rundeck/client";
 
 const client: RundeckBrowser = getRundeckContext().rundeckClient
 const rdBase = getRundeckContext().rdBase
+const context = getRundeckContext()
 
 interface PluginConf {
   type: string;
@@ -295,17 +281,14 @@ export default Vue.extend({
       this.editFocus = focus;
     },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
-      console.log("into save plugin now")
       this.$emit("saved", this.pluginConfigs);
       const type = plugin.entry.type
-      console.log(type)
       this.pluginProviders.forEach((item: any, index: any)=> {
         if(item.name == type){
           item.configSet=true
         }
 
       })
-      console.log(this.pluginProviders)
       //validate
       const validation: PluginValidation = await pluginService.validatePluginConfig(
         this.serviceName,
@@ -331,13 +314,9 @@ export default Vue.extend({
         }
 
       })
-
       const found = this.pluginConfigs.indexOf(plugin);
-
-      //this.pluginConfigs[found].configSet=false
       this.pluginConfigs.splice(found, 1);
-
-      //this.getPluginConfigs()
+      this.setPluginConfigsModified()
       this.cleanStorageAccess(plugin);
       this.setFocus(-1);
     },
@@ -356,7 +335,6 @@ export default Vue.extend({
       }
     },
     async savePlugins() {
-        console.log("into save plugins")
         this.$emit("saved", this.pluginConfigs);
     },
     async getProjectProperties(){
@@ -372,11 +350,6 @@ export default Vue.extend({
       if (result.status == 200) {
         this.projectSettings = result.parsedBody
       }
-    },
-    cancelAction() {
-      this.pluginConfigs = this.configOrig.map(this.createConfigEntry);
-      this.pluginConfigsModifiedReset();
-      this.didSave(false);
     },
     setPluginConfigsModified() {
       this.modified = true;
@@ -438,8 +411,6 @@ export default Vue.extend({
                   this.notifyPluginConfigs();
                 }
               });
-              console.log(provider.name)
-              console.log(config)
               if(Object.keys(config).length!=0){
                 projectPluginConfig.create=true
                 projectPluginConfig.configSet=true
@@ -453,13 +424,12 @@ export default Vue.extend({
             });
           }
         }).catch(error => console.error(error));
-      console.log(projectPluginConfigList)
       this.pluginConfigs = projectPluginConfigList
     }
   },
   async mounted() {
-
     this.project = window._rundeck.projectName;
+    console.log(context)
     await this.getProjectProperties()
     await this.getPluginConfigs()
 
