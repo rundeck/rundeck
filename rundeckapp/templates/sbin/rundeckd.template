@@ -62,10 +62,15 @@ mkdir -p $RDECK_BASE/var/run
 mkdir -p $RDECK_BASE/var/log
 mkdir -p $RDECK_BASE/var/lock/subsys
 
+# check if "bin/java" occurs in the argv of $PID_FILE
+PID=$(cat "$PID_FILE" 2>/dev/null)
+[ $PID ] && grep -sq bin/java /proc/$PID/cmdline &&
+    RUNNING=1 || RUNNING=
+
 start() {
     RETVAL=0
     printf "%s" "Starting $prog: "
-    [ -f $LOK_FILE -a -f $PID_FILE ] && {
+    [ -f $LOK_FILE -a "$RUNNING" ] && {
 	echo_success; #already running
 	return $RETVAL
     }
@@ -89,10 +94,9 @@ stop() {
 	echo_success; #already stopped
 	return $RETVAL
     }
-    PID=`cat $PID_FILE`
-    RETVAL=$?
-    [ -z "$PID" ] && { 
-	echo_failure; #empty pid value"
+    RETVAL=1
+    [ ! $RUNNING ] && { 
+	echo_failure; # PID gone or no longer owned by us
 	return $RETVAL;
     }
     ps -p "$PID" >/dev/null 2>&1
@@ -119,13 +123,12 @@ status() {
 	echo "$prog is stopped";
 	return 3;
     }
-    PID=`cat $PID_FILE`
-    ps -p "$PID" >/dev/null
-    RETVAL=$?
-    [ $RETVAL -eq 0 ] && { 
+    [ $RUNNING ] && { 
 	echo "$prog is running (pid=$PID, port=$RDECK_PORT)"
+  	RETVAL=0
     } || { 
 	echo "$prog dead but pid file exists"
+ 	RETVAL=1
     }
     return $RETVAL
 }
