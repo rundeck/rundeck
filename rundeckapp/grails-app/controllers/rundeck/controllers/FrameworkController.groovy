@@ -1362,7 +1362,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
 
             //specific props for typed pluginValues
-            if(params.pluginValues?.PluginGroup?.json){
+            if(params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]" ){
                 removePrefixes.add("project.plugin.PluginGroup.".toString())
                 def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
                 if(groupData instanceof Collection){
@@ -1383,14 +1383,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     }
                 }
             }
-//            if(params.pluginValues?.PluginGroup?.json){
-//                params.pluginValues.each { k, v ->
-//                    if(v instanceof String) {
-//                        removePrefixes.add("project.plugin.${k}.".toString())
-//                        projProps.put("project.plugin.${k}".toString(), v)
-//                    }
-//                }
-//            }
 
             if (!errors) {
 
