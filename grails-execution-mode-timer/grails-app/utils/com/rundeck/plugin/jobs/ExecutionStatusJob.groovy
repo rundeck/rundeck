@@ -23,52 +23,53 @@ class ExecutionStatusJob implements InterruptableJob {
         String executionLaterPath="extraConfig/executionLater.properties"
         UpdateModeProjectService editProjectService = fetchEditProjectService(context.jobDetail.jobDataMap)
 
-        //get saved value
-        def executionLater = [:]
-        def scheduleLater = [:]
-        def result = [:]
+        if(type == "executions-schedule"){
+            context.jobDetail.jobDataMap["type"] = "executions"
+            context.jobDetail.jobDataMap["config"]["action"] = config["executions.action"]
+            execute(context)
+            context.jobDetail.jobDataMap["type"] = "schedule"
+            context.jobDetail.jobDataMap["config"]["action"] = config["schedule.action"]
+            execute(context)
+        }else {
+            //get saved value
+            def result = [:]
 
-        if(type == "schedule"){
-            config.active = false
+            if(type == "schedule"){
+                config.active = false
 
-            executionLater = editProjectService.getExecutionLaterValues(rundeckProject, executionLaterPath)
+                def executionLater = editProjectService.getExecutionLaterValues(rundeckProject, executionLaterPath)
 
-            result = [executions: executionLater, schedule: config]
+                result = [executions: executionLater, schedule: config]
 
-            boolean isScheduleDisabledNow = false
-            if(config.action == "disable"){
-                isScheduleDisabledNow=true
+                boolean isScheduleDisabledNow = false
+                if(config.action == "disable"){
+                    isScheduleDisabledNow=true
+                }
+                editProjectService.editProject(rundeckProject, project, isScheduleDisabledNow, false, true)
             }
-            editProjectService.editProject(rundeckProject, project, isScheduleDisabledNow, false, true)
+
+
+            if(type == "executions"){
+                config.active = false
+
+                def scheduleLater = editProjectService.getScheduleLaterValues(rundeckProject, executionLaterPath)
+                result = [executions: config, schedule: scheduleLater]
+
+                boolean isExecutionDisabledNow = false
+                if(config.action == "disable"){
+                    isExecutionDisabledNow=true
+                }
+                editProjectService.editProject(rundeckProject, project, isExecutionDisabledNow, true, false)
+            }
 
             config.action = null
             config.value = null
 
+            def currentStatus = editProjectService.getProjectExecutionStatus(rundeckProject)
+            result.global = [executionDisable: currentStatus.isExecutionDisabled, scheduleDisable: currentStatus.isScheduleDisabled]
+
+            editProjectService.saveExecutionLater(rundeckProject, executionLaterPath , result)
         }
-
-
-        if(type == "executions"){
-            config.active = false
-
-            scheduleLater = editProjectService.getScheduleLaterValues(rundeckProject, executionLaterPath)
-            result = [executions: config, schedule: scheduleLater]
-
-            boolean isExecutionDisabledNow = false
-            if(config.action == "disable"){
-                isExecutionDisabledNow=true
-            }
-            editProjectService.editProject(rundeckProject, project, isExecutionDisabledNow, true, false)
-
-            config.action = null
-            config.value = null
-
-        }
-
-        def currentStatus = editProjectService.getProjectExecutionStatus(rundeckProject)
-        result.global = [executionDisable: currentStatus.isExecutionDisabled, scheduleDisable: currentStatus.isScheduleDisabled]
-
-        editProjectService.saveExecutionLater(rundeckProject, executionLaterPath , result)
-
     }
 
     private UpdateModeProjectService fetchEditProjectService(def jobDataMap) {
