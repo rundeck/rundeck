@@ -3921,9 +3921,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             try {
                 //validate is no the first attempt
                 if ( retryCount > count ){
-                    if(count>0){
-                        Thread.sleep(contimeout*1000)
-                    }
+                    Thread.sleep(contimeout*1000)
                 }
                 def framework = frameworkService.getRundeckFramework()
                 def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)

@@ -5632,6 +5632,40 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         null    | null       | null  | 10            | 0                | 5
     }
 
+    def "load remote options get an exception"(){
+
+        given:
+        def fwkservice=Mock(FrameworkService)
+        defineBeans{
+            frameworkService(InstanceFactoryBean,fwkservice)
+        }
+        service.configurationService = Mock(ConfigurationService)
+        service.frameworkService = fwkservice
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.addToOptions(new Option(
+                name:'test',
+                realValuesUrl: new URL('file://test')
+        ))
+        se.save()
+        _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
+            _ * getFrameworkProjectMgr()>>Mock(ProjectManager){
+                _ * loadProjectConfig('testProject')
+            }
+        }
+
+        when:
+        Exception e = new Exception("some exception")
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+            throw new Exception(e)
+        }
+        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+
+        then:
+        result.err.exception.toString() == "java.lang.Exception: java.lang.Exception: some exception"
+        result.values == null
+        result.err.message == "Failed loading remote option values"
+    }
+
     def "sort url options result"(){
         given:
 
