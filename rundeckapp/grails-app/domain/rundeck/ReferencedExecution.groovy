@@ -36,14 +36,12 @@ class ReferencedExecution {
         } as List<ScheduledExecution>
     }
 
-    static List executionIdList(ScheduledExecution se, int max = 0){
+    static List executionProjectList(ScheduledExecution se, int max = 0){
         return createCriteria().list(max: (max!=0)?max:null) {
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
             createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
             eq("scheduledExecution", se)
             projections {
-                property('e.id', "executionId")
-                property('e.project', "project")
+                groupProperty('e.project', "project")
             }
         }
     }

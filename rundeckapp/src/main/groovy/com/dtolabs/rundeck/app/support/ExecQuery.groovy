@@ -31,6 +31,7 @@ class ExecQuery extends ReportQuery implements Validateable{
     String groupPathFilter
     String groupPathExactFilter
     List execIdFilter
+    List execProjects
 
     static constraints = {
         abortedByFilter(nullable: true)
@@ -60,6 +61,7 @@ class ExecQuery extends ReportQuery implements Validateable{
         statFilter(nullable:true,inList:["succeed","fail","cancel","missed"])
         execnodeFilter(nullable: true)
         execIdFilter(nullable:true)
+        execProjects(nullable:true)
         sortBy(nullable:true,inList:[
             "jobFilter",
             "jobIdFilter",
