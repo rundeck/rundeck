@@ -329,7 +329,7 @@
 
 </g:each>
 
-<div class="tab-pane form-horizontal" id="tab_plugins">
+<div class="tab-pane form-horizontal" id="tab_pluginGroups">
 
     <div class="form-group">
         <div class=" col-sm-12 help-block"><g:message
@@ -345,7 +345,6 @@
                     service-name="PluginGroup"
                     :mode-toggle="false"
                     :config-list="[]"
-                    project="${project}"
                     config-prefix="pluginValues.PluginGroup."
             ></plugin-set-config>
         </div>

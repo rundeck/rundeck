@@ -667,6 +667,7 @@ beans={
      * Track passwords on these plugins
      */
     obscurePasswordFieldsService(PasswordFieldsService)
+    pluginGroupPasswordFieldsService(PasswordFieldsService)
     resourcesPasswordFieldsService(PasswordFieldsService)
     execPasswordFieldsService(PasswordFieldsService)
     pluginsPasswordFieldsService(PasswordFieldsService)
