@@ -2090,8 +2090,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         (ienabled?expected:0) * controller.scmService.projectHasConfiguredPlugin('import','test')>>iconfiged
         (eenabled?expected:0) * controller.scmService.projectHasConfiguredPlugin('export','test')>>econfiged
-        (econfiged?expected:0) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null)
-        (iconfiged?expected:0) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null)
+        (econfiged?expected:0) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null, null, null)
+        (iconfiged?expected:0) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null, null, null)
         model.hasConfiguredScmPlugins==hasConfigured
         model.hasConfiguredScmPluginsEnabled==hasEnabled
         where:

@@ -653,6 +653,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
         controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
@@ -690,6 +691,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
             controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
             controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
             controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
             controller.userService = Mock(UserService)
             controller.featureService = Mock(FeatureService)
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -721,6 +723,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
             1 * fwkService.getRundeckFramework()
+            1 * fwkService.listPluginGroupDescriptions() >> null
             1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
@@ -732,6 +735,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
         controller.frameworkService = fwkService
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
         controller.featureService = Mock(FeatureService)
@@ -769,6 +773,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
             controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
             controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
             controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
             controller.userService = Mock(UserService)
             controller.featureService = Mock(FeatureService){
                 featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, _) >> true
@@ -818,6 +823,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
             controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
             controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
             controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
             controller.userService = Mock(UserService)
             controller.featureService = Mock(FeatureService)
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -1285,6 +1291,7 @@ class FrameworkControllerSpec extends RundeckHibernateSpec implements Controller
         controller.frameworkService = fwkService
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
         def sEService=Mock(ScheduledExecutionService){
@@ -1884,11 +1891,11 @@ project.label=A Label
             1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_, project) >> true
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
-            new DescribedPlugin(null, null, '1type')
+            new DescribedPlugin(null, null, '1type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
             new ValidatedPlugin(valid: true)
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -1948,11 +1955,11 @@ project.label=A Label
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             0 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
-            new DescribedPlugin(null, null, '1type')
+            new DescribedPlugin(null, null, '1type', null, null)
             0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
 
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -2015,7 +2022,7 @@ project.label=A Label
             0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
 
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -2076,12 +2083,12 @@ project.label=A Label
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
-            new DescribedPlugin(null, null, '1type')
+            new DescribedPlugin(null, null, '1type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
             new ValidatedPlugin(valid: false, report: report)
 
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
@@ -2142,12 +2149,12 @@ project.label=A Label
             1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
 
             1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
-            new DescribedPlugin(null, null, '1type')
+            new DescribedPlugin(null, null, '1type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
             new ValidatedPlugin(valid: true)
 
             1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
-            new DescribedPlugin(null, null, '2type')
+            new DescribedPlugin(null, null, '2type', null, null)
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 

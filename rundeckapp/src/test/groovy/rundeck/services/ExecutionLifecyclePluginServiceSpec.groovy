@@ -191,8 +191,8 @@ class ExecutionLifecyclePluginServiceSpec extends Specification implements Servi
             }
             service.pluginService = Mock(PluginService) {
                 listPlugins(ExecutionLifecyclePlugin) >> [
-                        typeA: new DescribedPlugin<ExecutionLifecyclePluginImpl>(null, null, 'typeA'),
-                        typeB: new DescribedPlugin<ExecutionLifecyclePluginImpl>(null, null, 'typeB')
+                        typeA: new DescribedPlugin<ExecutionLifecyclePluginImpl>(null, null, 'typeA', null, null),
+                        typeB: new DescribedPlugin<ExecutionLifecyclePluginImpl>(null, null, 'typeB', null, null)
                 ]
             }
 

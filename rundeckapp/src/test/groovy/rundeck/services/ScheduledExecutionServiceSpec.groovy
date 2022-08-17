@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -485,7 +486,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         valid
         !step.hasErrors()
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -537,7 +538,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         !valid
         step.hasErrors()
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: 'bogus'
         ]
@@ -582,7 +583,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -629,7 +630,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: 'bogus'
         ]
@@ -659,7 +660,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -694,7 +695,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         params['logFilterValidation']["0"] instanceof Validator.Report
         !params['logFilterValidation']["0"].valid
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','bogus')
         ]
@@ -1636,6 +1637,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                         new Option(name: 'test2', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d', multivalued: true, delimiter: "testdelim")
                 ]
         ))
+        service.frameworkService = Mock(FrameworkService){
+            pluginConfigFactory(_, _) >> Mock(PropertyResolverFactory.Factory)
+        }
         service.fileUploadService = Mock(FileUploadService)
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
         service.jobSchedulesService = Mock(SchedulesManager)
@@ -2299,7 +2303,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         ]
         !results.scheduledExecution.errors.hasFieldErrors('workflow')
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true,
         ]
@@ -2337,7 +2341,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         passparams['logFilterValidation']["0"] instanceof Validator.Report
         !passparams['logFilterValidation']["0"].valid
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','bogus')
         ]
@@ -2374,7 +2378,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         }
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         def pluginService = service.pluginService
-        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true,
@@ -2511,7 +2515,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
 
         def pluginService = service.pluginService
 
-        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','wrong')

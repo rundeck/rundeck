@@ -295,6 +295,7 @@ class FrameworkController2Spec extends RundeckHibernateSpec implements Controlle
         fwk.demand.getDefaultFileCopyService { project -> null }
         fwk.demand.getNodeExecConfigurationForType { defaultNodeExec, project -> null }
         fwk.demand.getFileCopyConfigurationForType { defaultFileCopy, project -> null }
+        fwk.demand.listPluginGroupDescriptions{null}
         fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
         fwk.demand.listResourceModelConfigurations { project ->
             [
@@ -314,7 +315,10 @@ class FrameworkController2Spec extends RundeckHibernateSpec implements Controlle
 
         def execPFmck = new MockFor(PasswordFieldsService)
         def fcopyPFmck = new MockFor(PasswordFieldsService)
+        def pluginPFmck = new MockFor(PasswordFieldsService)
 
+        pluginPFmck.demand.reset{ -> return null}
+        pluginPFmck.demand.track{a, b -> return null}
         execPFmck.demand.reset{ -> return null}
         execPFmck.demand.track{a, b -> return null}
         fcopyPFmck.demand.reset{ -> return null}
@@ -323,6 +327,7 @@ class FrameworkController2Spec extends RundeckHibernateSpec implements Controlle
 
         controller.execPasswordFieldsService = execPFmck.proxyInstance()
         controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
+        controller.pluginGroupPasswordFieldsService = pluginPFmck.proxyInstance()
 
 
         def passwordFieldsService = new PasswordFieldsService()
@@ -443,6 +448,9 @@ class FrameworkController2Spec extends RundeckHibernateSpec implements Controlle
 
         controller.execPasswordFieldsService = Mock(PasswordFieldsService){
             2 * untrack(_,_)
+            1 * reset(*_)
+        }
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService){
             1 * reset(*_)
         }
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService){
@@ -713,6 +721,9 @@ class FrameworkController2Spec extends RundeckHibernateSpec implements Controlle
             def fcopyPasswordFieldsService = Mock(PasswordFieldsService){
                 1 * reset(*_)
             }
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService){
+                1 * reset(*_)
+            }
             controller.fcopyPasswordFieldsService = fcopyPasswordFieldsService
 
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -831,6 +842,9 @@ class FrameworkController2Spec extends RundeckHibernateSpec implements Controlle
                 1 * reset(*_)
             }
             controller.fcopyPasswordFieldsService = fcopyPasswordFieldsService
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService){
+                1 * reset(*_)
+            }
 
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 _ * isProjectExecutionEnabled(_) >> true
@@ -938,6 +952,9 @@ class FrameworkController2Spec extends RundeckHibernateSpec implements Controlle
             _*reset()
             _*track(*_)
         }
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService){
+            1 * reset(*_)
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * getAuthContextForSubject(_)
@@ -983,23 +1000,25 @@ class FrameworkController2Spec extends RundeckHibernateSpec implements Controlle
 
         def execPFmck = Mock(PasswordFieldsService)
         def fcopyPFmck = Mock(PasswordFieldsService)
+        def pluginPFmck = Mock(PasswordFieldsService)
 
 
         controller.execPasswordFieldsService = execPFmck
         controller.fcopyPasswordFieldsService = fcopyPFmck
+        controller.pluginGroupPasswordFieldsService = pluginPFmck
 
 
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.pluginService = Mock(PluginService){
             1 * getPluginDescriptor('TestPluginsNodeExecutor', ServiceNameConstants.NodeExecutor)>>{
                 if(foundNodeExec){
-                    return new DescribedPlugin<NodeExecutor>(Mock(NodeExecutor),null,'TestPluginsNodeExecutor')
+                    return new DescribedPlugin<NodeExecutor>(Mock(NodeExecutor),null,'TestPluginsNodeExecutor', null, null)
                 }
                 null
             }
             1 * getPluginDescriptor('WinRMcpPython', ServiceNameConstants.FileCopier)>>{
                 if(foundFileCopier){
-                    return new DescribedPlugin<FileCopier>(Mock(FileCopier), null, 'WinRMcpPython')
+                    return new DescribedPlugin<FileCopier>(Mock(FileCopier), null, 'WinRMcpPython', null, null)
                 }
                 null
             }

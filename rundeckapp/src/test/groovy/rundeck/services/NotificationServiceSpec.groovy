@@ -266,7 +266,7 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
+        1 * service.frameworkService.getProjectPropertyResolver(_)
 
     }
 
@@ -305,7 +305,7 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, null)
+        1 * service.frameworkService.getProjectPropertyResolver(_)
 
     }
 
@@ -355,7 +355,6 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
         1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -545,7 +544,6 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
         1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -613,7 +611,7 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
         def ret = service.triggerJobNotification('start', job, content)
 
         then:
-        1 * service.frameworkService.getFrameworkPropertyResolver(_, testResult)
+        1 * service.frameworkService.getProjectPropertyResolver(_)
         1 * service.pluginService.configurePlugin(_,_,_,_,_)>>new ConfiguredPlugin(
                 mockPlugin,
                 [:]
@@ -905,7 +903,7 @@ class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUni
 
         service.pluginService = Mock(PluginService){
             listPlugins(_,_)>>[
-                    XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake'),
+                    XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake', null, null),
             ]
         }
         service.frameworkService = Mock(FrameworkService) {

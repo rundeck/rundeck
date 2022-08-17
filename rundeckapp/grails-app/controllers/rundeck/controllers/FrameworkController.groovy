@@ -1392,7 +1392,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
 
-            final pluginGroupConfig = frameworkService.getPluginGroupConfigurationForType("PluginGroup", project)
             List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
 
             //specific props for typed pluginValues
