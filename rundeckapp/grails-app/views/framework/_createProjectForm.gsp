@@ -74,9 +74,15 @@
                     FileCopier: fileCopierPluginsData,
             ]
     ]}"/>
+    <g:embedJSON id="pluginGroupJSON" data="${[
+            project: params.newproject,
+            config: pluginGroupConfig
+    ]}"/>
 
     <asset:javascript src="prototype/effects"/>
     <asset:javascript src="framework/editProject.js"/>
+    <asset:javascript src="static/pages/project-config.js" defer="defer" />
+    <asset:stylesheet href="static/css/pages/project-config.css" />
     <g:javascript>
 
     function init(){
@@ -88,6 +94,11 @@
         });
     }
     jQuery(init);
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data: {
+            testValue: loadJsonData("pluginGroupJSON")
+        }
+    })
     </g:javascript>
     <style type="text/css">
     #configs li {

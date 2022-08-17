@@ -339,20 +339,6 @@ export default Vue.extend({
     async savePlugins() {
         this.$emit("saved", this.pluginConfigs);
     },
-    async getProjectProperties(){
-      let result = await client.sendRequest(
-        {
-          baseUrl: rdBase,
-          pathTemplate: "/api/"+window._rundeck.apiVersion+"/project/"+this.project+"/config",
-          method: "GET",
-          headers: {"content-type": "application/json"}
-        }
-      )
-
-      if (result.status == 200) {
-        this.projectSettings = result.parsedBody
-      }
-    },
     setPluginConfigsModified() {
       this.modified = true;
       this.$emit("modified");
@@ -440,7 +426,6 @@ export default Vue.extend({
     console.log(test)
     this.contextConfig = test.config
     console.log(this.contextConfig)
-    await this.getProjectProperties()
     await this.getPluginConfigs()
 
   }

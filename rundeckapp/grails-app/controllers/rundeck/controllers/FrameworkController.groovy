@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -815,6 +816,26 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         String defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         String defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
 
+        if(params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]" ){
+            def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
+            if(groupData instanceof Collection){
+                for(Object data: groupData){
+                    if(data instanceof Map
+                            && data.type instanceof String
+                            && data.config instanceof Map) {
+                        String type = data.get('type')
+                        Map config = data.get('config')
+                        for (String confKey : config.keySet()) {
+                            projProps.put(
+                                    "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                    config.get(confKey).toString()
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         if(featureService.featurePresent(Features.CLEAN_EXECUTIONS_HISTORY, true) && cleanerHistoryEnabled
                 && (params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0)) {
             cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
@@ -973,6 +994,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def (descriptions, nodeexecdescriptions, filecopydescs) = frameworkService.listDescriptions()
 
+        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+        List<Map<String, Object>> pluginGroupConfig = []
+        pluginGroupDescs.each {
+            List<Property> propList = it.getProperties()
+            Map<String, String> mapping = new HashMap<>();
+            for(Property item : propList){
+                mapping.put(item.getName(), null);
+            }
+
+            pluginGroupConfig.add(["type": it.name, "config":mapping])
+        }
         //get grails services that declare project configurations
         Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput('extraConfig.', [:])
 
@@ -983,6 +1015,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             nodeexecconfig: ['keypath': sshkeypath],
             fcopyconfig: ['keypath': sshkeypath],
             defaultFileCopy: defaultFileCopy,
+            pluginGroupConfig: pluginGroupConfig,
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
             prefixKey:prefixKey,
