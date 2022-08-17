@@ -1,9 +1,9 @@
 import Vue from 'vue'
 
-import { getRundeckContext, url } from '@rundeck/ui-trellis'
+import { getRundeckContext, url } from '@/library/rundeckService'
 
-import ProjectPicker from '@rundeck/ui-trellis/lib/components/widgets/project-select/ProjectSelectButton.vue'
-import { Project } from '@rundeck/ui-trellis/lib/stores/Projects'
+import ProjectPicker from '@/library/components/widgets/project-select/ProjectSelectButton.vue'
+import { Project } from '@/library/stores/Projects'
 
 const rootStore = getRundeckContext().rootStore
 

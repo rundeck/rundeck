@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-import Pagination from '@rundeck/ui-trellis/lib/components/utils/Pagination.vue'
+import Pagination from '@/library/components/utils/Pagination.vue'
 
 const template = `
     <Pagination 

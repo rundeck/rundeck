@@ -3,15 +3,15 @@ __webpack_public_path__ = (new URL(window._rundeck.rdBase)).pathname + 'assets/s
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+import uivLang from '@/library/utilities/uivi18n'
 import * as uiv from 'uiv'
 import axios from 'axios'
-import TourConstants from '@/components/tour/constants'
-import TourPicker from './tourPicker/App'
-import TourDisplay from './tourDisplay/App'
+import TourConstants from '@/app/components/tour/constants'
+import TourPicker from './tourPicker/App.vue'
+import TourDisplay from './tourDisplay/App.vue'
 import {
   EventBus
-} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
+} from '@/library/utilities/vueEventBus'
 
 import { getRundeckContext } from '@rundeck/ui-trellis'
 

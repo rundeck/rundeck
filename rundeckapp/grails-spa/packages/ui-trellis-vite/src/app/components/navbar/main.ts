@@ -1,11 +1,11 @@
 import Vue from 'vue'
 
-import NavigationBar from '@rundeck/ui-trellis/lib/components/navbar/NavBar.vue'
-import UtilityBar from '@rundeck/ui-trellis/lib/components/utility-bar/UtilityBar.vue'
-import RundeckInfoWidget from '@rundeck/ui-trellis/lib/components/widgets/rundeck-info/RundeckInfoWidget.vue'
-import ThemeSelectWidget from '@rundeck/ui-trellis/lib/components/widgets/theme-select/ThemeSelect.vue'
+import NavigationBar from '@/library/components/navbar/NavBar.vue'
+import UtilityBar from '@/library/components/utility-bar/UtilityBar.vue'
+import RundeckInfoWidget from '@/library/components/widgets/rundeck-info/RundeckInfoWidget.vue'
+import ThemeSelectWidget from '@/library/components/widgets/theme-select/ThemeSelect.vue'
 
-import {UtilityActionItem} from '@rundeck/ui-trellis/lib/stores/UtilityBar'
+import {UtilityActionItem} from '@/library/stores/UtilityBar'
 import { getRundeckContext, getAppLinks } from '@rundeck/ui-trellis'
 
 const appLinks = getAppLinks()

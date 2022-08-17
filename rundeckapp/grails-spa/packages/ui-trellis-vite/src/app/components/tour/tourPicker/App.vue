@@ -35,8 +35,8 @@
 <script lang='ts'>
   import Vue from "vue";
   import Trellis, { getRundeckContext } from "@rundeck/ui-trellis";
-  import TourServices from "@/components/tour/services";
-  import { RootStore } from '@rundeck/ui-trellis/lib/stores/RootStore';
+  import TourServices from "@/app/components/tour/services";
+  import { RootStore } from '@/library/stores/RootStore';
 
   const context = getRundeckContext();
 

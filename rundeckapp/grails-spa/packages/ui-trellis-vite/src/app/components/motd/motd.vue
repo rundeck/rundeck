@@ -22,7 +22,7 @@
 import axios from 'axios'
 // import _ from 'lodash'
 
-import Drawer from '@rundeck/ui-trellis/lib/components/containers/drawer/Drawer'
+import Drawer from '@/library/components/containers/drawer/Drawer.vue'
 
 export default {
   name: 'MessageOfTheDay',
@@ -76,20 +76,20 @@ export default {
     }
   },
   computed: {
-    /**
-     * Return true if the html does not start with a <h1/2/3/4/5> tag
-     * @returns {boolean}
-     */
+    // **
+    //  * Return true if the html does not start with a <h1/2/3/4/5> tag
+    //  * @returns {boolean}
+    // **
     noTitle () {
       if(!this.message){
         return true
       }
       return this.message.indexOf("<article class=\"markdown-body\"><h") < 0
     },
-    /**
-     * Return true if the html does not start with a <h1/2/3/4/5> tag
-     * @returns {boolean}
-     */
+    // **
+    //  * Return true if the html does not start with a <h1/2/3/4/5> tag
+    //  * @returns {boolean}
+    // **
     motdTitle () {
       if(!this.message){
         return null
@@ -103,11 +103,11 @@ export default {
         return null
       }
     },
-    /**
-     * Return 'style' variant if the motd text contains a html comment starting with <!-- style:variant
-     * for the danger, warning, primary, info, success styles
-     * @returns {string}
-     */
+    // **
+    //  * Return 'style' variant if the motd text contains a html comment starting with <!-- style:variant
+    //  * for the danger, warning, primary, info, success styles
+    //  * @returns {string}
+    // **
     motdStyle () {
       if(!this.project.readme.motd){
         return ''
@@ -119,28 +119,32 @@ export default {
       }
       return 'default'
     },
-    /**
-     * Return 'alert-*' variant if the motd text contains a html comment starting with <!-- style:variant
-     * for the danger, warning, primary, info, success styles
-     * @returns {string}
-     */
+    // **
+    //  * Return 'alert-*' variant if the motd text contains a html comment starting with <!-- style:variant
+    //  * for the danger, warning, primary, info, success styles
+    //  * @returns {string}
+    // **
     alertStyle () {
       return `bg-${this.motdStyle}`
     },
     styleCss () {
       let style = {}
-      if (!this.project.readme.motd) {
-        return style
-      }
-      const keys={fgcolor:'color',bgcolor:'backgroundColor'}
-      let regex = /<!--\s+(fgcolor|bgcolor):(#[a-fA-F0-9]{6})\s+-->/g
-      let found = regex.exec(this.project.readme.motd)
-      while (found) {
-        if(found.length>2 && keys[found[1]]) {
-          style[keys[found[1]]] = found[2]
-        }
-        found = regex.exec(this.project.readme.motd)
-      }
+      // if (!this.project.readme.motd) {
+      //   return style
+      // } 
+      // const keys= {
+      //   fgcolor:'color',
+      //   bgcolor:'backgroundColor'
+      // }
+      // // let regex = /<!--\s+(fgcolor|bgcolor):(#[a-fA-F0-9]{6})\s+-->/
+      // let regex = ''
+      // let found = regex.exec(this.project.readme.motd)
+      // while (found) {
+      //   if(found.length>2 && keys[found[1]]) {
+      //     style[keys[found[1]]] = found[2]
+      //   }
+      //   found = regex.exec(this.project.readme.motd)
+      // }
       return style
     }
   },

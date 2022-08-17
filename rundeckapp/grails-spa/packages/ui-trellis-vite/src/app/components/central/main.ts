@@ -3,11 +3,12 @@ import Vue from 'vue'
 import * as uiv from 'uiv'
 import VueCookies from 'vue-cookies'
 import VueI18n from 'vue-i18n'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+import uivLang from '@/library/utilities/uivi18n'
 import VueMoment from 'vue-moment'
-import {getRundeckContext, getSynchronizerToken, RundeckBrowser} from '@rundeck/ui-trellis'
-import {EventBus} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
-import { RootStore } from '@rundeck/ui-trellis/lib/stores/RootStore'
+import {getRundeckContext, getSynchronizerToken} from '@/library/rundeckService'
+import { RundeckBrowser } from '@rundeck/client'
+import {EventBus} from '@/library/utilities/vueEventBus'
+import { RootStore } from '@/library/stores/RootStore'
 
 type UivLangKey = keyof typeof uivLang
 

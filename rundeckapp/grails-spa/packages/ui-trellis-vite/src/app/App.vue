@@ -92,6 +92,8 @@ export default {
   mounted(){
     let html = document.querySelector('html')
     html.setAttribute('data-color-theme', this.theme);
+
+    console.log(import.meta.env)
   },
   methods: {
     setTheme(){
