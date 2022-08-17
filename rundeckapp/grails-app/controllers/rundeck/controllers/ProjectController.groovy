@@ -1344,23 +1344,7 @@ class ProjectController extends ControllerBase{
             if(!succeed){
                 return
             }
-//            Map<String, String> finalConfig = [:]
-//            for(entry in config){
-//                if(entry["serviceName"] == "PluginGroup"){
-//                    Map<String, String> groupConfig = entry["config"] as Map<String, String>
-//                    String provider = entry["type"]
-//                    for (group in groupConfig){
-//                        finalConfig.put("project.plugin.PluginGroup." + provider + "." + group.key,group.value)
-//                    }
-//
-//                }
-//            }
-//            if(finalConfig){
-//                configProps.putAll(finalConfig)
-//            }
-//            else{
-//                configProps.putAll(config)
-  //          }
+            configProps.putAll(config)
 
         }
         Properties currentProps = project.getProjectProperties() as Properties
@@ -1439,75 +1423,6 @@ class ProjectController extends ControllerBase{
                         newScheduleDisabledStatus
                 )
             }
-        }
-    }
-    @RdAuthorizeProject(RundeckAccess.Project.AUTH_APP_CONFIGURE)
-    def apiProjectConfigAddEntries() {
-        if(!apiService.requireApi(request,response)){
-            return
-        }
-        def project = authorizingProject.resource
-        def key_ = apiService.restoreUriPath(request, params.keypath)
-        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
-        def value_=null
-        if(request.format in ['text']){
-            value_ = request.inputStream.text
-        }else{
-            def succeeded = apiService.parseJsonXmlWith(request,response,[
-                    xml:{xml->
-                        value_ = xml?.'@value'?.text()
-                    },
-                    json:{json->
-                        value_ = json?.value
-                    }
-            ])
-            if(!succeeded){
-                return
-            }
-        }
-        if(!value_){
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_BAD_REQUEST,
-                    code:'api.error.invalid.request',
-                    args:["value was not specified"],
-                    format:respFormat
-            ])
-        }
-        def propValueBefore = project.getProperty(key_)
-        if(propValueBefore){
-            propValueBefore = new Properties([(key_): propValueBefore])
-        }else{
-            propValueBefore = new Properties([(key_): ''])
-        }
-
-        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
-
-        if(!result.success){
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    message:result.error,
-                    format: respFormat
-            ])
-        }
-        def resultValue= project.getProperty(key_)
-        propValueBefore
-        checkScheduleChanges(project, propValueBefore, new Properties([(key_): resultValue]))
-
-        switch (respFormat) {
-            case 'text':
-                render(contentType: 'text/plain', text: resultValue)
-                break
-            case 'xml':
-                apiService.renderSuccessXml(request, response) {
-                    property(key: key_, value: resultValue)
-                }
-                break
-            case 'json':
-                render(contentType: 'application/json') {
-                    key key_
-                    value value_
-                }
-                break
         }
     }
 
