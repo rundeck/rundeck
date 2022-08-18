@@ -100,6 +100,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             getRundeckBase() >> ''
             getServerUUID() >> 'uuid'
             isClusterModeEnabled() >> clusterEnabled
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
         }
         def quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
@@ -1384,6 +1387,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 getWorkflowStrategyService()>>Mock(WorkflowStrategyService){
                     getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
                 }
+            }
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
             }
             getFrameworkProject(_) >> projectMock
         }
