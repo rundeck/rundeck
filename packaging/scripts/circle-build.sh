@@ -18,11 +18,8 @@ main() {
         create_packages) create_packages "${@}" ;;
         sign) sign "${@}" ;;
         test) test_packages "${@}" ;;
-        test_pro) test_pro_packages "${@}" ;;
         publish) publish "${@}" ;;
-        publish_pro) publish_pro "${@}" ;;
         publish_war) publish_war "${@}" ;;
-        publish_war_pro) publish_war_pro "${@}" ;;
     esac
 }
 
@@ -51,10 +48,6 @@ test_packages() {
   bash packaging/test/test-docker-install-rpm.sh
 }
 
-test_pro_packages() {
-  docker_login
-  test_packages
-}
 
 publish() {
   echo "publish function"
@@ -71,22 +64,6 @@ publish() {
     )
 }
 
-publish_pro() {
-  echo "publish pro function"
-  (
-      cd packaging
-      for BUNDLE in enterprise; do
-          for PACKAGE in deb rpm; do
-              ./gradlew --info \
-                  -PpackageBundle=$BUNDLE \
-                  -PpackageType=$PACKAGE \
-                  -PpackageOrg=rundeckpro \
-                  -PpackageRevision=1 \
-                  publish
-          done
-      done
-  )
-}
 
 publish_war() {
   echo "publish war function"
@@ -98,37 +75,6 @@ publish_war() {
             -PpackageRevision=1 \
             publishWar
     )
-}
-
-publish_pro_war() {
-  echo 'publish pro war'
-  (
-      cd packaging
-      ./gradlew --info \
-          -PpackageType=war \
-          -PpackageGroup="com.rundeck.enterprise" \
-          -PpackageOrg=rundeckpro \
-          -PpackageRevision=1 \
-          publishWar
-  )
-}
-
-publish_to_s3() {
-  echo 'publish to s3 function'
-  (
-      cd packaging
-      # This is a flag that doesn't take a value
-      S3_DRY_RUN="--dryrun"
-      if [[ "$DRY_RUN" != true ]] ; then
-          S3_DRY_RUN=""
-      fi
-
-      if [[ -n "${UPSTREAM_TAG}" ]] ; then
-          for PACKAGE in deb rpm; do
-              aws s3 sync "${S3_DRY_RUN}" --exclude=* --include=*.$PACKAGE packaging/packaging/build/distributions/ s3://download.rundeck.org/$PACKAGE/
-          done
-      fi
-  )
 }
 
 main "${@}"
