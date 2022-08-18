@@ -842,9 +842,6 @@ class ScheduledExecutionController  extends ControllerBase{
             client.setFollowRedirects(true)
             client.setTimeout(timeout*1000)
 
-            if(retry>0) {
-                client.setRetryCount(retry)
-            }
 
             URL urlo
             String cleanUrl = url.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');

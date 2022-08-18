@@ -3840,6 +3840,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         int timeout = 10
         int contimeout = 0
         int retryCount = 5
+        int httpResponseCode = 0
+
         if (configurationService.getString("jobs.options.remoteUrlTimeout")) {
             try {
                 timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout", null)
@@ -3911,32 +3913,47 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
-        try {
-            def framework = frameworkService.getRundeckFramework()
-            def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
-            boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
-            remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
-            result = remoteResult.json
-            if (remoteResult.stats) {
-                remoteStats.putAll(remoteResult.stats)
+        int count = retryCount
+
+        //cycle to retry if getRemoteJSON dont get the remote values
+        do{
+            try {
+                //validate if not the firt attemp
+                if(retryCount > count){
+                    Thread.sleep(contimeout*1000)
+                }
+                def framework = frameworkService.getRundeckFramework()
+                def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
+                boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
+
+                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+                result = remoteResult.json
+                if (remoteResult.stats) {
+                    remoteStats.putAll(remoteResult.stats)
+                    if(remoteResult.stats.httpStatusCode){
+                        httpResponseCode = remoteResult.stats.httpStatusCode
+                    }
+                }
+            } catch (Exception e) {
+                err.message = "Failed loading remote option values"
+                err.exception = e
+                err.srcUrl = cleanUrl
+                log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
+                e.printStackTrace()
+                remoteStats.finishTime = System.currentTimeMillis()
+                remoteStats.durationTime = remoteStats.finishTime - remoteStats.startTime
             }
-        } catch (Exception e) {
-            err.message = "Failed loading remote option values"
-            err.exception = e
-            err.srcUrl = cleanUrl
-            log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
-            e.printStackTrace()
-            remoteStats.finishTime = System.currentTimeMillis()
-            remoteStats.durationTime = remoteStats.finishTime - remoteStats.startTime
-        }
-        if (remoteResult.error) {
-            err.message = "Failed loading remote option values"
-            err.exception = new Exception(remoteResult.error)
-            err.srcUrl = cleanUrl
-            log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
-        }
-        logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
+            if (remoteResult.error) {
+                err.message = "Failed loading remote option values"
+                err.exception = new Exception(remoteResult.error)
+                err.srcUrl = cleanUrl
+                log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
+            }
+            logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
+            count--
+        }while(count > 0 && (httpResponseCode < 200 || httpResponseCode > 300 ))
+
         //validate result contents
         boolean valid = true;
         def validationerrors = []
