@@ -157,23 +157,22 @@ class ReportsController extends ControllerBase{
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
                 ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
-                def list = ReferencedExecution.executionIdList(sched)
-                def include = []
-                list.each {refex ->
-                    boolean add = true
-                    if(refex.project != params.project){
-                        if(unauthorizedResponse(rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_EVENT, AuthConstants.ACTION_READ,
-                                params.project), AuthConstants.ACTION_READ,'Events in project',refex.project)){
-                            log.debug('Cant read executions on project '+refex.project)
+                def list = ReferencedExecution.executionProjectList(sched)
+                def allowedProjects = []
+                list.each { project ->
+                    if(project != params.project){
+                        if(!rundeckAuthContextProcessor.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_EVENT, AuthConstants.ACTION_READ,
+                                project)){
+                            log.debug('Cant read executions on project ' + project)
                         }else{
-                            include << String.valueOf(refex.executionId)
+                            allowedProjects << project
                         }
                     }else{
-                        include << String.valueOf(refex.executionId)
+                        allowedProjects << project
                     }
                 }
-                if(include){
-                    query.execIdFilter = include
+                if(allowedProjects){
+                    query.execProjects = allowedProjects
                 }
             }
 
@@ -359,10 +358,11 @@ class ReportsController extends ControllerBase{
         results.reports=results?.reports.collect{
             def map=it.toMap()
             map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
-            if(map.jcExecId){
-                map.executionId= map.remove('jcExecId')
+            if(map.executionId){
+                //nb:response data type expects string
+                map.executionId= map.executionId.toString()
                 try {
-                    map.execution = Execution.get(Long.parseLong(map.executionId)).toMap()
+                    map.execution = Execution.get(map.executionId).toMap()
                     map.executionHref = createLink(controller: 'execution', action: 'show', absolute: false, id: map.executionId, params: [project: (map?.ctxProject != null)? map.ctxProject : params.project])
                 } catch (Exception e) {
 
@@ -742,9 +742,9 @@ class ReportsController extends ControllerBase{
                                     }
                                     job(jparms)
                                 }
-                                if(rpt.jcExecId){
-                                    def foundExec=Execution.get(rpt.jcExecId)
-                                    def execparms=[id:rpt.jcExecId]
+                                if(rpt.executionId){
+                                    def foundExec=Execution.get(rpt.executionId)
+                                    def execparms=[id:rpt.executionId]
                                     if(foundExec){
                                         execparms.href=apiService.apiHrefForExecution(foundExec)
                                         execparms.permalink=apiService.guiHrefForExecution(foundExec)
@@ -801,11 +801,11 @@ class ReportsController extends ControllerBase{
                                         ]
                                     }
                                 }
-                                if(rpt.jcExecId){
-                                    def foundExec=Execution.get(rpt.jcExecId)
+                                if(rpt.executionId){
+                                    def foundExec=Execution.get(rpt.executionId)
                                     if(foundExec) {
                                         execution = [
-                                                id       : rpt.jcExecId,
+                                                id       : rpt.executionId,
                                                 href     : apiService.apiHrefForExecution(foundExec),
                                                 permalink: apiService.guiHrefForExecution(foundExec)
                                         ]

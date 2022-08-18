@@ -19,7 +19,6 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ProjectArchiveExportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
 import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.providers.Validator
@@ -34,24 +33,18 @@ import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.jetbrains.annotations.NotNull
 import org.rundeck.app.acl.ACLFileManager
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.BaseAuthContextEvaluator
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
-import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.AuthConstants
-import rundeck.BaseReport
-import rundeck.CommandExec
-import rundeck.ExecReport
-import rundeck.Execution
-import rundeck.Project
-import rundeck.ScheduledExecution
-import rundeck.Workflow
+import rundeck.*
 import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
@@ -59,6 +52,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 import static org.junit.Assert.*
@@ -74,6 +68,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         mockDomain ScheduledExecution
         mockDomain Execution
         mockDomain CommandExec
+        mockDomain JobFileRecord
         mockCodec JobsXMLCodec
 
         def configService = Stub(ConfigurationService) {
@@ -1170,6 +1165,77 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
 
 
     }
+    def "basic export executions only to stream"() {
+        given:
+
+            File temp = File.createTempFile("test", "zip")
+            service.componentBeanProvider=new ProjectService.BeanProvider<ProjectComponent>(){
+                Map<String, ProjectComponent> beans=[:]
+            }
+
+            Execution exec = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                nodeInclude: 'test1',
+                nodeExcludeTags: 'monkey',
+                status: 'true',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
+
+            )
+            assertNotNull exec.save()
+            ExecReport er = ExecReport.fromExec(exec).save()
+            assert null!=er
+
+            def project = Mock(IRundeckProject){
+                getName()>>'testproj'
+            }
+            def framework = Mock(IFramework)
+            List<String> entries=[]
+            def output = new ZipOutputStream(temp.newOutputStream()){
+                @Override
+                void putNextEntry(@NotNull final ZipEntry e) throws IOException {
+                    entries<<e.name
+                    super.putNextEntry(e)
+                }
+            }
+            def options = Mock(ProjectArchiveExportRequest){
+                isAll()>>false
+                isExecutionsOnly()>>true
+                getExecutionIds()>>[
+                    exec.id.toString()
+                ]
+            }
+            def auth = Mock(AuthContext)
+            def listener = Mock(ProgressListener){
+
+            }
+            service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
+            service.loggingService = Mock(LoggingService)
+            service.workflowService = Mock(WorkflowService)
+            service.executionUtilService=Mock(ExecutionUtilService){
+                1 * exportExecutionXml(_, _, _)>>{
+                    it[1].write('test\n')
+                }
+            }
+        when:
+            service.exportProjectToStream(project, framework, output, listener, options, auth)
+        then:
+            true
+            1 * listener.total('export', 4)
+            _ * listener.inc('export', _)
+            1 * listener.done()
+            entries.contains("rundeck-testproj/executions/execution-${exec.id}.xml".toString())
+            entries.contains("rundeck-testproj/reports/report-${exec.id}.xml".toString()    )
+        cleanup:
+            temp.delete()
+
+
+    }
     def "component export project to stream"() {
         given:
             ProjectComponent component = Mock(ProjectComponent)
@@ -2238,6 +2304,30 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
   <message>Report message</message>
   <dateStarted>1970-01-01T00:00:00Z</dateStarted>
   <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+  <executionId>123</executionId>
+  <jcJobId>test-job-uuid</jcJobId>
+  <adhocExecution />
+  <adhocScript />
+  <abortedByUser />
+  <succeededNodeList />
+  <failedNodeList />
+  <filterApplied />
+</report>'''
+    /**
+     * uses deprecated jcExecId
+     */
+    static String REPORT_XML_TEST1_DEPRECATED='''<report>
+  <node>1/0/0</node>
+  <title>blah</title>
+  <status>succeed</status>
+  <actionType>succeed</actionType>
+  <ctxProject>testproj1</ctxProject>
+  <reportId>test/job</reportId>
+  <tags>a,b,c</tags>
+  <author>admin</author>
+  <message>Report message</message>
+  <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+  <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
   <jcExecId>123</jcExecId>
   <jcJobId>test-job-uuid</jcJobId>
   <adhocExecution />
@@ -2269,7 +2359,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
         def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
-            jcExecId:'123',
+            executionId:123L,
             jcJobId: oldJobId.toString(),
             node:'1/0/0',
             title: 'blah',
@@ -2305,11 +2395,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def ExecReport result = service.loadHistoryReport(REPORT_XML_TEST1,[(123):'456'],[(oldUuid):se],'test')
+        def ExecReport result = service.loadHistoryReport(rptxml,[(123):456],[(oldUuid):se],'test')
         then:
-        assertNotNull result
+        result!=null
         def expected = [
-            jcExecId: '456',
+            executionId: 456L,
             jcJobId: newJobId.toString(),
             node: '1/0/0',
             title: 'blah',
@@ -2324,6 +2414,11 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             message: 'Report message',
         ]
         assertPropertiesEquals expected, result
+        where:
+            rptxml<<[
+                REPORT_XML_TEST1,
+                REPORT_XML_TEST1_DEPRECATED
+            ]
     }
     def testLoadReportSkippedExecution() {
 
@@ -2337,9 +2432,14 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def ExecReport result = service.loadHistoryReport(REPORT_XML_TEST1,[:],[(oldUuid):se],'test')
+        def ExecReport result = service.loadHistoryReport(rptxml,[:],[(oldUuid):se],'test')
         then:
         assertNull result
+        where:
+            rptxml<<[
+                REPORT_XML_TEST1,
+                REPORT_XML_TEST1_DEPRECATED
+            ]
     }
     def testReportRoundtrip() {
         given:
@@ -2355,7 +2455,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
             ctxController: 'ct',
-            jcExecId: '123',
+            executionId: 123,
             jcJobId: '321',
             node: '1/0/0',
             title: 'blah',
@@ -2380,7 +2480,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         then:
         assertNotNull result
         def keys = [
-            jcExecId: '456',
+            executionId: 456,
             jcJobId: '321',
             node: '1/0/0',
             title: 'blah',

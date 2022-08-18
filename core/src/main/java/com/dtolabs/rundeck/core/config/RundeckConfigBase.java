@@ -25,7 +25,6 @@ import java.util.Map;
 public class RundeckConfigBase {
 
     String executionMode;
-    String projectsStorageType;
     String primaryServerId;
 
     Map<String,Object> mail;  //mail is a very dynamic config
@@ -59,6 +58,18 @@ public class RundeckConfigBase {
     RundeckApiConfig api;
     ScmLoader scmLoader;
     RundeckHealthIndicatorConfig health;
+    RundeckJobsConfig jobs;
+
+    @Data public static class RundeckJobsConfig{
+        JobOptionsConfig options;
+    }
+
+    @Data
+    public static class JobOptionsConfig{
+        int remoteUrlTimeout;
+        int remoteUrlConnectionTimeout;
+        int remoteUrlRetry;
+    }
 
     @Data
     public static class UserSessionProjectsCache {
@@ -629,6 +640,8 @@ public class RundeckConfigBase {
         public static class Login {
             String welcome;
             String welcomeHtml;
+            String footerMessageHtml;
+            String disclaimer;
         }
 
         @Data

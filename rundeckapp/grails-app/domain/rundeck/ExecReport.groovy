@@ -23,7 +23,7 @@ class ExecReport extends BaseReport{
 
     String ctxCommand
     String ctxController
-    String jcExecId
+    Long executionId
     String jcJobId
     Boolean adhocExecution
     String adhocScript
@@ -38,9 +38,9 @@ class ExecReport extends BaseReport{
         succeededNodeList type: 'text'
         failedNodeList type: 'text'
         DomainIndexHelper.generate(delegate) {
-            index 'EXEC_REPORT_IDX_0', [/*'class', 'ctxProject', 'dateCompleted',*/ 'jcExecId', 'jcJobId']
+            index 'EXEC_REPORT_IDX_0', [/*'class', 'ctxProject', 'dateCompleted',*/ 'executionId', 'jcJobId']
             index 'EXEC_REPORT_IDX_1', [/*'ctxProject',*/ 'jcJobId']
-            index 'EXEC_REPORT_IDX_2', [/*'class',*/ 'jcExecId']
+            index 'EXEC_REPORT_IDX_2', [/*'class',*/ 'executionId']
         }
     }
 
@@ -48,8 +48,8 @@ class ExecReport extends BaseReport{
         adhocExecution(nullable:true)
         ctxCommand(nullable:true,blank:true)
         ctxController(nullable:true,blank:true)
-        jcExecId(nullable:true,blank:true)
         jcJobId(nullable:true,blank:true)
+        executionId(nullable:true)
         adhocScript(nullable:true,blank:true)
         abortedByUser(nullable:true,blank:true)
         succeededNodeList(nullable:true,blank:true)
@@ -59,7 +59,7 @@ class ExecReport extends BaseReport{
     }
 
     public static final ArrayList<String> exportProps = BaseReport.exportProps +[
-            'jcExecId',
+            'executionId',
             'jcJobId',
             'adhocExecution',
             'adhocScript',
@@ -110,7 +110,7 @@ class ExecReport extends BaseReport{
         def status = issuccess ? "succeed" : iscancelled ? "cancel" : exec.willRetry ? "retry" : istimedout ?
             "timedout" : ismissed ? "missed" : "fail"
         return fromMap([
-                jcExecId:exec.id,
+                executionId: exec.id,
                 jcJobId: exec.scheduledExecution?.id,
                 adhocExecution: null==exec.scheduledExecution,
                 adhocScript: adhocScript,

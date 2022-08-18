@@ -906,7 +906,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         if(execId){
-            reportMap.jcExecId=execId
+            reportMap.executionId=execId
         }
         if(startDate){
             reportMap.dateStarted=startDate
@@ -1894,7 +1894,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 re.delete()
             }
                 //delete all reports
-            ExecReport.findAllByJcExecId(e.id.toString()).each { rpt ->
+            ExecReport.findAllByExecutionId(e.id).each { rpt ->
                 rpt.delete()
             }
 

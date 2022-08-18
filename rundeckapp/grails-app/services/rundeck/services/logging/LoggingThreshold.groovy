@@ -93,7 +93,7 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         if (!job && !global) { return null }
         def t = new LoggingThreshold()
         if (job && global && job.type == global.type) {
-            t.maxValue = Math.min(job.maxValue, global.maxValue)
+            evalMaxValue(t, job, global)
         } else {
             evalPriority(t, [job, global])
         }
@@ -101,6 +101,20 @@ class LoggingThreshold implements ThresholdValue<Long>, ValueWatcher<Long> {
         return t
     }
 
+    /**
+     * Evaluates which threshold object has the minimum maxValue attribute
+     * @param t LoggingThreshold to be filled
+     * @param thresholds objects to compare
+     */
+    static void evalMaxValue(LoggingThreshold t, LoggingThreshold... thresholds) {
+        LoggingThreshold min = thresholds.min{it.maxValue}
+        if (min) {
+            t.description = min.description
+            t.maxValue    = min.maxValue
+            t.type        = min.type
+        }
+    }
+    
     static void evalPriority(LoggingThreshold t, List<LoggingThreshold> thresholds) {
         def priorities = []
         thresholds.each {it ->

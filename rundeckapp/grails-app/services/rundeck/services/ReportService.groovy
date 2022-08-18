@@ -21,11 +21,13 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.google.common.collect.Lists
+import grails.gorm.DetachedCriteria
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
+import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 
 import javax.sql.DataSource
@@ -230,7 +232,8 @@ class ReportService  {
         }
         return total
     }
-    def applyExecutionCriteria(ExecQuery query, delegate, boolean isJobs=true){
+
+    def applyExecutionCriteria(ExecQuery query, delegate, boolean isJobs=true, ScheduledExecution se=null){
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -295,36 +298,37 @@ class ReportService  {
                     }
                 }
 
-                if (query.execIdFilter) {
+                if (query.execProjects && se) {
                     or {
-                        if(isOracleDatasource()){
-                            //Hack to avoid error: ORA-01795: maximum number of expressions in a list is 1000
-                            or {
-                                List execIdFilterPartioned = Lists.partition(query.execIdFilter, 1000)
-                                execIdFilterPartioned.each { List partition ->
-                                    'in'('jcExecId', partition)
+                        exists(new DetachedCriteria(ReferencedExecution, "re").build {
+                            projections { property 're.execution.id' }
+                            eq('re.scheduledExecution.id', se.id)
+                            eqProperty('re.execution.id', 'this.executionId')
+                            List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
+                            or{
+                                for(def partition : execProjectsPartitioned){
+                                    'in'('this.ctxProject', partition)
                                 }
                             }
-                        } else {
-                            'in'('jcExecId', query.execIdFilter)
-                        }
+                        })
+                        eq('jcJobId', String.valueOf(se.id))
                         and{
-                                    jobfilters.each { key, val ->
-                                        if (query["${key}Filter"] == 'null') {
-                                            or {
-                                                isNull(val)
-                                                eq(val, '')
-                                            }
-                                        } else if (query["${key}Filter"] == '!null') {
-                                            and {
-                                                isNotNull(val)
-                                                if(!isOracleDatasource())
-                                                    ne(val,'')
-                                            }
-                                        } else if (query["${key}Filter"]) {
-                                            eq(val, query["${key}Filter"])
-                                        }
+                            jobfilters.each { key, val ->
+                                if (query["${key}Filter"] == 'null') {
+                                    or {
+                                        isNull(val)
+                                        eq(val, '')
                                     }
+                                } else if (query["${key}Filter"] == '!null') {
+                                    and {
+                                        isNotNull(val)
+                                        if(!isOracleDatasource())
+                                            ne(val,'')
+                                    }
+                                } else if (query["${key}Filter"]) {
+                                    eq(val, query["${key}Filter"])
+                                }
+                            }
                         }
                     }
                 }else{
@@ -395,11 +399,11 @@ class ReportService  {
             if (isJobs) {
                 or {
                     isNotNull("jcJobId")
-                    isNotNull("jcExecId")
+                    isNotNull("executionId")
                 }
             } else {
                 isNull("jcJobId")
-                isNull("jcExecId")
+                isNull("executionId")
             }
 
             if(query.execnodeFilter){
@@ -439,13 +443,14 @@ class ReportService  {
                 execnode: 'execnode'
         ]
 
+        def se
         if(query?.jobIdFilter) {
-            def found = ScheduledExecution.findByUuid(query.jobIdFilter)
-            if(!found && query.jobIdFilter.isNumber()) {
-                found = ScheduledExecution.get(query.jobIdFilter)
+            se = ScheduledExecution.findByUuid(query.jobIdFilter)
+            if(!se && query.jobIdFilter.isNumber()) {
+                se = ScheduledExecution.get(query.jobIdFilter)
             }
-            if(found) {
-                query.jobIdFilter = found.id.toString()
+            if(se) {
+                query.jobIdFilter = se.id.toString()
             }
         }
 
@@ -464,7 +469,7 @@ class ReportService  {
                 firstResult(query.offset.toInteger())
             }
 
-            applyExecutionCriteria(query, delegate,isJobs)
+            applyExecutionCriteria(query, delegate,isJobs, se)
 
             if (query && query.sortBy && filters[query.sortBy]) {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
@@ -484,7 +489,7 @@ class ReportService  {
         def isolationLevel = (minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
         def total = ExecReport.withTransaction([isolationLevel: isolationLevel]) {
             ExecReport.createCriteria().count {
-                applyExecutionCriteria(query, delegate, isJobs)
+                applyExecutionCriteria(query, delegate, isJobs, se)
             }
         }
         filters.putAll(specialfilters)

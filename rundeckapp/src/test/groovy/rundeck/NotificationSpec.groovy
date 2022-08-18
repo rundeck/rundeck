@@ -4,6 +4,27 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 class NotificationSpec extends Specification {
+
+
+    @Unroll
+    def "fromNormalizeMap should set the attachLog values as true"() {
+
+        given:"the data collected from a job"
+        def type = 'email'
+        def data = [type : type , config : config]
+
+        when:"creating or updating a notification from a normalized map "
+        def result = Notification.fromNormalizedMap(data)
+
+        then:"attachLog should have a true value"
+        result.type == type
+        result.configuration == expect
+
+        where:"the attachLog is set as 'true'"
+        config = [recipients: 'recip1',subject: 'subj1',attachLog:"true",attachType:'inline']
+        expect = [recipients: 'recip1',subject: 'subj1',attachLog:true,attachLogInline: true]
+    }
+
     @Unroll
     def "toNormalizedMap email"() {
         given:

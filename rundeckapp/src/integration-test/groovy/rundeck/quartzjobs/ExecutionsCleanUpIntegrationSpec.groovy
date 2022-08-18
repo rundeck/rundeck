@@ -25,6 +25,7 @@ import org.junit.Assert
 import org.junit.Test
 import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
+import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
@@ -34,6 +35,7 @@ import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.LogFileStorageService
+import spock.lang.Specification
 
 /**
  * $INTERFACE is ...
@@ -44,11 +46,11 @@ import rundeck.services.LogFileStorageService
 
 @Integration
 @Rollback
-class ExecutionsCleanUpTest extends GroovyTestCase{
+class ExecutionsCleanUpIntegrationSpec extends Specification{
 
-    @Test
-    void testExecuteJobCleanerNoExecutionsToDelete(){
-        String projName = 'projectTest'
+    def testExecuteJobCleanerNoExecutionsToDelete(){
+        given:
+        String projName = 'projectTest1'
         int maxDaysToKeep = 10
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
@@ -61,25 +63,33 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         FrameworkService frameworkService = initNonClusterFrameworkService()
 
         ScheduledExecution se = setupJob(projName)
-        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         ExecutionsCleanUp job = new ExecutionsCleanUp()
+        when:
+        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
+        then:
+        1 == Execution.countByProject(projName)
+        1 == ExecReport.countByCtxProject(projName)
 
+
+        when:
         List execIdsToExclude = job.searchExecutions(
                 frameworkService,
                 new ExecutionService(),
                 new JobSchedulerService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
-
-        Assert.assertEquals(0, execIdsToExclude.size())
+        then:
+        execIdsToExclude.size() == 0
+        1 == Execution.countByProject(projName)
+        1 == ExecReport.countByCtxProject(projName)
     }
 
-    @Test
-    void testExecuteJobCleanerWithExecutionsToDelete(){
-        String projName = 'projectTest'
+    def testExecuteJobCleanerWithExecutionsToDelete(){
+        given:
+        String projName = 'projectTest2'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        def logFileStorageService = new MockFor(LogFileStorageService)
+        def logFileStorageService = Mock(LogFileStorageService)
 
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
@@ -90,24 +100,29 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         ScheduledExecution se = setupJob(projName)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
 
-        def executionFile = new MockFor(ExecutionFile)
+        def executionFile = Mock(ExecutionFile)
 
         FrameworkService frameworkService = initNonClusterFrameworkService()
-        List execIdsToExclude = job.searchExecutions(frameworkService,
+        Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
+        when:
+        List execIds = job.searchExecutions(frameworkService,
                 new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
 
 
-        logFileStorageService.demand.getExecutionFiles(1..999) { e , filters, endpoint ->  [:] }
 
-        Assert.assertEquals(true, execIdsToExclude.size() > 0)
+        then:
+        execIds.size() > 0
 
-        int sucessTotal = job.deleteByExecutionList(
-                execIdsToExclude, new FileUploadService(), logFileStorageService.proxyInstance())
+        when:
+        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService)
 
-        Assert.assertEquals(sucessTotal, execIdsToExclude.size())
+        then:
+        execIds.size() == sucessTotal
+        0 == Execution.countByProject(projName)
+        0 == ExecReport.countByCtxProject(projName)
     }
 
-    FrameworkService initNonClusterFrameworkService() {
+    private FrameworkService initNonClusterFrameworkService() {
         NavigableMap cfg = new NavigableMap()
         cfg.setProperty("clusterMode.enabled",false)
         ConfigurationService cfgSvc = new ConfigurationService()
@@ -115,19 +130,14 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         return new FrameworkService(configurationService: cfgSvc)
     }
 
-    @Test
-    void testExecuteJobCleanerOnClusterDeleteNullServerUUID(){
-        String projName = 'projectTest'
+
+    def testExecuteJobCleanerOnClusterDeleteNullServerUUID(){
+        given:
+        String projName = 'projectTest3'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
-        def logFileStorageService = new MockFor(LogFileStorageService)
-        logFileStorageService.demand.getFileForExecutionFiletype(1..999){Execution execution,
-                                                                         String filetype,
-                                                                         boolean useStoredPath,
-                                                                         boolean partial ->
-            null
-        }
+
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
         ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
@@ -135,35 +145,37 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         }
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
-        Execution execution = setupExecution(se, projName, execDate, execDate)
+        def mockfs=Mock(FrameworkService){
+            getServerUUID()>> "aaaa"
+            isClusterModeEnabled()>> true
+        }
+
+
+        def mockjs=Mock(JobSchedulerService) {
+            _*getDeadMembers(_) >> ["null", "bbbb"]
+        }
         ExecutionsCleanUp job = new ExecutionsCleanUp()
+        when:
+        Execution execution = setupExecution(se, projName, execDate, execDate)
 
-        def mockfs=new MockFor(FrameworkService)
-        mockfs.demand.getServerUUID(1..1){
-            "aaaa"
-        }
-        mockfs.demand.isClusterModeEnabled(1..5){
-            true
-        }
-
-        FrameworkService frameworkService = mockfs.proxyInstance()
-
-        def mockjs=new MockFor(JobSchedulerService)
-        mockjs.demand.getDeadMembers(0..1){
-            ["null","bbbb"]
-        }
-
-        JobSchedulerService jobSchedulerService = mockjs.proxyInstance()
+        then:
+        1 == Execution.countByProject(projName)
+        1 == ExecReport.countByCtxProject(projName)
 
 
-        List execIdsToExclude = job.searchExecutions(frameworkService,
-                new ExecutionService(), jobSchedulerService, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
 
-        Assert.assertEquals(true, execIdsToExclude.size() > 0)
+        when:
+        List execIdsToExclude = job.searchExecutions(mockfs,
+                new ExecutionService(), mockjs, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+        then:
+        execIdsToExclude.size() ==1
+        execIdsToExclude.contains(execution.id)
+        1 == Execution.countByProject(projName)
+        1 == ExecReport.countByCtxProject(projName)
 
     }
 
-    Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
+    private Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate, String serverUUID = null) {
         Execution e
         Execution.withNewTransaction {
             e = new Execution(
@@ -184,7 +196,10 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
                 e.serverNodeUUID = serverUUID
             }
             e.save()
+            def er=ExecReport.fromExec(e)
+            er.save()
         }
+
         return e
     }
 

@@ -16,10 +16,10 @@ result=$?
 set -e
 if [ "$CODE" == "404" ] ; then
 	echo "key not found, uploading $STORAGE_PATH ..."
-	rd keys create -f $SSH_KEY -t privateKey $STORAGE_PATH
+	rd keys create -f $SSH_KEY -t privateKey -p $STORAGE_PATH
 elif [ $result -eq 0 -o "$CODE" == "200" ] ; then
 	echo "key found, re-uploading $STORAGE_PATH ..."
-	rd keys update -f $SSH_KEY -t privateKey $STORAGE_PATH
+	rd keys update -f $SSH_KEY -t privateKey -p $STORAGE_PATH
 else
 	echo "failed, key storage result ${CODE}"
 	exit 2

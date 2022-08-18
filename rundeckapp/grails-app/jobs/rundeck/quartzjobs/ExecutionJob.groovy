@@ -40,6 +40,7 @@ import rundeck.services.*
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
+import java.sql.Timestamp
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -557,7 +558,7 @@ class ExecutionJob implements InterruptableJob {
             statusString = initMap.scheduledExecution?.logOutputThresholdStatus?:'failed'
         }
         //save Execution state
-        def dateCompleted = new Date()
+        def dateCompleted = new Timestamp(System.currentTimeMillis())
         def resultMap = [
                 status        : statusString?: success? ExecutionState.succeeded.toString():ExecutionState.failed.toString(),
                 dateCompleted : dateCompleted,

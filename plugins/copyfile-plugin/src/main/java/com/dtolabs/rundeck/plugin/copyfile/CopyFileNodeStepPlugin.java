@@ -37,7 +37,7 @@ import java.util.Map;
  * $INTERFACE is ... User: greg Date: 10/31/13 Time: 2:58 PM
  */
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = CopyFileNodeStepPlugin.TYPE)
-@PluginDescription(title = "Copy File",description = "Copy a file to a destination on a remote node.")
+@PluginDescription(title = "Copy File",description = "Copy a file to a destination on a remote node")
 public class CopyFileNodeStepPlugin implements NodeStepPlugin {
     public static final String TYPE = "copyfile";
     public static final String FILE_SEPARATOR = System.getProperty("file.separator");

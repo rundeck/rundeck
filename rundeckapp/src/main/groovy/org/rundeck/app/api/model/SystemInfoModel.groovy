@@ -90,9 +90,9 @@ class SystemInfoModel {
         @Schema(name="memory", description="Memory Information")
         static class MemoryInfoModel {
             String unit
-            int max
-            int free
-            int total
+            long max
+            long free
+            long total
         }
         @Schema(name="scheduler", description="Scheduler Information")
         static class SchedulerInfoModel {

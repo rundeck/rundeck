@@ -159,8 +159,8 @@ class WebhookService {
             hook.uuid = UUID.randomUUID().toString()
         }
         hook.uuid = hookData.uuid ?: hook.uuid
-        int countByNameInProject = Webhook.countByNameAndProject(hookData.name,hookData.project)
-        if(countByNameInProject > 0) {
+        def whsFound = Webhook.findAllByNameAndProjectAndUuidNotEqual(hookData.name, hookData.project, hook.uuid)
+        if( whsFound.size() > 0) {
             return [err: " A Webhook by that name already exists in this project"]
         }
         hook.name = hookData.name ?: hook.name

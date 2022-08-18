@@ -46,7 +46,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
 
         then:
         exec!=null
-        report.jcExecId==exec.id.toString()
+        report.executionId==exec.id
         report.author=='user'
         report.adhocExecution
         report.adhocScript=='test exec'
@@ -73,7 +73,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
 
         then:
         exec!=null
-        report.jcExecId==exec.id.toString()
+        report.executionId==exec.id
         report.author=='user'
         report.adhocExecution
         report.adhocScript=='test exec'
@@ -101,7 +101,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
 
         then:
         exec!=null
-        report.jcExecId==exec.id.toString()
+        report.executionId==exec.id
         report.author=='user'
         report.adhocExecution
         report.adhocScript==null
@@ -129,7 +129,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
 
         then:
         exec!=null
-        report.jcExecId==exec.id.toString()
+        report.executionId==exec.id
         report.author=='user'
         report.node==result
         report.adhocExecution
@@ -169,7 +169,7 @@ class ExecReportSpec extends RundeckHibernateSpec {
 
         then:
         exec!=null
-        report.jcExecId==exec.id.toString()
+        report.executionId==exec.id
         report.author=='user'
         report.adhocExecution
         report.adhocScript==null

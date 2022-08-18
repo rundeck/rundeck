@@ -53,7 +53,6 @@ class BootStrap {
     def frameworkService
     def workflowService
     def logFileStorageService
-    def rundeckFilesystemProjectImporter
     def reportService
     def configurationService
     def fileUploadService
@@ -239,8 +238,6 @@ class BootStrap {
                     log.debug("Loaded ${tokenMap.size()} tokens from tokens file: ${tokensfile}...")
                 }
             }
-            //begin import at bootstrap time
-            rundeckFilesystemProjectImporter.bootstrap()
         }
         executionService.initialize()
 

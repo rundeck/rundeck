@@ -6,7 +6,7 @@ IFS=$'\n\t'
 readonly ARGS=("$@")
 DOCKER_DIR=$PWD/test/docker
 
-TOMCAT_TAG="${1:-8}"
+TOMCAT_TAG=${1:?arg TOMCAT_TAG is required, specify docker tag for tomcat}
 
 usage() {
       grep '^#/' <"$0" | cut -c4- # prints the #/ lines above as usage info
