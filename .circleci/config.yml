@@ -174,19 +174,19 @@ commands:
           name: Echo Package cloud token
           command: echo "{\"url\":\"https://packagecloud.io\",\"token\":\"${PKGCLD_WRITE_TOKEN}\"}" > ~/.packagecloud
 
-  build-war:
-    description: Build war
+  create-packages:
+    description: Create packages
     steps:
       - run:
-          name: Build war
+          name: Create packages
           command: |
             source .circleci/circle-shim.sh
-            bash packaging/scripts/circle-build.sh build
+            bash packaging/scripts/circle-build.sh create_packages
   sign:
-    description: Sign war
+    description: Sign packages
     steps:
       - run:
-          name: Sign war
+          name: Sign packages
           command: |
             GPG_TTY=$(tty)
             export GPG_TTY
@@ -197,23 +197,23 @@ commands:
       - store_artifacts:
           path: ~/repo/packaging/packaging/artifacts
   test-war:
-    description: Test war
+    description: Test packages
     steps:
       - run:
-          name: Test war
+          name: Test packages
           command: |
             source .circleci/circle-shim.sh
             bash packaging/scripts/circle-build.sh test
   publish:
-    description: Publish
+    description: Publish packages
     steps:
       - run:
-          name: Publish
+          name: Publish packages
           command: |
             rvm use ruby-2.4.10
             source .circleci/circle-shim.sh
             bash packaging/scripts/circle-build.sh publish
-  publish_war:
+  publish-war:
     description: Publish war
     steps:
       - run:
@@ -534,12 +534,12 @@ jobs:
       - submodule-update
       - aws-install
       - echo-package-cloud
-      - build-war
+      - create-packages
       - sign
       - test-war
       - package-cloud-install
       - publish
-      - publish_war
+      - publish-war
 
   trigger-packaging:
     <<: *defaults

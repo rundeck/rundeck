@@ -15,8 +15,7 @@ main() {
     shift
 
     case "${COMMAND}" in
-        build) build "${@}" ;;
-        build_pro) build_pro "${@}" ;;
+        create_packages) create_packages "${@}" ;;
         sign) sign "${@}" ;;
         test) test_packages "${@}" ;;
         test_pro) test_pro_packages "${@}" ;;
@@ -31,7 +30,7 @@ docker_login() {
     echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 }
 
-build() {
+create_packages() {
     local RELEASE_NUM="1"
     bash packaging/packaging/scripts/circle-build.sh fetch_artifacts
     (
@@ -42,18 +41,6 @@ build() {
     )
 }
 
-build_pro() {
-    local RELEASE_NUM="1"
-
-    bash packaging/scripts/circle-build.sh fetch_artifacts
-    (
-        cd packaging/packaging
-        ./gradlew \
-            -PpackageRelease=$RELEASE_NUM \
-            -PpackageInclude='.+(enterprise).+' \
-            clean packageArtifacts
-    )
-}
 
 sign() {
   bash packaging/packaging/scripts/sign-packages.sh
