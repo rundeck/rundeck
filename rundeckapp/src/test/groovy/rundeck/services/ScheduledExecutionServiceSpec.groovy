@@ -1457,7 +1457,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             _ * getExecutionsAreActive() >> false
         }
         service.pluginService = Mock(PluginService) {
-            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _)
+            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _, _)
         }
 
         service.executionUtilService = Mock(ExecutionUtilService) {
@@ -1647,9 +1647,6 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                         new Option(name: 'test2', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d', multivalued: true, delimiter: "testdelim")
                 ]
         ))
-        service.frameworkService = Mock(FrameworkService){
-            pluginConfigFactory(_, _) >> Mock(PropertyResolverFactory.Factory)
-        }
         service.fileUploadService = Mock(FileUploadService)
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
         service.jobSchedulesService = Mock(SchedulesManager)
@@ -2105,6 +2102,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             isClusterModeEnabled() >> false
             existsFrameworkProject(projectName) >> true
             getFrameworkProject(projectName) >> projectMock
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
 
             getRundeckFramework() >> Mock(Framework) {
                 getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {

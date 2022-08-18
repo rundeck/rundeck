@@ -260,7 +260,8 @@ class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<Scm
                         service.scmImportPluginProviderService,
                 resolver,
                 PropertyScope.Instance,
-                PropertyScope.Project
+                PropertyScope.Project,
+                _
         ) >>
                 validated
         result == validated
