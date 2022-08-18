@@ -117,7 +117,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             existsFrameworkProject('testProject') >> true
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
-            getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             projectNames(*_)>>[]
             getFrameworkNodeName() >> "testProject"
         }
@@ -1431,7 +1433,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                    create(_,_) >> Mock(PropertyResolver)
+                }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3554,7 +3558,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             existsFrameworkProject('testProject') >> true
             isClusterModeEnabled() >> false
             getServerUUID() >> TEST_UUID1
-            getFrameworkPropertyResolverWithProps(*_) >> Mock(PropertyResolver)
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             projectNames(*_) >> []
             getFrameworkNodeName() >> "testProject"
         }
@@ -3608,7 +3614,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3663,7 +3671,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3740,7 +3750,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3809,7 +3821,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3875,7 +3889,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3937,7 +3953,9 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
