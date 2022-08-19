@@ -35,7 +35,16 @@ class ScheduledExecutionStats {
     public void setContentMap(Map obj) {
         if (null != obj) {
             final ObjectMapper objMapper = new ObjectMapper()
-            content = objMapper.writeValueAsString(obj)
+            Map<String, Object> newContentMap
+            if (content != null) {
+                newContentMap = objMapper.readValue(content, Map.class)
+                obj.each { statKey, statVal ->
+                    newContentMap.put(statKey, statVal)
+                }
+                content = objMapper.writeValueAsString(newContentMap)
+            } else {
+                content = objMapper.writeValueAsString(obj)
+            }
         } else {
             content = null
         }
