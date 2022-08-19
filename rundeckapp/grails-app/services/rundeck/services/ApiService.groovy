@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import org.rundeck.app.data.model.v1.Token
+import org.rundeck.app.data.model.v1.TokenImpl
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
@@ -32,13 +34,12 @@ import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.spi.data.DataManager
-import org.rundeck.spi.data.DataProvider
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
 import com.dtolabs.rundeck.app.api.ApiVersions
-import org.rundeck.app.data.providers.TokenDataProvider
+import org.rundeck.app.data.providers.GormTokenDataProvider
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
@@ -56,8 +57,8 @@ class ApiService implements WebUtilService{
     WebUtilService rundeckWebUtil
     DataManager rundeckDataManager
 
-    private TokenDataProvider getTokenProvider() {
-        (TokenDataProvider)rundeckDataManager.getProviderForType(TokenDataProvider.class.getSimpleName())
+    private GormTokenDataProvider getTokenProvider() {
+        (GormTokenDataProvider)rundeckDataManager.getProviderForType(GormTokenDataProvider.class.getSimpleName())
     }
 
 
@@ -106,7 +107,7 @@ class ApiService implements WebUtilService{
      * @param tokenData Token metadata.
      * @return Generated token.
      */
-    private AuthToken generateAuthToken(
+    private Token generateAuthToken(
             User ownerUser,
             AuthenticationToken tokenData) {
 
@@ -126,19 +127,19 @@ class ApiService implements WebUtilService{
             encToken = AuthToken.encodeTokenValue(newtoken, tokenMode)
         }
 
-        AuthToken token = new AuthToken(
-            token: newtoken,
-            authRoles: AuthToken.generateAuthRoles(roles),
-            user: ownerUser,
-            expiration: expiration,
-            uuid: uuid,
-            creator: tokenData.creator,
-            name: tokenData.name,
-            type: tokenType,
-            tokenMode: tokenMode
-        )
+        TokenImpl token1 = new TokenImpl()
+        token1.setType(org.rundeck.app.data.model.v1.Token.AuthTokenType.valueOf(tokenType.toString()))
+        token1.setUuid(uuid)
+        token1.setToken(newtoken)
+        token1.setCreator(tokenData.creator)
+        token1.setOwnerName(tokenData.ownerName)
+        token1.setAuthRolesSet(roles)
+        token1.setExpiration(expiration)
+        token1.setName(tokenData.name)
 
-        tokenProvider.create(token)
+
+        String id = tokenProvider.create(token1);
+        tokenProvider.getData(id)
     }
 
     /**
@@ -155,21 +156,21 @@ class ApiService implements WebUtilService{
     /**
      * Find a token by UUID and creator
      */
-    AuthToken findUserTokenId(String creator, String id) {
+    Token findUserTokenId(String creator, String id) {
         tokenProvider.findByUuidAndCreator(id, creator)
     }
 
     /**
      * Find a token by UUID and creator
      */
-    List<AuthToken> findUserTokensCreator(String creator) {
+    List<Token> findUserTokensCreator(String creator) {
         tokenProvider.findAllByCreator(creator)
     }
 
     /**
      * Find a token by UUID
      */
-    AuthToken findTokenId(String id) {
+    Token findTokenId(String id) {
         tokenProvider.getData(id)
     }
 
@@ -183,7 +184,7 @@ class ApiService implements WebUtilService{
      * @param tokenRoles role list for token, or null to use all owner roles (user token only)
      * @return
      */
-    AuthToken generateUserToken(
+    Token generateUserToken(
             UserAndRolesAuthContext authContext,
             Integer tokenTimeSeconds,
             String username,
@@ -204,7 +205,7 @@ class ApiService implements WebUtilService{
      * @param tokenRoles role list for token, or null to use all owner roles (user token only)
      * @return
      */
-    AuthToken createUserToken(
+    Token createUserToken(
             UserAndRolesAuthContext authContext,
             Integer tokenTimeSeconds,
             String token,
@@ -870,19 +871,16 @@ class ApiService implements WebUtilService{
         )
     }
 
-    def removeToken(final AuthToken authToken) {
+    def removeToken(final Token token) {
 
-        def user = authToken.user
-        def creator = authToken.creator ?: user.login
-        def id = authToken.uuid ?: authToken.id
-        def oldAuthRoles = authToken.authRoles
+        def user = token.getOwnerName()
+        def creator = token.getCreator() ?: user
+        def id = token.getUuid()
+        def oldAuthRoles = token.getAuthRolesSet()
 
-        if(authToken.uuid)
-            tokenProvider.deleteByUuid(authToken.uuid)
-        else
-            tokenProvider.delete(authToken.id)
+        tokenProvider.delete(id)
 
-        log.info("DELETED TOKEN ${id} (creator:$creator) User ${user.login} with roles: ${oldAuthRoles}")
+        log.info("DELETED TOKEN ${id} (creator:$creator) User ${user} with roles: ${oldAuthRoles}")
     }
 
     /**
@@ -893,10 +891,10 @@ class ApiService implements WebUtilService{
     @Transactional
     def removeAllExpiredTokens(final String creator) {
         def now = Date.from(Clock.systemUTC().instant())
-        List<AuthToken> found = tokenProvider.findAllByCreatorAndExpirationLessThan(creator, now)
+        List<Token> found = tokenProvider.findAllByCreatorAndExpirationLessThan(creator, now)
         if (found) {
             found.each {
-                tokenProvider.deleteByUuid(it.uuid)
+                tokenProvider.delete(it.uuid)
             }
         }
         found.size()
@@ -913,7 +911,7 @@ class ApiService implements WebUtilService{
         def found = tokenProvider.findAllByExpirationLessThan(now)
         if (found) {
             found.each {
-                tokenProvider.deleteByUuid(it.uuid)
+                tokenProvider.delete(it.uuid)
             }
         }
         found.size()

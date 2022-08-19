@@ -343,8 +343,7 @@ class ApiController extends ControllerBase{
 
         //admin: search by token ID
         //user: search for token ID owned by user
-
-        AuthToken oldtoken = adminAuth ?
+        org.rundeck.app.data.model.v1.Token oldtoken = adminAuth ?
                 apiService.findTokenId(params.tokenid) :
                 apiService.findUserTokenId(authContext.username, params.tokenid)
 
@@ -623,7 +622,7 @@ Since: v11
         if (rolesSet.size() == 1 && rolesSet.contains('*')) {
             rolesSet = null
         }
-        AuthToken token
+        org.rundeck.app.data.model.v1.Token token
 
         Integer tokenDurationSeconds = tokenDuration ? Sizes.parseTimeDuration(tokenDuration) : 0
         if (tokenDuration && !Sizes.validTimeDuration(tokenDuration)) {

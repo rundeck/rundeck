@@ -76,7 +76,7 @@ class AuthToken implements AuthenticationToken {
     }
 
     /**
-     * Encodes a clear token value acording to the tokenMode supplied.
+     * Encodes a clear token value according to the tokenMode supplied.
      */
     public static String encodeTokenValue(String clearValue, AuthTokenMode mode){
         if(!clearValue)

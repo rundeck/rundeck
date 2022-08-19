@@ -2,14 +2,15 @@ package org.rundeck.spi.data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class BaseDataManager
         implements DataManager
 {
-    private final Map<String, DataProvider<?>> providers = new HashMap<>();
+    private final Map<String, Object> providers = new HashMap<>();
 
-    public <D> void registerDataProvider(
-            DataProvider<D> dataProvider
+    public void registerDataProvider(
+            Object dataProvider
     )
     {
         providers.put(
@@ -19,7 +20,7 @@ public class BaseDataManager
 
     }
 
-    public <D> DataProvider<D> getProviderForType(String className) {
-        return (DataProvider<D>) providers.get(className);
+    public Object getProviderForType(String className) {
+        return (Object) providers.get(className);
     }
 }

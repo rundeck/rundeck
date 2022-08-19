@@ -73,7 +73,7 @@ class Token {
     @Schema(description = "since: v19")
     Boolean expired;
 
-    Token(AuthToken authToken, boolean masked = true, boolean legacyApiMode=false) {
+    Token(Token authToken, boolean masked = true) {
         this.name = authToken.name
         this.id = authToken.uuid ?: authToken.id
         this.token = masked ? null :
@@ -87,5 +87,17 @@ class Token {
         this.roles = authToken.authRolesSet()
         this.expiration = authToken.expiration
         this.expired = authToken.tokenIsExpired()
+    }
+
+    Token(org.rundeck.app.data.model.v1.Token authToken, boolean masked = true) {
+        this.name = authToken.name
+        this.id = authToken.uuid
+        this.token = masked ? null : authToken.token
+        this.v18TokenId = this.token
+        this.creator = authToken.creator
+        this.user = authToken.ownerName
+        this.roles = authToken.getAuthRolesSet()
+        this.expiration = authToken.expiration ? new FormattedDate(authToken.expiration) : null
+        this.expired = authToken.tokenIsExpired(authToken)
     }
 }

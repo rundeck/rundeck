@@ -12,7 +12,7 @@ import org.springframework.beans.factory.InitializingBean
 class ProviderRegistration implements InitializingBean {
 
     DataManager dataManager
-    List <DataProvider<?>> providers = []
+    List <Object> providers = []
 
     @Override
     void afterPropertiesSet() throws Exception {

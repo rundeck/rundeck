@@ -95,7 +95,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.data.ProviderRegistration
-import org.rundeck.app.data.providers.TokenDataProvider
+import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -811,7 +811,7 @@ beans={
     interceptorHelper(DefaultInterceptorHelper)
 
     //provider implementations
-    tokenDataProvider(TokenDataProvider)
+    tokenDataProvider(GormTokenDataProvider)
 
 
     //manager setup

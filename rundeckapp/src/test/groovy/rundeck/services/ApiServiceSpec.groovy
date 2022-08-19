@@ -32,6 +32,8 @@ import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.context.MessageSource
@@ -61,6 +63,9 @@ class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<
 
     void setup() {
         mockCodec(JSONCodec)
+        ApiService.metaClass.getTokenProvider =  {
+            new GormTokenDataProvider()
+        }
         service = new ApiService()
     }
 
