@@ -196,7 +196,7 @@ commands:
           path: ~/repo/packaging/packaging/build/distributions
       - store_artifacts:
           path: ~/repo/packaging/packaging/artifacts
-  test-war:
+  test-packages:
     description: Test packages
     steps:
       - run:
@@ -332,11 +332,23 @@ jobs:
             source .circleci/circle-shim.sh
             bash scripts/circle-build.sh buildDocker
             build_rdtest
+
+      - run:
+          name: Setup artifacts
+          command: |
+            source .circleci/circle-shim.sh
+            copy_artifacts
+      - persist_to_workspace:
+          root: artifacts
+          paths:
+            - core
+            - rundeckapp
+            - rundeck-storage
+            - rundeck-authz
       - run:
           name: Upload artifacts
           command: |
             source .circleci/circle-shim.sh
-            copy_artifacts
             sync_to_s3
             sync_to_latest_s3
             seal_artifacts
@@ -521,14 +533,7 @@ jobs:
         default: true
 
     steps:
-      - run:
-          name: Apt install
-          command: |
-            sudo apt-get update
-            sudo apt-get -y install expect
-            sudo apt-get -y install rpm
-            sudo apt-get -y install dpkg-sig
-            sudo apt-get -y install gnupg
+      - install-packages
       - docker-login
       - git-modules
       - submodule-update
@@ -536,10 +541,40 @@ jobs:
       - echo-package-cloud
       - create-packages
       - sign
-      - test-war
+      - test-packages
       - package-cloud-install
       - publish
       - publish-war
+
+  packaging_test:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: large
+    steps:
+      - install-packages
+      - docker-login
+      - git-modules
+      - submodule-update
+      - echo-package-cloud
+      - attach_workspace:
+          at: artifacts
+      - run:
+          name: Prepare artifacts
+          command: |
+            PATTERN="artifacts/**/*.war"
+            WARS=( $PATTERN )
+            mkdir packaging/packaging/artifacts
+            cp "${WARS[@]}" packaging/packaging/artifacts/
+
+      - run:
+          name: Create packages
+          command: |
+            cd packaging/packaging
+            ./gradlew clean packageArtifacts
+      - sign
+      - test-packages
+      - package-cloud-install
 
   trigger-packaging:
     <<: *defaults
@@ -729,6 +764,11 @@ workflows:
           filters:
             branches: { ignore: /.*/ }
             tags: { only: /^v.*$/ }
+      - packaging_test:
+          name: Test Packaging
+          requires: *stage-build
+          filters:
+            branches: { only: /^RUN-809.*/ }
       - maven-publish:
           name: Maven Publish
           requires: *stage-build
