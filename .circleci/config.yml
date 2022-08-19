@@ -562,11 +562,8 @@ jobs:
       - run:
           name: Prepare artifacts
           command: |
-            PATTERN="artifacts/**/*.war"
-            WARS=( $PATTERN )
             mkdir packaging/packaging/artifacts
-            cp "${WARS[@]}" packaging/packaging/artifacts/
-
+            find artifacts -name '*.war' -exec cp \{\} packaging/packaging/artifacts/ \;
       - run:
           name: Create packages
           command: |
