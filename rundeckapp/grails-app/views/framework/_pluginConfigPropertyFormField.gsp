@@ -267,6 +267,12 @@
         <g:set var="syntax" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODE)}"/>
         <g:set var="syntaxSelectable" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_SELECTABLE)}"/>
         <g:set var="syntaxModes" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODES_ALLOWED)}"/>
+
+
+        <g:set var="scriptTokenAutocomplete" value="${prop.renderingOptions?.(StringRenderingConstants.SCRIPT_TOKEN_AUTOCOMPLETE)}"/>
+        <g:set var="scriptTokenAutocompleteCss" value="${scriptTokenAutocomplete&&scriptTokenAutocomplete==StringRenderingConstants.ScriptTokenAutocomplete.ENABLED?'_wfscriptitem':''}"/>
+
+
         <g:textArea name="${fieldname}" value="${valueText}"
             data-ace-session-mode="${syntax}"
             data-ace-control-syntax="${syntaxSelectable?true:false}"
@@ -274,7 +280,23 @@
             data-ace-height="100px"
             data-ace-resize-auto="true"
             data-ace-resize-max="20"
-                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${extraInputCss}"/>
+                    data-ace-autofocus='true'
+                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${scriptTokenAutocompleteCss} ${extraInputCss}"/>
+
+
+        <g:if test="${scriptTokenAutocomplete&&scriptTokenAutocomplete==StringRenderingConstants.ScriptTokenAutocomplete.ENABLED}">
+            <g:embedJSON id="scriptStepData_${stepKey}" data="${[invocationString: 'bash',fileExtension: '',args: '',argsQuoted: false, expandToken: true]}"/>
+
+            <g:javascript>
+                fireWhenReady("scriptStep_${stepKey}",function(){
+                    workflowEditor.bindScriptStepKey('${stepKey}','wfiedit_${stepKey}',loadJsonData('scriptStepData_${stepKey}'));
+                    if (typeof(_initPopoverContentRef) == 'function') {
+                        _initPopoverContentRef("#scriptStep_${stepKey}");
+                    }
+                });
+            </g:javascript>
+        </g:if>
+
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
        <g:passwordField name="${fieldname}" value="${valueText}"
@@ -305,9 +327,13 @@
             <g:enc html="${staticTextValue}"/>
         </g:else>
     </g:elseif>
+    <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.SCRIPT_INVOCATION_STRING, 'SCRIPT_INVOCATION_STRING']}">
+        <g:textField name="${fieldname}" value="${valueText}"
+                     id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}" data-bind="value: invocationString, valueUpdate: 'keyup'" autofocus="true" />
+    </g:elseif>
     <g:else>
         <g:textField name="${fieldname}" value="${valueText}"
-                 id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
+                 id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}" />
     </g:else>
     </div>
     <g:if test="${hasStorageSelector}">

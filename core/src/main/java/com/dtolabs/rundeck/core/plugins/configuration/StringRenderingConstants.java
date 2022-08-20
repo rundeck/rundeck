@@ -40,6 +40,7 @@ public class StringRenderingConstants {
     public static final String CODE_SYNTAX_MODE = "codeSyntaxMode";
     public static final String CODE_SYNTAX_SELECTABLE = "codeSyntaxSelectable";
     public static final String CODE_SYNTAX_MODES_ALLOWED = "codeSyntaxModesAllowed";
+    public static final String SCRIPT_TOKEN_AUTOCOMPLETE = "scriptTokenAutocomplete";
 
     /**
      * Values that can be specified for a key of {@link #DISPLAY_TYPE_KEY}
@@ -50,7 +51,8 @@ public class StringRenderingConstants {
         STATIC_TEXT,
         PASSWORD,
         CODE,
-        DYNAMIC_FORM;
+        DYNAMIC_FORM,
+        SCRIPT_INVOCATION_STRING;
         public boolean equalsOrString(Object o) {
             return this == o || toString().equals(o);
         }
@@ -65,6 +67,15 @@ public class StringRenderingConstants {
     public enum ValueConversion{
         STORAGE_PATH_AUTOMATIC_READ,
         PRIVATE_DATA_CONTEXT;
+
+        public boolean equalsOrString(Object o) {
+            return this == o || toString().equals(o);
+        }
+    }
+
+    public enum ScriptTokenAutocomplete{
+        ENABLED,
+        DISABLED;
 
         public boolean equalsOrString(Object o) {
             return this == o || toString().equals(o);
