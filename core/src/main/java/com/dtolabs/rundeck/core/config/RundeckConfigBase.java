@@ -674,6 +674,13 @@ public class RundeckConfigBase {
     public static class ScmLoader {
         Long delay;
         Long interval;
+        Init init;
+
+        @Data
+        public static class Init {
+            Long retry;
+            Long delay;
+        }
     }
 
     /**
