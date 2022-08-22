@@ -56,10 +56,8 @@
 <script>
 import axios from "axios";
 import Trellis, {
-  getRundeckContext,
-  getSynchronizerToken,
-  RundeckBrowser
-} from "@rundeck/ui-trellis";
+  getRundeckContext
+} from "@/library/centralService";
 
 // import motd from '@/components/motd/motd'
 

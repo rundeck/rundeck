@@ -17,7 +17,7 @@
   </div>
 </template>
 <script>
-import {client} from "@rundeck/ui-trellis/lib/modules/rundeckClient"
+import {client} from "@/library/modules/rundeckClient"
 export default {
   name: "PluginUrlUploadForm",
   data() {

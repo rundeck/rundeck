@@ -15,7 +15,7 @@ import activityList from '../../components/activity/activityList.vue'
 
 import {
   getRundeckContext
-} from "@rundeck/ui-trellis"
+} from "@/library/rundeckService"
 import RundeckContext from '@/library/centralService'
 
 export default {
