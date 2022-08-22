@@ -20,6 +20,7 @@
   "scripts": {
     "dev:app": "vite -c vite.config.app.js --mode development",
     "devbuild:app": "vite build -c vite.config.app.js --mode development",
+    "watchbuild:app": "vite build -c vite.config.app.js --mode production --watch",
     "build:app": "vite build -c vite.config.app.js --mode production",
     "build:library": "vite build -c vite.config.library.js --mode production",
     "dev:build": "npm install && npm run build:library",
