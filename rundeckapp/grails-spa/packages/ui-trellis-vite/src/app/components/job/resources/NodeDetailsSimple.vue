@@ -200,9 +200,9 @@
   </div>
 </template>
 <script lang="ts">
-import NodeFilterLink from '@/components/job/resources/NodeFilterLink.vue'
-import NodeIcon from '@/components/job/resources/NodeIcon.vue'
-import NodeStatus from '@/components/job/resources/NodeStatus.vue'
+import NodeFilterLink from '@/app/components/job/resources/NodeFilterLink.vue'
+import NodeIcon from '@/app/components/job/resources/NodeIcon.vue'
+import NodeStatus from '@/app/components/job/resources/NodeStatus.vue'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {Prop} from 'vue-property-decorator'

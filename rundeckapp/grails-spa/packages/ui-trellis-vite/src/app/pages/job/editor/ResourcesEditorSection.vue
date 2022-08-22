@@ -9,11 +9,6 @@
 import ResourcesEditor from '../../../components/job/resources/ResourcesEditor.vue'
 import JsonEmbed from './JsonEmbed.vue'
 
-import {
-  getRundeckContext,
-  RundeckContext
-} from "@rundeck/ui-trellis"
-
 export default {
   name: 'App',
   props:['eventBus' ],

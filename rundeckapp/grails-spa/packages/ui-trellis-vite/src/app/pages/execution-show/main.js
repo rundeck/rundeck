@@ -3,9 +3,9 @@
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 
-import { getRundeckContext } from '@rundeck/ui-trellis/lib'
-import LogViewer from '@rundeck/ui-trellis/lib/components/execution-log/logViewer.vue'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+import { getRundeckContext } from '@/library/rundeckService'
+import LogViewer from '@/library/components/execution-log/logViewer.vue'
+import uivLang from '@/library/utilities/uivi18n'
 
 import './nodeView'
 
@@ -68,8 +68,8 @@ if (location.hash) {
 }
 
 let scrollTop = 0
-mainPanel.addEventListener('scroll', () => {
-  scrollTop = mainPanel.scrollTop
+mainPanel?.addEventListener('scroll', () => {
+  scrollTop = mainPanel?.scrollTop
 })
 
 window.onhashchange = () => {

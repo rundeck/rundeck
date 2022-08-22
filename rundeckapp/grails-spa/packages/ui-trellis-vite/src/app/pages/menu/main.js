@@ -4,11 +4,11 @@ import Vue from 'vue'
 import * as uiv from 'uiv'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import App from './App'
+import App from './App.vue'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
 import moment from 'moment'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+import uivLang from '@/library/utilities/uivi18n'
 
 Vue.config.productionTip = false
 

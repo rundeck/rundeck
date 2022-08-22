@@ -238,17 +238,11 @@
   </div>
 </template>
 <script lang="ts">
-import {_genUrl} from '@/utilities/genUrl'
-import axios from 'axios'
 import InlineValidationErrors from '../../form/InlineValidationErrors.vue'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {Prop, Watch} from 'vue-property-decorator'
 
-import {
-  getRundeckContext,
-  getAppLinks
-} from '@rundeck/ui-trellis'
 
 @Component({components: {InlineValidationErrors}})
 export default class OtherEditor extends Vue {

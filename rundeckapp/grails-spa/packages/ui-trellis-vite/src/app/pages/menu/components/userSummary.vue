@@ -253,8 +253,8 @@
 
 <script>
 import axios from "axios";
-import OffsetPagination from "@rundeck/ui-trellis/lib/components/utils/OffsetPagination";
-import LoginStatus from "./LoginStatus";
+import OffsetPagination from "@/library/components/utils/OffsetPagination.vue";
+import LoginStatus from "./LoginStatus.vue";
 
 export default {
   name: "UserSummary",

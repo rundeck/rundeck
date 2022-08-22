@@ -1,6 +1,6 @@
 import * as moment from 'moment'
 
-import {getRundeckContext} from '@rundeck/ui-trellis'
+import {getRundeckContext} from '@/library/rundeckService'
 
 const rundeckContext = getRundeckContext()
 

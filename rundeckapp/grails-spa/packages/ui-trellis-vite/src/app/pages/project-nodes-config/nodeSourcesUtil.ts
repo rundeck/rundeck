@@ -1,9 +1,8 @@
 import { client } from '../../services/rundeckClient'
 
 import {
-  getRundeckContext,
-  RundeckContext
-} from "@rundeck/ui-trellis"
+  getRundeckContext
+} from "@/library/rundeckService"
 
 export interface NodeSourceResources {
   href: string

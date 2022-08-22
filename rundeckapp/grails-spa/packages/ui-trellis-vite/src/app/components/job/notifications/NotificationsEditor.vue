@@ -232,17 +232,11 @@
 <script>
 
 
-import {
-  getRundeckContext,
-  RundeckContext
-} from "@rundeck/ui-trellis"
-
-import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue";
-import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue";
-import pluginService from "@rundeck/ui-trellis/lib/modules/pluginService";
-import ExtendedDescription from "@rundeck/ui-trellis/lib/components/utils/ExtendedDescription.vue";
+import PluginInfo from "@/library/components/plugins/PluginInfo.vue";
+import PluginConfig from "@/library/components/plugins/pluginConfig.vue";
+import pluginService from "@/library/modules/pluginService";
+import ExtendedDescription from "@/library/components/utils/ExtendedDescription.vue";
 import UndoRedo from "../../util/UndoRedo.vue"
-import Vue from 'vue'
 
 export default {
   name: 'NotificationsEditor',

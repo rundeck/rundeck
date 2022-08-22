@@ -7,7 +7,7 @@
 </template>
 <script lang="ts">
 
-import {_genUrl} from '@/utilities/genUrl'
+import {_genUrl} from '@/app/utilities/genUrl'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {Prop} from 'vue-property-decorator'
@@ -15,7 +15,7 @@ import {Prop} from 'vue-property-decorator'
 import {
   getRundeckContext,
   url
-} from '@rundeck/ui-trellis'
+} from '@/library/rundeckService'
 
 const rdBase = getRundeckContext().rdBase
 const project = getRundeckContext().projectName

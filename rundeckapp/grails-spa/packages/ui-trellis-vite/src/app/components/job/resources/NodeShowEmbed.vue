@@ -57,16 +57,16 @@
 </template>
 <script lang="ts">
 
-import NodeDetailsSimple from '@/components/job/resources/NodeDetailsSimple.vue'
-import NodeFilterLink from '@/components/job/resources/NodeFilterLink.vue'
-import NodeIcon from '@/components/job/resources/NodeIcon.vue'
-import NodeStatus from '@/components/job/resources/NodeStatus.vue'
+import NodeDetailsSimple from '@/app/components/job/resources/NodeDetailsSimple.vue'
+import NodeFilterLink from '@/app/components/job/resources/NodeFilterLink.vue'
+import NodeIcon from '@/app/components/job/resources/NodeIcon.vue'
+import NodeStatus from '@/app/components/job/resources/NodeStatus.vue'
 
-import {getRundeckContext} from '@rundeck/ui-trellis'
+import {getRundeckContext} from '@/library'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {Prop} from 'vue-property-decorator'
-import {styleForNode} from '@/utilities/nodeUi'
+import {styleForNode} from '@/app/utilities/nodeUi'
 
 const rdBase = getRundeckContext().rdBase
 const project = getRundeckContext().projectName

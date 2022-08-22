@@ -1,9 +1,9 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
-import ServerDisplay from '@rundeck/ui-trellis/lib/components/version/ServerDisplay'
-import { getRundeckContext } from '@rundeck/ui-trellis'
-import { ServerInfo }  from '@rundeck/ui-trellis/src/stores/System'
+import ServerDisplay from '@/library/components/version/ServerDisplay.vue'
+import { getRundeckContext } from '@/library'
+import { ServerInfo }  from '@/library/stores/System'
 
 Vue.config.productionTip = false
 
