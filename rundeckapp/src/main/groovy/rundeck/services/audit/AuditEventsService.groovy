@@ -62,11 +62,11 @@ class AuditEventsService
         asyncTaskExecutor = new ThreadPoolTaskExecutor()
         asyncTaskExecutor.setCorePoolSize(1)
         asyncTaskExecutor.setMaxPoolSize(1)
+        asyncTaskExecutor.initialize()
     }
 
     @Subscriber('rundeck.bootstrap')
     void init() throws Exception {
-        asyncTaskExecutor.initialize()
         Holders.getApplicationContext()
             .getBean("aclFileManagerService", ContextACLManager)
             .addListenerMap(buildACLFileListeners())
