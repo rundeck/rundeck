@@ -2,8 +2,8 @@ import Vue from 'vue'
 
 import {autorun} from 'mobx'
 
-import LogViewer from '@rundeck/ui-trellis/lib/components/execution-log/logViewer.vue'
-import { getRundeckContext } from '@rundeck/ui-trellis'
+import LogViewer from '@/library/components/execution-log/logViewer.vue'
+import { getRundeckContext } from '@/library/rundeckService'
 
 const rootStore = getRundeckContext().rootStore
 

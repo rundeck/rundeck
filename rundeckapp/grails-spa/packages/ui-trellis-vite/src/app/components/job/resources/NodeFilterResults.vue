@@ -46,8 +46,8 @@
 <script lang="ts">
 
 
-import NodeListEmbed from '@/components/job/resources/NodeListEmbed.vue'
-import {_genUrl} from '@/utilities/genUrl'
+import NodeListEmbed from '@/app/components/job/resources/NodeListEmbed.vue'
+import {_genUrl} from '@/app/utilities/genUrl'
 import axios from 'axios'
 import Vue from 'vue'
 import Component from 'vue-class-component'
@@ -56,7 +56,7 @@ import {Prop, Watch} from 'vue-property-decorator'
 import {
   getRundeckContext,
   getAppLinks
-} from '@rundeck/ui-trellis'
+} from '@/library/rundeckService'
 
 const rdBase = getRundeckContext().rdBase
 const project = getRundeckContext().projectName

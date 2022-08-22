@@ -11,7 +11,7 @@
   </span>
 </template>
 <script lang="ts">
-import {glyphiconForName, statusIconStyle, statusIconCss} from '@/utilities/nodeUi'
+import {glyphiconForName, statusIconStyle, statusIconCss} from '@/app/utilities/nodeUi'
 
 export default {
   name: 'node-status',

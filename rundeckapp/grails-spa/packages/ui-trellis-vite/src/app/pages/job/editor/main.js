@@ -3,18 +3,18 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import NotificationsEditorSection from './NotificationsEditorSection'
-import ResourcesEditorSection from './ResourcesEditorSection'
-import SchedulesEditorSection from './SchedulesEditorSection'
-import OtherEditorSection from './OtherEditorSection'
+import NotificationsEditorSection from './NotificationsEditorSection.vue'
+import ResourcesEditorSection from './ResourcesEditorSection.vue'
+import SchedulesEditorSection from './SchedulesEditorSection.vue'
+import OtherEditorSection from './OtherEditorSection.vue'
 import * as uiv from 'uiv'
 import international from './i18n'
 import VueI18n from 'vue-i18n'
 import moment from 'moment'
 import {
     EventBus
-} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+} from '@/library/utilities/vueEventBus'
+import uivLang from '@/library/utilities/uivi18n'
 
 Vue.config.productionTip = false
 
