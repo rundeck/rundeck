@@ -3,15 +3,15 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import App from './App'
+import App from './App.vue'
 import * as uiv from 'uiv'
 import international from '../project-activity/i18n'
 import VueI18n from 'vue-i18n'
 import moment from 'moment'
 import {
   EventBus
-} from '@rundeck/ui-trellis/lib/utilities/vueEventBus'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+} from '@/library/utilities/vueEventBus'
+import uivLang from '@/library/utilities/uivi18n'
 
 Vue.config.productionTip = false
 

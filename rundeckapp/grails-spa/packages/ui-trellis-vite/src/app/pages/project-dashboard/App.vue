@@ -8,15 +8,15 @@
 </template>
 
 <script>
-import projectDescription from './components/description'
-import projectReadme from './components/projectReadme'
-import activitySummary from './components/activitySummary'
-import activityList from '../../components/activity/activityList'
+import projectDescription from '@/app/pages/project-dashboard/components/description.vue'
+import projectReadme from './components/projectReadme.vue'
+import activitySummary from './components/activitySummary.vue'
+import activityList from '../../components/activity/activityList.vue'
 
 import {
-  getRundeckContext,
-  RundeckContext
+  getRundeckContext
 } from "@rundeck/ui-trellis"
+import RundeckContext from '@/library/centralService'
 
 export default {
   name: 'App',

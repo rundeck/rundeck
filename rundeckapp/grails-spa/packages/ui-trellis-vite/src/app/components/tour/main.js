@@ -1,4 +1,4 @@
-__webpack_public_path__ = (new URL(window._rundeck.rdBase)).pathname + 'assets/static/'
+// __webpack_public_path__ = (new URL(window._rundeck.rdBase)).pathname + 'assets/static/'
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
@@ -13,7 +13,7 @@ import {
   EventBus
 } from '@/library/utilities/vueEventBus'
 
-import { getRundeckContext } from '@rundeck/ui-trellis'
+import { getRundeckContext } from '@/library/rundeckService'
 
 Vue.config.productionTip = false
 

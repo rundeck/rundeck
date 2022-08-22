@@ -45,8 +45,8 @@
 <script lang='ts'>
   import Vue from 'vue';
   import _ from "lodash";
-  import Trellis, { getRundeckContext } from "@rundeck/ui-trellis";
-  import TourServices from "@/components/tour/services";
+  import Trellis, { getRundeckContext } from "@/library/centralService";
+  import TourServices from "@/app/components/tour/services";
   import {Tour, Step} from '../interfaces/Tours';
 
   const context = getRundeckContext();

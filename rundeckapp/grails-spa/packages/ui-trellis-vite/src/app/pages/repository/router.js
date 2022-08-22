@@ -1,9 +1,9 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 
-import PluginRepositoryView from "./views/PluginRepositoryView"
-import PluginConfigurationView from './views/PluginConfigurationView'
-import UploadPluginView from './views/UploadPluginView'
+import PluginRepositoryView from "./views/PluginRepositoryView.vue"
+import PluginConfigurationView from './views/PluginConfigurationView.vue'
+import UploadPluginView from './views/UploadPluginView.vue'
 
 Vue.use(Router)
 

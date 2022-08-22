@@ -74,7 +74,7 @@
 import _ from "lodash";
 import axios from "axios";
 import fuse from "fuse.js";
-import RepositoryRow from "../components/Repository";
+import RepositoryRow from "../components/Repository.vue";
 import { mapState, mapActions } from "vuex";
 
 const FuseSearchOptions = {

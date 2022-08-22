@@ -30,7 +30,7 @@
 </template>
 
 <script>
-import PluginCard from "./PluginCard";
+import PluginCard from "./PluginCard.vue";
 import { mapState } from "vuex";
 
 export default {

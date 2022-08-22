@@ -323,9 +323,9 @@ const FuseSearchOptions = {
 import axios from "axios";
 
 import { mapState, mapActions, mapGetters } from "vuex";
-import ProviderCard from "../components/ProviderCard";
-import ProviderCardRow from "../components/ProviderCardRow";
-import ConfigureFrameworkString from "../components/ConfigureFrameworkString";
+import ProviderCard from "../components/ProviderCard.vue";
+import ProviderCardRow from "../components/ProviderCardRow.vue";
+import ConfigureFrameworkString from "../components/ConfigureFrameworkString.vue";
 
 export default {
   name: "PluginConfigurationView",

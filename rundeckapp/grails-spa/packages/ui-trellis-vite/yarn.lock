@@ -328,6 +328,11 @@
 "@gar/promisify@^1.1.3":
   "version" "1.1.3"
 
+"@iconfu/svg-inject@^1.2.3":
+  "integrity" "sha512-3v1MUAJqmJS4jmhHoCkSxt+EdJrjPHlLXrWocCT25kCxnxJto8028Z6CC406EL11KA53SDZgI/QQA5GEJAoiRw=="
+  "resolved" "https://registry.npmjs.org/@iconfu/svg-inject/-/svg-inject-1.2.3.tgz"
+  "version" "1.2.3"
+
 "@iconify/json@^2.1.14":
   "integrity" "sha512-3I+eMDfrofM64GfUMtH1P864u3H/iAMixmgmVJyWk45gIXJgRGVUqSAd+N2eM2/LNAE4SaGoPuipPAewVpUAEw=="
   "resolved" "https://registry.npmjs.org/@iconify/json/-/json-2.1.14.tgz"
@@ -588,6 +593,11 @@
   dependencies:
     "@types/minimatch" "*"
     "@types/node" "*"
+
+"@types/lodash@^4.14.183":
+  "integrity" "sha512-UXavyuxzXKMqJPEpFPri6Ku5F9af6ZJXUneHhvQJxavrEjuHkFp2YnDWHcxJiG7hk8ZkWqjcyNeW1s/smZv5cw=="
+  "resolved" "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.183.tgz"
+  "version" "4.14.183"
 
 "@types/minimatch@*":
   "integrity" "sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ=="
@@ -960,6 +970,11 @@
   "integrity" "sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw=="
   "resolved" "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz"
   "version" "1.0.2"
+
+"bezier-easing@2.1.0":
+  "integrity" "sha512-gbIqZ/eslnUFC1tjEvtz0sgx+xTK20wDnYMIA27VA04R7w6xxXQPZDbibjA9DTWZRA2CXtwHykkVzlCaAJAZig=="
+  "resolved" "https://registry.npmjs.org/bezier-easing/-/bezier-easing-2.1.0.tgz"
+  "version" "2.1.0"
 
 "bin-links@^3.0.0":
   "version" "3.0.2"
@@ -1462,6 +1477,11 @@
   "resolved" "https://registry.npmjs.org/function-bind/-/function-bind-1.1.1.tgz"
   "version" "1.1.1"
 
+"fuse.js@^3.4.6":
+  "integrity" "sha512-hT9yh/tiinkmirKrlv4KWOjztdoZo1mx9Qh4KvWqC7isoXwdUY3PNWUxceF4/qO9R6riA2C29jdTOeQOIROjgw=="
+  "resolved" "https://registry.npmjs.org/fuse.js/-/fuse.js-3.6.1.tgz"
+  "version" "3.6.1"
+
 "gauge@^4.0.3":
   "version" "4.0.4"
   dependencies:
@@ -1921,10 +1941,10 @@
   "resolved" "https://registry.npmjs.org/lodash.kebabcase/-/lodash.kebabcase-4.1.1.tgz"
   "version" "4.1.1"
 
-"lodash@^4.17.15":
-  "integrity" "sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A=="
-  "resolved" "https://registry.npmjs.org/lodash/-/lodash-4.17.15.tgz"
-  "version" "4.17.15"
+"lodash@^4.17.21":
+  "integrity" "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
+  "resolved" "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz"
+  "version" "4.17.21"
 
 "lru-cache@^4.1.2":
   "integrity" "sha512-sWZlbEP2OsHNkXrMl5GYk/jKk70MBng6UU4YI/qGDYbgf6YbP4EvmqISbXCoJiRKs+1bSpFHVgQxvJ17F2li5g=="
@@ -3064,6 +3084,13 @@
   "resolved" "https://registry.npmjs.org/vue-demi/-/vue-demi-0.12.5.tgz"
   "version" "0.12.5"
 
+"vue-fuse@^2.2.0":
+  "integrity" "sha512-mJmmRup0D7xm8nbqgteOu9Gpg6yKcBACs1peD7yGhnMztCEdeEpD/D7W4wvMa9UFogZnESI5vunxlZzgDY9/hA=="
+  "resolved" "https://registry.npmjs.org/vue-fuse/-/vue-fuse-2.2.0.tgz"
+  "version" "2.2.0"
+  dependencies:
+    "fuse.js" "^3.4.6"
+
 "vue-good-table@^2.21.11":
   "integrity" "sha512-OpVPdxbBTahtfq1aXxEa5P1CMy1wiLcBg4mo7k6Qs537l9v8KVrvF+fXqbnxqNrAfmd1Mw9LidcjgTErjmVU8g=="
   "resolved" "https://registry.npmjs.org/vue-good-table/-/vue-good-table-2.21.11.tgz"
@@ -3104,10 +3131,17 @@
   "resolved" "https://registry.npmjs.org/vue-resize/-/vue-resize-0.4.5.tgz"
   "version" "0.4.5"
 
-"vue-router@^3.5.3":
-  "integrity" "sha512-FUlILrW3DGitS2h+Xaw8aRNvGTwtuaxrRkNSHWTizOfLUie7wuYwezeZ50iflRn8YPV5kxmU2LQuu3nM/b3Zsg=="
-  "resolved" "https://registry.npmjs.org/vue-router/-/vue-router-3.5.3.tgz"
-  "version" "3.5.3"
+"vue-router@^3.0.6":
+  "integrity" "sha512-Ox0ciFLswtSGRTHYhGvx2L44sVbTPNS+uD2kRISuo8B39Y79rOo0Kw0hzupTmiVtftQYCZl87mwldhh2L9Aquw=="
+  "resolved" "https://registry.npmjs.org/vue-router/-/vue-router-3.0.6.tgz"
+  "version" "3.0.6"
+
+"vue-scrollto@^2.17.1":
+  "integrity" "sha512-uxOJXg6cZL88B+hTXRHDJMR+gHGiaS70ZTNk55fE5Z2TdwyIx9K/IHoNeTrtBrM6u3FASAIymKjZaQLmDf8Ykg=="
+  "resolved" "https://registry.npmjs.org/vue-scrollto/-/vue-scrollto-2.17.1.tgz"
+  "version" "2.17.1"
+  dependencies:
+    "bezier-easing" "2.1.0"
 
 "vue-template-compiler@^2.2.0", "vue-template-compiler@^2.6.12", "vue-template-compiler@^2.6.14":
   "integrity" "sha512-ODQS1SyMbjKoO1JBJZojSw6FE4qnh9rIpUZn2EUT86FKizx9uH5z6uXiIrm4/Nb/gwxTi/o17ZDEGWAXHvtC7g=="
@@ -3131,7 +3165,7 @@
     "vue-observe-visibility" "^0.4.4"
     "vue-resize" "^0.4.5"
 
-"vue@*", "vue@^2.0.0", "vue@^2.3.0", "vue@^2.6.0 || ^3.2.0", "vue@^2.6.11", "vue@^2.6.14", "vue@^3.0.0-0 || ^2.6.0", "vue@>= 2.5 < 3", "vue@>=1.x.x", "vue@2 || 3":
+"vue@*", "vue@^2.0.0", "vue@^2.3.0", "vue@^2.6.0 || ^3.2.0", "vue@^2.6.10", "vue@^2.6.11", "vue@^2.6.14", "vue@^3.0.0-0 || ^2.6.0", "vue@>= 2.5 < 3", "vue@>=1.x.x", "vue@2 || 3":
   "integrity" "sha512-x2284lgYvjOMj3Za7kqzRcUSxBboHqtgRE2zlos1qWaOye5yUmHn42LB1250NJBLRwEcdrB0JRwyPTEPhfQjiQ=="
   "resolved" "https://registry.npmjs.org/vue/-/vue-2.6.14.tgz"
   "version" "2.6.14"
@@ -3140,6 +3174,11 @@
   "integrity" "sha512-peQHwZIT4cv/SsFodfmS8QREOnpdbsblIcKg19Kgu6kDCZ2Q9vorI9QyRLDIdvziFsKYjDL4NtwqgKDUrgxNQg=="
   "resolved" "https://registry.npmjs.org/vue2-filters/-/vue2-filters-0.9.1.tgz"
   "version" "0.9.1"
+
+"vuex@^3.1.0":
+  "integrity" "sha512-mdHeHT/7u4BncpUZMlxNaIdcN/HIt1GsGG5LKByArvYG/v6DvHcOxvDCts+7SRdCoIRGllK8IMZvQtQXLppDYg=="
+  "resolved" "https://registry.npmjs.org/vuex/-/vuex-3.1.0.tgz"
+  "version" "3.1.0"
 
 "walk-up-path@^1.0.0":
   "version" "1.0.0"

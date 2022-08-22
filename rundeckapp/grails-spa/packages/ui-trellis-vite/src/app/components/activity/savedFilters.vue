@@ -37,7 +37,8 @@
 </template>
 <script>
 import Vue from "vue";
-import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
+import { getRundeckContext } from "@/library/rundeckService"
+import RundeckContext from '@/library/centralService'
 
 export default {
   props: ["query", "hasQuery","eventBus"],

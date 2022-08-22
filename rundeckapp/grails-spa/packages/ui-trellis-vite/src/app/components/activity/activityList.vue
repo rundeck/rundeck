@@ -365,12 +365,12 @@
 import axios from 'axios'
 import Vue from 'vue'
 import moment from 'moment'
-import OffsetPagination from '@rundeck/ui-trellis/lib/components/utils/OffsetPagination.vue'
+import OffsetPagination from '@/library/components/utils/OffsetPagination.vue'
 import ActivityFilter from './activityFilter.vue'
 
-import {getRundeckContext} from "@rundeck/ui-trellis"
+import {getRundeckContext} from "@/library/centralService"
 import {Execution, ExecutionBulkDeleteResponse} from '@rundeck/client/dist/lib/models';
-import {clearTimeout, setTimeout} from 'timers';
+//import {clearTimeout, setTimeout} from 'timers';
 
 /**
  * Generate a URL

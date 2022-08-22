@@ -6,12 +6,12 @@ import VueCookies from 'vue-cookies'
 import VueScrollTo from 'vue-scrollto'
 import VueFuse from 'vue-fuse'
 import VueI18n from 'vue-i18n'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+import uivLang from '@/library/utilities/uivi18n'
 import * as uiv from 'uiv'
 
 import store from './stores'
 import router from './router'
-import App from './App'
+import App from './App.vue'
 
 Vue.config.productionTip = false
 

@@ -1,7 +1,7 @@
 import axios from 'axios'
 import _ from 'lodash'
 import Trellis from '@rundeck/ui-trellis'
-import TourConstants from '@/components/tour/constants'
+import TourConstants from '@/app/components/tour/constants'
 
 export const getTours = () => {
   let tours = [] as any[]
