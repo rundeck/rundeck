@@ -20,12 +20,6 @@
 </template>
 
 <script>
-import axios from "axios";
-import Trellis, {
-  getRundeckContext,
-  getSynchronizerToken,
-  RundeckBrowser
-} from "@rundeck/ui-trellis";
 import CommunityNewsFeed from "./CommunityNewsFeed.vue";
 import NewsletterSubscribe from "./NewsletterSubscribe.vue";
 

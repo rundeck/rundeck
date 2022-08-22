@@ -27,7 +27,7 @@
 <script>
 import { mapState, mapActions } from "vuex";
 import axios from "axios";
-import {client} from "@rundeck/ui-trellis/lib/modules/rundeckClient"
+import {client} from "@/library/modules/rundeckClient"
 export default {
   name: "UploadPluginForm",
   computed: {

@@ -1,6 +1,6 @@
 import axios from 'axios'
 import _ from 'lodash'
-import Trellis from '@rundeck/ui-trellis'
+import Trellis from '@/library/centralService'
 import TourConstants from '@/app/components/tour/constants'
 
 export const getTours = () => {
