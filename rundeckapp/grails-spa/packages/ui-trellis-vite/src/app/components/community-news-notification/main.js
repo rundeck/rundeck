@@ -8,13 +8,13 @@ import international from './i18n'
 import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
 import { getRundeckContext, getAppLinks, url } from '@rundeck/ui-trellis'
 
-import News from '@rundeck/ui-trellis/lib/components/widgets/news/News.vue'
+import News from '@/library/components/widgets/news/News.vue'
 
 import VueCookies from 'vue-cookies'
 import moment from 'moment'
 // Component Files
 import VueI18n from 'vue-i18n'
-import App from './App'
+import App from './App.vue'
 
 Vue.config.productionTip = false
 

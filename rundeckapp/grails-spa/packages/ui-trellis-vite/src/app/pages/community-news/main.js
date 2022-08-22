@@ -5,7 +5,7 @@
 import Vue from 'vue'
 import * as uiv from 'uiv'
 import international from './i18n'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+import uivLang from '@/library/utilities/uivi18n'
 import VueCookies from 'vue-cookies'
 import moment from 'moment'
 // Component Files
