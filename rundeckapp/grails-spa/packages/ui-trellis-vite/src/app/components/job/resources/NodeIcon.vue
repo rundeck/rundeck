@@ -11,7 +11,7 @@
 </template>
 <script lang="ts">
 import Vue from 'vue'
-import {cssForIcon, styleForIcon, glyphiconForName} from '@/utilities/nodeUi'
+import {cssForIcon, styleForIcon, glyphiconForName} from '@/app/utilities/nodeUi'
 import Component from 'vue-class-component'
 import {Prop} from 'vue-property-decorator'
 

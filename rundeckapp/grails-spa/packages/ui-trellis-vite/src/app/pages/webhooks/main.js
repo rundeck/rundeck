@@ -7,10 +7,10 @@ import * as uiv from 'uiv'
 import App from './App.vue'
 import VueI18n from 'vue-i18n'
 
-import {getRundeckContext} from '@rundeck/ui-trellis'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
+import {getRundeckContext} from '@/library/rundeckService'
+import uivLang from '@/library/utilities/uivi18n'
 
-import AceEditor from '@rundeck/ui-trellis/lib/components/utils/AceEditor.vue'
+import AceEditor from '@/library/components/utils/AceEditor.vue'
 
 import international from './i18n'
 

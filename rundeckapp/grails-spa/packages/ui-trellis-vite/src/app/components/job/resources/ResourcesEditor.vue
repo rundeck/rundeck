@@ -331,8 +331,8 @@
   </div>
 </template>
 <script lang="ts">
-import OrchestratorEditor from '@/components/job/resources/OrchestratorEditor.vue'
-import {_genUrl} from '@/utilities/genUrl'
+import OrchestratorEditor from '@/app/components/job/resources/OrchestratorEditor.vue'
+import {_genUrl} from '@/app/utilities/genUrl'
 import axios from 'axios'
 import InlineValidationErrors from '../../form/InlineValidationErrors.vue'
 import Vue from 'vue'
@@ -342,9 +342,8 @@ import NodeFilterInput from './NodeFilterInput.vue'
 import NodeFilterResults from './NodeFilterResults.vue'
 
 import {
-  getRundeckContext,
   getAppLinks
-} from '@rundeck/ui-trellis'
+} from '@/library/rundeckService'
 
 @Component({components: {OrchestratorEditor, InlineValidationErrors, NodeFilterInput, NodeFilterResults}})
 export default class ResourcesEditor extends Vue {

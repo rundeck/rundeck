@@ -85,15 +85,15 @@
   </div>
 </template>
 <script lang="ts">
-import InlineValidationErrors from '@/components/form/InlineValidationErrors.vue'
+import InlineValidationErrors from '@/app/components/form/InlineValidationErrors.vue'
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import {Prop, Watch} from 'vue-property-decorator'
 
-import PluginInfo from '@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue'
-import PluginConfig from '@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue'
-import pluginService from '@rundeck/ui-trellis/lib/modules/pluginService'
-import ExtendedDescription from '@rundeck/ui-trellis/lib/components/utils/ExtendedDescription.vue'
+import PluginInfo from '@/library/components/plugins/PluginInfo.vue'
+import PluginConfig from '@/library/components/plugins/pluginConfig.vue'
+import pluginService from '@/library/modules/pluginService'
+import ExtendedDescription from '@/library/components/utils/ExtendedDescription.vue'
 
 @Component({components: {InlineValidationErrors, PluginInfo, PluginConfig, ExtendedDescription}})
 export default class OrchestratorEditor extends Vue {

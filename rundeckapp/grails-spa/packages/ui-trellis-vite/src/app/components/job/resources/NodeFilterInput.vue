@@ -184,7 +184,7 @@
   </div>
 </template>
 <script lang="ts">
-import {_genUrl} from '@/utilities/genUrl'
+import {_genUrl} from '@/app/utilities/genUrl'
 import {RundeckBrowser} from '@rundeck/client'
 import axios from 'axios'
 import Vue from 'vue'
@@ -194,8 +194,8 @@ import NodeFilterLink from './NodeFilterLink.vue'
 import {
   getAppLinks,
   getRundeckContext
-} from '@rundeck/ui-trellis'
-import Trellis from '@rundeck/ui-trellis'
+} from '@/library/rundeckService'
+import Trellis, { getRundeckContext } from '@/library/centralService';
 
 const client: RundeckBrowser = getRundeckContext().rundeckClient
 const rdBase = getRundeckContext().rdBase

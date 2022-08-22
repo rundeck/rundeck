@@ -45,7 +45,7 @@
 
 <script lang="ts">
 import Vue from "vue";
-import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
+import { getRundeckContext } from "@/library/rundeckService";
 
 export default Vue.extend({
   name: "ProjectNodeSourcesHelp",

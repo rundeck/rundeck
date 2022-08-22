@@ -9,11 +9,6 @@
 import NotificationsEditor from '../../../components/job/notifications/NotificationsEditor.vue'
 import JsonEmbed from './JsonEmbed.vue'
 
-import {
-  getRundeckContext,
-  RundeckContext
-} from "@rundeck/ui-trellis"
-
 export default {
   name: 'App',
   props:['eventBus' ],

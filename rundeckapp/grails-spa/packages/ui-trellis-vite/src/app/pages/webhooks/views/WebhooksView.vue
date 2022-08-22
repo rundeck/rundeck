@@ -164,23 +164,19 @@ import VueI18n from 'vue-i18n'
 import i18n from '../i18n'
 import axios from 'axios'
 
-import {observable, autorun, reaction} from 'mobx'
-import {deepObserve} from 'mobx-utils'
+import {reaction} from 'mobx'
 import {observer} from 'mobx-vue'
 
-import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfig.vue"
-import PluginInfo from "@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue"
+import PluginConfig from "@/library/components/plugins/pluginConfig.vue"
+import PluginInfo from "@/library/components/plugins/PluginInfo.vue"
 
-import CopyBox from '@rundeck/ui-trellis/lib/components/containers/copybox/CopyBox.vue'
-import Tabs from '@rundeck/ui-trellis/lib/components/containers/tabs/Tabs'
-import Tab from '@rundeck/ui-trellis/lib/components/containers/tabs/Tab'
-import WebhookPicker from '@rundeck/ui-trellis/lib/components/widgets/webhook-select/WebhookSelect.vue'
-import KeyStorageSelector from '@rundeck/ui-trellis/lib/components/plugins/KeyStorageSelector.vue'
+import CopyBox from '@/library/components/containers/copybox/CopyBox.vue'
+import Tabs from '@/library/components/containers/tabs/Tabs.vue'
+import Tab from '@/library/components/containers/tabs/Tab.vue'
+import WebhookPicker from '@/library/components/widgets/webhook-select/WebhookSelect.vue'
+import KeyStorageSelector from '@/library/components/plugins/KeyStorageSelector.vue'
 
-import {getServiceProviderDescription,
-  getPluginProvidersForService} from '@rundeck/ui-trellis/lib/modules/pluginService'
-
-import {ServiceType} from '@rundeck/ui-trellis/lib/stores/Plugins'
+import {getServiceProviderDescription} from '@/library/modules/pluginService'
 
 
 import WebhookTitle from '../components/WebhookTitle.vue'

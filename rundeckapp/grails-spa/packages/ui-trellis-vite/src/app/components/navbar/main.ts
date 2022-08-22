@@ -6,7 +6,7 @@ import RundeckInfoWidget from '@/library/components/widgets/rundeck-info/Rundeck
 import ThemeSelectWidget from '@/library/components/widgets/theme-select/ThemeSelect.vue'
 
 import {UtilityActionItem} from '@/library/stores/UtilityBar'
-import { getRundeckContext, getAppLinks } from '@rundeck/ui-trellis'
+import { getRundeckContext, getAppLinks } from '@/library/rundeckService'
 
 const appLinks = getAppLinks()
 const rootStore = getRundeckContext().rootStore

@@ -8,9 +8,9 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import PluginInfo from '@rundeck/ui-trellis/lib/components/plugins/PluginInfo.vue'
+import PluginInfo from '@/library/components/plugins/PluginInfo.vue'
 
-import {Webhook} from '@rundeck/ui-trellis/lib/stores/Webhooks'
+import {Webhook} from '@/library/stores/Webhooks'
 
 export default Vue.extend({
     components: {

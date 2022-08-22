@@ -67,6 +67,6 @@ const translationStrings = {
   }
 }
 
-module.exports = {
+export default {
   messages: translationStrings
 }

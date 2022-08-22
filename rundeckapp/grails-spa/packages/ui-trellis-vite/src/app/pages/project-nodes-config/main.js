@@ -3,16 +3,16 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import ProjectPluginConfig from './ProjectPluginConfig'
-import ProjectNodeSourcesConfig from './ProjectNodeSourcesConfig'
-import ProjectNodeSourcesHelp from './ProjectNodeSourcesHelp'
-import WriteableProjectNodeSources from './WriteableProjectNodeSources'
-import PageConfirm from '../../components/PageConfirm'
+import ProjectPluginConfig from './ProjectPluginConfig.vue'
+import ProjectNodeSourcesConfig from './ProjectNodeSourcesConfig.vue'
+import ProjectNodeSourcesHelp from './ProjectNodeSourcesHelp.vue'
+import WriteableProjectNodeSources from './WriteableProjectNodeSources.vue'
+import PageConfirm from '../../components/PageConfirm.vue'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
-import uivLang from '@rundeck/ui-trellis/lib/utilities/uivi18n'
-import {getRundeckContext} from '@rundeck/ui-trellis'
+import uivLang from '@/library/utilities/uivi18n'
+import {getRundeckContext} from '@/library'
 
 Vue.config.productionTip = false
 

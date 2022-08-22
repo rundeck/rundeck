@@ -32,7 +32,7 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
-import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
+import { getRundeckContext, RundeckContext } from "@/library";
 
 import ProjectPluginConfig from "./ProjectPluginConfig.vue";
 import { getProjectNodeSources, NodeSource } from "./nodeSourcesUtil";

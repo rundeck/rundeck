@@ -4,7 +4,7 @@
   </div>
 </template>
 <script>
-import WebhooksView from "./views/WebhooksView";
+import WebhooksView from "./views/WebhooksView.vue";
 
 export default {
   name: "WebhooksApplication",

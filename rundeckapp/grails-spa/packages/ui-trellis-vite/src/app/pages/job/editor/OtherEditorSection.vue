@@ -9,11 +9,6 @@
 import OtherEditor from '../../../components/job/other/OtherEditor.vue'
 import JsonEmbed from './JsonEmbed.vue'
 
-import {
-  getRundeckContext,
-  RundeckContext
-} from "@rundeck/ui-trellis"
-
 export default {
   name: 'App',
   props:['eventBus' ],
