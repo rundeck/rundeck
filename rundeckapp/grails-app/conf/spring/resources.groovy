@@ -490,7 +490,6 @@ beans={
 
     auditEventsService(AuditEventsService) {
         frameworkService = ref('frameworkService')
-        aclFileManagerService = ref('aclFileManagerService')
     }
 
     scmJobImporter(ScmJobImporter)

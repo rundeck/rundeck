@@ -8,6 +8,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
+import grails.events.annotation.Subscriber
+import grails.util.Holders
 import groovy.transform.PackageScope
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
@@ -17,6 +19,7 @@ import org.rundeck.app.acl.ContextACLManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.context.ApplicationContext
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -26,8 +29,6 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.logout.LogoutHandler
 import rundeck.services.FrameworkService
-
-
 
 
 import javax.servlet.http.HttpServletRequest
@@ -44,13 +45,13 @@ import java.util.stream.Collectors
  *
  */
 class AuditEventsService
-        implements LogoutHandler, InitializingBean {
+    implements LogoutHandler {
 
     static final Logger LOG = LoggerFactory.getLogger(AuditEventsService.class)
 
     FrameworkService frameworkService
-    ContextACLManager<AppACLContext> aclFileManagerService
 
+    private ContextACLManager<AppACLContext> aclFileManagerService
     protected AsyncTaskExecutor asyncTaskExecutor
     protected final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
 
@@ -61,16 +62,17 @@ class AuditEventsService
         asyncTaskExecutor = new ThreadPoolTaskExecutor()
         asyncTaskExecutor.setCorePoolSize(1)
         asyncTaskExecutor.setMaxPoolSize(1)
-        asyncTaskExecutor.initialize()
     }
-    
 
-    @Override
-    void afterPropertiesSet() throws Exception {
-        // Set ACL listeners
-        this.aclFileManagerService?.addListenerMap(buildACLFileListeners())
+    @Subscriber('rundeck.bootstrap')
+    void init() throws Exception {
+        asyncTaskExecutor.initialize()
+        Holders.getApplicationContext()
+            .getBean("aclFileManagerService", ContextACLManager)
+            .addListenerMap(buildACLFileListeners())
     }
-/**
+
+    /**
      * Returns the cache of listener plugins.
      * Cache is implemented lazily, so if the cache is not initialized, the plugins
      * will be instanced and configured, and the cache will be built.
