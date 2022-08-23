@@ -1029,7 +1029,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 auditEventsService.eventBuilder()
                     .setResourceType(ResourceTypes.JOB)
                     .setActionType(ActionTypes.DELETE)
-                    .setResourceName("${scheduledExecution.project}:${scheduledExecution.generateFullName()}")
+                    .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
                     .publish()
             }
 
