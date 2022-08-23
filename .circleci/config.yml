@@ -190,6 +190,8 @@ commands:
           command: |
             GPG_TTY=$(tty)
             export GPG_TTY
+            GPG_PATH="~/repo/ci-resources"
+            export GPG_PATH
             source .circleci/circle-shim.sh
             bash packaging/scripts/circle-build.sh sign
       - store_artifacts:
