@@ -17,7 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
@@ -30,7 +30,7 @@ import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
 import rundeck.services.UserService
-import rundeck.services.ConfigurationService
+import org.rundeck.app.data.model.v1.*
 
 import javax.servlet.http.HttpServletResponse
 
@@ -133,7 +133,7 @@ class UserController extends ControllerBase{
                 eq("creator", u.login)
             }
             or {
-                eq("type", AuthTokenType.USER)
+                eq("type", AuthenticationToken.AuthTokenType.USER)
                 isNull("type")
             }
 
@@ -165,7 +165,7 @@ class UserController extends ControllerBase{
                 maxResults(max)
             }
             or {
-                eq("type", AuthTokenType.USER)
+                eq("type", AuthenticationToken.AuthTokenType.USER)
                 isNull("type")
             }
             order("dateCreated", "desc")
@@ -591,7 +591,7 @@ class UserController extends ControllerBase{
             }
             eq("user",user)
             or {
-                eq("type", AuthTokenType.USER)
+                eq("type", AuthenticationToken.AuthTokenType.USER)
                 isNull("type")
             }
         }[0]
@@ -691,7 +691,7 @@ class UserController extends ControllerBase{
                     tokenUser ?: params.login,
                     AuthToken.parseAuthRoles(tokenRoles),
                     true,
-                    AuthTokenType.USER,
+                    AuthenticationToken.AuthTokenType.USER,
                     tokenName
             )
             result = [result: true, apitoken: token.clearToken, tokenid: token.uuid]

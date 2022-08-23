@@ -1,7 +1,6 @@
 package webhooks
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
+
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.event.EventImpl
@@ -24,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.apache.commons.lang.RandomStringUtils
+import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
@@ -199,7 +199,8 @@ class WebhookService {
             //create token
             String checkUser = hookData.user ?: authContext.username
             try {
-                def at=apiService.generateUserToken(authContext, null, checkUser, roles, false, AuthTokenType.WEBHOOK)
+                def at=apiService.generateUserToken(authContext, null, checkUser, roles, false,
+                                                            AuthenticationToken.AuthTokenType.WEBHOOK)
                 hook.authToken = at.token
             } catch (Exception e) {
                 hook.discard()
@@ -316,7 +317,7 @@ class WebhookService {
 
     private Map getWebhookWithAuthAsMap(Webhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
-        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, useAuth: hook.authConfigJson != null, regenAuth: false, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
+        return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.getAuthRolesSet().join(","), authToken:hook.authToken, useAuth: hook.authConfigJson != null, regenAuth: false, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
 
     Webhook getWebhook(Long id) {

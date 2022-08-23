@@ -2,7 +2,6 @@ package org.rundeck.app.data
 
 import groovy.transform.CompileStatic
 import org.rundeck.spi.data.DataManager
-import org.rundeck.spi.data.DataProvider
 import org.springframework.beans.factory.InitializingBean
 
 /**
@@ -12,12 +11,14 @@ import org.springframework.beans.factory.InitializingBean
 class ProviderRegistration implements InitializingBean {
 
     DataManager dataManager
-    List <Object> providers = []
+    def providers = []
 
     @Override
     void afterPropertiesSet() throws Exception {
         for (def provider : providers) {
-            dataManager.registerDataProvider(provider);
+            Class<?> clazz = provider.getClass().getInterfaces() ? provider.getClass().getInterfaces()[0] :
+                                    provider.getClass()
+            dataManager.registerDataProvider(clazz as Class, provider);
         }
     }
 }

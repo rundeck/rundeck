@@ -1,13 +1,14 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authorization.UserAndRoles
+
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.*
 import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.UnauthorizedAccess
@@ -527,9 +528,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         User user = new User(login: "admin")
         user.save()
         createAuthToken(user:user,type:null)
-        createAuthToken(user:user,type: AuthTokenType.USER)
-        createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
-        createAuthToken(user:user,creator:'admin',type: AuthTokenType.USER)
+        createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.USER)
+        createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.WEBHOOK)
+        createAuthToken(user:user,creator:'admin',type: AuthenticationToken.AuthTokenType.USER)
         def authCtx = Mock(UserAndRolesAuthContext)
         session.user='admin'
             controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
@@ -558,8 +559,8 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         User user = new User(login: "admin")
         user.save()
         createAuthToken(user:user,type:null)
-        createAuthToken(user:user,type: AuthTokenType.USER)
-        createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
+        createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.USER)
+        createAuthToken(user:user,type: AuthenticationToken.AuthTokenType.WEBHOOK)
         controller.apiService = Stub(ApiService)
 
         controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }
@@ -754,9 +755,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         given:
         User bob = new User(login:"bob")
         bob.save()
-        new AuthToken(user:bob,type:AuthTokenType.USER,authRoles: "admin",token:Math.random().toString()).save()
+        new AuthToken(user:bob,type: AuthenticationToken.AuthTokenType.USER,authRoles: "admin",token:Math.random().toString()).save()
         new AuthToken(user:bob,authRoles: "admin",token:Math.random().toString()).save()
-        new AuthToken(user:bob,type:AuthTokenType.WEBHOOK,authRoles: "admin",token:Math.random().toString()).save()
+        new AuthToken(user:bob,type:AuthenticationToken.AuthTokenType.WEBHOOK,authRoles: "admin",token:Math.random().toString()).save()
 
         when:
         def tokenCount = controller.countUserApiTokens(bob)

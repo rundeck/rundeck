@@ -18,8 +18,7 @@ package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
+import org.rundeck.app.data.model.v1.AuthenticationToken
 
 import java.time.Clock
 
@@ -148,7 +147,7 @@ class AuthToken implements AuthenticationToken {
     }
 
     @Override
-    Set<String> authRolesSet() {
+    Set<String> getAuthRolesSet() {
         return parseAuthRoles(authRoles)
     }
 

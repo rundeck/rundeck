@@ -21,7 +21,7 @@ import com.dtolabs.rundeck.app.api.tokens.CreateTokenStringRoles
 import com.dtolabs.rundeck.app.api.tokens.ListTokens
 import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import groovy.transform.CompileStatic
@@ -35,11 +35,10 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody
 import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.api.model.LinkListResponse
 import org.rundeck.app.api.model.SystemInfoModel
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.sun.management.OperatingSystemMXBean
 import grails.web.mapping.LinkGenerator
+import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem
@@ -343,7 +342,7 @@ class ApiController extends ControllerBase{
 
         //admin: search by token ID
         //user: search for token ID owned by user
-        org.rundeck.app.data.model.v1.Token oldtoken = adminAuth ?
+        AuthenticationToken oldtoken = adminAuth ?
                 apiService.findTokenId(params.tokenid) :
                 apiService.findUserTokenId(authContext.username, params.tokenid)
 
@@ -457,8 +456,11 @@ class ApiController extends ControllerBase{
             tokenlist = AuthToken.list()
         }
 
-        def data = new ListTokens(user, !user, tokenlist.findAll {
-            it.type != AuthTokenType.WEBHOOK
+
+        def data = new ListTokens(params.user, !params.user, tokenlist.findAll {
+            it.type != AuthenticationToken.AuthTokenType.WEBHOOK
+            // From now on we always mask tokens.
+//        def apiv19 = request.api_version >= ApiVersions.V19
         }.collect {
             new Token(it, true, apiVersion < ApiVersions.V19)
         })
@@ -622,7 +624,7 @@ Since: v11
         if (rolesSet.size() == 1 && rolesSet.contains('*')) {
             rolesSet = null
         }
-        org.rundeck.app.data.model.v1.Token token
+        AuthenticationToken token
 
         Integer tokenDurationSeconds = tokenDuration ? Sizes.parseTimeDuration(tokenDuration) : 0
         if (tokenDuration && !Sizes.validTimeDuration(tokenDuration)) {
@@ -640,7 +642,7 @@ Since: v11
                     tokenuser,
                     rolesSet,
                     true,
-                    AuthTokenType.USER,
+                    AuthenticationToken.AuthTokenType.USER,
                     tokenName
             )
         } catch (Exception e) {

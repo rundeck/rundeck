@@ -3,9 +3,9 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
-import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
+import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import groovy.transform.PackageScope
 import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.web.infosec.AuthorizationRoleSource

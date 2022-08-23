@@ -1,23 +1,23 @@
 package org.rundeck.app.data.providers.v1;
 
-import org.rundeck.app.data.model.v1.Token;
+import org.rundeck.app.data.model.v1.AuthenticationToken;
 import org.rundeck.spi.data.DataAccessException;
 
 import java.util.Date;
 import java.util.List;
 
 public interface TokenDataProvider {
-    Token getData(String id);
-    String create(Token data);
-    String createWithId(String id, Token data);
-    void update(String id, Token data);
+    AuthenticationToken getData(String id);
+    String create(AuthenticationToken data);
+    String createWithId(String id, AuthenticationToken data);
+    void update(String id, AuthenticationToken data);
     void delete(final String id) throws DataAccessException;
-    List<Token> findAllByCreator(String creator);
-    List<Token> findAllByCreatorAndExpirationLessThan(String creator, Date now);
-    List<Token> findAllByExpirationLessThan(Date now);
-    Token findByUuidAndCreator(String uuid, String creator);
-    Token findByTokenAndType(String token, Token.AuthTokenType type);
-    Token tokenLookup(String token);
+    List<AuthenticationToken> findAllByCreator(String creator);
+    List<AuthenticationToken> findAllByCreatorAndExpirationLessThan(String creator, Date now);
+    List<AuthenticationToken> findAllByExpirationLessThan(Date now);
+    AuthenticationToken findByUuidAndCreator(String uuid, String creator);
+    AuthenticationToken findByTokenAndType(String token, AuthenticationToken.AuthTokenType type);
+    AuthenticationToken tokenLookup(String token);
 
 
 }

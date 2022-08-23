@@ -1,6 +1,7 @@
 package rundeck.services.data
 
 import grails.gorm.services.Service
+import org.rundeck.app.data.model.v1.AuthenticationToken
 import rundeck.AuthToken
 
 @Service(AuthToken)

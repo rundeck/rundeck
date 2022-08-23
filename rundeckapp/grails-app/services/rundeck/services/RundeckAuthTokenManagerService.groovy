@@ -1,14 +1,12 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenManager
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
-import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
-import com.dtolabs.rundeck.core.authentication.tokens.SimpleTokenBuilder
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
-import org.rundeck.app.data.model.v1.Token
-import org.rundeck.app.data.model.v1.TokenImpl
+import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.spi.data.DataManager
 import rundeck.AuthToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
@@ -20,41 +18,33 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     ApiService apiService
     DataManager rundeckDataManager
 
-    private GormTokenDataProvider getTokenProvider() {
-        (GormTokenDataProvider)rundeckDataManager.getProviderForType(GormTokenDataProvider.class.getSimpleName())
+    private TokenDataProvider getTokenProvider() {
+        rundeckDataManager.getProviderForType(TokenDataProvider)
     }
 
     @Override
     AuthenticationToken getToken(final String token) {
-        def data = tokenProvider.getData(token)
-        return new SimpleTokenBuilder()
-                .setToken(token)
-                .setCreator(data.creator)
-                .setOwnerName(data.ownerName)
-                .setAuthRolesSet(data.getAuthRolesSet())
-                .setExpiration(data.expiration)
-                .setType(AuthTokenType.valueOf(data.type.toString()))
-                .setName(data.name)
+        return tokenProvider.getData(token)
     }
 
 
     @Override
     boolean updateAuthRoles(UserAndRolesAuthContext authContext, final String token, final Set<String> roleSet)
         throws Exception {
-        Token token1 = tokenProvider.getData(token)
+        AuthenticationToken token1 = tokenProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)
         if (!token1) {
             return false
         }
-        def username = token1.creator
+        def username = token1.getOwnerName()
         def check = apiService.checkTokenAuthorization(authContext, username, roleSet)
         if (!check.authorized) {
             throw new Exception("Unauthorized: modify token roles for ${token1.uuid} failed: ${check.message}")
         }
-        TokenImpl newToken = TokenImpl.with(token1)
+        SimpleTokenBuilder newToken = SimpleTokenBuilder.with(token1)
 
         newToken.authRolesSet = check.roles
          try {
-            tokenProvider.update(token1.uuid, token1)
+            tokenProvider.update(token1.uuid, newToken)
             return true
         } catch (Exception ex) {
             log.error("Save token ${token} failed:", ex)
@@ -88,14 +78,12 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
         if (tokenProvider.tokenLookup(token)) {
             throw new Exception("Cannot import webhook token")
         }
-        org.rundeck.app.data.model.v1.Token.AuthTokenType webhookToken =
-                             org.rundeck.app.data.model.v1.Token.AuthTokenType.valueOf(AuthTokenType.WEBHOOK.toString())
-
-        if (tokenProvider.findByTokenAndType(token, webhookToken)) {
+        AuthenticationToken webookToken = tokenProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)
+        if (tokenProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)) {
             return updateAuthRoles(authContext, token, roleSet)
         }
 
-        apiService.createUserToken(authContext, 0, token, user, roleSet, false, AuthTokenType.WEBHOOK)
+        apiService.createUserToken(authContext, 0, token, user, roleSet, false, AuthenticationToken.AuthTokenType.WEBHOOK)
 
         return true
     }

@@ -189,8 +189,6 @@ dependencies {
     implementation "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     implementation "io.micronaut:micronaut-core:${micronautVersion}"
 
-    implementation('org.modelmapper:modelmapper:1.1.0')
-
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     runtimeOnly "com.h2database:h2:2.1.210"
 

@@ -16,7 +16,7 @@
 package com.dtolabs.rundeck.core.authentication.tokens;
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
-
+import org.rundeck.app.data.model.v1.AuthenticationToken;
 import java.util.List;
 import java.util.Set;
 

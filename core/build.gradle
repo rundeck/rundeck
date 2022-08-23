@@ -53,6 +53,8 @@ dependencies {
     api project(":rundeck-authz:rundeck-authz-api")
     api project(":rundeck-authz:rundeck-authz-core")
     api project(":rundeck-authz:rundeck-authz-yaml")
+    api project(':rundeck-data-model')
+
     api ('com.google.guava:guava:26.0-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
@@ -94,7 +96,7 @@ dependencies {
       exclude group:'commons-codec', module: 'commons-codec'
       exclude group:'org.apache.httpcomponents', module: 'httpcore'
     }
-    
+
     implementation ("org.apache.httpcomponents:httpcore:4.4.15")
 
     compileOnly "org.projectlombok:lombok:1.18.20"

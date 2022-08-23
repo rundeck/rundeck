@@ -1,22 +1,17 @@
 package org.rundeck.app.data.providers
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import grails.compiler.GrailsCompileStatic
 import groovy.util.logging.Slf4j
-import org.rundeck.app.data.model.v1.Token
-import org.rundeck.app.data.model.v1.TokenDataType
-import org.rundeck.app.data.model.v1.TokenImpl
+import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.spi.data.DataAccessException
-import org.rundeck.spi.data.DataProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.UserService
 import rundeck.services.data.AuthTokenDataService
-import org.modelmapper.ModelMapper;
 
 @GrailsCompileStatic
 @Slf4j
@@ -28,17 +23,14 @@ class GormTokenDataProvider implements TokenDataProvider {
     @Autowired
     MessageSource messageSource
 
-    TokenDataType dataType = new TokenDataType()
-    private static final ModelMapper modelMapper = new ModelMapper();
-
     @Override
-    Token getData (final String id) {
-        def authToken = authTokenDataService.getByUuid(id)
-        return authToken ? convertAuthTokenToToken(authToken): null
+    AuthenticationToken getData (final String id) {
+        AuthenticationToken authToken = authTokenDataService.getByUuid(id)
+        return authToken ?: null
     }
 
     @Override
-    String create( final Token data) {
+    String create( final AuthenticationToken data) {
         return createWithId(
                 data.uuid ?: UUID.randomUUID().toString(),
                 data
@@ -46,13 +38,13 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
-    String createWithId( final String id, final Token data) {
+    String createWithId( final String id, final AuthenticationToken data) {
         User tokenOwner = userService.findOrCreateUser(data.ownerName)
         if (!tokenOwner) {
             throw new Exception("Couldn't find user: ${data.ownerName}")
         }
 
-        def tokenType = AuthTokenType.valueOf(data.type.toString())
+        def tokenType = AuthenticationToken.AuthTokenType.valueOf(data.type.toString())
 
         AuthToken token = new AuthToken(
                 token: data.token,
@@ -63,7 +55,7 @@ class GormTokenDataProvider implements TokenDataProvider {
                 creator: data.creator,
                 name: data.name,
                 type: tokenType,
-                tokenMode: (tokenType == AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
+                tokenMode: (tokenType == AuthenticationToken.AuthTokenType.WEBHOOK) ? AuthTokenMode.LEGACY : AuthTokenMode.SECURED
         )
         if (token.save(flush: true)) {
             return token.uuid
@@ -74,13 +66,13 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
-    void update(final String id, final Token data) {
+    void update(final String id, final AuthenticationToken data) {
         def token = authTokenDataService.getByUuid(id)
         if (!token) {
             throw new DataAccessException("Not found: token with ID: ${id}")
         }
         token.name = data.name
-        token.setAuthRoles(AuthToken.generateAuthRoles(data.authRolesSet))
+        token.setAuthRoles(AuthToken.generateAuthRoles(data.getAuthRolesSet()))
 
         try {
             token.save(failOnError: true)
@@ -103,58 +95,56 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
-    List<Token> findAllByCreator(String creator) {
-        List tokens = []
+    List<AuthenticationToken> findAllByCreator(String creator) {
+        List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.findAllByCreator(creator)
-        authTokens.each {authToken->
-            tokens << convertAuthTokenToToken(authToken)
+        authTokens.each{authToken ->
+            tokens << authToken
         }
         tokens
     }
 
     @Override
-    Token findByUuidAndCreator(String id, String creator) {
+    AuthenticationToken findByUuidAndCreator(String id, String creator) {
         def authToken = AuthToken.findByUuidAndCreator(id, creator)
-        return authToken ? convertAuthTokenToToken(authToken): null
+        return authToken ?: null
 
     }
-    
+
     @Override
-    List<Token> findAllByCreatorAndExpirationLessThan(final String creator, final Date now) {
-        List tokens = []
+    List<AuthenticationToken> findAllByCreatorAndExpirationLessThan(final String creator, final Date now) {
+        List<AuthenticationToken> tokens = []
+
         List<AuthToken> authTokens = AuthToken.findAllByCreatorAndExpirationLessThan(creator, now)
-        authTokens.each {authToken->
-            tokens << convertAuthTokenToToken(authToken)
+        authTokens.each{authToken ->
+            tokens << authToken
         }
         tokens
     }
 
     @Override
-    List<Token> findAllByExpirationLessThan(final Date now) {
-        List tokens = []
+    List<AuthenticationToken> findAllByExpirationLessThan(final Date now) {
+        List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.findAllByExpirationLessThan(now)
-        authTokens.each {authToken->
-            tokens << convertAuthTokenToToken(authToken)
+        authTokens.each{authToken ->
+            tokens << authToken
         }
         tokens
+
     }
     @Override
-    Token findByTokenAndType(final String token, Token.AuthTokenType type) {
-        def tokenType = AuthTokenType.valueOf(type.toString())
-        def authToken = AuthToken.findByTokenAndType(token, tokenType)
-        return authToken ? convertAuthTokenToToken(authToken): null
+    AuthenticationToken findByTokenAndType(final String token, AuthenticationToken.AuthTokenType type) {
+        def tokenType = AuthenticationToken.AuthTokenType.valueOf(type.toString())
+        AuthenticationToken authToken = AuthToken.findByTokenAndType(token, tokenType)
+        return authToken ?: null
 
     }
 
-    Token tokenLookup(final String token){
+    AuthenticationToken tokenLookup(final String token){
         def authToken = AuthToken.tokenLookup(token);
-        return authToken ? convertAuthTokenToToken(authToken): null
+        return authToken ?: null
 
     }
-    private Token convertAuthTokenToToken(AuthToken authToken){
-        TokenImpl token = modelMapper.map(authToken, TokenImpl.class)
-        token.setAuthRolesSet(authToken.authRolesSet())
-        token
-    }
+
 
 }
