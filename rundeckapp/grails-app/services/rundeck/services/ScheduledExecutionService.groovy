@@ -3428,7 +3428,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             auditEventsService.eventBuilder()
                 .setResourceType(ResourceTypes.JOB)
                 .setActionType(ActionTypes.UPDATE)
-                .setResourceName("${scheduledExecution.project}:${scheduledExecution.generateFullName()}")
+                .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
                 .publish()
         }
 
@@ -3527,7 +3527,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             auditEventsService.eventBuilder()
                 .setResourceType(ResourceTypes.JOB)
                 .setActionType(ActionTypes.CREATE)
-                .setResourceName("${scheduledExecution.project}:${scheduledExecution.generateFullName()}")
+                .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
                 .publish()
         }
         

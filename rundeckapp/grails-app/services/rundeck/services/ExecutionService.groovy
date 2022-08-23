@@ -2540,17 +2540,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}}: Limit of running executions has been reached.', 'conflict')
         }
 
+        Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
+        
         // Publish audit event for new job run.
         if(auditEventsService) {
             auditEventsService.eventBuilder()
                 .setResourceType(ResourceTypes.JOB)
                 .setResourceName("${jobReference.project}:${jobReference.jobAndGroup}")
+                .setResourceName("${se.project}:${se.uuid}:${se.generateFullName()}:${newExec.id}")
                 .setActionType(ActionTypes.RUN)
                 .publish()
         }
 
-        return int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
-
+        return newExec
     }
 
     /**
