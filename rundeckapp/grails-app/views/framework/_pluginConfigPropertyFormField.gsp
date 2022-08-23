@@ -314,7 +314,7 @@
     </g:elseif>
     <g:else>
         <g:textField name="${fieldname}" value="${valueText}"
-                 id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}" />
+                 id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
     </g:else>
     </div>
     <g:if test="${hasStorageSelector}">
