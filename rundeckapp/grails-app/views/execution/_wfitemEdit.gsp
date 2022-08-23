@@ -712,8 +712,7 @@
                             values             : item?.configuration,
                             fieldnamePrefix    : pluginprefix,
                             origfieldnamePrefix:'orig.' + pluginprefix,
-                            allowedScope       : PropertyScope.Instance,
-                            stepKey: rkey
+                            allowedScope       : PropertyScope.Instance
                     ]}"/>
 
                 </div>
