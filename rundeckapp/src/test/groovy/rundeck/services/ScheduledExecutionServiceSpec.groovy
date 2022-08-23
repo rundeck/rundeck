@@ -5567,7 +5567,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             input.timeout==expectTimeout
             input.contimeout==expectConTimeout
             input.retry==expectRetry
-            result.values==['some','option','values']
+            result.values==[[name:'some', value:'some'],[name:'option', value:'option'],[name:'values', value:'values']]
 
         where:
             timeout | conTimeout | retry | expectTimeout | expectConTimeout | expectRetry
@@ -5623,7 +5623,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         input.timeout==expectTimeout
         input.contimeout==expectConTimeout
         input.retry==expectRetry
-        result.values==['some','option','values']
+        result.values==[[name:'some', value:'some'],[name:'option', value:'option'],[name:'values', value:'values']]
 
         where:
         timeout | conTimeout | retry | expectTimeout | expectConTimeout | expectRetry

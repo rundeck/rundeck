@@ -3959,6 +3959,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def validationerrors = []
         if (result) {
             if (result instanceof Collection) {
+                def resultForString = []
                 result.eachWithIndex { entry, i ->
                     if (entry instanceof JSONObject) {
                         if (!entry.name) {
@@ -3972,7 +3973,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     } else if (!(entry instanceof String)) {
                         valid = false;
                         validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
+                    } else if (entry instanceof String){
+                        resultForString << [name: entry, value: entry]
                     }
+                }
+                if(!resultForString.isEmpty()){
+                    result = resultForString
                 }
             } else if (result instanceof JSONObject) {
                 JSONObject jobject = result
