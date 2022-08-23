@@ -557,6 +557,7 @@ jobs:
       - git-modules
       - submodule-update
       - echo-package-cloud
+      - fetch-ci-resources
       - attach_workspace:
           at: artifacts
       - run:
