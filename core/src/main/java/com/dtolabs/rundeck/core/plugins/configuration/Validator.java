@@ -201,7 +201,7 @@ public class Validator {
                     if (null != validator) {
                         try {
                             if (value instanceof String ) {
-                                if (!validator.isValid((String) value)) {
+                                if (!value.equals("\\s|\\$|\\{|\\}|\\\\") && !validator.isValid((String) value, props)) {
                                     report.errors.put(key, "Invalid value: " + value);
                                 }
                             }else if(validator instanceof PropertyObjectValidator ){

@@ -106,6 +106,25 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     String invalidKeyPattern
 
     static class RegexValidator implements PropertyValidator {
+
+        @Override
+        boolean isValid(String value, Map<String,Object> props) throws ValidationException {
+            try {
+                def compile = Pattern.compile(value)
+                Matcher m = compile.matcher("");
+
+                if(m.groupCount() == 0){
+                    throw new PatternSyntaxException("Patter must have at least one group", value, -1)
+                }
+                if(m.groupCount() == 1 && !props.containsKey("name")){
+                    throw new PatternSyntaxException("It must be defined the field name", value, -1)
+                }
+                return true
+            } catch (PatternSyntaxException e) {
+                throw new ValidationException(e.message, e)
+            }
+        }
+
         @Override
         boolean isValid(final String value) throws ValidationException {
             try {

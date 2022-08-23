@@ -31,4 +31,8 @@ import java.util.*;
  */
 public interface PropertyValidator {
     public boolean isValid(String value) throws ValidationException;
+
+    default boolean isValid(String value,Map<String,Object> props) throws ValidationException {
+        return isValid(value);
+    }
 }
