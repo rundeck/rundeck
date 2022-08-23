@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
-import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
@@ -110,13 +109,20 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
         @Override
         boolean isValid(String value, Map<String,Object> props) throws ValidationException {
             try {
+
+                def invalidKeyPattern = "";
+
+                if(props.containsKey("invalidKeyPattern")){
+                    invalidKeyPattern = props.get("invalidKeyPattern")
+                }
+
                 def compile = Pattern.compile(value)
                 Matcher m = compile.matcher("");
 
-                if(m.groupCount() == 0){
+                if(value != invalidKeyPattern && m.groupCount() == 0){
                     throw new PatternSyntaxException("Patter must have at least one group", value, -1)
                 }
-                if(m.groupCount() == 1 && !props.containsKey("name")){
+                if(value != invalidKeyPattern && m.groupCount() == 1 && !props.containsKey("name")){
                     throw new PatternSyntaxException("It must be defined the field name", value, -1)
                 }
                 return true
