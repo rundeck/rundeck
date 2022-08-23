@@ -280,22 +280,7 @@
             data-ace-height="100px"
             data-ace-resize-auto="true"
             data-ace-resize-max="20"
-                    data-ace-autofocus='true'
                     id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${scriptTokenAutocompleteCss} ${extraInputCss}"/>
-
-
-        <g:if test="${scriptTokenAutocomplete&&scriptTokenAutocomplete==StringRenderingConstants.ScriptTokenAutocomplete.ENABLED}">
-            <g:embedJSON id="scriptStepData_${stepKey}" data="${[invocationString: 'bash',fileExtension: '',args: '',argsQuoted: false, expandToken: true]}"/>
-
-            <g:javascript>
-                fireWhenReady("scriptStep_${stepKey}",function(){
-                    workflowEditor.bindScriptStepKey('${stepKey}','wfiedit_${stepKey}',loadJsonData('scriptStepData_${stepKey}'));
-                    if (typeof(_initPopoverContentRef) == 'function') {
-                        _initPopoverContentRef("#scriptStep_${stepKey}");
-                    }
-                });
-            </g:javascript>
-        </g:if>
 
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
@@ -326,10 +311,6 @@
             %{--plain--}%
             <g:enc html="${staticTextValue}"/>
         </g:else>
-    </g:elseif>
-    <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.SCRIPT_INVOCATION_STRING, 'SCRIPT_INVOCATION_STRING']}">
-        <g:textField name="${fieldname}" value="${valueText}"
-                     id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}" data-bind="value: invocationString, valueUpdate: 'keyup'" autofocus="true" />
     </g:elseif>
     <g:else>
         <g:textField name="${fieldname}" value="${valueText}"

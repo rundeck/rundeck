@@ -51,8 +51,7 @@ public class StringRenderingConstants {
         STATIC_TEXT,
         PASSWORD,
         CODE,
-        DYNAMIC_FORM,
-        SCRIPT_INVOCATION_STRING;
+        DYNAMIC_FORM;
         public boolean equalsOrString(Object o) {
             return this == o || toString().equals(o);
         }
