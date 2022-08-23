@@ -270,7 +270,7 @@
 
 
         <g:set var="scriptTokenAutocomplete" value="${prop.renderingOptions?.(StringRenderingConstants.SCRIPT_TOKEN_AUTOCOMPLETE)}"/>
-        <g:set var="scriptTokenAutocompleteCss" value="${scriptTokenAutocomplete&&scriptTokenAutocomplete==StringRenderingConstants.ScriptTokenAutocomplete.ENABLED?'_wfscriptitem':''}"/>
+        <g:set var="scriptTokenAutocompleteCss" value="${scriptTokenAutocomplete&&StringRenderingConstants.ScriptTokenAutocomplete.ENABLED.equalsOrString(scriptTokenAutocomplete)?'_wfscriptitem':''}"/>
 
 
         <g:textArea name="${fieldname}" value="${valueText}"
