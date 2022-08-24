@@ -24,8 +24,8 @@ import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
 
 import io.swagger.v3.oas.annotations.media.Schema
+import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.AuthTokenMode
-import rundeck.AuthToken
 
 /**
  * @author greg
