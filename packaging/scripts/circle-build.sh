@@ -38,8 +38,12 @@ create_packages() {
     )
 }
 
+fetch_ci_resources() {
+    aws s3 sync --delete "${S3_CI_RESOURCES}" ~/.gnupg
+}
 
 sign() {
+  fetch_ci_resources
   bash packaging/packaging/scripts/sign-packages.sh
 }
 

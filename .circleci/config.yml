@@ -190,8 +190,6 @@ commands:
           command: |
             GPG_TTY=$(tty)
             export GPG_TTY
-            GPG_PATH="~/repo/ci-resources"
-            export GPG_PATH
             source .circleci/circle-shim.sh
             bash packaging/scripts/circle-build.sh sign
       - store_artifacts:
@@ -559,7 +557,6 @@ jobs:
       - git-modules
       - submodule-update
       - echo-package-cloud
-      - fetch-ci-resources
       - attach_workspace:
           at: artifacts
       - run:
