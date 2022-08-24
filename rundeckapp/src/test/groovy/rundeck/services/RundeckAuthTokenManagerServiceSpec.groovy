@@ -1,6 +1,5 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.testing.gorm.DataTest

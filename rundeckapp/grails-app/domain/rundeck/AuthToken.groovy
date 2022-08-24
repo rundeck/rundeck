@@ -17,7 +17,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
+import org.rundeck.app.data.model.v1.AuthTokenMode
 import org.rundeck.app.data.model.v1.AuthenticationToken
 
 import java.time.Clock

@@ -22,8 +22,9 @@ import com.dtolabs.rundeck.app.api.marshall.ApiVersion
 import com.dtolabs.rundeck.app.api.marshall.CollectionElement
 import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
+
 import io.swagger.v3.oas.annotations.media.Schema
+import org.rundeck.app.data.model.v1.AuthTokenMode
 import rundeck.AuthToken
 
 /**
@@ -74,18 +75,18 @@ class Token {
     Boolean expired;
 
 
-    Token(org.rundeck.app.data.model.v1.AuthenticationToken authToken, boolean masked = true, boolean legacyApiMode=false) {
-        this.name = authToken.name
-        this.id = authToken.uuid
-        if(legacyApiMode){
-            this.id = this.token
-        }
-        this.token = masked ? null : authToken.token
+    Token(org.rundeck.app.data.model.v1.AuthenticationToken token, boolean masked = true) {
+        this.name = token.name
+        this.id = token.uuid
+        this.token = masked ? null : token.token
+        this.token = masked ? null :
+                (token.getTokenMode() == null || token.getTokenMode() == AuthTokenMode.LEGACY) ? token.getToken() :
+                        token.getClearToken()
         this.v18TokenId = this.token
-        this.creator = authToken.creator
-        this.user = authToken.ownerName
-        this.roles = authToken.getAuthRolesSet()
-        this.expiration = authToken.expiration ? new FormattedDate(authToken.expiration) : null
-        this.expired = authToken.tokenIsExpired(authToken)
+        this.creator = token.creator
+        this.user = token.ownerName
+        this.roles = token.getAuthRolesSet()
+        this.expiration = token.expiration ? new FormattedDate(token.expiration) : null
+        this.expired = token.tokenIsExpired(token)
     }
 }

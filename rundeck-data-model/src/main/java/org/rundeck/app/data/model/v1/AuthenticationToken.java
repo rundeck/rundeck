@@ -32,6 +32,8 @@ public interface AuthenticationToken {
     String getPrintableToken();
     Date getExpiration();
     String getName();
+    String getClearToken();
+    AuthTokenMode getTokenMode();
 
     static enum AuthTokenType {
         USER,

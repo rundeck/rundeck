@@ -12,6 +12,8 @@ public class SimpleTokenBuilder implements AuthenticationToken {
   private AuthTokenType type;
   private Date expiration;
   private String name;
+  private AuthTokenMode tokenMode;
+  private String clearToken;
 
 
 
@@ -19,6 +21,11 @@ public class SimpleTokenBuilder implements AuthenticationToken {
   public String getToken() {
     return token;
   }
+
+  @Override
+  public String getClearToken() {
+        return clearToken;
+    }
 
   @Override
   public Set<String> getAuthRolesSet() {
@@ -39,6 +46,11 @@ public class SimpleTokenBuilder implements AuthenticationToken {
   public String getOwnerName() {
     return ownerName;
   }
+
+  @Override
+  public AuthTokenMode getTokenMode() {
+        return tokenMode;
+    }
 
   @Override
   public AuthTokenType getType() {

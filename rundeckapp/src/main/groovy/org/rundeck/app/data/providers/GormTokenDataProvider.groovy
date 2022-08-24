@@ -1,6 +1,6 @@
 package org.rundeck.app.data.providers
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
+import org.rundeck.app.data.model.v1.AuthTokenMode
 import grails.compiler.GrailsCompileStatic
 import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.AuthenticationToken

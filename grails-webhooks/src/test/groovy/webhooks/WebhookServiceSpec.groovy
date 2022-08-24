@@ -16,7 +16,7 @@
 package webhooks
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenManager
-
+import org.rundeck.app.data.model.v1.AuthTokenMode
 import org.rundeck.app.data.model.v1.AuthenticationToken;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.config.FeatureService
@@ -679,6 +679,16 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
         @Override
         String getName() {
+            return null
+        }
+
+        @Override
+        String getClearToken() {
+            return null
+        }
+
+        @Override
+        AuthTokenMode getTokenMode() {
             return null
         }
     }

@@ -18,7 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
+import org.rundeck.app.data.model.v1.AuthTokenMode
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON

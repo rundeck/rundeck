@@ -16,7 +16,7 @@
 
 package rundeck
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenMode
+import org.rundeck.app.data.model.v1.AuthTokenMode
 
 import grails.testing.gorm.DataTest
 import org.apache.commons.codec.digest.DigestUtils
