@@ -32,7 +32,14 @@ import java.util.*;
 public interface PropertyValidator {
     public boolean isValid(String value) throws ValidationException;
 
-    default boolean isValid(String value,Map<String,Object> props) throws ValidationException {
+    /**
+     * Custom validator to check for any property from a defined plugin.
+     * @param value Regex to validate
+     * @param props Plugin properties
+     * @return Boolean indicating validity of presented values
+     * @throws ValidationException
+     */
+    default boolean isValid(String value, Map<String,Object> props) throws ValidationException {
         return isValid(value);
     }
 }

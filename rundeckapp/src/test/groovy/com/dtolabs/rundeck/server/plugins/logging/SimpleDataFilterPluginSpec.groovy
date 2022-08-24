@@ -227,7 +227,7 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "Test good parameters"() {
 
-        SimpleDataFilterPlugin.RegexValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.RegexValidator()
+        SimpleDataFilterPlugin.RegexPropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.RegexPropertyValidator()
 
         expect:
         simpleDataFilterPluginValidator.isValid(regexValue, props)
@@ -241,7 +241,7 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "Test failing parameters"() {
 
-        SimpleDataFilterPlugin.RegexValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.RegexValidator()
+        SimpleDataFilterPlugin.RegexPropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.RegexPropertyValidator()
 
         when:
         simpleDataFilterPluginValidator.isValid(regexValue, props)
@@ -252,7 +252,7 @@ class SimpleDataFilterPluginSpec extends Specification {
 
         where:
         regexValue   |            props              | expectedException      |     expectedMessage
-        '.*'     | [name: "TestValue"]           | ValidationException |  'Patter must have at least one group\n.*'
-        '(.*)'    | [:]                           | ValidationException    |  'It must be defined the field name\n(.*)'
+            '.*'     | [name: "TestValue"]           | ValidationException    |  'Pattern must have at least one group'
+           '(.*)'    | [:]                           | ValidationException    |  'The Name field must be defined when only one capture group is specified'
     }
 }
