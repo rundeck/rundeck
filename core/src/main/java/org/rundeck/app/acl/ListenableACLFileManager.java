@@ -12,7 +12,7 @@ import java.util.List;
 public class ListenableACLFileManager
         extends DelegateACLFileManager
 {
-    private final List<ACLFileManagerListener> listeners = Collections.synchronizedList(new ArrayList<>());
+    private final Listeners listeners = new ListenersManager();
 
     public ListenableACLFileManager(final ACLFileManager delegate) {
         super(delegate);
@@ -20,12 +20,12 @@ public class ListenableACLFileManager
 
     @Override
     public void addListener(final ACLFileManagerListener listener) {
-        listeners.add(listener);
+        listeners.addListener(listener);
     }
 
     @Override
     public void removeListener(final ACLFileManagerListener listener) {
-        listeners.remove(listener);
+        listeners.removeListener(listener);
     }
 
     @Override
@@ -53,11 +53,11 @@ public class ListenableACLFileManager
 
 
     protected void notifyDeleted(final String fileName) {
-        listeners.forEach(a -> a.aclFileDeleted(fileName));
+        listeners.notifyDeleted(fileName);
     }
 
     protected void notifyUpdated(final String fileName) {
-        listeners.forEach(a -> a.aclFileUpdated(fileName));
+        listeners.notifyUpdated(fileName);
     }
 
 }

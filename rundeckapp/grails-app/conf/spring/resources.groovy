@@ -488,7 +488,7 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
-    auditEventsService(AuditEventsService){
+    auditEventsService(AuditEventsService) {
         frameworkService = ref('frameworkService')
     }
 
