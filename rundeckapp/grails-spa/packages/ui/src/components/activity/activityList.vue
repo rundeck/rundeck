@@ -445,7 +445,7 @@ export default Vue.extend({
         allowAutoRefresh: true
       } as {[key:string]:any},
       autorefresh:false,
-      autorefreshms:30000,
+      autorefreshms:5000,
       autorefreshtimeout:null as null | any,
       sincecount:0,
       loading: false,
@@ -690,15 +690,13 @@ export default Vue.extend({
           withCredentials: true
         })
 
-        if ( !response.data.since ) {
-          this.disableRefresh = !this.disableRefresh;
-        } else {
           if (this.lastDate > 0 && response.data.since && response.data.since.count) {
             this.sincecount = response.data.since.count
           }
-        }
+
       }catch(error){
         //@ts-ignore
+        this.disableRefresh = !this.disableRefresh;
         this.loadError = error.message
       }
     },
@@ -780,7 +778,7 @@ export default Vue.extend({
     checkrefresh(time: number = 0) {
       if(!this.loadingRunning && this.autorefresh && !this.disableRefresh){
         let delay: number = time ? (new Date().getTime() - time) : 0
-        let ms = this.loadError ? (this.autorefreshms * 2) : this.autorefreshms
+        let ms = this.loadError ? (this.autorefreshms * 10) : this.autorefreshms
         ms = time > 0 ? Math.min(60000, Math.max(ms, 5 * delay)) : 0
         this.autorefreshtimeout = setTimeout(() => {
           let cur = new Date()
@@ -851,7 +849,7 @@ export default Vue.extend({
       this.bulkDeleteUrl = window._rundeck.data['bulkDeleteUrl']
       this.activityPageHref = window._rundeck.data['activityPageHref']
       this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
-        this.autorefreshms = window._rundeck.data['autorefreshms'] || 30000
+        this.autorefreshms = window._rundeck.data['autorefreshms'] || 5000
 
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
