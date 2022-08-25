@@ -284,7 +284,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 creator: 'elf',
                 )
         createdToken.save(flush: true)
-        def roles = AuthToken.parseAuthRoles('api_token_group')
+        def roles = AuthenticationToken.parseAuthRoles('api_token_group')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:
@@ -328,7 +328,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 expiration: new Date(123)
                 )
         createdToken.save(flush: true)
-        def roles = AuthToken.parseAuthRoles('a,b')
+        def roles = AuthenticationToken.parseAuthRoles('a,b')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:
@@ -384,7 +384,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
                 expiration: new Date(123)
                 )
         createdToken.save(flush: true)
-        def roles = AuthToken.parseAuthRoles('a,b')
+        def roles = AuthenticationToken.parseAuthRoles('a,b')
         XML.use('v' + request.api_version)
         JSON.use('v' + request.api_version)
         when:

@@ -15,12 +15,14 @@
  */
 package org.rundeck.app.data.model.v1;
 
+import org.rundeck.app.data.utils.Utils;
+
 import java.time.Clock;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.rundeck.app.data.model.v1.AuthTokenMode.*;
 
 public interface AuthenticationToken {
     String getToken();
@@ -56,5 +58,39 @@ public interface AuthenticationToken {
                 .map(String::trim)
                 .filter(s -> !"".equals(s))
                 .collect(Collectors.joining(","));
+    }
+
+    static Set<String> parseAuthRoles(String authRoles){
+        if(authRoles == null || authRoles.trim().isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return Stream.of(authRoles.split(","))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Encodes a clear token value according to the tokenMode supplied.
+     */
+     static String encodeTokenValue(String clearValue, AuthTokenMode mode){
+        if(clearValue == null || clearValue.trim().isEmpty())
+            throw new IllegalArgumentException("Illegal token value supplied: " + clearValue);
+
+        switch (mode) {
+            case SECURED:
+                return Utils.encodeAsSHA256(clearValue);
+            case LEGACY:
+                return clearValue;
+            default:
+                return clearValue;
+        }
+    }
+
+    /**
+     * @return Printable truncated token value
+     */
+    static String printable(String authtoken) {
+        return (authtoken.length() > 5 ? authtoken.substring(0, 5) : "") + "****";
     }
 }

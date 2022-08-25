@@ -140,11 +140,35 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     }
 
+    @Override
+    AuthenticationToken findByTokenAndCreator(final String token, String creator) {
+        AuthenticationToken authToken = AuthToken.findByTokenAndCreator(token, creator)
+        return authToken ?: null
+
+    }
+
+    @Override
+    List<AuthenticationToken> list() {
+        List<AuthenticationToken> tokens = []
+        List<AuthToken> authTokens = AuthToken.list()
+        authTokens.each{authToken ->
+            tokens << authToken
+        }
+        tokens
+    }
+
+    @Override
     AuthenticationToken tokenLookup(final String token){
         def authToken = AuthToken.tokenLookup(token);
         return authToken ?: null
 
     }
 
+    @Override
+    AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType type){
+        def authToken = AuthToken.tokenLookup(token, type);
+        return authToken ?: null
+
+    }
 
 }

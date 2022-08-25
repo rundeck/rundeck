@@ -8,13 +8,18 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.spi.data.DataManager
 import rundeck.AuthToken
 import rundeck.ConfigTagLib
+import rundeck.GormEventStoreServiceSpec
 import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.codecs.HTMLAttributeCodec
 import rundeck.codecs.HTMLContentCodec
 import rundeck.codecs.URIComponentCodec
+import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
 import spock.lang.Specification
@@ -148,8 +153,14 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         whkTk.save()
         def svCtx = Mock(ServletContext)
         request.setAttribute(SetUserInterceptor.RUNNER_RQ_ATTRIB, runnerRq)
-
+        def apiService = new ApiService()
+        apiService.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                new GormTokenDataProvider()
+            }
+        }
         when:
+        interceptor.apiService = apiService
         AuthenticationToken foundToken = interceptor.lookupToken(tk,svCtx,webhookToken)
         String result = foundToken?.getOwnerName()
 

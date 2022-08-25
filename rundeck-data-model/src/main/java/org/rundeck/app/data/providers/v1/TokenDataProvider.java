@@ -18,6 +18,8 @@ public interface TokenDataProvider {
     AuthenticationToken findByUuidAndCreator(String uuid, String creator);
     AuthenticationToken findByTokenAndType(String token, AuthenticationToken.AuthTokenType type);
     AuthenticationToken tokenLookup(String token);
+    AuthenticationToken tokenLookupWithType(String token, AuthenticationToken.AuthTokenType type);
+    AuthenticationToken findByTokenAndCreator(final String token, String creator) ;
+    List<AuthenticationToken> list();
 
-
-}
+    }

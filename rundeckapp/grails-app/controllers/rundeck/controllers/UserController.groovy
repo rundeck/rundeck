@@ -685,11 +685,11 @@ class UserController extends ControllerBase{
         //default to current user profile
         def result = [:]
         try {
-            AuthToken token = apiService.generateUserToken(
+            AuthenticationToken token = apiService.generateUserToken(
                     authContext,
                     tokenDurationSeconds,
                     tokenUser ?: params.login,
-                    AuthToken.parseAuthRoles(tokenRoles),
+                    AuthenticationToken.parseAuthRoles(tokenRoles),
                     true,
                     AuthenticationToken.AuthTokenType.USER,
                     tokenName
@@ -726,7 +726,7 @@ class UserController extends ControllerBase{
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
         try {
-            AuthToken token = adminAuth ?
+            AuthenticationToken token = adminAuth ?
                     apiService.findTokenId(tokenid) :
                     apiService.findUserTokenId(authContext.username, tokenid)
             if (!token) {
@@ -918,7 +918,7 @@ class UserController extends ControllerBase{
                 result=[result: false, error: error]
             }else{
                 def findtoken = params.tokenid ?: params.token
-                AuthToken found = null
+                AuthenticationToken found = null
                 if (adminAuth) {
                     //admin can delete any token
                     found = params.token ?
@@ -927,7 +927,7 @@ class UserController extends ControllerBase{
                 } else {
                     //users can delete owned token
                     found = params.token ?
-                            AuthToken.findByTokenAndCreator(params.token, login) :
+                            apiService.findByTokenAndCreator(params.token, login) :
                             apiService.findUserTokenId(login, params.tokenid)
                 }
 

@@ -43,7 +43,6 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
-import rundeck.AuthToken
 import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
@@ -617,7 +616,7 @@ Since: v11
         }
         Set<String> rolesSet=null
         if (roles instanceof String) {
-            rolesSet = AuthToken.parseAuthRoles(roles)
+            rolesSet = AuthenticationToken.parseAuthRoles(roles)
         } else if (roles instanceof Collection) {
             rolesSet = new HashSet(roles)
         }

@@ -34,7 +34,6 @@ import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.spi.data.DataManager
 import org.rundeck.util.Sizes
-import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -117,12 +116,12 @@ class ApiService implements WebUtilService{
 
         def uuid = UUID.randomUUID().toString()
         String newtoken = tokenData.token?:genRandomString()
-        String encToken = AuthToken.encodeTokenValue(newtoken, tokenMode)
+        String encToken = AuthenticationToken.encodeTokenValue(newtoken, tokenMode)
 
         // regenerate if we find collisions.
-        while (AuthToken.tokenLookup(encToken) != null) {
+        while (tokenProvider.tokenLookup(encToken) != null) {
             newtoken = genRandomString()
-            encToken = AuthToken.encodeTokenValue(newtoken, tokenMode)
+            encToken = AuthenticationToken.encodeTokenValue(newtoken, tokenMode)
         }
 
         SimpleTokenBuilder token1 =  new SimpleTokenBuilder()
@@ -149,7 +148,7 @@ class ApiService implements WebUtilService{
     def Map authResourceForUserToken(String username, Set<String> roles) {
         return AuthorizationUtil.resource(
                 AuthConstants.TYPE_APITOKEN,
-                [username: username, roles: AuthToken.generateAuthRoles(roles)]
+                [username: username, roles: AuthenticationToken.generateAuthRoles(roles)]
         )
     }
     /**
@@ -914,5 +913,20 @@ class ApiService implements WebUtilService{
             }
         }
         found.size()
+    }
+
+    @Transactional
+    AuthenticationToken findByTokenAndCreator(final String token, String creator){
+        return tokenProvider.findAllByCreator(token, creator)
+    }
+
+    @Transactional
+    AuthenticationToken tokenLookup(final String token){
+        return tokenProvider.tokenLookup(token)
+    }
+
+    @Transactional
+    AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType type){
+        return tokenProvider.tokenLookupWithType(token, type)
     }
 }

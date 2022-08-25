@@ -37,7 +37,7 @@ class AuthTokenSpec extends Specification implements DataTest {
     def "parseAuthRoles"() {
 
         when:
-        def result = AuthToken.parseAuthRoles(input)
+        def result = AuthenticationToken.parseAuthRoles(input)
 
         then:
         result == expected as Set

@@ -8,8 +8,6 @@ import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.spi.data.DataManager
-import rundeck.AuthToken
-import org.rundeck.app.data.providers.GormTokenDataProvider
 
 @Transactional
 @GrailsCompileStatic
@@ -65,7 +63,7 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
 
     @Override
     Set<String> parseAuthRoles(final String authRoles) {
-        return AuthToken.parseAuthRoles(authRoles)
+        return AuthenticationToken.parseAuthRoles(authRoles)
     }
 
     @Override

@@ -5,6 +5,7 @@ repositories {
 }
 dependencies {
     api project(":rundeck-data-spi")
+    api 'commons-codec:commons-codec:1.15'
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
