@@ -4,6 +4,7 @@ import grails.plugins.*
 import org.rundeck.grails.plugins.securityheaders.CSPSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.CustomSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.RundeckSecurityHeadersFilter
+import org.rundeck.grails.plugins.securityheaders.SessionIdChangeFilter
 import org.rundeck.grails.plugins.securityheaders.XCTOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XFOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XXSSPSecurityHeaderProvider
@@ -77,6 +78,12 @@ Brief summary/description of the plugin.
             }
             rundeckSecHeadersFilterReg(FilterRegistrationBean) {
                 filter = ref("rundeckSecurityHeadersFilter")
+                enabled = true
+            }
+
+            rundeckSessionIdChangeFilter(SessionIdChangeFilter)
+            rundeckSessionIdChangeFilterReg(FilterRegistrationBean) {
+                filter = ref("rundeckSessionIdChangeFilter")
                 enabled = true
             }
         }
