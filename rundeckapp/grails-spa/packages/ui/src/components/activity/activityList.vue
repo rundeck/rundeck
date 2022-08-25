@@ -721,18 +721,16 @@ export default Vue.extend({
             withCredentials: true
         })
 
-        if (response.data.executions.length > 0) {
-          this.disableRefresh = !this.disableRefresh;
-        } else {
-            let executions = response.data.executions.map((e: any) => {
+          let executions = response.data.executions.map((e: any) => {
               let { 'date-started': dateStarted, 'date-completed': dateCompleted } = e
               return Object.assign({ dateStarted, dateCompleted }, e) as Execution
-            })
+          })
           this.running = { executions, paging: response.data.paging }
           this.loadingRunning = false
           this.eventBus.$emit('activity-nowrunning-count', executions.length)
-        }
+
       }catch(error){
+        this.disableRefresh = !this.disableRefresh;
         this.loadingRunning=false
         //@ts-ignore
         this.loadError = error.message
