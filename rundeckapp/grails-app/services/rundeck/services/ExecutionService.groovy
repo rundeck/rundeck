@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
+import com.dtolabs.rundeck.core.audit.ActionTypes
+import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
@@ -88,6 +90,7 @@ import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
+import rundeck.services.audit.AuditEventsService
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.execution.ThresholdValue
@@ -147,6 +150,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def executorService
     JobLifecyclePluginService jobLifecyclePluginService
     def executionLifecyclePluginService
+    AuditEventsService auditEventsService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -2536,8 +2540,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}}: Limit of running executions has been reached.', 'conflict')
         }
 
-        return int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
+        Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
+        
+        // Publish audit event for new job run.
+        if(auditEventsService) {
+            auditEventsService.eventBuilder()
+                .setResourceType(ResourceTypes.JOB)
+                .setResourceName("${jobReference.project}:${jobReference.jobAndGroup}")
+                .setResourceName("${se.project}:${se.uuid}:${se.generateFullName()}:${newExec.id}")
+                .setActionType(ActionTypes.RUN)
+                .publish()
+        }
 
+        return newExec
     }
 
     /**

@@ -122,6 +122,11 @@ class ScmLoaderService implements EventBusAware {
                         long retryTimes = getScmLoaderInitialRetryTimes()
                         long retryDelay = getScmLoaderInitialRetryDelay()
 
+                        if (pluginConfigData.properties.get("flagToReturnProcess")) {
+                            pluginConfigData.properties.remove("flagToReturnProcess")
+                            scmService.storeConfig(pluginConfigData, project, integration)
+                        }
+
                         while (!process){
                             try {
                                 if (integration == scmService.EXPORT) {

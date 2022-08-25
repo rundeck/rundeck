@@ -445,7 +445,7 @@ export default Vue.extend({
         allowAutoRefresh: true
       } as {[key:string]:any},
       autorefresh:false,
-      autorefreshms:5000,
+      autorefreshms:30000,
       autorefreshtimeout:null as null | any,
       sincecount:0,
       loading: false,
@@ -480,6 +480,7 @@ export default Vue.extend({
         filterName:''
       } as {[key:string]:string},
       currentFilter:'',
+      disableRefresh:false,
     }
   },
   methods: {
@@ -689,8 +690,12 @@ export default Vue.extend({
           withCredentials: true
         })
 
-        if(this.lastDate>0  && response.data.since && response.data.since.count ){
-            this.sincecount=response.data.since.count
+        if ( !response.data.since ) {
+          this.disableRefresh = !this.disableRefresh;
+        } else {
+          if (this.lastDate > 0 && response.data.since && response.data.since.count) {
+            this.sincecount = response.data.since.count
+          }
         }
       }catch(error){
         //@ts-ignore
@@ -716,13 +721,17 @@ export default Vue.extend({
             withCredentials: true
         })
 
-        let executions = response.data.executions.map((e: any) => {
-          let {'date-started': dateStarted, 'date-completed': dateCompleted} = e
-          return Object.assign({dateStarted, dateCompleted}, e) as Execution
-        })
-        this.running={executions,paging:response.data.paging}
-        this.loadingRunning=false
-        this.eventBus.$emit('activity-nowrunning-count', executions.length)
+        if (response.data.executions.length > 0) {
+          this.disableRefresh = !this.disableRefresh;
+        } else {
+            let executions = response.data.executions.map((e: any) => {
+              let { 'date-started': dateStarted, 'date-completed': dateCompleted } = e
+              return Object.assign({ dateStarted, dateCompleted }, e) as Execution
+            })
+          this.running = { executions, paging: response.data.paging }
+          this.loadingRunning = false
+          this.eventBus.$emit('activity-nowrunning-count', executions.length)
+        }
       }catch(error){
         this.loadingRunning=false
         //@ts-ignore
@@ -771,9 +780,9 @@ export default Vue.extend({
       this.loadActivity(offset)
     },
     checkrefresh(time: number = 0) {
-      if(!this.loadingRunning && this.autorefresh){
+      if(!this.loadingRunning && this.autorefresh && !this.disableRefresh){
         let delay: number = time ? (new Date().getTime() - time) : 0
-        let ms = this.loadError ? (this.autorefreshms * 10) : this.autorefreshms
+        let ms = this.loadError ? (this.autorefreshms * 2) : this.autorefreshms
         ms = time > 0 ? Math.min(60000, Math.max(ms, 5 * delay)) : 0
         this.autorefreshtimeout = setTimeout(() => {
           let cur = new Date()
@@ -844,7 +853,7 @@ export default Vue.extend({
       this.bulkDeleteUrl = window._rundeck.data['bulkDeleteUrl']
       this.activityPageHref = window._rundeck.data['activityPageHref']
       this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
-        this.autorefreshms = window._rundeck.data['autorefreshms'] || 5000
+        this.autorefreshms = window._rundeck.data['autorefreshms'] || 30000
 
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max

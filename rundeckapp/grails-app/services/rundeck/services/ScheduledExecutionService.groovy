@@ -17,6 +17,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.core.audit.ActionTypes
+import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -96,6 +98,7 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
+import rundeck.services.audit.AuditEventsService
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.utils.OptionsUtil
@@ -119,6 +122,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def JobScheduleManager rundeckJobScheduleManager
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    AuditEventsService auditEventsService
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -1015,10 +1019,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             //after delete job
             rundeckJobDefinitionManager.afterDelete(scheduledExecution, authContext)
-            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
 
             //issue event directly
+            def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, scheduledExecution, originalRef)
             notify('jobChanged', event)
+
+            // publish audit event
+            if(auditEventsService) {
+                auditEventsService.eventBuilder()
+                    .setResourceType(ResourceTypes.JOB)
+                    .setActionType(ActionTypes.DELETE)
+                    .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
+                    .publish()
+            }
+
         }
         return new DeleteJobResult(success:success,error:errmsg)
     }
@@ -3409,6 +3423,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         boolean remoteSchedulingChanged = scheduleResult == null || scheduleResult == [null, null]
 
+        // publish audit event
+        if(auditEventsService) {
+            auditEventsService.eventBuilder()
+                .setResourceType(ResourceTypes.JOB)
+                .setActionType(ActionTypes.UPDATE)
+                .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
+                .publish()
+        }
+
         def eventType=JobChangeEvent.JobChangeEventType.MODIFY
         if (renamed) {
             eventType = JobChangeEvent.JobChangeEventType.MODIFY_RENAME
@@ -3498,6 +3521,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     .save(flush: true)
         }
         rescheduleJob(scheduledExecution)
+
+        // publish audit event
+        if(auditEventsService) {
+            auditEventsService.eventBuilder()
+                .setResourceType(ResourceTypes.JOB)
+                .setActionType(ActionTypes.CREATE)
+                .setResourceName("${scheduledExecution.project}:${scheduledExecution.uuid}:${scheduledExecution.generateFullName()}")
+                .publish()
+        }
+        
         def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.CREATE, scheduledExecution)
         return [success: true, scheduledExecution: scheduledExecution, jobChangeEvent: event]
     }
@@ -3840,6 +3873,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         int timeout = 10
         int contimeout = 0
         int retryCount = 5
+        int httpResponseCode = 0
+
         if (configurationService.getString("jobs.options.remoteUrlTimeout")) {
             try {
                 timeout = configurationService.getInteger("jobs.options.remoteUrlTimeout", null)
@@ -3911,37 +3946,53 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
-        try {
-            def framework = frameworkService.getRundeckFramework()
-            def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
-            boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
 
-            remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
-            result = remoteResult.json
-            if (remoteResult.stats) {
-                remoteStats.putAll(remoteResult.stats)
+        int count = retryCount
+
+        //cycle to retry if getRemoteJSON dont get the remote values
+        do{
+            try {
+                //validate if not the firt attemp
+                if(retryCount > count){
+                    Thread.sleep(contimeout*1000)
+                }
+                def framework = frameworkService.getRundeckFramework()
+                def projectConfig = framework.frameworkProjectMgr.loadProjectConfig(scheduledExecution.project)
+                boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
+
+                remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+                result = remoteResult.json
+                if (remoteResult.stats) {
+                    remoteStats.putAll(remoteResult.stats)
+                    if(remoteResult.stats.httpStatusCode){
+                        httpResponseCode = remoteResult.stats.httpStatusCode
+                    }
+                }
+            } catch (Exception e) {
+                err.message = "Failed loading remote option values"
+                err.exception = e
+                err.srcUrl = cleanUrl
+                log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
+                e.printStackTrace()
+                remoteStats.finishTime = System.currentTimeMillis()
+                remoteStats.durationTime = remoteStats.finishTime - remoteStats.startTime
             }
-        } catch (Exception e) {
-            err.message = "Failed loading remote option values"
-            err.exception = e
-            err.srcUrl = cleanUrl
-            log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
-            e.printStackTrace()
-            remoteStats.finishTime = System.currentTimeMillis()
-            remoteStats.durationTime = remoteStats.finishTime - remoteStats.startTime
-        }
-        if (remoteResult.error) {
-            err.message = "Failed loading remote option values"
-            err.exception = new Exception(remoteResult.error)
-            err.srcUrl = cleanUrl
-            log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
-        }
-        logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
+            if (remoteResult.error) {
+                err.message = "Failed loading remote option values"
+                err.exception = new Exception(remoteResult.error)
+                err.srcUrl = cleanUrl
+                log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
+            }
+            logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
+            count--
+        }while(count > 0 && (httpResponseCode < 200 || httpResponseCode > 300 ))
+
         //validate result contents
         boolean valid = true;
         def validationerrors = []
         if (result) {
             if (result instanceof Collection) {
+                def resultForString = []
                 result.eachWithIndex { entry, i ->
                     if (entry instanceof JSONObject) {
                         if (!entry.name) {
@@ -3955,7 +4006,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     } else if (!(entry instanceof String)) {
                         valid = false;
                         validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
+                    } else if (entry instanceof String){
+                        resultForString << [name: entry, value: entry]
                     }
+                }
+                if(!resultForString.isEmpty()){
+                    result = resultForString
                 }
             } else if (result instanceof JSONObject) {
                 JSONObject jobject = result

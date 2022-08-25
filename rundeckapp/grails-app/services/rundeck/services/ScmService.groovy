@@ -777,6 +777,7 @@ class ScmService {
             def context = scmOperationContext(auth, project)
             def plugin = initPlugin(integration, context, type, scmPluginConfig.config)
             scmPluginConfig.enabled = true
+            scmPluginConfig.properties.put("flagToReturnProcess", "true")
             storeConfig(scmPluginConfig, project, integration)
             if (integration == IMPORT) {
                 def nextAction = plugin.getSetupAction(context)

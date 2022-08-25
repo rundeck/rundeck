@@ -58,6 +58,18 @@ public class RundeckConfigBase {
     RundeckApiConfig api;
     ScmLoader scmLoader;
     RundeckHealthIndicatorConfig health;
+    RundeckJobsConfig jobs;
+
+    @Data public static class RundeckJobsConfig{
+        JobOptionsConfig options;
+    }
+
+    @Data
+    public static class JobOptionsConfig{
+        int remoteUrlTimeout;
+        int remoteUrlConnectionTimeout;
+        int remoteUrlRetry;
+    }
 
     @Data
     public static class UserSessionProjectsCache {
@@ -628,6 +640,8 @@ public class RundeckConfigBase {
         public static class Login {
             String welcome;
             String welcomeHtml;
+            String footerMessageHtml;
+            String disclaimer;
         }
 
         @Data
@@ -660,6 +674,13 @@ public class RundeckConfigBase {
     public static class ScmLoader {
         Long delay;
         Long interval;
+        Init init;
+
+        @Data
+        public static class Init {
+            Long retry;
+            Long delay;
+        }
     }
 
     /**

@@ -13,7 +13,7 @@ echo "TEST: /api/projects "
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out
 
-assert_json_value '59' 'length' $DIR/curl.out
+assert_json_value '60' 'length' $DIR/curl.out
 
 
 rm $DIR/curl.out
