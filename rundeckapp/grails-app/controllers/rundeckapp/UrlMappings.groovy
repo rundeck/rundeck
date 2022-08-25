@@ -312,6 +312,8 @@ class UrlMappings {
 
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
+        "/helplink/name"(controller:'helplink',action:'helplinkName')
+
         "404"(controller:"error",action:"notFound")
         "405"(controller:"error",action:"notAllowed")
         "500"(controller:"error",action:"fiveHundred")
