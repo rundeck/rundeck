@@ -16,10 +16,10 @@
 
 /*
 * ExternalScriptExecutor.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/31/11 6:18 PM
-* 
+*
 */
 package com.dtolabs.rundeck.plugin.script;
 
@@ -258,6 +258,14 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
             reason = StepFailureReason.IOFailure;
             message = e.getMessage();
         }
+
+        try {
+            exec.destroyForcibly();
+        } catch(Exception e) {
+            executionContext.getExecutionListener().log(3,
+                "[script-exec]: exception when destroying process: " + e.getMessage());
+        }
+
         executionContext.getExecutionListener().log(3,
                                                     "[script-exec]: result code: " + result + ", success: " + success);
         return NodeExecutorResultImpl.createFailure(reason, message, node, result);
