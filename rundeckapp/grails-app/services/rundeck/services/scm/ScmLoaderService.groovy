@@ -162,6 +162,7 @@ class ScmLoaderService implements EventBusAware {
     }
 
     def scmToFalse(ScmPluginConfigData scmPluginConfig, String project, String integration) {
+        log.debug("SCM disabled")
         scmPluginConfig.enabled = false
         scmService.storeConfig(scmPluginConfig, project, integration)
     }
