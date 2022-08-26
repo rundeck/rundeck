@@ -268,6 +268,7 @@
         <g:set var="syntaxSelectable" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_SELECTABLE)}"/>
         <g:set var="syntaxModes" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODES_ALLOWED)}"/>
 
+        <g:set var="extraInputCss" value="${extraInputCss?.replaceAll("context_var_autocomplete","")}"/>
 
         <g:set var="scriptTokenAutocomplete" value="${prop.renderingOptions?.(StringRenderingConstants.SCRIPT_TOKEN_AUTOCOMPLETE)}"/>
         <g:set var="scriptTokenAutocompleteCss" value="${scriptTokenAutocomplete&&StringRenderingConstants.ScriptTokenAutocomplete.ENABLED.equalsOrString(scriptTokenAutocomplete)?'_wfscriptitem':''}"/>
