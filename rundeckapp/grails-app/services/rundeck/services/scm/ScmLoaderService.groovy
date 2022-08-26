@@ -33,8 +33,8 @@ class ScmLoaderService implements EventBusAware {
     ScheduledExecutionService scheduledExecutionService
     ConfigurationService configurationService
     public static final long DEFAULT_LOADER_DELAY = 0
-    public static final long DEFAULT_LOADER_INTERVAL_SEC = 20
-    public static final long INIT_RETRY_TIMES = 5
+    public static final long DEFAULT_LOADER_INTERVAL_SEC = 10
+    public static final long INIT_RETRY_TIMES = 2
     public static final long INIT_RETRY_TIMES_DELAY = 1000
 
     /**
@@ -140,6 +140,7 @@ class ScmLoaderService implements EventBusAware {
                                 if(retryCount>retryTimes){
                                     scmFailedProjectInit.put(projectIntegration, pluginConfigData)
                                     process = true
+                                    scmToFalse(pluginConfigData, project, integration)
                                     removingLoaderProcess(project, integration)
                                 }else{
                                     retryCount++
@@ -158,6 +159,11 @@ class ScmLoaderService implements EventBusAware {
                 TimeUnit.SECONDS
         )
         scheduler
+    }
+
+    def scmToFalse(ScmPluginConfigData scmPluginConfig, String project, String integration) {
+        scmPluginConfig.enabled = false
+        scmService.storeConfig(scmPluginConfig, project, integration)
     }
 
     def removingLoaderProcess(String project, String integration){
