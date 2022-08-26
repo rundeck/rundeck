@@ -313,7 +313,7 @@ class ApiController extends ControllerBase{
     @Tag(name = "tokens")
     @CompileStatic
     def apiTokenGet(String tokenid) {
-        AuthToken oldtoken = validateTokenRequest(tokenid)
+        AuthenticationToken oldtoken = validateTokenRequest(tokenid)
 
         if (!oldtoken) {
             return
@@ -323,7 +323,7 @@ class ApiController extends ControllerBase{
     }
 
     @CompileStatic
-    private AuthToken validateTokenRequest(String tokenid){
+    private AuthenticationToken validateTokenRequest(String tokenid){
         if (!apiService.requireApi(request, response)) {
             return null
         }
@@ -342,8 +342,8 @@ class ApiController extends ControllerBase{
         //admin: search by token ID
         //user: search for token ID owned by user
         AuthenticationToken oldtoken = adminAuth ?
-                apiService.findTokenId(params.tokenid) :
-                apiService.findUserTokenId(authContext.username, params.tokenid)
+                apiService.findTokenId(tokenid) :
+                apiService.findUserTokenId(authContext.username, tokenid)
 
         if (!apiService.requireExistsFormat(response, oldtoken, ['Token', tokenid])) {
             return null
@@ -382,7 +382,7 @@ class ApiController extends ControllerBase{
     @Tag(name = "tokens")
     @CompileStatic
     def apiTokenDelete(String tokenid) {
-        AuthToken oldtoken = validateTokenRequest(tokenid)
+        AuthenticationToken oldtoken = validateTokenRequest(tokenid)
 
         if (!oldtoken) {
             return
@@ -446,20 +446,18 @@ class ApiController extends ControllerBase{
         if (!adminAuth && user && user != authContext.username) {
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'User', user])
         }
-        def tokenlist
+        List<AuthenticationToken> tokenlist
         if (user) {
             tokenlist = apiService.findUserTokensCreator(user)
         } else if (!adminAuth) {
             tokenlist = apiService.findUserTokensCreator(authContext.username)
         } else {
-            tokenlist = AuthToken.list()
+            tokenlist = apiService.listTokens()
         }
 
 
-        def data = new ListTokens(params.user, !params.user, tokenlist.findAll {
-            it.type != AuthenticationToken.AuthTokenType.WEBHOOK
-            // From now on we always mask tokens.
-//        def apiv19 = request.api_version >= ApiVersions.V19
+        def data = new ListTokens(user, !user, tokenlist.findAll {tkn->
+            tkn.getType() != AuthenticationToken.AuthTokenType.WEBHOOK
         }.collect {
             new Token(it, true, apiVersion < ApiVersions.V19)
         })

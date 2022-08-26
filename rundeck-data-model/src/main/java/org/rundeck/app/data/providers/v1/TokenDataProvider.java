@@ -6,6 +6,10 @@ import org.rundeck.spi.data.DataAccessException;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * TokenDataProvider defines a base set of AuthenticationToken datastore methods.
+ *
+ */
 public interface TokenDataProvider {
     AuthenticationToken getData(String id);
     String create(AuthenticationToken data);

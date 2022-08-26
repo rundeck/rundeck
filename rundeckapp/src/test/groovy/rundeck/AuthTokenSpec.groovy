@@ -56,7 +56,7 @@ class AuthTokenSpec extends Specification implements DataTest {
 
     def "generate"() {
         when:
-        def result = AuthToken.generateAuthRoles(input)
+        def result = AuthenticationToken.generateAuthRoles(input)
 
         then:
         result == expected

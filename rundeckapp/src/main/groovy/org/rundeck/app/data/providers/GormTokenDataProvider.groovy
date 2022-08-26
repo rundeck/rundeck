@@ -13,8 +13,11 @@ import rundeck.User
 import rundeck.services.UserService
 import rundeck.services.data.AuthTokenDataService
 
+import javax.transaction.Transactional
+
 @GrailsCompileStatic
 @Slf4j
+@Transactional
 class GormTokenDataProvider implements TokenDataProvider {
     @Autowired
     AuthTokenDataService authTokenDataService
@@ -48,7 +51,7 @@ class GormTokenDataProvider implements TokenDataProvider {
 
         AuthToken token = new AuthToken(
                 token: data.token,
-                authRoles: AuthToken.generateAuthRoles(data.getAuthRolesSet()),
+                authRoles: AuthenticationToken.generateAuthRoles(data.getAuthRolesSet()),
                 user: tokenOwner,
                 expiration: data.expiration,
                 uuid: id,

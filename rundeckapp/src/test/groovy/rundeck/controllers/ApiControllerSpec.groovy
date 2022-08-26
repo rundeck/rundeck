@@ -33,6 +33,7 @@ import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeSystem
@@ -110,6 +111,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
 
         controller.apiService = Mock(ApiService) {
             hasTokenAdminAuth(_) >> { true }
+            listTokens() >> { AuthToken.list() }
         }
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -133,7 +135,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         bob.save()
         AuthToken createdToken = new AuthToken(
                 user: bob,
-                type: AuthTokenType.USER,
+                type: AuthenticationToken.AuthTokenType.USER,
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',

@@ -929,4 +929,9 @@ class ApiService implements WebUtilService{
     AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType type){
         return tokenProvider.tokenLookupWithType(token, type)
     }
+
+    @Transactional
+    List<AuthenticationToken> listTokens(){
+        return tokenProvider.list()
+    }
 }
