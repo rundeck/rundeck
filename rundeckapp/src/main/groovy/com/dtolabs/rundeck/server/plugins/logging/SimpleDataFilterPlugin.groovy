@@ -69,7 +69,7 @@ the data key, and the second group defines the data value.
 See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) documentation.''',
             defaultValue = SimpleDataFilterPlugin.PATTERN,
             required = true,
-            validatorClass = SimpleDataFilterPlugin.RegexPropertyValidator
+            validatorClass = SimpleDataFilterPlugin.NamePropertyValidator
     )
     String regex
 
@@ -116,7 +116,7 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
         }
     }
 
-    static class RegexPropertyValidator implements PropertyValidator {
+    static class NamePropertyValidator implements PropertyValidator {
 
         @Override
         boolean isValid(String value) throws ValidationException {

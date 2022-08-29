@@ -227,7 +227,7 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "Test good parameters"() {
 
-        SimpleDataFilterPlugin.RegexPropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.RegexPropertyValidator()
+        SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()
 
         expect:
         simpleDataFilterPluginValidator.isValid(regexValue, props)
@@ -241,7 +241,7 @@ class SimpleDataFilterPluginSpec extends Specification {
     @Unroll
     def "Test failing parameters"() {
 
-        SimpleDataFilterPlugin.RegexPropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.RegexPropertyValidator()
+        SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()
 
         when:
         simpleDataFilterPluginValidator.isValid(regexValue, props)
