@@ -103,11 +103,11 @@ export default {
         return null
       }
     },
-    /**
-     * Return 'style' variant if the motd text contains a html comment starting with <!-- style:variant
-     * for the danger, warning, primary, info, success styles
-     * @returns {string}
-     */
+    // /**
+    //  * Return 'style' variant if the motd text contains a html comment starting with <!-- style:variant
+    //  * for the danger, warning, primary, info, success styles
+    //  * @returns {string}
+    //  */
     motdStyle () {
       if(!this.project.readme.motd){
         return ''
@@ -119,28 +119,28 @@ export default {
       }
       return 'default'
     },
-    /**
-     * Return 'alert-*' variant if the motd text contains a html comment starting with <!-- style:variant
-     * for the danger, warning, primary, info, success styles
-     * @returns {string}
-     */
+    // /**
+    //  * Return 'alert-*' variant if the motd text contains a html comment starting with <!-- style:variant
+    //  * for the danger, warning, primary, info, success styles
+    //  * @returns {string}
+    //  */
     alertStyle () {
       return `bg-${this.motdStyle}`
     },
     styleCss () {
       let style = {}
-      if (!this.project.readme.motd) {
-        return style
-      }
-      const keys={fgcolor:'color',bgcolor:'backgroundColor'}
-      let regex = /<!--\s+(fgcolor|bgcolor):(#[a-fA-F0-9]{6})\s+-->/g
-      let found = regex.exec(this.project.readme.motd)
-      while (found) {
-        if(found.length>2 && keys[found[1]]) {
-          style[keys[found[1]]] = found[2]
-        }
-        found = regex.exec(this.project.readme.motd)
-      }
+    //   if (!this.project.readme.motd) {
+    //     return style
+    //   }
+    //   const keys={fgcolor:'color',bgcolor:'backgroundColor'}
+    //   let regex = /<!--\s+(fgcolor|bgcolor):(#[a-fA-F0-9]{6})\s+-->/g
+    //   let found = regex.exec(this.project.readme.motd)
+    //   while (found) {
+    //     if(found.length>2 && keys[found[1]]) {
+    //       style[keys[found[1]]] = found[2]
+    //     }
+    //     found = regex.exec(this.project.readme.motd)
+    //   }
       return style
     }
   },
