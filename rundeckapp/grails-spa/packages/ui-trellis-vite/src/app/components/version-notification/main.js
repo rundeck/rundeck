@@ -39,12 +39,12 @@ const i18n = new VueI18n({
 
 })
 
-/* eslint-disable no-new */
-new Vue({
-  el: '#version-notification-vue',
-  components: {
-    App
-  },
-  template: '<App/>',
-  i18n
-})
+if(document.getElementById("version-notification-vue"))
+  new Vue({
+    el: '#version-notification-vue',
+    components: {
+      App
+    },
+    template: '<App/>',
+    i18n
+  })

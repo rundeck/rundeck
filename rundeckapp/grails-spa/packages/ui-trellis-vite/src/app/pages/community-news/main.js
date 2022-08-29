@@ -43,11 +43,12 @@ const i18n = new VueI18n({
 })
 
 /* eslint-disable no-new */
-new Vue({
-  el: '#community-news-vue',
-  components: {
-    App
-  },
-  template: '<App/>',
-  i18n
-})
+if(document.getElementById("community-news-vue"))
+  new Vue({
+    el: '#community-news-vue',
+    components: {
+      App
+    },
+    template: '<App/>',
+    i18n
+  })

@@ -44,6 +44,7 @@ const i18n = new VueI18n({
 })
 
 /* eslint-disable no-new */
+if(document.getElementById("user-summary-vue"))
 new Vue({
   el: '#user-summary-vue',
   components: {

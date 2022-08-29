@@ -41,13 +41,14 @@ const i18n = new VueI18n({
 })
 
 /* eslint-disable no-new */
-new Vue({
-  el: '#repository-vue',
-  store,
-  router,
-  components: {
-    App
-  },
-  template: '<App/>',
-  i18n
-})
+if(document.getElementById("repository-vue"))
+  new Vue({
+    el: '#repository-vue',
+    store,
+    router,
+    components: {
+      App
+    },
+    template: '<App/>',
+    i18n
+  })

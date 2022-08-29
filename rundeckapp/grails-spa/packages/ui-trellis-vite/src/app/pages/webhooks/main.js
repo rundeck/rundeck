@@ -49,10 +49,11 @@ const i18n = new VueI18n({
 })
 
 // eslint-disable-next-line no-new
-new Vue({
-  i18n,
-  el: '#webhook-vue',
-  components: { App },
-  provide: {rootStore},
-  template: "<App/>"
-})
+if(document.getElementById("webhook-vue"))
+  new Vue({
+    i18n,
+    el: '#webhook-vue',
+    components: { App },
+    provide: {rootStore},
+    template: "<App/>"
+  })
