@@ -2014,6 +2014,53 @@ class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUn
 
     }
     
+    def "When a exception is thrown during project's import process, the user is flashed with errors"(){
+        setup:
+        controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
+
+            1 * authResourceForProjectAcl('test') >> null
+            1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
+        }
+        controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
+            1 * project(_,_)>>Mock(AuthorizingProject){
+                1 * getResource()>>Stub(IRundeckProject){
+                    getName()>>'test'
+                }
+            }
+        }
+        controller.frameworkService=Mock(FrameworkService){
+
+            1 * getFrameworkProject('test') >> null
+            1 * getRundeckFramework() >> null
+
+            0 * _(*_)
+        }
+        controller.projectService=Mock(ProjectService){
+            1*importToProject(null,null,null,!null, {
+                it.jobUuidOption== 'preserve'
+                it.importExecutions== true
+                it.importConfig== false
+                it.importACL== true
+            })>>new Exception("expected exception")
+            1 * validateAllProjectComponentImportOptions(_) >> [:]
+            0 * _(*_)
+        }
+        session.subject= new Subject()
+
+        when:
+        setupFormTokens()
+        params.project="test"
+        params.importACL='true'
+        response.format='json'
+        request.method='POST'
+        def file = new GrailsMockMultipartFile('zipFile', 'data'.bytes)
+        request.addFile file
+        def result=controller.importArchive()
+
+        then:
+        flash.error == 'There was some errors with the import process: [ No such property: success for class: java.lang.Exception ]'
+    }
+
     def "import archive no importACL"(){
         setup:
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
