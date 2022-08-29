@@ -37,8 +37,10 @@ import './app/pages/dynamic-form/main'
 import './app/pages/job/editor/main'
 
 
+
 const app = createApp({
   render: () => h(App),
 });
 
-app.mount("#app");
+if(document.getElementById("sandbox-app"))
+  app.mount("#sandbox-app");
