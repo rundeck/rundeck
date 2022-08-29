@@ -432,7 +432,7 @@ class ProjectController extends ControllerBase{
                 }
                 flash.warn=warning.join(",")
                 }catch( Exception e ){
-                    flash.error="There was some errors with the import process with at least one of the jobs: [ ${e.getMessage()} ]"
+                    flash.error="There was some errors with the import process: [ ${e.getMessage()} ]"
                 }
 
                 return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
