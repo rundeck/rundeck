@@ -7,7 +7,6 @@ ext.spaBuildDir = "${buildDir}/spa"
 
 configurations{
   spa
-  lib
   uiTrellis {
       canBeConsumed(true)
   }
@@ -17,9 +16,8 @@ configurations{
 }
 
 dependencies {
-    lib project(path: ':rundeckapp:grails-spa:packages:ui-trellis', configuration: 'lib')
-    uiTrellis project(path: ':rundeckapp:grails-spa:packages:ui-trellis', configuration: 'packages')
-    uiTrellisVite project(path: ':rundeckapp:grails-spa:packages:ui-trellis-vite', configuration: 'packages')
+  uiTrellis project(path: ':rundeckapp:grails-spa:packages:ui-trellis', configuration: 'packages')
+  uiTrellisVite project(path: ':rundeckapp:grails-spa:packages:ui-trellis-vite', configuration: 'packages')
 }
 
 node{
@@ -35,48 +33,20 @@ node{
 }
 
 
-task noop() {
-  doLast {
-    true
-  }
-}
 
 tasks.register("runNpmBuild", NpmTask) {
-    dependsOn configurations.uiTrellis
 
-    inputs.files(configurations.uiTrellis.allArtifacts)
-    inputs.file 'packages/ui-trellis/build/package/rundeck-ui-trellis.tgz'
-    inputs.file 'packages/ui/package.json'
-    inputs.file 'packages/ui/package-lock.json'
-    inputs.file 'packages/ui/babel.config.js'
-    inputs.file 'packages/ui/vue.config.js'
-    inputs.file 'packages/ui/tsconfig.json'
-    inputs.file 'packages/ui/.env.development'
-    inputs.file 'packages/ui/.env.production'
-
-    inputs.dir 'packages/ui/src'
-
-    outputs.dir(file("$spaBuildDir"))
-    outputs.cacheIf { true }
-
-    def npmCommand = System.env.CI ?
-      'ci:build' :
-      'dev:build'
-
-    args = ['run', npmCommand]
-
-    execOverrides {
-      it.workingDir = './packages/ui'
-    }
-}
-
-tasks.register("runNpmBuildApp", NpmTask) {
-    dependsOn configurations.uiTrellisVite
-
-    inputs.files(configurations.uiTrellis.allArtifacts)
+    inputs.file 'packages/ui-trellis-vite/package.json'
+    inputs.file 'packages/ui-trellis-vite/package-lock.json'
+    inputs.file 'packages/ui-trellis-vite/vite.config.app.js'
+    inputs.file 'packages/ui-trellis-vite/tsconfig.json'
+    inputs.file 'packages/ui-trellis-vite/.env.development'
+    inputs.file 'packages/ui-trellis-vite/.env.production'
 
     inputs.dir 'packages/ui-trellis-vite/src'
 
+    outputs.dir(file("$spaBuildDir"))
+    outputs.cacheIf { true }
 
     def npmCommand = System.env.CI ?
       'ci:build:app' :
@@ -89,21 +59,6 @@ tasks.register("runNpmBuildApp", NpmTask) {
     }
 }
 
-tasks.register("runNpmBuildVite", NpmTask) {
-    dependsOn configurations.uiTrellisVite
-
-    inputs.files(configurations.uiTrellisVite.allArtifacts)
-    inputs.file 'packages/ui-trellis-vite/build/package/rundeck-ui-trellis-vite.tgz'
-
-    outputs.dir(file("$spaBuildDir"))
-    outputs.cacheIf { true }
-
-    def npmCommand = System.env.CI ?
-      'ci:build' :
-      'dev:build'
-
-    args = ['run', npmCommand]
-}
 
 
 assemble.dependsOn runNpmBuild
