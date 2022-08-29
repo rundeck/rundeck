@@ -2058,7 +2058,7 @@ class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUn
         def result=controller.importArchive()
 
         then:
-        flash.error == 'There was some errors with the import process: [ No such property: success for class: java.lang.Exception ]'
+        flash.error == 'There was some errors in the import process: [ No such property: success for class: java.lang.Exception ]'
     }
 
     def "import archive no importACL"(){
