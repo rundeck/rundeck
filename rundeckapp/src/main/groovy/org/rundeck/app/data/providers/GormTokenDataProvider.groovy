@@ -33,7 +33,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
-    String create( final AuthenticationToken data) {
+    String create( final AuthenticationToken data) throws DataAccessException {
         return createWithId(
                 data.uuid ?: UUID.randomUUID().toString(),
                 data
@@ -41,10 +41,10 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
-    String createWithId( final String id, final AuthenticationToken data) {
+    String createWithId( final String id, final AuthenticationToken data) throws DataAccessException {
         User tokenOwner = userService.findOrCreateUser(data.ownerName)
         if (!tokenOwner) {
-            throw new Exception("Couldn't find user: ${data.ownerName}")
+            throw new DataAccessException("Couldn't find user: ${data.ownerName}")
         }
 
         def tokenType = AuthenticationToken.AuthTokenType.valueOf(data.type.toString())
@@ -69,7 +69,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
-    void update(final String id, final AuthenticationToken data) {
+    void update(final String id, final AuthenticationToken data) throws DataAccessException {
         def token = authTokenDataService.getByUuid(id)
         if (!token) {
             throw new DataAccessException("Not found: token with ID: ${id}")

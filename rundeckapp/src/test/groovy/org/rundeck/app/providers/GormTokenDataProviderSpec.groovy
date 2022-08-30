@@ -1,15 +1,14 @@
 package org.rundeck.app.providers
 
 import grails.testing.gorm.DataTest
-import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.spi.data.DataAccessException
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.UserService
 import rundeck.services.data.AuthTokenDataService
-import spock.lang.Specification
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
 
@@ -56,6 +55,22 @@ class GormTokenDataProviderSpec extends RundeckHibernateSpec implements DataTest
         "Token3"    | "user3"    | 'd'       | AuthTokenType.WEBHOOK  | 'def' | UUID.randomUUID().toString()
     }
 
+    def "should throw an error when create fails"() {
+        when:
+        provider.userService = Mock(UserService){
+            findOrCreateUser(_) >>  new User(login: "auser")
+        }
+        SimpleTokenBuilder data =  new SimpleTokenBuilder()
+                                       .setType(AuthTokenType.WEBHOOK)
+                                       .setAuthRolesSet(AuthenticationToken.parseAuthRoles('a,b'))
+
+
+        provider.create(data)
+
+        then:
+        DataAccessException e = thrown()
+
+    }
     @Unroll
     def "Update and Retrieve"() {
         when:
@@ -93,6 +108,77 @@ class GormTokenDataProviderSpec extends RundeckHibernateSpec implements DataTest
         "Token3"    | 'd'       | 'def'
     }
 
- 
+    def "should throw and error when updating fails"() {
+        when:
+        User bob = new User(login: 'bob')
+        bob.save()
+        provider.userService = Mock(UserService){
+            findOrCreateUser(_) >>  bob
+        }
+        String uuid = '123uuid'
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthenticationToken.AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'g,f',
+                uuid: uuid,
+                creator: 'elf',
+        )
+        createdToken.save(flush: true);
+        SimpleTokenBuilder data =  new SimpleTokenBuilder()
+                                      .setName("name")
+        provider.update("FAKE", data)
+
+        then:
+        DataAccessException e = thrown()
+
+    }
+
+    def "Delete"() {
+        given:
+        User bob = new User(login: 'bob')
+        bob.save()
+
+        String uuid = '123uuid'
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthenticationToken.AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'g,f',
+                uuid: uuid,
+                creator: 'elf',
+        )
+        createdToken.save(flush: true);
+        when:
+        def list = provider.list()
+        then:
+        list.size() == 1
+        when:
+        provider.delete(uuid)
+        then:
+        provider.list().size() == 0
+    }
+
+    def "should throw an exception when deleting an invalid token"() {
+        given:
+        User bob = new User(login: 'bob')
+        bob.save()
+
+        String uuid = '123uuid'
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthenticationToken.AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'g,f',
+                uuid: uuid,
+                creator: 'elf',
+        )
+        createdToken.save(flush: true);
+        when:
+        provider.delete("FAKE")
+        then:
+        DataAccessException e = thrown()
+    }
+
 
 }

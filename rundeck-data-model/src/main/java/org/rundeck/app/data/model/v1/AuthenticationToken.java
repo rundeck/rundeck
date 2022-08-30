@@ -72,6 +72,8 @@ public interface AuthenticationToken {
 
     /**
      * Encodes a clear token value according to the tokenMode supplied.
+     * @param clearValue
+     * @param mode
      */
      static String encodeTokenValue(String clearValue, AuthTokenMode mode){
         if(clearValue == null || clearValue.trim().isEmpty())
@@ -88,6 +90,7 @@ public interface AuthenticationToken {
     }
 
     /**
+    * @param authtoken
      * @return Printable truncated token value
      */
     static String printable(String authtoken) {
