@@ -5,6 +5,7 @@ import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.spi.data.DataAccessException
+import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.UserService
@@ -59,6 +60,9 @@ class GormTokenDataProviderSpec extends RundeckHibernateSpec implements DataTest
         when:
         provider.userService = Mock(UserService){
             findOrCreateUser(_) >>  new User(login: "auser")
+        }
+        provider.messageSource = Mock(MessageSource) {
+            getMessage(_,_) >> null
         }
         SimpleTokenBuilder data =  new SimpleTokenBuilder()
                                        .setType(AuthTokenType.WEBHOOK)
