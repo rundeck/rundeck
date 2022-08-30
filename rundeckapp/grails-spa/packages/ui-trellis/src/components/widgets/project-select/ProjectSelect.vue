@@ -13,7 +13,7 @@
                 </div>
             </div>
             <Skeleton :loading="!projects.loaded">
-                <RecycleScroller @foo="alert('Foo')"
+                <RecycleScroller
                     ref="scroller"
                     :items="projects.search(searchTerm)"
                     :item-size="25"
@@ -115,13 +115,6 @@ export default class ProjectSelect extends Vue {
         })
     }
 
-    itemClicked(project: Project) {
-        this.$emit('project:selected', project)
-    }
-
-    allClicked() {
-        this.$emit('project:select-all')
-    }
 }
 </script>
 
