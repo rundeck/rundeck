@@ -249,7 +249,7 @@
         <tr class="link activity_row autoclickable"
             @click="autoBulkEdit(rpt)"
             @click.middle="middleClickRow(rpt)"
-            :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',missed:rpt.status==='missed',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}"
+            :class="[`ali-${rpt.execution.id}`,{succeed:rpt.status==='succeed',fail:rpt.status==='fail',missed:rpt.status==='missed',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}]"
             v-for="rpt in reports"
             :key="rpt.execution.id"
           >
@@ -264,7 +264,11 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date " v-tooltip.bottom="$t(rpt.status==='missed'?'info.missed.0.1':'info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
+            <td class="right date"
+              v-tooltip.bottom="{
+                text: $t(rpt.status==='missed'?'info.missed.0.1':'info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)]),
+                'viewport': `.ali-${rpt.execution.id}`
+            }">
                 <span v-if="rpt.dateCompleted">
                     <span class="timeabs ">
                         {{rpt.dateCompleted | moment(momentJobFormat)}}
@@ -476,6 +480,7 @@ export default Vue.extend({
         filterName:''
       } as {[key:string]:string},
       currentFilter:'',
+      disableRefresh:false,
     }
   },
   methods: {
@@ -685,11 +690,13 @@ export default Vue.extend({
           withCredentials: true
         })
 
-        if(this.lastDate>0  && response.data.since && response.data.since.count ){
-            this.sincecount=response.data.since.count
-        }
+          if (this.lastDate > 0 && response.data.since && response.data.since.count) {
+            this.sincecount = response.data.since.count
+          }
+
       }catch(error){
         //@ts-ignore
+        this.disableRefresh = !this.disableRefresh;
         this.loadError = error.message
       }
     },
@@ -712,14 +719,16 @@ export default Vue.extend({
             withCredentials: true
         })
 
-        let executions = response.data.executions.map((e: any) => {
-          let {'date-started': dateStarted, 'date-completed': dateCompleted} = e
-          return Object.assign({dateStarted, dateCompleted}, e) as Execution
-        })
-        this.running={executions,paging:response.data.paging}
-        this.loadingRunning=false
-        this.eventBus.$emit('activity-nowrunning-count', executions.length)
+          let executions = response.data.executions.map((e: any) => {
+              let { 'date-started': dateStarted, 'date-completed': dateCompleted } = e
+              return Object.assign({ dateStarted, dateCompleted }, e) as Execution
+          })
+          this.running = { executions, paging: response.data.paging }
+          this.loadingRunning = false
+          this.eventBus.$emit('activity-nowrunning-count', executions.length)
+
       }catch(error){
+        this.disableRefresh = !this.disableRefresh;
         this.loadingRunning=false
         //@ts-ignore
         this.loadError = error.message
@@ -767,7 +776,7 @@ export default Vue.extend({
       this.loadActivity(offset)
     },
     checkrefresh(time: number = 0) {
-      if(!this.loadingRunning && this.autorefresh){
+      if(!this.loadingRunning && this.autorefresh && !this.disableRefresh){
         let delay: number = time ? (new Date().getTime() - time) : 0
         let ms = this.loadError ? (this.autorefreshms * 10) : this.autorefreshms
         ms = time > 0 ? Math.min(60000, Math.max(ms, 5 * delay)) : 0

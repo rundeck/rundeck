@@ -23,7 +23,6 @@ class ContextACLStorageFileManagerFactory implements FactoryBean<ContextACLManag
 
     @Autowired StorageManager configStorageService
     @Autowired ValidatorFactory rundeckYamlAclValidatorFactory
-    String projectsStorageType
     ValidatorFactory validatorFactory;
     String systemPrefix
     String projectPattern

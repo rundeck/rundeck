@@ -55,7 +55,7 @@ window._rundeck.eventBus.$on('ko-exec-show-output', (nodeStep: any) => {
     /** Update the KO code when this views output starts showing up */
     const execOutput = rootStore.executionOutputStore.createOrGet(execId)
     autorun((reaction) => {
-        const entries = execOutput.getEntriesByNodeCtx(node, stepCtx)
+        const entries = execOutput.getEntriesFiltered(node, stepCtx)
 
         if (!entries || entries.length == 0) {
             /** There was no output so we update KO and remove the viewer */

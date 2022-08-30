@@ -23,14 +23,6 @@ rm -fv $HOME/testdata/*
 # configure hostname, nodename, url
 
 
-# RUN TEST PRESTART SCRIPT
-if [[ ! -z "$CONFIG_SCRIPT_PRESTART" && -f $CONFIG_SCRIPT_PRESTART ]];
-then
-  . $CONFIG_SCRIPT_PRESTART
-else
-  echo "### Prestart config not set. skipping..."
-fi
-
 export RDECK_BASE=$HOME
 LOGFILE=$RDECK_BASE/var/log/service.log
 mkdir -p $(dirname $LOGFILE)
@@ -143,48 +135,42 @@ sed -i -e "s:admin:api_token_group:" $HOME/etc/apitoken.aclpolicy
 
 #sudo chown -R $USERNAME:$USERNAME $HOME;
 
-mkdir -p $HOME/projects/testproj1/etc
-
-cat > $HOME/projects/testproj1/etc/project.properties <<END
-project.name=testproj1
-project.nodeCache.delay=30
-project.nodeCache.enabled=true
-project.ssh-authentication=privateKey
-project.ssh-keypath=/home/rundeck/.ssh/id_rsa
-resources.source.1.config.file=$HOME/projects/testproj1/etc/resources.xml
-resources.source.1.config.format=resourcexml
-resources.source.1.config.generateFileAutomatically=true
-resources.source.1.config.includeServerNode=true
-resources.source.1.config.requireFileExists=false
-resources.source.1.type=file
-resources.source.2.config.directory=/home/rundeck/resources
-resources.source.2.type=directory
-service.FileCopier.default.provider=jsch-scp
-service.NodeExecutor.default.provider=jsch-ssh
-END
 
 
-setup_project(){
+setup_project_api(){
   local FARGS=("$@")
   local DIR=${FARGS[0]}
   local PROJ=${FARGS[1]}
+  local TOK=${FARGS[2]}
+  local XFILE=${FARGS[3]}
   echo "setup test project: $PROJ in dir $DIR"
+  local XJSON=
+  if [ -n "$XFILE" ] ; then
+    XJSON=$(cat "$XFILE" | grep -v '^#' | sed 's/^/"/' | sed 's/=/":"/' | sed 's/$/",/' )
+  fi
   mkdir -p $DIR/projects/$PROJ/etc
-  cat >$DIR/projects/$PROJ/etc/project.properties<<END
-project.name=$PROJ
-project.nodeCache.delay=30
-project.nodeCache.enabled=true
-project.ssh-authentication=privateKey
-#project.ssh-keypath=
-resources.source.1.config.file=$DIR/projects/\${project.name}/etc/resources.xml
-resources.source.1.config.format=resourcexml
-resources.source.1.config.generateFileAutomatically=true
-resources.source.1.config.includeServerNode=true
-resources.source.1.config.requireFileExists=false
-resources.source.1.type=file
-service.FileCopier.default.provider=jsch-scp
-service.NodeExecutor.default.provider=jsch-ssh
+  cat >$DIR/projects/$PROJ/etc/project.json<<END
+{
+    "project.name":"$PROJ",
+    "project.nodeCache.delay":"30",
+    "project.nodeCache.enabled":"true",
+    "project.ssh-authentication":"privateKey",
+    "resources.source.1.config.file":"$DIR/projects/\${project.name}/etc/resources.xml",
+    "resources.source.1.config.format":"resourcexml",
+    "resources.source.1.config.generateFileAutomatically":"true",
+    "resources.source.1.config.includeServerNode":"true",
+    "resources.source.1.config.requireFileExists":"false",
+    "resources.source.1.type":"file",
+    "service.FileCopier.default.provider":"jsch-scp",
+    "service.NodeExecutor.default.provider":"jsch-ssh",
+    $XJSON
+    "dummy":"x"
+  }
 END
+
+  RD_OPTS="-Djavax.net.ssl.trustStore=$DIR/etc/truststore" \
+  RD_URL=$RUNDECK_URL RD_TOKEN=$TOK rd projects create -p "$PROJ" -f $DIR/projects/$PROJ/etc/project.json -F json
+
 }
 
 append_project_config(){
@@ -205,6 +191,7 @@ setup_ssl(){
   if [ ! -f $TRUSTSTORE ]; then
      echo "=>Generating ssl cert"
      sudo -u rundeck keytool -keystore $KEYSTORE -alias $RUNDECK_NODE -genkey -keyalg RSA \
+      -ext san=dns:$RUNDECK_NODE \
       -keypass adminadmin -storepass adminadmin -dname "cn=$RUNDECK_NODE, o=test, o=rundeck, o=org, c=US" && \
      cp $KEYSTORE $TRUSTSTORE
   fi
@@ -213,13 +200,6 @@ cat >> $HOME/etc/profile <<END
 export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=$DIR/server/config/ssl.properties -Dserver.https.port=$RUNDECK_PORT"
 END
 }
-
-if [ -n "$SETUP_TEST_PROJECT" ] ; then
-    setup_project $RDECK_BASE $SETUP_TEST_PROJECT
-    if [ -n "$CONFIG_TEST_PROJECT_FILE" ] ; then
-      append_project_config $RDECK_BASE $SETUP_TEST_PROJECT $CONFIG_TEST_PROJECT_FILE
-    fi
-fi
 
 if [ -n "$SETUP_SSL" ] ; then
     setup_ssl $RDECK_BASE
@@ -317,6 +297,25 @@ do
 
 done
 echo "RUNDECK NODE $RUNDECK_NODE started successfully!!"
+
+
+### default project testproj1
+
+mkdir -p $HOME/projects/testproj1/etc
+
+cat > $HOME/projects/testproj1/etc/partial-project.properties <<END
+project.ssh-keypath=/home/rundeck/.ssh/id_rsa
+resources.source.2.config.directory=/home/rundeck/resources
+resources.source.2.type=directory
+END
+
+setup_project_api $RDECK_BASE testproj1 $API_KEY $HOME/projects/testproj1/etc/partial-project.properties
+
+###
+
+if [ -n "$SETUP_TEST_PROJECT" ] ; then
+    setup_project_api $RDECK_BASE $SETUP_TEST_PROJECT $API_KEY $CONFIG_TEST_PROJECT_FILE
+fi
 
 
 ### POST CONFIG

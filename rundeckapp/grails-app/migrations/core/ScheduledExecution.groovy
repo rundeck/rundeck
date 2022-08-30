@@ -244,4 +244,61 @@ databaseChangeLog = {
             }
         }
     }
+
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-1", dbms: "h2") {
+        comment { 'rename month to MONTH' }
+        preConditions(onFail: "CONTINUE"){
+            columnExists(tableName: "scheduled_execution", columnName: "month")
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN \"month\" TO MONTH;")
+            }
+            rollback {
+            }
+        }
+    }
+    
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-2", dbms: "h2") {
+        comment { 'rename hour to HOUR' }
+        preConditions(onFail: "CONTINUE"){
+            columnExists(tableName: "scheduled_execution", columnName: "hour")
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN \"hour\" TO HOUR;")
+            }
+            rollback {
+            }
+        }
+    }
+    
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-3", dbms: "h2") {
+        comment { 'rename year to YEAR' }
+        preConditions(onFail: "CONTINUE"){
+            columnExists(tableName: "scheduled_execution", columnName: "year")
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN \"year\" TO YEAR;")
+            }
+            rollback {
+            }
+        }
+    }
+    
+    changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "4.6.0-4", dbms: "h2") {
+        comment { 'rename minute to MINUTE' }
+        preConditions(onFail: "CONTINUE"){
+            columnExists(tableName: "scheduled_execution", columnName: "minute")
+        }
+        grailsChange {
+            change {
+                sql.execute("ALTER TABLE scheduled_execution RENAME COLUMN \"minute\" TO MINUTE;")
+            }
+            rollback {
+            }
+        }
+    }
+    
 }

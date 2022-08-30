@@ -647,7 +647,7 @@ class EditOptsController extends ControllerBase{
             if (params && params.valuesType == 'url') {
                 opt.errors.rejectValue('valuesUrl', 'option.enforced.emptyvalues.message')
             } else {
-                opt.errors.rejectValue('values', 'option.enforced.emptyvalues.message')
+                opt.errors.rejectValue('valuesList', 'option.enforced.emptyvalues.message')
             }
         }
         if (opt.regex) {
@@ -700,8 +700,6 @@ class EditOptsController extends ControllerBase{
             }
             if(!hasSelectedOnRemoteValue) opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
         }
-        //we will not persist field values anymore (replace it for option.valueList)
-        opt.values = null
         return result
     }
 
@@ -769,16 +767,11 @@ class EditOptsController extends ControllerBase{
         if (params.optionType && params.configMap) {
             opt.configMap = params.configMap
         }
-        if(params.valuesList){
-            opt.valuesList = params.valuesList
-        }else{
-            opt.valuesList = null
-            opt.values = null
-        }
+
+        opt.valuesList = params.valuesList?:null
         if(params.valuesType == 'list'){
             opt.realValuesUrl=null
         }else if(params.valuesType == 'url'){
-            opt.values=null
             opt.valuesList=null
             if(valuesUrl){
                 opt.realValuesUrl=new URL(valuesUrl)
@@ -799,7 +792,7 @@ class EditOptsController extends ControllerBase{
     private Map _getParamsFromOption (Option opt){
         def params = [:]
         params.putAll(opt.properties)
-        if (opt.values) {
+        if (opt.valuesList) {
             params.valuesType = 'list'
         } else if (params.valuesUrl) {
             params.valuesType = 'url'

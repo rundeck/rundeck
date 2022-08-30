@@ -215,6 +215,9 @@ class ScmController extends ControllerBase {
         }
         def describedPlugin = scmService.getPluginDescriptor(integration, type)
         def pluginConfig = scmService.loadScmConfig(project, integration)
+        if (pluginConfig && pluginConfig.properties && pluginConfig.properties.get("flagToReturnProcess")) {
+            pluginConfig.properties.remove("flagToReturnProcess")
+        }
         def config = [:]
         if (type == pluginConfig?.type) {
             config = pluginConfig.config

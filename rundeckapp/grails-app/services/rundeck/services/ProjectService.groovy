@@ -223,8 +223,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 object.jcJobId= jobsByOldIdMap[object.jcJobId].id
             }
             //remap exec id if necessary
+            //nb: support old "jcExecId" name
             if (object.jcExecId && execIdMap && execIdMap[object.jcExecId]) {
-                object.jcExecId= execIdMap[object.jcExecId]
+                object.executionId= execIdMap[object.jcExecId]
+            }else if (object.executionId && execIdMap && execIdMap[object.executionId]) {
+                object.executionId= execIdMap[object.executionId]
             }else {
                 //skip report for exec id that cannot be found
                 return null
@@ -785,18 +788,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     if (options.executionsOnly) {
                         //find execs
                         List<Long> execIds = []
-                        List<String> execIdStrings = []
                         options.executionIds.each {
                             if (it instanceof Long) {
                                 execIds << it
-                                execIdStrings << it.toString()
                             } else if (it instanceof String) {
                                 execIds << Long.parseLong(it)
-                                execIdStrings << it
                             }
                         }
                         execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
-                        reports = ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName, execIdStrings)
+                        reports = ExecReport.findAllByCtxProjectAndExecutionIdInList(projectName, execIds)
                     } else if (isExportExecutions) {
                         execs = Execution.findAllByProject(projectName)
                         reports = BaseReport.findAllByCtxProject(projectName)
@@ -1510,7 +1510,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def loadedreports = []
         def execids = new ArrayList<Long>(execidmap.values())
         reportxml.each { rxml ->
-            def report
+            ExecReport report
             try {
                 report = loadHistoryReport(rxml, execidmap, jobsByOldId, reportxmlnames[rxml])
             } catch (ProjectServiceException e) {
@@ -1528,7 +1528,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 log.error("[${reportxmlnames[rxml]}] Unable to save report: ${report.errors}")
                 return
             }
-            execids.remove(Long.parseLong(report.jcExecId))
+            execids.remove(report.executionId)
             loadedreports << report
         }
         //generate reports for executions without matching reports

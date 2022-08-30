@@ -500,7 +500,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         )
 
         then:
-        params.jcExecId == 11
+        params.executionId == 11
         params.jcJobId == 'abc'
         params.reportId == 'job1'
         params.adhocExecution == false
@@ -1208,6 +1208,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         execution.dateCompleted = new Date()
         execution.status = 'succeeded'
         assert execution.save()
+        ExecReport execReport = ExecReport.fromExec(execution).save()
+        assert execReport!=null
+        def erptid=execReport.id
         def eauth = Mock(AuthorizingExecution){
             getResource()>>execution
         }
@@ -1223,6 +1226,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         1 * service.logFileStorageService.getExecutionFiles(execution,_,_)>>[:]
         result.success
+        ExecReport.get(erptid)==null
     }
 
     def "delete execution running"() {
@@ -1849,9 +1853,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', enforced: true)
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         when:
@@ -1872,9 +1874,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', enforced: true)
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         service.messageSource = Mock(MessageSource) {
@@ -1902,9 +1902,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', enforced: true, multivalued: true, delimiter: ',')
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         when:
@@ -1927,9 +1925,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', enforced: true, multivalued: true, delimiter: ',')
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         service.messageSource = Mock(MessageSource) {
@@ -2019,9 +2015,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', required: true)
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
 
         when:
@@ -2043,9 +2037,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution se = new ScheduledExecution()
         final Option option = new Option(name: 'test1', required: true)
-        option.addToValues('a')
-        option.addToValues('b')
-        option.addToValues('abc')
+        option.valuesList = 'a,b,abc'
         se.addToOptions(option)
         final Option option2 = new Option(name: 'test2', required: true)
         se.addToOptions(option2)

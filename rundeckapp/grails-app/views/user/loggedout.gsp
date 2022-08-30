@@ -60,7 +60,7 @@
             <g:set var="userDefinedInstanceName" value="${cfg.getString(config: "gui.instanceName")}"/>
             <g:if test="${userDefinedInstanceName}">
               <div class="col-md-12" style="text-align:center;margin-bottom:3em;">
-                  <span class="label label-white" style="padding:.8em;font-size: 20px; border-radius:3px;    box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);">
+                  <span class="label label-default instance-label" style="padding:.8em;font-size: 20px; border-radius:3px;    box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);">
                       ${enc(sanitize:userDefinedInstanceName)}
                   </span>
               </div>

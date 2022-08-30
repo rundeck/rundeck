@@ -1538,7 +1538,7 @@ class ProjectController extends ControllerBase{
         archiveParams.cleanComponentOpts()
 
         //nb: compatibility with API v34
-        if (request.api_version>= ApiVersions.V34 && params.exportWebhooks == 'true') {
+        if (request.api_version>= ApiVersions.V34 && (params.exportWebhooks == 'true'||params.exportAll == 'true')) {
             if (archiveParams.exportComponents != null) {
                 archiveParams.exportComponents[WebhooksProjectComponent.COMPONENT_NAME] = true
             } else {

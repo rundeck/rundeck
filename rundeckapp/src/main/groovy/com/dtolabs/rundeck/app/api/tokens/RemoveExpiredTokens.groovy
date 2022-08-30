@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.app.api.tokens
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.ElementName
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
+import io.swagger.v3.oas.annotations.media.Schema
 
 /**
  * @author greg
@@ -26,6 +27,7 @@ import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
  */
 @ApiResource
 @ElementName('removeExpiredTokens')
+@Schema
 class RemoveExpiredTokens {
     @XmlAttribute
     int count;

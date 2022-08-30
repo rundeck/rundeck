@@ -24,9 +24,10 @@ import com.dtolabs.rundeck.app.gui.UserSummaryMenuItem
 import com.dtolabs.rundeck.app.internal.framework.ConfigFrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.config.RundeckConfig
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
-import com.dtolabs.rundeck.app.internal.framework.RundeckFilesystemProjectImporter
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.app.tree.DelegateStorageTree
+import com.dtolabs.rundeck.app.tree.RundeckBootstrapStorageTreeUpdater
+import com.dtolabs.rundeck.app.tree.JasyptEncryptionEnforcerUpdaterConfig
 import com.dtolabs.rundeck.app.tree.StorageTreeCreator
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AclsUtil
@@ -105,7 +106,6 @@ import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.boot.actuate.jdbc.DataSourceHealthIndicator
-import org.springframework.boot.jdbc.metadata.DataSourcePoolMetadataProvider
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -253,19 +253,10 @@ beans={
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
-    //NB: retained for compatibilty for upgrading from <3.4, should be removed after 3.4
-    filesystemProjectManager(FrameworkFactory,frameworkFilesystem,ref('rundeckNodeService')){ bean->
-        bean.factoryMethod='createProjectManager'
-    }
-    rundeckFilesystemProjectImporter(RundeckFilesystemProjectImporter){
-        importFilesOption = application.config.getProperty("rundeck.projectsStorageImportFilesOption", String.class, 'known')
-        importStartupMode = application.config.getProperty("rundeck.projectsStorageImportStartupMode", String.class,'bootstrap')
-    }
 
     frameworkFactory(RundeckFrameworkFactory){
         frameworkFilesystem=frameworkFilesystem
         propertyLookup=ref('frameworkPropertyLookup')
-        type=application.config.getProperty("rundeck.projectsStorageType", String.class,'db')
         dbProjectManager=ref('projectManagerService')
         pluginManagerService=ref('rundeckServerServiceProviderLoader')
     }
@@ -343,7 +334,6 @@ beans={
     aclStorageFileManager(ContextACLStorageFileManagerFactory){
         systemPrefix = ContextACLStorageFileManagerFactory.ACL_STORAGE_PATH_BASE
         projectPattern = ContextACLStorageFileManagerFactory.ACL_PROJECT_STORAGE_PATH_PATTERN
-        projectsStorageType=application.config.getProperty("rundeck.projectsStorageType", String.class, 'db')
         validatorFactory=ref('rundeckYamlAclValidatorFactory')
     }
 
@@ -498,7 +488,7 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
-    auditEventsService(AuditEventsService){
+    auditEventsService(AuditEventsService) {
         frameworkService = ref('frameworkService')
     }
 
@@ -550,6 +540,17 @@ beans={
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
     }else{
         rundeckKeyStorageContextProvider(KeyStorageContextProvider)
+    }
+
+    rundeckJasyptConverterUpdaterConfig(JasyptEncryptionEnforcerUpdaterConfig){
+        treeCreator = ref('rundeckStorageTreeCreator')
+    }
+
+    rundeckBootstrapStorageTreeUpdater(RundeckBootstrapStorageTreeUpdater){
+        storageTree = ref('rundeckStorageTree')
+        updaterConfig = ref('rundeckJasyptConverterUpdaterConfig')
+        enabled = grailsApplication.config.getProperty('rundeck.feature.storageRewrite.enabled', Boolean.class, true)
+        basePath = grailsApplication.config.getProperty('rundeck.storage.rewrite.basePath', String.class, 'keys')
     }
 
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree, rundeckKeyStorageContextProvider)

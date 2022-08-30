@@ -296,9 +296,11 @@ function postLoadItemEdit(item, iseh, isnodestep) {
     if (isscriptStep) {
       var key = liitem.find('._wfiedit').data('rkey');
       if (key) {
-        workflowEditor.scriptSteps()[key].guessAceMode.subscribe(function (val) {
-          setAceSyntaxMode(val, editor);
-        });
+        if(workflowEditor.scriptSteps()[key]){
+          workflowEditor.scriptSteps()[key].guessAceMode.subscribe(function (val) {
+            setAceSyntaxMode(val, editor);
+          });
+        }
       }
     }
   }, function (elem) {

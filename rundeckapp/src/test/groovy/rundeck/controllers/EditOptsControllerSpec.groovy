@@ -568,7 +568,6 @@ class EditOptsControllerSpec extends RundeckHibernateSpec implements ControllerU
         ! option.required
         option.realValuesUrl.toExternalForm() == 'http://test.com'
         option.regex == 'testregex'
-        null == option.values || 0 == option.values.size()
         option.valuesList == null
 
     }
@@ -615,7 +614,6 @@ class EditOptsControllerSpec extends RundeckHibernateSpec implements ControllerU
         ! option.required
         option.realValuesUrl.toExternalForm() == 'http://test.com'
         option.regex == 'testregex'
-        null == option.values || 0 == option.values.size()
         option.valuesList == null
     }
 
@@ -661,7 +659,6 @@ class EditOptsControllerSpec extends RundeckHibernateSpec implements ControllerU
         ! option.required
         option.realValuesUrl.toExternalForm() == 'http://test.com'
         option.regex == 'testregex'
-        null == option.values || 0 == option.values.size()
         option.valuesList == null
     }
 

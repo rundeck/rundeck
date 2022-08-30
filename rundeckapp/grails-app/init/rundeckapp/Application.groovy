@@ -3,6 +3,7 @@ package rundeckapp
 import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
+import io.swagger.v3.oas.annotations.ExternalDocumentation
 import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.info.Info
 import io.swagger.v3.oas.annotations.info.License
@@ -32,6 +33,10 @@ import java.nio.file.Paths
         version = ApiVersions.API_CURRENT_VERSION_STR,
         description = "Rundeck provides a Web API for use with your applications.",
         license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0.html")
+    ),
+    externalDocs = @ExternalDocumentation(
+        description = 'Original Rundeck API Documentation',
+        url = 'https://docs.rundeck.com/docs/api/rundeck-api.html'
     ),
     servers = @Server(
         url = '{host}/api/{apiversion}',

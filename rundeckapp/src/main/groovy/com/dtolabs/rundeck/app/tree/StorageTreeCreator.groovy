@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.ConfigurationService
 
 @CompileStatic
-class StorageTreeCreator {
+class StorageTreeCreator implements TreeCreator{
     IPropertyLookup frameworkPropertyLookup
     PluginRegistry pluginRegistry
     StorageTreeFactory storageTreeFactory
@@ -61,7 +61,7 @@ class StorageTreeCreator {
         Map<String, String> finalconfigMap = [:]
         Map<String, Map> storageMap = configurationService.getAppConfig().get("storage") as Map<String, Map>
         Map<String, Map> providerMap = storageMap.get("provider") as Map<String, Map>
-
+        Map<String, Map> converterMap = storageMap.get("converter") as Map<String, Map>
         finalconfigMap.put("default", "deleteMe")
         providerMap?.each {
             if (it.key.toString().isInteger()) {
@@ -77,6 +77,22 @@ class StorageTreeCreator {
                         finalconfigMap.put("provider." + index + "." + it.key, it.value.toString())
                     }
 
+                }
+            }
+        }
+        converterMap?.each {
+            if (it.key.toString().isInteger()) {
+                int index = it.key.toInteger()
+                Map<String, Map> finalMap = it.value as Map<String, Map>
+                finalMap.each {
+                    if (it.key == "config") {
+                        Map<String, String> configMap = it.value as Map<String, String>
+                        configMap.each {
+                            finalconfigMap.put("converter." + index + "." + "config." + it.key, it.value.toString())
+                        }
+                    } else {
+                        finalconfigMap.put("converter." + index + "." + it.key, it.value.toString())
+                    }
                 }
             }
         }

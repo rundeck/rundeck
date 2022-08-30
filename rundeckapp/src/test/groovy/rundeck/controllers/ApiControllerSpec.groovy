@@ -25,18 +25,26 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
+import grails.web.JSONBuilder
 import grails.web.mapping.LinkGenerator
+import org.quartz.Scheduler
+import org.quartz.SchedulerMetaData
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.core.auth.AuthConstants
+import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import rundeck.AuthToken
 import rundeck.User
+import rundeck.UtilityTagLib
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.security.auth.Subject
 import java.lang.annotation.Annotation
 
 class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
@@ -48,9 +56,127 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         def apiMarshallerRegistrar = new ApiMarshallerRegistrar()
         apiMarshallerRegistrar.registerMarshallers()
         apiMarshallerRegistrar.registerApiMarshallers()
+        session.subject = new Subject()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
     }
 
     def "api token list does not include webhook tokens"() {
+        given:
+        User bob = new User(login: 'bob')
+        bob.save()
+        User bob2 = new User(login: 'bob2')
+        bob2.save()
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'a,b',
+                uuid: '123uuid',
+                creator: 'elf',
+                )
+        createdToken.save()
+        AuthToken webhookToken = new AuthToken(
+            user: bob,
+            type: AuthTokenType.WEBHOOK,
+            tokenMode: AuthTokenMode.LEGACY,
+            token: 'whk',
+            authRoles: 'a,b',
+            uuid: '123uuidwhk',
+            creator: 'elf',
+            )
+        webhookToken.save()
+        AuthToken createdToken2 = new AuthToken(
+                user: bob2,
+                type: AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'a,b',
+                uuid: '456uuid',
+                creator: 'elf',
+                )
+        createdToken2.save()
+        AuthToken webhookToken2 = new AuthToken(
+            user: bob2,
+            type: AuthTokenType.WEBHOOK,
+            tokenMode: AuthTokenMode.LEGACY,
+            token: 'whk',
+            authRoles: 'a,b',
+            uuid: '456uuidwhk',
+            creator: 'elf',
+            )
+        webhookToken2.save()
+
+        controller.apiService = Mock(ApiService) {
+            hasTokenAdminAuth(_) >> { true }
+        }
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        request.api_version = 33
+        request.addHeader('accept', 'application/json')
+        JSON.use('v' + request.api_version)
+        when:
+        controller.apiTokenList()
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        response.json.size() == 2
+        response.json[0].id == "123uuid"
+        response.json[1].id == "456uuid"
+
+    }
+    def "api token list unauthorized self param #inputUser"() {
+        given:
+        User bob = new User(login: 'bob')
+        bob.save()
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'a,b',
+                uuid: '123uuid',
+                creator: 'elf',
+                )
+        createdToken.save()
+        AuthToken webhookToken = new AuthToken(
+            user: bob,
+            type: AuthTokenType.WEBHOOK,
+            tokenMode: AuthTokenMode.LEGACY,
+            token: 'whk',
+            authRoles: 'a,b',
+            uuid: '123uuidwhk',
+            creator: 'elf',
+            )
+        webhookToken.save()
+
+        controller.apiService = Mock(ApiService) {
+            hasTokenAdminAuth(_) >> { false }
+        }
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubject(_)>>Mock(UserAndRolesAuthContext){
+                1 * getUsername()>>'bob'
+            }
+        }
+        request.api_version = 33
+        request.addHeader('accept', 'application/json')
+        JSON.use('v' + request.api_version)
+        when:
+        controller.apiTokenList(inputUser)
+
+        then:
+        1 * controller.apiService.findUserTokensCreator('bob') >> [createdToken]
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        response.json.size() == 1
+        response.json[0].id == "123uuid"
+
+        where:
+            inputUser <<['bob',null]
+
+    }
+    def "api token list authorized non-self"() {
         given:
         User bob = new User(login: 'bob')
         bob.save()
@@ -78,19 +204,65 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             hasTokenAdminAuth(_) >> { true }
         }
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         request.api_version = 33
         request.addHeader('accept', 'application/json')
         JSON.use('v' + request.api_version)
         when:
-        controller.apiTokenList()
+        controller.apiTokenList('bob')
 
         then:
+        1 * controller.apiService.findUserTokensCreator('bob') >> [createdToken]
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.apiService.requireVersion(_, _, _) >> true
         response.json.size() == 1
         response.json[0].id == "123uuid"
 
+    }
+
+    def "api token list unauthorized non-self"() {
+        given:
+        User bob = new User(login: 'bob')
+        bob.save()
+        AuthToken createdToken = new AuthToken(
+                user: bob,
+                type: AuthTokenType.USER,
+                token: 'abc',
+                authRoles: 'a,b',
+                uuid: '123uuid',
+                creator: 'elf',
+                )
+        createdToken.save()
+        AuthToken webhookToken = new AuthToken(
+            user: bob,
+            type: AuthTokenType.WEBHOOK,
+            tokenMode: AuthTokenMode.LEGACY,
+            token: 'whk',
+            authRoles: 'a,b',
+            uuid: '123uuidwhk',
+            creator: 'elf',
+            )
+        webhookToken.save()
+
+        controller.apiService = Mock(ApiService) {
+            hasTokenAdminAuth(_) >> { false }
+        }
+        controller.frameworkService = Mock(FrameworkService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubject(_)>>Mock(UserAndRolesAuthContext){
+                1 * getUsername()>>'notbob'
+            }
+        }
+        request.api_version = 33
+        request.addHeader('accept', 'application/json')
+        JSON.use('v' + request.api_version)
+        when:
+        controller.apiTokenList('bob')
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.apiService.renderUnauthorized(_, [AuthConstants.ACTION_ADMIN, 'User', 'bob'])
     }
 
     def "api token create v18"() {
@@ -304,6 +476,44 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     }
 
     @Unroll
+    def "api system info should return only basic data if user doesnt have read authorizarion"() {
+        given:
+        request.api_version = ApiVersions.V14
+        request.addHeader('accept', 'application/json')
+        session.subject = new Subject()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.grailsLinkGenerator = Mock(LinkGenerator)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.quartzScheduler = Mock(Scheduler) {
+            (isAuth ? 1 : 0) * getCurrentlyExecutingJobs() >> []
+            (isAuth ? 1 : 0) * getMetaData() >> Mock(SchedulerMetaData)
+        }
+        controller.rundeckAppAuthorizer = Mock(AppAuthorizer) {
+            1 * system(_) >> Mock(AuthorizingSystem) {
+                isAuthorized(RundeckAccess.System.READ_OR_OPS_ADMIN) >> isAuth
+            }
+        }
+        def assetTaglib = mockTagLib(UtilityTagLib)
+
+        when:
+        controller.apiSystemInfo()
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.apiService.renderSuccessJson(_,_) >> {
+            JSONBuilder builder = new JSONBuilder();
+            JSON json = builder.build(it[1]);
+            json.toString() == jsonResult
+        }
+
+        where:
+        isAuth| jsonResult
+        false | '{"system":{"executions":null,"extended":null,"healthcheck":null,"jvm":null,"metrics":null,"os":null,"ping":null,"rundeck":{"apiversion":"41","base":null,"build":"@build.ident@","buildGit":null,"node":null,"serverUUID":null,"version":"4.4.0-SNAPSHOT"},"stats":null,"threadDump":null,"timestamp":null}}'
+        true  | '{"system":{"executions":{"active":"false","executionMode":"passive"},"extended":null,"healthcheck":{"contentType":"application/json","href":null},"jvm":{"implementationVersion":"25.302-b08","name":"OpenJDK 64-Bit Server VM","vendor":"Oracle Corporation","version":"1.8.0_302"},"metrics":{"contentType":"application/json","href":null},"os":{"arch":"amd64","name":"Linux","version":"5.13.0-48-generic"},"ping":{"contentType":"text/plain","href":null},"rundeck":{"apiversion":"41","base":null,"build":"@build.ident@","buildGit":null,"node":null,"serverUUID":null,"version":"4.4.0-SNAPSHOT"},"stats":{"cpu":{"loadAverage":{"average":0,"unit":"percent"},"processors":12},"memory":{"free":601737712,"max":773324800,"total":773324800,"unit":"byte"},"scheduler":{"running":0,"threadPoolSize":0},"threads":{"active":12},"uptime":{"duration":351050,"since":{"datetime":"2022-06-14T19:27:17Z","epoch":1655234837036,"unit":"ms"},"unit":"ms"}},"threadDump":{"contentType":"text/plain","href":null},"timestamp":{"datetime":"2022-06-14T19:33:08Z","epoch":1655235188086,"unit":"ms"}}}'
+    }
+
+    @Unroll
     def "api metrics forwarding"() {
         given:
         def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
@@ -352,7 +562,6 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         where:
             endpoint        | access
             'apiMetrics'    | RundeckAccess.System.AUTH_READ_OR_ANY_ADMIN
-            'apiSystemInfo' | RundeckAccess.System.AUTH_READ_OR_OPS_ADMIN
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {

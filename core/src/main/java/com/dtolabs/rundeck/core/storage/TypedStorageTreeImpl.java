@@ -46,8 +46,9 @@ public class TypedStorageTreeImpl extends StorageTreeImpl implements TypedStorag
         if (resource.getContents().getContentType().equals(contentType)) {
             return resource;
         }
+        String errorMessage = "Path " + path + " does not store a password, content-type: " + contentType;
         throw new WrongContentType(
-                "Path ${path} does not store a password, content-type: ${resource.contents.contentType}",
+                errorMessage,
                 StorageException.Event.READ,
                 path
         );

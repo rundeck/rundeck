@@ -1309,7 +1309,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                                               enforced: true,
                                               multivalued:true,
                                               delimiter: ',',
-                                              values:['val1','val2','val3']
+                                              valuesList: 'val1,val2,val3'
                                       ]
                       ]
         ]
@@ -1339,7 +1339,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                                               enforced: true,
                                               multivalued:true,
                                               delimiter: ',',
-                                              values:['val1','val2','val3']
+                                              valuesList: 'val1,val2,val3'
                                       ]+data
                       ]
         ]
@@ -1627,13 +1627,13 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         given:
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         def newjob=new ScheduledExecution(createJobParams(
                 options: [
                         new Option(name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3", multivalued: true),
-                        new Option(name: 'test2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd'], multivalued: true, delimiter: "testdelim")
+                        new Option(name: 'test2', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d', multivalued: true, delimiter: "testdelim")
                 ]
         ))
         service.fileUploadService = Mock(FileUploadService)
@@ -1889,7 +1889,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'a', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'a', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         service.fileUploadService = Mock(FileUploadService)
@@ -1908,7 +1908,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         def inputOptions = input?.options ?: input?._sessionEditOPTSObject
 
         for(def i=0;i<inputOptions?.size();i++){
-            for(def prop:['name','defaultValue','enforced','realValuesUrl','values']){
+            for(def prop:['name','defaultValue','enforced','realValuesUrl','valuesList']){
                 results.scheduledExecution.options[i]."$prop"==inputOptions["options[$i]"]."$prop"
             }
         }
@@ -1917,7 +1917,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         input|expectSize|isSuccess
         //modify existing options
         [options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"],
-                   "options[1]": [name: 'test2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']]]] |  2 | true
+                   "options[1]": [name: 'test2', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d']]] |  2 | true
         //replace with a new option
         [options: ["options[0]": [name: 'test3', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"]]] |  1  | true
         //remove all options
@@ -1933,7 +1933,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'a', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'a', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
 
@@ -1958,7 +1958,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         input|_
         //invalid test1 option delimiter
         [options: ["options[0]": [name: 'test1', defaultValue: 'val3', enforced: false, multivalued: true],
-                   "options[1]": [name: 'test2', defaultValue: 'val2', enforced: false, values: ['a', 'b', 'c', 'd'], multivalued: true, delimiter: "testdelim"]]] |  _
+                   "options[1]": [name: 'test2', defaultValue: 'val2', enforced: false, valuesList: 'a,b,c,d', multivalued: true, delimiter: "testdelim"]]] |  _
 
     }
     def "do update job valid options"(){
@@ -1967,7 +1967,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         def newJob = new ScheduledExecution(createJobParams(
@@ -1986,7 +1986,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         results.scheduledExecution.options?.size() == input?.size()
 
         for(def i=0;i<input?.size();i++){
-            for(def prop:['name','defaultValue','enforced','realValuesUrl','values']){
+            for(def prop:['name','defaultValue','enforced','realValuesUrl','valuesList']){
                 results.scheduledExecution.options[0]."$prop"==input[i]."$prop"
             }
         }
@@ -1994,7 +1994,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         where:
         input|_
         [new Option(name: 'test1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"),
-                new Option(name: 'test3', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']),
+                new Option(name: 'test3', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d'),
         ] |  _
         null |  _
 
@@ -2075,7 +2075,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 command: 'aCommand'
         )
         def opt1 = new Option(name: 'test1', defaultValue: 'val1', enforced: false, valuesUrl: "http://test.com/test")
-        def opt2 = new Option(name: 'test2', defaultValue: 'val2', enforced: true, values: ['a', 'b', 'c'])
+        def opt2 = new Option(name: 'test2', defaultValue: 'val2', enforced: true, valuesList: 'a,b,c')
         se.addToOptions(opt1)
         se.addToOptions(opt2)
         se.save()
@@ -3397,7 +3397,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
 
         def se = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         def newJob = new ScheduledExecution(createJobParams(
@@ -3427,7 +3427,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         where:
         input|_
         [new Option(name: 'test1', label: 'label1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"),
-         new Option(name: 'test3', label: 'label2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']),
+         new Option(name: 'test3', label: 'label2', defaultValue: 'd', enforced: true, valuesList: 'a,b,c,d'),
         ] |  _
         null |  _
 
@@ -4949,7 +4949,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoUpdate()
         def auth = Mock(UserAndRolesAuthContext)
         def baseJob = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c')]))
                 .save(flush:true)
         def  emptyOptionsJob = new ScheduledExecution(createJobParams(options:[]))
 
@@ -4972,11 +4972,11 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         setupDoValidate()
         Map params = [:]
         def baseJob = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
-                new Option(name: 'test2', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c'),
+                new Option(name: 'test2', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c')
         ])).save()
         def  updatedJob = new ScheduledExecution(createJobParams(options:[
-                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c'])]))
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, valuesList: 'a,b,c')]))
 
         when: "same job with different options"
 
@@ -5523,20 +5523,31 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             result.nodeStepDescriptions[0].name=='test2'
 
     }
-    def "load remote options timeout configuration"(){
-        given:
+    def "load remote options timeout configuration from url params"(){
+
+        given:"a option getting values from a URL"
             def fwkservice=Mock(FrameworkService)
             defineBeans{
                 frameworkService(InstanceFactoryBean,fwkservice)
             }
             service.configurationService = Mock(ConfigurationService)
             service.frameworkService = fwkservice
+
+
+        when:"the connection values are set directly on the URL"
             def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
             se.addToOptions(new Option(
-                name:'test',
-                realValuesUrl: new URL('file://test')
+                    name:'test',
+                    realValuesUrl: new URL('file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry)
             ))
             se.save()
+
+            _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
+                _ * getFrameworkProjectMgr()>>Mock(ProjectManager){
+                    _ * loadProjectConfig('testProject')
+                }
+            }
+
             def input=[:]
             ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
                 input.url=url
@@ -5544,30 +5555,19 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
                 input.contimeout=vcontimeout
                 input.retry=vretry
                 [
-                    json: [
-                        'some', 'option', 'values'
-                    ]
+                        json: [
+                                'some', 'option', 'values'
+                        ]
                 ]
             }
-        when:
             def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
-        then:
-            input.url=='file://test'
+
+        then:"the values on the input should be the same as the spectec values "
+            input.url=='file://test#timeout='+timeout+';contimeout='+conTimeout+';retry='+retry
             input.timeout==expectTimeout
             input.contimeout==expectConTimeout
             input.retry==expectRetry
-            result.values==['some','option','values']
-            1 * service.configurationService.getString("jobs.options.remoteUrlTimeout")>>timeout?.toString()
-            _ * service.configurationService.getInteger("jobs.options.remoteUrlTimeout", null) >> timeout
-            1 * service.configurationService.getString("jobs.options.remoteUrlConnectionTimeout")>>conTimeout?.toString()
-            _ * service.configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout", null) >> conTimeout
-            1 * service.configurationService.getString("jobs.options.remoteUrlRetry")>>retry?.toString()
-            _ * service.configurationService.getInteger("jobs.options.remoteUrlRetry", null) >> retry
-            1 * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
-                1 * getFrameworkProjectMgr()>>Mock(ProjectManager){
-                    1 * loadProjectConfig('testProject')
-                }
-            }
+            result.values==[[name:'some', value:'some'],[name:'option', value:'option'],[name:'values', value:'values']]
 
         where:
             timeout | conTimeout | retry | expectTimeout | expectConTimeout | expectRetry
@@ -5575,6 +5575,129 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
             2       | 2          | 2     | 2             | 2                | 2
             null    | null       | null  | 10            | 0                | 5
     }
+
+    def "load remote options timeout configuration from config.properties"(){
+
+        given:"a option getting values from a URL"
+        def fwkservice=Mock(FrameworkService)
+        defineBeans{
+            frameworkService(InstanceFactoryBean,fwkservice)
+        }
+        service.configurationService = Mock(ConfigurationService)
+        service.frameworkService = fwkservice
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.addToOptions(new Option(
+                name:'test',
+                realValuesUrl: new URL('file://test')
+        ))
+        se.save()
+        def input=[:]
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+            input.url=url
+            input.timeout=vtimeout
+            input.contimeout=vcontimeout
+            input.retry=vretry
+            [
+                    json: [
+                            'some', 'option', 'values'
+                    ]
+            ]
+        }
+
+        when:"the values are set on the config.properties"
+        service.configurationService.getString("jobs.options.remoteUrlTimeout") >> timeout
+        service.configurationService.getInteger("jobs.options.remoteUrlTimeout",null) >> timeout
+        service.configurationService.getString("jobs.options.remoteUrlConnectionTimeout") >> conTimeout
+        service.configurationService.getInteger("jobs.options.remoteUrlConnectionTimeout",null) >> conTimeout
+        service.configurationService.getString("jobs.options.remoteUrlRetry") >> retry
+        service.configurationService.getInteger("jobs.options.remoteUrlRetry",null) >> retry
+        _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
+            _ * getFrameworkProjectMgr()>>Mock(ProjectManager){
+                _ * loadProjectConfig('testProject')
+            }
+        }
+        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+
+        then:"values setted on the config.properties should be equals to input values"
+        input.url=='file://test'
+        input.timeout==expectTimeout
+        input.contimeout==expectConTimeout
+        input.retry==expectRetry
+        result.values==[[name:'some', value:'some'],[name:'option', value:'option'],[name:'values', value:'values']]
+
+        where:
+        timeout | conTimeout | retry | expectTimeout | expectConTimeout | expectRetry
+        1       | 1          | 1     | 1             | 1                | 1
+        2       | 2          | 2     | 2             | 2                | 2
+        null    | null       | null  | 10            | 0                | 5
+    }
+
+    def "load remote options get an exception"(){
+
+        given:"a job with an url option"
+        def fwkservice=Mock(FrameworkService)
+        defineBeans{
+            frameworkService(InstanceFactoryBean,fwkservice)
+        }
+        service.configurationService = Mock(ConfigurationService)
+        service.frameworkService = fwkservice
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.addToOptions(new Option(
+                name:'test',
+                realValuesUrl: new URL('file://test')
+        ))
+        se.save()
+        _ * service.frameworkService.getRundeckFramework()>>Mock(IFramework){
+            _ * getFrameworkProjectMgr()>>Mock(ProjectManager){
+                _ * loadProjectConfig('testProject')
+            }
+        }
+
+        when:"getRemoteJSON trow an exception"
+        Exception e = new Exception("some exception")
+        ScheduledExecutionController.metaClass.static.getRemoteJSON={String url,int vtimeout, int vcontimeout, int vretry, boolean disableRemoteJsonCheck->
+            throw new Exception(e)
+        }
+        def result = service.loadOptionsRemoteValues(se,[option:'test'],'auser')
+
+        then:"result should have the information of the exception"
+        result.err.exception.toString() == "java.lang.Exception: java.lang.Exception: some exception"
+        result.values == null
+        result.err.message == "Failed loading remote option values"
+    }
+
+
+
+    def "sort url options result"(){
+        given:
+
+        def result = []
+        result << [name: "testName4", value: "value4"]
+        result << [name: "exampleName", value: "16"]
+        result << [name: "someOptionName", value: "cake"]
+        result << [name: "sweet", value: "sugar"]
+
+        when:
+        def sortedOptions = service.sortRemoteOptions(result, sort)
+        then:
+        sortedOptions.size() == size
+        if(sort){
+            sortedOptions[0].name == "exampleName" && sortedOptions[0].value == "16"
+            sortedOptions[1].name == "someOptionName" && sortedOptions[1].value == "cake"
+            sortedOptions[2].name == "sweet" && sortedOptions[2].value == "sugar"
+            sortedOptions[3].name == "testName4" && sortedOptions[3].value == "value4"
+        }else{
+            sortedOptions[0].name == "testName4" && sortedOptions[0].value == "value4"
+            sortedOptions[1].name == "exampleName" && sortedOptions[1].value == "16"
+            sortedOptions[2].name == "someOptionName" && sortedOptions[2].value == "cake"
+            sortedOptions[3].name == "sweet" && sortedOptions[3].value == "sugar"
+        }
+        where:
+            sort    | size
+            true    | 4
+            false   | 4
+    }
+
 }
 
 @CompileStatic

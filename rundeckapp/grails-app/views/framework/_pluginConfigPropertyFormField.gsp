@@ -267,6 +267,12 @@
         <g:set var="syntax" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODE)}"/>
         <g:set var="syntaxSelectable" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_SELECTABLE)}"/>
         <g:set var="syntaxModes" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODES_ALLOWED)}"/>
+
+
+        <g:set var="scriptTokenAutocomplete" value="${prop.renderingOptions?.(StringRenderingConstants.SCRIPT_TOKEN_AUTOCOMPLETE)}"/>
+        <g:set var="scriptTokenAutocompleteCss" value="${scriptTokenAutocomplete&&StringRenderingConstants.ScriptTokenAutocomplete.ENABLED.equalsOrString(scriptTokenAutocomplete)?'_wfscriptitem':''}"/>
+
+
         <g:textArea name="${fieldname}" value="${valueText}"
             data-ace-session-mode="${syntax}"
             data-ace-control-syntax="${syntaxSelectable?true:false}"
@@ -274,7 +280,8 @@
             data-ace-height="100px"
             data-ace-resize-auto="true"
             data-ace-resize-max="20"
-                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${extraInputCss}"/>
+                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${scriptTokenAutocompleteCss} ${extraInputCss}"/>
+
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
        <g:passwordField name="${fieldname}" value="${valueText}"

@@ -34,6 +34,8 @@ public class AuthConstants {
     public static final String ACTION_APP_ADMIN = "app_admin";
     public static final String ACTION_GENERATE_USER_TOKEN = "generate_user_token";
     public static final String ACTION_GENERATE_SERVICE_TOKEN = "generate_service_token";
+    public static final String ACTION_RUNNER_PING = "ping";
+    public static final String ACTION_RUNNER_REGENERATE_CREDENTIALS = "regenerate_credentials";
     public static final String ACTION_REFRESH = "refresh";
     public static final String ACTION_RUNAS = "runAs";
     public static final String ACTION_KILLAS = "killAs";
@@ -66,6 +68,7 @@ public class AuthConstants {
     public static final String TYPE_PROJECT = "project";
     public static final String TYPE_PROJECT_ACL = "project_acl";
     public static final String TYPE_PLUGIN = "plugin";
+    public static final String TYPE_RUNNER = "runner";
     public static final String TYPE_EVENT = "event";
     public static final String TYPE_USER = "user";
     public static final String TYPE_STORAGE = "storage";

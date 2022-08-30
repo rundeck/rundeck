@@ -153,8 +153,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
             throw new RuntimeException("Unable to create cachedir: " + cacheDir.getAbsolutePath());
         }
         //create node context for node and substitute data references in command
-        WFSharedContext sharedContext = new WFSharedContext();
-        sharedContext.merge(context.getSharedDataContext());
+        WFSharedContext sharedContext = new WFSharedContext(context.getSharedDataContext());
         sharedContext.merge(ContextView.global(), context.getDataContextObject());
         sharedContext.merge(
                 ContextView.node(node.getNodename()),
@@ -248,7 +247,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
                         dataContext,
                         ContextView.node(nodename),
                         ContextView::nodeStep,
-                        urlPathEncoder,
+                        DataContextUtils.replaceMissingOptionsWithBlank,
                         true,
                         false
                 ));

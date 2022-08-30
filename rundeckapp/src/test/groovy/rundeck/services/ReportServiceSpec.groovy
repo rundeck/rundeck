@@ -104,6 +104,22 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
         )
         job.save()
 
+        ScheduledExecution job2 = new ScheduledExecution(
+                jobName: jobname+"example",
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job2.save()
+
         List execIds = []
 
         (0..1001).each {
@@ -121,6 +137,19 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
             ReferencedExecution refexec = new ReferencedExecution(status: 'running',scheduledExecution: job, execution: e1)
             refexec.save()
 
+            Execution e2 = new Execution(
+                    project: project,
+                    user: 'bob',
+                    dateStarted: new Date(),
+                    dateCompleted: new Date(),
+                    status: 'successful'
+
+            )
+            e2.save()
+
+            ReferencedExecution refexec2 = new ReferencedExecution(status: 'running',scheduledExecution: job, execution: e2)
+            refexec2.save()
+
             ExecReport execReport = new ExecReport(
                     jcExecId: e1.id,
                     jcJobId: job.id,
@@ -134,22 +163,35 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
                     actionType: "type"
             )
             execReport.save(flush: true, failOnError: true)
+            ExecReport execReport2 = new ExecReport(
+                    jcExecId: e2.id,
+                    jcJobId: job2.id,
+                    ctxProject: "AProject",
+                    author: 'admin',
+                    title: "title",
+                    message: "message",
+                    dateCompleted: e2.dateCompleted,
+                    dateStarted: e2.dateStarted,
+                    status: 'success',
+                    actionType: "type"
+            )
+            execReport2.save(flush: true, failOnError: true)
         }
         ExecQuery query =  new ExecQuery()
         query.execIdFilter = execIds
         query.projFilter = "AProject"
         query.jobIdFilter = "${job.id}"
+        query.execProjects = ["AProject"]
         when:
         List result = ExecReport.createCriteria().list {
-            service.applyExecutionCriteria(query, delegate)
+            service.applyExecutionCriteria(query, delegate, true, job)
         }
 
         DetachedCriteria detachedCriteria1 =  new DetachedCriteria(ExecReport).build {
-            service.applyExecutionCriteria(query, delegate)
+            service.applyExecutionCriteria(query, delegate, true, job)
         }
 
-
-        def criteria = detachedCriteria1.getCriteria()[0].criteria[0]
+        def criteria = detachedCriteria1.getCriteria()[0].criteria[0].subquery.criteria[2].criteria[0]
 
         then:
         result
@@ -158,7 +200,7 @@ class ReportServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<
 
         where:
         isOracle| criteriaQuery
-        true    | Query.Disjunction
+        true    | Query.In
         false   | Query.In
     }
 

@@ -198,6 +198,7 @@ public class Notification {
         if(data.type=='email'){
             def map=data.config
             if(map['attachLog']) {
+                map['attachLog'] = true
                 if (map.attachType=='inline') {
                     map['attachLogInline'] = true
                 }else{
@@ -230,4 +231,19 @@ public class Notification {
         '}' ;
     }
 
+    def beforeValidate() {
+        if(this.type == 'email'){
+            if (content.startsWith('{') && content.endsWith('}')) {
+                //parse as json
+                Map<String,String> mailConf = getConfiguration()
+                String trimmedRecipients = mailConf['recipients'].split(",").collect{ mail->mail.trim() }.join(",")
+                if(trimmedRecipients != mailConf['recipients']){
+                    mailConf['recipients'] = trimmedRecipients
+                    setConfiguration(mailConf)
+                }
+            } else{
+                this.content = this.content.split(",").collect{mail->mail.trim() }.join(",")
+            }
+        }
+    }
 }
