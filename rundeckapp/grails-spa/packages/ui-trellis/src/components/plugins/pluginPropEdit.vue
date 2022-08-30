@@ -122,7 +122,7 @@
           size="100"
           type="number"
           class="form-control input-sm"
-          v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+          v-bind:class="contextAutocomplete ? 'vue_context_var_autocomplete' : ''"
           v-if="['Integer','Long'].indexOf(prop.type)>=0"
         >
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'">
@@ -133,7 +133,7 @@
             rows="10"
             cols="100"
             class="form-control input-sm"
-            v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+            v-bind:class="contextAutocomplete ? 'vue_context_var_autocomplete' : ''"
           ></textarea>
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='CODE'">
@@ -174,7 +174,7 @@
             readonly
             size="100"
             class="form-control input-sm"
-            v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+            v-bind:class="contextAutocomplete ? 'vue_context_var_autocomplete' : ''"
             v-bind:title="currentValue"
             v-bind:value="jobName"
           >
@@ -186,9 +186,31 @@
           size="100"
           type="text"
           class="form-control input-sm"
-          v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+          v-bind:class="contextAutocomplete ? 'vue_context_var_autocomplete' : ''"
           v-else
         >
+
+        <Typeahead v-if="contextAutocomplete"
+                   :target="'#' + rkey  +'prop_' + pindex"
+                   match-start
+                   :data="jobContext"
+                   item-key="name"
+                   v-model="currentValue"
+                   :limit=20
+        >
+          <template #item="{ items, activeIndex, select, highlight }">
+            <li
+                v-for="(item, index) in items"
+                :key="item.name"
+                :class="{ active: activeIndex === index }"
+            >
+              <a role="button"  @click="select(item)">
+                <span v-html="highlight(item)"></span> -  {{item.description}}
+              </a>
+            </li>
+          </template>
+        </Typeahead>
+
       </div>
       <div
         v-if="prop.options && prop.options['selectionAccessor']==='PLUGIN_TYPE'"
@@ -244,6 +266,7 @@
 import Vue from "vue"
 import MarkdownItVue from 'markdown-it-vue'
 // import 'markdown-it-vue/dist/markdown-it-vue.css'
+import { Typeahead } from 'uiv';
 
 import JobConfigPicker from './JobConfigPicker.vue'
 import KeyStorageSelector from './KeyStorageSelector.vue'
@@ -338,6 +361,7 @@ export default Vue.extend({
       currentValue: this.value,
       jobName: '',
       keyPath:'',
+      jobContext: [] as any
     }
   },
   watch:{
@@ -370,6 +394,27 @@ export default Vue.extend({
     this.setJobName(this.value)
     if (window._rundeck && window._rundeck.projectName) {
       this.keyPath = 'keys/project/' + window._rundeck.projectName +'/'
+    }
+
+    if (window._rundeck && window._rundeck.data) {
+      let pluginData = window._rundeck.data["pluginsData"]
+
+      if(pluginData){
+        let vars = pluginData.get(this.rkey  +'prop_' + this.pindex)
+
+        if(vars){
+          let jobContext = [] as any
+          vars.forEach( (context: any) => {
+            jobContext.push({
+              name: context["value"],
+              description: context["data"]["title"],
+              category: context["data"]["category"]
+            })
+          });
+          this.jobContext = jobContext
+        }
+
+      }
     }
   }
 })

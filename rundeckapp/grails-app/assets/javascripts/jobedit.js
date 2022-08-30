@@ -322,6 +322,16 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
 }
 
 function setupNotificationAutocomplete(idcompenent){
+
+  var data = window._rundeck.data
+
+  if(data["pluginsData"] == null){
+    data["pluginsData"] = new Map()
+    window._rundeck = Object.assign(window._rundeck || {}, {
+      data: data
+    })
+  }
+
   jQuery('#' + idcompenent).each(function (i, elem) {
     addNotificationAutocomplete(jQuery(elem));
   });
@@ -535,6 +545,25 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
         return jQuery.Autocomplete.formatResult(suggestion, currentValue)
       }
     })
+  });
+
+  liitem.find('.vue_context_var_autocomplete').each(function (i, elem) {
+    var id = elem.id
+    var autoenvmode = gettextfieldenvmode && gettextfieldenvmode(elem) || null;
+    var isscriptStep = istextareatemplatemode && istextareatemplatemode(elem);
+
+    var vars = isscriptStep ? autovarfunc('@', '@', autoenvmode) : autovarfunc(null, null, autoenvmode);
+
+    var data = window._rundeck.data
+    var pluginsData = window._rundeck.data["pluginsData"]
+
+    if(pluginsData.get(id) == null){
+      pluginsData.set(id, vars)
+      data["pluginsData"] = pluginsData
+      window._rundeck = Object.assign(window._rundeck || {}, {
+        data: data
+      })
+    }
   });
 }
 
