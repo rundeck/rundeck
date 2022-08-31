@@ -203,10 +203,10 @@
             :show-title="false"
             :show-description="false"
             :context-autocomplete="true"
-            @handleAutocomplete="handleAutoComplete"
             :validation="editValidation"
             scope="Instance"
             default-scope="Instance"
+            :autocompleteCallback="autocompleteCallback"
         ></plugin-config>
 
       </div>
@@ -273,7 +273,10 @@ export default {
       editValidation:null,
       editError:null,
       editIndex:-1,
-      editModal:false
+      editModal:false,
+      autocompleteCallback: {
+        type: Function
+      }
     }
   },
   computed:{
@@ -452,9 +455,6 @@ export default {
     doRedo(change){
       this.perform(change.operation,change)
     },
-    handleAutoComplete(){
-      window.setupNotificationAutocomplete("notification-edit-config")
-    },
     async perform(operation,change){
       if(operation==='create'){
         return this.operationCreate(change.value)
@@ -473,6 +473,8 @@ export default {
     }
   },
   async mounted () {
+    this.autocompleteCallback = window.notificationAutocomplete
+
     this.notifications = [].concat(this.notificationData.notifications || [])
     this.notifyAvgDurationThreshold = this.notificationData.notifyAvgDurationThreshold
     this.$on("undo",this.doUndo)
