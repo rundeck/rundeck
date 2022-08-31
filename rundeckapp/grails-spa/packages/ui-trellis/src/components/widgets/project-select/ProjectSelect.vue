@@ -24,7 +24,7 @@
                 >
                     <a role="button" tabindex="0" class="scroller__item" :title="item.name"
                        :href="itemHref(item)">
-                        <span class="text-ellipsis">{{item.label || item.name}}</span>
+                        <span class="text-ellipsis">{{item.label || item.name}}<span v-if="searchTerm && item.label && item.label!==item.name" class="text-muted"> {{item.name}}</span></span>
                     </a>
                 </RecycleScroller>
             </Skeleton>
