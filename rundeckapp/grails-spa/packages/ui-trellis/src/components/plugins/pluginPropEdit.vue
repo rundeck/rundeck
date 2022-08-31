@@ -122,7 +122,6 @@
           size="100"
           type="number"
           class="form-control input-sm"
-          v-bind:class="contextAutocomplete ? 'vue_context_var_autocomplete' : ''"
           v-if="['Integer','Long'].indexOf(prop.type)>=0"
         >
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'">
@@ -133,7 +132,6 @@
             rows="10"
             cols="100"
             class="form-control input-sm"
-            v-bind:class="contextAutocomplete ? 'vue_context_var_autocomplete' : ''"
           ></textarea>
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='CODE'">
@@ -174,7 +172,6 @@
             readonly
             size="100"
             class="form-control input-sm"
-            v-bind:class="contextAutocomplete ? 'vue_context_var_autocomplete' : ''"
             v-bind:title="currentValue"
             v-bind:value="jobName"
           >
@@ -186,11 +183,10 @@
           size="100"
           type="text"
           class="form-control input-sm"
-          v-bind:class="contextAutocomplete ? 'vue_context_var_autocomplete' : ''"
           v-else
         >
 
-        <Typeahead v-if="contextAutocomplete"
+        <Typeahead v-if="contextAutocomplete && prop.options && prop.options['displayType']!=='CODE'"
                    :target="'#' + rkey  +'prop_' + pindex"
                    match-start
                    :data="jobContext"
@@ -326,6 +322,10 @@ export default Vue.extend({
         default:false,
         required:false
     },
+    'autocompleteCallback':{
+      type:Function,
+      required:false
+    }
   },
   methods:{
     inputColSize(prop: any) {
@@ -396,25 +396,17 @@ export default Vue.extend({
       this.keyPath = 'keys/project/' + window._rundeck.projectName +'/'
     }
 
-    if (window._rundeck && window._rundeck.data) {
-      let pluginData = window._rundeck.data["pluginsData"]
-
-      if(pluginData){
-        let vars = pluginData.get(this.rkey  +'prop_' + this.pindex)
-
-        if(vars){
-          let jobContext = [] as any
-          vars.forEach( (context: any) => {
-            jobContext.push({
-              name: context["value"],
-              description: context["data"]["title"],
-              category: context["data"]["category"]
-            })
-          });
-          this.jobContext = jobContext
-        }
-
-      }
+    if(this.autocompleteCallback){
+      let vars = this.autocompleteCallback(this.rkey  +'prop_' + this.pindex)
+      let jobContext = [] as any
+      vars.forEach( (context: any) => {
+        jobContext.push({
+          name: context["value"],
+          description: context["data"]["title"],
+          category: context["data"]["category"]
+        })
+      });
+      this.jobContext = jobContext
     }
   }
 })
