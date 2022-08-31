@@ -186,7 +186,7 @@
           v-else
         >
 
-        <Typeahead v-if="contextAutocomplete && prop.options && prop.options['displayType']!=='CODE'"
+        <Typeahead v-if="contextAutocomplete && !aceEditorEnabled"
                    :target="'#' + rkey  +'prop_' + pindex"
                    match-start
                    :data="jobContext"
@@ -361,7 +361,8 @@ export default Vue.extend({
       currentValue: this.value,
       jobName: '',
       keyPath:'',
-      jobContext: [] as any
+      jobContext: [] as any,
+      aceEditorEnabled: false
     }
   },
   watch:{
@@ -396,7 +397,7 @@ export default Vue.extend({
       this.keyPath = 'keys/project/' + window._rundeck.projectName +'/'
     }
 
-    if(this.autocompleteCallback){
+    if(this.autocompleteCallback && this.contextAutocomplete){
       let vars = this.autocompleteCallback(this.rkey  +'prop_' + this.pindex)
       let jobContext = [] as any
       vars.forEach( (context: any) => {
@@ -407,6 +408,10 @@ export default Vue.extend({
         })
       });
       this.jobContext = jobContext
+    }
+
+    if(this.prop.options && this.prop.options['displayType']==='CODE'){
+      this.aceEditorEnabled = true
     }
   }
 })
