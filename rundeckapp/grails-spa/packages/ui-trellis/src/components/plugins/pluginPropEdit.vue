@@ -200,7 +200,7 @@
                 :key="item.name"
                 :class="{ active: activeIndex === index }"
             >
-              <a role="button"  @click="select(item)">
+              <a role="button"  @click="select(item.name)">
                 <span v-html="highlight(item)"></span> -  {{item.description}}
               </a>
             </li>
