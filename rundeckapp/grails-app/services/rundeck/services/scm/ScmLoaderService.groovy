@@ -33,8 +33,8 @@ class ScmLoaderService implements EventBusAware {
     ScheduledExecutionService scheduledExecutionService
     ConfigurationService configurationService
     public static final long DEFAULT_LOADER_DELAY = 0
-    public static final long DEFAULT_LOADER_INTERVAL_SEC = 10
-    public static final long INIT_RETRY_TIMES = 2
+    public static final long DEFAULT_LOADER_INTERVAL_SEC = 20
+    public static final long INIT_RETRY_TIMES = 5
     public static final long INIT_RETRY_TIMES_DELAY = 1000
 
     /**
