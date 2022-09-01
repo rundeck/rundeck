@@ -17,6 +17,8 @@ export const Elems = {
   jobDefModalScheduleEveryDaySelected: By.xpath('//div[contains(@class, \'cronselected\') and text() = \'every day\']'),
   jobDefinitionModalCloseBtn  : By.css('#job-definition-modal .modal-footer button[data-dismiss="modal"]'),
   notificationDefinition: By.css('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx'),
+  notificationDefinitionToggle: By.css('#detailtable.tab-pane > div.row > div.col-sm-12.table-responsive > table.table.item_details> tbody > tr > td.container > div.row > div.col-sm-12 > div.overflowx > span.toggle'),
+  notificationDefinitionDetailHttpRemoteUrl: By.xpath('//*[@id="detailtable"]/div/div/table/tbody[3]/tr[1]/td[2]/div/div/div/span[2]/div[2]/div/span/span[1]/span[2]'),
   nodeFilterSection: By.css('#detailtable.tab-pane  tr#exec_detail_nodes '),
   nodeFilterSectionMatchednodes: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__matchednodes'),
   nodeFilterSectionThreadcount: By.css('#detailtable.tab-pane  tr#exec_detail_nodes  .exec_detail__threadcount'),
@@ -97,6 +99,9 @@ export class JobShowPage extends Page {
     let data= await this.ctx.driver.findElement(Elems.notificationDefinition)
     return await data.getText()
   }
+  async jobDefinitionNotificationToggle(){
+    return await this.ctx.driver.findElement(Elems.notificationDefinitionToggle)
+  }
   async waitDefinitionNodefilters(){
     await this.ctx.driver.wait(until.elementLocated(Elems.nodeFilterSection), 25000)
   }
@@ -129,5 +134,9 @@ export class JobShowPage extends Page {
   }
   async jobDefinitionOrchestratorText() {
     return this.ctx.driver.findElement(Elems.orchestratorText)
+  }
+  async jobDefinitionNotificationHttpRemoteUrlDetail(){
+    return this.ctx.driver.findElement(Elems.notificationDefinitionDetailHttpRemoteUrl)
+
   }
 }
