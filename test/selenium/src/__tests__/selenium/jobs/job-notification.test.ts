@@ -189,4 +189,98 @@ describe('job', () => {
         let notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
         expect(notificationDefinitionText).toEqual("mail to: " + newEmail)
     })
+
+    it('context variables job  notifications', async () => {
+
+        await jobCreatePage.get()
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+        let jobName=await jobCreatePage.jobNameInput()
+        await jobName.sendKeys('a job with notifications context variables')
+
+        //add workflow step
+        let wfTab=await jobCreatePage.tabWorkflow()
+        await wfTab.click()
+        let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+
+        //click add Command step, and wait until input fields are loaded
+        await addWfStepCommand.click()
+        await jobCreatePage.waitWfStepCommandRemoteText()
+
+
+        let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+        await wfStepCommandRemoteText.sendKeys('echo selenium test')
+
+        let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
+
+        //click step Save button and wait for the step content to display
+        let wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
+        await wfStep0SaveButton.click()
+        await jobCreatePage.waitWfstep0vis()
+
+        //wait until edit form section for step is removed from dom
+        await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
+
+        const notificationsTab = await jobCreatePage.notificationsTab()
+        await notificationsTab.click()
+        
+        const vueAddSuccessbutton = await jobCreatePage.vueAddSuccessbutton()
+        await vueAddSuccessbutton.click()
+
+        const vueEditNotificationModal = await jobCreatePage.vueEditNotificationModal()
+        const typeDropdown = await jobCreatePage.vueEditNotificationPluginTypeDropdownButton()
+        await typeDropdown.click()
+
+        const httpNotification = await jobCreatePage.vueEditNotificationPluginTypeDropdownMenuItem('HttpNotification')
+        await sleep(1500)
+        await httpNotification.click()
+
+        // wait for config section to appear
+        const notificationConfig = await jobCreatePage.vueNotificationConfig()
+
+        // fill remoteUrl input section
+        await jobCreatePage.vueNotificationConfigFillPropText('remoteUrl', "${job.id")
+
+        await sleep(2000)
+
+        const autocomplteSuggestion = await jobCreatePage.findJobNotificationContextAutocomplete()
+        const autocomplteSuggestionText = await autocomplteSuggestion.getText()
+        expect(autocomplteSuggestionText).toEqual("${job.id} - Job ID")
+
+        await autocomplteSuggestion.click()
+
+        await sleep(2000)
+
+        // find modal save button
+        const modalSaveBtn = await jobCreatePage.vueEditNotificationModalSaveBtn()
+        await modalSaveBtn.click()
+        // wait until modal is hidden
+        await jobCreatePage.vueEditNotificationModalHidden()
+
+        //save the job
+        let save = await jobCreatePage.saveButton()
+        await save.click()
+
+        await ctx.driver.wait(until.urlContains('/job/show'), 35000)
+        let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
+
+        await jobShowPage.waitJobDefinition()
+        let jobDefinitionModal = await jobShowPage.jobDefinition()
+        await jobDefinitionModal.click()
+
+        await jobShowPage.waitDefinitionNotificationText()
+
+        let notificationDefinition = await jobShowPage.jobDefinitionNotificationToggle()
+        let notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
+        expect(notificationDefinitionText).toEqual("Http Notification")
+
+        await notificationDefinition.click()
+
+        await sleep(3000)
+
+
+        let jobDefinitionNotificationDetail = await jobShowPage.jobDefinitionNotificationHttpRemoteUrlDetail()
+        let remoteUrlText = await jobDefinitionNotificationDetail.getText()
+        expect(remoteUrlText).toEqual("${job.id}")
+
+    })
 })
