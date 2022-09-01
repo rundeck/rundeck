@@ -163,7 +163,7 @@ jQuery(function () {
                 " hasTextfield({0})",
                 [
                     [{enforced: false, multivalued: false, secureInput: false, hasError: false}, true],
-                    [{enforced: false, multivalued: true, secureInput: false, hasError: true}, true],
+                    [{enforced: false, multivalued: true, secureInput: false, hasError: true}, false],
                     [{enforced: true, multivalued: false, secureInput: true, hasError: false}, true],
 
                     [{enforced: true, multivalued: true, secureInput: false, hasError: false}, false],
