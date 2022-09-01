@@ -126,8 +126,11 @@ export const Elems = {
     otherTab  : By.css('#job_edit_tabs > li > a[href=\'#tab_other\']'),
     multiExecFalse: By.css('input#multipleFalse'),
     multiExecTrue: By.css('input#multipleTrue'),
-    retryInput: By.css('input#schedJobRetry')
-    // Job Queue tab
+    retryInput: By.css('input#schedJobRetry'),
+    
+    contextAutocomplete  : By.css('div[class="autocomplete-suggestions"]'),
+    notificationContextAutocomplete  : By.xpath('//*[@id="notification-edit-config"]/div/div/div[1]/div/div[1]/div/div[1]/section/ul/li/a')
+
 }
 
 export class JobCreatePage extends Page {
@@ -616,4 +619,28 @@ export class JobCreatePage extends Page {
     async retryInput() {
         return this.ctx.driver.findElement(Elems.retryInput)
     }
+
+    async findJobContextAutocomplete() {
+        let containers = await this.ctx.driver.findElements(Elems.contextAutocomplete)
+        let autoCompleteDiv
+        
+        for(let t = 0; t < containers.length; t++){
+            //let result = await containers[t].findElement(By.xpath(".//div[1]")).getText() 
+            let isDisplayed = await containers[t].isDisplayed()
+
+            if(isDisplayed){
+                autoCompleteDiv = containers[t]
+            }
+        }
+
+        let result = await autoCompleteDiv.findElement(By.css("div.autocomplete-suggestion"))
+
+        return result
+    }
+
+    async findJobNotificationContextAutocomplete() {
+        let notificationContextAutocomplete = await this.ctx.driver.findElement(Elems.notificationContextAutocomplete)
+        return notificationContextAutocomplete
+    }
+
 }
