@@ -48,8 +48,6 @@ describe('job', () => {
 
 
         let autocomplete = await jobCreatePage.findJobContextAutocomplete()
-
-    
         await autocomplete.click()
 
     
@@ -58,6 +56,8 @@ describe('job', () => {
         //click step Save button and wait for the step content to display
         await wfStep0SaveButton.click()
         await jobCreatePage.waitWfstepvis('0')
+
+        await sleep(3000)
 
         //save the job
         let save = await jobCreatePage.saveButton()
