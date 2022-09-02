@@ -28,6 +28,8 @@ export const Elems = {
   orchestratorText: By.css('#detailtable.tab-pane  tr#exec_detail_orchestrator  #exec_detail__orchestrator summary'),
   jobEditButton: By.xpath('//*[@id="subtitlebar"]/div/div[2]/div/div/ul/li[1]/a'),
   jobActionDropdown: By.css('.job-action-button > .btn-group > a.dropdown-toggle'),
+  jobStepDefinition: By.css('#wfitem_0 > span > div > div > span > span > span.text-success')
+  
 }
 
 export class JobShowPage extends Page {
@@ -138,5 +140,10 @@ export class JobShowPage extends Page {
   async jobDefinitionNotificationHttpRemoteUrlDetail(){
     return this.ctx.driver.findElement(Elems.notificationDefinitionDetailHttpRemoteUrl)
 
+  }
+
+  async findJobStepDefinition(){
+    let stepPluginDefinition = await this.ctx.driver.findElement(Elems.jobStepDefinition)
+    return stepPluginDefinition
   }
 }
