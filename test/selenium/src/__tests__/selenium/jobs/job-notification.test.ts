@@ -206,6 +206,27 @@ describe('job', () => {
         await addWfStepCommand.click()
         await jobCreatePage.waitWfStepCommandRemoteText()
 
+                //add options//
+        //1. click new option button
+        let optionNewButton = await jobCreatePage.optionNewButton()
+        await optionNewButton.click()
+        //2. wait for edit form to load
+        await jobCreatePage.waitoption0EditForm()
+
+        let optionName='email'
+        let optionNameInput=await jobCreatePage.option0NameInput()
+        await optionNameInput.sendKeys(optionName)
+
+        let optionUsageSection=await jobCreatePage.option0UsageSession()
+        expect(optionUsageSection).toBeDefined()
+
+        //save option
+        let optionFormSaveButton = await jobCreatePage.optionFormSaveButton()
+        await optionFormSaveButton.click()
+
+        //wait for option to save
+        await jobCreatePage.waitOption0li()
+
 
         let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test')
@@ -230,21 +251,21 @@ describe('job', () => {
         const typeDropdown = await jobCreatePage.vueEditNotificationPluginTypeDropdownButton()
         await typeDropdown.click()
 
-        const httpNotification = await jobCreatePage.vueEditNotificationPluginTypeDropdownMenuItem('HttpNotification')
+        const emailItem = await jobCreatePage.vueEditNotificationPluginTypeDropdownMenuItem('email')
         await sleep(1500)
-        await httpNotification.click()
+        await emailItem.click()
 
         // wait for config section to appear
         const notificationConfig = await jobCreatePage.vueNotificationConfig()
 
         // fill remoteUrl input section
-        await jobCreatePage.vueNotificationConfigFillPropText('remoteUrl', "${job.id")
+        await jobCreatePage.vueNotificationConfigFillPropText('recipients',"${option")
 
         await sleep(2000)
 
         const autocomplteSuggestion = await jobCreatePage.findJobNotificationContextAutocomplete()
         const autocomplteSuggestionText = await autocomplteSuggestion.getText()
-        expect(autocomplteSuggestionText).toEqual("${job.id} - Job ID")
+        expect(autocomplteSuggestionText).toEqual("${option.email} - Option value")
 
         await autocomplteSuggestion.click()
 
@@ -269,18 +290,8 @@ describe('job', () => {
 
         await jobShowPage.waitDefinitionNotificationText()
 
-        let notificationDefinition = await jobShowPage.jobDefinitionNotificationToggle()
         let notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
-        expect(notificationDefinitionText).toEqual("Http Notification")
-
-        await notificationDefinition.click()
-
-        await sleep(3000)
-
-
-        let jobDefinitionNotificationDetail = await jobShowPage.jobDefinitionNotificationHttpRemoteUrlDetail()
-        let remoteUrlText = await jobDefinitionNotificationDetail.getText()
-        expect(remoteUrlText).toEqual("${job.id}")
+        expect(notificationDefinitionText).toEqual("mail to: ${option.email}")
 
     })
 })
