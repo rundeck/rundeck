@@ -2,6 +2,7 @@
 #loginpage {
   display: flex;
   flex-direction: column;
+  overflow: scroll;
 
   .footer {
     margin-top: auto;
