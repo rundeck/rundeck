@@ -39,7 +39,7 @@ buildscript {
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
-        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.26'
+        classpath group: 'org.yaml', name: 'snakeyaml', version: "${snakeyamlVersion}"
         classpath 'org.owasp:dependency-check-gradle:5.3.2'
     }
 }
