@@ -767,7 +767,7 @@ workflows:
           requires: *stage-build
           context:
             - slack-secrets
-            <<: *slack-fail-post-step
+          <<: *slack-fail-post-step
       - maven-publish:
           name: Maven Publish
           requires: *stage-build
