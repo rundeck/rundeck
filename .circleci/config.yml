@@ -765,7 +765,6 @@ workflows:
           <<: *filter-no-tags
           name: Test Packaging
           requires: *stage-build
-          <<: *slack-fail-post-step
       - maven-publish:
           name: Maven Publish
           requires: *stage-build
