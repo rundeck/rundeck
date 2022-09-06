@@ -762,10 +762,10 @@ workflows:
             branches: { ignore: /.*/ }
             tags: { only: /^v.*$/ }
       - packaging_test:
+          <<: *filter-no-tags
           name: Test Packaging
           requires: *stage-build
-          filters:
-            branches: { only: /^RUN-809.*/ }
+          <<: *slack-fail-post-step
       - maven-publish:
           name: Maven Publish
           requires: *stage-build
