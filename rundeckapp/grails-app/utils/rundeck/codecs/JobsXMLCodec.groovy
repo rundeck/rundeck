@@ -377,7 +377,7 @@ class JobsXMLCodec {
                                 setValidNotifData(notifVal, notifType, trigger)
                             }
                         }else {
-                            throw new JobXMLException("${notifType} is not a valid/supported notification definition")
+                            throw new JobXMLException("Invalid Notification: [ name: ${map.name}, desc: ${map.desc}, group: ${map.group}, type: ${notifType}")
                         }
                     }
             }
