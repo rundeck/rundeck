@@ -565,6 +565,7 @@ public class RundeckConfigBase {
         String instanceNameLabelTextColor;
         String titleLink;
         String helpLink;
+        String helpLinkName;
         Boolean realJobTree;
         String logoSmall;
         Integer matchedNodesMaxCount;
