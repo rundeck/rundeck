@@ -2138,10 +2138,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
         List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
         List<Map<String, Object>> pluginGroupConfig = []
+        boolean pluginGroupDefined = false
         pluginGroupDescs.each {
             Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
             pluginGroupPasswordFieldsService.track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
             pluginGroupConfig.add(["type": it.name, "config":providerConfig])
+            pluginGroupDefined=true
         }
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
@@ -2165,6 +2167,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             pluginGroupConfig: pluginGroupConfig,
+            pluginGroupDefined: pluginGroupDefined,
             defaultNodeExec: defaultNodeExec,
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: execDesc,
