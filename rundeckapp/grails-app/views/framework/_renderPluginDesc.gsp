@@ -1,5 +1,4 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
 <g:if test="${description}">
   <g:if test="${showPluginIcon}">
     <stepplugin:pluginIcon service="${serviceName}"
