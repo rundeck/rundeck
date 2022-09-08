@@ -13,7 +13,7 @@
                 </div>
             </div>
             <Skeleton :loading="!projects.loaded">
-                <RecycleScroller @foo="alert('Foo')"
+                <RecycleScroller
                     ref="scroller"
                     :items="projects.search(searchTerm)"
                     :item-size="25"
@@ -22,19 +22,18 @@
                     key-field="name"
                     class="scroller"
                 >
-                    <div role="button" tabindex="0" class="scroller__item" :title="item.name" 
-                        @click="itemClicked(item)"
-                        @keypress.enter="itemClicked(item)">
-                        <span class="text-ellipsis">{{item.label || item.name}}</span>
-                    </div>
+                    <a role="button" tabindex="0" class="scroller__item" :title="item.name"
+                       :href="itemHref(item)">
+                        <span class="text-ellipsis">{{item.label || item.name}}<span v-if="searchTerm && item.label && item.label!==item.name" class="text-muted"> {{item.name}}</span></span>
+                    </a>
                 </RecycleScroller>
             </Skeleton>
         </div>
              <div class="btn-group btn-group-justified" style="height: 40px; flex-grow: 0; flex-shrink: 0; border-top: solid 1px grey;">
-                <a href="allProjectsLink" @click.prevent="allClicked" @keypress.enter.prevent="allClicked" class="btn btn-default" style="border-radius: 0px; border: 0px; border-right: solid 1px grey;">
+                <a :href="allProjectsLink" role="button" tabindex="0" class="btn btn-default scroller__subbutton" style="border-radius: 0px; border: 0px; border-right: solid 1px grey;">
                 <i class="far fa-eye"></i>
                 View All</a>
-                <a href="/resources/createProject" class="btn btn-default" style="border-radius: 0px; border: 0px;">
+                <a :href="createProjectLink" role="button" tabindex="0" class="btn btn-default scroller__subbutton" style="border-radius: 0px; border: 0px;">
                 <i class="fas fa-plus-circle"></i>
                 Create Project</a>
         </div>
@@ -54,6 +53,7 @@ import { getAppLinks } from '../../../rundeckService'
 import {RootStore} from '../../../stores/RootStore'
 import { ProjectStore, Project } from '../../../stores/Projects'
 import Skeleton from '../../skeleton/Skeleton.vue'
+import {url} from '../../../rundeckService'
 
 RecycleScroller.updated = function() {
     if (!this.ps)
@@ -91,6 +91,12 @@ export default class ProjectSelect extends Vue {
     get allProjectsLink(): string {
         return getAppLinks().menuHome
     }
+    get createProjectLink() {
+        return url('resources/createProject')
+    }
+    itemHref(project:any){
+        return url(`?project=${project.name}`).href
+    }
 
     created() {
         this.projects = this.rootStore.projects
@@ -109,13 +115,6 @@ export default class ProjectSelect extends Vue {
         })
     }
 
-    itemClicked(project: Project) {
-        this.$emit('project:selected', project)
-    }
-
-    allClicked() {
-        this.$emit('project:select-all')
-    }
 }
 </script>
 
@@ -162,6 +161,19 @@ export default class ProjectSelect extends Vue {
         border-left: 3px solid var(--brand-color);
         margin-left: -10px;
     }
+}
+
+a.scroller__item {
+    color: var(--font-color);
+    display: block;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+a.scroller__subbutton:focus {
+    text-decoration: underline;
 }
 
 .has-search .form-control-feedback {
