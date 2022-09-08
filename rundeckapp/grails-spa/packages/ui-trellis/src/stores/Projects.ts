@@ -26,8 +26,7 @@ export class ProjectStore {
     search(term: string) {
         const lowerTerm = term.toLowerCase()
         return this.projects.filter(p => {
-            const pTerm = p.label || p.name
-            return pTerm.toLowerCase().includes(lowerTerm)
+            return (p.label ? p.label.toLowerCase().includes(lowerTerm) : false) || (p.name.toLowerCase().includes(lowerTerm))
         })
     }
 }

@@ -394,13 +394,15 @@ class ProjectController extends ControllerBase{
                     flash.error = message(code:"no.file.was.uploaded")
                     return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
                 }
-                def result = projectService.importToProject(
-                    project1,
-                    frameworkService.getRundeckFramework(),
-                    authorizing.authContext,
-                    file.getInputStream(),
-                    archiveParams
-                )
+
+                try{
+                    def result = projectService.importToProject(
+                        project1,
+                        frameworkService.getRundeckFramework(),
+                        authorizing.authContext,
+                        file.getInputStream(),
+                        archiveParams
+                    )
 
 
                 if(result.success){
@@ -429,6 +431,10 @@ class ProjectController extends ControllerBase{
                     }
                 }
                 flash.warn=warning.join(",")
+                }catch( Exception e ){
+                    flash.error="There was some errors in the import process: [ ${e.getMessage()} ]"
+                }
+
                 return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
             }
         }.invalidToken {

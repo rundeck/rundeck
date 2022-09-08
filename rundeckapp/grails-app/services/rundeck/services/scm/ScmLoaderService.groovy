@@ -140,6 +140,7 @@ class ScmLoaderService implements EventBusAware {
                                 if(retryCount>retryTimes){
                                     scmFailedProjectInit.put(projectIntegration, pluginConfigData)
                                     process = true
+                                    scmToFalse(pluginConfigData, project, integration)
                                     removingLoaderProcess(project, integration)
                                 }else{
                                     retryCount++
@@ -158,6 +159,12 @@ class ScmLoaderService implements EventBusAware {
                 TimeUnit.SECONDS
         )
         scheduler
+    }
+
+    def scmToFalse(ScmPluginConfigData scmPluginConfig, String project, String integration) {
+        log.debug("SCM disabled")
+        scmPluginConfig.enabled = false
+        scmService.storeConfig(scmPluginConfig, project, integration)
     }
 
     def removingLoaderProcess(String project, String integration){

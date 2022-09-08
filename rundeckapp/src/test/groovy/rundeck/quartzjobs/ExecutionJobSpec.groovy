@@ -22,6 +22,10 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler
+import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import grails.test.hibernate.HibernateSpec
 import org.quartz.*
@@ -34,6 +38,7 @@ import rundeck.services.JobSchedulesService
 import testhelper.RundeckHibernateSpec
 
 import java.sql.Timestamp
+import java.util.concurrent.CountDownLatch
 
 /**
  * Created by greg on 4/12/16.
@@ -693,24 +698,32 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
 
         }
 
+        CountDownLatch latch = new CountDownLatch(1)
+
+        //simulate a workflow thread
+        def testThread=new WorkflowExecutionServiceThread(null,null,origContext,null,null){
+            void run(){
+                //keep "running" until notification sent
+                latch.await()
+            }
+        }
         def execmap = [
                 execution         : e,
                 scheduledExecution: se,
-                thread : Mock(WorkflowExecutionServiceThread){
-                    getContext()>>origContext
-                    isAlive()>>true
-                }
+                thread : testThread
         ]
 
         def es = Mock(ExecutionService){
-            executeAsyncBegin(framework, auth, e, se, secureOption, secureOptsExposed)>>execmap
+            1 * executeAsyncBegin(framework, auth, e, se, secureOption, secureOptsExposed) >> {
+                testThread.start()
+                execmap
+            }
         }
 
         ExecutionJob executionJob = new ExecutionJob()
-        def context = execmap.thread.context
         Map content = [
-                execution: execmap.execution,
-                context:context
+            execution: e,
+            context  : origContext
         ]
         ExecutionJob.RunContext runContext=new ExecutionJob.RunContext(
             executionService: es,
@@ -729,7 +742,9 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
 
         then:
 
-        1* es.avgDurationExceeded(_,content)
+        1 * es.avgDurationExceeded(_, content) >> {
+            latch.countDown()
+        }
         result != null
 
     }
