@@ -319,6 +319,9 @@
           :disabled="true"
           v-else
       ></slot>
+      <div>
+        {{"mcg is awesome"}}
+      </div>
 
     </template>
 

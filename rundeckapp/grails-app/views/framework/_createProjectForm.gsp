@@ -96,7 +96,7 @@
     jQuery(init);
     window._rundeck = Object.assign(window._rundeck || {}, {
         data: {
-            testValue: loadJsonData("pluginGroupJSON")
+            pluginGroups: loadJsonData("pluginGroupJSON")
         }
     })
     </g:javascript>

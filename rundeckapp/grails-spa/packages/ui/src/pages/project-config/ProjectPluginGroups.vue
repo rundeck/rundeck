@@ -208,9 +208,7 @@ export default Vue.extend({
       let data = []
       let inputData = this.pluginConfigs
       for (let key in inputData) {
-        if(inputData[key].modified){
-          data.push({type: key, config: inputData[key].entry.config})
-        }
+        data.push({type: key, config: inputData[key].entry.config})
       }
       return data
     }
@@ -422,9 +420,8 @@ export default Vue.extend({
   async mounted() {
     this.project = window._rundeck.projectName;
     console.log("made it here")
-    const test = window._rundeck.data.testValue as PluginConf
-    console.log(test)
-    this.contextConfig = test.config
+    const pluginGroups = window._rundeck.data.pluginGroups as PluginConf
+    this.contextConfig = pluginGroups.config
     console.log(this.contextConfig)
     await this.getPluginConfigs()
 
