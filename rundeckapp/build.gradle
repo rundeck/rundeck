@@ -75,6 +75,8 @@ dependencies {
     // Rundeck project dependencies.
     implementation project(':core')
     implementation project(':rundeck-storage:rundeck-storage-filesys')
+    implementation project(':rundeck-data-model')
+    implementation project(':rundeck-data-spi')
 
 
     /** It's important that the configuration addition follow the form 'compile project("")'
@@ -175,6 +177,9 @@ dependencies {
         exclude(group:"org.grails.profiles",module:"web")
     }
 
+
+    compileOnly "org.projectlombok:lombok:1.18.24"
+    annotationProcessor "org.projectlombok:lombok:1.18.24"
     // OpenApi Dependencies
     compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
     implementation "io.swagger.core.v3:swagger-annotations:2.1.13"
@@ -183,7 +188,6 @@ dependencies {
     implementation "io.micronaut:micronaut-inject-java:${micronautVersion}"
     implementation "io.micronaut:micronaut-inject-groovy:${micronautVersion}"
     implementation "io.micronaut:micronaut-core:${micronautVersion}"
-
 
     runtimeOnly 'org.aspectj:aspectjweaver:1.9.7'
     runtimeOnly "com.h2database:h2:2.1.210"

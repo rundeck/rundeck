@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.core.authentication;
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType;
+import org.rundeck.app.data.model.v1.AuthenticationToken;
 
 import java.io.Serializable;
 import java.security.Principal;
@@ -10,14 +10,14 @@ public class Token
 {
     private static final long serialVersionUID = 1L;
 
-    public Token(String tokenId, AuthTokenType type) {
+    public Token(String tokenId, AuthenticationToken.AuthTokenType type) {
         super();
         this.tokenId = tokenId;
         this.type = type;
     }
 
     private final String tokenId;
-    private final AuthTokenType type;
+    private final AuthenticationToken.AuthTokenType type;
 
     /**
      * @see java.security.Principal#getName()
@@ -26,7 +26,7 @@ public class Token
         return tokenId;
     }
 
-    public AuthTokenType getType() {
+    public AuthenticationToken.AuthTokenType getType() {
         return type;
     }
 

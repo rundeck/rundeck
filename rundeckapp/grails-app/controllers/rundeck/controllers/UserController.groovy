@@ -17,7 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
@@ -30,7 +30,7 @@ import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
 import rundeck.services.UserService
-import rundeck.services.ConfigurationService
+import org.rundeck.app.data.model.v1.*
 
 import javax.servlet.http.HttpServletResponse
 
@@ -133,7 +133,7 @@ class UserController extends ControllerBase{
                 eq("creator", u.login)
             }
             or {
-                eq("type", AuthTokenType.USER)
+                eq("type", AuthenticationToken.AuthTokenType.USER)
                 isNull("type")
             }
 
@@ -165,7 +165,7 @@ class UserController extends ControllerBase{
                 maxResults(max)
             }
             or {
-                eq("type", AuthTokenType.USER)
+                eq("type", AuthenticationToken.AuthTokenType.USER)
                 isNull("type")
             }
             order("dateCreated", "desc")
@@ -591,7 +591,7 @@ class UserController extends ControllerBase{
             }
             eq("user",user)
             or {
-                eq("type", AuthTokenType.USER)
+                eq("type", AuthenticationToken.AuthTokenType.USER)
                 isNull("type")
             }
         }[0]
@@ -685,13 +685,13 @@ class UserController extends ControllerBase{
         //default to current user profile
         def result = [:]
         try {
-            AuthToken token = apiService.generateUserToken(
+            AuthenticationToken token = apiService.generateUserToken(
                     authContext,
                     tokenDurationSeconds,
                     tokenUser ?: params.login,
-                    AuthToken.parseAuthRoles(tokenRoles),
+                    AuthenticationToken.parseAuthRoles(tokenRoles),
                     true,
-                    AuthTokenType.USER,
+                    AuthenticationToken.AuthTokenType.USER,
                     tokenName
             )
             result = [result: true, apitoken: token.clearToken, tokenid: token.uuid]
@@ -726,7 +726,7 @@ class UserController extends ControllerBase{
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
         try {
-            AuthToken token = adminAuth ?
+            AuthenticationToken token = adminAuth ?
                     apiService.findTokenId(tokenid) :
                     apiService.findUserTokenId(authContext.username, tokenid)
             if (!token) {
@@ -918,7 +918,7 @@ class UserController extends ControllerBase{
                 result=[result: false, error: error]
             }else{
                 def findtoken = params.tokenid ?: params.token
-                AuthToken found = null
+                AuthenticationToken found = null
                 if (adminAuth) {
                     //admin can delete any token
                     found = params.token ?
@@ -927,7 +927,7 @@ class UserController extends ControllerBase{
                 } else {
                     //users can delete owned token
                     found = params.token ?
-                            AuthToken.findByTokenAndCreator(params.token, login) :
+                            apiService.findByTokenAndCreator(params.token, login) :
                             apiService.findUserTokenId(login, params.tokenid)
                 }
 

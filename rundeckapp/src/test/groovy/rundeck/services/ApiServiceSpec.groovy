@@ -25,6 +25,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.JSONBuilder
@@ -32,8 +33,12 @@ import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.spi.data.DataManager
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.CommandExec
@@ -42,6 +47,7 @@ import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
 import rundeck.controllers.ApiController
+import rundeck.services.data.AuthTokenDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
@@ -53,15 +59,29 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<ApiController> {
+class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<ApiController>, DataTest {
 
     List<Class> getDomainClasses() { [User, AuthToken] }
 
     ApiService service
+    GormTokenDataProvider provider = new GormTokenDataProvider()
 
     void setup() {
         mockCodec(JSONCodec)
+        mockDomains(AuthToken, User)
+        mockDataService(AuthTokenDataService)
+
+        provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
+
+        provider.userService = Mock(UserService){
+            findOrCreateUser(_) >>  new User(login: 'auser')
+        }
         service = new ApiService()
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
+        }
     }
 
     def "renderWrappedFileContents xml"(){
@@ -351,15 +371,15 @@ class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<
         service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
         service.configurationService = Mock(ConfigurationService)
         service.userService = Mock(UserService)
-        def user = new User(login: 'auser')
+        def user = new User(login: 'auser').save()
 
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         result != null
-        result.user == user
-        result.authRoles == 'role1'
-        result.authRolesSet() == tokenRoles
+        result.user.login == user.login
+        result.generateAuthRoles(result.getAuthRolesSet()) == 'role1'
+        result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >>
                 (tokenaction == 'admin')
@@ -392,15 +412,15 @@ class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<
         service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
         service.configurationService = Mock(ConfigurationService)
         service.userService = Mock(UserService)
-        def user = new User(login: 'auser')
+        def user = new User(login: 'auser').save()
 
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         result != null
-        result.user == user
+        result.user.login == user.login
         result.authRoles == 'role1,svc_roleA'
-        result.authRolesSet() == tokenRoles
+        result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         if (tokenaction == 'admin') {
             1 * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
@@ -433,8 +453,15 @@ class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<
 
         service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
         service.configurationService = Mock(ConfigurationService)
-        service.userService = Mock(UserService) {
+        def mockedUserService =  Mock(UserService) {
             findOrCreateUser(tokenUser) >> new User(login: tokenUser)
+        }
+        service.userService = mockedUserService
+        provider.userService = mockedUserService
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
         }
 
         when:
@@ -443,7 +470,7 @@ class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<
         result != null
         result.user.login == tokenUser
         result.authRoles == 'role1,svc_roleA'
-        result.authRolesSet() == tokenRoles
+        result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >>
                 (tokenaction == 'admin')
@@ -515,17 +542,19 @@ class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<
         service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
         service.configurationService = Mock(ConfigurationService)
         service.userService = Mock(UserService)
-        def user = new User(login: tokenUser)
+        def user = new User(login: tokenUser).save()
 
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         result != null
-        result.user == user
-        result.authRolesSet() == tokenRoles
+        result.user.login == user.login
+        result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
         service.userService.findOrCreateUser(tokenUser) >> user
+        provider.userService.findOrCreateUser(tokenUser) >> user
+
 
         where:
          tokenUser | _
@@ -597,7 +626,7 @@ class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<
                 (tokeaction == 'generate_user_token')
 
         service.userService.findOrCreateUser('auser') >> user
-        result.authRolesSet() == (['role1', 'role2'] as Set)
+        result.getAuthRolesSet() == (['role1', 'role2'] as Set)
         where:
         tokeaction               | _
         'generate_service_token' | _

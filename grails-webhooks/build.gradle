@@ -50,6 +50,7 @@ dependencies {
     implementation "io.micronaut:micronaut-inject-groovy"
     console "org.grails:grails-console"
     implementation project(":core")
+    implementation project(':rundeck-data-model')
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
     compileOnly "org.grails:grails-plugin-domain-class"
