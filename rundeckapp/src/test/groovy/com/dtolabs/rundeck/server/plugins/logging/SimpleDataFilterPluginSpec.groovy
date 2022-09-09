@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.logging.LogEventControl
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -69,6 +70,7 @@ class SimpleDataFilterPluginSpec extends Specification {
 
         where:
         dolog | regex                          | lines                           | expect
+        true  | SimpleDataFilterPlugin.PATTERN | ['.*']                          | [:]
         true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
         false | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
         true  | SimpleDataFilterPlugin.PATTERN | ['blah', 'blee']                | [:]
@@ -220,5 +222,37 @@ class SimpleDataFilterPluginSpec extends Specification {
         false  | ''              | '.*:(.+?)\\s*=\\s*(.+)$'   | null | ['Incident:Number= 1235'] | [Number: '1235']
 
 
+    }
+
+    @Unroll
+    def "Test good parameters"() {
+
+        SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()
+
+        expect:
+        simpleDataFilterPluginValidator.isValid(regexValue, props)
+
+        where:
+        regexValue                             |            props              | expectedResult
+        '^RUNDECK:DATA:\\s*([^\\s]+?)\\s*=\\s*(.+)\$'         | [name: "TestValue"]           | true
+        '(.*)'                                                | [name: "TestValue"]           | true
+    }
+
+    @Unroll
+    def "Test failing parameters"() {
+
+        SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()
+
+        when:
+        simpleDataFilterPluginValidator.isValid(regexValue, props)
+
+        then:
+        def error = thrown(expectedException)
+        error.message == expectedMessage
+
+        where:
+        regexValue   |            props              | expectedException      |     expectedMessage
+            '.*'     | [name: "TestValue"]           | ValidationException    |  'Pattern must have at least one group'
+           '(.*)'    | [:]                           | ValidationException    |  'The Name field must be defined when only one capture group is specified'
     }
 }

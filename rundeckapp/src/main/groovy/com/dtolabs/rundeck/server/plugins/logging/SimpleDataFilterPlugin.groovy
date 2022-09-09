@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
-import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
@@ -70,7 +69,7 @@ the data key, and the second group defines the data value.
 See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) documentation.''',
             defaultValue = SimpleDataFilterPlugin.PATTERN,
             required = true,
-            validatorClass = SimpleDataFilterPlugin.RegexValidator
+            validatorClass = SimpleDataFilterPlugin.NamePropertyValidator
     )
     String regex
 
@@ -114,6 +113,34 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
             } catch (PatternSyntaxException e) {
                 throw new ValidationException(e.message, e)
             }
+        }
+    }
+
+    static class NamePropertyValidator implements PropertyValidator {
+
+        @Override
+        boolean isValid(String value) throws ValidationException {
+            return false
+        }
+
+        @Override
+        boolean isValid(String value, Map<String,Object> props) throws ValidationException {
+            def compile
+
+            try {
+                compile = Pattern.compile(value)
+            } catch (PatternSyntaxException e) {
+                throw new ValidationException(e.message, e)
+            }
+            Matcher m = compile.matcher("");
+
+            if(m.groupCount() == 0){
+                throw new ValidationException("Pattern must have at least one group")
+            }
+            if(m.groupCount() == 1 && !props.containsKey("name")){
+                throw new ValidationException("The Name field must be defined when only one capture group is specified")
+            }
+            return true
         }
     }
 
