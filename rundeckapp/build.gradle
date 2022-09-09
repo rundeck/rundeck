@@ -176,10 +176,7 @@ dependencies {
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
     }
-
-
-    compileOnly "org.projectlombok:lombok:1.18.24"
-    annotationProcessor "org.projectlombok:lombok:1.18.24"
+    
     // OpenApi Dependencies
     compileOnly "io.micronaut.openapi:micronaut-openapi:4.0.1"
     implementation "io.swagger.core.v3:swagger-annotations:2.1.13"
