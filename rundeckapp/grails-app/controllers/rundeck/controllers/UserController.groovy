@@ -60,6 +60,11 @@ class UserController extends ControllerBase{
     }
 
     def error() {
+        // A caller can pass in an error code URL parameter to support customized message other than the default generic message.
+        if (params.code) {
+            flash.loginErrorCode = params.code
+        }
+
         if(!flash.loginErrorCode){
             flash.loginErrorCode = 'invalid.username.and.password'
         }
