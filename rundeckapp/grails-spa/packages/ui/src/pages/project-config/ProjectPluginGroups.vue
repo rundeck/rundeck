@@ -401,10 +401,7 @@ export default Vue.extend({
                     if(projectPluginConfig.configSet){
                       projectPluginConfigList.push(projectPluginConfig)
                       this.pluginProviders.forEach((provider: any, index: any)=> {
-                        console.log(provider.name)
-                        console.log(provider2.type)
                         if(provider.name===provider2.type){
-                          console.log("entered in")
                           this.pluginProviders[index]["configSet"]=true
                         }
                       })
@@ -413,16 +410,12 @@ export default Vue.extend({
           }
         }).catch(error => console.error(error));
       this.pluginConfigs = projectPluginConfigList
-      console.log("pluginconfigs")
-      console.log(this.pluginConfigs)
     }
   },
   async mounted() {
     this.project = window._rundeck.projectName;
-    console.log("made it here")
     const pluginGroups = window._rundeck.data.pluginGroups as PluginConf
     this.contextConfig = pluginGroups.config
-    console.log(this.contextConfig)
     await this.getPluginConfigs()
 
   }

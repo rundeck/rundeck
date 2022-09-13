@@ -299,8 +299,8 @@
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
                               :allow-upload="true"
-                              :value="keyPath"/>
-
+                              :value="keyPath"
+                              :read-only="readOnly"/>
       </div>
       <slot
         v-else-if="prop.options && prop.options['selectionAccessor'] "
@@ -308,16 +308,6 @@
         :prop="prop"
         :inputValues="inputValues"
         :accessor="prop.options['selectionAccessor']"
-        v-if="!readOnly"
-      ></slot>
-      <slot
-          v-else-if="prop.options && prop.options['selectionAccessor'] "
-          name="accessors"
-          :prop="prop"
-          :inputValues="inputValues"
-          :accessor="prop.options['selectionAccessor']"
-          :disabled="true"
-          v-else
       ></slot>
 
     </template>
