@@ -120,6 +120,7 @@ class ExecutionJob implements InterruptableJob {
         try{
             initMap= initialize(context,context.jobDetail.jobDataMap)
         } catch (ExecutionServiceException es) {
+            markStartExecutionFailure(context)
             if (es.code == 'conflict') {
                 log.error("Unable to start Job execution: ${es.message ?: 'no message'}")
                 return
@@ -128,6 +129,7 @@ class ExecutionJob implements InterruptableJob {
                 throw es
             }
         }catch(Throwable t){
+            markStartExecutionFailure(context)
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
         }
@@ -171,6 +173,13 @@ class ExecutionJob implements InterruptableJob {
                 result?.execmap
         )
         initMap.jobSchedulerService.afterExecution(initMap.execution.asReference(), context.mergedJobDataMap, initMap.authContext)
+    }
+
+    private void markStartExecutionFailure(JobExecutionContext context) {
+        MetricRegistry metricRegistry=context.jobDetail.jobDataMap.get('metricRegistry')
+        if(metricRegistry) {
+            metricRegistry.meter(MetricRegistry.name(this.class.name, 'executionJobStartFailedMeter')).mark()
+        }
     }
 
     public void interrupt(){
