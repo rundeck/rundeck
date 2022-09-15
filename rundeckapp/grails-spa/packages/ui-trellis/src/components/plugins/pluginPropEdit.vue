@@ -189,7 +189,12 @@
             class="form-control input-sm"
             v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
             :disabled="true"
-            v-if="readOnly"
+            v-if="
+              readOnly && 
+              prop.options['displayType']!='PASSWORD' &&
+              prop.options['displayType']!='MULTI_LINE' &&
+              prop.options['displayType']!='CODE'
+            "
         >
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'">
           <textarea
@@ -226,7 +231,8 @@
           />
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='PASSWORD'">
-          <input
+          <div v-if="!readOnly">
+            <input
             :name="`${rkey}prop_`+pindex"
             v-model="currentValue"
             :id="`${rkey}prop_`+pindex"
@@ -234,9 +240,10 @@
             type="password"
             autocomplete="new-password"
             class="form-control input-sm"
-            v-if="!readOnly"
-          >
-          <input
+            >
+          </div>
+          <div v-else>
+            <input
               :name="`${rkey}prop_`+pindex"
               v-model="currentValue"
               :id="`${rkey}prop_`+pindex"
@@ -245,8 +252,9 @@
               autocomplete="new-password"
               class="form-control input-sm"
               :disabled="true"
-              v-else
-          >
+            >
+          </div>
+         
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='STATIC_TEXT'">
           <span
