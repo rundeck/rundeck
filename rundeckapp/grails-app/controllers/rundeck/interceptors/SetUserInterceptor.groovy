@@ -3,6 +3,7 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
+import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.SimpleTokenBuilder
@@ -21,7 +22,7 @@ import webhooks.Webhook
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
-
+import java.util.stream.Collectors
 class SetUserInterceptor {
     public static final String RUNNER_RQ_ATTRIB = "runnerRq"
     @Autowired
@@ -181,6 +182,7 @@ class SetUserInterceptor {
      * @return
      */
     @PackageScope
+    @CompileStatic
     AuthenticationToken lookupToken(String authtoken, ServletContext context, boolean webhookType) {
         if(!authtoken){
             return null
@@ -213,12 +215,11 @@ class SetUserInterceptor {
         }
 
         if (tokenobj) {
-            if (tokenobj.tokenIsExpired()) {
-                log.debug("loginCheck token is expired ${tokenobj?.user}, ${tokenobj}");
+            if (AuthenticationToken.tokenIsExpired(tokenobj)) {
+                log.debug("loginCheck token is expired ${tokenobj?.getOwnerName()}, ${tokenobj}");
                 return null
             }
-            User user = tokenobj?.user
-            log.debug("loginCheck found user ${user.login} via DB, ${tokenobj}");
+            log.debug("loginCheck found user ${tokenobj?.getOwnerName()} via DB, ${tokenobj}");
             return tokenobj
         }
         null
@@ -230,6 +231,7 @@ class SetUserInterceptor {
      * @param context
      * @return
      */
+    @CompileStatic
     private Set<String> lookupTokenRoles(AuthenticationToken authtoken, ServletContext context) {
         if(!authtoken){
             return null
@@ -243,11 +245,11 @@ class SetUserInterceptor {
                     roles = userLine.toString().split(",").drop(1) as List
                 }
                 log.debug("loginCheck found roles ${roles} via tokens file, token: ${authtoken.printableToken}");
-                return roles
+                return roles.stream().collect(Collectors.toSet());
             }
         }
 
-        Set<String> tokenRoles = authtoken.authRolesSet()
+        Set<String> tokenRoles = authtoken.getAuthRolesSet()
         if (tokenRoles && !tokenRoles.isEmpty()) {
             log.debug("loginCheck found roles ${tokenRoles} via DB, ${authtoken}");
             return tokenRoles

@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.AuthTokenMode
 import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 import org.rundeck.app.data.model.v1.AuthenticationToken
@@ -904,6 +905,7 @@ class ApiService implements WebUtilService{
      * @return
      */
     @Transactional
+    @CompileStatic
     def removeAllExpiredTokens() {
         def now = Date.from(Clock.systemUTC().instant())
         def found = tokenProvider.findAllByExpirationLessThan(now)
@@ -916,21 +918,26 @@ class ApiService implements WebUtilService{
     }
 
     @Transactional
+    @CompileStatic
     AuthenticationToken findByTokenAndCreator(final String token, String creator){
-        return tokenProvider.findAllByCreator(token, creator)
+        List<AuthenticationToken> userTokens =  tokenProvider.findAllByCreator(creator)
+        return userTokens.find{it.getToken() == token}
     }
 
     @Transactional
+    @CompileStatic
     AuthenticationToken tokenLookup(final String token){
         return tokenProvider.tokenLookup(token)
     }
 
     @Transactional
+    @CompileStatic
     AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType type){
         return tokenProvider.tokenLookupWithType(token, type)
     }
 
     @Transactional
+    @CompileStatic
     List<AuthenticationToken> listTokens(){
         return tokenProvider.list()
     }
