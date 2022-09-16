@@ -28,7 +28,7 @@
     "vue-template-compiler": "^2.6.12"
   },
   "dependencies": {
-    "bootstrap": "3.4.1",
+    "bootstrap": "4.1.2",
     "dotenv-webpack": "^7.0.2",
     "install": "^0.13.0",
     "jquery": "1.12.4",
