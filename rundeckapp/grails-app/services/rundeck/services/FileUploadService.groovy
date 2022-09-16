@@ -21,6 +21,7 @@ import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.feature.FeatureService
 
 import java.nio.file.Files
+import java.util.regex.Pattern
 
 /**
  * Manage receiving and retrieving files uploaded for job execution
@@ -31,6 +32,8 @@ class FileUploadService {
     public static final String RECORD_TYPE_OPTION_INPUT = 'option'
     public static final long DEFAULT_TEMP_EXPIRATION = 10 * 60 * 1000 //10 minutes
     public static final String DEFAULT_MAX_SIZE = '200MB'
+    public static final Pattern ILLEGAL_FILENAME_CHARACTERS = ~/[#@=%&{}$!`?*<>|:;'"\n\r\t\f\/\\]/
+    
     PluginService pluginService
     ConfigurationService configurationService
     TaskService taskService
@@ -132,6 +135,13 @@ class FileUploadService {
     )
     {
 
+        // Validate received filename.
+        if(origName && origName =~ ILLEGAL_FILENAME_CHARACTERS) {
+            throw new FileUploadServiceException(
+                "Illegal filename: ${origName}"
+            )
+        }
+        
         def shastream = new SHAInputStream(input)
         def readstream = shastream
         long max = optionUploadMaxSize

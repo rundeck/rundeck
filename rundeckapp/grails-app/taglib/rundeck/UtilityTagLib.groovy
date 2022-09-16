@@ -1843,8 +1843,8 @@ ansi-bg-default'''))
 
         attrs.data.each { row ->
             out << '<tr>'
-            attrs.columns.each {
-                out << "<td>${row.hasProperty(it) || row.properties[it] ? row[it] : ''}</td>"
+            attrs.columns.each { col ->
+                out << "<td>${(row instanceof Map && row.containsKey(col)) || row.hasProperty(col) || row.properties[col] ? row[col].toString()?.encodeAsHTML() : ''}</td>"
             }
             out << '</tr>'
         }
@@ -1877,7 +1877,7 @@ ansi-bg-default'''))
             }else if(recurse && val instanceof Collection){
                 out << g.basicList([ data: val, recurse: true], body)
             }else{
-                out<<val.toString()
+                out<< val.toString().encodeAsHTML()
             }
             out<<"</td>"
             out << "</tr>"
@@ -1909,7 +1909,7 @@ ansi-bg-default'''))
             }else if(recurse && item instanceof Collection){
                 out << g.basicList([classes:attrs.classes, data: item, recurse: true], body)
             }else{
-                out<<item.toString()
+                out<<item.toString().encodeAsHTML()
             }
             out << "</li>"
         }
