@@ -4,6 +4,18 @@
 #
 version: 2.1
 
+# config.yml packaging core
+
+parameters:
+  CIRCLE_UPSTREAM_PIPELINE_NUMBER: {type: string, default: ""}
+  CIRCLE_UPSTREAM_BRANCH: {type: string, default: ""}
+  CIRCLE_UPSTREAM_TAG: {type: string, default: ""}
+
+upstream-env: &upstream
+  CIRCLE_UPSTREAM_PIPELINE_NUMBER: <<pipeline.parameters.CIRCLE_UPSTREAM_PIPELINE_NUMBER>>
+  CIRCLE_UPSTREAM_BRANCH: <<pipeline.parameters.CIRCLE_UPSTREAM_BRANCH>>
+  CIRCLE_UPSTREAM_TAG: <<pipeline.parameters.CIRCLE_UPSTREAM_TAG>>
+
 slack-fail-post-step: &slack-fail-post-step
   post-steps:
     - slack/notify:
@@ -105,6 +117,111 @@ commands:
           path: ~/test-results
       - store_artifacts:
           path: ~/test-results/junit
+
+  install-packages:
+    description: Install apt packages
+    steps:
+      - run:
+          name: Apt install
+          command: |
+            sudo apt-get update
+            sudo apt-get -y install expect
+            sudo apt-get -y install rpm
+            sudo apt-get -y install dpkg-sig
+            sudo apt-get -y install gnupg
+  docker-login:
+    description: Login to docker
+    steps:
+      - run:
+          name: Login to docker
+          command: docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+  git-modules:
+    description: Git modules step
+    steps:
+      - checkout
+      - run:
+          name: Git modules
+          command: |
+            sudo sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  submodule-update:
+    description: Update submodule
+    steps:
+      - run:
+          name: Update submodule
+          command: git submodule update --init --recursive --remote
+  aws-install:
+    description: Install aws cli
+    steps:
+      - run:
+          name: Install aws cli
+          command: pip install awscli --upgrade --user
+
+  package-cloud-install:
+    description: Install package cloud
+    steps:
+      - run:
+          name: Install package cloud
+          command: |
+            rvm install 2.4.10
+            echo . $(rvm 2.4.10 do rvm env --path) >> $BASH_ENV
+            rvm use ruby-2.4.10
+            gem install package_cloud
+
+  echo-package-cloud:
+    description: Echo Package cloud token
+    steps:
+      - run:
+          name: Echo Package cloud token
+          command: echo "{\"url\":\"https://packagecloud.io\",\"token\":\"${PKGCLD_WRITE_TOKEN}\"}" > ~/.packagecloud
+
+  create-packages:
+    description: Create packages
+    steps:
+      - run:
+          name: Create packages
+          command: |
+            source .circleci/circle-shim.sh
+            bash packaging/scripts/circle-build.sh create_packages
+  sign:
+    description: Sign packages
+    steps:
+      - run:
+          name: Sign packages
+          command: |
+            GPG_TTY=$(tty)
+            export GPG_TTY
+            source .circleci/circle-shim.sh
+            bash packaging/scripts/circle-build.sh sign
+      - store_artifacts:
+          path: ~/repo/packaging/packaging/build/distributions
+      - store_artifacts:
+          path: ~/repo/packaging/packaging/artifacts
+  test-packages:
+    description: Test packages
+    steps:
+      - run:
+          name: Test packages
+          command: |
+            source .circleci/circle-shim.sh
+            bash packaging/scripts/circle-build.sh test
+  publish:
+    description: Publish packages
+    steps:
+      - run:
+          name: Publish packages
+          command: |
+            rvm use ruby-2.4.10
+            source .circleci/circle-shim.sh
+            bash packaging/scripts/circle-build.sh publish
+  publish-war:
+    description: Publish war
+    steps:
+      - run:
+          name: Publish war
+          command: |
+            rvm use ruby-2.4.10
+            source .circleci/circle-shim.sh
+            bash packaging/scripts/circle-build.sh publish_war
   setup-environment:
     steps:
       - run:
@@ -215,11 +332,23 @@ jobs:
             source .circleci/circle-shim.sh
             bash scripts/circle-build.sh buildDocker
             build_rdtest
+
+      - run:
+          name: Setup artifacts
+          command: |
+            source .circleci/circle-shim.sh
+            copy_artifacts
+      - persist_to_workspace:
+          root: artifacts
+          paths:
+            - core
+            - rundeckapp
+            - rundeck-storage
+            - rundeck-authz
       - run:
           name: Upload artifacts
           command: |
             source .circleci/circle-shim.sh
-            copy_artifacts
             sync_to_s3
             sync_to_latest_s3
             seal_artifacts
@@ -391,6 +520,59 @@ jobs:
           path: build/owasp-reports
           prefix: owasp-reports
 
+  build_and_publish:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: large
+
+    parameters:
+      submodule:
+        description: Should the build use submodules?
+        type: boolean
+        default: true
+
+    steps:
+      - install-packages
+      - docker-login
+      - git-modules
+      - submodule-update
+      - aws-install
+      - echo-package-cloud
+      - create-packages
+      - sign
+      - test-packages
+      - package-cloud-install
+      - publish
+      - publish-war
+
+  packaging_test:
+    <<: *defaults
+    machine:
+      image: ubuntu-2004:202201-02
+    resource_class: large
+    steps:
+      - install-packages
+      - docker-login
+      - git-modules
+      - submodule-update
+      - echo-package-cloud
+      - attach_workspace:
+          at: artifacts
+      - run:
+          name: Prepare artifacts
+          command: |
+            mkdir packaging/packaging/artifacts
+            find artifacts -name '*.war' -exec cp \{\} packaging/packaging/artifacts/ \;
+      - run:
+          name: Create packages
+          command: |
+            cd packaging/packaging
+            ./gradlew clean packageArtifacts
+      - sign
+      - test-packages
+      - package-cloud-install
+
   trigger-packaging:
     <<: *defaults
     docker:
@@ -450,6 +632,10 @@ filters:
   ignore-tags: &filter-no-tags
     filters:
       tags: { ignore: '/^v.*/' }
+  tags: &filter-tags
+    filters:
+      branches: { ignore: /.*/ }
+      tags: { only: '/^v.*/' }
 
 workflows:
   version: 2
@@ -569,20 +755,25 @@ workflows:
           context:
             - slack-secrets
           <<: *slack-fail-post-step
-      - trigger-packaging:
-          name: Trigger packaging-core
+      - build_and_publish:
+          name: Package and Release
           requires: *stage-build
           filters:
-            branches: {ignore: /.*/}
-            tags: {only: /^v.*$/}
+            branches: { ignore: /.*/ }
+            tags: { only: /^v.*$/ }
+      - packaging_test:
+          <<: *filter-no-tags
+          name: Test Packaging
+          requires: *stage-build
+          context:
+            - slack-secrets
+          <<: *slack-fail-post-step
       - maven-publish:
           name: Maven Publish
           requires: *stage-build
           filters:
             branches: {ignore: /.*/}
             tags: {only: /^v.*$/}
-
-
   nightly:
     triggers:
       - schedule:

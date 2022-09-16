@@ -38,7 +38,7 @@ else
 fi
 
 # Location of CI resources such as private keys
-S3_CI_RESOURCES="s3://rundeck-ci-resources/shared/resources"
+export S3_CI_RESOURCES="s3://rundeck-ci-resources/shared/resources"
 
 # Locations we could push build artifacts to depending on release type (snapshot, alpha, ga, etc).
 # The directory layout is designed to make browsing via the AWS console, and fetching from other projects easier.
