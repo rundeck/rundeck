@@ -203,16 +203,15 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         when:
         interceptor.apiService = apiService
         Set<String> foundRoles = interceptor.lookupTokenRoles(userTk3,svCtx)
-        String result = foundRoles?.getAt(0)
 
         then:
-        result == expected
+        foundRoles == expected
 
         where:
         tk    | authRoles       | expected
-        "123" | "admin"         | "admin"
+        "123" | "admin"         | ['admin'].toSet()
         "456" |  null           |  null
-        "ABC" | "webhook,role1" | "role1"
+        "ABC" | "webhook,role1" | ['webhook','role1'].toSet()
     }
 
     def "request without remote auth info will be invalid"(){
