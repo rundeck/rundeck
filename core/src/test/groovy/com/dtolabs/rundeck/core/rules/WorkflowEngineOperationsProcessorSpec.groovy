@@ -110,4 +110,51 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
         then:
             !processor.detectNoMoreChanges()
     }
+
+    def "shouldWorkflowEnd()"() {
+        given:
+            Set<TestOperation> operations = new HashSet<TestOperation>()
+            def engine = Mock(StateWorkflowSystem)
+            Map shared = [:]
+            WorkflowSystem.SharedData<Map,Map> sharedData = WorkflowSystem.SharedData.<Map,Map> with(
+                    { Map d -> shared.putAll(d) },
+                    { -> shared },
+                    {->[:]}
+            )
+            def executor = Mock(ListeningExecutorService)
+            def manager = Mock(ListeningExecutorService)
+            def handler = Mock(WorkflowSystemEventHandler)
+
+            WorkflowEngineOperationsProcessor processor = new WorkflowEngineOperationsProcessor<Map, TestOpCompleted,
+                    TestOperation>(
+                    engine,
+                    handler,
+                    operations,
+                    sharedData,
+                    executor,
+                    manager
+            )
+            processor.tuneEndStateGather(gather)
+            if(ops){
+                processor.inProcess.add(new TestOperation())
+            }
+            if(changes){
+                processor.stateChangeQueue.add(Mock(WorkflowSystem.OperationCompleted))
+            }
+            engine.isWorkflowEndState()>>endState
+
+        expect:
+            processor.shouldWorkflowEnd() == expect
+        where:
+            ops   | changes | endState | gather | expect
+            false | false   | false    | false  | false
+            false | false   | true     | false  | true
+            false | true    | true     | false  | true
+            true  | false   | true     | false  | true
+            true  | true    | true     | false  | true
+            false | false   | true     | true   | true
+            true  | false   | true     | true   | false
+            true  | true    | true     | true   | false
+            false | true    | true     | true   | false
+    }
 }
