@@ -177,22 +177,12 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
         boolean changed = false;
         for (WorkflowSystem.OperationCompleted<DAT> task : operationCompleteds) {
-            DAT result = task.getResult();
-            Map<String, String> state = new HashMap<>(task.getNewState().getState());
             changed |=
                     workflowEngine.processStateChange(
-                            StateWorkflowSystem.stateChange(
-                                    task.getIdentity(),
-                                    () -> {
-                                        if (null != sharedData && null != result) {
-                                            sharedData.addData(result);
-                                            Map<String, String> sharedState = sharedData.produceState();
-                                            state.putAll(sharedState);
-                                        }
-                                        return state;
-                                    },
-                                    sharedData
-                            )
+                            task.getIdentity(),
+                            task.getNewState(),
+                            task.getResult(),
+                            sharedData
                     );
         }
         return changed;

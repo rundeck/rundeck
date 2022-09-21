@@ -48,7 +48,12 @@ public interface StateWorkflowSystem
         /**
          * @return new state data
          */
-        Map<String, String> getState();
+        StateObj getState();
+
+        /**
+         * @return new state data
+         */
+        D getNewData();
 
         /**
          * @return shared data
@@ -60,13 +65,14 @@ public interface StateWorkflowSystem
      * Create State Change
      *
      * @param identity
-     * @param stateSupplier
+     * @param state
      * @param sharedData
      * @param <D>
      */
     static <D> StateChange<D> stateChange(
             String identity,
-            Supplier<Map<String, String>> stateSupplier,
+            StateObj state,
+            final D newData,
             SharedData<D, Map<String, String>> sharedData
     )
     {
@@ -77,8 +83,13 @@ public interface StateWorkflowSystem
             }
 
             @Override
-            public Map<String, String> getState() {
-                return stateSupplier.get();
+            public StateObj getState() {
+                return state;
+            }
+
+            @Override
+            public D getNewData() {
+                return newData;
             }
 
             @Override
@@ -89,7 +100,7 @@ public interface StateWorkflowSystem
     }
 
     /**
-     * state change for given identity
+     * state change for workflow
      */
     interface StateEvent<D> {
 
@@ -134,6 +145,11 @@ public interface StateWorkflowSystem
      */
     interface StateChangeEvent<D> {
         /**
+         *
+         * @return identity of step
+         */
+        String getIdentity();
+        /**
          * Current state
          */
         public MutableStateObj getState();
@@ -147,16 +163,22 @@ public interface StateWorkflowSystem
     /**
      * Create StateChangeEvent
      *
+     * @param <D>
+     * @param identity
      * @param state
      * @param stateChange
-     * @param <D>
      */
     static <D> StateChangeEvent<D> stateChangeEvent(
+            final String identity,
             MutableStateObj state,
             StateChange<D> stateChange
     )
     {
         return new StateWorkflowSystem.StateChangeEvent<D>() {
+            @Override
+            public String getIdentity() {
+                return identity;
+            }
 
             @Override
             public MutableStateObj getState() {
@@ -273,10 +295,18 @@ public interface StateWorkflowSystem
     /**
      * Handle the state changes for the rule engine
      *
-     * @param change a single change
+     * @param identity step identity
+     * @param state state change map
+     * @param newData new data provided by operation
+     * @param sharedData shared data
      * @return true if internal state was changed
      */
-    boolean processStateChange(WorkflowEngine.StateChange<?> change);
+    <D> boolean processStateChange(
+            final String identity,
+            final StateObj state,
+            final D newData,
+            final SharedData<D, Map<String, String>> sharedData
+    );
 
     /**
      * @return true if the state indicates the workflow should end
@@ -291,7 +321,7 @@ public interface StateWorkflowSystem
     /**
      * set listener
      *
-     * @param listener
+     * @param listeners
      */
     void setListeners(List<WorkflowSystemEventListener> listeners);
 }
