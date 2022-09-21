@@ -184,6 +184,36 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         "RN1" | false        | true     | "admin"
     }
 
+    @Unroll
+    def "lookupTokenRoles"() {
+
+        given:
+        User u1 = new User(login: "admin")
+
+        AuthToken userTk3 = new AuthToken(token: tk, user:u1, authRoles:authRoles, type: AuthenticationToken.AuthTokenType.USER, tokenMode: AuthTokenMode.SECURED)
+        u1.save()
+        userTk3.save()
+        def svCtx = Mock(ServletContext)
+        def apiService = new ApiService()
+        apiService.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                new GormTokenDataProvider()
+            }
+        }
+        when:
+        interceptor.apiService = apiService
+        Set<String> foundRoles = interceptor.lookupTokenRoles(userTk3,svCtx)
+
+        then:
+        foundRoles == expected
+
+        where:
+        tk    | authRoles       | expected
+        "123" | "admin"         | ['admin'].toSet()
+        "456" |  null           |  null
+        "ABC" | "webhook,role1" | ['webhook','role1'].toSet()
+    }
+
     def "request without remote auth info will be invalid"(){
         given:
             request.api_version=12
