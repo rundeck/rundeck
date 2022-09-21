@@ -373,30 +373,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     }
 
     /**
-     * Handle the state changes for the rule engine
-     *
-     * @param changes
-     */
-    private void processStateChanges(final Map<String, String> changes) {
-        eventHandler.event(WorkflowSystemEventType.WillProcessStateChange,
-                           String.format("saw state changes: %s", changes), changes
-        );
-
-        workflowEngine.getState().updateState(changes);
-
-        boolean update = Rules.update(workflowEngine.getRuleEngine(), workflowEngine.getState());
-        eventHandler.event(
-                WorkflowSystemEventType.DidProcessStateChange,
-                String.format(
-                        "applied state changes and rules (changed? %s): %s",
-                        update,
-                        workflowEngine.getState()
-                ),
-                workflowEngine.getState()
-        );
-    }
-
-    /**
      * Run and skip pending operations
      *
      * @param resultConsumer consumer for result of operations
