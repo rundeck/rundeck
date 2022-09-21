@@ -146,35 +146,45 @@ public class WorkflowEngine
         return results;
     }
 
-    /**
-     * @param change
-     * @return true if state was changed
-     */
     @Override
-    public boolean processStateChange(final StateChange<?> change) {
+    public <D> boolean processStateChange(
+            final String identity,
+            final StateObj newState,
+            final D newData,
+            final SharedData<D, Map<String, String>> sharedData
+    )
+    {
         event(
                 WorkflowSystemEventType.WillProcessStateChange,
-                String.format("state changes: %s ", change.getIdentity()),
-                StateWorkflowSystem.stateChangeEvent(getState(), change)
+                String.format("state changes: %s %s", identity, newState),
+                StateWorkflowSystem.stateChangeEvent(
+                        identity,
+                        getState(),
+                        StateWorkflowSystem.stateChange(identity, newState, newData, sharedData)
+                )
         );
 
-        Map<String, String> newState = change.getState();
-        boolean update = getState().updateState(newState);
+        if (null != newData) {
+            sharedData.addData(newData);
+        }
+        Map<String, String> additionalState = sharedData.produceState();
 
-        update |= Rules.update(getRuleEngine(), getState());
+        boolean update = getState().updateState(newState);
+        D nextShared = sharedData.produceNext();
+
+        update |= Rules.update(getRuleEngine(), getState(), States.state(additionalState));
         event(
                 WorkflowSystemEventType.DidProcessStateChange,
                 String.format(
                         "applied state changes and rules (changed? %s): %s - %s",
                         update,
-                        change.getIdentity(),
+                        identity,
                         getState()
                 ),
                 StateWorkflowSystem.stateChangeEvent(
+                        identity,
                         getState(),
-                        StateWorkflowSystem.stateChange(change.getIdentity(),
-                                                        () -> newState,
-                                                        change.getSharedData())
+                        StateWorkflowSystem.stateChange(identity, States.state(additionalState), nextShared, sharedData)
                 )
         );
 
