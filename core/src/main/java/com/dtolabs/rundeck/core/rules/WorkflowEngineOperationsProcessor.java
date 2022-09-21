@@ -62,18 +62,12 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private final List<ListenableFuture<RES>> futures = new ArrayList<>();
 
     private WorkflowEngine.Sleeper sleeper = new WorkflowEngine.Sleeper();
+    /**
+     * when wf is in end state, wait until existing operations finish
+     */
     private boolean
-            endStateBreak =
-            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateBreak", "false"));
-    private boolean
-            endStateCancel =
-            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateCancel", "false"));
-    private boolean
-            endStateCancelInterrupt =
-            Boolean.parseBoolean(System.getProperty(
-                    "WorkflowEngineOperationsProcessor.endStateCancelInterrupt",
-                    "false"
-            ));
+            endStateGather =
+            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateGather", "true"));
 
 
     public WorkflowEngineOperationsProcessor(
@@ -92,6 +86,10 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         this.pending = new HashSet<>(operations);
         this.executorService = executorService;
         this.manager = manager;
+    }
+
+    public void tuneEndStateGather(boolean gather){
+        endStateGather = gather;
     }
 
     /**
@@ -139,25 +137,19 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 }
 
 
-                if (workflowEngine.isWorkflowEndState()) {
-                    //end state reached
+                if (shouldWorkflowEnd()) {
+                    //end state reached, and either; gather was true and no more changes are pending, or gather was not true
                     eventHandler.event(
                             WorkflowSystemEventType.WorkflowEndState,
                             "Workflow end state reached.",
                             StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
                     );
 
-                    if (endStateBreak) {
-                        cancel = endStateCancel;
-                        cancelInterrupt = endStateCancelInterrupt;
-                        break;
-                    } else {
-                        return;
-                    }
+                    return;
+                }else if(!workflowEngine.isWorkflowEndState()){
+                    //some changes made to state, so review pending operations
+                    processOperations(results::add);
                 }
-
-                //some changes made to state, so review pending operations
-                processOperations(results::add);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -170,6 +162,10 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             cancelFutures(cancelInterrupt);
         }
         awaitFutures();
+    }
+
+    boolean shouldWorkflowEnd() {
+        return workflowEngine.isWorkflowEndState() && (!endStateGather || detectNoMoreChanges());
     }
 
     private boolean processCompletedChanges(
