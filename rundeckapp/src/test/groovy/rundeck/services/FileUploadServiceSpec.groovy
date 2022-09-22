@@ -645,4 +645,122 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
         option.errors.hasErrors() == true
 
     }
+
+    def "reject upload files with invalid name"() {
+        given:
+
+        def fileUploadPluginMock = Mock(FileUploadPlugin) {
+            uploadFile(_, _, _, _) >> "stubfileref"
+        }
+
+        def service = GroovySpy(FileUploadService) {
+            getPlugin() >> fileUploadPluginMock
+            createRecord(_, _, _, _, _, _, _, _, _, _) >> { args ->
+                return new JobFileRecord(
+                    fileName: args[4],
+                    uuid: args[2].toString()
+                )
+            }
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileUploadService.tempfile.maxsize', _) >> "200MB"
+        }
+
+        def file = new ByteArrayInputStream("example file contents".getBytes())
+        def length = file.available()
+
+
+        when:
+        def result = service.receiveFile(
+            file,
+            length,
+            "admin",
+            origFilename,
+            "inputnamefile031u4023480928",
+            [:],
+            "jobid",
+            "testproject",
+            null
+        )
+
+        then:
+        def exc = thrown(expectedException)
+        exc.message.contains "Illegal filename:"
+
+        where:
+        origFilename                | expectedException
+        '<script>alert(1)</script>'         | FileUploadServiceException
+        'Robert\'); DROP TABLE Students;--' | FileUploadServiceException
+        'filename/with/dirs.txt'            | FileUploadServiceException
+        'file with @'                       | FileUploadServiceException
+        '{"json": "content"}'               | FileUploadServiceException
+        'files with # in name.txt'          | FileUploadServiceException
+        'files with @ in name.txt'          | FileUploadServiceException
+        'files with = in name.txt'          | FileUploadServiceException
+        'files with % in name.txt'          | FileUploadServiceException
+        'files with & in name.txt'          | FileUploadServiceException
+        'files with { in name.txt'          | FileUploadServiceException
+        'files with } in name.txt'          | FileUploadServiceException
+        'files with $ in name.txt'          | FileUploadServiceException
+        'files with ! in name.txt'          | FileUploadServiceException
+        'files with ` in name.txt'          | FileUploadServiceException
+        'files with ? in name.txt'          | FileUploadServiceException
+        'files with * in name.txt'          | FileUploadServiceException
+        'files with < in name.txt'          | FileUploadServiceException
+        'files with > in name.txt'          | FileUploadServiceException
+        'files with | in name.txt'          | FileUploadServiceException
+        'files with : in name.txt'          | FileUploadServiceException
+        'files with ; in name.txt'          | FileUploadServiceException
+        'files with \' in name.txt'         | FileUploadServiceException
+        'files with " in name.txt'          | FileUploadServiceException
+    }
+
+    def "accept upload files with valid name"() {
+        given:
+
+        def fileUploadPluginMock = Mock(FileUploadPlugin) {
+            uploadFile(_, _, _, _) >> "stubfileref"
+        }
+
+        def service = GroovySpy(FileUploadService) {
+            getPlugin() >> fileUploadPluginMock
+            createRecord(_, _, _, _, _, _, _, _, _, _) >> { args ->
+                return new JobFileRecord(
+                    fileName: args[4],
+                    uuid: args[2].toString()
+                )
+            }
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileUploadService.tempfile.maxsize', _) >> "200MB"
+        }
+
+        def file = new ByteArrayInputStream("example file contents".getBytes())
+        def length = file.available()
+
+        when:
+        def result = service.receiveFile(
+            file,
+            length,
+            "admin",
+            origFilename,
+            "inputnamefile031u4023480928",
+            [:],
+            "jobid",
+            "testproject",
+            null
+        )
+
+        then:
+        (UUID.fromString(result) instanceof UUID) == expected
+
+        where:
+        origFilename                                | expected
+        'hello_world.txt'                           | true
+        'filename.html'                             | true
+        'with-hyphens_underscore.txt'               | true
+        'with spaces .txt'                          | true
+        'status report last-ver (1.05)_abraxas.txt' | true
+    }
+
 }
