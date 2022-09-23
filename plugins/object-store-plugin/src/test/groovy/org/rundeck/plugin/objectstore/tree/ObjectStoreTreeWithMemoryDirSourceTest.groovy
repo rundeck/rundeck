@@ -28,6 +28,7 @@ import org.rundeck.storage.api.PathUtil
 import spock.lang.Shared
 import spock.lang.Specification
 import testhelpers.MinioContainer
+import testhelpers.MinioTestUtils
 
 class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     String configBucket = "test-config-bucket"
@@ -39,8 +40,7 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     public MinioContainer minio = new MinioContainer()
 
     void setupSpec() {
-//        minio.start()
-        mClient = minio.client()
+        mClient = MinioTestUtils.startOrConnectToContainer(minio)
     }
 
     void setup() {

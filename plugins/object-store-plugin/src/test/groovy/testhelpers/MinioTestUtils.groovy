@@ -40,4 +40,17 @@ class MinioTestUtils {
             }
         }
     }
+
+    static MinioClient startOrConnectToContainer(MinioContainer container) {
+        boolean isTestEnv = false
+        try {
+            String testEnvCheck = System.getenv("IS_TEST_ENV")
+            if (testEnvCheck) { isTestEnv = true }
+        } catch (NullPointerException e) {
+            System.out.println("object-store-plugin test: Error checking IS_TEST_ENV variable. Starting Minio container...")
+        }
+
+        if (!isTestEnv) { container.start() }
+        return container.client(isTestEnv)
+    }
 }
