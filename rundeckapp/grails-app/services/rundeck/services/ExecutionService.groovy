@@ -1246,6 +1246,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }catch(Exception e) {
             log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
+            metricService.markMeter(this.class.name,'executionJobStartFailedMeter')
             sysThreadBoundOut.close()
             sysThreadBoundOut.removeThreadStream()
             sysThreadBoundErr.close()
