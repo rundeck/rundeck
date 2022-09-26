@@ -1184,7 +1184,7 @@ class LogFileStorageService
             boolean checkPartial = false
     )
     {
-        File file = getFileForExecutionFiletype(execution, filetype, false, false)
+        File file = getFileForExecutionFiletype(execution, filetype, execution.scheduledExecution == null, false)
         def key = logFileRetrievalKey(execution,filetype)
         def keyPartial = logFileRetrievalKey(execution, filetype, true)
 
@@ -1522,7 +1522,7 @@ class LogFileStorageService
         log.debug("requestLogFileLoad(${e.id},${filetype}): file state: ${state}: ${result}")
         switch (state) {
             case ExecutionFileState.AVAILABLE:
-                file = getFileForExecutionFiletype(e, filetype, false, false)
+                file = getFileForExecutionFiletype(e, filetype, e.scheduledExecution == null, false)
                 break
             case ExecutionFileState.AVAILABLE_PARTIAL:
                 file = getFileForExecutionFiletype(e, filetype, false, true)
