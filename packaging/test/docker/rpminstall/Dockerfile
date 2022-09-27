@@ -11,7 +11,6 @@ ENV USERNAME=rundeck \
     LOGNAME=$USERNAME \
     TERM=xterm-256color
 
-ENV EDITION=$EDITION
 ENV JAVA_HOME=/etc/alternatives/java_sdk
 
 ADD entry.sh /entry.sh
