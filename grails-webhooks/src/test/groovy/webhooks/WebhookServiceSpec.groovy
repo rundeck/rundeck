@@ -460,6 +460,20 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         then:
         !res
     }
+    def "import is not allowed - token exists"() {
+        setup:
+            service.rundeckAuthTokenManagerService=Mock(AuthTokenManager){
+                1 * getTokenWithType('12345', AuthenticationToken.AuthTokenType.WEBHOOK)>>Mock(AuthenticationToken)
+            }
+            Webhook hook = new Webhook(name:"new")
+            def hookData = [authToken:"12345"]
+        when:
+
+        boolean res = service.importIsAllowed(hook,hookData)
+
+        then:
+        !res
+    }
 
     def "edit webhook"() {
         given:
@@ -560,11 +574,12 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         hook.save()
 
         service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
-            getToken("abc123") >> { new TestAuthenticationToken(token:"abc123",
-                                                                creator:"admin",
-                                                                authRoles:["webhook,role1"] as Set,
-                                                                ownerName:"webhook") }
-
+            1 * getTokenWithType("abc123", AuthenticationToken.AuthTokenType.WEBHOOK) >> Mock(AuthenticationToken){
+                getToken()>>'abc123'
+                getCreator()>>'admin'
+                getAuthRolesSet()>>(["webhook,role1"] as Set)
+                getOwnerName()>>'webhook'
+            }
         }
 
         when:
@@ -600,7 +615,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
         then:
             output == null
-            0 * service.rundeckAuthTokenManagerService.getToken("abc123")
+            0 * service.rundeckAuthTokenManagerService._(*_)
     }
 
     def "delete all webhooks in project"() {
