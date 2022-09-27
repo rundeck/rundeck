@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenManager
 import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.compiler.GrailsCompileStatic
@@ -22,9 +23,13 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
 
     @Override
     AuthenticationToken getToken(final String token) {
-        return tokenProvider.getData(token)
+        return tokenProvider.tokenLookup(token)
     }
 
+    @Override
+    AuthenticationToken getTokenWithType(final String token, final AuthTokenType type) {
+        return tokenProvider.tokenLookupWithType(token,type)
+    }
 
     @Override
     boolean updateAuthRoles(UserAndRolesAuthContext authContext, final String token, final Set<String> roleSet)

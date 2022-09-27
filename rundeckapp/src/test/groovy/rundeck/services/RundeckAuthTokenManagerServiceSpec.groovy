@@ -22,6 +22,42 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
         mockDomain(User)
     }
 
+    def "get token calls tokenLookup"(){
+        given:
+            def token='abc123'
+        service.rundeckDataManager=Mock(DataManager){
+            1 * getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider){
+                 1 * tokenLookup('abc123')>>Mock(AuthenticationToken)
+            }
+        }
+        when:
+            def result = service.getToken(token)
+
+        then:
+            result instanceof AuthenticationToken
+    }
+
+    def "get token with type calls tokenLookupWithType"(){
+        given:
+            def token='abc123'
+        service.rundeckDataManager=Mock(DataManager){
+            1 * getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider){
+                 1 * tokenLookupWithType('abc123',type)>>Mock(AuthenticationToken)
+            }
+        }
+        when:
+            def result = service.getTokenWithType(token, type)
+
+        then:
+            result instanceof AuthenticationToken
+        where:
+            type <<[
+                AuthenticationToken.AuthTokenType.WEBHOOK,
+                AuthenticationToken.AuthTokenType.USER,
+                AuthenticationToken.AuthTokenType.RUNNER,
+            ]
+    }
+
     def "importWebhookToken"() {
         given:
             service.apiService = Mock(ApiService)

@@ -236,7 +236,14 @@ class WebhookService {
 
     boolean importIsAllowed(Webhook hook, Map hookData) {
         if(hook.authToken == hookData.authToken) return true
-        if(!hook.authToken && Webhook.countByAuthToken(hookData.authToken) == 0 && !rundeckAuthTokenManagerService.getToken(hookData.authToken)) return true
+        if(!hook.authToken
+            && Webhook.countByAuthToken(hookData.authToken) == 0
+            && !rundeckAuthTokenManagerService.getTokenWithType(
+            hookData.authToken,
+            AuthenticationToken.AuthTokenType.WEBHOOK
+        )) {
+            return true
+        }
         return false
     }
 
@@ -316,7 +323,10 @@ class WebhookService {
     }
 
     private Map getWebhookWithAuthAsMap(Webhook hook) {
-        AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
+        AuthenticationToken authToken = rundeckAuthTokenManagerService.getTokenWithType(
+            hook.authToken,
+            AuthenticationToken.AuthTokenType.WEBHOOK
+        )
         return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.getAuthRolesSet().join(","), authToken:hook.authToken, useAuth: hook.authConfigJson != null, regenAuth: false, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
 
