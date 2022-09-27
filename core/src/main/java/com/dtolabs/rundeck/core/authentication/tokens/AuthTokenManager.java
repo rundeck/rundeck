@@ -32,6 +32,14 @@ public interface AuthTokenManager {
     AuthenticationToken getToken(String token);
 
     /**
+     * Retrieve token of specific type
+     * @param token token string
+     * @param type type
+     * @return AuthenticationToken
+     */
+    AuthenticationToken getTokenWithType(String token, AuthenticationToken.AuthTokenType type);
+
+    /**
      * Update the roles associated with the authentication token
      * @param token token id
      * @param roleSet the new list of roles
