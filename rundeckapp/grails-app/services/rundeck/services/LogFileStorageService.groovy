@@ -1525,7 +1525,7 @@ class LogFileStorageService
                 file = getFileForExecutionFiletype(e, filetype, e.scheduledExecution == null, false)
                 break
             case ExecutionFileState.AVAILABLE_PARTIAL:
-                file = getFileForExecutionFiletype(e, filetype, false, true)
+                file = getFileForExecutionFiletype(e, filetype, e.scheduledExecution == null, true)
                 retryBackoff = Math.max(getBackoffForPartialFile(e, filetype), retryBackoff)
                 if (performLoad && result.remotePartialState == LogFileState.AVAILABLE_PARTIAL) {
                     //intiate another partial retrieval if delay interval has passed
@@ -1558,7 +1558,7 @@ class LogFileStorageService
                 if (performLoad && result.remotePartialState == LogFileState.AVAILABLE_PARTIAL) {
                     state = requestLogFileRetrievalPartial(e, filetype, plugin)
                     if (state == ExecutionFileState.AVAILABLE_PARTIAL) {
-                        file = getFileForExecutionFiletype(e, filetype, false, true)
+                        file = getFileForExecutionFiletype(e, filetype, e.scheduledExecution == null, true)
                         retryBackoff = Math.max(getBackoffForPartialFile(e, filetype), retryBackoff)
                     }
                 }
@@ -1627,7 +1627,7 @@ class LogFileStorageService
     )
     {
         def key=logFileRetrievalKey(execution,filetype)
-        def file = getFileForExecutionFiletype(execution, filetype, false, false)
+        def file = getFileForExecutionFiletype(execution, filetype, execution.scheduledExecution == null, false)
         Map newstate = [state  : ExecutionFileState.PENDING_LOCAL, file: file, filetype: filetype,
                         ruuid  : UUID.randomUUID().toString(),
                         storage: plugin, id: key, name: getConfiguredPluginName(), count: 0]
