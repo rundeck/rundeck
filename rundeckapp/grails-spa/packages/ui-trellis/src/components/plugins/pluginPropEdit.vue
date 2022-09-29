@@ -186,26 +186,24 @@
           v-else
         >
 
-        <Typeahead v-if="contextAutocomplete && !aceEditorEnabled"
+        <TextAutocomplete v-if="contextAutocomplete && !aceEditorEnabled"
                    :target="'#' + rkey  +'prop_' + pindex"
-                   match-start
                    :data="jobContext"
                    item-key="name"
                    v-model="currentValue"
-                   :limit=20
+                   autocompleteKey="$"
         >
-          <template #item="{ items, activeIndex, select, highlight }">
+          <template #item="{ items, select, highlight }">
             <li
                 v-for="(item, index) in items"
                 :key="item.name"
-                :class="{ active: activeIndex === index }"
             >
               <a role="button"  @click="select(item.name)">
                 <span v-html="highlight(item)"></span> -  {{item.description}}
               </a>
             </li>
           </template>
-        </Typeahead>
+        </TextAutocomplete>
 
       </div>
       <div
@@ -271,6 +269,8 @@ import AceEditor from '../utils/AceEditor.vue'
 import PluginPropVal from './pluginPropVal.vue'
 import { client } from '../../modules/rundeckClient'
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
+import TextAutocomplete from '../utils/TextAutocomplete.vue'
+
 export default Vue.extend({
   components:{
     DynamicFormPluginProp,
@@ -278,7 +278,8 @@ export default Vue.extend({
     JobConfigPicker,
     MarkdownItVue,
     PluginPropVal,
-    KeyStorageSelector
+    KeyStorageSelector,
+    TextAutocomplete
   },
   props:{
     'prop':{
