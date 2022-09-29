@@ -129,7 +129,7 @@ export const Elems = {
     retryInput: By.css('input#schedJobRetry'),
 
     contextAutocomplete  : By.css('div[class="autocomplete-suggestions"]'),
-    notificationContextAutocomplete  : By.xpath('//*[@id="notification-edit-config"]/div/div/div[1]/div/div[1]/div/div[1]/section/ul/li/a'),
+    notificationContextAutocomplete  : By.css('section[class="dropdown open"] > ul > li > a'),
 
     addNewWfStepPlugin: By.css('#wfnewtypes #addnodestep > div > a.add_node_step_type[com.batix.rundeck.plugins.AnsiblePlaybookInlineWorkflowNodeStep]'),
     wfStepPluginForm: By.xpath('//*[@id="workflowContent"]/div/div[2]/div[4]/ol/li/span/div')
