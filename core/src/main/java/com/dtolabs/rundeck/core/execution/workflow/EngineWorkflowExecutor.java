@@ -256,7 +256,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     WorkflowSystem.SharedData.with(
                             sharedContext::merge,
                             () -> sharedContext,
-                            () -> DataContextUtils.flattenDataContext(sharedContext.getData(ContextView.global()))
+                            () -> DataContextUtils.flattenDataContext(sharedContext.consolidate().getData(ContextView.global()))
                     );
 
             Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>
