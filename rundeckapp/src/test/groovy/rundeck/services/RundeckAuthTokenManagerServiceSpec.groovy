@@ -27,7 +27,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             def token='abc123'
         service.rundeckDataManager=Mock(DataManager){
             1 * getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider){
-                 1 * findByToken('abc123')>>Mock(AuthenticationToken)
+                 1 * tokenLookup('abc123')>>Mock(AuthenticationToken)
             }
         }
         when:
