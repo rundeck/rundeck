@@ -27,7 +27,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             def token='abc123'
         service.rundeckDataManager=Mock(DataManager){
             1 * getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider){
-                 1 * tokenLookup('abc123')>>Mock(AuthenticationToken)
+                 1 * findByToken('abc123')>>Mock(AuthenticationToken)
             }
         }
         when:
@@ -141,6 +141,41 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             0 * service.apiService.checkTokenAuthorization(auth, 'auser', roles)
             0 * service.apiService.createUserToken(auth, 0, token, user, roles, false, AuthenticationToken.AuthTokenType.WEBHOOK)
 
+    }
+
+    def "delete token"() {
+        given:
+        mockDataService(AuthTokenDataService)
+        def provider  = new GormTokenDataProvider()
+        provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
+
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
+        }
+        User user1 = new User(login: 'auser')
+        user1.save()
+        AuthToken createdToken = new AuthToken(
+                user: user1,
+                type: tokenType,
+                token: 'abc',
+                authRoles: 'g,f',
+                uuid: UUID.randomUUID().toString(),
+                creator: 'elf',
+        )
+        createdToken.save(flush: true);
+
+        when:
+        boolean isDeleted = service.deleteByTokenWithType(tokenValue, tokenType)
+        then:
+        isDeleted == true
+
+        where:
+        tokenValue              | expectedValue     | tokenType
+        'abc'                   | true              | AuthenticationToken.AuthTokenType.WEBHOOK
+        'abc'                   | true              | AuthenticationToken.AuthTokenType.USER
+        'abc'                   | true              | AuthenticationToken.AuthTokenType.RUNNER
     }
 
     def cleanup() {
