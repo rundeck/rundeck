@@ -228,7 +228,7 @@ class WebhookService {
         } else {
             if(!hook.id && hook.authToken){
                 //delete the created token
-                rundeckAuthTokenManagerService.deleteToken(hook.authToken)
+                rundeckAuthTokenManagerService.deleteByTokenWithType(hook.authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             }
             return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
         }
@@ -276,7 +276,7 @@ class WebhookService {
         String name = hook.name
         try {
             hook.delete()
-            rundeckAuthTokenManagerService.deleteToken(authToken)
+            rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]
         } catch(Exception ex) {
             log.error("delete webhook failed",ex)

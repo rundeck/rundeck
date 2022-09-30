@@ -56,16 +56,29 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     }
 
     @Override
-    boolean deleteToken(final String token) {
+    boolean deleteToken(final String uuid) {
         try {
-            tokenProvider.delete(token)
+            tokenProvider.delete(uuid)
             return true
+        } catch(Exception ex) {
+            log.error("Delete token ${uuid} failed:",ex)
+        }
+        return false
+    }
+
+    @Override
+    boolean deleteByTokenWithType(final String token, AuthTokenType type) {
+        try {
+            AuthenticationToken authToken = getTokenWithType(token, type)
+            if(authToken) {
+                tokenProvider.delete(authToken.getUuid())
+                return true
+            }
         } catch(Exception ex) {
             log.error("Delete token ${token} failed:",ex)
         }
         return false
     }
-
     @Override
     Set<String> parseAuthRoles(final String authRoles) {
         return AuthenticationToken.parseAuthRoles(authRoles)
