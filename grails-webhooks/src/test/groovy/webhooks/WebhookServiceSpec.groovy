@@ -287,7 +287,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
             result.err
             !created
             1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }
-            1 * service.rundeckAuthTokenManagerService.deleteToken('12345')
+            1 * service.rundeckAuthTokenManagerService.deleteByTokenWithType('12345', AuthenticationToken.AuthTokenType.WEBHOOK )
 
     }
     def "webhook name must be unique in project"() {
