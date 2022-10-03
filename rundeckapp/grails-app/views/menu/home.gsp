@@ -362,7 +362,6 @@
                 </div>
               </div>
             </div>
-            <!-- ko if: $root.projectForName(project).showMessage() -->
             <div data-bind="if: $root.projectForName(project)">
               <div class="row" data-bind="if: $root.projectForName(project).showMessage() ">
                 <div class="project_list_readme col-sm-10 col-sm-offset-1 col-xs-12">
@@ -372,15 +371,18 @@
                     </span>
                   </div>
                   <div data-bind="if:  $root.projectForName(project).showReadme() ">
-                  <hr style="width: 0px">
+                  <div>
                     <span data-bind="if: $root.projectForName(project).readme().readmeHTML()">
                         <span data-bind="html: $root.projectForName(project).readme().readmeHTML()"></span>
                     </span>
                   </div>
                 </div>
               </div>
-            </div>         
+            </div>
+            <!-- ko if: $root.projectForName(project).extra() -->
+            <!-- ko foreach: $root.projectForName(project).extra() -->
             <div data-bind="component: $data"></div>
+            <!-- /ko -->
             <!-- /ko -->
           </div>
 
