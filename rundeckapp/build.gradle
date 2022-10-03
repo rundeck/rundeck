@@ -206,14 +206,14 @@ dependencies {
     api ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
         exclude group: 'log4j', module: 'log4j'
     }
-    implementation "com.squareup.okhttp3:okhttp:4.9.2"
+    implementation "com.squareup.okhttp3:okhttp:${okHttpVersion}"
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
     testImplementation "org.grails:grails-web-testing-support"
     testImplementation "org.grails.plugins:geb"
     testImplementation "org.grails:grails-test-mixins:3.3.0.RC1"
     testImplementation "com.squareup.okhttp3:mockwebserver:4.9.2"
-    testImplementation "com.squareup.okhttp3:okhttp:4.9.2"
+    testImplementation "com.squareup.okhttp3:okhttp:${okHttpVersion}"
     testImplementation( "org.hibernate:hibernate-jcache:${hibernateVersion}")
 
     testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver"
