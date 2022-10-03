@@ -167,12 +167,13 @@ public class WorkflowEngine
         if (null != newData) {
             sharedData.addData(newData);
         }
-        Map<String, String> additionalState = sharedData.produceState();
+        Map<String, String> additionalState = sharedData != null?sharedData.produceState():null;
 
         boolean update = getState().updateState(newState);
-        D nextShared = sharedData.produceNext();
+        D nextShared = sharedData != null ? sharedData.produceNext() : null;
 
-        update |= Rules.update(getRuleEngine(), getState(), States.state(additionalState));
+        StateObj additional = additionalState != null ? States.state(additionalState) : null;
+        update |= Rules.update(getRuleEngine(), getState(), additional);
         event(
                 WorkflowSystemEventType.DidProcessStateChange,
                 String.format(
@@ -184,7 +185,7 @@ public class WorkflowEngine
                 StateWorkflowSystem.stateChangeEvent(
                         identity,
                         getState(),
-                        StateWorkflowSystem.stateChange(identity, States.state(additionalState), nextShared, sharedData)
+                        StateWorkflowSystem.stateChange(identity, additional, nextShared, sharedData)
                 )
         );
 
