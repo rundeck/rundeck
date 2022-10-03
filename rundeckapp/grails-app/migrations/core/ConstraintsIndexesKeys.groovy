@@ -323,7 +323,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-56") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK22545y15qs4iqod1ljyqsm1fi")
+                foreignKeyConstraintExists (foreignKeyTableName: "scheduled_execution_filter", foreignKeyName: "FK22545y15qs4iqod1ljyqsm1fi")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "scheduled_execution_filter", constraintName: "FK22545y15qs4iqod1ljyqsm1fi", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
@@ -332,7 +332,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-57") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK3d7mwn5cy49tddfba3ewvftgk")
+                foreignKeyConstraintExists (foreignKeyTableName: "scheduled_execution", foreignKeyName: "FK3d7mwn5cy49tddfba3ewvftgk")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "workflow_id", baseTableName: "scheduled_execution", constraintName: "FK3d7mwn5cy49tddfba3ewvftgk", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "workflow", validate: "true")
@@ -341,7 +341,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-58") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK3n044fm81867b5putknoupx36")
+                foreignKeyConstraintExists (foreignKeyTableName: "notification", foreignKeyName: "FK3n044fm81867b5putknoupx36")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "scheduled_execution_id", baseTableName: "notification", constraintName: "FK3n044fm81867b5putknoupx36", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "scheduled_execution", validate: "true")
@@ -350,7 +350,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-59") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK3sv28w2o5i03gxi66b80240qk")
+                foreignKeyConstraintExists (foreignKeyTableName: "referenced_execution", foreignKeyName: "FK3sv28w2o5i03gxi66b80240qk")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "execution_id", baseTableName: "referenced_execution", constraintName: "FK3sv28w2o5i03gxi66b80240qk", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "execution", validate: "true")
@@ -359,7 +359,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-60") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK45h35d8rum4i3ruqomwgs0n49")
+                foreignKeyConstraintExists (foreignKeyTableName: "log_file_storage_request", foreignKeyName: "FK45h35d8rum4i3ruqomwgs0n49")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "execution_id", baseTableName: "log_file_storage_request", constraintName: "FK45h35d8rum4i3ruqomwgs0n49", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "execution", validate: "true")
@@ -368,7 +368,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-61") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK5t1rmnkvaaj8haakvh0al8uhq")
+                foreignKeyConstraintExists (foreignKeyTableName: "referenced_execution", foreignKeyName: "FK5t1rmnkvaaj8haakvh0al8uhq")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "scheduled_execution_id", baseTableName: "referenced_execution", constraintName: "FK5t1rmnkvaaj8haakvh0al8uhq", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "scheduled_execution", validate: "true")
@@ -377,7 +377,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-62") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK77u7nheh1hwykxnnh6y17ldvc")
+                foreignKeyConstraintExists (foreignKeyTableName: "execution", foreignKeyName: "FK77u7nheh1hwykxnnh6y17ldvc")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "retry_execution_id", baseTableName: "execution", constraintName: "FK77u7nheh1hwykxnnh6y17ldvc", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "execution", validate: "true")
@@ -386,7 +386,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-63") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK7b7mj9danbl00nokdrq1iyn23")
+                foreignKeyConstraintExists (foreignKeyTableName: "scheduled_execution", foreignKeyName: "FK7b7mj9danbl00nokdrq1iyn23")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "orchestrator_id", baseTableName: "scheduled_execution", constraintName: "FK7b7mj9danbl00nokdrq1iyn23", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "orchestrator", validate: "true")
@@ -395,7 +395,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-64") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK8kjy551iwoqqmsu2f1a88pwbu")
+                foreignKeyConstraintExists (foreignKeyTableName: "auth_token", foreignKeyName: "FK8kjy551iwoqqmsu2f1a88pwbu")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "auth_token", constraintName: "FK8kjy551iwoqqmsu2f1a88pwbu", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
@@ -404,7 +404,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-65") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FK9u6t22sfe6v8hfj3kj2sjg9rg")
+                foreignKeyConstraintExists (foreignKeyTableName: "job_file_record", foreignKeyName: "FK9u6t22sfe6v8hfj3kj2sjg9rg")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "execution_id", baseTableName: "job_file_record", constraintName: "FK9u6t22sfe6v8hfj3kj2sjg9rg", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "execution", validate: "true")
@@ -413,7 +413,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-66") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKcdly7hl8164nfb0e5908ch64n")
+                foreignKeyConstraintExists (foreignKeyTableName: "report_filter", foreignKeyName: "FKcdly7hl8164nfb0e5908ch64n")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "report_filter", constraintName: "FKcdly7hl8164nfb0e5908ch64n", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
@@ -423,7 +423,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-67") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKdtqy2uar1ln372ne8u2jj27nw")
+                foreignKeyConstraintExists (foreignKeyTableName: "execution", foreignKeyName: "FKdtqy2uar1ln372ne8u2jj27nw")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "scheduled_execution_id", baseTableName: "execution", constraintName: "FKdtqy2uar1ln372ne8u2jj27nw", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "scheduled_execution", validate: "true")
@@ -432,7 +432,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-68") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKe75poq1n8bmqu5ireg3fjc7iu")
+                foreignKeyConstraintExists (foreignKeyTableName: "rdoption", foreignKeyName: "FKe75poq1n8bmqu5ireg3fjc7iu")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "scheduled_execution_id", baseTableName: "rdoption", constraintName: "FKe75poq1n8bmqu5ireg3fjc7iu", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "scheduled_execution", validate: "true")
@@ -442,7 +442,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-69") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKgm5hu46fmti2jpbj1d7xlyw65")
+                foreignKeyConstraintExists (foreignKeyTableName: "execution", foreignKeyName: "FKgm5hu46fmti2jpbj1d7xlyw65")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "orchestrator_id", baseTableName: "execution", constraintName: "FKgm5hu46fmti2jpbj1d7xlyw65", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "orchestrator", validate: "true")
@@ -451,7 +451,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-70") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKhuj3n3gy2kqoie8d8oucay4b3")
+                foreignKeyConstraintExists (foreignKeyTableName: "node_filter", foreignKeyName: "FKhuj3n3gy2kqoie8d8oucay4b3")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "node_filter", constraintName: "FKhuj3n3gy2kqoie8d8oucay4b3", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rduser", validate: "true")
@@ -460,7 +460,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-71") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKipk3uik8eqp54cf0ul996bu4o")
+                foreignKeyConstraintExists (foreignKeyTableName: "workflow_step", foreignKeyName: "FKipk3uik8eqp54cf0ul996bu4o")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "error_handler_id", baseTableName: "workflow_step", constraintName: "FKipk3uik8eqp54cf0ul996bu4o", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "workflow_step", validate: "true")
@@ -469,7 +469,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-72") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKnm8rfqbotpdp347xqsltkegfv")
+                foreignKeyConstraintExists (foreignKeyTableName: "rdoption_values", foreignKeyName: "FKnm8rfqbotpdp347xqsltkegfv")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "option_id", baseTableName: "rdoption_values", constraintName: "FKnm8rfqbotpdp347xqsltkegfv", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "rdoption", validate: "true")
@@ -478,7 +478,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-73") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKpwc0snw00ehserhlpgftbu8aw")
+                foreignKeyConstraintExists (foreignKeyTableName: "scheduled_execution_stats", foreignKeyName: "FKpwc0snw00ehserhlpgftbu8aw")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "se_id", baseTableName: "scheduled_execution_stats", constraintName: "FKpwc0snw00ehserhlpgftbu8aw", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "scheduled_execution", validate: "true")
@@ -487,7 +487,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-74") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKrln65du8n7hwu3qbinnea748g")
+                foreignKeyConstraintExists (foreignKeyTableName: "workflow_workflow_step", foreignKeyName: "FKrln65du8n7hwu3qbinnea748g")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "workflow_step_id", baseTableName: "workflow_workflow_step", constraintName: "FKrln65du8n7hwu3qbinnea748g", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "workflow_step", validate: "true")
@@ -496,7 +496,7 @@ databaseChangeLog = {
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-75") {
         preConditions(onFail: "MARK_RAN"){
             not{
-                foreignKeyConstraintExists (foreignKeyName: "FKs7kalwep0lr5r39cntcu0pev6")
+                foreignKeyConstraintExists (foreignKeyTableName: "execution", foreignKeyName: "FKs7kalwep0lr5r39cntcu0pev6")
             }
         }
         addForeignKeyConstraint(baseColumnNames: "workflow_id", baseTableName: "execution", constraintName: "FKs7kalwep0lr5r39cntcu0pev6", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "workflow", validate: "true")
