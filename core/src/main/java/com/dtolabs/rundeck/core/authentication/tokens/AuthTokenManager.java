@@ -49,10 +49,18 @@ public interface AuthTokenManager {
 
     /**
      * Delete an authentication token
-     * @param token token identifier
+     * @param uuid token identifier
      * @return true if the update completed successfully
      */
-    boolean deleteToken(String token);
+    boolean deleteToken(String uuid);
+
+    /**
+     * Delete an authentication token
+     * @param token token value
+     * @param type token type
+     * @return true if the update completed successfully
+     */
+    boolean deleteByTokenWithType(String token, AuthenticationToken.AuthTokenType type);
 
     /**
      * Parse a comma separated list of roles into a role Set
