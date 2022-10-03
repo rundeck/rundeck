@@ -56,7 +56,7 @@ public interface AuthTokenManager {
 
     /**
      * Delete an authentication token
-     * @param token token identifier
+     * @param token token value
      * @param type token type
      * @return true if the update completed successfully
      */
