@@ -46,7 +46,6 @@
   background-clip: padding-box;
   border: 0 none;
   border-radius: $border-radius-extreme;
-  padding-right: 2rem;
   @include box-shadow($dropdown-shadow);
 
   // Aligns the dropdown menu to right
