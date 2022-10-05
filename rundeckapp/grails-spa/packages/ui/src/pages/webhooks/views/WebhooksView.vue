@@ -114,7 +114,7 @@
                         </span>
                         <span class="caret"></span>
                       </button>
-                      <ul class="dropdown-menu " style="padding-right: 2rem;">
+                      <ul class="dropdown-menu ">
 
                         <li v-for="plugin in webhookPlugins" v-bind:key="plugin.id">
                           <a href="#" @click="setSelectedPlugin(false,plugin)">
