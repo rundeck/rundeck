@@ -266,6 +266,7 @@
 
                             <li data-bind="foreach: descriptions['${serviceDefaults.service}']">
                                 <a href="#" data-bind="click: function(){$parent.defaults['${serviceDefaults.service}'].type(type())}">
+                                    <span>
                                     <!-- ko if: iconSrc -->
                                     <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
                                     <!-- /ko -->
@@ -282,7 +283,7 @@
                                     <i class="rdicon icon-small plugin"></i>
                                     <!-- /ko -->
                                     <span data-bind="text: title"></span>
-
+                                    </span>
                                 </a>
                             </li>
                     </ul>
