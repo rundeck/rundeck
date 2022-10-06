@@ -77,16 +77,11 @@
       background-color: $dropdown-link-hover-bg;
     }
   }
+  // Links which have <span> that overflow the <li>
+  // caret class (arrows) excluded 
   > li > a > span:not(.caret) {
     display: block;
     padding: 3px 20px 3px 3px;
-
-    &:hover,
-    &:focus {
-      color: $dropdown-link-hover-color;
-      text-decoration: none;
-      background-color: $dropdown-link-hover-bg;
-    }
   }
 }
 
@@ -106,9 +101,7 @@
   &,
   &:hover,
   &:focus {
-    color: $dropdown-link-active-color;
     text-decoration: none;
-    background-color: $dropdown-link-active-bg;
     outline: 0;
   }
 }
