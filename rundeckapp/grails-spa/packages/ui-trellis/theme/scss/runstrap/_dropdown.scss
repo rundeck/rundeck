@@ -64,7 +64,6 @@
   // Links within the dropdown menu
   > li > a {
     display: block;
-    padding: 3px 20px;
     clear: both;
     font-weight: 400;
     line-height: $line-height-base;
@@ -76,6 +75,16 @@
       color: $dropdown-link-hover-color;
       text-decoration: none;
       background-color: $dropdown-link-hover-bg;
+    }
+  }
+  > li > a > span {
+    display: block;
+    padding: 3px 20px 3px 3px;
+
+    &:hover,
+    &:focus {
+      color: $dropdown-link-active-color;
+      text-decoration: none;
     }
   }
 }
@@ -118,7 +127,7 @@
 .open {
   // Show the menu
   > .dropdown-menu {
-    display: block;
+    display: table;
   }
 
   // Remove the outline when :focus is triggered
