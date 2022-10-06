@@ -33,7 +33,7 @@
   top: 100%;
   left: 0;
   z-index: $zindex-dropdown;
-  display: none; // none by default, but table on "open" of the menu
+  display: none; // none by default, but block on "open" of the menu
   float: left;
   min-width: 160px;
   padding: 0px;
@@ -77,12 +77,14 @@
       background-color: $dropdown-link-hover-bg;
     }
   }
+
   // Links which have <span> that overflow the <li>
   // caret class (arrows) excluded 
   > li > a > span:not(.caret) {
     display: block;
     padding: 3px 20px 3px 3px;
   }
+
 }
 
 // Active state
@@ -95,8 +97,7 @@
     outline: 0;
   }
 }
-// The background color change on hover delegated to the span tag
-// to occupy all the list item and prevent visual overflow on corners
+//Active state of the text inside the links in the dropdown-m
 .dropdown-menu > .active > a > span {
   &,
   &:hover,
@@ -110,7 +111,6 @@
 // Disabled state
 //
 // Gray out text and ensure the hover/focus state remains gray
-
 .dropdown-menu > .disabled > a {
   &,
   &:hover,
@@ -148,7 +148,6 @@
 }
 
 // Open state for the dropdown
-// Display table to fit correctly the content of li's
 .open {
   // Show the menu
   > .dropdown-menu {
