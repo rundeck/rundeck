@@ -92,7 +92,6 @@
   &:focus {
     color: $dropdown-link-active-color;
     text-decoration: none;
-    background-color: $dropdown-link-active-bg;
     outline: 0;
   }
 }
@@ -102,6 +101,7 @@
   &:hover,
   &:focus {
     text-decoration: none;
+    background-color: $dropdown-link-active-bg;
     outline: 0;
   }
 }
