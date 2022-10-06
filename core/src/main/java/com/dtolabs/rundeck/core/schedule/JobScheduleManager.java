@@ -101,6 +101,15 @@ public interface JobScheduleManager {
     List<String> getDeadMembers(String uuid);
 
     /**
+     * Tries to acquire the history cleaner ownership
+     * (only acquired if the owner of the job is dead)
+     * @param uuid of the server that is trying to acquire ownership
+     * @param project the project where the job runs
+     * @return true if the ownership was aquired
+     */
+    boolean tryAcquireExecCleanerJob(String uuid, String project);
+
+    /**
      * Schedule a job to run later
      *
      * @param data  dataRundeckproClusterGrailsPlugin

@@ -79,6 +79,11 @@ class JobSchedulerService implements JobScheduleManager {
     }
 
     @Override
+    boolean tryAcquireExecCleanerJob(String uuid, String project) {
+        return rundeckJobScheduleManager.tryAcquireExecCleanerJob(uuid, project);
+    }
+
+    @Override
     boolean scheduleRemoteJob(Map data) {
         return rundeckJobScheduleManager.scheduleRemoteJob(data)
     }
@@ -215,6 +220,11 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
     @Override
     List<String> getDeadMembers(String uuid) {
         return null;
+    }
+
+    @Override
+    boolean tryAcquireExecCleanerJob(String uuid, String project) {
+        return false
     }
 
     @Override
