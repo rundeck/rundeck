@@ -180,22 +180,6 @@
           v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
           v-if="['Integer','Long'].indexOf(prop.type)>=0 && !readOnly"
         >
-        <input
-            :name="`${rkey}prop_`+pindex"
-            v-model.number="currentValue"
-            :id="`${rkey}prop_`+pindex"
-            size="100"
-            type="number"
-            class="form-control input-sm"
-            v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
-            :disabled="true"
-            v-if="
-              readOnly && 
-              prop.options['displayType']!='PASSWORD' &&
-              prop.options['displayType']!='MULTI_LINE' &&
-              prop.options['displayType']!='CODE'
-            "
-        >
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'">
           <textarea
             :name="`${rkey}prop_`+pindex"
@@ -278,6 +262,16 @@
           >
         </template>
         <input
+          :name="`${rkey}prop_`+pindex"
+          v-model="currentValue"
+          :id="`${rkey}prop_`+pindex"
+          size="100"
+          type="text"
+          class="form-control input-sm"
+          :disabled="true"
+          v-else-if="readOnly"
+        >
+          <input
           :name="`${rkey}prop_`+pindex"
           v-model="currentValue"
           :id="`${rkey}prop_`+pindex"
