@@ -198,7 +198,6 @@
               rows="10"
               cols="100"
               class="form-control input-sm"
-              v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
               :disabled="true"
               v-else
           ></textarea>
