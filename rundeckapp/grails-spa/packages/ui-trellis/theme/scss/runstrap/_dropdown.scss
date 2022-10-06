@@ -77,14 +77,15 @@
       background-color: $dropdown-link-hover-bg;
     }
   }
-  > li > a > span {
+  > li > a > span:not(.caret) {
     display: block;
     padding: 3px 20px 3px 3px;
 
     &:hover,
     &:focus {
-      color: $dropdown-link-active-color;
+      color: $dropdown-link-hover-color;
       text-decoration: none;
+      background-color: $dropdown-link-hover-bg;
     }
   }
 }
@@ -101,11 +102,40 @@
   }
 }
 
+.dropdown-menu > .active > a > span {
+  &,
+  &:hover,
+  &:focus {
+    color: $dropdown-link-active-color;
+    text-decoration: none;
+    background-color: $dropdown-link-active-bg;
+    outline: 0;
+  }
+}
+
 // Disabled state
 //
 // Gray out text and ensure the hover/focus state remains gray
 
 .dropdown-menu > .disabled > a {
+  &,
+  &:hover,
+  &:focus {
+    color: $dropdown-link-disabled-color;
+  }
+
+  // Nuke hover/focus effects
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    cursor: $cursor-disabled;
+    background-color: transparent;
+    background-image: none; // Remove CSS gradient
+    @include reset-filter;
+  }
+}
+
+.dropdown-menu > .disabled > a > span{
   &,
   &:hover,
   &:focus {
