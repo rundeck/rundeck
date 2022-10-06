@@ -208,10 +208,11 @@
             :name="`${rkey}prop_`+pindex"
             v-model="currentValue"
             :lang="prop.options['codeSyntaxMode']"
-            :codeSyntaxSelectable="prop.options['codeSyntaxSelectable']==='true'"
+            :codeSyntaxSelectable="prop.options['codeSyntaxSelectable']==='true' && !readOnly"
             :id="`${rkey}prop_`+pindex"
             height="200"
             width="100%"
+            :read-only="readOnly"
           />
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='PASSWORD'">
