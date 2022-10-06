@@ -33,7 +33,7 @@
   top: 100%;
   left: 0;
   z-index: $zindex-dropdown;
-  display: none; // none by default, but block on "open" of the menu
+  display: none; // none by default, but table on "open" of the menu
   float: left;
   min-width: 160px;
   padding: 0px;
@@ -95,7 +95,8 @@
     outline: 0;
   }
 }
-
+// The background color change on hover delegated to the span tag
+// to occupy all the list item and prevent visual overflow on corners
 .dropdown-menu > .active > a > span {
   &,
   &:hover,
@@ -147,6 +148,7 @@
 }
 
 // Open state for the dropdown
+// Display table to fit correctly the content of li's
 .open {
   // Show the menu
   > .dropdown-menu {
