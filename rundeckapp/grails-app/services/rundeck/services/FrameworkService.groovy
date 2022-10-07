@@ -356,22 +356,24 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
 
     @CompileStatic(TypeCheckingMode.SKIP)
     def scheduleCleanerExecutions(String project, ExecutionCleanerConfig config){
-        log.info("removing cleaner executions job scheduled for ${project}")
-        scheduledExecutionService.deleteCleanerExecutionsJob(project)
+        if(!isClusterModeEnabled() || jobSchedulerService.tryAcquireExecCleanerJob(getServerUUID(),project)) {
+            log.info("removing cleaner executions job scheduled for ${project}")
+            scheduledExecutionService.deleteCleanerExecutionsJob(project)
 
-        if(config.enabled) {
-            log.info("scheduling cleaner executions job for ${project}")
-            scheduledExecutionService.scheduleCleanerExecutionsJob(project, config.getCronExpression(),
-                    [
-                            maxDaysToKeep: config.maxDaysToKeep,
-                            minimumExecutionToKeep: config.minimumExecutionToKeep,
-                            maximumDeletionSize: config.maximumDeletionSize,
-                            project: project,
-                            logFileStorageService: logFileStorageService,
-                            fileUploadService: fileUploadService,
-                            frameworkService: this,
-                            jobSchedulerService: jobSchedulerService
-                    ])
+            if (config.enabled) {
+                log.info("scheduling cleaner executions job for ${project}")
+                scheduledExecutionService.scheduleCleanerExecutionsJob(project, config.getCronExpression(),
+                        [
+                                maxDaysToKeep         : config.maxDaysToKeep,
+                                minimumExecutionToKeep: config.minimumExecutionToKeep,
+                                maximumDeletionSize   : config.maximumDeletionSize,
+                                project               : project,
+                                logFileStorageService : logFileStorageService,
+                                fileUploadService     : fileUploadService,
+                                frameworkService      : this,
+                                jobSchedulerService   : jobSchedulerService
+                        ])
+            }
         }
     }
 
