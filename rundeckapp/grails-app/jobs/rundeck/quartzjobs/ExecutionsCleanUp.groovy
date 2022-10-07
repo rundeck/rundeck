@@ -30,30 +30,28 @@ class ExecutionsCleanUp implements InterruptableJob {
         String uuid = frameworkService.getServerUUID()
         jobSchedulerService.getDeadMembers(uuid)
 
-        if(!frameworkService.isClusterModeEnabled() || jobSchedulerService.tryAcquireExecCleanerJob(uuid,project)) {
-            logger.info("Initializing cleaner execution history job from server ${uuid}")
+        logger.info("Initializing cleaner execution history job from server ${uuid}")
 
-            String maxDaysToKeep = context.jobDetail.jobDataMap.get('maxDaysToKeep')
-            String minimumExecutionToKeep = context.jobDetail.jobDataMap.get('minimumExecutionToKeep')
-            String maximumDeletionSize = context.jobDetail.jobDataMap.get('maximumDeletionSize')
+        String maxDaysToKeep = context.jobDetail.jobDataMap.get('maxDaysToKeep')
+        String minimumExecutionToKeep = context.jobDetail.jobDataMap.get('minimumExecutionToKeep')
+        String maximumDeletionSize = context.jobDetail.jobDataMap.get('maximumDeletionSize')
 
-            logger.info("Cleaner parameters: Project name: ${project}")
-            logger.info("Max days to keep: ${maxDaysToKeep}")
-            logger.info("Minimum executions to keep: ${minimumExecutionToKeep}")
-            logger.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
+        logger.info("Cleaner parameters: Project name: ${project}")
+        logger.info("Max days to keep: ${maxDaysToKeep}")
+        logger.info("Minimum executions to keep: ${minimumExecutionToKeep}")
+        logger.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
 
-            ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
-            FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
-            LogFileStorageService logFileStorageService = fetchLogFileStorageService(context.jobDetail.jobDataMap)
+        ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
+        FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
+        LogFileStorageService logFileStorageService = fetchLogFileStorageService(context.jobDetail.jobDataMap)
 
-            if(!wasInterrupted) {
-                List execIdsToExclude = searchExecutions(frameworkService, executionService, jobSchedulerService, project,
-                        maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
-                        minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
-                        maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
-                logger.info("Executions to delete: ${execIdsToExclude.toListString()}")
-                deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService)
-            }
+        if(!wasInterrupted) {
+            List execIdsToExclude = searchExecutions(frameworkService, executionService, jobSchedulerService, project,
+                    maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
+                    minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
+                    maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
+            logger.info("Executions to delete: ${execIdsToExclude.toListString()}")
+            deleteByExecutionList(execIdsToExclude, fileUploadService, logFileStorageService)
         }
     }
 
