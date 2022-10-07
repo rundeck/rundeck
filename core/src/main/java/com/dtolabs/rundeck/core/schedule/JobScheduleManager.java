@@ -92,14 +92,6 @@ public interface JobScheduleManager {
      */
     String determineExecNode(JobReference job);
 
-
-    /**
-     * Return list dead cluster members.
-     *
-     * @return list dead cluster members
-     */
-    List<String> getDeadMembers(String uuid);
-
     /**
      * Tries to acquire the history cleaner ownership
      * (only acquired if the owner of the job is dead)

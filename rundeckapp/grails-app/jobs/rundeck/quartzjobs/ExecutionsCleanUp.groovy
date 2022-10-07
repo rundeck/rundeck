@@ -28,7 +28,6 @@ class ExecutionsCleanUp implements InterruptableJob {
         FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
         String project = context.jobDetail.jobDataMap.get('project')
         String uuid = frameworkService.getServerUUID()
-        jobSchedulerService.getDeadMembers(uuid)
 
         logger.info("Initializing cleaner execution history job from server ${uuid}")
 
