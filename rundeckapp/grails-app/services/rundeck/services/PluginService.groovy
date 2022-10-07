@@ -186,17 +186,12 @@ class PluginService implements ResourceFormats {
         String project,
         Services services
     ) {
-        def pluginServiceType
         def pluginDescriptor
 
         if(serviceName == ServiceNameConstants.WorkflowNodeStep){
-            pluginServiceType = rundeckFramework.getNodeStepExecutorService()
+            pluginDescriptor = getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
         }else if(serviceName == ServiceNameConstants.WorkflowStep){
-            pluginServiceType = rundeckFramework.getStepExecutionService()
-        }
-
-        if(pluginServiceType){
-            pluginDescriptor = getPluginDescriptor(type, pluginServiceType)
+            pluginDescriptor = getPluginDescriptor(type, rundeckFramework.getStepExecutionService())
         }else{
             pluginDescriptor = getPluginDescriptor(type, serviceName)
         }
@@ -204,7 +199,9 @@ class PluginService implements ResourceFormats {
         if(!pluginDescriptor){
             return null
         }
-        if(!(pluginDescriptor.instance instanceof DynamicProperties)){
+
+        def instance = pluginDescriptor.instance
+        if(!(instance instanceof DynamicProperties)){
             return null
         }
 
@@ -256,7 +253,7 @@ class PluginService implements ResourceFormats {
         }
 
         try{
-            Map<String, Object> dynamicProperties = pluginDescriptor.instance.dynamicProperties(config, services)
+            Map<String, Object> dynamicProperties = instance.dynamicProperties(config, services)
             return dynamicProperties
         }catch(Exception e){
             log.error("error dynamicProperties plugin ${serviceName}: ${e.message}")
