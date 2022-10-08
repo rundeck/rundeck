@@ -1,15 +1,21 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -158,6 +164,7 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
         }
         service.frameworkService = Mock(FrameworkService) {
             getRundeckPluginRegistry() >> rundeckPluginRegistry
+            1 * pluginConfigFactory(_,_)>>Mock(PropertyResolverFactory.Factory)
         }
         service.pluginService = Mock(PluginService)
         service.taskService = Mock(TaskService)
@@ -199,8 +206,7 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
         def result = service.loadFileOptionInputs(exec, job, context)
         then:
         result != null
-        1 * service.getFrameworkService().getFrameworkPropertyResolver() >> Mock(PropertyResolver)
-        1 * service.pluginService.configurePlugin('filesystem-temp', _, _,_) >>
+        1 * service.pluginService.configurePlugin('filesystem-temp', _ as PluggableProviderService, _ as PropertyResolverFactory.Factory,PropertyScope.Framework) >>
                 new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         1 * context.getDataContext() >> new BaseDataContext([option: [(optionName): ref]])
         1 * context.getExecutionListener() >> Mock(ExecutionListener)
@@ -389,6 +395,7 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
         }
         service.frameworkService = Mock(FrameworkService) {
             getRundeckPluginRegistry() >> rundeckPluginRegistry
+            1 * pluginConfigFactory(_,_)>>Mock(PropertyResolverFactory.Factory)
         }
         service.pluginService = Mock(PluginService)
         service.configurationService = Mock(ConfigurationService) {
@@ -403,9 +410,8 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
         service.checkAndExpireAllRecords()
         then:
         1 * service.frameworkService.getServerUUID()
-        1 * service.getFrameworkService().getFrameworkPropertyResolver() >> Mock(PropertyResolver)
-        1 * service.pluginService.configurePlugin('filesystem-temp', _, _,_) >>
-                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
+        1 * service.pluginService.configurePlugin('filesystem-temp', _ as PluggableProviderService, _ as PropertyResolverFactory.Factory,PropertyScope.Framework) >>
+            new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         jfr.fileState == dbState
 
         where:
@@ -451,6 +457,7 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
         }
         service.frameworkService = Mock(FrameworkService) {
             getRundeckPluginRegistry() >> rundeckPluginRegistry
+            1 * pluginConfigFactory(_,_)>>Mock(PropertyResolverFactory.Factory)
         }
         service.pluginService = Mock(PluginService)
         service.configurationService = Mock(ConfigurationService) {
@@ -464,9 +471,8 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
         when:
         service.executionComplete(event)
         then:
-        1 * service.getFrameworkService().getFrameworkPropertyResolver() >> Mock(PropertyResolver)
-        1 * service.pluginService.configurePlugin('filesystem-temp', _, _,_) >>
-                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
+        1 * service.pluginService.configurePlugin('filesystem-temp', _ as PluggableProviderService, _ as PropertyResolverFactory.Factory,PropertyScope.Framework) >>
+            new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         jfr.fileState == dbState
 
         where:

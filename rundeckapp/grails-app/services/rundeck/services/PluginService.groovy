@@ -391,6 +391,23 @@ class PluginService implements ResourceFormats {
     {
         configurePlugin(name, service, resolver, defaultScope, null)
     }
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param service service
+     * @param resolver property resolver for configuration properties
+     * @param defaultScope default plugin property scope
+     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
+     */
+    def <T> ConfiguredPlugin<T> configurePlugin(
+            String name,
+            PluggableProviderService<T> service,
+            PropertyResolverFactory.Factory factory,
+            PropertyScope defaultScope
+    )
+    {
+        configurePlugin(name, service, factory, defaultScope, null)
+    }
 
     /**
      * Configure a new plugin using a specific property resolver for configuration

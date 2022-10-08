@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
@@ -95,8 +96,12 @@ class FileUploadService {
 
     FileUploadPlugin getPlugin() {
         PluggableProviderService fileUploadProviderService = frameworkService.getRundeckPluginRegistry().createPluggableService(FileUploadPlugin.class)
-        def configured = pluginService.configurePlugin(pluginType, fileUploadProviderService, frameworkService.getFrameworkPropertyResolver(),
-                                                       PropertyScope.Framework)
+        def configured = pluginService.configurePlugin(
+            pluginType,
+            fileUploadProviderService,
+            frameworkService.pluginConfigFactory(null,null),
+            PropertyScope.Framework
+        )
         def plugin = configured.instance
         plugin.initialize()
         return plugin

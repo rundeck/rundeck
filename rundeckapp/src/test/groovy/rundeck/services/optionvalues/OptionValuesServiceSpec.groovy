@@ -2,6 +2,7 @@ package rundeck.services.optionvalues
 
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
@@ -32,10 +33,12 @@ class OptionValuesServiceSpec extends Specification implements ServiceUnitTest<O
     void "get Options"() {
         setup:
         service.pluginService = Mock(PluginService)
-
+        service.frameworkService=Mock(FrameworkService){
+            1 * getFrameworkPropertyResolverFactory(*_)>>Mock(PropertyResolverFactory.Factory)
+        }
         when:
         TestOptionValuesPlugin plugin = new TestOptionValuesPlugin()
-        1 * service.pluginService.configurePlugin(_,_,_,_,_) >> new ConfiguredPlugin<OptionValuesPlugin>(plugin,null)
+        1 * service.pluginService.configurePlugin(_, _, _ as PropertyResolverFactory.Factory, _, _) >> new ConfiguredPlugin<OptionValuesPlugin>(plugin, null)
         def results = service.getOptions("AProject","optValProvider",null)
 
         then:

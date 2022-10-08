@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -211,6 +212,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         FrameworkService fwkService = Mock(FrameworkService) {
             getRundeckPluginRegistry() >> rundeckPluginRegistry
             getPluginService() >> pluginService
+            getFrameworkPropertyResolverFactory()>>Mock(PropertyResolverFactory.Factory)
         }
         service.frameworkService = fwkService
         def roles = service.getUserGroupSourcePluginRoles(userA)
@@ -235,11 +237,12 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         RundeckPluginRegistry rundeckPluginRegistry = Mock(RundeckPluginRegistry)
         PluginService pluginService = Mock(PluginService) {
             listPlugins(UserGroupSourcePlugin) >> { [testPlugin:testPlugin] }
-            configurePlugin(_,_,_,_) >> { null }
+            configurePlugin(_, _, _ as PropertyResolverFactory.Factory, _) >> { null }
         }
         FrameworkService fwkService = Mock(FrameworkService) {
             getRundeckPluginRegistry() >> rundeckPluginRegistry
             getPluginService() >> pluginService
+            getFrameworkPropertyResolverFactory()>>Mock(PropertyResolverFactory.Factory)
         }
         service.frameworkService = fwkService
         def roles = service.getUserGroupSourcePluginRoles("any")

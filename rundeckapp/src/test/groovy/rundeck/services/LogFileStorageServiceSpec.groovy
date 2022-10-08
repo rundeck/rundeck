@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
@@ -84,12 +85,15 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
             })
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, _, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('blah', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >> new ConfiguredPlugin(
                     mockPlugin,
                     [:]
             )
         }
-        service.frameworkService = Mock(FrameworkService)
+        service.frameworkService = Mock(FrameworkService){
+
+            1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
+        }
         service.grailsLinkGenerator = Mock(LinkGenerator)
         def e1 = new Execution(dateStarted: new Date(),
                                dateCompleted: null,
@@ -219,12 +223,12 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 }
             )
         }
-        def test2PropertyResolver = Mock(PropertyResolver)
+        def test2PropertyResolverFactory = Mock(PropertyResolverFactory.Factory)
         service.frameworkService = Mock(FrameworkService) {
-            1 * getFrameworkPropertyResolver('test2') >> test2PropertyResolver
+            1 * getFrameworkPropertyResolverFactory('test2') >> test2PropertyResolverFactory
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, test2PropertyResolver, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('blah', _, test2PropertyResolverFactory, PropertyScope.Instance) >> new ConfiguredPlugin(
                 mockPlugin,
                 [:]
             )
@@ -345,12 +349,12 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
         def mockPlugin = Mock(ExecutionFileStoragePlugin) {
             1 * initialize(_)
         }
-        def test2PropertyResolver = Mock(PropertyResolver)
+        def test2PropertyResolverFactory = Mock(PropertyResolverFactory.Factory)
         service.frameworkService = Mock(FrameworkService) {
-            1 * getFrameworkPropertyResolver('test') >> test2PropertyResolver
+            1 * getFrameworkPropertyResolverFactory('test') >> test2PropertyResolverFactory
         }
         service.pluginService = Mock(PluginService) {
-            1 * configurePlugin('blah', _, test2PropertyResolver, PropertyScope.Instance) >> new ConfiguredPlugin(
+            1 * configurePlugin('blah', _, test2PropertyResolverFactory, PropertyScope.Instance) >> new ConfiguredPlugin(
                 mockPlugin,
                 [:]
             )
@@ -944,13 +948,14 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                     'framework.logs.dir': tempDir.toAbsolutePath().toString()
                 ] as Properties
             )
+            1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
         }
         service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
         service.configurationService = Mock(ConfigurationService) {
             getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
         }
         service.pluginService = Mock(PluginService) {
-            configurePlugin('testplugin', _, _, PropertyScope.Instance) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(new TestEFSPlugin(partialRetrieveSupported: false),[:])
+            1 * configurePlugin('testplugin', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(new TestEFSPlugin(partialRetrieveSupported: false),[:])
         }
         when:
 
@@ -1035,6 +1040,7 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                                 'framework.logs.dir': tempDir.toAbsolutePath().toString()
                         ] as Properties
                 )
+                getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
             }
             boolean retrieved = false
             def plugin = new TestEFSPlugin(
@@ -1049,10 +1055,10 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
             }
             service.pluginService = Mock(PluginService) {
-                configurePlugin(
+                1 * configurePlugin(
                         'testplugin',
                         _,
-                        _,
+                        _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
                 ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
             }
@@ -1099,6 +1105,9 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                                 'framework.logs.dir': tempDir.toAbsolutePath().toString()
                         ] as Properties
                 )
+
+
+                1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
             }
             boolean retrieved = false
             def plugin = new TestEFSPlugin(
@@ -1116,7 +1125,7 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 configurePlugin(
                         'testplugin',
                         _,
-                        _,
+                        _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
                 ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
             }
@@ -1164,6 +1173,7 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                                 'framework.logs.dir': tempDir.toAbsolutePath().toString()
                         ] as Properties
                 )
+                1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
             }
             boolean retrieved = false
             def plugin = new TestEFSPlugin(
@@ -1184,7 +1194,7 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 configurePlugin(
                         'testplugin',
                         _,
-                        _,
+                        _ as PropertyResolverFactory.Factory,
                         PropertyScope.Instance
                 ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
             }
@@ -1269,14 +1279,15 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
                 outputfilepath: '/tmp/file'
             ).save()
             service.frameworkService = Mock(FrameworkService){
-                2 * getFrameworkPropertyResolver(_)
+
+                2 * getFrameworkPropertyResolverFactory(_) >> Mock(PropertyResolverFactory.Factory)
             }
             service.configurationService=Mock(ConfigurationService){
                 _ * getString('execution.logs.fileStoragePlugin',null)>>'test1'
             }
             def instance = Mock(ExecutionFileStoragePlugin)
             service.pluginService=Mock(PluginService){
-                2 * configurePlugin('test1', _, _, PropertyScope.Instance)>>new ConfiguredPlugin<ExecutionFileStoragePlugin>(
+                2 * configurePlugin('test1', _, _ as PropertyResolverFactory.Factory, PropertyScope.Instance)>>new ConfiguredPlugin<ExecutionFileStoragePlugin>(
                     instance,
                     [:]
                 )

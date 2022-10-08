@@ -203,7 +203,7 @@ class UserService {
                         configurePlugin(
                                 prov.key,
                                 groupSourcePluginService,
-                                frameworkService.getFrameworkPropertyResolver(),
+                                frameworkService.getFrameworkPropertyResolverFactory(),
                                 PropertyScope.Unspecified
                         )
                 if(configuredPlugin && configuredPlugin.instance) roles.addAll(configuredPlugin.instance.getGroups(username,configuredPlugin.configuration))

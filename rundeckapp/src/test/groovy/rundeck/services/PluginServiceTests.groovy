@@ -24,17 +24,14 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.ProviderIdent
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import grails.test.*
 import spock.lang.Specification
 
 class PluginServiceTests extends Specification {
