@@ -769,4 +769,30 @@ class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitT
         'status report last-ver (1.05)_abraxas.txt' | true
     }
 
+    def "Ensure getPlugin returns a configured plugin"() {
+        given:
+            service.frameworkService=Mock(FrameworkService){
+                getRundeckPluginRegistry()>>Mock(PluginRegistry){
+                    1 * createPluggableService(FileUploadPlugin)>>Mock(PluggableProviderService)
+                }
+                1 * pluginConfigFactory(null, null) >> Mock(PropertyResolverFactory.Factory)
+            }
+            FSFileUploadPlugin instance = new FSFileUploadPlugin()
+            service.pluginService=Mock(PluginService){
+                1 * configurePlugin(FileUploadService.FS_FILE_UPLOAD_PLUGIN,_, { it!=null },PropertyScope.Framework)>> {
+                    instance.basePath='/tmp'
+                    new ConfiguredPlugin(instance,[basePath:'/tmp'])
+                }
+            }
+            service.configurationService=Mock(ConfigurationService){
+                1 * getString('fileupload.plugin.type', FileUploadService.FS_FILE_UPLOAD_PLUGIN)>>FileUploadService.FS_FILE_UPLOAD_PLUGIN
+            }
+
+        when:
+            def plugin = service.getPlugin()
+
+        then:
+            plugin.basePath == "/tmp"
+    }
+
 }
