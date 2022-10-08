@@ -182,15 +182,11 @@ public class PropertyResolverFactory {
             final Map<String, Object> instanceProperties
     )
     {
-        return (String svc, String provider) -> {
-            final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(svc, provider));
-            final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(svc, provider));
-            return createResolver(
-                    instanceRetriever(instanceProperties),
-                    null != projectName ? projectRetriever(projectPrefix, framework, projectName) : null,
-                    frameworkRetriever(frameworkPrefix, framework)
-            );
-        };
+        return pluginPrefixedScoped(
+                null!=instanceProperties?instanceRetriever(instanceProperties):null,
+                null!=projectName?instanceRetriever(framework.getFrameworkProjectMgr().getFrameworkProject(projectName).getProperties()):null,
+                framework.getPropertyRetriever()
+        );
     }
 
 
