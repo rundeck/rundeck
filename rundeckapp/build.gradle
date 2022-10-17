@@ -311,6 +311,10 @@ tasks.withType(Test) {
     systemProperty "webdriver.gecko.driver", System.getProperty('webdriver.gecko.driver')
 }
 
+tasks.withType(Test).configureEach {
+    forkEvery = 500
+}
+
 assets {
     minifyJs = false
     minifyCss = false
