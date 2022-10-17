@@ -137,7 +137,7 @@ class ScmLoaderService implements EventBusAware {
                                 process = true
 
                             } catch (Throwable t) {
-                                if(retryCount>retryTimes){
+                                if(retryCount>=retryTimes){
                                     scmFailedProjectInit.put(projectIntegration, pluginConfigData)
                                     process = true
                                     scmToFalse(pluginConfigData, project, integration)
