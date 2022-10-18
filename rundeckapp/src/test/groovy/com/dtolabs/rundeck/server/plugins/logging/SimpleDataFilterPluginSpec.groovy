@@ -233,7 +233,7 @@ class SimpleDataFilterPluginSpec extends Specification {
         plugin.name = name
         plugin.invalidKeyPattern = validKeyPattern
         plugin.replaceFilteredResult = true
-        plugin.replaceFilteredResultWith = invalidStringReplacement
+        plugin.invalidCharactersReplacement = invalidStringReplacement
         def sharedoutput = new DataOutput(ContextView.global())
         def context = Mock(PluginLoggingContext) {
             getOutputContext() >> sharedoutput
