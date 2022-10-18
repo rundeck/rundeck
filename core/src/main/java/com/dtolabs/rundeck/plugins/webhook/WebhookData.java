@@ -31,4 +31,5 @@ public interface WebhookData {
     String getContentType();
     Map<String,String> getHeaders();
     InputStream getData();
+    Map<String,Object> getFormData();
 }
