@@ -158,7 +158,11 @@ class WebhookController {
         whkdata.sender = request.remoteAddr
         whkdata.project = hook.project
         whkdata.contentType = request.contentType
-        whkdata.data = request.inputStream
+        if(request.contentType == "application/x-www-form-urlencoded") {
+            whkdata.formData = params
+        } else {
+            whkdata.data = request.inputStream
+        }
 
         try {
             def responder = webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata, authContext, request)
