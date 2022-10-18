@@ -143,7 +143,11 @@ function Option(data) {
 
         var testselected = function (val) {
             if (self.selectedMultiValues() && self.selectedMultiValues().length > 0) {
-                return ko.utils.arrayIndexOf(self.selectedMultiValues(), val) >= 0;
+                if (self.multivalueAllSelected()) {
+                    return true;
+                } else {
+                    return ko.utils.arrayIndexOf(self.selectedMultiValues(), val) >= 0;
+                }
             } else if (self.defaultMultiValues() && self.defaultMultiValues().length > 0) {
                 return ko.utils.arrayIndexOf(self.defaultMultiValues(), val) >= 0;
             } else if (self.value()) {
