@@ -174,4 +174,10 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     }
 
+    User findOrCreateTokenOwner(String name){
+        User tokenOwner = userService.findOrCreateUser(name)
+        tokenOwner
+
+    }
+
 }
