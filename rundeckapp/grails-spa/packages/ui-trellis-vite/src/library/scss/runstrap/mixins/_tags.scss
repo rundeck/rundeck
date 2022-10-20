@@ -1,0 +1,30 @@
+@mixin tag-color ($color){
+    .tag{
+         background-color: var($color);
+         color: var(--white-color);
+         .tagsinput-remove-link{
+             color: var(--white-color);
+         }
+     }
+     .tagsinput-add{
+         color: var($color);
+     }
+}
+
+@mixin create-colored-tags(){
+    &.tag-primary{
+        @include tag-color(--primary-color);
+    }
+    &.tag-info {
+        @include tag-color(--info-color);
+    }
+    &.tag-success{
+        @include tag-color(--success-color);
+    }
+    &.tag-warning{
+        @include tag-color(--warning-color);
+    }
+    &.tag-danger{
+        @include tag-color(--danger-color);
+    }
+}

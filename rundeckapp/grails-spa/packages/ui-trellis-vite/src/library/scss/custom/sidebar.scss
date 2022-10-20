@@ -1,0 +1,181 @@
+.sidebar {
+  .logo {
+    background-color: #000000;
+
+    a.home {
+      font-family: 'Futura';
+      text-transform: uppercase;
+      color: #ffffff;
+      padding: 15px 15px 15px 32px;
+      font-size: 18px;
+      line-height: 20px;
+      height: 50px;
+      background-image: url("#{$logos-asset}/rundeck-text.png");
+      background-size: 50%;
+      background-repeat: no-repeat;
+      width: 100%;
+      display: block;
+      background-position-y: 15px;
+      background-position-x: 65px;
+    }
+
+    .navbar-minimize {
+      position: absolute;
+      right: -1em;
+      top: 1.8em;
+
+      .triangle {
+        cursor: pointer;
+        z-index: 1;
+        color: white;
+        position: absolute;
+        left: -2.15em;
+        padding: .5em;
+        top: -7px;
+      }
+
+      // sidebar open
+      i.fas.fa-ellipsis-v,
+      i.fas.fa-sign-out-alt,
+      i.fas.fa-chevron-left {
+        display: block;
+      }
+
+      i.fas.fa-ellipsis-h,
+      i.fas.fa-sign-in-alt,
+      i.fas.fa-chevron-right {
+        display: none;
+      }
+
+      // sidebar closed
+      .sidebar-mini & {
+
+        i.fas.fa-ellipsis-v,
+        i.fas.fa-sign-out-alt,
+        i.fas.fa-chevron-left {
+          display: none;
+        }
+
+        i.fas.fa-ellipsis-h,
+        i.fas.fa-sign-in-alt,
+        i.fas.fa-chevron-right {
+          display: block;
+        }
+      }
+
+      &:after {
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 17px 0 17px 17px;
+        border-color: transparent transparent transparent #000000;
+        content: "";
+        position: absolute;
+        right: -2px;
+        top: -10px;
+      }
+    }
+
+  }
+
+  .nav {
+    margin-bottom: 40px;
+  }
+
+  #sidebar-bottom {
+    padding: 0 0 10px 0;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: 258px;
+    background: #000;
+    // transition: width .2s;
+
+    .sidebar-footer-line-item {
+      text-align: left;
+      padding-left: 28px;
+      display: block;
+    }
+
+
+    .snapshot-version {
+      padding-top: .5em;
+
+      a {
+        opacity: 1;
+        color: #FFFFFF;
+      }
+
+      .badge {
+        color: #000;
+      }
+    }
+  }
+}
+
+.sidebar-modal-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1040;
+  background-color: #000;
+}
+
+body.modal-open {
+  .sidebar .sidebar-modal-backdrop {
+    display: block;
+    max-width: 260px;
+    filter: alpha(opacity=50);
+    opacity: .5;
+  }
+
+  &.sidebar-mini {
+    .sidebar .sidebar-modal-backdrop {
+      display: block;
+      max-width: 80px;
+      filter: alpha(opacity=50);
+      opacity: .5;
+    }
+  }
+}
+
+.sidebar {
+  .sidebar-mini:not(.nav-open) & {
+    #sidebar-bottom {
+      width: 80px;
+      transition: width .2s;
+    }
+
+    a.home {
+      background-image: none;
+    }
+
+    .appTitle {
+      opacity: 0;
+      display: none;
+      // position: absolute;
+    }
+
+    .snapshot-version {
+      display: none;
+    }
+  }
+}
+
+.sidebar {
+  .subnav-open {
+    .caret {
+      border-top: none;
+      border-bottom: 4px dashed;
+    }
+  }
+}
+
+.sidebar-mini #sidebar-bottom {
+  padding-bottom: 0;
+}

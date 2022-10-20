@@ -1,0 +1,32 @@
+@import "../runstrap/variables";
+.vue-tabs .nav-tabs-navigation{
+  text-align: left;
+  margin-bottom:0px;
+  border-color: #b7b7b7;
+  li.active a:before{
+    border-bottom-color: #b7b7b7;
+  }
+}
+.vue-tabs .tab-content {
+    text-align: left;
+    padding: 1em 0;
+    // border:1px solid black;
+}
+
+.nav-pills {
+  &> li.active > a, &> li.active > a:focus, & > li.active > a:hover {
+    color: #fff;
+    background-color: $bg-primary;
+  }
+
+  &.nav-sm > li > a {
+    border-radius: 4px;
+    padding: 5px 10px;
+  }
+
+  &.nav-xs > li > a {
+    border-radius: 3px;
+    padding: 2px 6px;
+  }
+}
+

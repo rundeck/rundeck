@@ -1,0 +1,157 @@
+// Button variants
+//
+// Easily pump out default styles, as well as :hover, :focus, :active,
+// and disabled options for all buttons
+
+@mixin button-variant($color, $states-color, $background, $background-state, $border, $border-focus) {
+  color: var($color);
+  background-color: var($background);
+  border-color: var($border);
+
+  &:focus,
+  &.focus {
+    color: var($color);
+    // background-color: var($background);
+    box-shadow: var($border-focus) 0px 0px 0px 3px
+    ;
+    // border-color: darken($border, 25%);
+  }
+  &:hover {
+    color: var($states-color);
+    background-color: var($background-state);
+    // border-color: darken($border, 12%);
+  }
+  &:active,
+  &.active,
+  .open > &.dropdown-toggle {
+    color: var($states-color);
+    background-color: var($background-state);
+    background-image: none;
+    // border-color: darken($border, 12%);
+
+  }
+  &.disabled,
+  &[disabled],
+  fieldset[disabled] & {
+    &:hover,
+    &:focus,
+    &.focus {
+      background-color: var($background);
+      border-color: $border;
+    }
+  }
+
+  .badge {
+    color: $background;
+    background-color: var(--color);
+  }
+}
+
+// Button sizes
+@mixin button-size($padding-vertical, $padding-horizontal, $font-size, $line-height, $border-radius) {
+  padding: $padding-vertical $padding-horizontal;
+  font-size: $font-size;
+  line-height: $line-height;
+  border-radius: $border-radius;
+}
+
+// Mixin for generating new styles
+@mixin btn-styles($btn-color, $btn-states-color, $btn-font-color, $btn-border-color) {
+  border-color: var($btn-border-color);
+  color: var(--font-fill-color);
+  background-color: var($btn-color);
+  color: var($btn-font-color);
+  box-shadow: var(--button-box-shadow);
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active,
+  .open > &.dropdown-toggle {
+    background-color: var($btn-states-color);
+    color: var(--font-fill-color);
+    border-color: var($btn-color);
+    .caret {
+      border-top-color: var(--font-fill-color);
+    }
+  }
+
+  // &.disabled,
+  // &:disabled,
+  // &[disabled],
+  // fieldset[disabled] & {
+  //   &,
+  //   &:hover,
+  //   &:focus,
+  //   &.focus,
+  //   &:active,
+  //   &.active {
+  //     background-color: var(--transparent-bg);
+  //     border-color: var($btn-color);
+  //   }
+  // }
+  &.btn-cta{
+    color: var(--white-color);
+    background-color: var($btn-color);
+    &:hover{
+      background-color: var($btn-states-color);
+      border-color: var($btn-states-color);
+    }
+  }
+  &.btn-transparent {
+    // border-color: transparent !important;
+    &:not(:hover) {
+      background-color: transparent !important;
+    }
+    box-shadow: unset;
+  }
+  // &.btn-fill {
+  //   color: var(--white-color);
+  //   background-color: var($btn-color);
+  //   @include opacity(1);
+
+  //   &:hover,
+  //   &:focus,
+  //   &:active,
+  //   &.active,
+  //   .open > &.dropdown-toggle {
+  //     background-color: var($btn-states-color);
+  //     color: var(--white-color);
+  //     border-color: var($btn-states-color);
+  //   }
+
+  //   .caret {
+  //     border-top-color: var(--white-color);
+  //   }
+  // }
+
+  // &.btn-simple {
+    // &:hover,
+    // &:focus,
+    // &:active,
+    // &.active,
+    // .open > &.dropdown-toggle {
+    //   background-color: var(--transparent-bg);
+    //   color: var($btn-states-color);
+
+    //   .caret {
+    //     border-top-color: var($btn-states-color);
+    //   }
+    // }
+  // }
+
+  .caret {
+    border-top-color: var($btn-font-color);
+  }
+}
+
+@mixin btn-size($padding-vertical, $padding-horizontal, $font-size, $border, $line-height) {
+  font-size: $font-size;
+  // border-radius: $border;
+  padding: $padding-vertical $padding-horizontal;
+
+  &.btn-simple {
+    padding: $padding-vertical + 2 $padding-horizontal;
+  }
+
+}

@@ -1,0 +1,300 @@
+// Import first so they can be wired into the bootstrap scss
+@import "_theme";
+
+@import "runstrap/variables";
+@import "runstrap/mixins";
+
+// Reset and dependencies
+@import "runstrap/normalize";
+@import "runstrap/print";
+@import "runstrap/glyphicons";
+
+// Core CSS
+@import "runstrap/layouts";
+@import "runstrap/scaffolding";
+@import "runstrap/type";
+@import "runstrap/typography";
+@import "runstrap/code";
+@import "runstrap/grid";
+@import "runstrap/tables";
+@import "runstrap/forms";
+@import "runstrap/buttons";
+@import "runstrap/sidebar-and-main-panel";
+@import "runstrap/misc";
+@import "runstrap/inputs";
+@import "runstrap/progress-bars";
+@import "runstrap/footers";
+@import "runstrap/cards";
+@import "runstrap/slider";
+@import "runstrap/select";
+@import "runstrap/chat-message";
+@import "runstrap/checkbox-radio";
+
+// Components
+@import "runstrap/component-animations";
+@import "runstrap/dropdown";
+@import "runstrap/button-groups";
+@import "runstrap/input-groups";
+@import "runstrap/navs";
+@import "runstrap/navbar";
+@import "runstrap/breadcrumbs";
+@import "runstrap/pagination";
+@import "runstrap/pager";
+@import "runstrap/labels";
+@import "runstrap/badges";
+@import "runstrap/jumbotron";
+@import "runstrap/thumbnails";
+@import "runstrap/alerts";
+@import "runstrap/progress-bars";
+@import "runstrap/media";
+@import "runstrap/list-group";
+@import "runstrap/panels";
+@import "runstrap/responsive-embed";
+@import "runstrap/wells";
+@import "runstrap/close";
+
+// Fancy Stuff
+@import "runstrap/social";
+@import "runstrap/tags";
+@import "runstrap/collapse";
+@import "runstrap/animated-buttons";
+@import "runstrap/switch";
+@import "runstrap/storybook";
+
+// Components w/ JavaScript
+@import "runstrap/modals";
+@import "runstrap/tooltip-and-popovers";
+@import "runstrap/popovers";
+@import "runstrap/carousel";
+
+// Utility classes
+@import "runstrap/utilities";
+@import "runstrap/responsive-utilities";
+
+//plugins css
+@import "runstrap/plugins/animate";
+@import "runstrap/plugins/fullcalendar";
+@import "runstrap/plugins/chartist";
+@import "runstrap/plugins/perfect-scrollbar";
+@import "runstrap/plugins/jquery.jvectormap";
+// @import "~perfect-scrollbar/css/perfect-scrollbar.css";
+
+//SCSS for Pages
+@import "runstrap/pages";
+
+@import "runstrap/tabs-navs-pagination";
+@import "runstrap/circlechart";
+ 
+@import "runstrap/responsive";
+
+// UI Next Layout
+@import "runstrap/view";
+
+
+// Font Awesome 5
+@import "fontawesome/fontawesome";
+@import "fontawesome/regular";
+@import "fontawesome/solid";
+@import "fontawesome/brands";
+
+
+// CUSTOM
+@import "custom/rundeck-icon";
+@import "custom/pagerduty-icon";
+@import "custom/mainbar";
+@import "custom/sidebar";
+@import "custom/modals";
+@import "custom/rows";
+@import "custom/flexbox";
+@import "custom/text";
+@import "custom/forms";
+@import "custom/flexbox";
+@import "custom/buttons";
+@import "custom/dropdown";
+@import "custom/expand";
+@import "custom/execution-page";
+// @import "custom/input-group";
+@import "custom/jobs";
+@import "custom/links";
+@import "custom/nodes-embed";
+@import "custom/popover";
+@import "custom/table";
+@import "custom/tabs";
+@import "custom/execution-output-table";
+@import "custom/execution-output-styles";
+@import "custom/cards";
+@import "custom/cards-expandable";
+@import "custom/exec-status";
+@import "custom/exec-state";
+@import "custom/process-flow";
+@import "custom/workflow-editor";
+@import "custom/workflow-step";
+@import "custom/autocomplete";
+@import "custom/markdeep";
+@import "custom/nav-tabs";
+@import "custom/labels";
+@import "custom/progress-bars";
+@import "custom/project-list";
+@import "custom/popovers";
+@import "custom/anchors";
+@import "custom/carets";
+@import "custom/loading-spinner";
+@import "custom/script-content";
+@import "custom/plugin-config";
+@import "custom/ace-editor";
+@import "custom/logo";
+
+// PAGES
+@import "pages/login";
+@import "pages/page_storage";
+@import "pages/nodes";
+@import "pages/jobs";
+@import "pages/four-oh-four";
+
+// COMPONENTS
+@import "custom/community-news-sidebar";
+
+
+.patab-item:not(.patab-item--active) {
+  cursor: pointer;
+}
+.patabs{
+&.patabs--standard{
+
+  .patabs-list{
+    display: flex;
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    width: fit-content;
+    align-items: center;
+    position: relative;
+    border-bottom: 2px solid #d0d9e1;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    &:hover{
+      .patab-item{
+        &.patab-item--active{
+          &:before{
+            left: 100%;
+            transition: .1s cubic-bezier(.55,0,.1,1);
+            content: "";
+            position: absolute;
+            height: 20px;
+            border-bottom: 3px solid green;
+            width: 0;
+            bottom: -2px;
+            border-radius: 1rem;
+    
+          }
+          &:hover{
+            &:before{
+              left: 0;
+            content: "";
+            position: absolute;
+            height: 3px;
+            border-bottom: 3px solid var(--brand-color);
+            width: 100%;
+            bottom: -1px;
+            border-radius: 1rem;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .patab-item{
+    position: relative;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    height: 100%;
+    font-weight: 700;
+    color: var(--text-muted-color);
+    padding: 10px 15px;
+    &.patab-item--active{
+      color: var(--font-color);
+      &:before{
+        left: 0;
+        content: "";
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid var(--brand-color);
+        width: 100%;
+        bottom: -1px;
+        border-radius: 1rem;
+      }
+    }
+    &:before{
+      left: 100%;
+      transition: .1s cubic-bezier(.55,0,.1,1);
+      content: "";
+      position: absolute;
+      height: 3px;
+      border-bottom: 3px solid var(--brand-color);
+      width: 0;
+      bottom: -1px;
+      border-radius: 1rem;
+    }
+    &:hover{
+      &:before{
+        border-bottom-color: var(--brand-color);
+        width: 100%;
+        bottom: -1px;
+        transition-delay: .1s;
+        left: 0;
+      }
+    }
+  }
+}
+&.patabs--card{
+   --line-width: 0.1em;
+  --radius: 10px;
+
+  --width: 1.5em;
+   .patabs-list{
+    display: flex;
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    width: fit-content;
+    align-items: center;
+    position: relative;
+    border-bottom: 2px solid #d0d9e1;
+    width: 100%;
+    margin-bottom: 1.5rem;
+        padding: 0 20px;
+  }
+
+  .patab-item{
+    position: relative;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    height: 100%;
+    font-weight: 700;
+    color: var(--text-muted-color);
+    padding: 7px 15px;
+    &.patab-item--active{
+      background-color: var(--background-color-lvl2);
+      color: var(--font-color);
+      border-bottom: var(--line-width) solid var(--background-color-lvl2);
+      border-top-left-radius: var(--radius);
+      border-top-right-radius: var(--radius);
+      border: 2px solid #d0d9e1;
+      &:after{
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background-color: var(--background-color-lvl2);
+        content: "";
+      }
+    }
+    
+    
+  }
+}
+}

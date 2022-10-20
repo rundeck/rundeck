@@ -1,0 +1,102 @@
+.nodes-embed{
+
+  .embedded_node {
+    display: inline-block;
+    cursor: pointer;
+
+    &.tight {
+      white-space: nowrap;
+      overflow-x: hidden;
+    }
+  }
+
+  a.embedded_node + .detailpopup > .nodedetail {
+    display: none;
+  }
+
+  a.embedded_node:focus + .detailpopup > .nodedetail {
+    display: block;
+  }
+}
+
+.node_unselected {
+  color: red;
+  text-decoration: line-through;
+}
+
+.node_select_checkbox {
+  display: inline-block;
+  margin-right: 10px;
+}
+.node-details-simple {
+  .subattrs {
+    td {
+      background: var(--background-color-lvl2);
+    }
+  }
+}
+
+//node detail
+/** node detail */
+.nodedetail {
+  & tr td.key {
+    width: 200px;
+    vertical-align: top;
+
+    &.namespace {
+      padding-right: 20px;
+    }
+  }
+
+  & .key {
+    text-align: right;
+    font-weight: bold;
+    color: var(--text-muted-color);
+  }
+
+  & tr .value {
+    vertical-align: top;
+    max-width: 800px;
+  }
+
+  &.detailpopup {
+    max-height: 500px;
+    max-width: 600px;
+    overflow-y: auto;
+  }
+
+  &.embed {
+    & tr .value {
+      max-width: 400px;
+    }
+  }
+}
+
+.node_entry {
+  .hostname,
+  .nodedesc,
+  .nodeident,
+  .nodetags,
+  .username {
+    white-space: nowrap;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nodetags {
+    max-width: 20em;
+
+  }
+}
+
+.node_entry.server .nodedesc:before {
+  color: #f66;
+  content: " server ";
+  padding-left: 18px;
+}
+
+.nodedetail.server .nodedesc:before {
+  color: #f66;
+  content: " server " "\2022" " ";
+  padding-left: 18px;
+}

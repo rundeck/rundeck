@@ -1,0 +1,105 @@
+
+html,body{
+    background-color: var(--background-color);
+}
+//.view {
+//    height: 100vh;
+//    width: 100vw;
+//
+//    overflow: hidden;
+//
+//    display: grid;
+//    grid-template-areas:
+//        "header"
+//        "main"
+//        "utility";
+//
+//    grid-template-rows: min-content 1fr 22px;
+//    grid-template-columns: 1fr;
+//}
+
+body.view{
+    position: relative;
+}
+#section-main{
+    margin-top: 45px;
+    height: calc(100vh - 69px);
+    #section-navbar{
+
+    }
+    #section-navbar{
+
+    }
+}
+#section-header{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+#section-utility{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%; 
+}
+
+
+.view > section {
+    overflow: hidden;
+}
+
+#section-header {
+    //position: relative;
+    z-index: 3;
+    overflow: visible;
+}
+
+#section-navbar {
+    display: flex;
+    flex: none;
+    width: 65px;
+    align-items: center;
+    overflow: hidden;
+    background-color: var(--sidebar-background-color);
+}
+
+#section-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow: auto;
+    padding: 2rem;
+}
+
+#section-main {
+    display: flex;
+    z-index: 1;
+    overflow: hidden;
+    // position: relative;
+}
+
+#section-utility {
+    position: relative;
+    z-index: 2;
+    box-shadow: var(--utility-bar-box-shadow) !important;
+}
+
+#loginpage {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+th.table-header, td.table-header, .text-table-header {
+    color: var(--card-default-color) !important;
+}
+
+.list-group-item {
+  background-color: var(--list-item-background-color);
+  border: 1px solid var(--list-item-border-color);
+}
+
+.table thead tr.success th, .table thead tr.success td, .table tbody tr.success th, .table tbody tr.success td, .table tfoot tr.success th, .table tfoot tr.success td {
+    background-color: var(--success-bg-color) !important;
+}

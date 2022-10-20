@@ -1,0 +1,651 @@
+//
+// Dropdown menus
+// --------------------------------------------------
+
+
+// Dropdown arrow/caret
+.caret {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-top: $caret-width-base dashed;
+  border-top: $caret-width-base solid \9; // IE8
+  border-right: $caret-width-base solid transparent;
+  border-left: $caret-width-base solid transparent;
+}
+
+// The dropdown wrapper (div)
+.dropup,
+.dropdown {
+  position: relative;
+}
+
+// Prevent the focus on the dropdown toggle when closing dropdowns
+.dropdown-toggle:focus {
+  outline: 0;
+}
+
+// The dropdown menu (ul)
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: $zindex-dropdown;
+  display: none; // none by default, but block on "open" of the menu
+  float: left;
+  min-width: 160px;
+  padding: 0px;
+  margin: 2px 0 0; // override default ul
+  margin-top: 5px;
+  font-size: $font-size-base;
+  text-align: left; // Ensures proper alignment if parent has it changed (e.g., modal footer)
+  list-style: none;
+  background-color: var(--popover-background-color);
+  background-clip: padding-box;
+  border: 0 none;
+  border-radius: $border-radius-extreme;
+  @include box-shadow($dropdown-shadow);
+
+  // Aligns the dropdown menu to right
+  //
+  // Deprecated as of 3.1.0 in favor of `.dropdown-menu-[dir]`
+  &.pull-right {
+    right: 0;
+    left: auto;
+  }
+
+  // Dividers (basically an hr) within the dropdown
+  .divider {
+    @include nav-divider($dropdown-divider-bg);
+  }
+
+  // Links within the dropdown menu
+  > li > a {
+    display: block;
+    padding: 3px 20px;
+    clear: both;
+    font-weight: 400;
+    line-height: $line-height-base;
+    color: $dropdown-link-color;
+    white-space: nowrap; // prevent links from randomly breaking onto new lines
+
+    &:hover,
+    &:focus {
+      color: $dropdown-link-hover-color;
+      text-decoration: none;
+      background-color: $dropdown-link-hover-bg;
+    }
+  }
+}
+
+// Active state
+.dropdown-menu > .active > a {
+  &,
+  &:hover,
+  &:focus {
+    color: $dropdown-link-active-color;
+    text-decoration: none;
+    background-color: $dropdown-link-active-bg;
+    outline: 0;
+  }
+}
+
+// Disabled state
+//
+// Gray out text and ensure the hover/focus state remains gray
+
+.dropdown-menu > .disabled > a {
+  &,
+  &:hover,
+  &:focus {
+    color: $dropdown-link-disabled-color;
+  }
+
+  // Nuke hover/focus effects
+  &:hover,
+  &:focus {
+    text-decoration: none;
+    cursor: $cursor-disabled;
+    background-color: transparent;
+    background-image: none; // Remove CSS gradient
+    @include reset-filter;
+  }
+}
+
+// Open state for the dropdown
+.open {
+  // Show the menu
+  > .dropdown-menu {
+    display: block;
+  }
+
+  // Remove the outline when :focus is triggered
+  > a {
+    outline: 0;
+  }
+}
+
+// Menu positioning
+//
+// Add extra class to `.dropdown-menu` to flip the alignment of the dropdown
+// menu with the parent.
+.dropdown-menu-right {
+  right: 0;
+  left: auto; // Reset the default from `.dropdown-menu`
+}
+// With v3, we enabled auto-flipping if you have a dropdown within a right
+// aligned nav component. To enable the undoing of that, we provide an override
+// to restore the default dropdown menu alignment.
+//
+// This is only for left-aligning a dropdown menu within a `.navbar-right` or
+// `.pull-right` nav component.
+.dropdown-menu-left {
+  right: auto;
+  left: 0;
+}
+
+// Dropdown section headers
+.dropdown-header {
+  display: block;
+  padding: 3px 20px;
+  font-size: $font-size-small;
+  line-height: $line-height-base;
+  color: $dropdown-header-color;
+  white-space: nowrap; // as with > li > a
+}
+
+// Backdrop to catch body clicks on mobile, etc.
+.dropdown-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: ($zindex-dropdown - 10);
+}
+
+// Right aligned dropdowns
+.pull-right > .dropdown-menu {
+  right: 0;
+  left: auto;
+}
+
+// Allow for dropdowns to go bottom up (aka, dropup-menu)
+//
+// Just add .dropup after the standard .dropdown class and you're set, bro.
+// TODO: abstract this so that the navbar fixed styles are not placed here?
+
+.dropup,
+.navbar-fixed-bottom .dropdown {
+  // Reverse the caret
+  .caret {
+    content: "";
+    border-top: 0;
+    border-bottom: $caret-width-base dashed;
+    border-bottom: $caret-width-base solid \9; // IE8
+  }
+  // Different positioning for bottom up menu
+  .dropdown-menu {
+    top: auto;
+    bottom: 100%;
+    margin-bottom: 2px;
+  }
+}
+
+
+// Component alignment
+//
+// Reiterate per navbar.less and the modified component alignment there.
+
+@media (min-width: $grid-float-breakpoint) {
+  .navbar-right {
+    .dropdown-menu {
+      right: 0; left: auto;
+    }
+    // Necessary for overrides of the default right aligned menu.
+    // Will remove come v4 in all likelihood.
+    .dropdown-menu-left {
+      left: 0; right: auto;
+    }
+  }
+}
+
+.dropdown-menu {
+    
+  .dropdown &,
+  .bootstrap-table .btn-group &,
+  .btn-group &,
+  .dropup & {
+    @include transform-translate-y(-30px);
+    @include transition($fast-transition-time, $transition-linear);
+    @include opacity(0);
+    visibility: hidden;
+    display: block;
+  }
+
+  .dropdown.open &,
+  &.bootstrap-datetimepicker-widget.open,
+  .bootstrap-table .btn-group.open &,
+  .btn-group.open & {
+    @include transform-translate-y(0);
+    @include opacity(1);
+    visibility: visible;
+  }
+
+  .dropup & {
+    @include transform-translate-y(30px);
+    @include transition($fast-transition-time, $transition-linear);
+    @include opacity(0);
+    visibility: hidden;
+    display: block;
+  }
+
+  .dropup.open &,
+  &.bootstrap-datetimepicker-widget.top.open {
+    @include transform-translate-y(0);
+    @include opacity(1);
+    visibility: visible;
+  }
+
+  .dropup & {
+    margin-bottom: 5px;
+
+    >.active>a,
+    >.active>a:hover,
+    >.active>a:focus {
+      background-color: var(--background-color-accent-lvl2);
+      color: var(--font-color);
+    }
+
+    >li>a:hover,
+    >li>a:focus {
+      background-color: var(--background-color-accent-lvl2);
+      color: var(--font-color);
+      opacity: 1;
+      text-decoration: none;
+    }
+  }
+
+
+  // REMOVED
+  // Why: because I hate the triangle that points to the bottom.
+  // It means you have to align the dropup/down UI over a very particular part
+  // of the UI and that's not as easy as it sounds
+  //
+  // &:before{
+  //   border-bottom: 11px solid var(--medium-pale-bg);
+  //   border-left: 11px solid rgba(0, 0, 0, 0);
+  //   border-right: 11px solid rgba(0, 0, 0, 0);
+  //   content: "";
+  //   display: inline-block;
+  //   position: absolute;
+  //   right: 12px;
+  //   top: -12px;
+  // }
+  //
+  // &:after{
+  //   border-bottom: 11px solid var(--white-color);
+  //   border-left: 11px solid rgba(0, 0, 0, 0);
+  //   border-right: 11px solid rgba(0, 0, 0, 0);
+  //   content: "";
+  //   display: inline-block;
+  //   position: absolute;
+  //   right: 12px;
+  //   top: -11px;
+  // }
+
+
+  .dropup &,
+  &.bootstrap-datetimepicker-widget.top {
+    &:before {
+      border-top: 11px solid var(--medium-pale-bg);
+      border-left: 11px solid rgba(0, 0, 0, 0);
+      border-right: 11px solid rgba(0, 0, 0, 0);
+      border-bottom: none;
+      content: "";
+      display: inline-block;
+      position: absolute;
+      left: 12px;
+      right: auto;
+      top: auto;
+      bottom: -12px;
+    }
+
+    &:after {
+      border-top: 11px solid var(--white-color);
+      border-left: 11px solid rgba(0, 0, 0, 0);
+      border-right: 11px solid rgba(0, 0, 0, 0);
+      border-bottom: none;
+      content: "";
+      display: inline-block;
+      position: absolute;
+      left: 12px;
+      right: auto;
+      bottom: -11px;
+      top: auto;
+    }
+  }
+
+  &.dropdown-menu-left {
+    &:after {
+      left: 12px;
+      right: auto;
+    }
+
+    &:before {
+      left: 12px;
+      right: auto;
+    }
+  }
+
+  .divider {
+    background-color: var(--medium-pale-bg);
+    margin: 0px;
+  }
+
+  .dropdown-header {
+    color: var( --font-color);
+    font-size: $font-size-small;
+    font-weight: 800;
+    padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
+  }
+
+  >li>a {
+    color: var(--font-color);
+    font-size: $font-size-base;
+    padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
+    @include transition-none();
+
+    img {
+      margin-top: -3px;
+    }
+  }
+
+  >li>a:focus {
+    outline: 0 !important;
+  }
+
+  .btn-group.select & {
+    min-width: 100%;
+  }
+
+  >li:first-child>a {
+    border-top-left-radius: $border-radius-extreme;
+    border-top-right-radius: $border-radius-extreme;
+  }
+
+  >li:last-child>a {
+    border-bottom-left-radius: $border-radius-extreme;
+    border-bottom-right-radius: $border-radius-extreme;
+  }
+
+  >li>a:hover,
+  >li>a:focus {
+    background-color: var(--background-color-accent-lvl2);
+    color: var(--font-color);
+    opacity: 1;
+    text-decoration: none;
+  }
+
+  &.dropdown-primary>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
+      background-color: var(--primary-color);
+    }
+  }
+
+  &.dropdown-info>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
+      background-color: var(--info-color);
+    }
+  }
+
+  &.dropdown-success>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
+      background-color: var(--success-color);
+    }
+  }
+
+  &.dropdown-warning>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
+      background-color: var(--warning-color);
+    }
+  }
+
+  &.dropdown-danger>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
+      background-color: var(--danger-color);
+    }
+  }
+
+  //     Styles for the dropdown footer
+  >li.dropdown-footer {
+    background-color: $background-light-grey;
+    border-radius: 0 0 $border-radius-extreme $border-radius-extreme;
+
+    >ul {
+      list-style: outside none none;
+      padding: 0px 5px;
+
+      >li {
+        display: inline-block;
+        text-align: left;
+        padding: 0 10px;
+
+        >a {
+          color: $font-background-light-grey;
+          font-size: 0.9em;
+          line-height: 35px;
+        }
+      }
+
+      >li:hover a {
+        color: $font-hover-background-light-grey;
+      }
+    }
+  }
+
+}
+
+.select {
+
+  .no-style:hover,
+  .no-style:active,
+  .no-style:focus {
+    background-color: var(--white-color);
+    color: var(--font-color);
+
+    .caret {
+      border-top-color: var(--font-color);
+    }
+  }
+}
+
+.open {
+  .no-style {
+    background-color: var(--white-color) !important;
+    color: var(--font-color) !important;
+
+    .caret {
+      border-top-color: var(--font-color) !important;
+    }
+  }
+}
+
+//fix bug for the select items in btn-group
+.btn-group.select {
+  overflow: hidden;
+}
+
+.btn-group.select.open {
+  overflow: visible;
+}
+
+// Style for notifications in dropdown
+.notification-bubble {
+  left: 25px;
+  position: absolute;
+  top: 13px;
+}
+
+.dropdown-notification {
+
+  .dropdown-header {
+    border-bottom: 1px solid var(--medium-pale-bg);
+  }
+
+  .no-notification {
+    color: var(--dark-gray);
+    font-size: 1.2em;
+    padding: 30px 30px;
+    text-align: center;
+  }
+
+}
+
+.dropdown-notification-list {
+
+  >li {
+    border-bottom: 1px solid var(--medium-pale-bg);
+    color: var(--font-color);
+    font-size: $font-size-base;
+    //        padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
+    padding: 10px 5px;
+  }
+
+  >li>a {
+    color: var(--font-color);
+    white-space: normal;
+
+    .notification-text {
+      padding-left: 40px;
+      position: relative;
+    }
+
+    .label {
+      display: block;
+      position: absolute;
+      top: 50%;
+      margin-top: -12px;
+      left: 7px;
+    }
+
+    .message {
+      font-size: 0.9em;
+      line-height: 0.7;
+    }
+
+    .time {
+      color: var(--dark-gray);
+      font-size: 0.7em;
+    }
+
+    .read-notification {
+      font-size: 12px;
+      opacity: 0;
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      margin-top: -12px;
+    }
+  }
+
+  >li:hover,
+  >li:focus {
+    background-color: $background-lighter-grey;
+    color: var(--font-color);
+    opacity: 1;
+    text-decoration: none;
+
+    .read-notification {
+      opacity: 1;
+    }
+  }
+
+}
+
+.scroll-area {
+  max-height: 310px;
+  overflow-y: scroll;
+  list-style: outside none none;
+  padding: 0px;
+}
+
+.dropdown-sharing {
+
+  li {
+    color: var(--font-color);
+    font-size: $font-size-base;
+
+    .social-line {
+      line-height: 28px;
+      padding: 10px 20px 5px 20px;
+
+      [class*="icon-"] {
+        font-size: 20px;
+      }
+    }
+  }
+
+  li:hover,
+  li:focus {
+
+    .social-line,
+    a,
+    .action-line {
+      background-color: var(--smoke-bg);
+      color: var(--font-color);
+      opacity: 1;
+      text-decoration: none;
+    }
+  }
+}
+
+.dropdown-actions {
+  li {
+    .action-line {
+      line-height: 24px;
+      padding: 10px 20px;
+      font-weight: bold;
+
+      [class*="icon-"] {
+        font-size: 24px;
+      }
+
+      .col-xs-9 {
+        line-height: 34px;
+      }
+    }
+
+    .link-danger {
+      color: var(--danger-color);
+
+      &:hover,
+      &:active,
+      &:focus {
+        color: var(--danger-color);
+      }
+    }
+  }
+
+  li:hover,
+  li:focus {
+    a {
+      background-color: $background-lighter-grey;
+      color: var(--font-color);
+      opacity: 1;
+      text-decoration: none;
+    }
+  }
+}

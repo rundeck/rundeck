@@ -1,0 +1,105 @@
+.rdtabs__tabheader--standard {
+    
+    .rdtabs__tabheader-inner {
+        border-bottom: 2px #D0D9E1 solid;
+        width: 100%;
+    }
+
+    display: flex;
+
+    .rdtabs__tablist {
+        display: flex;
+        width: fit-content;
+        align-items: center;
+        position: relative;
+
+
+        // &:before {
+        //     position: absolute;
+
+        //     width: 100%;
+        //     bottom: 0;
+        //     content: '';
+        //     height: 2px;
+        //     border-bottom: 2px #D0D9E1 solid;
+        // }
+
+    }
+
+    .rdtabs__tablist:hover, .rdtabs__tablist:focus-within{
+        .rdtabs__tab--active:before {
+          left: 0%;
+          content: '';
+          position: absolute;
+          height: 3px;
+          border-bottom: 3px solid var(--brand-color);
+          width: 0%;
+          bottom: -1px;
+          border-radius: 1rem;
+        }
+        .rdtabs__tab--active:hover:before, .rdtabs__tab--active:focus:before {
+          left: 0%;
+          content: '';
+          position: absolute;
+          height: 3px;
+          border-bottom: 3px solid var(--brand-color);
+          width: 100%;
+          bottom: -1px;
+          border-radius: 1rem;
+        }
+    }
+
+    .rdtabs__tab {
+        position: relative;
+        display: flex;
+        align-items: center;
+        align-content: center;
+        text-align: center;
+        height: 100%;
+        // border: 1px solid black;
+        font-weight: 700;
+        color: var(--text-muted-color);
+        padding: 10px 15px;
+    }
+
+    .rdtabs__tab--active {
+        color: var(--font-color);
+    }
+
+
+    .rdtabs__tab.rdtabs__tab--active:before {
+        left: 0%;
+        content: '';
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid var(--brand-color);
+        width: 100%;
+        bottom: -1px;
+        border-radius: 1rem;
+    }
+    .rdtabs__tab:active{
+        transition: none;
+    }
+    .rdtabs__tab:before{
+        left: 100%;
+        transition: 0.1s cubic-bezier(0.55, 0, 0.1, 1);
+        content: '';
+        position: absolute;
+        height: 3px;
+        border-bottom: 3px solid var(--brand-color);
+        width: 0;
+        bottom: -1px;
+        border-radius: 1rem;
+    }
+    .rdtabs__tab:hover:before, .rdtabs__tab:focus:before{
+        border-bottom-color: var(--brand-color);
+        width: 100%;
+        bottom: -1px;
+        transition-delay: 0.1s;
+        left: 0;
+    }
+
+    .rdtabs__tab:hover ~ .rdtabs__tab:before, .rdtabs__tab:focus ~ .rdtabs__tab:focus {
+        left: 0;
+    }
+}

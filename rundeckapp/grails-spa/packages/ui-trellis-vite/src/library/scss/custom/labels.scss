@@ -1,0 +1,43 @@
+@import "../runstrap/variables";
+
+.label{
+  &.label-default {
+    color: var(--default-color);
+    background-color: var(--font-color);
+  }
+  &.label-white{
+    background-color: var(--white-color);
+    color: var(--black-color);
+  }
+
+  &.label-muted {
+    color: var(--text-muted-color);
+    background-color: var(--background-color-accent);
+    &.active{
+      background-color: var(--text-muted-color);
+    }
+  }
+
+  &.label-secondary {
+    background-color: var(--background-color-accent);
+    &.active{
+      background-color: var(--medium-gray);
+    }
+  }
+}
+
+a:hover.label {
+  &.label-muted {
+    background-color: var(--light-gray);
+
+  }
+
+  &.label-secondary {
+
+    background-color: var(--medium-gray);
+  }
+}
+
+a.label, a.label:focus, a.label:hover {
+  color: inherit;
+}

@@ -1,0 +1,191 @@
+// *************************************
+//
+//   Page Layouts
+//   -> Pages should exclusivly use one of the templates assigned here
+//   - 1. Base Layout
+//   - 2. Sidebar Layout
+//   - 3. Wizard Layout
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Base
+// -------------------------------------
+
+.layout-base{
+    .layout-base--header{
+        background-color: var(--background-color-lvl2);
+        border-bottom:1px solid var(--background-color-lvl3);
+        .layout-base--action{
+            padding-top: var(--spacing-12);
+            padding-bottom: var(--spacing-12);
+            @media (min-width: $screen-md) {
+                padding-left: var(--spacing-12);
+            }
+            .btn{
+                margin: var(--spacing-12);
+            }
+        }
+        .layout-base--action.p-0{
+            padding: 0;
+        }
+        .layout-base--content{
+            @extend .rs-container;
+            padding: var(--spacing-12) 0 var(--spacing-12) 0;
+            .flex--grow{
+                padding: 0 0 var(--spacing-12) var(--spacing-12);
+            }
+        }
+    }
+    .layout-base--body{
+        background-color: var(--background-color);
+        .layout-base--content{
+            padding: var(--spacing-12) 0 0 0;
+            .card{
+                padding: var(--spacing-6);
+                display: grid;
+                overflow-x: scroll;
+            }
+        }
+    }
+}
+
+// -------------------------------------
+//   2. Sidebar
+// -------------------------------------
+
+.layout-sidebar{
+    display: flex;
+    position: relative;
+    justify-content: flex-end;
+    position: relative;
+    aside{
+        position: fixed;
+        height: 100vh;
+        width: 300px;
+        top:0;
+        left:0;
+        background-color: var(--background-color-lvl2);
+        border-right:1.5px solid var(--background-color-lvl3);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        .layout-sidebar--sidebar-header, .layout-sidebar--sidebar-footer{
+            padding: var(--spacing-6);
+            background-color: var(--background-color);
+            flex: none;
+            h1{
+                font-size: var(--text-2xl);
+                margin: 0;
+            }
+        }
+        .layout-sidebar--sidebar-header{
+            border-bottom: 1.5px solid var(--background-color-lvl3);
+        }
+        .layout-sidebar--sidebar-footer{
+            border-top: 1.5px solid var(--background-color-lvl3);
+        }
+        .layout-sidebar--sidebar-body{
+            padding: var(--spacing-6);
+            flex-grow: 1;
+            overflow-y: scroll;
+            background-color: var(--background-color-lvl2);
+        }
+    }
+    main{
+        padding: var(--spacing-12);
+        width: calc(100% - 300px);
+    }
+}
+
+.nav-vertical{
+    
+}
+
+    
+// -------------------------------------
+//   3. Wizard
+// -------------------------------------
+
+.wizard-contanier{
+    max-width: var(--screen-sm);
+    margin: 0 auto;
+}
+.layout-wizard{
+    @extend .card;
+    margin: 0 auto;
+    max-width: var(--screen-sm);
+    background-color: var(--background-color);
+    margin-top: var(--spacing-12);
+    .layout-wizard--progress-steps{
+        padding: var(--spacing-6) var(--spacing-12);
+        border-bottom:1px solid var(--background-color-lvl3);
+    }
+    .layout-wizard--header, .layout-wizard--footer{
+        padding: var(--spacing-12);
+        h1{
+            font-size: var(--text-3xl);
+            line-height: var(--line-height-2xl);
+        }
+        h1, h2, h3, h4{
+            margin: 0;
+        }
+    }
+    .layout-wizard--action{
+        padding-top: var(--spacing-12);
+        padding-bottom: var(--spacing-12);
+        @media (min-width: $screen-md) {
+            padding-left: var(--spacing-12);
+        }
+        .btn{
+            margin: 0 var(--spacing-2);
+        }
+    }
+    .layout-wizard--content{
+        h1, h2, h3, h4{
+            margin: 0 0 1em;
+        }
+        padding: var(--spacing-12)
+    }
+    .layout-wizard--body{
+        padding: var(--spacing-12);
+        border-top:1px solid var(--background-color-lvl3);
+        border-bottom:1px solid var(--background-color-lvl3);
+    }
+    .layout-wizard--header-tabs{
+        @extend .layout-wizard--header;
+        padding-bottom: 0;
+    }
+    .rdtabs__tabheader-inner{
+        padding:0 var(--spacing-12) !important;
+        border-bottom: 0 !important;
+    }
+    .rdtabs__tabheader--standard{
+        border-bottom:1px solid var(--background-color-lvl3);
+    }
+    .layout-wizard--body-tabs{
+        padding: var(--spacing-6);
+        .rdtabs__tabheader.rdtabs__tabheader--standard{
+            padding-left: var(--spacing-12);
+            padding-right: var(--spacing-12);
+            padding-bottom: 0;
+            border-bottom:1px solid var(--background-color-lvl3);
+        }
+    }
+    .layout-wizard--footer-tabs{
+        border-top: 1px solid var(--background-color-lvl3);
+        padding: var(--spacing-12);
+        display: flex;
+        justify-content: flex-end;
+        .btn:not(:last-child){
+            margin-right: var(--spacing-4);
+        }
+    }
+    .layout-wizard--footer{
+        display: flex;
+        justify-content: flex-end;
+        .btn:not(:last-child){
+            margin-right: var(--spacing-4);
+        }
+    }
+}

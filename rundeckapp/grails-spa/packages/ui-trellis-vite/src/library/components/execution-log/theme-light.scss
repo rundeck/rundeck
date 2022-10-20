@@ -1,0 +1,64 @@
+.execution-log--light .execution-log__gutter {
+  color: grey;
+  background-color: whitesmoke;
+  // color: bisque;
+  box-sizing: border-box;
+  border-style: none none dotted none;
+  border-width: 1px;
+  border-color: rgb(223, 223, 223);
+}
+
+.execution-log--light .execution-log__scroller {
+  background-color: whitesmoke;
+}
+
+// .execution-log--light .execution-log__scroller > :nth-child(2) {
+//   border-style: solid none none none;
+//   border-width: 1px;
+//   border-color: lightgrey;
+// }
+
+.execution-log--light .execution-log__line--selected .execution-log__gutter {
+  background-color: powderblue;
+}
+
+.execution-log--light .execution-log__line--selected .execution-log__content {
+  background-color: beige;
+}
+
+.execution-log--light .execution-log__warning {
+  background-color: aliceblue;
+}
+
+.execution-log--light .execution-log__content {
+  color: black;
+  background-color: white;
+  box-sizing: border-box;
+  border-style: none none dotted none;
+  border-width: 1px;
+  border-color: #f1f1f1;
+
+  &.execution-log__content--level-warn{
+    color: #aa8800;
+  }
+  &.execution-log__content--level-error{
+    color: #ff3300;
+  }
+  &.execution-log__content--level-debug, &.execution-log__content--level-verbose{
+    color: darkgray;
+  }
+}
+
+.execution-log--light .execution-log__node-chunk {
+  border-style: none none solid none;
+  border-width: 1px;
+  border-color: lightgray;
+}
+
+.execution-log--light .execution-log__node-badge {
+  color: cornflowerblue;
+  background-color: whitesmoke;
+  padding-left: 4px;
+  border-bottom-left-radius: 5px;
+}
+

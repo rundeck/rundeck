@@ -1,0 +1,77 @@
+// *************************************
+//
+//   Breadcrumbs
+//   -> Navigational Items
+//   - 1. Breadcrumb bar with Nav Items
+//   * Breadcrumbs (-Legacy Bootstrap 3)
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Breadcrumb bar with Nav Items
+// -------------------------------------
+
+.breadcrumb-bar{
+    background-color: var(--background-color-lvl2);
+    border-bottom:1px solid var(--background-color-lvl3);
+    .breadcrumb-bar--navs{
+        //@extend .rs-container;
+        padding: var(--spacing-3) var(--spacing-12);
+        display: flex;
+        justify-content: flex-start;
+        .breadcrumb-bar--nav_item{
+            font-family: var(--headings-font-family);
+            font-size: var(--text-md);
+            &:first-child{
+                font-weight: 800;
+            }
+            &:not(:last-child):after{
+                border-style: solid;
+                border-width: 0.15em 0.15em 0 0;
+                content: '';
+                display: inline-block;
+                height: 0.55em;
+                left: 0.15em;
+                position: relative;
+                top: -2px;
+                vertical-align: top;
+                width: 0.55em;
+                left: 0;
+	            transform: rotate(45deg);
+                margin: 0 var(--spacing-6);
+                vertical-align: middle;
+            }
+        }
+    }
+}
+
+
+
+//
+// Breadcrumbs (-Legacy Bootstrap 3)
+// --------------------------------------------------
+
+
+.breadcrumb {
+  padding: $breadcrumb-padding-vertical $breadcrumb-padding-horizontal;
+  margin-bottom: $line-height-computed;
+  list-style: none;
+  background-color: $breadcrumb-bg;
+  border-radius: $border-radius-base;
+
+  > li {
+    display: inline-block;
+
+    + li:before {
+      padding: 0 5px;
+      color: $breadcrumb-color;
+      // [converter] Workaround for https://github.com/sass/libsass/issues/1115
+      $nbsp: "\00a0";
+      content: "#{$breadcrumb-separator}#{$nbsp}"; // Unicode space added since inline-block means non-collapsing white-space
+    }
+  }
+
+  > .active {
+    color: $breadcrumb-active-color;
+  }
+}

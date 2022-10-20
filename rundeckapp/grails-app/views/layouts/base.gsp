@@ -155,10 +155,19 @@
     </script>
 
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
+    <!-- 
     <asset:stylesheet href="static/css/chunk-vendors.css"/>
     <asset:stylesheet href="static/css/chunk-common.css"/>
+    -->
+    <asset:stylesheet href="static/ui-trellis-vite/css/index.css"/>
+   <script type="module" crossorigin src="${assetPath(src: 'static/ui-trellis-vite/index.js')}"></script>
+    <link rel="modulepreload" href="${assetPath(src: 'static/ui-trellis-vite/vendor.js')}">
+  
+    <!-- 
+         <script type="module" crossorigin src="${assetPath(src: 'static/ui-trellis-vite/index.js')}"></script>
     <asset:javascript src="static/js/chunk-common.js"/>
     <asset:javascript src="static/js/chunk-vendors.js"/>
+    -->
     %{-- Central should be loaded as soon as before any other Vue project code --}%
     <asset:javascript src="static/components/central.js"/>
     %{--  Navigation components load early too  --}%

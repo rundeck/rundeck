@@ -1,0 +1,239 @@
+@import '../custom/text';
+
+// *************************************
+//
+//   Typography
+//   -> Text Styles
+//   - 1. Code
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Code
+// -------------------------------------
+
+.code-inline--danger {
+  font-family: Courier, monospace;
+  background-color: var(--blue-100);
+  color: var(--red-500);
+  border-radius: 4px;
+  padding: 0 var(--spacing-2);
+}
+
+//
+// Typography (-Legacy Bootstrap 3)
+// --------------------------------------------------
+
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6, p, .navbar, .brand, a, .td-name, td {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-family: 'Muli', "Helvetica", Arial, sans-serif;
+}
+
+
+h1, .h1, h2, .h2, h3, .h3, h4, .h4 {
+  font-weight: 600;
+  margin: $margin-large-vertical 0 $margin-base-vertical;
+  font-family: 'Jost','Muli', "Helvetica", Arial, sans-serif;
+}
+
+h1, .h1 {
+  @extend %text-h1;
+}
+
+h2, .h2 {
+  @extend %text-h2;
+}
+
+h3, .h3 {
+  @extend %text-h3;
+  line-height: 1.4;
+  margin: 20px 0 10px;
+}
+
+h4, .h4 {
+  @extend %text-h4;
+  line-height: 1.2em;
+}
+
+h5, .h5 {
+  @extend %text-h5;
+  margin-bottom: 15px;
+}
+
+h6, .h6 {
+  @extend %text-h6;
+  text-transform: uppercase;
+}
+
+p {
+  font-size: $font-paragraph;
+  line-height: $line-height-general;
+}
+
+h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small, .h3 small, .h4 small, .h5 small, .h6 small, h1 .small, h2 .small, h3 .small, h4 .small, h5 .small, h6 .small, .h1 .small, .h2 .small, .h3 .small, .h4 .small, .h5 .small, .h6 .small {
+  color: var(--dark-gray);
+  font-weight: $font-weight-light;
+  line-height: $line-height-general;
+}
+
+h1 small, h2 small, h3 small, h1 .small, h2 .small, h3 .small {
+  font-size: 60%;
+}
+
+.title-uppercase {
+  text-transform: uppercase;
+}
+
+blockquote {
+  font-style: italic;
+}
+
+blockquote small {
+  font-style: normal;
+}
+
+code {
+  color: #1f4866;
+  background-color: #f5f5f5;
+}
+
+.text-muted {
+  color: var(--text-muted-color);
+}
+
+.text-primary, .text-primary:hover, .text-primary:focus, a.text-primary {
+  color: var(--text-primary-color);
+  font-weight: 600;
+}
+
+a.text-primary:hover, a.text-primary:focus {
+  // color: lighten($primary-states-color, 10%);
+}
+
+a.link-quiet {
+  color: var(--font-color);
+}
+
+.text-secondary, .text-secondary:hover, .text-secondary:focus, a.text-secondary {
+  color: var(--text-secondary-color);
+}
+
+a.text-secondary:hover, a.text-secondary:focus {
+  // color: lighten($primary-states-color, 20%);
+}
+
+.text-info, .text-info:hover, .text-info:focus, a.text-info {
+  color: var(--info-states-color);
+  font-weight: 600;
+}
+
+a.text-info:hover, .text-info:focus {
+  filter: brightness(1.25);
+}
+
+.text-success, .text-success:hover, .text-success:focus, a.text-success {
+  color: var(--success-states-color);
+  font-weight: 600;
+}
+
+a.text-success:hover, .text-success:focus {
+  // color: lighten($success-states-color, 25%);
+}
+
+.text-warning, .text-warning:hover, .text-warning:focus, a.text-warning {
+  color: var(--warning-color);
+  font-weight: 600;
+}
+
+a.text-warning:hover, .text-warning:focus {
+  // color: lighten(var(--warning-states-color), 25%);
+}
+
+.text-danger, .text-danger:hover, .text-danger:focus, a.text-danger {
+  color: var(--danger-states-color);
+  font-weight: 600;
+}
+
+a.text-danger:hover, .text-danger:focus {
+  // color: lighten(var(--danger-states-color), 25%);
+}
+
+.glyphicon {
+  line-height: 1;
+}
+
+.icon-primary {
+  color: var(--primary-color);
+}
+
+.icon-info {
+  color: var(--info-color);
+}
+
+.icon-success {
+  color: var(--success-color);
+}
+
+.icon-warning {
+  color: var(--warning-color);
+}
+
+.icon-danger {
+  color: var(--danger-color);
+}
+
+.chart-legend {
+  .text-primary, .text-primary:hover {
+    color: var(--primary-color);
+  }
+  .text-info, .text-info:hover {
+    color: var(--info-color);
+  }
+  .text-success, .text-success:hover {
+    color: var(--success-color);
+  }
+  .text-warning, .text-warning:hover {
+    color: var(--warning-color);
+  }
+  .text-danger, .text-danger:hover {
+    color: var(--danger-color);
+  }
+}
+
+@font-face {
+  font-family: 'Muli';
+  src: url('#{$static-asset}/fonts/Mulish-VariableFont_wght.woff2') format('woff2');
+  font-weight: 200 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Muli';
+  src: url('#{$static-asset}/fonts/Mulish-Italic-VariableFont_wght.woff2') format('woff2');
+  font-weight: 200 900;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Jost';
+  src: url('#{$static-asset}/fonts/Jost-VariableFont_wght.woff2') format('woff2');
+  font-weight: 200 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Jost';
+  src: url('#{$static-asset}/fonts/Jost-Italic-VariableFont_wght.woff2') format('woff2');
+  font-weight: 200 900;
+  font-style: italic;
+}
+
+.download-text {
+  color: var(--link-color);
+  font-size: 2rem;
+  text-decoration: underline;
+}
+
+.clickable{
+  cursor: pointer;
+}

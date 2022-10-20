@@ -1,0 +1,145 @@
+$logos-asset: '/assets/static/ui-trellis-vite/images/logos';
+$images-asset: '/assets/static/ui-trellis-vite/images/';
+//rundeck icons
+.rdicon {
+  display: inline-block;
+  vertical-align: middle;
+  background-repeat: no-repeat;
+  
+  &.app-logo{
+    background-image: url("#{$logos-asset}/rundecklogo.svg");
+    // background-image: url("/static/images/rundeck2-icon-32.png");
+    background-size: 20px 20px;
+    height: 20px;
+    width: 20px;
+    vertical-align: baseline;
+    .sidebar &{
+      height: 24px;
+      width: 24px;
+      background-size: 24px;
+      vertical-align: bottom;
+    }
+  }
+  // &.app-logo
+  //       width: 32px;
+  //       height: 32px;
+  //     vertical-align: baseline;
+  // }
+  //
+  // .rdicon.app-logo
+  //     background-image: url("../images/images/logos/rundeck-red-chevron.png");
+  //     background-repeat: no-repeat;
+  // }
+  //
+  // @media
+  // only screen and (-webkit-min-device-pixel-ratio: 2),
+  // only screen and (   min--moz-device-pixel-ratio: 2),
+  // only screen and (     -o-min-device-pixel-ratio: 2/1),
+  // only screen and (        min-device-pixel-ratio: 2),
+  // only screen and (                min-resolution: 192dpi),
+  // only screen and (                min-resolution: 2dppx) {
+  //   .rdicon.app-logo{
+  //     background-image: url("../images/images/logos/rundeck-red-chevron.png");
+  //     background-size: 32px 32px;
+  //       // background-image: url("${logoResourceHires}");
+  //       // background-size: ${ enc(rawtext:appLogoW) } ${ enc(rawtext:appLogoH) };
+  //   }
+  // }
+
+  &.icon-small {
+    width: 16px;
+    height: 16px;
+    background-size: 16px;
+
+    &.command,
+    &.shell {
+      background-image: url("#{$images-asset}/icon-small-shell@2x.png");
+    }
+
+    &.script {
+      background-image: url("#{$images-asset}/icon-small-script@2x.png");
+    }
+
+    &.scriptfile,
+    &.scripturl {
+      background-image: url("#{$images-asset}/icon-small-scriptfile@2x.png");
+    }
+
+    &.plugin {
+      background-image: url("#{$images-asset}/icon-small-plugin@2x.png");
+    }
+
+    &.node {
+      height: 10px;
+      background-image: url("#{$images-asset}/icon-small-Node@2x.png");
+    }
+
+    &.node.node-runnable {
+      background-image: url("#{$images-asset}/icon-small-Node-run@2x.png");
+    }
+  }
+
+  &.icon {
+    width: 32px;
+    height: 32px;
+    background-size: 32x;
+
+    &.command,
+    &.shell {
+      background-image: url("#{$images-asset}/icon-shell@2x.png");
+    }
+
+    &.script {
+      background-image: url("#{$images-asset}/icon-script@2x.png");
+    }
+
+    &.scriptfile,
+    &.scripturl {
+      background-image: url("#{$images-asset}/icon-scriptfile@2x.png");
+    }
+
+    &.plugin {
+      background-image: url("#{$images-asset}/icon-small-plugin@2x.png");
+    }
+  }
+
+  &.icon-med {
+    width: 24px;
+    height: 24px;
+    background-size: 24px;
+
+    &.command,
+    &.shell {
+      background-image: url("#{$images-asset}/icon-med-shell@2x.png");
+    }
+
+    &.script {
+      background-image: url("#{$images-asset}/icon-med-script@2x.png");
+    }
+
+    &.scriptfile,
+    &.scripturl {
+      background-image: url("#{$images-asset}/icon-med-scriptfile@2x.png");
+    }
+
+    &.plugin {
+      background-image: url("#{$images-asset}/icon-small-plugin@2x.png");
+    }
+  }
+
+  &.app-logo.middle {
+    vertical-align: middle;
+  }
+}
+
+.nodedetail.server .nodedesc, .node_entry.server .nodedesc{
+    width: 16px;
+    height: 16px;
+    vertical-align: baseline;
+}
+
+.nodedetail.server .nodedesc, .node_entry.server .nodedesc {
+    background-size: 16px;
+    background-image: url("#{$logos-asset}/rundeck2-icon-32.png");
+    background-repeat: no-repeat;
+}

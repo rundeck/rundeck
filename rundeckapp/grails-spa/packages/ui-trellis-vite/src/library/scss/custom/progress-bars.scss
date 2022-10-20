@@ -1,0 +1,11 @@
+.progress {
+    height: 28px;
+
+    &.progress-embed {
+        margin-bottom: 0;
+    }
+
+    &.progress-square {
+        border-radius: 0;
+    }
+}

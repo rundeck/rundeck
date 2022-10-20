@@ -1,0 +1,266 @@
+#page_jobs {
+
+  //   .expandComponentHolder{
+  //     // margin-top: 15px;
+  //   }
+  .panel-group {
+    .panel {
+      //   .subjobs{
+      //   }
+    }
+  }
+}
+
+.job-display-tree {
+
+  .sub_group {
+
+    padding-left: 15px;
+
+    >.list-group>.jobslist>.list-group-item {
+      padding-left: 35px
+    }
+
+    .expandComponentHolder {
+      margin-top: 0;
+    }
+
+    .panel {
+      background-color: white;
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      -webkit-box-shadow: none;
+
+      &.panel-default,
+      .panel-heading {
+        border: none;
+      }
+
+      .panel-heading {
+        background-color: white;
+        border-left: 1px solid #efefef;
+        border-bottom: 1px solid #efefef;
+        border-bottom-left-radius: 3px;
+      }
+    }
+  }
+}
+
+#page_job_edit {
+  i {
+    top: 2px
+  }
+
+  textarea.code {
+    font-family: Courier, monospace;
+    font-size: 100%;
+  }
+
+  /** drag and drop for workflow editor */
+  .dragdropfinal.ready {
+    padding: 2px;
+    margin-top: 3px;
+    display: block;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+  }
+
+  .draggableitem {
+    padding: 0;
+  }
+
+  .droppableitem.hoverActiveAll {
+    border: 3px solid rgba(0, 0, 255, 0.53);
+  }
+
+  .droppableitem.hoverActiveUp {
+    border-top: 3px solid rgba(0, 0, 255, 0.53);
+  }
+
+  .droppableitem.hoverActiveDown {
+    border-bottom: 3px solid rgba(0, 0, 255, 0.53);
+  }
+
+  .dragdropfinal {
+    height: 25px;
+    background: #ddd;
+  }
+
+
+  /*** ***/
+  div.wfctrlholder {
+    position: relative;
+    padding-right: 170px;
+  }
+
+  .wfitem {
+    display: block;
+    padding: 5px;
+  }
+
+  .wfitemcontrols {
+    margin-left: 10px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 160px;
+    text-align: right;
+  }
+
+  .wfhandleritem {
+    list-style: none;
+    padding: 10px 0 0;
+  }
+
+  .controls.autohide {
+    visibility: hidden;
+  }
+
+  li:hover .controls.autohide {
+    visibility: visible;
+  }
+
+  /** option controls and view layout **/
+  div.optctrlholder {
+    position: relative;
+    padding-right: 40px;
+  }
+
+  //   .optctrl{
+  //       // margin-left:10px;
+  //       // position:absolute;
+  //       // right:0;
+  //       // top:0;
+  //       // /* width:120px; */
+  //       // text-align:right;
+  //   }
+  //   .optview{
+  //       /*position:relative;*/
+  //   }
+  .optdetail {
+    /*float:left;*/
+    width: 540px;
+    overflow: hidden;
+    white-space: nowrap;
+    height: 16px;
+    line-height: 16px;
+  }
+
+  .enforceSet {
+    /*position:absolute;*/
+    /*right: 45px;*/
+    // display: inline-block;
+    width: 100px;
+    overflow: hidden;
+    white-space: nowrap;
+    height: 16px;
+    line-height: 16px;
+  }
+
+  .enforceSet span.any,
+  .opt.item .enforceSet span.enforced,
+  .opt.item .enforceSet span.regex {
+    text-align: right;
+  }
+
+  .valuesSet {
+    /*position:absolute;*/
+    /*right: 150px;*/
+    // display: inline-block;
+    width: 60px;
+    overflow: hidden;
+    white-space: nowrap;
+    height: 16px;
+    line-height: 16px;
+  }
+
+  span.truncatedtext {
+    border-bottom: 1px dotted #aaa;
+  }
+
+  /*** options edit form **/
+  ul.options {
+    margin: 0;
+    padding: 0;
+  }
+
+  ul.options li {
+    list-style: none;
+    padding: 10px 4px;
+  }
+
+  div.inputset>div {
+    clear: both;
+  }
+
+  label.left,
+  span.left {
+    float: left;
+    width: 10em;
+    display: block;
+  }
+
+  div.inputset>div>.right {
+    margin-left: 0.5em;
+  }
+
+  label.left.half,
+  span.left.half {
+    width: 50%;
+  }
+
+  /*** END Options */
+
+  .nodefilterfield {
+    margin-bottom: 5px;
+  }
+
+  .nodefilterfield label span.text {
+    text-align: right;
+    width: 10em;
+    display: inline-block;
+  }
+
+  .filterkeyset {
+    padding: 3px 0;
+  }
+
+  #matchednodes .allnodes {
+    width: 600px;
+  }
+
+  /** add step styles */
+  .add_step_buttons ul {
+    margin: 0;
+    list-style-type: none;
+    padding-left: 0;
+  }
+
+  .add_step_buttons li.action {
+    padding: 5px;
+    margin: 0;
+  }
+
+  //   .add_step_buttons li.action:hover{
+  //   }
+
+  /**
+  job edit form table
+   */
+  table.jobeditform>tbody>tr>td:first-child {
+    width: 120px;
+  }
+
+  /**
+  Ace editor
+  */
+  div.ace_text {
+    border: 1px solid #aaa;
+  }
+
+  .pflowlist {
+    margin-right: 10px;
+  }
+}

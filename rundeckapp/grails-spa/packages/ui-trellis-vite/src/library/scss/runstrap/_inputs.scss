@@ -1,0 +1,230 @@
+// *************************************
+//
+//   Inputs
+//   -> Form Inputs and Control
+//   - 1. Text Inputs
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Text Inputs
+// -------------------------------------
+//  Must be used in a card or higher contrast background color
+// -------------------------------------
+
+.input-text--horizontal{
+    padding: var(--spacing-4);
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
+    &:not(:last-child){
+        border-bottom:1px solid var(--background-color-lvl3);
+    }
+    label{
+        padding: 0;
+        font-size: var(--text-lg);
+        text-transform: capitalize;
+    }
+    @media (min-width: $screen-sm) {
+        grid-template-columns: repeat(5,minmax(0,1fr));
+    }
+    
+    .flex-v-center{
+        display: flex;
+        align-items: center;
+    }
+}
+
+//
+// Breadcrumbs (-Legacy Bootstrap 3)
+// --------------------------------------------------
+
+.form-control::-moz-placeholder{
+   @include input-placeholder(var(--medium-gray),1);
+}
+.form-control:-moz-placeholder{
+   @include input-placeholder(var(--medium-gray),1);
+}
+.form-control::-webkit-input-placeholder{
+   @include input-placeholder(var(--medium-gray),1);
+}
+.form-control:-ms-input-placeholder{
+   @include input-placeholder(var(--medium-gray),1);
+}
+
+.form-control {
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--input-outline-color);
+    border-radius: $border-radius-base;
+    color: var(--font-color);
+    font-size: $font-size-base;
+    @include input-size-min($padding-base-vertical, $padding-base-horizontal, $height-base);
+    @include box-shadow(none);
+
+    &:focus{
+       border: 1px solid var(--gray-input-outline);
+       background-color: var(--input-focus-color);
+       @include box-shadow(none);
+       outline: 0 !important;
+    }
+
+    .has-success &,
+    .has-error &,
+    .has-success &:focus,
+    .has-error &:focus{
+        @include box-shadow(none);
+    }
+
+    .has-success &,
+    &.valid{
+        //background-color: var(--white-bg);
+        color: var(--font-color);
+        border-color: var(--gray-input-outline);
+    }
+    .has-success &:focus,
+    &.valid:focus, &[aria-invalid="false"]:focus{
+        background-color: var(--input-focus-color);
+        border-color: var(--success-color);
+    }
+    .has-error &,
+    &.error, &[aria-invalid="true"]{
+        background-color: var(--danger-input-bg);
+        color: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+    .has-error &:focus,
+    &.error:focus{
+        background-color: var(--input-focus-color);
+        border-color: var(--danger-color);
+    }
+
+    & + .form-control-feedback{
+        border-radius: $border-radius-large;
+        font-size: $font-size-base;
+        margin-top: -7px;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        vertical-align: middle;
+    }
+
+    .open &{
+        border-bottom-color: transparent;
+    }
+
+    &.input-no-border{
+        border: 0 none;
+    }
+
+    .input-group &:not(:first-child):not(:last-child){
+        border-left: 0;
+        border-right: 0;
+    }
+}
+
+.input-lg{
+    height: 55px;
+    padding: $padding-large-vertical $padding-large-horizontal;
+}
+
+.has-error{
+    .form-control-feedback, .control-label{
+        color: var(--danger-color);
+    }
+}
+.has-success{
+    .form-control-feedback, .control-label{
+        color: var(--success-color);
+    }
+}
+
+
+.input-group-addon {
+    background-color: var(--input-group-addon-bg-color);
+    border: 1px solid var(--input-outline-color);
+    border-radius: $border-radius-base;
+
+    .has-success &,
+    .has-error &{
+        background-color: var(--white-color);
+    }
+    .has-error .form-control:focus + &{
+        color: var(--danger-color);
+    }
+    .has-success .form-control:focus + &{
+        color: var(--success-color);
+    }
+    .form-control:focus + &,
+    .form-control:focus ~ &{
+        background-color: var(--white-color);
+    }
+
+    .has-error &{
+        color: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+    .has-error &{
+        color: var(--success-color);
+        border-color: var(--success-color);
+    }
+
+    & + .form-control{
+        padding-left: 0;
+    }
+}
+.input-group{
+    margin-bottom: 15px;
+}
+.input-group[disabled]{
+    .input-group-addon{
+        background-color: var(--light-gray);
+    }
+}
+// .input-group .form-control:first-child,
+// .input-group-addon:first-child,
+// .input-group-btn:first-child > .dropdown-toggle,
+// .input-group-btn:last-child > .btn:not(:last-child):not(.dropdown-toggle) {
+//     border-right: 0 none;
+// }
+// .input-group .form-control:last-child,
+// .input-group-addon:last-child,
+// .input-group-btn:last-child > .dropdown-toggle,
+// .input-group-btn:first-child > .btn:not(:first-child) {
+//     border-left: 0 none;
+// }
+.form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control {
+    background-color: var(--light-gray);
+    cursor: not-allowed;
+    @include input-placeholder(--dark-gray,1);
+}
+.form-control[disabled]::-moz-placeholder{
+   @include input-placeholder(--dark-gray,1);
+}
+.form-control[disabled]:-moz-placeholder{
+   @include input-placeholder(var(--medium-gray),1);
+}
+.form-control[disabled]::-webkit-input-placeholder{
+   @include input-placeholder(var(--medium-gray),1);
+}
+.form-control[disabled]:-ms-input-placeholder{
+   @include input-placeholder(var(--medium-gray),1);
+}
+.input-group-btn .btn{
+    border-width: $border-thin;
+    padding: $padding-round-vertical $padding-base-horizontal;
+}
+
+textarea.form-control{
+    max-width: 100%;
+    padding: 10px 18px;
+    resize: none;
+}
+
+.input-group-focus .input-group-addon{
+    background-color: var(--input-focus-color);
+}
+
+label::after + input[aria-required="true"]{
+  content: "*";
+  color: red;
+}

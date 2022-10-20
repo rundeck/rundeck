@@ -1,0 +1,61 @@
+#fourohfour,
+#loginpage {
+  display: flex;
+  flex-direction: column;
+  overflow: scroll;
+
+  .footer {
+    margin-top: auto;
+  }
+
+  .logo {
+    text-align: center;
+
+    // background-color: #000000;
+    a {
+      font-family: 'Futura';
+      text-transform: uppercase;
+      color: #000000;
+      // float: left;
+      padding: 15px;
+      font-size: 18px;
+      line-height: 20px;
+      height: 50px;
+    }
+  }
+
+  .alert.alert-danger {
+    background-color: #ff666f;
+    color: #ffffff;
+    border: 0;
+  }
+
+  .footer,
+  .footer .copyright {
+    background-color: var(--background-color);
+    color: var(--font-color) !important;
+
+    & a:not(.btn) {
+      text-decoration: underline;
+    }
+  }
+
+  $rdlogo-color: rgba(255, 0, 0, 1);
+  // $bgcolor1: #9CF6E4;
+  // $bgcolor2: #999999;
+  $bgcolor1: rgba(80, 80, 80, 1);
+  $bgcolor2: rgba(153, 153, 153, 1);
+
+  // .full-page:after {
+  //   background: $bgcolor1 repeating-linear-gradient(180deg, $bgcolor1, $bgcolor2);
+  // }
+  // .full-page:before {
+  //   background-image: url('../images/rundeck-chevrons/rd-chevron-teal.png');
+  //   background-repeat: no-repeat;
+  //   background-size: contain;
+  //   z-index: 4;
+  // }
+  .ui-common-platform.enterprise-hide {
+    display: none;
+  }
+}
