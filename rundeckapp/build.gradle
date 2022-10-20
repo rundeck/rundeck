@@ -194,6 +194,7 @@ dependencies {
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
     runtimeOnly 'org.postgresql:postgresql:42.3.3'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
+    runtimeOnly 'software.aws.rds:aws-mysql-jdbc:1.1.1'
 
     runtimeOnly "org.springframework:spring-jcl:${springVersion}"
     runtimeOnly "org.codehaus.groovy:groovy-dateutil:${groovyVersion}"
