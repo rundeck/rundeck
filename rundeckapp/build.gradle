@@ -200,12 +200,7 @@ dependencies {
     runtimeOnly "org.apache.tomcat:tomcat-jdbc:9.0.44"
     api ("com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion")
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
-    api ("com.bertramlabs.plugins:less-asset-pipeline:$assetPluginVersion") {
-        exclude group: 'log4j', module: 'log4j'
-    }
-    api ("com.bertramlabs.plugins:sass-asset-pipeline:$assetPluginVersion") {
-        exclude group: 'log4j', module: 'log4j'
-    }
+
     implementation "com.squareup.okhttp3:okhttp:4.9.2"
     testImplementation "org.grails:grails-gorm-testing-support"
     testImplementation "org.mockito:mockito-core"
