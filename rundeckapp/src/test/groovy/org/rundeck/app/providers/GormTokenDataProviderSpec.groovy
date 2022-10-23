@@ -10,12 +10,12 @@ import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.UserService
 import rundeck.services.data.AuthTokenDataService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import static org.rundeck.app.data.model.v1.AuthenticationToken.*
 
-class GormTokenDataProviderSpec extends RundeckHibernateSpec implements DataTest{
+class GormTokenDataProviderSpec extends Specification implements DataTest{
     GormTokenDataProvider provider = new GormTokenDataProvider()
 
     void setup() {

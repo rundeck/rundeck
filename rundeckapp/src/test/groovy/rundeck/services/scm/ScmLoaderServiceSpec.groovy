@@ -9,18 +9,17 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import grails.events.bus.EventBus
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.rundeck.storage.api.StorageException
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
 import rundeck.services.JobRevReferenceImpl
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
-class  ScmLoaderServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ScmLoaderService> {
+class  ScmLoaderServiceSpec extends Specification implements ServiceUnitTest<ScmLoaderService>, DataTest {
 
     def "loaded export plugin not configured"(){
 

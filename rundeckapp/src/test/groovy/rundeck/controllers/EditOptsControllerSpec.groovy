@@ -16,12 +16,9 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
@@ -30,15 +27,15 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.optionvalues.OptionValuesService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 2/11/16.
  */
-class EditOptsControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<EditOptsController>{
+class EditOptsControllerSpec extends Specification implements ControllerUnitTest<EditOptsController>, DataTest {
 
-    List<Class> getDomainClasses() { [Option, ScheduledExecution, CommandExec, Workflow] }
+    def setupSpec() { mockDomains Option, ScheduledExecution, CommandExec, Workflow }
 
     def setup() {
         mockCodec(URIComponentCodec)

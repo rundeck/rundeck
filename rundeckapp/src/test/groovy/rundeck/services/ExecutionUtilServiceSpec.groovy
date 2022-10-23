@@ -6,7 +6,7 @@ import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import rundeck.CommandExec
@@ -14,12 +14,12 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.logging.ExecutionLogWriter
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.assertNotNull
 
-class ExecutionUtilServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ExecutionUtilService> {
-    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Workflow, CommandExec] }
+class ExecutionUtilServiceSpec extends Specification implements ServiceUnitTest<ExecutionUtilService>, DataTest {
+    def setupSpec() { mockDomains Execution, ScheduledExecution, Workflow, CommandExec }
 
     def testfinishExecutionMetricsSuccess() {
         given:

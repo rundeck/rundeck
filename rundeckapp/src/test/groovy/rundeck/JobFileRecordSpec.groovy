@@ -1,21 +1,15 @@
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import rundeck.services.FileUploadService
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.domain.DomainClassUnitTestMixin} for usage instructions
  */
-class JobFileRecordSpec extends RundeckHibernateSpec {
+class JobFileRecordSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [Execution, Workflow, CommandExec, JobFileRecord] }
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
+    def setupSpec() { mockDomains Execution, Workflow, CommandExec, JobFileRecord }
 
     def "invalid state changes"() {
         given:

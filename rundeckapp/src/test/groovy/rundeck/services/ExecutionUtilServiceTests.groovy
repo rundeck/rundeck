@@ -30,25 +30,22 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLComm
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobRefCommand
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import groovy.mock.interceptor.MockFor
-import org.grails.plugins.metricsweb.MetricService
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Workflow
 import rundeck.Execution
-import rundeck.services.logging.ExecutionLogWriter
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-class ExecutionUtilServiceTests extends RundeckHibernateSpec implements ServiceUnitTest<ExecutionUtilService>{
+class ExecutionUtilServiceTests extends Specification implements ServiceUnitTest<ExecutionUtilService>, DataTest{
 
-    List<Class> getDomainClasses() { [Execution, CommandExec, JobExec, Workflow] }
+    def setupSpec() { mockDomains Execution, CommandExec, JobExec, Workflow }
 
 
     void testItemForWFCmdItem_command(){
