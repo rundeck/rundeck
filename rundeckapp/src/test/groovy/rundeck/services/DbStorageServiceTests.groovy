@@ -17,17 +17,17 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.StorageUtil
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.storage.api.StorageException
 import rundeck.Storage
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
-class DbStorageServiceTests extends RundeckHibernateSpec implements ServiceUnitTest<DbStorageService> {
+class DbStorageServiceTests extends Specification implements ServiceUnitTest<DbStorageService>, DataTest {
 
-    List<Class> getDomainClasses() { [Storage] }
+    def setupSpec() { mockDomain Storage }
 
     void testHasResource() {
         when:

@@ -10,9 +10,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
-import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
 import rundeck.Execution
@@ -24,20 +22,14 @@ import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
 
-class FileUploadServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<FileUploadService> {
+class FileUploadServiceSpec extends Specification implements ServiceUnitTest<FileUploadService>, DataTest {
 
-    List<Class> getDomainClasses() { [JobFileRecord, Execution, ScheduledExecution, Workflow, Option, CommandExec] }
-    def setup() {
-    }
-
-    def cleanup() {
-    }
+    def setupSpec() { mockDomains JobFileRecord, Execution, ScheduledExecution, Workflow, Option, CommandExec }
 
     void "create record"() {
         given:

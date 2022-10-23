@@ -16,14 +16,8 @@
 
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
-import org.grails.orm.hibernate.HibernateDatastore
-import org.junit.AfterClass
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Test
-import org.springframework.transaction.PlatformTransactionManager
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import spock.lang.Specification
 
 import static org.junit.Assert.assertFalse
 import static org.junit.Assert.assertTrue
@@ -31,9 +25,9 @@ import static org.junit.Assert.assertTrue
 /**
  * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
  */
-class ReportFilterSpec extends RundeckHibernateSpec {
+class ReportFilterSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [ReportFilter] }
+    def setupSpec() { mockDomain ReportFilter }
 
     void "testValidation"() {
         when:

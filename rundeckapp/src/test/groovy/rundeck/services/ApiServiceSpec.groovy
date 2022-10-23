@@ -20,37 +20,22 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
-import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.ControllerUnitTestMixin
 import grails.testing.gorm.DataTest
-import grails.testing.services.ServiceUnitTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.JSONBuilder
-import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.data.providers.GormTokenDataProvider
-import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.spi.data.DataManager
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.MessageSource
 import rundeck.AuthToken
-import rundeck.CommandExec
-import rundeck.Option
-import rundeck.ScheduledExecution
 import rundeck.User
-import rundeck.Workflow
 import rundeck.controllers.ApiController
 import rundeck.services.data.AuthTokenDataService
 import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import java.time.Clock
 import java.time.Instant
@@ -59,9 +44,7 @@ import java.time.ZoneId
 /**
  * Created by greg on 7/28/15.
  */
-class ApiServiceSpec extends RundeckHibernateSpec implements ControllerUnitTest<ApiController>, DataTest {
-
-    List<Class> getDomainClasses() { [User, AuthToken] }
+class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiController>, DataTest {
 
     ApiService service
     GormTokenDataProvider provider = new GormTokenDataProvider()
