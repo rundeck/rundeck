@@ -16,16 +16,16 @@
 
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
-import testhelper.RundeckHibernateSpec
+import grails.testing.gorm.DataTest
+import spock.lang.Specification
 
 /**
  * @author greg
  * @since 6/26/17
  */
-class JobExecSpec extends RundeckHibernateSpec {
+class JobExecSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [JobExec, ScheduledExecution, Workflow, CommandExec]}
+    def setupSpec() { mockDomains JobExec, ScheduledExecution, Workflow, CommandExec }
 
     def "to map with node filter"() {
         when:

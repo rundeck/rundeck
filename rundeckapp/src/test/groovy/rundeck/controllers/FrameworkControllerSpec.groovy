@@ -33,7 +33,7 @@ import com.dtolabs.rundeck.core.resources.WriteableModelSource
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -48,20 +48,19 @@ import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
 import rundeck.UtilityTagLib
-import rundeck.codecs.URIComponentCodec
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import static org.rundeck.core.auth.AuthConstants.*
 
 /**
  * Created by greg on 7/28/15.
  */
-class FrameworkControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<FrameworkController> {
+class FrameworkControllerSpec extends Specification implements ControllerUnitTest<FrameworkController>, DataTest {
 
-    List<Class> getDomainClasses() { [NodeFilter, User] }
+    def setupSpec() { mockDomains NodeFilter, User }
 
     def setup() {
         grailsApplication.config.clear()

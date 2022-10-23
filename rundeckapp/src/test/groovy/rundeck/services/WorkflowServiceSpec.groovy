@@ -16,26 +16,18 @@
 
 package rundeck.services
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Workflow
 import rundeck.services.workflow.StateMapping
 import spock.lang.Specification
-import testhelper.RundeckHibernateSpec
 
-class WorkflowServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<WorkflowService>{
+class WorkflowServiceSpec extends Specification implements ServiceUnitTest<WorkflowService>, DataTest {
 
-    @Override
-    List<Class> getDomainClasses() {
-        [Workflow,Execution,CommandExec]
-    }
-
-    def setup() {
-    }
-
-    def cleanup() {
+    def setupSpec() {
+        mockDomains Workflow,Execution,CommandExec
     }
 
     def "state mapping"(){

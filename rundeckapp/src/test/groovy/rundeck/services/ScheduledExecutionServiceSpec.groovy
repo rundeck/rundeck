@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import groovy.transform.CompileStatic
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -50,7 +50,7 @@ import rundeck.Orchestrator
 import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 import rundeck.User
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
@@ -86,12 +86,12 @@ import spock.lang.Unroll
 /**
  * Created by greg on 6/24/15.
  */
-class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ScheduledExecutionService> {
+class ScheduledExecutionServiceSpec extends Specification implements ServiceUnitTest<ScheduledExecutionService>, DataTest {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
 
-    List<Class> getDomainClasses() { [Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
-                                      WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User] }
+    def setupSpec() { mockDomains Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
+                                      WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats, Orchestrator, User }
 
     def setupSchedulerService(clusterEnabled = false){
         SchedulesManager rundeckJobSchedulesManager = new LocalJobSchedulesManager()
@@ -4983,7 +4983,7 @@ class ScheduledExecutionServiceSpec extends RundeckHibernateSpec implements Serv
         def importedJob = RundeckJobDefinitionManager.importedJob(updatedJob, [:])
         service.updateJobDefinition(importedJob, params, mockAuth(), baseJob)
         baseJob.save(flush:true)
-        def options = Option.findAll().size()
+        def options = baseJob.options.size()
 
         then: "baseJob should have 1 option remaining"
 

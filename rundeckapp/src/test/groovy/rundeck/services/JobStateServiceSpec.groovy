@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.core.auth.AuthConstants
@@ -33,16 +33,16 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.assertNotNull
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
-class JobStateServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<JobStateService> {
+class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobStateService>, DataTest {
 
-    List<Class> getDomainClasses() { [Execution,ScheduledExecution,Workflow,CommandExec] }
+    def setupSpec() { mockDomains Execution,ScheduledExecution,Workflow,CommandExec }
 
     def setup() {
 
@@ -65,8 +65,6 @@ class JobStateServiceSpec extends RundeckHibernateSpec implements ServiceUnitTes
 
     }
 
-    def cleanup() {
-    }
     void "job ref not found by uuid"() {
         def jobName = 'abc'
         def groupPath = null

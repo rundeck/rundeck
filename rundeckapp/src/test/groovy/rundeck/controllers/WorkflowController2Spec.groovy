@@ -20,17 +20,18 @@ import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.*
 import rundeck.services.FrameworkService
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
-class WorkflowController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<WorkflowController> {
+class WorkflowController2Spec extends Specification implements ControllerUnitTest<WorkflowController>, DataTest {
 
-    List<Class> getDomainClasses() { [Workflow, WorkflowStep, JobExec, CommandExec, PluginStep] }
+    def setupSpec() { mockDomains Workflow, WorkflowStep, JobExec, CommandExec, PluginStep }
 
     public void testWFEditActionsInsertJob() {
         WorkflowController ctrl = controller
