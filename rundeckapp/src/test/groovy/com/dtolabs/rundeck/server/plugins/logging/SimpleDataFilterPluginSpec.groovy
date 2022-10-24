@@ -253,14 +253,14 @@ class SimpleDataFilterPluginSpec extends Specification {
         }
         plugin.complete(context)
         then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == ['data': expect]
 
         1 * context.log(1, _)
 
         where:
-        doWarn | validKeyPattern        | regex                    | invalidStringReplacement | name      | lines                           | expect
-        true   | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | ''                       | ' ubuntu' | ['RUNDECK:DATA:zangief']        | [ubuntu: 'zangief']
-        true   | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | 'Football'               | ' wimple' | ['RUNDECK:DATA:zangief']        | [Footballwimple: 'zangief']
-        false  | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | 'Match'                  | ' wimple' | ['RUNDECK:DATA:zangief']        | [Matchwimple: 'zangief']
+        validKeyPattern        | regex                    | invalidStringReplacement | name      | lines                           | expect
+        '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | ''                       | ' ubuntu' | ['RUNDECK:DATA:zangief']        | [ubuntu: 'zangief']
+        '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | 'Football'               | ' wimple' | ['RUNDECK:DATA:zangief']        | [Footballwimple: 'zangief']
 
     }
 
