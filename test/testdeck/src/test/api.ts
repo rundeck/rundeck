@@ -25,7 +25,7 @@ export async function CreateRundeckCluster() {
 
     const cluster = new RundeckCluster(rundeckUrl,
       envOpts.TESTDECK_RUNDECK_TOKEN ?
-        new RundeckClient(new TokenCredentialProvider(envOpts.TESTDECK_RUNDECK_TOKEN)):
+        new RundeckClient(new TokenCredentialProvider(envOpts.TESTDECK_RUNDECK_TOKEN),{baseUri: rundeckUrl}):
         rundeckPasswordAuth('admin','admin', {
             baseUri: rundeckUrl,
         }),

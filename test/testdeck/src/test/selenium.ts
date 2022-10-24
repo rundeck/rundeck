@@ -55,7 +55,7 @@ export function CreateContext(resources: IRequiredResources) {
      */
     beforeAll( async () => {
         const client = envOpts.TESTDECK_RUNDECK_TOKEN?
-          new RundeckClient(new TokenCredentialProvider(envOpts.TESTDECK_RUNDECK_TOKEN)):
+          new RundeckClient(new TokenCredentialProvider(envOpts.TESTDECK_RUNDECK_TOKEN),{baseUri: envOpts.TESTDECK_RUNDECK_URL}):
           rundeckPasswordAuth('admin', 'admin',{baseUri: envOpts.TESTDECK_RUNDECK_URL})
         await TestProject.LoadResources(client, resources)
         await ctx.init()
