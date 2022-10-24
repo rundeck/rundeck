@@ -16,33 +16,27 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.Authorization
-import com.dtolabs.rundeck.core.authorization.LoggingAuthorization
-import com.dtolabs.rundeck.core.authorization.RuleEvaluator
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
 import com.google.common.cache.LoadingCache
 import grails.events.bus.EventBus
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
-import org.apache.commons.fileupload.util.Streams
 import org.rundeck.app.grails.events.AppEvents
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.data.DataUtil
 import rundeck.Project
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
-class ProjectManagerServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ProjectManagerService> {
+class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest<ProjectManagerService>, DataTest {
 
-    List<Class> getDomainClasses() { [Project] }
+    def setupSpec() { mockDomains Project }
 
     def setup() {
     }
