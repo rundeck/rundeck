@@ -81,7 +81,7 @@
   // Links which have <span> that overflow the <li>
   // caret class (arrows) excluded 
   > li > a > span:not(.caret) {
-    display: block;
+    display: inline-block;
     padding: 3px 20px 3px 3px;
   }
 
