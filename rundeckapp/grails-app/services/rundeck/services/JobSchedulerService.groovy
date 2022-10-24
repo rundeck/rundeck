@@ -214,7 +214,7 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Override
     boolean tryAcquireExecCleanerJob(String uuid, String project) {
-        return false
+        return true
     }
 
     @Override
