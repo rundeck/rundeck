@@ -7,7 +7,7 @@ import {toMatchImageSnapshot} from 'jest-image-snapshot'
 import {Context} from '../context'
 import {envOpts} from './rundeck'
 import { IRequiredResources, TestProject } from '../TestProject'
-import { rundeckPasswordAuth } from 'ts-rundeck'
+import {RundeckClient, rundeckPasswordAuth, TokenCredentialProvider} from 'ts-rundeck'
 
 import {CustomError} from '../util/Error'
 
@@ -48,13 +48,15 @@ export function CreateContext(resources: IRequiredResources) {
         return proxy
     }
 
-    let ctx = new Context(driverProvider, envOpts.TESTDECK_RUNDECK_URL, envOpts.TESTDECK_S3_UPLOAD, envOpts.TESTDECK_S3_BASE)
+    let ctx = new Context(driverProvider, envOpts.TESTDECK_RUNDECK_URL, envOpts.TESTDECK_S3_UPLOAD, envOpts.TESTDECK_S3_BASE as string)
 
     /**
      * Configure before/after handlers common to all Selenium test suites
      */
     beforeAll( async () => {
-        const client = rundeckPasswordAuth('admin', 'admin',{baseUri: envOpts.TESTDECK_RUNDECK_URL})
+        const client = envOpts.TESTDECK_RUNDECK_TOKEN?
+          new RundeckClient(new TokenCredentialProvider(envOpts.TESTDECK_RUNDECK_TOKEN)):
+          rundeckPasswordAuth('admin', 'admin',{baseUri: envOpts.TESTDECK_RUNDECK_URL})
         await TestProject.LoadResources(client, resources)
         await ctx.init()
     })

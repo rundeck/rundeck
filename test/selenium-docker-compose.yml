@@ -6,7 +6,10 @@ services:
     environment:
       RUNDECK_SERVER_ADDRESS: rundeck
       RUNDECK_GRAILS_URL: http://rundeck:4440/
+      RUNDECK_TOKENS_FILE: /home/rundeck/etc/tokens.properties
     expose: ['4440']
+    volumes:
+      - ./test-tokens.properties:/home/rundeck/etc/tokens.properties
 
   selenium:
     image: rundeck/selenium@sha256:d2c31cbc93716420479cf5d999dd7e0d8a6429e1aacd36bc99d4f9711fb70a05

@@ -2,7 +2,7 @@ import {Argv} from 'yargs'
 
 import * as Path from 'path'
 
-import {Rundeck, PasswordCredentialProvider} from 'ts-rundeck'
+import {Rundeck, PasswordCredentialProvider, TokenCredentialProvider} from 'ts-rundeck'
 
 import {ProjectExporter} from '../projectExporter'
 
@@ -10,6 +10,7 @@ import {ProjectExporter} from '../projectExporter'
 
 interface Opts {
     url: string
+    testToken?: string
     project: string
     repo: string
 }
@@ -37,12 +38,17 @@ class ProjectExportCommand {
                 default: "http://127.0.0.1:4440",
                 type: "string"
             })
+            .option('t', {
+                alias: 'testToken',
+                describe: 'API Token to use for tests',
+                type: 'string'
+            })
     }
 
     async handler(opts: Opts) {
         const fullRepoPath = Path.resolve(opts.repo)
 
-        const client = new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {baseUri: opts.url})
+        const client = new Rundeck(opts.testToken ? new TokenCredentialProvider(opts.testToken): new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {baseUri: opts.url})
 
         const exporter = new ProjectExporter(opts.repo, opts.project, client)
 
