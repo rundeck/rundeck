@@ -43,6 +43,7 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.auth.CoreTypedRequestAuthorizer
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -2795,6 +2796,64 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         jobTree | groupsSize    | group
         true    | 4             | ["acme","demo","demo/level1","demo/level2"]
         false   | 3             | ["acme","demo/level1","demo/level2"]
+    }
+
+    @Unroll
+    def "api export jobs v14"() {
+        given:
+        controller.configurationService = Mock(ConfigurationService)
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+        def testUUID = UUID.randomUUID().toString()
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.apiService = Mock(ApiService){
+            requireApi(_, _, _) >> true
+            requireExists(_,_,_) >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            1 * exportAs(format,[job1],_)>>{
+                it[2]<<"format: $format"
+            }
+        }
+
+
+        when:
+        request.parameters = [id: testUUID, project: 'test']
+        response.format = format
+        controller.apiJobsExportv14(query)
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
+        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                              action    : AuthConstants.ACTION_READ,
+                                                                                              resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        response.status == 200
+        response.text=="format: $format"
+        response.contentType=="text/$format;charset=UTF-8"
+        where:
+        format << ['xml', 'yaml']
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
