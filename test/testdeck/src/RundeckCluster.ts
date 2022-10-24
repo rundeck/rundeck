@@ -18,10 +18,8 @@ export class RundeckCluster {
 
     clusterManager: IClusterManager
 
-    constructor(url: string, username: string, password: string, clusterManager: IClusterManager) {
-        this.client = rundeckPasswordAuth(username, password, {
-            baseUri: url,
-        })
+    constructor(url: string, client:RundeckClient, clusterManager: IClusterManager) {
+        this.client = client
         this.clusterManager = clusterManager
     }
 
