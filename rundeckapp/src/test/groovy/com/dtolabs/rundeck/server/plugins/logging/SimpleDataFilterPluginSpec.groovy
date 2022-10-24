@@ -254,19 +254,13 @@ class SimpleDataFilterPluginSpec extends Specification {
         plugin.complete(context)
         then:
 
-        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == (expect ? ['data': expect] : null)
-        if (expect) {
-            if(doWarn){
-                1 * context.log(1, _)
-            }else{
-                0 * context.log(1, _)
-            }
-        }
+        1 * context.log(1, _)
 
         where:
         doWarn | validKeyPattern        | regex                    | invalidStringReplacement | name      | lines                           | expect
         true   | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | ''                       | ' ubuntu' | ['RUNDECK:DATA:zangief']        | [ubuntu: 'zangief']
         true   | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | 'Football'               | ' wimple' | ['RUNDECK:DATA:zangief']        | [Footballwimple: 'zangief']
+        false  | '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | 'Match'                  | ' wimple' | ['RUNDECK:DATA:zangief']        | [Matchwimple: 'zangief']
 
     }
 
