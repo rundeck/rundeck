@@ -38,14 +38,17 @@ export function CreateContext(resources: IRequiredResources) {
     opts.addArguments('--disable-rtc-smoothness-algorithm', '--disable-gpu-compositing', '--disable-gpu', '--force-device-scale-factor=1', '--disable-lcd-text', '--disable-dev-shm-usage')
 
     let driverProvider = async () => {
-        const driver = await new webdriver.Builder()
-            .forBrowser('chrome')
-            .setChromeOptions(opts)
-            .build()
+        try {
+            const driver = await new webdriver.Builder()
+              .forBrowser('chrome')
+              .setChromeOptions(opts)
+              .build()
+            const proxy = createDriverProxy(driver)
 
-        const proxy = createDriverProxy(driver)
-
-        return proxy
+            return proxy
+        } catch (e) {
+            console.log(`Error creating webdriver: ${e}`,e)
+        }
     }
 
     let ctx = new Context(driverProvider, envOpts.TESTDECK_RUNDECK_URL, envOpts.TESTDECK_S3_UPLOAD, envOpts.TESTDECK_S3_BASE as string)
@@ -57,7 +60,11 @@ export function CreateContext(resources: IRequiredResources) {
         const client = envOpts.TESTDECK_RUNDECK_TOKEN?
           new RundeckClient(new TokenCredentialProvider(envOpts.TESTDECK_RUNDECK_TOKEN),{baseUri: envOpts.TESTDECK_RUNDECK_URL}):
           rundeckPasswordAuth('admin', 'admin',{baseUri: envOpts.TESTDECK_RUNDECK_URL})
-        await TestProject.LoadResources(client, resources)
+        try {
+            await TestProject.LoadResources(client, resources)
+        } catch (e) {
+            console.log(`Error in TestProject.LoadResources: ${e}`,e)
+        }
         await ctx.init()
     })
     
