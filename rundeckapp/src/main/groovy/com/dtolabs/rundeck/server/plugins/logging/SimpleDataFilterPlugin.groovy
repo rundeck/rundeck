@@ -204,8 +204,7 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
                 if (key && value) {
                     if(invalidKeyPattern){
                         def validKey = null
-                        def emptyReplacement = invalidCharactersReplacement == null
-                        if( replaceFilteredResult ){
+                        if( invalidCharactersReplacement == null ){
                             if( emptyReplacement ){
                                 validKey = key.replaceAll(invalidKeyPattern, '')
                             }else{
