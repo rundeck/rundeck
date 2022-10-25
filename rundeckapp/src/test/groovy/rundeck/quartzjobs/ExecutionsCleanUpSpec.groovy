@@ -141,11 +141,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         }
         def fileUploadService = Mock(FileUploadService)
         def logFileStorageService = Mock(LogFileStorageService)
-        def jobSchedulerService = Mock(JobSchedulerService){
-            getDeadMembers(_)>>{
-                ["bbbb","null"]
-            }
-        }
+        def jobSchedulerService = Mock(JobSchedulerService)
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -168,7 +164,6 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         job.execute(context)
 
         then:
-        1*jobSchedulerService.getDeadMembers(_)
         1*executionService.queryExecutions(_)
 
     }
