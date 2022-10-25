@@ -57,6 +57,7 @@ class SimpleDataFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'key-value-data'
     public static final String PATTERN = '^RUNDECK:DATA:\\s*([^\\s]+?)\\s*=\\s*(.+)$'
     public static final String INVALID_KEY_PATTERN = '\\s|\\$|\\{|\\}|\\\\'
+    public static final String INVALID_KEY_PATTERN_DEFAULT_REPLACE_VALUE = ''
     public static final String EXTRA_SETTINGS_GROUP_NAME = "Advanced"
 
     @PluginProperty(
@@ -103,6 +104,36 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
             ]
     )
     String invalidKeyPattern
+
+    @PluginProperty(
+            title = 'Replace filtered data',
+            description = '''If checked, the data will be replaced with a defined value below''',
+            defaultValue = 'false'
+    )
+    @RenderingOptions(
+            [
+                    @RenderingOption(key = "groupName", value = SimpleDataFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
+                    @RenderingOption(key = "grouping", value = "secondary"),
+                    @RenderingOption(key = "requiredValue", value = "false"),
+            ]
+    )
+    Boolean replaceFilteredResult
+
+    @PluginProperty(
+            title = "Replace Invalid Character Patterns With",
+            description = '''If the Invalid Character Pattern matches, the string will be replaced with an underscore by default, unless you specify which value do you want to replace the invalid character pattern with.''',
+            defaultValue = SimpleDataFilterPlugin.INVALID_KEY_PATTERN_DEFAULT_REPLACE_VALUE,
+            required = false
+
+    )
+    @RenderingOptions(
+            [
+                    @RenderingOption(key = "groupName", value = SimpleDataFilterPlugin.EXTRA_SETTINGS_GROUP_NAME),
+                    @RenderingOption(key = "grouping", value = "secondary"),
+                    @RenderingOption(key = "requiredValue", value = "false"),
+            ]
+    )
+    String invalidCharactersReplacement
 
     static class RegexValidator implements PropertyValidator {
         @Override
@@ -172,7 +203,16 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
                 }
                 if (key && value) {
                     if(invalidKeyPattern){
-                        def validKey = key.replaceAll(invalidKeyPattern,"_")
+                        def validKey = null
+                        if( replaceFilteredResult ){
+                            if( invalidCharactersReplacement == null ){
+                                validKey = key.replaceAll(invalidKeyPattern, '')
+                            }else{
+                                validKey = key.replaceAll(invalidKeyPattern, invalidCharactersReplacement)
+                            }
+                        }else{
+                            validKey = key.replaceAll(invalidKeyPattern,"_")
+                        }
                         if (key != validKey) {
                             key = validKey
                             context.log(1,"Key contains not valid value which will be replaced")
