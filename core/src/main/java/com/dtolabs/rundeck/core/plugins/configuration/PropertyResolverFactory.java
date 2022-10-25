@@ -250,14 +250,14 @@ public class PropertyResolverFactory {
             final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
             return (PropertyResolver) (name, scope) -> {
                 String value = null;
-                if (scope.isInstanceLevel()) {
+                if (scope.isInstanceLevel() && instance != null) {
                     value = (String) instance.getProperty(name);
                 }
                 if (null != value || scope == PropertyScope.InstanceOnly) {
                     return value;
                 }
 
-                if (scope.isProjectLevel()) {
+                if (scope.isProjectLevel() && projectScope != null) {
                     value = (String) projectScope.getProperty(projectPrefix + name);
                 }
                 if (null != value || scope == PropertyScope.ProjectOnly) {
