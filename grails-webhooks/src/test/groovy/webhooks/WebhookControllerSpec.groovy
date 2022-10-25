@@ -84,7 +84,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.rundeckAuthContextEvaluator.authorizeProjectResourceAny(_,_,_,_) >> { return true }
         1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { args ->
             if(isFormData) {
-                args[2].formData["key1"] == "val1"
+                assert args[2].formData["key1"] == "val1"
             }
             new DefaultWebhookResponder()
         }
