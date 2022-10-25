@@ -27,18 +27,17 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.*
 
@@ -48,9 +47,9 @@ import static org.junit.Assert.*
  * Date: 1/30/14
  * Time: 5:19 PM
  */
-class FrameworkController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<FrameworkController> {
+class FrameworkController2Spec extends Specification implements ControllerUnitTest<FrameworkController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project]}
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project}
 
     /**
      * utility method to mock a class

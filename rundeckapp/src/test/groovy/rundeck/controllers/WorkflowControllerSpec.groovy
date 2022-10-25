@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import grails.testing.gorm.DataTest
 import org.grails.plugins.codecs.URLCodec
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextEvaluator
@@ -31,18 +32,16 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
-import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.codecs.URIComponentCodec
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import static org.junit.Assert.assertNotNull
 import static org.junit.Assert.assertNull
@@ -50,9 +49,9 @@ import static org.junit.Assert.assertNull
 /**
  * Created by greg on 2/16/16.
  */
-class WorkflowControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<WorkflowController> {
+class WorkflowControllerSpec extends Specification implements ControllerUnitTest<WorkflowController>, DataTest {
 
-    List<Class> getDomainClasses() { [Workflow, CommandExec, JobExec, ScheduledExecution, PluginStep]}
+    def setupSpec() { mockDomains Workflow, CommandExec, JobExec, ScheduledExecution, PluginStep }
 
     def setup() {
         grailsApplication.config.clear()

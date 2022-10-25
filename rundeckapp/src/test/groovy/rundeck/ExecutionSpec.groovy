@@ -16,16 +16,16 @@
 
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.validation.ValidationException
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 /**
  * Created by greg on 9/27/16.
  */
-class ExecutionSpec extends RundeckHibernateSpec {
+class ExecutionSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Workflow, LogFileStorageRequest, Orchestrator] }
+    def setupSpec() { mockDomains Execution, ScheduledExecution, Workflow, LogFileStorageRequest, Orchestrator }
 
     def "with server uuid"() {
         given:

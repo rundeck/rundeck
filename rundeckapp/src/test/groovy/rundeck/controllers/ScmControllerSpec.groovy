@@ -22,13 +22,11 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.ImportSynchState
 import com.dtolabs.rundeck.plugins.scm.JobImportState
-import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.JobStateImpl
-import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItemBuilder
 import com.dtolabs.rundeck.plugins.scm.SynchState
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -39,15 +37,15 @@ import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ScmService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
  */
-class ScmControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ScmController>{
+class ScmControllerSpec extends Specification implements ControllerUnitTest<ScmController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec] }
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec }
 
     protected setupFormTokens(session) {
         def token = SynchronizerTokensHolder.store(session)

@@ -28,24 +28,24 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 
 import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.web.mapping.LinkGenerator
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.grails.plugins.metricsweb.MetricService
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.springframework.context.MessageSource
 import rundeck.services.*
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
 //import grails.test.GrailsMock
 
-class ExecutionService2Spec extends RundeckHibernateSpec implements ServiceUnitTest<ExecutionService> {
+class ExecutionService2Spec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User] }
+    def setupSpec() { mockDomains ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User }
 
     def setup(){
         service.executionValidatorService = new ExecutionValidatorService()

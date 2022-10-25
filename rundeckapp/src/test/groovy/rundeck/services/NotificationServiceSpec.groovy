@@ -40,6 +40,7 @@ import grails.plugins.mail.MailService
 import grails.test.hibernate.HibernateSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.web.GrailsWebUnitTest
 import grails.util.Holders
@@ -57,17 +58,15 @@ import rundeck.User
 import rundeck.Workflow
 import rundeck.services.logging.ExecutionLogReader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
-import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 7/12/16.
  */
-class NotificationServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest {
+class NotificationServiceSpec extends Specification implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest, DataTest {
 
-    List<Class> getDomainClasses() { [Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats] }
+    def setupSpec() { mockDomains Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats }
 
 
     private List createTestJob() {

@@ -225,6 +225,46 @@ class SimpleDataFilterPluginSpec extends Specification {
     }
 
     @Unroll
+    def "invalid characters replaced by custom character"() {
+        given:
+        def plugin = new SimpleDataFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = false
+        plugin.name = name
+        plugin.invalidKeyPattern = validKeyPattern
+        plugin.replaceFilteredResult = true
+        plugin.invalidCharactersReplacement = invalidStringReplacement
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def events = []
+        lines.each { line ->
+            events << Mock(LogEventControl) {
+                getMessage() >> line
+                getEventType() >> 'log'
+                getLoglevel() >> LogLevel.NORMAL
+            }
+        }
+        when:
+        plugin.init(context)
+        events.each {
+            plugin.handleEvent(context, it)
+        }
+        plugin.complete(context)
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == ['data': expect]
+
+        1 * context.log(1, _)
+
+        where:
+        validKeyPattern        | regex                    | invalidStringReplacement | name      | lines                           | expect
+        '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | ''                       | ' ubuntu' | ['RUNDECK:DATA:zangief']        | [ubuntu: 'zangief']
+        '\\s|\\$|\\{|\\}|\\\\' | '^RUNDECK:DATA:(.+?)$'   | 'Football'               | ' wimple' | ['RUNDECK:DATA:zangief']        | [Footballwimple: 'zangief']
+
+    }
+
+    @Unroll
     def "Test good parameters"() {
 
         SimpleDataFilterPlugin.NamePropertyValidator simpleDataFilterPluginValidator = new SimpleDataFilterPlugin.NamePropertyValidator()

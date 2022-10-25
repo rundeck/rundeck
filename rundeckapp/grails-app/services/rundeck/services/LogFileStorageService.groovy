@@ -1185,7 +1185,8 @@ class LogFileStorageService
             boolean checkPartial = false
     )
     {
-        File file = getFileForExecutionFiletype(execution, filetype, false, false)
+        def useStoredPath = execution.scheduledExecution == null
+        File file = getFileForExecutionFiletype(execution, filetype, useStoredPath, false)
         def key = logFileRetrievalKey(execution,filetype)
         def keyPartial = logFileRetrievalKey(execution, filetype, true)
 
@@ -1499,6 +1500,7 @@ class LogFileStorageService
         def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
                 frameworkService.getServerUUID()
         def isRunning = e.dateCompleted == null && e.dateStarted != null
+        def useStoredPath = e.scheduledExecution == null
 
         if (isRunning) {
             //execution is running
@@ -1523,10 +1525,10 @@ class LogFileStorageService
         log.debug("requestLogFileLoad(${e.id},${filetype}): file state: ${state}: ${result}")
         switch (state) {
             case ExecutionFileState.AVAILABLE:
-                file = getFileForExecutionFiletype(e, filetype, false, false)
+                file = getFileForExecutionFiletype(e, filetype, useStoredPath, false)
                 break
             case ExecutionFileState.AVAILABLE_PARTIAL:
-                file = getFileForExecutionFiletype(e, filetype, false, true)
+                file = getFileForExecutionFiletype(e, filetype, useStoredPath, true)
                 retryBackoff = Math.max(getBackoffForPartialFile(e, filetype), retryBackoff)
                 if (performLoad && result.remotePartialState == LogFileState.AVAILABLE_PARTIAL) {
                     //intiate another partial retrieval if delay interval has passed
@@ -1559,7 +1561,7 @@ class LogFileStorageService
                 if (performLoad && result.remotePartialState == LogFileState.AVAILABLE_PARTIAL) {
                     state = requestLogFileRetrievalPartial(e, filetype, plugin)
                     if (state == ExecutionFileState.AVAILABLE_PARTIAL) {
-                        file = getFileForExecutionFiletype(e, filetype, false, true)
+                        file = getFileForExecutionFiletype(e, filetype, useStoredPath, true)
                         retryBackoff = Math.max(getBackoffForPartialFile(e, filetype), retryBackoff)
                     }
                 }
@@ -1626,8 +1628,9 @@ class LogFileStorageService
             CompletableFuture<RetrieveFileResult> listener
     )
     {
+        def useStoredPath = execution.scheduledExecution == null
         def key=logFileRetrievalKey(execution,filetype)
-        def file = getFileForExecutionFiletype(execution, filetype, false, false)
+        def file = getFileForExecutionFiletype(execution, filetype, useStoredPath, false)
         Map newstate = [state  : ExecutionFileState.PENDING_LOCAL, file: file, filetype: filetype,
                         ruuid  : UUID.randomUUID().toString(),
                         storage: plugin, id: key, name: getConfiguredPluginName(), count: 0]

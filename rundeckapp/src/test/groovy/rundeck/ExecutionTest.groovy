@@ -16,9 +16,9 @@
 
 package rundeck
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import rundeck.services.ExecutionService
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
@@ -30,9 +30,9 @@ import static org.junit.Assert.*
  * Time: 11:25 AM
  */
 
-class ExecutionTest extends RundeckHibernateSpec  {
+class ExecutionTest extends Specification implements DataTest  {
 
-    List<Class> getDomainClasses() { [Execution, Workflow, CommandExec]}
+    def setupSpec() { mockDomains Execution, Workflow, CommandExec }
 
     void "testValidateBasic"() {
         when:

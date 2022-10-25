@@ -1,19 +1,19 @@
 package rundeck.services
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import org.quartz.Scheduler
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * Created by ronaveva on 2/17/20.
  */
-class LocalJobSchedulesManagerSpec extends RundeckHibernateSpec {
+class LocalJobSchedulesManagerSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, CommandExec] }
+    def setupSpec() { mockDomains ScheduledExecution, CommandExec }
 
     public static final String TEST_UUID2 = '490966E0-2E2F-4505-823F-E2665ADC66FB'
 

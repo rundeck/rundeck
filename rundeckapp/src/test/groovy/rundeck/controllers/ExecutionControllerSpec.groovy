@@ -31,7 +31,7 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
@@ -55,8 +55,8 @@ import rundeck.codecs.HTMLElementCodec
 import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.WorkflowStateFileLoader
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletResponse
@@ -65,9 +65,9 @@ import java.text.SimpleDateFormat
 /**
  * Created by greg on 1/6/16.
  */
-class ExecutionControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ExecutionController> {
+class ExecutionControllerSpec extends Specification implements ControllerUnitTest<ExecutionController>, DataTest {
 
-    List<Class> getDomainClasses() { [Execution] }
+    def setupSpec() { mockDomain Execution }
 
     def setup() {
         mockCodec(AnsiColorCodec)

@@ -26,9 +26,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
-import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
@@ -37,9 +35,9 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
+import rundeck.ScheduledExecution
 import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -56,18 +54,14 @@ import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.W
 /**
  * Created by greg on 3/28/16.
  */
-class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<LogFileStorageService> {
+class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest<LogFileStorageService>, DataTest {
     File tempDir
 
-    List<Class> getDomainClasses() { [LogFileStorageRequest, Execution] }
+    def setupSpec() { mockDomains LogFileStorageRequest, Execution }
 
     def setup() {
         tempDir = Files.createTempDirectory("LogFileStorageServiceSpec").toFile()
-    }
-
-    def cleanup() {
-
-
+        tempDir.deleteOnExit()
     }
 
     def "resume incomplete delayed"() {
@@ -780,6 +774,12 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
         def filetype = 'rdlog'
         def performLoad = true
 
+        def scheduledExecution = new ScheduledExecution()
+        scheduledExecution.id = 1
+
+        exec.scheduledExecution = scheduledExecution
+        exec.save()
+
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkProperties() >> (
                 [
@@ -808,20 +808,20 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
         def tempDir = Files.createTempDirectory('test_logs')
         def logsDir = tempDir.resolve('rundeck')
 
-
         def exec = new Execution(
             dateStarted: new Date(),
             dateCompleted: null,
             user: 'user2',
             project: 'test',
-            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
-            outputfilepath: '/tmp/file'
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
         ).save()
         def filetype = 'rdlog'
         def performLoad = true
 
         createLogFile(logsDir, exec, filetype)
 
+        exec.outputfilepath = logsDir.resolve("test/run/logs/${exec.id}.${filetype}")
+        exec.save()
 
         service.frameworkService = Mock(FrameworkService) {
             getFrameworkProperties() >> (
@@ -899,6 +899,12 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
         ).save()
         def filetype = 'rdlog'
         def performLoad = true
+
+        def scheduledExecution = new ScheduledExecution()
+        scheduledExecution.id = 1
+
+        exec.scheduledExecution = scheduledExecution
+        exec.save()
 
         service.frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> true
@@ -982,12 +988,14 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
             user: 'user2',
             project: 'test',
             serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
-            outputfilepath: '/tmp/file'
         ).save()
         def filetype = 'rdlog'
         def performLoad = true
 
         createLogFile(logsDir, exec, filetype)
+
+        exec.outputfilepath = logsDir.resolve("test/run/logs/${exec.id}.${filetype}")
+        exec.save()
 
         service.frameworkService = Mock(FrameworkService) {
             isClusterModeEnabled() >> true
@@ -1021,11 +1029,10 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
 
             def exec = new Execution(
                     dateStarted: new Date(),
-                    dateCompleted: null,
+                    dateCompleted: new Date(),
                     user: 'user2',
                     project: 'test',
-                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F',
-                    outputfilepath: '/tmp/file'
+                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
             ).save()
             def filetype = 'rdlog'
             def performLoad = true
@@ -1086,11 +1093,10 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
 
             def exec = new Execution(
                     dateStarted: new Date(),
-                    dateCompleted: null,
+                    dateCompleted: new Date(),
                     user: 'user2',
                     project: 'test',
-                    serverNodeUUID: 'blabla',
-                    outputfilepath: '/tmp/file'
+                    serverNodeUUID: 'blabla'
             )
 
             exec.save()
@@ -1154,11 +1160,10 @@ class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceU
 
             def exec = new Execution(
                     dateStarted: new Date(),
-                    dateCompleted: null,
+                    dateCompleted: new Date(),
                     user: 'user2',
                     project: 'test',
-                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F',
-                    outputfilepath: '/tmp/file'
+                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
             ).save()
             def filetype = 'rdlog'
             def performLoad = true

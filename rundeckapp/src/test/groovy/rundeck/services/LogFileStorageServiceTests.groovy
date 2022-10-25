@@ -1498,7 +1498,7 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         service.frameworkService = fmock
 //        service.frameworkService.serverUUID = null
         service.pluginService = pmock
-        List useStoredValues = [false, false]
+        List useStoredValues = [true, true]
         List partialValues = [false, false]
         int useStoredNdx=0
         service.metaClass.getFileForExecutionFiletype = {
