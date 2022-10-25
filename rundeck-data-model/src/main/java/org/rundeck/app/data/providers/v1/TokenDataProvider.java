@@ -1,6 +1,7 @@
 package org.rundeck.app.data.providers.v1;
 
 import org.rundeck.app.data.model.v1.AuthenticationToken;
+import org.rundeck.app.data.model.v1.page.Pageable;
 import org.rundeck.spi.data.DataAccessException;
 
 import java.util.Date;
@@ -65,6 +66,14 @@ public interface TokenDataProvider {
     List<AuthenticationToken> findAllByCreator(String creator);
 
     /**
+     * Retrieves a List of AuthenticationToken for the user.
+     *
+     * @param userId of the AuthenticationTokens, format String
+     * @return list of AuthenticationTokens
+     */
+    List<AuthenticationToken> findAllByUser(String userId);
+
+    /**
      * Retrieves a List of AuthenticationTokens for the creator that are expired.
      *
      * @param creator of the AuthenticationTokens, format String
@@ -80,6 +89,22 @@ public interface TokenDataProvider {
      * @return list of AuthenticationTokens
      */
     List<AuthenticationToken> findAllByExpirationLessThan(Date now);
+
+    /**
+     *
+     * @param type of the AuthenticationToken, format AuthTokenType
+     * @param pageable paging attributes
+     * @return list of AuthenticationTokens
+     */
+    List<AuthenticationToken> findAllTokensByType(AuthenticationToken.AuthTokenType type, Pageable pageable);
+
+    /**
+     *
+     * @param creatorLoginName the login name of the creator of the token
+     * @param pageable paging attributes
+     * @return list of AuthenticationTokens
+     */
+    List<AuthenticationToken> findAllUserTokensByCreator(String creatorLoginName, Pageable pageable);
 
     /**
      * Retrieves an AuthenticationToken by uuid and creator.
@@ -132,4 +157,37 @@ public interface TokenDataProvider {
      */
     List<AuthenticationToken> list();
 
-    }
+    /**
+     * Counts the number of AuthenticationTokens by user
+     *
+     * @param userId - id of the associated user
+     * @return count of tokens associated with the user
+     */
+    Integer countTokensByUser(String userId);
+
+    /**
+     * Counts the number of AuthenticationTokens by creator
+     *
+     * @param creatorLoginName - login name of the token creator
+     * @return count of tokens created by the creator
+     */
+    Integer countTokensByCreator(String creatorLoginName);
+
+    /**
+     * Counts the number of AuthenticationTokens by type
+     *
+     * @param type - the type of AuthenticationToken
+     * @return count of tokens matching the type parameter
+     */
+    Integer countTokensByType(AuthenticationToken.AuthTokenType type);
+
+    /**
+     * Counts the number of AuthenticationTokens by creator and type
+     *
+     * * @param creatorLoginName - login name of the token creator
+     * @param type - the type of AuthenticationToken
+     * @return count of tokens matching the creator and type parameters
+     */
+    Integer countTokensByCreatorAndType(String creatorLoginName, AuthenticationToken.AuthTokenType type);
+
+}
