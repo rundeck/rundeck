@@ -3067,8 +3067,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
             }
             yaml{
-                final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
-                render(text:encoded,contentType:"text/yaml",encoding:"UTF-8")
+                def writer = new StringWriter()
+                rundeckJobDefinitionManager.exportAs('yaml', results.nextScheduled, writer)
+                writer.flush()
+                render(text:writer.toString(),contentType:"text/yaml",encoding:"UTF-8")
             }
         }
     }
