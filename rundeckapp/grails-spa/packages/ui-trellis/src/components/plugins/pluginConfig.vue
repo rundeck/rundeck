@@ -68,8 +68,9 @@
                                 @pluginPropsMounted="notifyHandleAutoComplete"
                                 :validation="validation"
                                 :rkey="'g_'+gindex+'_'+rkey"
-                                  :readOnly="readOnly"
-                                :pindex="pindex"/>
+                                :readOnly="readOnly"
+                                :pindex="pindex"
+                                :autocompleteCallback="autocompleteCallback"/>
               </div>
             </div>
             <details :open="!group.secondary" v-else class="more-info details-reset">
@@ -93,7 +94,9 @@
                                 :validation="validation"
                                 :readOnly="readOnly"
                                 :rkey="'g_'+gindex+'_'+rkey"
-                                :pindex="pindex"/>
+                                :pindex="pindex"
+                                :autocompleteCallback="autocompleteCallback"
+                />
               </div>
             </details>
         </div>
@@ -157,6 +160,7 @@ export default Vue.extend({
     'scope',
     'defaultScope',
     'contextAutocomplete',
+    'autocompleteCallback'
   ],
   data () {
     return {

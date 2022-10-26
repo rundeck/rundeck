@@ -503,7 +503,7 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
         }
       }
     };
-    langTools.addCompleter(extCompleter);
+    editor.completers = [extCompleter];
   }
   return editor;
 }

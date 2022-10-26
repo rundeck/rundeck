@@ -177,7 +177,6 @@
           size="100"
           type="number"
           class="form-control input-sm"
-          v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
           v-if="['Integer','Long'].indexOf(prop.type)>=0 && !readOnly"
         >
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'">
@@ -256,7 +255,6 @@
             readonly
             size="100"
             class="form-control input-sm"
-            v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
             v-bind:title="currentValue"
             v-bind:value="jobName"
           >
@@ -281,6 +279,26 @@
           v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
           v-else
         >
+
+        <TextAutocomplete v-if="contextAutocomplete && !aceEditorEnabled"
+                   :target="'#' + rkey  +'prop_' + pindex"
+                   :data="jobContext"
+                   item-key="name"
+                   v-model="currentValue"
+                   autocompleteKey="$"
+        >
+          <template #item="{ items, select, highlight }">
+            <li
+                v-for="(item, index) in items"
+                :key="item.name"
+            >
+              <a role="button"  @click="select(item.name)">
+                <span v-html="highlight(item)"></span> -  {{item.description}}
+              </a>
+            </li>
+          </template>
+        </TextAutocomplete>
+
       </div>
       <div
         v-if="prop.options && prop.options['selectionAccessor']==='PLUGIN_TYPE'"
@@ -337,6 +355,7 @@
 import Vue from "vue"
 import MarkdownItVue from 'markdown-it-vue'
 // import 'markdown-it-vue/dist/markdown-it-vue.css'
+import { Typeahead } from 'uiv';
 
 import JobConfigPicker from './JobConfigPicker.vue'
 import KeyStorageSelector from './KeyStorageSelector.vue'
@@ -345,6 +364,8 @@ import AceEditor from '../utils/AceEditor.vue'
 import PluginPropVal from './pluginPropVal.vue'
 import { client } from '../../modules/rundeckClient'
 import DynamicFormPluginProp from "./DynamicFormPluginProp.vue";
+import TextAutocomplete from '../utils/TextAutocomplete.vue'
+
 export default Vue.extend({
   components:{
     DynamicFormPluginProp,
@@ -352,7 +373,8 @@ export default Vue.extend({
     JobConfigPicker,
     MarkdownItVue,
     PluginPropVal,
-    KeyStorageSelector
+    KeyStorageSelector,
+    TextAutocomplete
   },
   props:{
     'prop':{
@@ -401,6 +423,10 @@ export default Vue.extend({
         default:false,
         required:false
     },
+    'autocompleteCallback':{
+      type:Function,
+      required:false
+    }
   },
   methods:{
     inputColSize(prop: any) {
@@ -436,6 +462,8 @@ export default Vue.extend({
       currentValue: this.value,
       jobName: '',
       keyPath:'',
+      jobContext: [] as any,
+      aceEditorEnabled: false
     }
   },
   watch:{
@@ -468,6 +496,23 @@ export default Vue.extend({
     this.setJobName(this.value)
     if (window._rundeck && window._rundeck.projectName) {
       this.keyPath = 'keys/project/' + window._rundeck.projectName +'/'
+    }
+
+    if(this.autocompleteCallback && this.contextAutocomplete){
+      let vars = this.autocompleteCallback(this.rkey  +'prop_' + this.pindex)
+      let jobContext = [] as any
+      vars.forEach( (context: any) => {
+        jobContext.push({
+          name: context["value"],
+          description: context["data"]["title"],
+          category: context["data"]["category"]
+        })
+      });
+      this.jobContext = jobContext
+    }
+
+    if(this.prop.options && this.prop.options['displayType']==='CODE'){
+      this.aceEditorEnabled = true
     }
   }
 })
