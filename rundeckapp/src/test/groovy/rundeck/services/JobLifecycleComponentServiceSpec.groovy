@@ -8,12 +8,11 @@ import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 
-class JobLifecyclePluginServiceSpec extends Specification implements ServiceUnitTest<JobLifecyclePluginService> {
+class JobLifecycleComponentServiceSpec extends Specification implements ServiceUnitTest<JobLifecycleComponentService> {
 
     class JobLifecycleStatusImplTest implements JobLifecycleStatus{
 
@@ -42,9 +41,9 @@ class JobLifecyclePluginServiceSpec extends Specification implements ServiceUnit
         given:
         def project = Mock(IRundeckProject) {
             getProjectProperties() >> [
-                    (JobLifecyclePluginService.CONF_PROJECT_ENABLED + 'typeA'): 'true',
-                    (JobLifecyclePluginService.CONF_PROJECT_ENABLED + 'typeB'): 'true',
-                    (JobLifecyclePluginService.CONF_PROJECT_ENABLED + 'typeC'): 'false',
+                    (JobLifecycleComponentService.CONF_PROJECT_ENABLED + 'typeA'): 'true',
+                    (JobLifecycleComponentService.CONF_PROJECT_ENABLED + 'typeB'): 'true',
+                    (JobLifecycleComponentService.CONF_PROJECT_ENABLED + 'typeC'): 'false',
             ]
         }
         when:
@@ -144,7 +143,7 @@ class JobLifecyclePluginServiceSpec extends Specification implements ServiceUnit
             result==null
         where:
             type                                              | _
-            JobLifecyclePluginService.EventType.PRE_EXECUTION | _
+            JobLifecycleComponentService.EventType.PRE_EXECUTION | _
     }
 
     def "handleEvent no plugins BEFORE_SAVE"() {
@@ -157,7 +156,7 @@ class JobLifecyclePluginServiceSpec extends Specification implements ServiceUnit
             result==null
         where:
             type                                            | _
-            JobLifecyclePluginService.EventType.BEFORE_SAVE | _
+            JobLifecycleComponentService.EventType.BEFORE_SAVE | _
     }
 
     def "handleEvent plugin exception BEFORE_SAVE"() {
@@ -177,7 +176,7 @@ class JobLifecyclePluginServiceSpec extends Specification implements ServiceUnit
             err.message =~ /oops/
         where:
             type                                            | _
-            JobLifecyclePluginService.EventType.BEFORE_SAVE | _
+            JobLifecycleComponentService.EventType.BEFORE_SAVE | _
     }
     def "handleEvent plugin exception PRE_EXECUTION"() {
         given:
@@ -196,6 +195,6 @@ class JobLifecyclePluginServiceSpec extends Specification implements ServiceUnit
             err.message =~ /oops/
         where:
             type                                            | _
-            JobLifecyclePluginService.EventType.PRE_EXECUTION | _
+            JobLifecycleComponentService.EventType.PRE_EXECUTION | _
     }
 }

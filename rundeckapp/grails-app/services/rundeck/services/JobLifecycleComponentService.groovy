@@ -25,7 +25,7 @@ import rundeck.ScheduledExecution
  * Date: 8/23/19
  * Time: 10:37 AM
  */
-class JobLifecyclePluginService implements ProjectConfigurable {
+class JobLifecycleComponentService implements ProjectConfigurable {
 
     PluginService pluginService
     FrameworkService frameworkService

@@ -1,6 +1,6 @@
 package rundeck
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
+
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.jobs.JobOption
  */
 
 import com.dtolabs.rundeck.core.utils.NodeSet
-import grails.test.hibernate.HibernateSpec
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.web.mapping.LinkGenerator
@@ -107,7 +106,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
         try{
@@ -162,7 +161,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
         def execution=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
@@ -191,7 +190,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         svc.scheduledExecutionService = Mock(ScheduledExecutionService){
             1 * getNodes(_,_,_,_)
         }
-        svc.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = Mock(JobLifecycleComponentService){
             1 * beforeJobExecution(_,_)
         }
 
@@ -244,7 +243,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -296,7 +295,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -342,7 +341,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -382,7 +381,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -424,7 +423,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -537,7 +536,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -584,7 +583,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -626,7 +625,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -667,7 +666,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -708,7 +707,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -755,7 +754,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
         when:
@@ -805,7 +804,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
         when:
@@ -836,7 +835,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -867,7 +866,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -899,7 +898,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -929,7 +928,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -978,7 +977,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -2499,7 +2498,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -2546,7 +2545,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService=fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -2608,7 +2607,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
         svc.frameworkService = fsvc
-        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+        svc.jobLifecyclePluginService = mockWith(JobLifecycleComponentService){
             beforeJobExecution(1..1){job,event->}
         }
 

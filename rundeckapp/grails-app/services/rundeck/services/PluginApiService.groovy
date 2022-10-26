@@ -33,7 +33,6 @@ import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.feature.FeatureService
 
 import javax.servlet.ServletContext
-import java.text.SimpleDateFormat
 
 class PluginApiService {
 
@@ -52,7 +51,7 @@ class PluginApiService {
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
-    JobLifecyclePluginService jobLifecyclePluginService
+    JobLifecycleComponentService jobLifecyclePluginService
     def rundeckPluginRegistry
     LinkGenerator grailsLinkGenerator
 

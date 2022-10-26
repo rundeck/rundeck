@@ -148,7 +148,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
-    JobLifecyclePluginService jobLifecyclePluginService
+    JobLifecycleComponentService jobLifecyclePluginService
     def executionLifecyclePluginService
     AuditEventsService auditEventsService
 

@@ -125,7 +125,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.jobLifecyclePluginService = Mock(JobLifecycleComponentService)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{
@@ -3492,7 +3492,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def uuid=setupDoUpdate(true, serverUuid)
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecyclePluginService=Mock(JobLifecycleComponentService)
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -3516,7 +3516,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def uuid=setupDoUpdate(true, serverUuid)
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecyclePluginService=Mock(JobLifecycleComponentService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
         when:
@@ -3544,7 +3544,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                     workflow: new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'test what')]),
             ]
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecyclePluginService=Mock(JobLifecycleComponentService)
 
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject('testProject') >> true
@@ -3994,7 +3994,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecyclePluginService=Mock(JobLifecycleComponentService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
         when:

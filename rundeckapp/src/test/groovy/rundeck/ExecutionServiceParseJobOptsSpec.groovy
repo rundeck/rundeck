@@ -18,9 +18,8 @@ package rundeck
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
-import rundeck.*
 import rundeck.services.ExecutionService
-import rundeck.services.JobLifecyclePluginService
+import rundeck.services.JobLifecycleComponentService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -34,7 +33,7 @@ class ExecutionServiceParseJobOptsSpec extends Specification implements ServiceU
     }
 
     def setup(){
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.jobLifecyclePluginService = Mock(JobLifecycleComponentService)
     }
 
     @Unroll
