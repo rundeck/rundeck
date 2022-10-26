@@ -37,6 +37,7 @@ class ContainerRoleSourceSpec extends Specification {
         where:
         user    | userRoles                                                                 | expected
         "admin" | [new SimpleGrantedAuthority("admin"), new SimpleGrantedAuthority("user")] | ["admin", "user"]
+        "admin" | [new SimpleGrantedAuthority("admin")]                                     | ["admin"]
         "admin" | [new SimpleGrantedAuthority("admin,user")]                                | ["admin", "user"]
         "admin" | null                                                                      | []
 
