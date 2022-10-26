@@ -17,11 +17,12 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.rundeck.app.data.model.v1.project.RundeckProject
 
 /**
  * Created by greg on 2/19/15.
  */
-class Project {
+class Project implements RundeckProject {
     String name
     String description
     Date dateCreated
