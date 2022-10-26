@@ -69,7 +69,8 @@
                                 @pluginPropsMounted="notifyHandleAutoComplete"
                                 :validation="validation"
                                 :rkey="'g_'+gindex+'_'+rkey"
-                                :pindex="pindex"/>
+                                :pindex="pindex"
+                                :autocompleteCallback="autocompleteCallback"/>
               </div>
             </div>
             <details :open="!group.secondary" v-else class="more-info details-reset">
@@ -93,7 +94,9 @@
                                 :input-values="inputValues"
                                 :validation="validation"
                                 :rkey="'g_'+gindex+'_'+rkey"
-                                :pindex="pindex"/>
+                                :pindex="pindex"
+                                :autocompleteCallback="autocompleteCallback"
+                />
               </div>
             </details>
         </div>
@@ -156,6 +159,7 @@ export default Vue.extend({
     'scope',
     'defaultScope',
     'contextAutocomplete',
+    'autocompleteCallback'
   ],
   data () {
     return {
