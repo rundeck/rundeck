@@ -24,6 +24,14 @@ RUN apt-get update && \
 
 USER rundeck
 
+# Update image apt packages
+USER root
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean
+
+USER rundeck
+
 COPY --chown=rundeck:root .build .
 RUN java -jar rundeck.war --installonly \
     # Create plugin folder
