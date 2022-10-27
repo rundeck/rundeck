@@ -1,4 +1,4 @@
-FROM rundeck/ubuntu-base@sha256:b985e4561ce61dc0865750394885f9afd9a1dffb56d4f72a8b6b575f2a342509
+FROM rundeck/ubuntu-base@sha256:9d5cc71424fcb1d80ab1cd0d5e6a9ba530406dfa3d56570cd3400640bb879d3e
 
 # Update image apt packages
 USER root
