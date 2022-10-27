@@ -134,7 +134,6 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
                     executor,
                     manager
             )
-            processor.tuneEndStateGather(gather)
             if(ops){
                 processor.inProcess.add(new TestOperation())
             }
@@ -149,9 +148,6 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
             ops   | changes | endState | gather | expect
             false | false   | false    | false  | false
             false | false   | true     | false  | true
-            false | true    | true     | false  | true
-            true  | false   | true     | false  | true
-            true  | true    | true     | false  | true
             false | false   | true     | true   | true
             true  | false   | true     | true   | false
             true  | true    | true     | true   | false

@@ -62,12 +62,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private final List<ListenableFuture<RES>> futures = new ArrayList<>();
 
     private WorkflowEngine.Sleeper sleeper = new WorkflowEngine.Sleeper();
-    /**
-     * when wf is in end state, wait until existing operations finish
-     */
-    private boolean
-            endStateGather =
-            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateGather", "true"));
 
 
     public WorkflowEngineOperationsProcessor(
@@ -88,9 +82,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         this.manager = manager;
     }
 
-    public void tuneEndStateGather(boolean gather){
-        endStateGather = gather;
-    }
 
     /**
      * Process the operations from a begin state
@@ -163,7 +154,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     }
 
     boolean shouldWorkflowEnd() {
-        return workflowEngine.isWorkflowEndState() && (!endStateGather || detectNoMoreChanges());
+        return workflowEngine.isWorkflowEndState() && detectNoMoreChanges();
     }
 
     private boolean processCompletedChanges(
