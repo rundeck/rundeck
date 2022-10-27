@@ -114,10 +114,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         boolean cancelInterrupt = false;
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                boolean changed = false;
-
                 //wait for changes
-                changed |= processCompletedChanges(waitForChanges());
+                boolean changed = processCompletedChanges(waitForChanges());
 
                 if (!changed) {
                     if (detectNoMoreChanges()) {
