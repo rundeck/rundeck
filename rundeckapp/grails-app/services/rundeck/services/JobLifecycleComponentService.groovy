@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
@@ -15,8 +16,11 @@ import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.JobLifecyclePluginProviderService
+import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import org.rundeck.core.projects.ProjectConfigurable
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Service
 import rundeck.ScheduledExecution
 
 /**
@@ -25,6 +29,7 @@ import rundeck.ScheduledExecution
  * Date: 8/23/19
  * Time: 10:37 AM
  */
+@Service
 class JobLifecycleComponentService implements ProjectConfigurable {
 
     PluginService pluginService
@@ -36,17 +41,21 @@ class JobLifecycleComponentService implements ProjectConfigurable {
     Map<String, String> configPropertiesMapping
     Map<String, String> configProperties
     List<Property> projectConfigProperties
+    
+    @Autowired
+    List<JobLifecycleComponent> beanComponents
 
-    enum EventType{
-        PRE_EXECUTION("preExecution"), BEFORE_SAVE("beforeSave")
-        private final String value
-        EventType(String value){
-            this.value = value
+
+
+    @Subscriber('rundeck.bootstrap')
+    void setup() throws Exception {
+        println "  !!! WILL PRINT COMPONENTS!!! "        
+        beanComponents?.each {
+            println " !!!! COMPONENT BEAN: " + it.toString()
         }
-        String getValue(){
-            this.value
-        }
+        
     }
+
 
     /**
      *
@@ -338,7 +347,21 @@ class JobLifecycleComponentService implements ProjectConfigurable {
         }
     }
 
+    enum EventType {
+        PRE_EXECUTION("preExecution"),
+        BEFORE_SAVE("beforeSave")
 
+        private final String value
+
+        EventType(String value) {
+            this.value = value
+        }
+
+        String getValue() {
+            this.value
+        }
+    }
+    
 }
 
 @CompileStatic

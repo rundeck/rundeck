@@ -13,5 +13,23 @@ import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException;
  * Time: 10:45 AM
  */
 public interface JobLifecyclePlugin extends JobLifecycleComponent {
-
+    
+    /**
+     * It triggers before the job execution context exist
+     * @param event event execution data
+     * @return JobEventStatus
+     */
+    default JobLifecycleStatus beforeJobExecution(JobPreExecutionEvent event) throws JobLifecyclePluginException {
+        return null;
+    }
+    
+    /**
+     * It triggers when a job is persisted
+     * @param event event saving data
+     * @return JobEventStatus
+     */
+    default JobLifecycleStatus beforeSaveJob(JobPersistEvent event) throws JobLifecyclePluginException {
+        return null;
+    }
+    
 }
