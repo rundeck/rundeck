@@ -101,8 +101,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * Continue processing from current state
      */
     private void continueProcessing() {
-        boolean cancel = false;
-        boolean cancelInterrupt = false;
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 //wait for changes
@@ -147,8 +145,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             eventHandler.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
             cancelFutures(true);
             interrupted = Thread.interrupted();
-        } else if (cancel) {
-            cancelFutures(cancelInterrupt);
         }
         awaitFutures();
     }
