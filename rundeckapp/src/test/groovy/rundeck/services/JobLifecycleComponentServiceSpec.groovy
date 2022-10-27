@@ -162,7 +162,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
     def "handleEvent plugin exception BEFORE_SAVE"() {
         given:
             def evt = Mock(JobPersistEvent)
-            def plugins = [new NamedJobLifecyclePlugin(
+            def plugins = [new NamedJobLifecycleComponent(
                     name: 'test', plugin: Mock(JobLifecyclePlugin) {
                 beforeSaveJob(_) >> {
                     throw new JobLifecyclePluginException("oops")
@@ -181,7 +181,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
     def "handleEvent plugin exception PRE_EXECUTION"() {
         given:
             def evt = Mock(JobPreExecutionEvent)
-            def plugins = [new NamedJobLifecyclePlugin(
+            def plugins = [new NamedJobLifecycleComponent(
                     name: 'test', plugin: Mock(JobLifecyclePlugin) {
                 beforeJobExecution(_) >> {
                     throw new JobLifecyclePluginException("oops")

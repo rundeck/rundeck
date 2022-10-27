@@ -14,13 +14,13 @@ public interface JobLifecycleComponent {
      * @param event event execution data
      * @return JobEventStatus
      */
-    JobLifecycleStatus beforeJobExecution(JobPreExecutionEvent event) throws JobLifecyclePluginException;
+    JobLifecycleStatus beforeJobExecution(JobPreExecutionEvent event) throws JobLifecycleComponentException;
 
     /**
      * It triggers when a job is persisted
      * @param event event saving data
      * @return JobEventStatus
      */
-    JobLifecycleStatus beforeSaveJob(JobPersistEvent event) throws JobLifecyclePluginException;
+    JobLifecycleStatus beforeSaveJob(JobPersistEvent event) throws JobLifecycleComponentException;
     
 }

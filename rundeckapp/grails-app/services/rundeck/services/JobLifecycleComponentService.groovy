@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponent
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
@@ -19,6 +20,8 @@ import com.dtolabs.rundeck.server.plugins.services.JobLifecyclePluginProviderSer
 import grails.events.annotation.Subscriber
 import groovy.transform.CompileStatic
 import org.rundeck.core.projects.ProjectConfigurable
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import rundeck.ScheduledExecution
@@ -31,6 +34,7 @@ import rundeck.ScheduledExecution
  */
 @Service
 class JobLifecycleComponentService implements ProjectConfigurable {
+    private static final Logger LOG = LoggerFactory.getLogger(JobLifecycleComponentService)
 
     PluginService pluginService
     FrameworkService frameworkService
@@ -46,14 +50,12 @@ class JobLifecycleComponentService implements ProjectConfigurable {
     List<JobLifecycleComponent> beanComponents
 
 
-
     @Subscriber('rundeck.bootstrap')
-    void setup() throws Exception {
-        println "  !!! WILL PRINT COMPONENTS!!! "        
+    void init() throws Exception {
+        LOG.debug("Initializing " + JobLifecycleComponentService.getSimpleName())
         beanComponents?.each {
-            println " !!!! COMPONENT BEAN: " + it.toString()
+            LOG.debug("Loaded JobLifecycleComponent Bean: ${it.toString()}")
         }
-        
     }
 
 
@@ -121,8 +123,8 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      */
     JobLifecycleStatus beforeJobExecution(ScheduledExecution job, JobPreExecutionEvent event)
             throws JobLifecyclePluginException {
-        def plugins = createConfiguredPlugins(job.project)
-        handleEvent(event, EventType.PRE_EXECUTION, plugins)
+        def components = loadProjectComponents(job.project)
+        handleEvent(event, EventType.PRE_EXECUTION, components)
     }
 
     /**
@@ -132,17 +134,28 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @return JobEventStatus response from plugin implementation
      */
     JobLifecycleStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) throws JobLifecyclePluginException {
-        def plugins = createConfiguredPlugins(job.project)
+        def plugins = loadProjectComponents(job.project)
         handleEvent(event, EventType.BEFORE_SAVE, plugins)
     }
 
+    List<NamedJobLifecycleComponent> loadProjectComponents(String project){
+        List compList = []
+        compList.addAll(loadProjectConfiguredPlugins(project))
+        compList.addAll(beanComponents.collect {
+            new NamedJobLifecycleComponent(
+                component: it,
+                name: it.class.canonicalName)
+        })
+        compList
+    }
+    
     /**
      * Load configured JobLifecyclePlugin instances
      * @param project
      * @return
      */
-    List<NamedJobLifecyclePlugin> createConfiguredPlugins(String project) {
-        List<NamedJobLifecyclePlugin> configured = []
+    List<NamedJobLifecycleComponent> loadProjectConfiguredPlugins(String project) {
+        List<NamedJobLifecycleComponent> configured = []
         def rundeckProject = frameworkService.getFrameworkProject(project)
         def defaultPluginTypes = new HashSet<String>(getProjectDefaultJobLifecyclePlugins(rundeckProject))
 
@@ -155,10 +168,11 @@ class JobLifecycleComponentService implements ProjectConfigurable {
                     JobLifecyclePlugin
             )
             if (!configuredPlugin) {
-                //TODO: could not load plugin, or config was invalid
+                //could not load plugin, or config was invalid
+                LOG.warn("Could not configure job lifecycle plugin [${type}] for project [${project}]")
                 return
             }
-            configured << new NamedJobLifecyclePlugin(plugin: (JobLifecyclePlugin) configuredPlugin.instance, name: type)
+            configured << new NamedJobLifecycleComponent(component: (JobLifecyclePlugin) configuredPlugin.instance, name: type)
         }
         configured
     }
@@ -167,11 +181,11 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      *
      * @param event job event
      * @param eventType type of event
-     * @param plugins list of NamedJobLifecyclePlugin
+     * @param plugins list of NamedJobLifecycleComponent
      * @return JobEventStatus response from plugin implementation
      */
-    JobLifecycleStatus handleEvent(def event, EventType eventType, List<NamedJobLifecyclePlugin> plugins)
-            throws JobLifecyclePluginException {
+    JobLifecycleStatus handleEvent(def event, EventType eventType, List<NamedJobLifecycleComponent> plugins)
+            throws JobLifecycleComponentException {
         if (!plugins) {
             return null
         }
@@ -181,7 +195,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
         JobLifecycleStatus prevResult = null
         def prevEvent = event
         boolean success = true
-        for (NamedJobLifecyclePlugin plugin : plugins) {
+        for (NamedJobLifecycleComponent plugin : plugins) {
             try {
 
                 def curEvent = mergeEvent(prevResult, prevEvent)
@@ -202,7 +216,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
                     prevResult = result
                 }
                 prevEvent = curEvent
-            } catch (Throwable e) {
+            } catch (Exception e) {
                 success = false
                 if (!firstErr) {
                     firstErr = e
@@ -285,9 +299,9 @@ class JobLifecycleComponentService implements ProjectConfigurable {
     }
 
     JobLifecycleStatus handleEventForPlugin(
-            EventType eventType,
-            NamedJobLifecyclePlugin plugin,
-            event
+        EventType eventType,
+        NamedJobLifecycleComponent plugin,
+        event
     ) {
         switch (eventType) {
             case EventType.PRE_EXECUTION:
@@ -365,9 +379,13 @@ class JobLifecycleComponentService implements ProjectConfigurable {
 }
 
 @CompileStatic
-class NamedJobLifecyclePlugin implements JobLifecyclePlugin {
-    @Delegate JobLifecyclePlugin plugin
+class NamedJobLifecycleComponent implements JobLifecycleComponent {
+    @Delegate JobLifecycleComponent component
     String name
+    
+    boolean isPlugin() {
+        return component instanceof JobLifecyclePlugin
+    }
 }
 
 @CompileStatic
