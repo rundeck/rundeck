@@ -1,5 +1,13 @@
 FROM rundeck/ubuntu-base@sha256:b985e4561ce61dc0865750394885f9afd9a1dffb56d4f72a8b6b575f2a342509
 
+# Update image apt packages
+USER root
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean
+
+USER rundeck
+
 COPY --chown=rundeck:root .build .
 RUN java -jar rundeck.war --installonly \
     # Create plugin folder
