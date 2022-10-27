@@ -23,8 +23,6 @@ RUN set -euxo pipefail \
         uuid-runtime \
         wget \
         unzip \
-        # Fix CVE-2022-3515 - upgrade libksba8 to latest version
-        libksba8 \
     && rm -rf /var/lib/apt/lists/* \
     # Setup rundeck user
     && adduser --gid 0 --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck \
