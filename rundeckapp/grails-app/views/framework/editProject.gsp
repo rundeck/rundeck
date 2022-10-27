@@ -25,6 +25,7 @@
 <head>
     <g:set var="rkey" value="${g.rkey()}"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="skipPrototypeJs" content="true"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code:'configuration')}"/>
@@ -86,7 +87,6 @@
             project          : projectName,
             config: pluginGroupConfig
     ]}"/>
-    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="framework/editProject.js"/>
     <asset:javascript src="static/pages/project-config.js" defer="defer" />
@@ -96,11 +96,7 @@
 
     var confirm = new PageConfirm(message('page.unsaved.changes'));
     function init(){
-        $$('input').each(function(elem){
-            if(elem.type=='text'){
-                elem.observe('keypress',noenter);
-            }
-        });
+        jQuery('input[type=text]').on('keydown', noenter);
     }
     var _storageBrowseSelected=confirm.setNeedsConfirm;
     jQuery(init);

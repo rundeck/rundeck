@@ -19,6 +19,7 @@
 <head>
     <g:set var="rkey" value="${g.rkey()}"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="skipPrototypeJs" content="true"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
     <title><g:message code="domain.Project.choose.title" default="Create a Project"/></title>
@@ -79,19 +80,13 @@
             config: pluginGroupConfig
     ]}"/>
 
-    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="framework/editProject.js"/>
     <asset:javascript src="static/pages/project-config.js" defer="defer" />
     <asset:stylesheet href="static/css/pages/project-config.css" />
     <g:javascript>
 
     function init(){
-
-        $$('input').each(function(elem){
-            if(elem.type=='text'){
-                elem.observe('keypress',noenter);
-            }
-        });
+        jQuery('input[type=text]').on('keydown', noenter);
     }
     jQuery(init);
     window._rundeck = Object.assign(window._rundeck || {}, {
