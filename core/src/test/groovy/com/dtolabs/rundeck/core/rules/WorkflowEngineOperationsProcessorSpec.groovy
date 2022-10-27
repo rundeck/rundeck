@@ -153,4 +153,59 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
             true  | true    | true     | true   | false
             false | true    | true     | true   | false
     }
+
+    def "processStep states"() {
+        given:
+            Set<TestOperation> operations = new HashSet<TestOperation>()
+            def engine = Mock(StateWorkflowSystem)
+            Map shared = [:]
+            WorkflowSystem.SharedData<Map, Map> sharedData = WorkflowSystem.SharedData.<Map, Map> with(
+                { Map d -> shared.putAll(d) },
+                { -> shared },
+                { -> [:] }
+            )
+            def executor = Mock(ListeningExecutorService)
+            def manager = Mock(ListeningExecutorService)
+            def handler = Mock(WorkflowSystemEventHandler)
+            def dummyState = States.mutable([some:'state'])
+
+            WorkflowEngineOperationsProcessor processor = new WorkflowEngineOperationsProcessor<Map, TestOpCompleted,
+                TestOperation>(
+                engine,
+                handler,
+                operations,
+                sharedData,
+                executor,
+                manager
+            )
+            if(runningOps){
+                processor.inProcess.add(Mock(WorkflowSystem.Operation))
+            }
+            processor.stateChangeQueue.add(Mock(WorkflowSystem.OperationCompleted){
+                getNewState() >> dummyState
+            })
+        when:
+            def result = processor.processStep()
+        then:
+            result == expected
+            1 * engine.processStateChange(*_) >> {
+                if(newChanges){
+                    processor.stateChangeQueue.add(Mock(WorkflowSystem.OperationCompleted){
+                        getNewState() >> dummyState
+                    })
+                }
+                changed
+            }
+            _ * engine.isWorkflowEndState() >> isEndState
+
+        where:
+            changed | isEndState | runningOps | newChanges | expected
+            true    | false      | false      | false      | WorkflowEngineOperationsProcessor.LoopResult.Continue
+            false   | false      | true       | false      | WorkflowEngineOperationsProcessor.LoopResult.Continue
+            false   | false      | false      | true       | WorkflowEngineOperationsProcessor.LoopResult.Continue
+            false   | true       | false      | false      | WorkflowEngineOperationsProcessor.LoopResult.FinishedFinal
+            false   | false      | false      | false      | WorkflowEngineOperationsProcessor.LoopResult.FinishedNoMoreChanges
+
+
+    }
 }

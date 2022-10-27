@@ -96,6 +96,42 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         continueProcessing();
     }
 
+    public static enum LoopResult{
+        Continue,
+        FinishedFinal,
+        FinishedNoMoreChanges
+    }
+
+    /**
+     * Perform one loop step, process state changes and run runnable operations
+     * @return FinishedFinal if workflow is done, FinishedNoMoreChanges if no more operations to run and no more
+     * state changes,  Continue if loop should continue
+     * @throws InterruptedException
+     */
+    public LoopResult processStep() throws InterruptedException {
+        //wait for changes
+        boolean changed = processCompletedChanges(waitForChanges());
+
+        if (!changed) {
+            if (detectNoMoreChanges()) {
+                if (workflowEngine.isWorkflowEndState()) {
+                    //end state reached, and no more changes are pending
+                    return LoopResult.FinishedFinal;
+                } else {
+                    //no pending operations, signalling no new state changes will occur
+                    return LoopResult.FinishedNoMoreChanges;
+                }
+            }
+            //no changes within sleep time, try again
+            return LoopResult.Continue;
+        }
+
+        if(!workflowEngine.isWorkflowEndState()){
+            //some changes made to state, so review pending operations
+            processOperations(results::add);
+        }
+        return LoopResult.Continue;
+    }
 
     /**
      * Continue processing from current state
@@ -103,39 +139,21 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private void continueProcessing() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                //wait for changes
-                boolean changed = processCompletedChanges(waitForChanges());
-
-                if (!changed) {
-                    if (detectNoMoreChanges()) {
-                        //no pending operations, signalling no new state changes will occur
-                        eventHandler.event(
-                                WorkflowSystemEventType.EndOfChanges,
-                                "No more state changes expected, finishing workflow.",
-                                StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
-                        );
-                        return;
-                    }
-                    if (Thread.currentThread().isInterrupted()) {
-                        break;
-                    }
-                    //no changes within sleep time, try again
-                    continue;
-                }
-
-
-                if (shouldWorkflowEnd()) {
-                    //end state reached, and either; gather was true and no more changes are pending, or gather was not true
+                LoopResult result = processStep();
+                if (result == LoopResult.FinishedFinal) {
                     eventHandler.event(
                             WorkflowSystemEventType.WorkflowEndState,
                             "Workflow end state reached.",
                             StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
                     );
-
                     return;
-                }else if(!workflowEngine.isWorkflowEndState()){
-                    //some changes made to state, so review pending operations
-                    processOperations(results::add);
+                } else if (result == LoopResult.FinishedNoMoreChanges) {
+                    eventHandler.event(
+                            WorkflowSystemEventType.EndOfChanges,
+                            "No more state changes expected, finishing workflow.",
+                            StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
+                    );
+                    return;
                 }
             }
         } catch (InterruptedException e) {
