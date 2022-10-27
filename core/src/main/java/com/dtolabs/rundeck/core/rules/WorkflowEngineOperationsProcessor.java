@@ -188,7 +188,11 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         return changed;
     }
 
-    boolean detectNoMoreChanges() {
+    /**
+     * @return true, if no running operations and no queued changes
+     */
+    synchronized boolean detectNoMoreChanges() {
+        //nb: synchronized to avoid race with finishedOperation method
         return inProcess.isEmpty() && stateChangeQueue.isEmpty();
     }
 
@@ -319,7 +323,11 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         return submit;
     }
 
-    private void finishedOperation(final WorkflowSystem.OperationCompleted<DAT> e, final OP operation) {
+    private synchronized void finishedOperation(final WorkflowSystem.OperationCompleted<DAT> e, final OP operation) {
+        //synchronize to prevent race condition with detectNoMoreChanges method
+        //because this method is called by an operation's thread, and the
+        //main thread may process the state change entry prior to
+        //this method removing the operation from inProcess set
         stateChangeQueue.add(e);
         inProcess.remove(operation);
     }
