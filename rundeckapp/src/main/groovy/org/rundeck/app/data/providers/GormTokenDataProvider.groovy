@@ -111,8 +111,10 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     List<AuthenticationToken> findAllByUser(String userId) {
+        User user = User.get(userId.toLong())
+        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
         List<AuthenticationToken> tokens = []
-        List<AuthToken> authTokens = AuthToken.findAllByUser(User.get(userId.toLong()))
+        List<AuthToken> authTokens = AuthToken.findAllByUser(user)
         authTokens.each{authToken ->
             tokens << authToken
         }
