@@ -1016,6 +1016,12 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         getServicePropertiesForType(serviceType, getNodeExecutorService(), project)
     }
 
+    public boolean hasPluginGroupConfigurationForType(String serviceType, Map<String,String> projectProps) {
+        return projectProps.get(
+            "project.PluginGroup.${serviceType}.enabled".toString()
+        )=='true'
+    }
+
     public Map<String, String> getPluginGroupConfigurationForType(String serviceType, String project) {
         getServicePropertiesForPluginGroups(serviceType, pluginService.createPluggableService(PluginGroup), project)
     }

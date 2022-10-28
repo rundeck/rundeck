@@ -1392,6 +1392,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
                 //specific props for typed pluginValues
                 removePrefixes.add("project.plugin.PluginGroup.".toString())
+                removePrefixes.add("project.PluginGroup.".toString())
                 if (params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]") {
                     def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
                     if (groupData instanceof Collection) {
@@ -1405,7 +1406,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                     [[config: [type: type, props: config], type: type, index: 0]],
                                     pluginGroupDescs
                                 )
-
+                                projProps.put(
+                                    "project.PluginGroup.${type}.enabled".toString(),
+                                    'true'
+                                )
                                 for (String confKey : config.keySet()) {
                                     projProps.put(
                                         "project.plugin.PluginGroup.${type}.${confKey}".toString(),
@@ -2139,16 +2143,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
         List<Map<String, Object>> pluginGroupConfig = []
         if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
-//          final fproject = frameworkService.getFrameworkProject(project)
-//          def projectProps = fproject.getProjectProperties()
+          final fproject = frameworkService.getFrameworkProject(project)
+          def projectProps = fproject.getProjectProperties()
             List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
             pluginGroupDescs.each {
-//                if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
+                if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
                     Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
                     pluginGroupPasswordFieldsService
                         .track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
                     pluginGroupConfig.add([type: it.name, config: providerConfig])
-//                }
+                }
             }
         }
         // resourceConfig CRUD rely on this session mapping
