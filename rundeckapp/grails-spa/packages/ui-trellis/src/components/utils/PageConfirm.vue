@@ -27,8 +27,10 @@ export default class PageConfirm extends Vue{
 
   resetConfirm(name:string){
     const loc=this.confirmData.indexOf(name)
-    if(loc>=0){
-      this.confirmData.splice(loc,1)
+    if (loc >= 0) {
+        this.confirmData.splice(loc, 1)
+    } else if (name === '*') {
+        this.confirmData.splice(0, this.confirmData.length)
     }
   }
 
@@ -36,14 +38,21 @@ export default class PageConfirm extends Vue{
     return this.confirmData.length>0
   }
 
-  mounted(){
-    this.eventBus.$on('page-modified',this.setConfirm)
-    this.eventBus.$on('page-reset',this.resetConfirm)
-    window.onbeforeunload = ()=> {
-      if (this.needsConfirm) {
-        return this.message||'confirm'
+  mounted() {
+      this.eventBus.$on('page-modified', this.setConfirm)
+      this.eventBus.$on('page-reset', this.resetConfirm)
+
+      const orighandler = window.onbeforeunload
+      const self = this
+      window.onbeforeunload = (ev: BeforeUnloadEvent) => {
+          if (this.needsConfirm) {
+              return self.message || 'confirm'
+          }
+          if (typeof (orighandler) === 'function') {
+              //@ts-ignore
+              return orighandler(ev)
+          }
       }
-    }
   }
 }
 </script>

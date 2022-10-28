@@ -94,7 +94,15 @@
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 
-    var confirm = new PageConfirm(message('page.unsaved.changes'));
+    var confirm = new PageConfirm(message('page.unsaved.changes'),{
+        skipbehavior:true,
+        setNeedsConfirm(){
+            window._rundeck.eventBus.$emit('page-modified','Edit Page')
+        },
+        clearNeedConfirm(){
+            window._rundeck.eventBus.$emit('page-reset','*')
+        }
+    });
     function init(){
         jQuery('input[type=text]').on('keydown', noenter);
     }
@@ -167,6 +175,12 @@
         <div class="card-footer">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
           <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
+
+            <page-confirm :event-bus="EventBus"
+                          class="project-config-plugins-vue text-warning"
+                          message="${enc(attr: message(code: 'page.unsaved.changes'))}"
+                          :display="true">
+            </page-confirm>
         </div>
       </div>
     </div>

@@ -347,6 +347,8 @@
                     :mode-toggle="false"
                     :config-list="[]"
                     config-prefix="pluginValues.PluginGroup."
+                    @modified="EventBus.$emit('page-modified','Plugins')"
+                    @reset="EventBus.$emit('page-reset','Plugins')"
             ></plugin-set-config>
         </div>
     </div>

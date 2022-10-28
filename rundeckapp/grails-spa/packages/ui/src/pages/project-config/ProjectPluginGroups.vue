@@ -134,10 +134,7 @@
           </modal>
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
-<!--          <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>-->
-<!--          <btn type="default" @click="cancelAction" v-else-if="modified">{{$t('Revert')}}</btn>-->
-<!--          <a class="btn btn-cta" @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>-->
-          <span class="text-warning" v-if="modified">Changes have not been saved.</span>
+            <slot name="footer"></slot>
         </div>
       </div>
     </div>
