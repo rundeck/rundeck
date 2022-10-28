@@ -1,7 +1,7 @@
 <template>
   <div>
   <project-plugin-groups
-    configPrefix="pluginValues.PluginGroup."
+    :configPrefix="configPrefix"
     service-name="PluginGroup"
     :edit-mode="true"
     :help="help"
