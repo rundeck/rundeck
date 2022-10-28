@@ -810,7 +810,6 @@ beans={
     pluginCachePreloader(PluginCachePreloader)
     interceptorHelper(DefaultInterceptorHelper)
 
-    //temporary duplicate beans needed for controlling rba data access through feature flags
     gormTokenDataProvider(GormTokenDataProvider)
 
     //provider implementations
