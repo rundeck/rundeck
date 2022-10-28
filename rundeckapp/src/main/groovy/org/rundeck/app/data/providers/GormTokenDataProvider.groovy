@@ -224,8 +224,10 @@ class GormTokenDataProvider implements TokenDataProvider {
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
     Integer countTokensByUser(String userId) {
+        User user = User.get(userId.toLong())
+        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
         return AuthToken.createCriteria().count {
-            eq("user", User.get(userId.toLong()))
+            eq("user", user)
             or {
                 eq("type", AuthenticationToken.AuthTokenType.USER)
                 isNull("type")
