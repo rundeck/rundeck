@@ -3,7 +3,7 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import PageConfirm from '../../components/PageConfirm'
+import PageConfirm from '@rundeck/ui-trellis/lib/components/utils/PageConfirm'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
