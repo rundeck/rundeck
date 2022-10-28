@@ -113,7 +113,7 @@
     <div class="row">
       <div class="col-xs-12">
         <div class="card" id="createform">
-          <g:form action="createProject" useToken="true" method="post" onsubmit="return configControl.checkForm();">
+          <g:form action="createProject" useToken="true" method="post" >
             <div class="card-header" data-ko-bind="editProject">
               <h4 class="card-title"><g:message code="domain.Project.create.message" default="Create a new Project"/></h4>
             </div>

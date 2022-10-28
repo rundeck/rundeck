@@ -121,7 +121,7 @@
       </div>
   </div>
   <div class="row">
-    <g:form action="saveProject" method="post" useToken="true" onsubmit="return configControl.checkForm();" class="form">
+    <g:form action="saveProject" method="post" useToken="true" class="form">
     <div class="col-xs-12">
       <div class="card"  id="createform">
           <div class="card-header" data-ko-bind="editProject">
