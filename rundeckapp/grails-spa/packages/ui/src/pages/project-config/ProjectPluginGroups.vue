@@ -380,32 +380,18 @@ export default Vue.extend({
 
               this.contextConfig.forEach((provider2: any, index: any) => {
 
-                    let projectPluginConfig = {} as ProjectPluginConfigEntry
-                    let configSet = false
-                    Object.values(provider2.config).forEach((entry: any)=> {
-                      if(entry!=null){
-                        projectPluginConfig.entry=provider2
-                        configSet=true
-                        projectPluginConfig.configSet=true
-                        projectPluginConfig.create=true
-                        this.loaded = true;
-                        this.notifyPluginConfigs();
+                  let projectPluginConfig = {entry:provider2,create:true} as ProjectPluginConfigEntry
+                  this.loaded = true
+                  projectPluginConfigList.push(projectPluginConfig)
+                  this.pluginProviders.forEach((provider: any, index: any) => {
+                      if (provider.name === provider2.type) {
+                          this.pluginProviders[index]['configSet'] = true
                       }
-                      else{
-                        projectPluginConfig.configSet=false
-                      }
-                    })
-                    if(projectPluginConfig.configSet){
-                      projectPluginConfigList.push(projectPluginConfig)
-                      this.pluginProviders.forEach((provider: any, index: any)=> {
-                        if(provider.name===provider2.type){
-                          this.pluginProviders[index]["configSet"]=true
-                        }
-                      })
-                    }
+                  })
               })
           }
         }).catch(error => console.error(error));
+        this.notifyPluginConfigs();
       this.pluginConfigs = projectPluginConfigList
     }
   },
