@@ -51,13 +51,13 @@
                     </li>
                 </g:each>
 
-                <g:if test="${pluginGroupDefined}">
+                <feature:enabled name="pluginGroups">
                     <li>
                         <a href="#tab_pluginGroups" data-toggle="tab">
                             <g:message code="project.edit.page.tab.plugins.title" default="Plugins"/>
                         </a>
                     </li>
-                </g:if>
+                </feature:enabled>
             </ul>
         </div>
     </div>

@@ -24,18 +24,15 @@ import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import org.grails.web.json.JSONArray
-import org.grails.web.json.JSONObject
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -60,7 +57,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
-import rundeck.Notification
 import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
@@ -124,7 +120,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
-    def featureService
+    FeatureService featureService
 
     // the delete, save and update actions only
     // accept POST requests
@@ -1392,25 +1388,30 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
 
-            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
-
-            //specific props for typed pluginValues
-            removePrefixes.add("project.plugin.PluginGroup.".toString())
-            if(params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]" ){
-                def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
-                if(groupData instanceof Collection){
-                    for(Object data: groupData){
-                        if(data instanceof Map
-                            && data.type instanceof String
-                            && data.config instanceof Map) {
-                            String type = data.get('type')
-                            Map config = data.get('config')
-                            pluginGroupPasswordFieldsService.untrack([[config: [type: type, props: config], type: type, index: 0]], pluginGroupDescs)
-                            for (String confKey : config.keySet()) {
-                                projProps.put(
-                                    "project.plugin.PluginGroup.${type}.${confKey}".toString(),
-                                    config.get(confKey).toString()
+            if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
+                List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+                //specific props for typed pluginValues
+                removePrefixes.add("project.plugin.PluginGroup.".toString())
+                if (params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]") {
+                    def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
+                    if (groupData instanceof Collection) {
+                        for (Object data : groupData) {
+                            if (data instanceof Map
+                                && data.type instanceof String
+                                && data.config instanceof Map) {
+                                String type = data.get('type')
+                                Map config = data.get('config')
+                                pluginGroupPasswordFieldsService.untrack(
+                                    [[config: [type: type, props: config], type: type, index: 0]],
+                                    pluginGroupDescs
                                 )
+
+                                for (String confKey : config.keySet()) {
+                                    projProps.put(
+                                        "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                        config.get(confKey).toString()
+                                    )
+                                }
                             }
                         }
                     }
@@ -2136,14 +2137,19 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         // Replace the Password Fields in configs with hashes
         execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], execDesc)
         fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
-        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
         List<Map<String, Object>> pluginGroupConfig = []
-        boolean pluginGroupDefined = false
-        pluginGroupDescs.each {
-            Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
-            pluginGroupPasswordFieldsService.track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
-            pluginGroupConfig.add(["type": it.name, "config":providerConfig])
-            pluginGroupDefined=true
+        if(featureService.featurePresent(Features.PLUGIN_GROUPS)) {
+//          final fproject = frameworkService.getFrameworkProject(project)
+//          def projectProps = fproject.getProjectProperties()
+            List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
+            pluginGroupDescs.each {
+//                if (frameworkService.hasPluginGroupConfigurationForType(it.name, projectProps)) {
+                    Map<String, String> providerConfig = frameworkService.getPluginGroupConfigurationForType(it.name, project)
+                    pluginGroupPasswordFieldsService
+                        .track([[type: it.name, props: providerConfig]], true, pluginGroupDescs)
+                    pluginGroupConfig.add([type: it.name, config: providerConfig])
+//                }
+            }
         }
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
@@ -2167,7 +2173,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             pluginGroupConfig: pluginGroupConfig,
-            pluginGroupDefined: pluginGroupDefined,
             defaultNodeExec: defaultNodeExec,
             defaultFileCopy: defaultFileCopy,
             nodeExecDescriptions: execDesc,

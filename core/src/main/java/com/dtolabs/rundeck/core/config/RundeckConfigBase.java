@@ -392,6 +392,7 @@ public class RundeckConfigBase {
         Enabled pluginSecurity = new Enabled(false);
         Enabled healthEndpoint = new Enabled(true);
         Enabled fileUploadPlugin = new Enabled(true);
+        Enabled pluginGroups = new Enabled(false);
 
 
 
