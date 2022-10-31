@@ -13,7 +13,7 @@ main() {
     docker-compose -f selenium-docker-compose.yml run \
         -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
         -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-        selenium "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4EB27DB2A3B88B8B && apt-get update && apt-get -y --no-install-recommends install google-chrome-stable && npm install && npm run bootstrap && ./selenium/bin/deck test -s selenium -u http://rundeck:4440 -h --s3-upload --s3-base ${S3_BASE}" || RET=$?
+        selenium "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4EB27DB2A3B88B8B && apt-get update && apt-get -y --no-install-recommends install google-chrome-stable && npm install && npm run bootstrap && ./selenium/bin/deck test -s selenium -t TEST_TOKEN -u http://rundeck:4440 -h --s3-upload --s3-base ${S3_BASE}" || RET=$?
 
     local DIFF_DIR=__image_snapshots__/__diff_output__
 

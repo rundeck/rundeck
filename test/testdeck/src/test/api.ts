@@ -1,8 +1,9 @@
+import {BaseCredentialProvider} from 'ts-rundeck/dist/baseCredProvider'
 import { parse } from 'url'
 
 import { RundeckCluster, RundeckInstance } from '../RundeckCluster'
 import { TestProject, IRequiredResources } from '../TestProject'
-import { RundeckClient, rundeckPasswordAuth } from 'ts-rundeck'
+import {PasswordCredentialProvider, RundeckClient, rundeckPasswordAuth, TokenCredentialProvider} from 'ts-rundeck'
 import { cookieEnrichPolicy, waitForRundeckReady } from '../util/RundeckAPI'
 import { ClusterFactory } from '../ClusterManager'
 
@@ -22,13 +23,23 @@ export async function CreateRundeckCluster() {
         image: envOpts.TESTDECK_BASE_IMAGE
     })
 
-    const cluster = new RundeckCluster(envOpts.TESTDECK_RUNDECK_URL!, 'admin', 'admin', clusterManager)
+    const cluster = new RundeckCluster(rundeckUrl,
+      envOpts.TESTDECK_RUNDECK_TOKEN ?
+        new RundeckClient(new TokenCredentialProvider(envOpts.TESTDECK_RUNDECK_TOKEN),{baseUri: rundeckUrl}):
+        rundeckPasswordAuth('admin','admin', {
+            baseUri: rundeckUrl,
+        }),
+      clusterManager)
 
     const RundeckNodes = (await clusterManager.listNodes()).filter(u => /rundeck/.test(u.hostname))
 
     for (let [i, n] of RundeckNodes.entries()) {
         cluster.nodes.push(
-            new RundeckInstance(parse(`${n.href}/home/rundeck`), clientForBackend(rundeckUrl, `rundeck-${i+1}`))
+            new RundeckInstance(parse(`${n.href}/home/rundeck`),
+              clientForBackend(rundeckUrl, envOpts.TESTDECK_RUNDECK_TOKEN ?
+                  new TokenCredentialProvider(envOpts.TESTDECK_RUNDECK_TOKEN):
+                new PasswordCredentialProvider(rundeckUrl,'admin','admin'),
+                `rundeck-${i+1}`))
         )
     }
 
@@ -47,10 +58,10 @@ export function CreateTestContext(resources: IRequiredResources) {
     return context as ITestContext
 }
 
-function clientForBackend(url: string, backend: string): RundeckClient {
+function clientForBackend(url: string, creds:BaseCredentialProvider, backend: string): RundeckClient {
     const cookiePolicy = cookieEnrichPolicy([`backend=${backend}`])
 
-    return rundeckPasswordAuth('admin', 'admin', {
+    return new RundeckClient(creds,{
         baseUri: url,
         noRetryPolicy: true,
         requestPolicyFactories: [cookiePolicy]
