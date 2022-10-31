@@ -37,7 +37,7 @@
     "js-yaml": "^3.12.0",
     "mkdirp": "^0.5.1",
     "mktmpdir": "^0.1.1",
-    "selenium-webdriver": "^4.1.0",
+    "selenium-webdriver": ">=4.1.0 <4.5.0",
     "tmp": "0.0.33",
     "ts-jest": "25.4.0",
     "ts-node": "8.8.2",
