@@ -13,7 +13,7 @@ RUN echo "dash dash/sh boolean false" | debconf-set-selections \
 ## General package configuration
 RUN set -euxo pipefail \
     && sed -i -e 's#http://\(archive\|security\)#mirror://mirrors#' -e 's#/ubuntu/#/mirrors.txt#' /etc/apt/sources.list \
-    && apt-get -y update && apt-get -y --no-install-recommends install \
+    && apt-get -y update && apt-get upgrade -y && apt-get -y --no-install-recommends install \
         acl \
         curl \
         gnupg2 \

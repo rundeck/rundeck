@@ -23,7 +23,7 @@ import com.dtolabs.rundeck.core.authorization.RuleSetValidation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.testing.GrailsMockMultipartFile
@@ -49,8 +49,8 @@ import rundeck.services.FrameworkService
 import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 import webhooks.component.project.WebhooksProjectComponent
 import webhooks.exporter.WebhooksProjectExporter
 import webhooks.importer.WebhooksProjectImporter
@@ -66,7 +66,7 @@ import static org.rundeck.core.auth.AuthConstants.ACTION_UPDATE
 /**
  * Created by greg on 2/26/15.
  */
-class ProjectControllerSpec extends RundeckHibernateSpec implements ControllerUnitTest<ProjectController> {
+class ProjectControllerSpec extends Specification implements ControllerUnitTest<ProjectController>, DataTest {
 
     def setup(){
         session.subject = new Subject()

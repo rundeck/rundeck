@@ -149,11 +149,8 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
             getServerUUID()>> "aaaa"
             isClusterModeEnabled()>> true
         }
+        def mockjs=Mock(JobSchedulerService)
 
-
-        def mockjs=Mock(JobSchedulerService) {
-            _*getDeadMembers(_) >> ["null", "bbbb"]
-        }
         ExecutionsCleanUp job = new ExecutionsCleanUp()
         when:
         Execution execution = setupExecution(se, projName, execDate, execDate)

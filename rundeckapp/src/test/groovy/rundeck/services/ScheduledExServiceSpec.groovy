@@ -18,24 +18,17 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
-import org.junit.Ignore
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.springframework.context.ApplicationContext
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import grails.test.mixin.TestMixin
 import grails.test.runtime.DirtiesRuntime
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
-import grails.test.mixin.web.ControllerUnitTestMixin;
 
 import org.junit.Assert
 import org.quartz.*
@@ -44,7 +37,6 @@ import org.quartz.spi.JobFactory
 import org.springframework.context.MessageSource
 
 import rundeck.*
-import rundeck.controllers.ScheduledExecutionController
 
 /*
  * rundeck.ScheduledExecutionServiceTests.java
@@ -53,9 +45,9 @@ import rundeck.controllers.ScheduledExecutionController
  * Created: 6/22/11 5:55 PM
  *
  */
-class ScheduledExServiceSpec extends RundeckHibernateSpec {
+class ScheduledExServiceSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification]}
+    def setupSpec() { mockDomains Execution, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification }
 
 
     /**

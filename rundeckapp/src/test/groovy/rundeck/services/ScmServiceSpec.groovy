@@ -46,22 +46,22 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
 import rundeck.services.scm.ScmPluginConfigData
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 /**
  * Created by greg on 10/15/15.
  */
-class ScmServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<ScmService> {
+class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, User, Storage ] }
+    def setupSpec() { mockDomains ScheduledExecution, User, Storage  }
 
     class TestCloseable implements Closeable {
         boolean closed

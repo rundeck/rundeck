@@ -25,9 +25,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
-import grails.test.hibernate.HibernateSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
@@ -39,7 +37,6 @@ import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -56,18 +53,14 @@ import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.W
 /**
  * Created by greg on 3/28/16.
  */
-class LogFileStorageServiceSpec extends RundeckHibernateSpec implements ServiceUnitTest<LogFileStorageService> {
+class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest<LogFileStorageService>, DataTest {
     File tempDir
 
-    List<Class> getDomainClasses() { [LogFileStorageRequest, Execution] }
+    def setupSpec() { mockDomains LogFileStorageRequest, Execution }
 
     def setup() {
         tempDir = Files.createTempDirectory("LogFileStorageServiceSpec").toFile()
-    }
-
-    def cleanup() {
-
-
+        tempDir.deleteOnExit()
     }
 
     def "resume incomplete delayed"() {

@@ -20,11 +20,9 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.json.JsonSlurper
-import groovy.time.TimeCategory
-import org.hibernate.JDBCException
 import org.quartz.JobExecutionContext
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
@@ -36,7 +34,6 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeExecution
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.core.auth.web.WebDefaultParameterNamesMapper
-import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -44,19 +41,18 @@ import rundeck.Workflow
 import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.WorkflowStateFileLoader
+import spock.lang.Specification
 import spock.lang.Unroll
-import testhelper.RundeckHibernateSpec
 
 import javax.security.auth.Subject
 import java.lang.annotation.Annotation
-import java.sql.Time
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
-class ExecutionController2Spec extends RundeckHibernateSpec implements ControllerUnitTest<ExecutionController>  {
+class ExecutionController2Spec extends Specification implements ControllerUnitTest<ExecutionController>, DataTest  {
 
-    List<Class> getDomainClasses() { [Workflow,ScheduledExecution,Execution,CommandExec]}
+    def setupSpec() { mockDomains Workflow,ScheduledExecution,Execution,CommandExec }
 
     public static <T extends Annotation> T getMethodAnnotation(Object instance, String name, Class<T> clazz) {
         instance.getClass().getDeclaredMethods().find { it.name == name }.getAnnotation(clazz)

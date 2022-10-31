@@ -1,16 +1,18 @@
 package org.rundeck.app.components
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import org.rundeck.app.components.jobs.ImportedJob
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
-class RundeckJobDefinitionManagerSpec extends RundeckHibernateSpec   {
+class RundeckJobDefinitionManagerSpec extends Specification implements DataTest   {
     RundeckJobDefinitionManager rundeckJobDefinitionManager = new RundeckJobDefinitionManager()
 
-    List<Class> getDomainClasses() { [Workflow, ScheduledExecution, CommandExec] }
+    void setupSpec() {
+        mockDomains Workflow, ScheduledExecution, CommandExec
+    }
 
 
     def "test decode format file with/without expandTokenInScriptFile field"(){
@@ -54,7 +56,7 @@ class RundeckJobDefinitionManagerSpec extends RundeckHibernateSpec   {
         writer.flush()
 
         then:
-        jobDefinition == writer.toString()
+        jobDefinition.replace("IDSUB",se.id.toString()) == writer.toString()
 
         where:
         format | jobDefinition
@@ -68,7 +70,7 @@ class RundeckJobDefinitionManagerSpec extends RundeckHibernateSpec   {
     <description>a job</description>
     <executionEnabled>true</executionEnabled>
     <group>some/where</group>
-    <id>1</id>
+    <id>IDSUB</id>
     <loglevel>WARN</loglevel>
     <name>blue</name>
     <nodeFilterEditable>false</nodeFilterEditable>
@@ -94,7 +96,7 @@ class RundeckJobDefinitionManagerSpec extends RundeckHibernateSpec   {
         return """- description: a job
   executionEnabled: true
   group: some/where
-  id: 2
+  id: IDSUB
   loglevel: WARN
   name: blue
   nodeFilterEditable: false

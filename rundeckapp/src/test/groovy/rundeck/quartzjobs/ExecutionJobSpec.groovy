@@ -22,12 +22,8 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
-import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler
-import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import org.quartz.*
 import rundeck.*
 import rundeck.services.ExecutionService
@@ -35,7 +31,7 @@ import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import java.sql.Timestamp
 import java.util.concurrent.CountDownLatch
@@ -43,9 +39,9 @@ import java.util.concurrent.CountDownLatch
 /**
  * Created by greg on 4/12/16.
  */
-class ExecutionJobSpec extends RundeckHibernateSpec {
+class ExecutionJobSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats] }
+    def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats }
 
     def "execute missing job"() {
         given:
@@ -785,8 +781,8 @@ class ExecutionJobSpec extends RundeckHibernateSpec {
         se.save(flush:true)
         Execution e = new Execution(
                 scheduledExecution: se,
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
+                dateStarted: new Timestamp(new Date().time),
+                dateCompleted: new Timestamp(new Date().time),
                 project: se.project,
                 user: 'bob',
                 workflow: new Workflow(commands: [new CommandExec(

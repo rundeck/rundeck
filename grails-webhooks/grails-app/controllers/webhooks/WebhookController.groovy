@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse
 
 class WebhookController {
     static final String AUTH_HEADER = "Authorization"
+    static final String FORM_URLENCODED = "application/x-www-form-urlencoded"
     static allowedMethods = [post:'POST']
 
     def webhookService
@@ -158,7 +159,11 @@ class WebhookController {
         whkdata.sender = request.remoteAddr
         whkdata.project = hook.project
         whkdata.contentType = request.contentType
-        whkdata.data = request.inputStream
+        if(FORM_URLENCODED == request.contentType) {
+            whkdata.formData = cleanedFormDataFromParams(params)
+        } else {
+            whkdata.data = request.inputStream
+        }
 
         try {
             def responder = webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata, authContext, request)
@@ -166,6 +171,13 @@ class WebhookController {
         } catch(WebhookEventException wee) {
             sendJsonError(wee.message)
         }
+    }
+    static final def KEYS_TO_CLEAN = ["controller","action","authtoken","api_version"]
+
+    static Map cleanedFormDataFromParams(def params) {
+        def cleanMap = new HashMap(params)
+        cleanMap.removeAll( e -> KEYS_TO_CLEAN.contains(e.key))
+        return cleanMap
     }
 
     private def sendJsonError(String errMessage,int statusCode = 400) {

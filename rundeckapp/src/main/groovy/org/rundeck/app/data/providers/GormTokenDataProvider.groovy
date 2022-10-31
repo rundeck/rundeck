@@ -2,8 +2,10 @@ package org.rundeck.app.data.providers
 
 import org.rundeck.app.data.model.v1.AuthTokenMode
 import grails.compiler.GrailsCompileStatic
+import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.page.Pageable
 import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
@@ -108,6 +110,18 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
+    List<AuthenticationToken> findAllByUser(String userId) {
+        User user = User.get(userId.toLong())
+        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
+        List<AuthenticationToken> tokens = []
+        List<AuthToken> authTokens = AuthToken.findAllByUser(user)
+        authTokens.each{authToken ->
+            tokens << authToken
+        }
+        tokens
+    }
+
+    @Override
     AuthenticationToken findByUuidAndCreator(String id, String creator) {
         def authToken = AuthToken.findByUuidAndCreator(id, creator)
         return authToken ?: null
@@ -161,17 +175,140 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
     AuthenticationToken tokenLookup(final String token){
-        def authToken = AuthToken.tokenLookup(token);
-        return authToken ?: null
-
+        def tokenHash = AuthToken.encodeTokenValue(token, AuthTokenMode.SECURED)
+        return AuthToken.createCriteria().get {
+            or {
+                and {
+                    eq("tokenMode", AuthTokenMode.SECURED)
+                    eq("token", tokenHash)
+                }
+                and {
+                    or {
+                        isNull("tokenMode")
+                        eq("tokenMode", AuthTokenMode.LEGACY)
+                    }
+                    eq("token", token)
+                }
+            }
+            or {
+                isNull("type")
+                eq("type", AuthenticationToken.AuthTokenType.USER)
+            }
+        }
     }
 
     @Override
-    AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType type){
-        def authToken = AuthToken.tokenLookup(token, type);
-        return authToken ?: null
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
+    AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType tokenType){
+        def tokenHash = AuthToken.encodeTokenValue(token, AuthTokenMode.SECURED)
+        return AuthToken.createCriteria().get {
+            eq("type", tokenType)
+            or {
+                and {
+                    eq("tokenMode", AuthTokenMode.SECURED)
+                    eq("token", tokenHash)
+                }
+                and {
+                    or {
+                        isNull("tokenMode")
+                        eq("tokenMode", AuthTokenMode.LEGACY)
+                    }
+                    eq("token", token)
+                }
+            }
+        }
+    }
 
+    @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
+    Integer countTokensByUser(String userId) {
+        User user = User.get(userId.toLong())
+        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
+        return AuthToken.createCriteria().count {
+            eq("user", user)
+            or {
+                eq("type", AuthenticationToken.AuthTokenType.USER)
+                isNull("type")
+            }
+        }
+    }
+
+    @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
+    Integer countTokensByCreator(String creatorLoginName) {
+        return AuthToken.createCriteria().count {
+            eq("creator", creatorLoginName)
+            or {
+                eq("type", AuthenticationToken.AuthTokenType.USER)
+                isNull("type")
+            }
+        }
+    }
+
+    @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
+    Integer countTokensByType(AuthenticationToken.AuthTokenType type) {
+        return AuthToken.createCriteria().count {
+            or {
+                eq("type", type)
+                isNull("type")   //type could be null if token was created before we recorded token types
+            }
+        }
+    }
+
+    @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
+    Integer countTokensByCreatorAndType(String creatorLoginName, AuthenticationToken.AuthTokenType type) {
+        return AuthToken.createCriteria().count {
+            eq("creator", creatorLoginName)
+            or {
+                eq("type", type)
+                isNull("type")
+            }
+        }
+    }
+
+    @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
+    List<AuthenticationToken> findAllTokensByType(AuthenticationToken.AuthTokenType type, Pageable pageable) {
+        return AuthToken.createCriteria().list {
+            if (pageable.offset) {
+                firstResult(pageable.offset)
+            }
+            if (pageable.max) {
+                maxResults(pageable.max)
+            }
+            or {
+                eq("type", type)
+                isNull("type")
+            }
+            pageable.sortOrders.each { so ->
+                order(so.column, so.direction)
+            }
+        }
+    }
+
+    @Override
+    @GrailsCompileStatic(TypeCheckingMode.SKIP)
+    List<AuthenticationToken> findAllUserTokensByCreator(String creatorLoginName, Pageable pageable) {
+        return AuthToken.createCriteria().list {
+            eq("creator", creatorLoginName)
+            if (pageable.offset) {
+                firstResult(pageable.offset)
+            }
+            if (pageable.max) {
+                maxResults(pageable.max)
+            }
+            or {
+                eq("type", AuthenticationToken.AuthTokenType.USER)
+                isNull("type")
+            }
+            pageable.sortOrders.each { so ->
+                order(so.column, so.direction)
+            }
+        }
     }
 
     User findOrCreateTokenOwner(String name){
@@ -179,5 +316,4 @@ class GormTokenDataProvider implements TokenDataProvider {
         tokenOwner
 
     }
-
 }

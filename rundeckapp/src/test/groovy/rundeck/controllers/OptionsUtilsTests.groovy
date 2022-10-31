@@ -17,7 +17,7 @@
 package rundeck.controllers
 
 
-import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.servlet.mvc.GrailsHttpSession
 import groovy.mock.interceptor.MockFor
@@ -25,14 +25,14 @@ import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FrameworkService
 import rundeck.utils.OptionsUtil
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
-class OptionsUtilsTests extends RundeckHibernateSpec implements ControllerUnitTest<ScheduledExecutionController>{
+class OptionsUtilsTests extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, FrameworkService, User] }
+    def setupSpec() { mockDomains ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, User }
     /**
      * utility method to mock a class
      */

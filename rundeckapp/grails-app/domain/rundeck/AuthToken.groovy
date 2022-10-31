@@ -93,55 +93,6 @@ class AuthToken implements AuthenticationToken {
         }
     }
 
-    /**
-     * Finds a user token from the provided value.
-     */
-    public static AuthToken tokenLookup(String tokenValue) {
-        def tokenHash = encodeTokenValue(tokenValue, AuthTokenMode.SECURED)
-        return createCriteria().get {
-            or {
-                and {
-                    eq("tokenMode", AuthTokenMode.SECURED)
-                    eq("token", tokenHash)
-                }
-                and {
-                    or {
-                        isNull("tokenMode")
-                        eq("tokenMode", AuthTokenMode.LEGACY)
-                    }
-                    eq("token", tokenValue)
-                }
-            }
-            or {
-                isNull("type")
-                eq("type", AuthTokenType.USER)
-            }
-        }
-    }
-
-    /**
-     * Finds a token from the provided value and type
-     */
-    public static AuthToken tokenLookup(String tokenValue, AuthTokenType tokenType) {
-        def tokenHash = encodeTokenValue(tokenValue, AuthTokenMode.SECURED)
-        return createCriteria().get {
-            eq("type", tokenType)
-            or {
-                and {
-                    eq("tokenMode", AuthTokenMode.SECURED)
-                    eq("token", tokenHash)
-                }
-                and {
-                    or {
-                        isNull("tokenMode")
-                        eq("tokenMode", AuthTokenMode.LEGACY)
-                    }
-                    eq("token", tokenValue)
-                }
-            }
-        }
-    }
-
     String getClearToken() {
         return clearToken
     }

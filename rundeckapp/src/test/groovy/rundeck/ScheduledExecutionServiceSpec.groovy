@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import grails.test.hibernate.HibernateSpec
+import grails.testing.gorm.DataTest
 import groovy.mock.interceptor.MockFor
 import net.bytebuddy.implementation.bytecode.Throw
 
@@ -28,14 +29,11 @@ import net.bytebuddy.implementation.bytecode.Throw
 
 //import grails.test.GrailsUnitTestCase
 
-import org.junit.Test
-import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
-import rundeck.controllers.ScheduledExecutionController
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecyclePluginService
 import rundeck.services.ScheduledExecutionService
-import testhelper.RundeckHibernateSpec
+import spock.lang.Specification
 
 import static org.junit.Assert.*
 
@@ -47,9 +45,9 @@ import static org.junit.Assert.*
 * $Id$
 */
 
-public class ScheduledExecutionServiceSpec extends RundeckHibernateSpec {
+public class ScheduledExecutionServiceSpec extends Specification implements DataTest {
 
-    List<Class> getDomainClasses() { [ScheduledExecution, Workflow,CommandExec]}
+    def setupSpec() { mockDomains ScheduledExecution, Workflow,CommandExec }
 
     void runBeforeSave(){
         when:
