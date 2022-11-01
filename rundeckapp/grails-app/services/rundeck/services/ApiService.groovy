@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import grails.compiler.GrailsCompileStatic
 import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.AuthTokenMode
 import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
@@ -105,6 +106,7 @@ class ApiService implements WebUtilService{
      * @param tokenData Token metadata.
      * @return Generated token.
      */
+    @GrailsCompileStatic
     private AuthenticationToken generateAuthToken(
             User ownerUser,
             AuthenticationToken tokenData) {
@@ -138,7 +140,11 @@ class ApiService implements WebUtilService{
 
         String id = tokenProvider.create(token1);
         AuthenticationToken token = tokenProvider.getData(id)
-        return token
+
+        SimpleTokenBuilder createdToken = SimpleTokenBuilder.with(token)
+        createdToken.clearToken  = newtoken
+
+        return createdToken
     }
 
     /**
