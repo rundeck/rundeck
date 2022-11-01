@@ -92,6 +92,11 @@ public class SimpleTokenBuilder implements AuthenticationToken {
     return this;
   }
 
+  public SimpleTokenBuilder setClearToken(String clearToken) {
+      this.clearToken = clearToken;
+      return this;
+  }
+
   public SimpleTokenBuilder setOwnerName(String ownerName) {
     this.ownerName = ownerName;
     return this;
