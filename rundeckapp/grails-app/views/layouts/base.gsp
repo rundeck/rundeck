@@ -55,7 +55,6 @@
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="vendor/jquery.js"/>
-    <asset:javascript src="vendor/jquery-migrate.js"/>
     <asset:javascript src="vendor/jquery-ui.js"/>
     <asset:javascript src="vendor/jquery-ui-timepicker-addon.js"/>
     <asset:javascript src="vendor/perfect-scrollbar.js"/>
