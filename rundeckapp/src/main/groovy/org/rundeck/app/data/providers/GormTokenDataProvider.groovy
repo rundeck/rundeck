@@ -29,13 +29,13 @@ class GormTokenDataProvider implements TokenDataProvider {
     MessageSource messageSource
 
     @Override
-    AuthenticationToken getData (final String id) {
+    AuthenticationToken getData(final String id) {
         AuthenticationToken authToken = authTokenDataService.getByUuid(id)
         return authToken ?: null
     }
 
     @Override
-    String create( final AuthenticationToken data) throws DataAccessException {
+    String create(final AuthenticationToken data) throws DataAccessException {
         return createWithId(
                 data.uuid ?: UUID.randomUUID().toString(),
                 data
@@ -43,7 +43,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     }
 
     @Override
-    String createWithId( final String id, final AuthenticationToken data) throws DataAccessException {
+    String createWithId(final String id, final AuthenticationToken data) throws DataAccessException {
         User tokenOwner = userService.findOrCreateUser(data.ownerName)
         if (!tokenOwner) {
             throw new DataAccessException("Couldn't find user: ${data.ownerName}")
@@ -103,7 +103,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     List<AuthenticationToken> findAllByCreator(String creator) {
         List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.findAllByCreator(creator)
-        authTokens.each{authToken ->
+        authTokens.each { authToken ->
             tokens << authToken
         }
         tokens
@@ -112,10 +112,10 @@ class GormTokenDataProvider implements TokenDataProvider {
     @Override
     List<AuthenticationToken> findAllByUser(String userId) {
         User user = User.get(userId.toLong())
-        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
+        if (!user) throw new DataAccessException("Couldn't find user: ${userId}")
         List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.findAllByUser(user)
-        authTokens.each{authToken ->
+        authTokens.each { authToken ->
             tokens << authToken
         }
         tokens
@@ -133,7 +133,7 @@ class GormTokenDataProvider implements TokenDataProvider {
         List<AuthenticationToken> tokens = []
 
         List<AuthToken> authTokens = AuthToken.findAllByCreatorAndExpirationLessThan(creator, now)
-        authTokens.each{authToken ->
+        authTokens.each { authToken ->
             tokens << authToken
         }
         tokens
@@ -143,12 +143,13 @@ class GormTokenDataProvider implements TokenDataProvider {
     List<AuthenticationToken> findAllByExpirationLessThan(final Date now) {
         List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.findAllByExpirationLessThan(now)
-        authTokens.each{authToken ->
+        authTokens.each { authToken ->
             tokens << authToken
         }
         tokens
 
     }
+
     @Override
     AuthenticationToken findByTokenAndType(final String token, AuthenticationToken.AuthTokenType type) {
         def tokenType = AuthenticationToken.AuthTokenType.valueOf(type.toString())
@@ -168,7 +169,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     List<AuthenticationToken> list() {
         List<AuthenticationToken> tokens = []
         List<AuthToken> authTokens = AuthToken.list()
-        authTokens.each{authToken ->
+        authTokens.each { authToken ->
             tokens << authToken
         }
         tokens
@@ -176,7 +177,7 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    AuthenticationToken tokenLookup(final String token){
+    AuthenticationToken tokenLookup(final String token) {
         def tokenHash = AuthToken.encodeTokenValue(token, AuthTokenMode.SECURED)
         return AuthToken.createCriteria().get {
             or {
@@ -201,7 +202,7 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType tokenType){
+    AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType tokenType) {
         def tokenHash = AuthToken.encodeTokenValue(token, AuthTokenMode.SECURED)
         return AuthToken.createCriteria().get {
             eq("type", tokenType)
@@ -225,7 +226,7 @@ class GormTokenDataProvider implements TokenDataProvider {
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
     Integer countTokensByUser(String userId) {
         User user = User.get(userId.toLong())
-        if(!user) throw new DataAccessException("Couldn't find user: ${userId}")
+        if (!user) throw new DataAccessException("Couldn't find user: ${userId}")
         return AuthToken.createCriteria().count {
             eq("user", user)
             or {
@@ -289,8 +290,7 @@ class GormTokenDataProvider implements TokenDataProvider {
             }
         }
     }
-
-<<<<<<< HEAD
+    
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
     List<AuthenticationToken> findAllUserTokensByCreator(String creatorLoginName, Pageable pageable) {
@@ -311,11 +311,11 @@ class GormTokenDataProvider implements TokenDataProvider {
             }
         }
     }
-    
+
+
     User findOrCreateTokenOwner(String name){
         User tokenOwner = userService.findOrCreateUser(name)
         tokenOwner
 
     }
-
 }
