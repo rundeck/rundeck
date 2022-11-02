@@ -20,10 +20,13 @@ export class DockerCompose {
             let burnedHeader = false
             const rl = readline.createInterface(cp.stdout)
             for await (let l of rl) {
-                if (burnedHeader)
+                if (burnedHeader) {
                     output.push(l.split(/\s+/)[0])
-                if (l.startsWith('----'))
+                }else if (l.startsWith('----')) {
                     burnedHeader = true
+                }else if(l.startsWith('NAME ')){
+                    burnedHeader = true
+                }
             }
             return output
         })()
