@@ -138,7 +138,11 @@ class ApiService implements WebUtilService{
 
         String id = tokenProvider.create(token1);
         AuthenticationToken token = tokenProvider.getData(id)
-        return token
+
+        SimpleTokenBuilder createdToken = SimpleTokenBuilder.with(token)
+        createdToken.clearToken  = newtoken
+
+        return createdToken
     }
 
     /**

@@ -61,6 +61,16 @@ class UserService {
         return user
     }
 
+    String getOwnerName(Long userId) {
+        User.createCriteria().get {}
+        User.createCriteria().get {
+            eq("id", userId)
+            projections {
+                property "login"
+            }
+        }
+    }
+    
     def registerLogin(String login, String sessionId){
         User user = User.findByLogin(login)
         if(!user){

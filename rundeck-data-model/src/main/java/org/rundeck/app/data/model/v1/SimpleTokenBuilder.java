@@ -97,6 +97,16 @@ public class SimpleTokenBuilder implements AuthenticationToken {
     return this;
   }
 
+  public SimpleTokenBuilder setClearToken(String clearToken) {
+    this.clearToken = clearToken;
+    return this;
+  }
+
+  public SimpleTokenBuilder setTokenMode(AuthTokenMode mode) {
+    this.tokenMode = mode;
+    return this;
+  }
+
   public SimpleTokenBuilder setType(AuthTokenType type) {
     this.type = type;
     return this;
@@ -122,6 +132,8 @@ public class SimpleTokenBuilder implements AuthenticationToken {
     token1.name = input.getName();
     token1.expiration = input.getExpiration();
     token1.type = input.getType();
+    token1.tokenMode = input.getTokenMode();
+
     return token1;
   }
 }

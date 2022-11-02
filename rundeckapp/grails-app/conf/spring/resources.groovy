@@ -810,6 +810,8 @@ beans={
     pluginCachePreloader(PluginCachePreloader)
     interceptorHelper(DefaultInterceptorHelper)
 
+    gormTokenDataProvider(GormTokenDataProvider)
+
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
 
