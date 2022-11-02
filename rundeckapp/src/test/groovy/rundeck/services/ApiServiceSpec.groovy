@@ -26,6 +26,7 @@ import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
@@ -360,7 +361,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         result != null
-        result.user.login == user.login
+        result.getOwnerName() == user.login
         result.generateAuthRoles(result.getAuthRolesSet()) == 'role1'
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
@@ -401,8 +402,8 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         result != null
-        result.user.login == user.login
-        result.authRoles == 'role1,svc_roleA'
+        result.getOwnerName() == user.login
+        result.authRolesSet == AuthenticationToken.parseAuthRoles('role1,svc_roleA')
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         if (tokenaction == 'admin') {
@@ -451,8 +452,8 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         result != null
-        result.user.login == tokenUser
-        result.authRoles == 'role1,svc_roleA'
+        result.getOwnerName() == tokenUser
+        result.authRolesSet == AuthenticationToken.parseAuthRoles('role1,svc_roleA')
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         _ * service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >>
@@ -531,7 +532,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         result != null
-        result.user.login == user.login
+        result.getOwnerName() == user.login
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
