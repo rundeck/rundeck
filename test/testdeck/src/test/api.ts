@@ -6,6 +6,7 @@ import { TestProject, IRequiredResources } from '../TestProject'
 import {PasswordCredentialProvider, RundeckClient, rundeckPasswordAuth, TokenCredentialProvider} from 'ts-rundeck'
 import { cookieEnrichPolicy, waitForRundeckReady } from '../util/RundeckAPI'
 import { ClusterFactory } from '../ClusterManager'
+import { RequestPolicyFactory } from "@azure/ms-rest-js"
 
 import {envOpts} from './rundeck'
 
@@ -64,6 +65,6 @@ function clientForBackend(url: string, creds:BaseCredentialProvider, backend: st
     return new RundeckClient(creds,{
         baseUri: url,
         noRetryPolicy: true,
-        requestPolicyFactories: [cookiePolicy]
+        requestPolicyFactories: (factories:RequestPolicyFactory[])=>factories.concat([cookiePolicy])
     })
 }
