@@ -290,7 +290,7 @@ class GormTokenDataProvider implements TokenDataProvider {
             }
         }
     }
-    
+
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
     List<AuthenticationToken> findAllUserTokensByCreator(String creatorLoginName, Pageable pageable) {
@@ -312,10 +312,4 @@ class GormTokenDataProvider implements TokenDataProvider {
         }
     }
 
-
-    User findOrCreateTokenOwner(String name){
-        User tokenOwner = userService.findOrCreateUser(name)
-        tokenOwner
-
-    }
 }
