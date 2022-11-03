@@ -181,7 +181,7 @@
                             <g:javascript>
                                 jQuery(function(){
                                     var nfilter=loadJsonData('nodeFilterData');
-                                    jQuery('#nodeFilterUpdate').click(function(e){
+                                    jQuery('#nodeFilterUpdate').on('click',function(e){
                                         _updateMatchedNodes(nfilter,'matchednodes_${ enc(js: rkey) }','${enc(js:execdata?.project)}',false,{requireRunAuth:true});
                                     });
                                 });
@@ -300,7 +300,7 @@
 
             <g:if test="${!knockout}">
                 <g:javascript>
-                jQuery('#serverNodeUpdate').click(function(e){
+                jQuery('#serverNodeUpdate').on('click',function(e){
                    _updateMatchedNodes({},'matchednodes_${enc(js: rkey)}','${enc(js: execdata?.project)}', true, {requireRunAuth:true});
                 });
                 </g:javascript>
