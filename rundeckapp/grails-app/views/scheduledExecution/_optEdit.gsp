@@ -763,7 +763,7 @@
                       title="${g.message(code:'form.option.create.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
                 <g:javascript>
                     fireWhenReady('optname_${enc(js:rkey)}',function(){
-                        jQuery('#optname_${enc(js:rkey)}').focus();
+                        jQuery('#optname_${enc(js:rkey)}').trigger('focus');
                     });
                 </g:javascript>
             </g:if>
