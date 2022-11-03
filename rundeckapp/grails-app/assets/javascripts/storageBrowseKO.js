@@ -415,7 +415,7 @@ function StorageBrowser(baseUrl, rootPath) {
                     }
                 }
             }
-        }).success(_createAjaxReceiveTokensHandler('storage_browser_token'));
+        }).done(_createAjaxReceiveTokensHandler('storage_browser_token'));
     };
     self.browseToInputPath = function(){
         self.path(self.absolutePath(self.inputBasePath()));

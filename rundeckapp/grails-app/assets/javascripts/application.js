@@ -537,7 +537,7 @@ function onlychars(regex, e) {
 }
 
 function fireWhenReady(elem, func) {
-  if (jQuery('#' + elem).size() > 0) {
+  if (jQuery('#' + elem).length > 0) {
     func();
   } else {
     jQuery(document).ready(func);
@@ -940,13 +940,13 @@ function _initPopoverContentFor(parent, options) {
 /** page init */
 function _initAffix() {
   //affixed elements
-  jQuery("a[href='#top']").click(function () {
+  jQuery("a[href='#top']").on('click',function () {
     jQuery("#section-main").animate({
       scrollTop: 0
     }, "slow");
     return false;
   });
-  jQuery("a[href='#bottom']").click(function () {
+  jQuery("a[href='#bottom']").on('click',function () {
     //window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
     var body = jQuery("#section-main")
     body.animate({
@@ -970,20 +970,20 @@ function _initIEPlaceholder() {
   if (typeof (Prototype) !== 'object' || !Prototype.Browser.IE) {
     return;
   }
-  jQuery('[placeholder]').focus(function () {
+  jQuery('[placeholder]').on('focus',function () {
     var input = jQuery(this);
     if (input.val() == input.attr('placeholder')) {
       input.val('');
       input.removeClass('placeholder');
     }
-  }).blur(function () {
+  }).on('blur',function () {
     var input = jQuery(this);
     if (input.val() == '' || input.val() == input.attr('placeholder')) {
       input.addClass('placeholder');
       input.val(input.attr('placeholder'));
     }
-  }).blur();
-  jQuery('[placeholder]').parents('form').submit(function () {
+  }).trigger('blur');
+  jQuery('[placeholder]').parents('form').on('submit',function () {
     jQuery(this).find('[placeholder]').each(function () {
       var input = jQuery(this);
       if (input.val() == input.attr('placeholder')) {
@@ -1410,7 +1410,7 @@ function setFilter(name, value, callback) {
         } catch (e) {}
       }
     }
-  }).success(_createAjaxReceiveTokensHandler('filter_select_tokens'));
+  }).done(_createAjaxReceiveTokensHandler('filter_select_tokens'));
 }
 var generateId = (function () {
   var counter = 0;
@@ -1453,11 +1453,11 @@ function messageTemplate(template, data, pluralize) {
   var values = [];
   if (typeof (data) != 'object') {
     values = [data];
-  } else if (jQuery.isArray(data)) {
+  } else if (Array.isArray(data)) {
     values = data;
   } else if (typeof (data) == 'object') {
     values = data['value'];
-    if (!jQuery.isArray(values)) {
+    if (!Array.isArray(values)) {
       values = [values];
     }
   }
@@ -1573,7 +1573,7 @@ function jQueryFormData(selected, rmprefixes,reqprefixes, rmkeyprefixes) {
       }
       if (data[name] && typeof(data[name]) === 'string') {
         data[name] = [data[name], jQuery(el).val()];
-      } else if (data[name] && jQuery.isArray(data[name])) {
+      } else if (data[name] && Array.isArray(data[name])) {
         data[name].push(jQuery(el).val());
       } else {
         data[name] = jQuery(el).val();

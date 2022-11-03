@@ -38,7 +38,7 @@ function init () {
     ko.applyBindings(storageBrowse)
     jQuery('#storageupload').find('.obs-storageupload-select').on('click', function (evt) {
         var file = jQuery('#storageuploadfile').val()
-        jQuery('#uploadForm')[0].submit()
+        jQuery('#uploadForm')[0].trigger('submit')
     })
     storageBrowse.browse(null, null, data.resourcePath ? data.resourcePath : null)
 }

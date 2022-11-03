@@ -49,7 +49,7 @@ function runStarted() {
 function afterRun() {
     running = false;
     jQuery('.execRerun').show();
-    jQuery('#runFormExec').focus();
+    jQuery('#runFormExec').trigger('focus')
 }
 function runError(msg) {
     jQuery('.errormessage').html(msg);
@@ -91,7 +91,7 @@ function runFormSubmit(elem) {
         error: function (data, jqxhr, err) {
             requestFailure(jqxhr);
         }
-    }).success(_createAjaxReceiveTokensHandler('adhoc_req_tokens'));
+    }).done(_createAjaxReceiveTokensHandler('adhoc_req_tokens'));
     return false;
 }
 /**
@@ -307,7 +307,7 @@ function init() {
     });
     nodeSummary.reload();
     nodeFilter.updateMatchedNodes();
-    jQuery('.act_adhoc_history_dropdown').click(function () {
+    jQuery('.act_adhoc_history_dropdown').on('click',function () {
         adhocCommand.loadRecentCommands();
     });
 
