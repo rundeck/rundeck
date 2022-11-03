@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.rules.Rules
 import com.dtolabs.rundeck.core.rules.StateObj
 import com.dtolabs.rundeck.core.rules.WorkflowEngineBuilder
 import com.dtolabs.rundeck.core.rules.WorkflowSystem
+import com.dtolabs.rundeck.core.rules.Workflows
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import spock.lang.Specification
 
@@ -821,5 +822,26 @@ class EngineWorkflowExecutorSpec extends Specification {
         !result.success
         result.stepFailures
         result.stepFailures.size() == 1
+    }
+
+    def "default augmentor initial state should not include shared data in state"(){
+        given:
+            def sut = new EngineWorkflowExecutor.DefaultAugmentor()
+            def item = Mock(WorkflowExecutionItem){
+                getWorkflow()>>Mock(IWorkflow){
+                    isKeepgoing()>>keepgoing
+                }
+            }
+            def context = Mock(StepExecutionContext)
+        when:
+            def result=sut.getInitialState(item,context)
+        then:
+            result.getState().size()==2
+            result.getState().get(Workflows.WORKFLOW_STATE_ID_KEY)!= null
+            result.getState().get(EngineWorkflowExecutor.WORKFLOW_KEEPGOING_KEY)==keepgoing.toString()
+
+        where:
+            keepgoing<<[true,false]
+
     }
 }

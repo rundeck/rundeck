@@ -62,18 +62,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private final List<ListenableFuture<RES>> futures = new ArrayList<>();
 
     private WorkflowEngine.Sleeper sleeper = new WorkflowEngine.Sleeper();
-    private boolean
-            endStateBreak =
-            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateBreak", "false"));
-    private boolean
-            endStateCancel =
-            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateCancel", "false"));
-    private boolean
-            endStateCancelInterrupt =
-            Boolean.parseBoolean(System.getProperty(
-                    "WorkflowEngineOperationsProcessor.endStateCancelInterrupt",
-                    "false"
-            ));
 
 
     public WorkflowEngineOperationsProcessor(
@@ -94,6 +82,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         this.manager = manager;
     }
 
+
     /**
      * Process the operations from a begin state
      */
@@ -107,57 +96,65 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         continueProcessing();
     }
 
+    public static enum LoopResult{
+        Continue,
+        FinishedFinal,
+        FinishedNoMoreChanges
+    }
+
+    /**
+     * Perform one loop step, process state changes and run runnable operations
+     * @return FinishedFinal if workflow is done, FinishedNoMoreChanges if no more operations to run and no more
+     * state changes,  Continue if loop should continue
+     * @throws InterruptedException
+     */
+    public LoopResult processStep() throws InterruptedException {
+        //wait for changes
+        boolean changed = processCompletedChanges(waitForChanges());
+
+        if (!changed) {
+            if (detectNoMoreChanges()) {
+                if (workflowEngine.isWorkflowEndState()) {
+                    //end state reached, and no more changes are pending
+                    return LoopResult.FinishedFinal;
+                } else {
+                    //no pending operations, signalling no new state changes will occur
+                    return LoopResult.FinishedNoMoreChanges;
+                }
+            }
+            //no changes within sleep time, try again
+            return LoopResult.Continue;
+        }
+
+        if(!workflowEngine.isWorkflowEndState()){
+            //some changes made to state, so review pending operations
+            processOperations(results::add);
+        }
+        return LoopResult.Continue;
+    }
 
     /**
      * Continue processing from current state
      */
     private void continueProcessing() {
-        boolean cancel = false;
-        boolean cancelInterrupt = false;
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                boolean changed = false;
-
-                //wait for changes
-                changed |= processCompletedChanges(waitForChanges());
-
-                if (!changed) {
-                    if (detectNoMoreChanges()) {
-                        //no pending operations, signalling no new state changes will occur
-                        eventHandler.event(
-                                WorkflowSystemEventType.EndOfChanges,
-                                "No more state changes expected, finishing workflow.",
-                                StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
-                        );
-                        return;
-                    }
-                    if (Thread.currentThread().isInterrupted()) {
-                        break;
-                    }
-                    //no changes within sleep time, try again
-                    continue;
-                }
-
-
-                if (workflowEngine.isWorkflowEndState()) {
-                    //end state reached
+                LoopResult result = processStep();
+                if (result == LoopResult.FinishedFinal) {
                     eventHandler.event(
                             WorkflowSystemEventType.WorkflowEndState,
                             "Workflow end state reached.",
                             StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
                     );
-
-                    if (endStateBreak) {
-                        cancel = endStateCancel;
-                        cancelInterrupt = endStateCancelInterrupt;
-                        break;
-                    } else {
-                        return;
-                    }
+                    return;
+                } else if (result == LoopResult.FinishedNoMoreChanges) {
+                    eventHandler.event(
+                            WorkflowSystemEventType.EndOfChanges,
+                            "No more state changes expected, finishing workflow.",
+                            StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
+                    );
+                    return;
                 }
-
-                //some changes made to state, so review pending operations
-                processOperations(results::add);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -166,10 +163,12 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             eventHandler.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
             cancelFutures(true);
             interrupted = Thread.interrupted();
-        } else if (cancel) {
-            cancelFutures(cancelInterrupt);
         }
         awaitFutures();
+    }
+
+    boolean shouldWorkflowEnd() {
+        return workflowEngine.isWorkflowEndState() && detectNoMoreChanges();
     }
 
     private boolean processCompletedChanges(
@@ -181,28 +180,22 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
         boolean changed = false;
         for (WorkflowSystem.OperationCompleted<DAT> task : operationCompleteds) {
-            DAT result = task.getResult();
-            Map<String, String> state = new HashMap<>(task.getNewState().getState());
             changed |=
                     workflowEngine.processStateChange(
-                            StateWorkflowSystem.stateChange(
-                                    task.getIdentity(),
-                                    () -> {
-                                        if (null != sharedData && null != result) {
-                                            sharedData.addData(result);
-                                            Map<String, String> sharedState = sharedData.produceState();
-                                            state.putAll(sharedState);
-                                        }
-                                        return state;
-                                    },
-                                    sharedData
-                            )
+                            task.getIdentity(),
+                            task.getNewState(),
+                            task.getResult(),
+                            sharedData
                     );
         }
         return changed;
     }
 
-    boolean detectNoMoreChanges() {
+    /**
+     * @return true, if no running operations and no queued changes
+     */
+    synchronized boolean detectNoMoreChanges() {
+        //nb: synchronized to avoid race with finishedOperation method
         return inProcess.isEmpty() && stateChangeQueue.isEmpty();
     }
 
@@ -333,7 +326,11 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         return submit;
     }
 
-    private void finishedOperation(final WorkflowSystem.OperationCompleted<DAT> e, final OP operation) {
+    private synchronized void finishedOperation(final WorkflowSystem.OperationCompleted<DAT> e, final OP operation) {
+        //synchronize to prevent race condition with detectNoMoreChanges method
+        //because this method is called by an operation's thread, and the
+        //main thread may process the state change entry prior to
+        //this method removing the operation from inProcess set
         stateChangeQueue.add(e);
         inProcess.remove(operation);
     }
@@ -374,30 +371,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         results.add(take);
         results.addAll(pollChanges());
         return results;
-    }
-
-    /**
-     * Handle the state changes for the rule engine
-     *
-     * @param changes
-     */
-    private void processStateChanges(final Map<String, String> changes) {
-        eventHandler.event(WorkflowSystemEventType.WillProcessStateChange,
-                           String.format("saw state changes: %s", changes), changes
-        );
-
-        workflowEngine.getState().updateState(changes);
-
-        boolean update = Rules.update(workflowEngine.getRuleEngine(), workflowEngine.getState());
-        eventHandler.event(
-                WorkflowSystemEventType.DidProcessStateChange,
-                String.format(
-                        "applied state changes and rules (changed? %s): %s",
-                        update,
-                        workflowEngine.getState()
-                ),
-                workflowEngine.getState()
-        );
     }
 
     /**

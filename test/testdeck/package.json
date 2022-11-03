@@ -28,7 +28,7 @@
     "aws-sdk": "^2.318.0",
     "axios": "^0.18.0",
     "chalk": "^2.4.1",
-    "chromedriver": ">=96.0.0",
+    "chromedriver": ">=96.0.0 <107.0.2",
     "fast-xml-parser": "^3.16.0",
     "indent-string": "^3.2.0",
     "jest": "^25.1.0",
