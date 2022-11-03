@@ -26,9 +26,15 @@ databaseChangeLog = {
     }
 
     changeSet(author: "gschueler (generated)", id: "1653344096108-54") {
+        preConditions(onFail: "MARK_RAN") {
+            indexExists(tableName:"base_report", indexName: "EXEC_REPORT_IDX_0")
+        }
         dropIndex(indexName: "EXEC_REPORT_IDX_0", tableName: "base_report")
     }
     changeSet(author: "gschueler (generated)", id: "1653344096108-55") {
+        preConditions(onFail: "MARK_RAN") {
+            indexExists(tableName:"base_report", indexName: "EXEC_REPORT_IDX_2")
+        }
         dropIndex(indexName: "EXEC_REPORT_IDX_2", tableName: "base_report")
     }
 
@@ -40,6 +46,11 @@ databaseChangeLog = {
     }
 
     changeSet(author: "gschueler (generated)", id: "1653344096108-2") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(tableName:"base_report", indexName: "EXEC_REPORT_IDX_0")
+            }
+        }
         createIndex(indexName: "EXEC_REPORT_IDX_0", tableName: "base_report", unique: "false") {
             column(name: "ctx_project")
 
@@ -53,6 +64,11 @@ databaseChangeLog = {
 
 
     changeSet(author: "gschueler (generated)", id: "1653344096108-4") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                indexExists(tableName:"base_report", indexName: "EXEC_REPORT_IDX_2")
+            }
+        }
         createIndex(indexName: "EXEC_REPORT_IDX_2", tableName: "base_report", unique: "false") {
             column(name: "execution_id")
         }
