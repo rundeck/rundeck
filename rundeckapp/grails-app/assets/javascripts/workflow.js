@@ -213,7 +213,7 @@ RDWorkflow.parseContextId= function (context) {
         return null;
     }
     //if context is already array, return it
-    if (jQuery.isArray(context)) {
+    if (context.isArray) {
         return context;
     }
     //split context into project,type,object
@@ -230,7 +230,7 @@ RDWorkflow.createContextId = function (contextArr) {
         return null;
     }
     //if context is already array, return it
-    if (!jQuery.isArray(contextArr)) {
+    if (!contextArr.isArray) {
         contextArr = [contextArr];
     }
     //split context into project,type,object

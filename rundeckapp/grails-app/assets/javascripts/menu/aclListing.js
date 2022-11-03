@@ -248,14 +248,14 @@ function PolicyFiles(data,loadableEndpoint) {
             contentType:'json',
             method:'POST',
             data:JSON.stringify({files:needsLoad.map(a=>a.id())})
-        }).success(function (data){
+        }).done(function (data){
             data.forEach(function(d){
                 let found=needsLoad.find(a=>a.id()===d.id)
                 if(found){
                     found.loader.onData(d)
                 }
             })
-        }).error(function(data, jqxhr, err){
+        }).fail(function(data, jqxhr, err){
             needsLoad.forEach(a=>a.loader.onError("Error loading policy information: "+err))
         })
     }

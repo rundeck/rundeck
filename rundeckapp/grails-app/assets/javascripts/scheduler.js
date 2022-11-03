@@ -84,7 +84,7 @@ function onScheduleSubmit() {
     if (!isValidDate()) {
         return false;
     }
-    $form.submit(function onScheduleFormSubmit() {
+    $form.on('submit',function onScheduleFormSubmit() {
         var $tempElement = jQuery('<input type="hidden"/>');
         $tempElement.attr('name', '_action_runJobLater')
             .appendTo($form);
@@ -92,7 +92,7 @@ function onScheduleSubmit() {
         var $timeElement = jQuery('#runAtTime');
         $timeElement.appendTo($form);
     });
-    $form.submit();
+    $form.trigger('submit');
 }
 
 /**
@@ -100,7 +100,7 @@ function onScheduleSubmit() {
  * picker to the current time.
  **/
 function onSchedulerPopover() {
-    jQuery('#scheduleSubmitButton').click(onScheduleSubmit);
+    jQuery('#scheduleSubmitButton').on('click',onScheduleSubmit);
 
     jQuery('#datetimepicker').datetimepicker({
         format: 'ddd, MMM D YYYY, HH:mm',
@@ -110,7 +110,7 @@ function onSchedulerPopover() {
 
 // Initialise the popover for scheduling
 jQuery(document).ready(function() {
-    jQuery('#scheduleSubmitButton').click(onScheduleSubmit);
+    jQuery('#scheduleSubmitButton').on('click',onScheduleSubmit);
     jQuery('#datetimepicker').datetimepicker({
         format: 'ddd, MMM D YYYY, HH:mm',
         minDate: moment(),

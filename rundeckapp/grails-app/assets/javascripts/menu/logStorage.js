@@ -93,7 +93,7 @@ function StorageStats(data) {
             url: _genUrl(url,opts),
             method:'POST',
             beforeSend: _createAjaxSendTokensHandler(self.tokensName)
-        }).success(_createAjaxReceiveTokensHandler(self.tokensName));
+        }).done(_createAjaxReceiveTokensHandler(self.tokensName));
     };
     self.resumeAllIncomplete = function () {
         return self.ajaxAction(self.resumeUrl,{}).success(function(data){
