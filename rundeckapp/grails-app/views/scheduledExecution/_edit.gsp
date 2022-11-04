@@ -343,7 +343,7 @@
                                                     showNodeIcon   : false,
                                                     hideTitle      : false,
                                                     hideDescription: false,
-                                                    fullDescription: true
+                                                    fullDescription: false
                                             ]}"/>
                                         </label>
                                     </div>

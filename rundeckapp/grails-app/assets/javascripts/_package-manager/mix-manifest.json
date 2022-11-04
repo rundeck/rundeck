@@ -1,6 +1,5 @@
 {
     "/vendor/jquery.js": "/vendor/jquery.js",
-    "/vendor/jquery-migrate.js": "/vendor/jquery-migrate.js",
     "/vendor/jquery-ui.js": "/vendor/jquery-ui.js",
     "/vendor/jquery-ui.css": "/vendor/jquery-ui.css",
     "/vendor/jquery-ui-timepicker-addon.js": "/vendor/jquery-ui-timepicker-addon.js",

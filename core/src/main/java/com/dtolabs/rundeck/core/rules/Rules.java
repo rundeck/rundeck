@@ -198,10 +198,25 @@ public class Rules {
      * @return true if state was modified, false if no state change occured
      */
     public static boolean update(RuleEngine ruleEngine, MutableStateObj state) {
-        StateObj newState = ruleEngine.evaluateRules(state);
+        return update(ruleEngine, state, null);
+    }
+
+    /**
+     * Update the state by evaluating the rules, and applying state changes
+     * @param ruleEngine rule engine
+     * @param state state
+     * @param readableState optional additional state
+     * @return
+     */
+    public static boolean update(RuleEngine ruleEngine, MutableStateObj state, StateObj readableState) {
+        Map<String, String> evalState = new HashMap<>();
+        if (readableState != null) {
+            evalState.putAll(readableState.getState());
+        }
+        evalState.putAll(state.getState());
+        StateObj newState = ruleEngine.evaluateRules(new DataState(evalState));
         state.updateState(newState);
         return newState.getState().size() > 0;
-
     }
 
     public static java.util.function.Predicate<? super Rule> ruleApplies(final StateObj state) {

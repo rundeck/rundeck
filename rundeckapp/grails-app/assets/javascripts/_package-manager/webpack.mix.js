@@ -4,7 +4,6 @@ let mix = require('laravel-mix');
 
 mix
     .copy('node_modules/jquery/dist/jquery.min.js', '../vendor/jquery.js')
-    .copy('node_modules/jquery-migrate/dist/jquery-migrate.js', '../vendor/jquery-migrate.js')
     .copy('node_modules/jquery-ui-dist/jquery-ui.min.js', '../vendor/jquery-ui.js')
     .copy('node_modules/jquery-ui-dist/jquery-ui.css', '../vendor/jquery-ui.css')
     .copy('node_modules/jquery-ui-timepicker-addon/dist/jquery-ui-timepicker-addon.min.js', '../vendor/jquery-ui-timepicker-addon.js')

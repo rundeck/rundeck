@@ -22,11 +22,13 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.core.GrailsApplication
+import org.rundeck.app.data.RdPageable
+import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
+import org.rundeck.spi.data.DataManager
 import org.rundeck.util.Sizes
-import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
 import rundeck.services.UserService
@@ -42,6 +44,11 @@ class UserController extends ControllerBase{
     UserService userService
     GrailsApplication grailsApplication
     def configurationService
+    DataManager rundeckDataManager
+
+    private TokenDataProvider getTokenProvider() {
+        rundeckDataManager.getProviderForType(TokenDataProvider)
+    }
 
     static allowedMethods = [
             addFilterPref      : 'POST',
@@ -128,16 +135,8 @@ class UserController extends ControllerBase{
             return
         }
 
-        def tokenTotal = AuthToken.createCriteria().count {
-            if (!tokenAdmin) {
-                eq("creator", u.login)
-            }
-            or {
-                eq("type", AuthenticationToken.AuthTokenType.USER)
-                isNull("type")
-            }
-
-        }
+        def tokenTotal = tokenAdmin ? tokenProvider.countTokensByType(AuthenticationToken.AuthTokenType.USER) :
+                tokenProvider.countTokensByCreatorAndType(u.login, AuthenticationToken.AuthTokenType.USER)
 
         int max = (params.max && params.max.isInteger()) ? params.max.toInteger() :
                 configurationService.getInteger(
@@ -154,22 +153,10 @@ class UserController extends ControllerBase{
             offset = tokenTotal - diff
         }
 
-        def tokenList = AuthToken.createCriteria().list {
-            if (!tokenAdmin) {
-                eq("creator", u.login)
-            }
-            if (offset) {
-                firstResult(offset)
-            }
-            if (max) {
-                maxResults(max)
-            }
-            or {
-                eq("type", AuthenticationToken.AuthTokenType.USER)
-                isNull("type")
-            }
-            order("dateCreated", "desc")
-        }
+        def pageable = new RdPageable(offset: offset, max: max).withOrder("dateCreated","desc")
+        def tokenList = tokenAdmin ? tokenProvider.findAllTokensByType(AuthenticationToken.AuthTokenType.USER, pageable) :
+                tokenProvider.findAllUserTokensByCreator(u.login, pageable)
+
         params.max = max
         params.offset = offset
 
@@ -429,7 +416,7 @@ class UserController extends ControllerBase{
                 if(lastExec?.size()>0){
                     obj.lastJob = lastExec.get(0).dateStarted
                 }
-                def tokenList = AuthToken.findAllByUser(it)
+                def tokenList = tokenProvider.findAllByUser(it.id.toString())
                 obj.tokens = tokenList?.size()
                 userList.put(it.login,obj)
             }
@@ -531,8 +518,7 @@ class UserController extends ControllerBase{
                     obj.lastJob = lastExec
                 }
             }
-            def tokenCount = countUserApiTokens(it)
-            obj.tokens = tokenCount
+            obj.tokens = tokenProvider.countTokensByUser(it.id.toString())
             obj.loggedStatus = userService.getLoginStatus(it)
             obj.lastHostName = it.lastLoggedHostName
             if (userService.isSessionIdRegisterEnabled()) {
@@ -584,18 +570,6 @@ class UserController extends ControllerBase{
         )
     }
 
-    protected Integer countUserApiTokens(User user) {
-        return AuthToken.createCriteria().list {
-            projections {
-                count()
-            }
-            eq("user",user)
-            or {
-                eq("type", AuthenticationToken.AuthTokenType.USER)
-                isNull("type")
-            }
-        }[0]
-    }
     public def update (User user) {
         withForm{
         if (user.hasErrors()) {
@@ -922,7 +896,7 @@ class UserController extends ControllerBase{
                 if (adminAuth) {
                     //admin can delete any token
                     found = params.token ?
-                            AuthToken.findByToken(params.token) :
+                            tokenProvider.tokenLookup(params.token) :
                             apiService.findTokenId(params.tokenid)
                 } else {
                     //users can delete owned token
