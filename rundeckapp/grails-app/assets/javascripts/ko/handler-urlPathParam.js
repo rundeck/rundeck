@@ -35,11 +35,11 @@ ko.bindingHandlers.urlPathParam = {
         var values=[];
         if(typeof(data)!='object'){
             values=[data];
-        }else if(data.isArray){
+        }else if(Array.isArray(data)){
             values=data;
         }else if(typeof(data)=='object'){
             values=ko.utils.unwrapObservable(data['value']);
-            if(!values.isArray){
+            if(!Array.isArray(values)){
                 values=[values];
             }
         }
