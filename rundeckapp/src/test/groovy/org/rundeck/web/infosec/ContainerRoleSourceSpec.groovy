@@ -23,13 +23,17 @@ import org.springframework.security.core.context.SecurityContextImpl
 import spock.lang.Specification
 
 class ContainerRoleSourceSpec extends Specification {
+
     def "GetUserRoles"() {
         setup:
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "***", userRoles)
         SecurityContextHolder.setContext(new SecurityContextImpl(auth))
 
         when:
-        def roles = new ContainerRoleSource().getUserRoles(user, null)
+        def container = new ContainerRoleSource()
+        container.setDelimiter(',')
+        container.setEnabled(true)
+        def roles = container.getUserRoles(user, null)
 
         then:
         roles == expected

@@ -25,7 +25,7 @@ import java.util.regex.Pattern
  */
 class PreauthenticatedAttributeRoleSource implements AuthorizationRoleSource {
     String attributeName
-    String delimiter=','
+    String delimiter
     boolean enabled
     @Override
     Collection<String> getUserRoles(final String username, final HttpServletRequest request) {

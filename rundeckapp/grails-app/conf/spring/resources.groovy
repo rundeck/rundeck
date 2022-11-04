@@ -544,16 +544,16 @@ beans={
 
     containerPrincipalRoleSource(ContainerPrincipalRoleSource){
         enabled=grailsApplication.config.getProperty("rundeck.security.authorization.containerPrincipal.enabled", Boolean.class, false)
-        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class)
+        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class, ',')
     }
     containerRoleSource(ContainerRoleSource){
         enabled=grailsApplication.config.getProperty("rundeck.security.authorization.container.enabled", Boolean.class, false)
-        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class)
+        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class, ',')
     }
     preauthenticatedAttributeRoleSource(PreauthenticatedAttributeRoleSource){
         enabled=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled", Boolean.class,false)
         attributeName=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.attributeName", String.class)
-        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class)
+        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class, ',')
     }
 
     def storageDir= new File(varDir, 'storage')

@@ -28,7 +28,7 @@ import java.util.regex.Pattern
  * Returns list of known roles that user is in via {@link HttpServletRequest#isUserInRole(java.lang.String)}
  */
 class ContainerRoleSource implements AuthorizationRoleSource {
-    String delimiter=','
+    String delimiter
     boolean enabled
 
     @Override

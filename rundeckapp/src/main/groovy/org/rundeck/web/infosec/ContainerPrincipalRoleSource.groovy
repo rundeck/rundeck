@@ -26,7 +26,7 @@ import java.util.regex.Pattern
  * Return a list of roles by introspecting the userPrincipal object
  */
 class ContainerPrincipalRoleSource implements AuthorizationRoleSource {
-    String delimiter=','
+    String delimiter
     boolean enabled
     @Override
     Collection<String> getUserRoles(final String username, final HttpServletRequest request) {
