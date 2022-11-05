@@ -14,51 +14,50 @@ import java.util.SortedSet;
 @Data
 @Builder
 public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
-
+    
     private String jobName;
     private String projectName;
     private String userName;
-    private Map optionsValues;
+    private SortedSet<JobOption> options;
+    private Map<String, String> optionsValues;
     private String nodeFilter;
     private INodeSet nodes;
-    private SortedSet<JobOption> options;
-    
     private Map executionMetadata;
-
+    
     
     public JobPreExecutionEventImpl(String jobName,
                                     String projectName,
                                     String userName,
-                                    Map optionsValues,
-                                    INodeSet nodes,
-                                    String nodeFilter,
                                     SortedSet<JobOption> options,
+                                    Map<String, String> optionsValues,
+                                    String nodeFilter,
+                                    INodeSet nodes,
                                     Map executionMetadata) {
-
+        
         this.jobName = jobName;
         this.projectName = projectName;
         this.userName = userName;
-        this.nodes = nodes;
-        this.nodeFilter = nodeFilter;
         this.options = options;
         this.optionsValues = Optional.ofNullable(optionsValues)
-            .map(map -> new HashMap(map))
+            .map(HashMap::new)
             .orElseGet(HashMap::new);
+        this.nodeFilter = nodeFilter;
+        this.nodes = nodes;
         this.executionMetadata = Optional.ofNullable(executionMetadata)
             .map(map -> new HashMap(map))
             .orElseGet(HashMap::new);
     }
-
+    
     public JobPreExecutionEventImpl(JobPreExecutionEvent origin) {
         this(
-            origin.getJobName(), 
+            origin.getJobName(),
             origin.getProjectName(),
             origin.getUserName(),
-            origin.getOptionsValues(),
-            origin.getNodes(),
-            origin.getNodeFilter(),
             origin.getOptions(),
+            origin.getOptionsValues(),
+            origin.getNodeFilter(),
+            origin.getNodes(),
             origin.getExecutionMetadata());
     }
-
+    
 }

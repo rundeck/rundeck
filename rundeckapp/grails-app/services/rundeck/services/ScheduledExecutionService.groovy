@@ -4149,10 +4149,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
                 scheduledExecution.jobName,
                 scheduledExecution.project,
-                authContext.getUsername(),
+                scheduledExecution.jobOptionsSet(),
                 nodeSet,
-                scheduledExecution?.filter,
-                scheduledExecution.jobOptionsSet()
+                authContext.getUsername(),
+                scheduledExecution?.filter
         )
         def jobEventStatus
         try {

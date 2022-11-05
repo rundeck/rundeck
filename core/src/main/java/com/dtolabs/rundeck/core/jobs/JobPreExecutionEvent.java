@@ -22,15 +22,15 @@ public interface JobPreExecutionEvent {
 
     /**
      *
-     * @return List<LinkedHashMap> options of the job.
-     */
-    SortedSet<JobOption> getOptions();
-
-    /**
-     *
      * @return String user name triggering the job.
      */
     String getUserName();
+
+    /**
+     *
+     * @return List<LinkedHashMap> options of the job.
+     */
+    SortedSet<JobOption> getOptions();
 
     /**
      *
