@@ -3,10 +3,13 @@ package com.dtolabs.rundeck.plugins.jobs;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.jobs.JobOption;
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent;
-import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
+import lombok.Builder;
+import lombok.Data;
 
-import java.util.*;
+import java.util.SortedSet;
 
+@Data
+@Builder
 public class JobPersistEventImpl implements JobPersistEvent {
 
     private String jobName;
@@ -30,38 +33,16 @@ public class JobPersistEventImpl implements JobPersistEvent {
         this.nodeFilter = nodeFilter;
         this.options = options;
     }
-
+    
     public JobPersistEventImpl(JobPersistEvent origin) {
         this(
-                origin.getJobName(),
-                origin.getProjectName(),
-                origin.getUserName(),
-                origin.getNodes(),
-                origin.getNodeFilter(),
-                origin.getOptions()
+            origin.getJobName(),
+            origin.getProjectName(),
+            origin.getUserName(),
+            origin.getNodes(),
+            origin.getNodeFilter(),
+            origin.getOptions()
         );
     }
-
-    @Override
-    public String getJobName() { return this.jobName; }
-
-    @Override
-    public String getProjectName() { return this.projectName; }
-
-    @Override
-    public SortedSet<JobOption> getOptions() { return this.options; }
-
-    @Override
-    public INodeSet getNodes() { return this.nodes; }
-
-    public void setNodes(INodeSet nodeSet) { this.nodes = nodeSet; }
-
-    @Override
-    public String getUserName() { return this.userName; }
-
-    @Override
-    public String getNodeFilter() { return this.nodeFilter; }
-
-    public void setOptions(SortedSet<JobOption> options) { this.options = options; }
 
 }

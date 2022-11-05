@@ -23,13 +23,15 @@ import java.util.Map;
 import java.util.SortedSet;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class JobLifecycleStatusImpl
-        implements JobLifecycleStatus
-{
+    implements JobLifecycleStatus {
+    
     private boolean successful;
     private String errorMessage;
     private boolean useNewValues;
     private Map optionsValues;
     private SortedSet<JobOption> options;
+    private boolean useNewMetadata;
+    private Map newExecutionMetadata;
 }

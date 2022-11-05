@@ -3,77 +3,62 @@ package com.dtolabs.rundeck.plugins.jobs;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.jobs.JobOption;
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
-import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
+import lombok.Builder;
+import lombok.Data;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.SortedSet;
 
+@Data
+@Builder
 public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
 
     private String jobName;
     private String projectName;
     private String userName;
-    private HashMap optionsValues;
+    private Map optionsValues;
     private String nodeFilter;
     private INodeSet nodes;
     private SortedSet<JobOption> options;
+    
+    private Map executionMetadata;
 
-
+    
     public JobPreExecutionEventImpl(String jobName,
                                     String projectName,
                                     String userName,
-                                    HashMap optionsValues,
+                                    Map optionsValues,
                                     INodeSet nodes,
                                     String nodeFilter,
-                                    SortedSet<JobOption> options) {
+                                    SortedSet<JobOption> options,
+                                    Map executionMetadata) {
 
         this.jobName = jobName;
         this.projectName = projectName;
         this.userName = userName;
-        if(optionsValues != null){
-            this.optionsValues = (HashMap) optionsValues.clone();
-        }else{
-            this.optionsValues = new HashMap();
-        }
         this.nodes = nodes;
         this.nodeFilter = nodeFilter;
         this.options = options;
+        this.optionsValues = Optional.ofNullable(optionsValues)
+            .map(map -> new HashMap(map))
+            .orElseGet(HashMap::new);
+        this.executionMetadata = Optional.ofNullable(executionMetadata)
+            .map(map -> new HashMap(map))
+            .orElseGet(HashMap::new);
     }
 
-    public JobPreExecutionEventImpl(JobPreExecutionEventImpl origin) {
-        this(origin.jobName, origin.projectName, origin.userName, origin.optionsValues, origin.nodes, origin.nodeFilter, origin.options);
+    public JobPreExecutionEventImpl(JobPreExecutionEvent origin) {
+        this(
+            origin.getJobName(), 
+            origin.getProjectName(),
+            origin.getUserName(),
+            origin.getOptionsValues(),
+            origin.getNodes(),
+            origin.getNodeFilter(),
+            origin.getOptions(),
+            origin.getExecutionMetadata());
     }
-
-    @Override
-    public String getJobName() {
-        return this.jobName;
-    }
-
-    @Override
-    public String getProjectName() {
-        return this.projectName;
-    }
-
-    @Override
-    public SortedSet<JobOption> getOptions() {
-        return this.options;
-    }
-
-    @Override
-    public String getUserName() {
-        return this.userName;
-    }
-
-    @Override
-    public HashMap getOptionsValues() {
-        return this.optionsValues;
-    }
-
-    @Override
-    public String getNodeFilter() {
-        return this.nodeFilter;
-    }
-
-    @Override
-    public INodeSet getNodes() { return this.nodes; }
 
 }

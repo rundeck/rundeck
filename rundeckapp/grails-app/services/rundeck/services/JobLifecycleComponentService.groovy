@@ -140,12 +140,12 @@ class JobLifecycleComponentService implements ProjectConfigurable {
 
     List<NamedJobLifecycleComponent> loadProjectComponents(String project){
         List compList = []
-        compList.addAll(loadProjectConfiguredPlugins(project))
         compList.addAll(beanComponents.collect {
             new NamedJobLifecycleComponent(
                 component: it,
                 name: it.class.canonicalName)
         })
+        compList.addAll(loadProjectConfiguredPlugins(project))
         compList
     }
     
@@ -181,88 +181,73 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      *
      * @param event job event
      * @param eventType type of event
-     * @param plugins list of NamedJobLifecycleComponent
+     * @param components list of NamedJobLifecycleComponent
      * @return JobEventStatus response from plugin implementation
      */
-    JobLifecycleStatus handleEvent(def event, EventType eventType, List<NamedJobLifecycleComponent> plugins)
+    JobLifecycleStatus handleEvent(def receivedEvent, EventType eventType, List<NamedJobLifecycleComponent> components)
             throws JobLifecycleComponentException {
-        if (!plugins) {
+        
+        if (!components) {
             return null
         }
-        def errors = [:]
-        def results = [:]
-        Exception firstErr
-        JobLifecycleStatus prevResult = null
-        def prevEvent = event
+        
+        Map<String, Exception> errors = [:]
         boolean success = true
-        for (NamedJobLifecycleComponent plugin : plugins) {
+        boolean useNewValues = false
+        
+        def currentEvent = receivedEvent
+        
+        for (NamedJobLifecycleComponent component : components) {
             try {
+                JobLifecycleStatus result = handleEventForPlugin(eventType, component, currentEvent)
 
-                def curEvent = mergeEvent(prevResult, prevEvent)
-                JobLifecycleStatus result = handleEventForPlugin(eventType, plugin, curEvent)
                 if (result != null && !result.successful) {
-                    success = false
-                    if (result != null && result.getErrorMessage() != null && !result.getErrorMessage().trim().isEmpty()) {
-                        throw new JobLifecyclePluginException(result.getErrorMessage())
-                    } else {
-                        throw new JobLifecyclePluginException(
-                                "Job Lifecycle Plugin: $plugin.name: result for $eventType: was unsuccessful: no message"
-                        )
-                    }
-
+                    throw new JobLifecycleComponentException("Error dispatcing event [${eventType}] for component [${component.name}]: " + result?.errorMessage)
                 }
-                if (result != null && result.isUseNewValues()) {
-                    results[plugin.name] = result
-                    prevResult = result
-                }
-                prevEvent = curEvent
+                
+                useNewValues = result?.isUseNewValues() || result?.isUseNewMetadata()
+                currentEvent = mergeEvent(result, currentEvent)
+                
             } catch (Exception e) {
                 success = false
-                if (!firstErr) {
-                    firstErr = e
-                }
-                errors[plugin.name] = e
+                errors[component.name] = e
             }
         }
-        if (errors) {
-            errors.each { name, Throwable e ->
-                log.debug("Error (JobLifecyclePlugin:$name/$eventType): $e.message", e)
-                log.warn("Error (JobLifecyclePlugin:$name/$eventType): $e.message")
+        
+        if (!success || errors) {
+            LOG.warn("Errors processing Job Component Event [${eventType}]. See debug log for details.")
+            errors.each { name, e ->
+                LOG.debug("    For component [${name}]: " + e.getMessage(), e)
             }
-            if (firstErr) {
-                throw firstErr
-            }
+            throw new JobLifecycleComponentException("Aborting event handling due to (${errors.size()}) errors: " + errors.collect { name, e ->
+                "{Component: [${name}] Message: [${e.message}]}"
+            }.join(", "))
         }
 
-        return mergeEventResult(success, prevResult, prevEvent, !results.isEmpty())
+        return createEventResult(success, currentEvent, useNewValues)
     }
 
     /**
-     * Merge original event, event status result, return a new result
+     * Create a new event result.
      * @param success overall success
-     * @param jobEventStatus result of plugin handling event
-     * @param jobEvent event
-     * @return result with merged contents for the type of event
+     * @param jobEvent event Processed event.
+     * @return result with processed contents for the type of event
      */
-    JobLifecycleStatus mergeEventResult(boolean success, final JobLifecycleStatus jobEventStatus, final Object jobEvent, boolean useNewValues) {
+    static JobLifecycleStatus createEventResult(boolean success, final Object jobEvent, boolean useNewValues) {
+
         if (jobEvent instanceof JobPreExecutionEvent) {
-            HashMap<String, String> newOptionsValues = mergePreExecutionOptionsValues(
-                    jobEvent.optionsValues,
-                    jobEventStatus
-            )
             return new JobEventStatusImpl(
-                    successful: success,
-                    optionsValues: newOptionsValues,
-                    useNewValues: useNewValues
+                successful: success,
+                optionsValues: jobEvent.optionsValues,
+                useNewValues: useNewValues
             )
         } else if (jobEvent instanceof JobPersistEvent) {
-            TreeSet<JobOption> options = mergePersistOptions(jobEvent.options, jobEventStatus)
             return new JobEventStatusImpl(
-                    successful: success,
-                    options: options,
-                    useNewValues: useNewValues
+                successful: success,
+                options: jobEvent.options,
+                useNewValues: useNewValues
             )
-        }else {
+        } else {
             throw new IllegalArgumentException("Unexpected type")
         }
     }
@@ -273,35 +258,28 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @param jobEvent
      * @return
      */
-    Object mergeEvent(final JobLifecycleStatus jobEventStatus, final Object jobEvent) {
+    static Object mergeEvent(final JobLifecycleStatus jobEventStatus, final def jobEvent) {
+
         if (jobEvent instanceof JobPreExecutionEvent) {
-            HashMap<String, String> newOptionsValues = mergePreExecutionOptionsValues(
-                    jobEvent.optionsValues,
-                    jobEventStatus
-            )
-            return new JobPreExecutionEventImpl(
-                    jobEvent.getJobName(),
-                    jobEvent.projectName,
-                    jobEvent.userName,
-                    newOptionsValues,
-                    jobEvent.nodes,
-                    jobEvent.nodeFilter,
-                    jobEvent.getOptions()
-            )
-        } else if (jobEvent instanceof JobPersistEvent) {
-            TreeSet<JobOption> options = mergePersistOptions(jobEvent.options, jobEventStatus)
-            def newEvent = new JobPersistEventImpl(jobEvent)
-            newEvent.setOptions(options)
+            def newEvent = new JobPreExecutionEventImpl(jobEvent);
+            newEvent.setOptionsValues(mergePreExecutionOptionsValues(jobEvent.optionsValues, jobEventStatus))
+            newEvent.setExecutionMetadata(mergePreExecutionMetadata(jobEvent.executionMetadata, jobEventStatus))
             return newEvent
+
+        } else if (jobEvent instanceof JobPersistEvent) {
+            def newEvent = new JobPersistEventImpl(jobEvent)
+            newEvent.setOptions(mergePersistOptions(jobEvent.options, jobEventStatus))
+            return newEvent
+
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }
     }
 
-    JobLifecycleStatus handleEventForPlugin(
+    static JobLifecycleStatus handleEventForPlugin(
         EventType eventType,
         NamedJobLifecycleComponent plugin,
-        event
+        Object event
     ) {
         switch (eventType) {
             case EventType.PRE_EXECUTION:
@@ -317,15 +295,34 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @param jobEventStatus result of pre execution event
      * @return new map with merged optionsvalues
      */
-    HashMap<String, String> mergePreExecutionOptionsValues(
+    static Map<String, String> mergePreExecutionOptionsValues(
             Map<String, String> optionsValues,
             JobLifecycleStatus jobEventStatus
     ) {
-        def newOptionsValues = new HashMap<String, String>(optionsValues ?: [:])
-        if (jobEventStatus && jobEventStatus.isUseNewValues() && jobEventStatus.optionsValues) {
+        if (jobEventStatus?.isUseNewValues() && jobEventStatus.optionsValues) {
+            def newOptionsValues = new HashMap<String, String>(optionsValues ?: [:])
             newOptionsValues.putAll(jobEventStatus.optionsValues)
+            return newOptionsValues
         }
-        newOptionsValues
+        return optionsValues
+    }
+  
+    /**
+     * Merge optionsValues map from event result if useNewValues is true and optionsValues is set
+     * @param optionsValues original optionsValues map, or null
+     * @param jobEventStatus result of pre execution event
+     * @return new map with merged optionsvalues
+     */
+    static Map mergePreExecutionMetadata(
+        Map executionMetadata,
+        JobLifecycleStatus jobEventStatus
+    ) {
+        if (jobEventStatus?.isUseNewMetadata() && jobEventStatus.newExecutionMetadata) {
+            def newOptionsValues = new HashMap(executionMetadata ?: [:])
+            newOptionsValues.putAll(jobEventStatus.newExecutionMetadata)
+            return newOptionsValues
+        }
+        return executionMetadata
     }
 
     /**
@@ -335,7 +332,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @param jobEventStatus result of event
      * @return merged set, or null
      */
-    TreeSet<JobOption> mergePersistOptions(SortedSet<JobOption> initial, JobLifecycleStatus jobEventStatus) {
+    static TreeSet<JobOption> mergePersistOptions(SortedSet<JobOption> initial, JobLifecycleStatus jobEventStatus) {
         SortedSet<JobOption> options = initial ? new TreeSet<JobOption>(initial) : null
 
         if (jobEventStatus && jobEventStatus.isUseNewValues()) {
