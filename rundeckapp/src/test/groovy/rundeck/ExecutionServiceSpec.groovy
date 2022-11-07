@@ -83,7 +83,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     }
 
     def setup(){
-        service.jobLifecyclePluginService = Mock(JobLifecycleComponentService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
         service.executionValidatorService = new ExecutionValidatorService()
         service.logFileStorageService=Mock(LogFileStorageService)
         service.fileUploadService=Mock(FileUploadService)
@@ -5322,7 +5322,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure remote option changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecycleComponentService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedOption1" : "secured option changed value"]
@@ -5380,7 +5380,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure exposed option changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecycleComponentService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value"]
@@ -5439,7 +5439,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure remote and exposed options changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecycleComponentService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value",

@@ -51,7 +51,7 @@ class PluginApiService {
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
-    JobLifecycleComponentService jobLifecyclePluginService
+    JobLifecycleComponentService jobLifecycleComponentService
     def rundeckPluginRegistry
     LinkGenerator grailsLinkGenerator
 
@@ -104,7 +104,7 @@ class PluginApiService {
 
         //web-app level plugin descriptions
         if(featureService.featurePresent(Features.JOB_LIFECYCLE_PLUGIN)) {
-            pluginDescs[jobLifecyclePluginService.jobLifecyclePluginProviderService.name]=jobLifecyclePluginService.listJobLifecyclePlugins().collect {
+            pluginDescs[jobLifecycleComponentService.jobLifecyclePluginProviderService.name]=jobLifecycleComponentService.listJobLifecyclePlugins().collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
         }

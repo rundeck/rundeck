@@ -177,7 +177,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def executionUtilService
     FileUploadService fileUploadService
     JobSchedulerService jobSchedulerService
-    JobLifecycleComponentService jobLifecyclePluginService
+    JobLifecycleComponentService jobLifecycleComponentService
     ExecutionLifecyclePluginService executionLifecyclePluginService
     SchedulesManager jobSchedulesService
     private def triggerComponents
@@ -4156,7 +4156,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
         def jobEventStatus
         try {
-            jobEventStatus = jobLifecyclePluginService?.beforeJobSave(scheduledExecution, jobPersistEvent)
+            jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution, jobPersistEvent)
         } catch (JobLifecyclePluginException exception) {
             log.debug("JobLifecycle error: " + exception.message, exception)
             log.warn("JobLifecycle error: " + exception.message)

@@ -318,9 +318,9 @@ class JobLifecycleComponentService implements ProjectConfigurable {
         JobLifecycleStatus jobEventStatus
     ) {
         if (jobEventStatus?.isUseNewMetadata() && jobEventStatus.newExecutionMetadata) {
-            def newOptionsValues = new HashMap(executionMetadata ?: [:])
-            newOptionsValues.putAll(jobEventStatus.newExecutionMetadata)
-            return newOptionsValues
+            def newExecutionMetadata = new HashMap(executionMetadata ?: [:])
+            newExecutionMetadata.putAll(jobEventStatus.newExecutionMetadata)
+            return newExecutionMetadata
         }
         return executionMetadata
     }

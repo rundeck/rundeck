@@ -148,7 +148,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
-    JobLifecycleComponentService jobLifecyclePluginService
+    JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecyclePluginService
     AuditEventsService auditEventsService
 
@@ -2572,6 +2572,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         HashMap optparams
         optparams = parseJobOptionInput(props, scheduledExec, authContext)
         def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
+        if(result?.isUseNewMetadata()) {
+            props.extraMetadataMap = result.newExecutionMetadata
+        }
         if(result?.isUseNewValues()){
             optparams = result.optionsValues
             checkSecuredOptions(result.optionsValues, securedOpts, securedExposedOpts)
@@ -4223,9 +4226,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             optparams,
             nodeFilter,
             nodes,
-            null)
+            props.extraMetadataMap)
         try {
-            return jobLifecyclePluginService.beforeJobExecution(scheduledExecution, event)
+            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
         } catch (JobLifecyclePluginException jpe) {
             throw new ExecutionServiceValidationException(jpe.message, optparams, null)
         }

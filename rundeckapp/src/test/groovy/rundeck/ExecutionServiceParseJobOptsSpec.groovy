@@ -33,7 +33,7 @@ class ExecutionServiceParseJobOptsSpec extends Specification implements ServiceU
     }
 
     def setup(){
-        service.jobLifecyclePluginService = Mock(JobLifecycleComponentService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
     }
 
     @Unroll

@@ -65,7 +65,7 @@ public class ScheduledExecutionServiceSpec extends Specification implements Data
         ScheduledExecutionService service = new ScheduledExecutionService()
         def authContext = Mock(UserAndRolesAuthContext)
         service.frameworkService = Mock(FrameworkService)
-        service.jobLifecyclePluginService = Mock(JobLifecycleComponentService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobSave(_, _) >> {throw new JobLifecyclePluginException("message from life cycle plugin")}
         }
         def fwknode = new NodeEntryImpl('fwknode')
