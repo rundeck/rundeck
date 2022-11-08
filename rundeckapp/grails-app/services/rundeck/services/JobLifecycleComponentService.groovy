@@ -193,7 +193,8 @@ class JobLifecycleComponentService implements ProjectConfigurable {
         
         Map<String, Exception> errors = [:]
         boolean success = true
-        boolean useNewValues = false
+        boolean useNewOptionValues = false
+        boolean useNewExecutionMetadata = false
         
         def currentEvent = receivedEvent
         
@@ -205,7 +206,8 @@ class JobLifecycleComponentService implements ProjectConfigurable {
                     throw new JobLifecycleComponentException("Error dispatcing event [${eventType}] for component [${component.name}]: " + result?.errorMessage)
                 }
                 
-                useNewValues = result?.isUseNewValues() || result?.isUseNewMetadata()
+                useNewOptionValues = result?.isUseNewValues() || useNewOptionValues
+                useNewExecutionMetadata = result?.isUseNewMetadata() || useNewExecutionMetadata
                 currentEvent = mergeEvent(result, currentEvent)
                 
             } catch (Exception e) {
@@ -224,7 +226,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
             }.join(", "))
         }
 
-        return createEventResult(success, currentEvent, useNewValues)
+        return createEventResult(success, currentEvent, useNewOptionValues, useNewExecutionMetadata)
     }
 
     /**
@@ -233,19 +235,21 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @param jobEvent event Processed event.
      * @return result with processed contents for the type of event
      */
-    static JobLifecycleStatus createEventResult(boolean success, final Object jobEvent, boolean useNewValues) {
+    static JobLifecycleStatus createEventResult(boolean success, final Object jobEvent, boolean useNewOptionValues, boolean useNewExecutionMetadata) {
 
         if (jobEvent instanceof JobPreExecutionEvent) {
             return new JobEventStatusImpl(
                 successful: success,
+                useNewValues: useNewOptionValues,
                 optionsValues: jobEvent.optionsValues,
-                useNewValues: useNewValues
+                useNewMetadata: useNewExecutionMetadata,
+                newExecutionMetadata: jobEvent.executionMetadata
             )
         } else if (jobEvent instanceof JobPersistEvent) {
             return new JobEventStatusImpl(
                 successful: success,
                 options: jobEvent.options,
-                useNewValues: useNewValues
+                useNewValues: useNewOptionValues
             )
         } else {
             throw new IllegalArgumentException("Unexpected type")
@@ -391,4 +395,6 @@ class JobEventStatusImpl implements JobLifecycleStatus {
     Map optionsValues
     boolean useNewValues
     SortedSet<JobOption> options
+    boolean useNewMetadata
+    Map newExecutionMetadata
 }

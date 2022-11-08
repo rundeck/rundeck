@@ -2572,6 +2572,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         HashMap optparams
         optparams = parseJobOptionInput(props, scheduledExec, authContext)
         def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
+        
+        // TODO REFACTOR THIS METHOD!!!!!!
+        // TODO REFACTOR THIS METHOD!!!!!!
+        // TODO REFACTOR THIS METHOD!!!!!!
+        // TODO REFACTOR THIS METHOD!!!!!!
+        // TODO REFACTOR THIS METHOD!!!!!!
+        // TODO REFACTOR THIS METHOD!!!!!!
+        
+        
         if(result?.isUseNewMetadata()) {
             props.extraMetadataMap = result.newExecutionMetadata
         }
