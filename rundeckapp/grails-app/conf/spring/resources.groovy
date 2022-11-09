@@ -95,6 +95,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.data.ProviderRegistration
+import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
@@ -812,14 +813,16 @@ beans={
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
-
+    rundeckProjectDataProvider(GormProjectDataProvider)
 
     //manager setup
     rundeckDataManager(BaseDataManager)
     rundeckDataProviderRegistration(ProviderRegistration) {
         dataManager = ref('rundeckDataManager')
         providers = [
-            ref('tokenDataProvider')
+            ref('tokenDataProvider'),
+            ref('rundeckProjectDataProvider')
+
         ]
     }
 

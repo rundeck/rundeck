@@ -1,38 +1,29 @@
 package org.rundeck.app.data.providers.v1.project;
 
-import org.rundeck.app.data.model.v1.project.RundeckProject;
+import org.rundeck.app.data.model.v1.project.RdProject;
 import org.rundeck.spi.data.DataAccessException;
 
 import java.io.Serializable;
+import java.util.Collection;
 
 public interface RundeckProjectDataProvider {
     /**
-     * Retrieves a RundeckProject based on the id/uuid provided.
+     * Retrieves a RundeckProject based on the id provided.
      *
      * @param id of the RundeckProject, format Serializable
      * @return RundeckProject if found, otherwise null
      */
-    RundeckProject getData(Serializable id);
+    RdProject getData(Serializable id);
 
     /**
-     * Creates a RundeckProject with a generated id
+     * Creates a RundeckProject
      *
      * @param data RundeckProject attributes
      *
      * @return id of the created RundeckProject
      * @throws DataAccessException on error
      */
-    String create(RundeckProject data) throws DataAccessException;
-
-    /**
-     * Creates a RundeckProject with the supplied id
-     *
-     * @param data RundeckProject attributes
-     * @param id id
-     * @return id of the created RundeckProject
-     * @throws DataAccessException on error
-     */
-    String createWithId(Serializable id, RundeckProject data) throws DataAccessException;
+    String create(RdProject data) throws DataAccessException;
 
     /**
      * Updates a RundeckProject with the supplied attributes
@@ -41,14 +32,52 @@ public interface RundeckProjectDataProvider {
      * @param id id
      * @throws DataAccessException on error
      */
-    void update(Serializable id, RundeckProject data) throws DataAccessException;
+    void update(Serializable id, RdProject data) throws DataAccessException;
 
     /**
      * Removes a RundeckProject
      *
-     * @param id RundeckProject id
+     * @param name of RundeckProject
      * @throws DataAccessException on error
      */
-    void delete(final Serializable id) throws DataAccessException;
+    void delete(final String name) throws DataAccessException;
+
+    /**
+     * Finds a RundeckProject by name
+     *
+     * @param name of RundeckProject
+     * @return RundeckProject if found, otherwise null
+     */
+    RdProject findByName(String name);
+
+    /**
+     * Rerieves all project names
+     *
+     * @return Collection of project names
+     */
+    Collection<String> getFrameworkProjectNames();
+
+    /**
+     * Retrieves the number of RundeckProjects
+     *
+     * @return Count of RundeckProjects
+     */
+    int countFrameworkProjects();
+
+    /**
+     * Checks if RundeckProject exists
+     *
+     * @param name of RundeckProject
+     * @return true if RundeckProject is found, otherwise false
+     */
+    boolean projectExists(final String name);
+
+    /**
+     * Retrieves the description of a RundeckProject
+     *
+     * @param name of RundeckProject
+     * @return Description of the RundeckProject if found, otherwise null
+     */
+    String getProjectDescription(final String name);
 
 }

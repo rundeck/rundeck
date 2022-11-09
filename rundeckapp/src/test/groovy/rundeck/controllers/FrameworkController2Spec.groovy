@@ -32,7 +32,9 @@ import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.spi.data.DataManager
 import rundeck.*
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
@@ -310,7 +312,13 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         fwk.demand.getAuthContextForSubjectAndProject { subject,pr -> return null}
 
         controller.frameworkService = fwk.proxyInstance()
-
+        controller.projectService = Mock(ProjectService){
+            rundeckDataManager >>  Mock(DataManager){
+                getProviderForType(_) >>  {
+                    new GormProjectDataProvider()
+                }
+            }
+        }
         def execPFmck = new MockFor(PasswordFieldsService)
         def fcopyPFmck = new MockFor(PasswordFieldsService)
 
@@ -938,10 +946,18 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             _*track(*_)
         }
 
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * getAuthContextForSubject(_)
-                1 * authorizeProjectConfigure(*_)>>true
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * getAuthContextForSubject(_)
+            1 * authorizeProjectConfigure(*_)>>true
+        }
+
+        controller.projectService = Mock(ProjectService){
+            rundeckDataManager >>  Mock(DataManager){
+                getProviderForType(_) >>  {
+                    new GormProjectDataProvider()
+                }
             }
+        }
         params.project = "edit_test_project"
 
         when:
@@ -986,7 +1002,13 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
         controller.execPasswordFieldsService = execPFmck
         controller.fcopyPasswordFieldsService = fcopyPFmck
-
+        controller.projectService = Mock(ProjectService){
+            rundeckDataManager >>  Mock(DataManager){
+                getProviderForType(_) >>  {
+                    new GormProjectDataProvider()
+                }
+            }
+        }
 
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.pluginService = Mock(PluginService){

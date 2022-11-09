@@ -56,11 +56,11 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
-import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
+import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 
 import javax.servlet.http.HttpServletResponse
@@ -106,6 +106,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     ExecutionService executionService
     ScheduledExecutionService scheduledExecutionService
     UserService userService
+    ProjectService projectService
 
     PasswordFieldsService obscurePasswordFieldsService
     PasswordFieldsService resourcesPasswordFieldsService
@@ -2029,9 +2030,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
-        final def projectDescription = Project.withNewSession {
-            Project.findByName(project)?.description
-        }
+        final def projectDescription = projectService.findProjectByName(project)?.description
+
 
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
 
