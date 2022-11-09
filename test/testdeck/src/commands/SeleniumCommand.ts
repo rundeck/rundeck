@@ -1,6 +1,6 @@
 import {Argv} from 'yargs'
 
-import { Rundeck, PasswordCredentialProvider } from 'ts-rundeck';
+import { Rundeck, PasswordCredentialProvider, TokenCredentialProvider } from 'ts-rundeck';
 
 import {spawn} from '../async/child-process'
 import { ProjectImporter } from '../projectImporter';
@@ -9,6 +9,7 @@ import { sleep } from '../async/util';
 interface Opts {
     debug: boolean
     url: string
+    testToken?: string
     jest: string
     headless: boolean
     s3Upload: boolean
@@ -25,6 +26,11 @@ class SeleniumCommand {
                 alias: "url",
                 default: `http://${process.env.HOSTNAME}:4440`,
                 describe: "Rundeck URL"
+            })
+            .option('t', {
+                alias: 'testToken',
+                describe: 'API Token to use for tests',
+                type: 'string'
             })
             .option("j", {
                 alias: "jest",
@@ -67,7 +73,8 @@ class SeleniumCommand {
         else
             args = `node ./node_modules/.bin/jest --testPathPattern="__tests__\/selenium\/" ${opts.jest}`
 
-        const client = new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {baseUri: opts.url})
+        const client = new Rundeck(
+          opts.testToken ? new TokenCredentialProvider(opts.testToken): new PasswordCredentialProvider(opts.url, 'admin', 'admin'), {baseUri: opts.url})
 
         await waitForRundeckReady(client)
 
@@ -80,6 +87,7 @@ class SeleniumCommand {
                 ...process.env,
                 SELENIUM_PROMISE_MANAGER: '0',
                 RUNDECK_URL: opts.url,
+                RUNDECK_TOKEN: opts.testToken,
                 HEADLESS: opts.headless.toString(),
                 S3_UPLOAD: opts.s3Upload.toString(),
                 S3_BASE: opts.s3Base,

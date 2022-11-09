@@ -1,4 +1,12 @@
-FROM rundeck/ubuntu-base@sha256:b985e4561ce61dc0865750394885f9afd9a1dffb56d4f72a8b6b575f2a342509
+FROM rundeck/ubuntu-base@sha256:f26f1db704553f138c8ec70ea6a53d23329308589d2d2a3f781a410a9a154e5c
+
+# Update image apt packages
+USER root
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get clean
+
+USER rundeck
 
 COPY --chown=rundeck:root .build .
 RUN java -jar rundeck.war --installonly \

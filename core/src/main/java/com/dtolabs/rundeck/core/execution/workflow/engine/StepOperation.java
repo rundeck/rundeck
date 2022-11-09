@@ -99,23 +99,6 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
                 EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_STATE_KEY, stepNum),
                 stepResultValue
         );
-        if (label != null) {
-            stateChanges.updateState(
-                    EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_STATE_KEY, "label." + label),
-                    stepResultValue
-            );
-            stateChanges.updateState(
-                    EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_COMPLETED_KEY, "label." + label),
-                    EngineWorkflowExecutor.VALUE_TRUE
-            );
-            if (result != null) {
-                EngineWorkflowExecutor.updateStateWithStepResultData(
-                        stateChanges,
-                        "label." + label,
-                        result.getFailureData()
-                );
-            }
-        }
         if (success) {
             stateChanges.updateState(
                     EngineWorkflowExecutor.STEP_ANY_STATE_SUCCESS_KEY,

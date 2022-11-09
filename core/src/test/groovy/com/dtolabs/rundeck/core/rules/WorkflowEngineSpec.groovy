@@ -417,7 +417,7 @@ class WorkflowEngineSpec extends Specification {
         operations[1].input == [c: 'd']
     }
 
-    def "global data refresh"() {
+    def "global shared data should not modify engine state"() {
         given:
         RuleEngine ruleEngine = Rules.createEngine()
         MutableStateObj state = States.mutable()
@@ -450,8 +450,7 @@ class WorkflowEngineSpec extends Specification {
         def result = engine.processOperations(operations, shared)
 
         then:
-        state.state.containsKey(expect)
-        state.state.get(expect) == value
+        !state.state.containsKey(expect)
 
         where:
         map                         | expect        | value
