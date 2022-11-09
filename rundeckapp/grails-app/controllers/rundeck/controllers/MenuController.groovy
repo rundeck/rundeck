@@ -42,6 +42,7 @@ import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
+import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AuthActions
@@ -2378,15 +2379,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=allsummary[project.name]?:[:]
-            def description = Project.findByName(project.name)?.description
+            def prj = projectService.findProjectByName(project.name)
+            def description = prj?.description
             if(!description){
                 description = project.hasProperty("project.description")?project.getProperty("project.description"):''
-                if(description){
-                    def proj = Project.findByName(project.name)
-                    if(proj){
-                        proj.description = description
-                        proj.save(flush: true)
-                    }
+                if(description && prj){
+                    def simplePrj = SimpleProjectBuilder.with(prj).setDescription(description)
+                    projectService.update(prj.getId(), simplePrj)
                 }
             }
             summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
