@@ -33,6 +33,7 @@ import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.*
@@ -320,7 +321,14 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         _*fwk.listWriteableResourceModelSources(_)>> []
 
 
-        controller.frameworkService = fwk
+
+        controller.frameworkService = fwk.proxyInstance()
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
+
+        }
+        def execPFmck = new MockFor(PasswordFieldsService)
+        def fcopyPFmck = new MockFor(PasswordFieldsService)
 
         def execPFmck = Mock(PasswordFieldsService)
         def fcopyPFmck = Mock(PasswordFieldsService)
@@ -975,6 +983,10 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
                 1 * getAuthContextForSubject(_)
                 1 * authorizeProjectConfigure(*_)>>true
             }
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
+
+        }
         params.project = "edit_test_project"
         controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
         when:

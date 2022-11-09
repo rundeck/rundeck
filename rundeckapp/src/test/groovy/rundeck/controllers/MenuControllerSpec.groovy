@@ -1343,11 +1343,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.projectService = Mock(ProjectService){
-            rundeckDataManager >>  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    new GormProjectDataProvider()
-                }
-            }
+            projectDataProvider >>  new GormProjectDataProvider()
+
         }
         request.addHeader('x-rundeck-ajax', 'true')
 
@@ -1377,11 +1374,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.projectService = Mock(ProjectService){
-            rundeckDataManager >>  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    new GormProjectDataProvider()
-                }
-            }
+            projectDataProvider >>  new GormProjectDataProvider()
+
         }
         request.addHeader('x-rundeck-ajax', 'true')
 
@@ -1411,11 +1405,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.projectService = Mock(ProjectService){
-            rundeckDataManager >>  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    new GormProjectDataProvider()
-                }
-            }
+            projectDataProvider >>  new GormProjectDataProvider()
+
         }
 
         request.addHeader('x-rundeck-ajax', 'true')
@@ -1733,11 +1724,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.projectService = Mock(ProjectService){
-            rundeckDataManager >>  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    new GormProjectDataProvider()
-                }
-            }
+            projectDataProvider >>  new GormProjectDataProvider()
+
         }
         request.addHeader('x-rundeck-ajax', 'true')
 

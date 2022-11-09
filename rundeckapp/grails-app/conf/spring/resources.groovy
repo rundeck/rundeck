@@ -860,7 +860,6 @@ beans={
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
-    rundeckProjectDataProvider(GormProjectDataProvider)
-
+    projectDataProvider(GormProjectDataProvider)
 
 }

@@ -106,15 +106,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
-    DataManager rundeckDataManager
+    RundeckProjectDataProvider projectDataProvider
 
     static transactional = false
 
     static Logger projectLogger = LoggerFactory.getLogger("org.rundeck.project.events")
 
-    private RundeckProjectDataProvider getProjectProvider() {
-        rundeckDataManager.getProviderForType(RundeckProjectDataProvider)
-    }
 
     private exportJob(ScheduledExecution job, Writer writer, String stripJobRef = null)
             throws ProjectServiceException {
@@ -1795,24 +1792,24 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     RdProject findProjectByName(String projectName) {
-        projectProvider.findByName(projectName)
+        projectDataProvider.findByName(projectName)
     }
 
     void update(Serializable id, RdProject data) throws DataAccessException {
-        projectProvider.update(id, data)
+        projectDataProvider.update(id, data)
     }
 
     int countFrameworkProjects() {
-        projectProvider.countFrameworkProjects()
+        projectDataProvider.countFrameworkProjects()
     }
 
     boolean projectExists(String project) {
-        projectProvider.projectExists(project)
+        projectDataProvider.projectExists(project)
 
     }
 
     String getProjectDescription(String name) {
-        projectProvider.getProjectDescription(name)
+        projectDataProvider.getProjectDescription(name)
     }
 }
 
