@@ -94,14 +94,16 @@ import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+<<<<<<< HEAD
 import org.rundeck.app.data.ProviderRegistration
 import org.rundeck.app.data.providers.GormProjectDataProvider
+=======
+>>>>>>> Add marker interface for all data providers.
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
-import org.rundeck.spi.data.BaseDataManager
 import org.rundeck.web.ExceptionHandler
 import org.rundeck.web.WebUtil
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
@@ -810,8 +812,6 @@ beans={
     rundeckConfigReloader(RundeckConfigReloader)
     pluginCachePreloader(PluginCachePreloader)
     interceptorHelper(DefaultInterceptorHelper)
-
-    gormTokenDataProvider(GormTokenDataProvider)
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)

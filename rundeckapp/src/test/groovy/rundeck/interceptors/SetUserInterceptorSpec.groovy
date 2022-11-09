@@ -154,11 +154,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         def svCtx = Mock(ServletContext)
         request.setAttribute(SetUserInterceptor.RUNNER_RQ_ATTRIB, runnerRq)
         def apiService = new ApiService()
-        apiService.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                new GormTokenDataProvider()
-            }
-        }
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+
         when:
         interceptor.apiService = apiService
         AuthenticationToken foundToken = interceptor.lookupToken(tk,svCtx,webhookToken)
@@ -195,11 +192,8 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         userTk3.save()
         def svCtx = Mock(ServletContext)
         def apiService = new ApiService()
-        apiService.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                new GormTokenDataProvider()
-            }
-        }
+        apiService.tokenDataProvider = new GormTokenDataProvider()
+
         when:
         interceptor.apiService = apiService
         Set<String> foundRoles = interceptor.lookupTokenRoles(userTk3,svCtx)
