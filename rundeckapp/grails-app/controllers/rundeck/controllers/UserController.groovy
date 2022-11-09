@@ -44,11 +44,7 @@ class UserController extends ControllerBase{
     UserService userService
     GrailsApplication grailsApplication
     def configurationService
-    DataManager rundeckDataManager
-
-    private TokenDataProvider getTokenProvider() {
-        rundeckDataManager.getProviderForType(TokenDataProvider)
-    }
+    TokenDataProvider tokenDataProvider
 
     static allowedMethods = [
             addFilterPref      : 'POST',
@@ -135,8 +131,8 @@ class UserController extends ControllerBase{
             return
         }
 
-        def tokenTotal = tokenAdmin ? tokenProvider.countTokensByType(AuthenticationToken.AuthTokenType.USER) :
-                tokenProvider.countTokensByCreatorAndType(u.login, AuthenticationToken.AuthTokenType.USER)
+        def tokenTotal = tokenAdmin ? tokenDataProvider.countTokensByType(AuthenticationToken.AuthTokenType.USER) :
+                tokenDataProvider.countTokensByCreatorAndType(u.login, AuthenticationToken.AuthTokenType.USER)
 
         int max = (params.max && params.max.isInteger()) ? params.max.toInteger() :
                 configurationService.getInteger(
@@ -154,8 +150,8 @@ class UserController extends ControllerBase{
         }
 
         def pageable = new RdPageable(offset: offset, max: max).withOrder("dateCreated","desc")
-        def tokenList = tokenAdmin ? tokenProvider.findAllTokensByType(AuthenticationToken.AuthTokenType.USER, pageable) :
-                tokenProvider.findAllUserTokensByCreator(u.login, pageable)
+        def tokenList = tokenAdmin ? tokenDataProvider.findAllTokensByType(AuthenticationToken.AuthTokenType.USER, pageable) :
+                tokenDataProvider.findAllUserTokensByCreator(u.login, pageable)
 
         params.max = max
         params.offset = offset
@@ -416,7 +412,7 @@ class UserController extends ControllerBase{
                 if(lastExec?.size()>0){
                     obj.lastJob = lastExec.get(0).dateStarted
                 }
-                def tokenList = tokenProvider.findAllByUser(it.id.toString())
+                def tokenList = tokenDataProvider.findAllByUser(it.id.toString())
                 obj.tokens = tokenList?.size()
                 userList.put(it.login,obj)
             }
@@ -518,7 +514,7 @@ class UserController extends ControllerBase{
                     obj.lastJob = lastExec
                 }
             }
-            obj.tokens = tokenProvider.countTokensByUser(it.id.toString())
+            obj.tokens = tokenDataProvider.countTokensByUser(it.id.toString())
             obj.loggedStatus = userService.getLoginStatus(it)
             obj.lastHostName = it.lastLoggedHostName
             if (userService.isSessionIdRegisterEnabled()) {
@@ -670,6 +666,7 @@ class UserController extends ControllerBase{
             )
             result = [result: true, apitoken: token.clearToken, tokenid: token.uuid]
         } catch (Exception e) {
+            e.printStackTrace()
             result = [result: false, error: e.getCause()?.message ?: e.message]
         }
         return renderTokenGenerateResult(result, params.login)
@@ -896,7 +893,7 @@ class UserController extends ControllerBase{
                 if (adminAuth) {
                     //admin can delete any token
                     found = params.token ?
-                            tokenProvider.tokenLookup(params.token) :
+                            tokenDataProvider.tokenLookup(params.token) :
                             apiService.findTokenId(params.tokenid)
                 } else {
                     //users can delete owned token

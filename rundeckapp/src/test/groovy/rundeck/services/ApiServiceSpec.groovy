@@ -61,11 +61,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
             findOrCreateUser(_) >>  new User(login: 'auser')
         }
         service = new ApiService()
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        service.tokenDataProvider = provider
     }
 
     def "renderWrappedFileContents xml"(){
@@ -442,11 +438,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         }
         service.userService = mockedUserService
         provider.userService = mockedUserService
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        service.tokenDataProvider = provider
 
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
