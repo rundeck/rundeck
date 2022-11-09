@@ -51,11 +51,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         mockDataService(ProjectDataService)
         GormProjectDataProvider provider = new GormProjectDataProvider()
         provider.projectDataService = applicationContext.getBean(ProjectDataService)
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        service.projectDataProvider = provider
     }
 
     def cleanup() {

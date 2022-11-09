@@ -90,16 +90,11 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     FeatureService featureService
     private StorageService storageService
     AppAuthContextProcessor rundeckAuthContextProcessor
-    DataManager rundeckDataManager
-
+    RundeckProjectDataProvider projectDataProvider
     /**
      * Scheduled executor for retries
      */
     private ExecutorService executor = Executors.newFixedThreadPool(2)
-
-    private RundeckProjectDataProvider getProjectProvider() {
-        rundeckDataManager.getProviderForType(RundeckProjectDataProvider)
-    }
 
     /**
      * Provides subtree access for the project without authorization
@@ -187,11 +182,11 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     Collection<String> listFrameworkProjectNames() {
-        projectProvider.getFrameworkProjectNames()
+        projectDataProvider.getFrameworkProjectNames()
     }
     @Override
     int countFrameworkProjects() {
-        return projectProvider.countFrameworkProjects()
+        return projectDataProvider.countFrameworkProjects()
     }
     IRundeckProject getFrameworkProject(final String name) {
         if (null==projectCache.getIfPresent(name) && !existsFrameworkProject(name)) {
@@ -206,7 +201,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     boolean existsFrameworkProject(final String project) {
-        projectProvider.projectExists(project)
+        projectDataProvider.projectExists(project)
     }
 
     @Override
@@ -582,7 +577,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @CompileStatic(TypeCheckingMode.SKIP)
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
-        RdProject found = projectProvider.findByName(projectName)
+        RdProject found = projectDataProvider.findByName(projectName)
 
         def description = properties.get('project.description')
         boolean generateInitProps = false
@@ -590,7 +585,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             SimpleProjectBuilder project = new SimpleProjectBuilder()
                                         .setDescription(description)
                                         .setName(projectName)
-            projectProvider.create(project)
+            projectDataProvider.create(project)
             generateInitProps = true
         }
         Properties storedProps = new Properties()
@@ -623,13 +618,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     void removeFrameworkProject(final String projectName) {
-        projectProvider.delete(projectName)
+        projectDataProvider.delete(projectName)
         deleteProjectResources(projectName)
     }
 
     @Override
     IRundeckProject createFrameworkProjectStrict(final String projectName, final Properties properties) {
-        RdProject found = projectProvider.findByName(projectName)
+        RdProject found = projectDataProvider.findByName(projectName)
         if (found) {
             throw new IllegalArgumentException("project exists: " + projectName)
         }
@@ -645,10 +640,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     {
         if(properties['project.description'] != null ) {
             def description = properties['project.description']
-            RdProject dbproj = projectProvider.findByName(projectName)
+            RdProject dbproj = projectDataProvider.findByName(projectName)
             SimpleProjectBuilder updatedProject =  SimpleProjectBuilder.with(dbproj)
             updatedProject.setDescription(description ? description : null)
-            projectProvider.update(dbproj.getId(), updatedProject)
+            projectDataProvider.update(dbproj.getId(), updatedProject)
         }
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
@@ -667,7 +662,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             final Set<String> removePrefixes
     )
     {
-        RdProject found = projectProvider.findByName(projectName)
+        RdProject found = projectDataProvider.findByName(projectName)
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
@@ -713,13 +708,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         String description = properties['project.description']
-        def found = projectProvider.findByName(projectName)
+        def found = projectDataProvider.findByName(projectName)
         if (!found) {
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         SimpleProjectBuilder projectBuilder = SimpleProjectBuilder.with(found)
                                                 .setDescription(description?:null)
-        projectProvider.update(projectBuilder.getId(), projectBuilder)
+        projectDataProvider.update(projectBuilder.getId(), projectBuilder)
         def res = loadProjectConfigResource(projectName)
         Map resource=storeProjectConfig(projectName, res?.config, properties)
         resource
@@ -766,7 +761,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
         def rdproject = lazyProject(project)
-        def description = projectProvider.getProjectDescription(project)
+        def description = projectDataProvider.getProjectDescription(project)
         //preload cached readme/motd
 //        String readme = readCachedProjectFileAsAstring(project,"readme.md")
 //        String motd = readCachedProjectFileAsAstring(project,"motd.md")
@@ -784,10 +779,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @CompileStatic(TypeCheckingMode.SKIP)
     def String getProjectDescription(String name){
-        projectProvider.getProjectDescription(name)
+        projectDataProvider.getProjectDescription(name)
     }
     boolean needsReload(IRundeckProject project) {
-        RdProject rdproject = projectProvider.findByName(project.name)
+        RdProject rdproject = projectDataProvider.findByName(project.name)
         boolean needsReload = rdproject == null ||
                 project.configLastModifiedTime == null ||
                 getProjectConfigLastModified(project.name) > project.configLastModifiedTime

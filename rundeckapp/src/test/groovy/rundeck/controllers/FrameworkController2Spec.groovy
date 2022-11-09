@@ -313,11 +313,8 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
         controller.frameworkService = fwk.proxyInstance()
         controller.projectService = Mock(ProjectService){
-            rundeckDataManager >>  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    new GormProjectDataProvider()
-                }
-            }
+            projectDataProvider >>  new GormProjectDataProvider()
+
         }
         def execPFmck = new MockFor(PasswordFieldsService)
         def fcopyPFmck = new MockFor(PasswordFieldsService)
@@ -952,11 +949,8 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         }
 
         controller.projectService = Mock(ProjectService){
-            rundeckDataManager >>  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    new GormProjectDataProvider()
-                }
-            }
+            projectDataProvider >>  new GormProjectDataProvider()
+
         }
         params.project = "edit_test_project"
 
