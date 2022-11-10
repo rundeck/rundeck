@@ -63,6 +63,7 @@ public class ServiceTypes {
     /**
      * Map of Service name to Class
      */
+    public static final Map<String, Class<?>> EXECUTION_TYPES;
     public static final Map<String, Class<?>> TYPES;
 
     static {
@@ -76,33 +77,36 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.ResourceModelSource, ResourceModelSourceFactory.class);
         map.put(ServiceNameConstants.ResourceFormatParser, ResourceFormatParser.class);
         map.put(ServiceNameConstants.ResourceFormatGenerator, ResourceFormatGenerator.class);
-        map.put(ServiceNameConstants.Notification, NotificationPlugin.class);
-        map.put(ServiceNameConstants.StreamingLogReader, StreamingLogReaderPlugin.class);
-        map.put(ServiceNameConstants.StreamingLogWriter, StreamingLogWriterPlugin.class);
-        map.put(ServiceNameConstants.LogFileStorage, LogFileStoragePlugin.class);
-        map.put(ServiceNameConstants.ExecutionFileStorage, ExecutionFileStoragePlugin.class);
-        map.put(ServiceNameConstants.StorageConverter, StorageConverterPlugin.class);
-        map.put(ServiceNameConstants.Storage, StoragePlugin.class);
-        map.put(ServiceNameConstants.Orchestrator, OrchestratorPlugin.class);
-        map.put(ServiceNameConstants.ScmExport, ScmExportPluginFactory.class);
-        map.put(ServiceNameConstants.ScmImport, ScmImportPluginFactory.class);
-        map.put(ServiceNameConstants.UI, UIPlugin.class);
-        map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
-        map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
-        map.put(ServiceNameConstants.TourLoader, TourLoaderPlugin.class);
-        map.put(ServiceNameConstants.FileUpload, FileUploadPlugin.class);
-        map.put(ServiceNameConstants.WorkflowStrategy, WorkflowStrategy.class);
-        map.put(ServiceNameConstants.OptionValues, OptionValuesPlugin.class);
-        map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
-        map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
-        map.put(ServiceNameConstants.WebhookEvent, WebhookEventPlugin.class);
-        map.put(ServiceNameConstants.PasswordUtilityEncrypter, PasswordUtilityEncrypterPlugin.class);
-        map.put(ServiceNameConstants.ExecutionLifecycle, ExecutionLifecyclePlugin.class);
-        map.put(ServiceNameConstants.JobLifecycle, JobLifecyclePlugin.class);
-        map.put(ServiceNameConstants.AuditEventListener, AuditEventListenerPlugin.class);
-        map.put(ServiceNameConstants.PluginGroup, PluginGroup.class);
 
-        TYPES = Collections.unmodifiableMap(map);
+        HashMap<String, Class<?>> map2 = new HashMap<>(map);
+        map2.put(ServiceNameConstants.Notification, NotificationPlugin.class);
+        map2.put(ServiceNameConstants.StreamingLogReader, StreamingLogReaderPlugin.class);
+        map2.put(ServiceNameConstants.StreamingLogWriter, StreamingLogWriterPlugin.class);
+        map2.put(ServiceNameConstants.LogFileStorage, LogFileStoragePlugin.class);
+        map2.put(ServiceNameConstants.ExecutionFileStorage, ExecutionFileStoragePlugin.class);
+        map2.put(ServiceNameConstants.StorageConverter, StorageConverterPlugin.class);
+        map2.put(ServiceNameConstants.Storage, StoragePlugin.class);
+        map2.put(ServiceNameConstants.Orchestrator, OrchestratorPlugin.class);
+        map2.put(ServiceNameConstants.ScmExport, ScmExportPluginFactory.class);
+        map2.put(ServiceNameConstants.ScmImport, ScmImportPluginFactory.class);
+        map2.put(ServiceNameConstants.UI, UIPlugin.class);
+        map2.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
+        map2.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
+        map2.put(ServiceNameConstants.TourLoader, TourLoaderPlugin.class);
+        map2.put(ServiceNameConstants.FileUpload, FileUploadPlugin.class);
+        map2.put(ServiceNameConstants.WorkflowStrategy, WorkflowStrategy.class);
+        map2.put(ServiceNameConstants.OptionValues, OptionValuesPlugin.class);
+        map2.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
+        map2.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
+        map2.put(ServiceNameConstants.WebhookEvent, WebhookEventPlugin.class);
+        map2.put(ServiceNameConstants.PasswordUtilityEncrypter, PasswordUtilityEncrypterPlugin.class);
+        map2.put(ServiceNameConstants.ExecutionLifecycle, ExecutionLifecyclePlugin.class);
+        map2.put(ServiceNameConstants.JobLifecycle, JobLifecyclePlugin.class);
+        map2.put(ServiceNameConstants.AuditEventListener, AuditEventListenerPlugin.class);
+        map2.put(ServiceNameConstants.PluginGroup, PluginGroup.class);
+
+        EXECUTION_TYPES = Collections.unmodifiableMap(map);
+        TYPES = Collections.unmodifiableMap(map2);
     }
 
     private static ServiceLoader<PluginTypes> pluginTypeServiceLoader = ServiceLoader.load(PluginTypes.class);
