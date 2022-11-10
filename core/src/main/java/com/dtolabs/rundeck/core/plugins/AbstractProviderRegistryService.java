@@ -71,11 +71,6 @@ public abstract class AbstractProviderRegistryService<T>
     }
 
     @Override
-    public boolean isRegistered(final String name) {
-        return instanceregistry.containsKey(name) || registry.containsKey(name);
-    }
-
-    @Override
     public void registerInstance(String name, T object) {
         instanceregistry.put(name, object);
     }

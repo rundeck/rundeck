@@ -34,11 +34,6 @@ public interface ProviderRegistryService<T>
      */
     void registerClass(String name, Class<? extends T> clazz);
 
-    /**
-     * @param name
-     * @return true if provider name is registered
-     */
-    boolean isRegistered(String name);
 
     /**
      * Register an instance for a provider

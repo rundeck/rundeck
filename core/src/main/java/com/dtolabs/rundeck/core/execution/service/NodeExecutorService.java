@@ -30,12 +30,12 @@ import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
-import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * CommandExecutorFactory is ...
@@ -57,6 +57,15 @@ public class NodeExecutorService
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-node-executor";
     public static final String DEFAULT_LOCAL_PROVIDER = LocalNodeExecutor.SERVICE_PROVIDER_TYPE;
     public static final String DEFAULT_REMOTE_PROVIDER = JschNodeExecutor.SERVICE_PROVIDER_TYPE;
+    private static final Map<String, Class<? extends NodeExecutor>> PRESET_PROVIDERS ;
+
+    static {
+        Map<String, Class<? extends NodeExecutor>> map = new HashMap<>();
+        map.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);
+        map.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
+        map.put(NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, NewLocalNodeExecutor.class);
+        PRESET_PROVIDERS = Collections.unmodifiableMap(map);
+    }
 
     public String getName() {
         return SERVICE_NAME;
@@ -68,9 +77,11 @@ public class NodeExecutorService
     public NodeExecutorService(Framework framework) {
         super(framework,true);
 
-        registry.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);
-        registry.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
-        registry.put(NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, NewLocalNodeExecutor.class);
+        registry.putAll(PRESET_PROVIDERS);
+    }
+
+    public static boolean isRegistered(String name){
+        return PRESET_PROVIDERS.containsKey(name);
     }
 
     @Override

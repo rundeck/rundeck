@@ -61,7 +61,15 @@ public class NodeStepExecutionService
     private final NodeStepPluginService nodeStepPluginService;
     private final RemoteScriptNodeStepPluginService remoteScriptNodeStepPluginService;
     private final ChainedNodeStepPluginService chainedNodeStepPluginService;
+    private static final Map<String, Class<? extends NodeStepExecutor>> PRESET_PROVIDERS ;
 
+    static {
+        Map<String, Class<? extends NodeStepExecutor>> map = new HashMap<>();
+        map.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
+        map.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
+        map.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
+        PRESET_PROVIDERS = Collections.unmodifiableMap(map);
+    }
 
     public NodeStepExecutionService(final Framework framework) {
         this.serviceList = new ArrayList<>();
@@ -71,13 +79,7 @@ public class NodeStepExecutionService
          * 2. NodeStepPlugin providers
          * 3. RemoteScriptNodeStepPlugin providers
          */
-        Map<String, Class<? extends NodeStepExecutor>> presetProviders = new HashMap<>();
-
-        presetProviders.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
-        presetProviders.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
-        presetProviders.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
-
-        this.primaryService = new PresetBaseProviderRegistryService<>(presetProviders, framework, false, SERVICE_NAME);
+        this.primaryService = new PresetBaseProviderRegistryService<>(PRESET_PROVIDERS, framework, false, SERVICE_NAME);
         this.dynamicRegistryService =
             new PresetBaseProviderRegistryService<>(new HashMap<>(), framework, true, SERVICE_NAME);
 
@@ -132,8 +134,9 @@ public class NodeStepExecutionService
         this.serviceList.add(nodeStepPluginAdaptedNodeStepExecutorService);
         this.serviceList.add(remoteScriptAdaptedNodeStepExecutorService);
     }
-    public boolean isRegistered(String provider){
-        return primaryService.isRegistered(provider) || dynamicRegistryService.isRegistered(provider);
+
+    public static boolean isRegistered(String provider){
+        return PRESET_PROVIDERS.containsKey(provider);
     }
 
     public ChainedNodeStepPluginService getChainedNodeStepPluginService() {

@@ -34,9 +34,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * FileCopierService is ...
@@ -58,6 +56,14 @@ public class FileCopierService
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-file-copier";
     public static final String DEFAULT_REMOTE_PROVIDER = JschScpFileCopier.SERVICE_PROVIDER_TYPE;
     public static final String DEFAULT_LOCAL_PROVIDER = LocalFileCopier.SERVICE_PROVIDER_TYPE;
+    private static final Map<String, Class<? extends FileCopier>> PRESET_PROVIDERS ;
+
+    static {
+        Map<String, Class<? extends FileCopier>> map = new HashMap<>();
+        map.put(JschScpFileCopier.SERVICE_PROVIDER_TYPE, JschScpFileCopier.class);
+        map.put(LocalFileCopier.SERVICE_PROVIDER_TYPE, LocalFileCopier.class);
+        PRESET_PROVIDERS = Collections.unmodifiableMap(map);
+    }
 
     public String getName() {
         return SERVICE_NAME;
@@ -70,12 +76,12 @@ public class FileCopierService
     public FileCopierService(Framework framework) {
         super(framework, true);
 
-        //TODO: use plugin framework to configure available FileCopier implementations.
-        registry.put(JschScpFileCopier.SERVICE_PROVIDER_TYPE, JschScpFileCopier.class);
-        registry.put(LocalFileCopier.SERVICE_PROVIDER_TYPE, LocalFileCopier.class);
-
+        registry.putAll(PRESET_PROVIDERS);
     }
 
+    public static boolean isRegistered(String name){
+        return PRESET_PROVIDERS.containsKey(name);
+    }
     @Override
     protected String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
         return getProviderNameForNode(
