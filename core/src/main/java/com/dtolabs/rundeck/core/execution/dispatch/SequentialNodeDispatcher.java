@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
@@ -49,9 +49,9 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class SequentialNodeDispatcher implements NodeDispatcher {
-    private Framework framework;
+    private IFramework framework;
 
-    public SequentialNodeDispatcher(Framework framework) {
+    public SequentialNodeDispatcher(IFramework framework) {
         this.framework = framework;
     }
 

@@ -25,9 +25,15 @@ package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.plugins.IFrameworkProviderRegistryService;
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
+import com.dtolabs.rundeck.core.plugins.ProviderIdent;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+
+import java.util.List;
 
 
 /**
@@ -35,11 +41,14 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispatcher>{
+public class NodeDispatcherService
+        extends IFrameworkProviderRegistryService<NodeDispatcher>
+        implements PluggableProviderService<NodeDispatcher>
+{
 
     private static final String SERVICE_NAME = ServiceNameConstants.NodeDispatcher;
 
-    public NodeDispatcherService(Framework framework) {
+    public NodeDispatcherService(IFramework framework) {
         super(framework);
         registry.put("parallel", ParallelNodeDispatcher.class);
         registry.put("sequential", SequentialNodeDispatcher.class);
@@ -58,13 +67,22 @@ public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispa
         }
     }
 
-    public static NodeDispatcherService getInstanceForFramework(Framework framework) {
+    public static NodeDispatcherService getInstanceForFramework(IFramework framework) {
         if (null == framework.getService(SERVICE_NAME)) {
             final NodeDispatcherService service = new NodeDispatcherService(framework);
             framework.setService(SERVICE_NAME, service);
             return service;
         }
         return (NodeDispatcherService) framework.getService(SERVICE_NAME);
+    }
+
+
+    public List<Description> listDescriptions() {
+        return DescribableServiceUtil.listDescriptions(this);
+    }
+
+    public List<ProviderIdent> listDescribableProviders() {
+        return DescribableServiceUtil.listDescribableProviders(this);
     }
 
     public String getName() {
