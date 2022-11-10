@@ -62,9 +62,6 @@ public class NodeStepExecutionService
     private final RemoteScriptNodeStepPluginService remoteScriptNodeStepPluginService;
     private final ChainedNodeStepPluginService chainedNodeStepPluginService;
 
-    public static final boolean
-            ENABLE_OLD_ADAPTER_BEHAVIOR =
-            Boolean.getBoolean("org.rundeck.NodeStepExecutionService.oldAdapterBehavior");
 
     public NodeStepExecutionService(final Framework framework) {
         this.serviceList = new ArrayList<>();
@@ -94,40 +91,30 @@ public class NodeStepExecutionService
                 serviceList =
                 new ArrayList<>(Collections.singletonList(nodeStepPluginService));
 
-        if (ENABLE_OLD_ADAPTER_BEHAVIOR) {
-            /*
-            This behavior uses the old adapter to convert RemoteScriptNodeStepPlugin to NodeExecutor,
-            and doesn't have a service to use in the chained service list for RemoteScriptNodeStepPlugins.
-            the consequence is that plugin loading requests for "NodeStepPlugin" service, and a remote script provider name will fail
-             */
-            remoteScriptAdaptedNodeStepExecutorService =
-                    remoteScriptNodeStepPluginService.adapter(RemoteScriptNodeStepPluginAdapter.CONVERTER);
 
-        } else {
-            /*
-             * this new behavior converts RemoteScriptNodeStepPlugin to a NodeStepPlugin
-             * which we then convert using the NodeStepPluginAdapter to NodeStepExecutor
-             * and allows us to add the remote script plugin service to the NodeStepPlugin service chain
-             */
+        /*
+         * this new behavior converts RemoteScriptNodeStepPlugin to a NodeStepPlugin
+         * which we then convert using the NodeStepPluginAdapter to NodeStepExecutor
+         * and allows us to add the remote script plugin service to the NodeStepPlugin service chain
+         */
 
-            //convert (original)RemoteScriptNodeStepPlugin -> NodeStepPlugin (adapted sevice)
-            final PluggableProviderService<NodeStepPlugin>
-                    remoteScriptAdaptedNodeStepPluginService =
-                    getRemoteScriptNodeStepPluginService().adapter(RemoteScriptNodeStepPluginAdapter_Ext.CONVERT_TO_NODE_STEP_PLUGIN);
+        //convert (original)RemoteScriptNodeStepPlugin -> NodeStepPlugin (adapted sevice)
+        final PluggableProviderService<NodeStepPlugin>
+                remoteScriptAdaptedNodeStepPluginService =
+                getRemoteScriptNodeStepPluginService().adapter(RemoteScriptNodeStepPluginAdapter_Ext.CONVERT_TO_NODE_STEP_PLUGIN);
 
-            //convert (adapted)NodeStepPlugin -> NodeStepExecutor
-            remoteScriptAdaptedNodeStepExecutorService =
-                    remoteScriptAdaptedNodeStepPluginService.adapter(
-                            new NodeStepPluginAdapter.ConvertToNodeStepExecutor(
-                                    ServiceNameConstants.RemoteScriptNodeStep,
-                                    false
-                            )
-                    );
+        //convert (adapted)NodeStepPlugin -> NodeStepExecutor
+        remoteScriptAdaptedNodeStepExecutorService =
+                remoteScriptAdaptedNodeStepPluginService.adapter(
+                        new NodeStepPluginAdapter.ConvertToNodeStepExecutor(
+                                ServiceNameConstants.RemoteScriptNodeStep,
+                                false
+                        )
+                );
 
-            //chain both (original)NodeStepPlugin and (adapted)RemoteScriptNodestepPlugin services as single service with
-            // NodeStepPlugin type
-            serviceList.add(remoteScriptAdaptedNodeStepPluginService);
-        }
+        //chain both (original)NodeStepPlugin and (adapted)RemoteScriptNodestepPlugin services as single service with
+        // NodeStepPlugin type
+        serviceList.add(remoteScriptAdaptedNodeStepPluginService);
 
         //convert (original)NodeStepPlugin -> NodeStepExecutor
         nodeStepPluginAdaptedNodeStepExecutorService =
