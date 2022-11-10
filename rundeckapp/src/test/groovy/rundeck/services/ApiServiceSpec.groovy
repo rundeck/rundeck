@@ -58,7 +58,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
 
         provider.userService = Mock(UserService){
-            findOrCreateUser(_) >>  new User(login: 'auser')
+            findOrCreateUser(_) >>  new User(login: 'auser').save()
         }
         service = new ApiService()
         service.tokenDataProvider = provider
@@ -392,7 +392,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
         service.configurationService = Mock(ConfigurationService)
         service.userService = Mock(UserService)
-        def user = new User(login: 'auser').save()
+        def user = new User(login: 'auser')
 
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
@@ -434,7 +434,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         service.rundeckAuthContextEvaluator=Mock(AppAuthContextEvaluator)
         service.configurationService = Mock(ConfigurationService)
         def mockedUserService =  Mock(UserService) {
-            findOrCreateUser(tokenUser) >> new User(login: tokenUser)
+            findOrCreateUser(tokenUser) >> new User(login: tokenUser).save()
         }
         service.userService = mockedUserService
         provider.userService = mockedUserService
@@ -525,6 +525,7 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         then:
         result != null
         result.getOwnerName() == user.login
+        result.userId == user.getId()
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true

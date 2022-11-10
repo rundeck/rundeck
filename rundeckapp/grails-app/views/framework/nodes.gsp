@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment; rundeck.User; org.rundeck.core.auth.AuthConstants" %>
+<%@ page import="grails.util.Environment; org.rundeck.core.auth.AuthConstants" %>
 <html>
 <head>
     <g:set var="ukey" value="${g.rkey()}" />
@@ -36,9 +36,9 @@
     <g:jsMessages code="Node,Node.plural"/>
 </head>
 <body>
-<g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
-    <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
-</g:if>
+<user:getNodeFilters user="${session.user}">
+    <g:set var="filterset" value="${filters}"/>
+</user:getNodeFilters>
 
 <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:AuthConstants.TYPE_JOB, action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>

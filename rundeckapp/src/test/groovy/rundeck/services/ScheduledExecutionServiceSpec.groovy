@@ -38,6 +38,7 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -46,11 +47,13 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
+import org.rundeck.spi.data.DataManager
 import org.springframework.context.ConfigurableApplicationContext
 import rundeck.Orchestrator
 import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 import rundeck.User
+import rundeck.services.data.UserDataService
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -88,6 +91,7 @@ import spock.lang.Unroll
  * Created by greg on 6/24/15.
  */
 class ScheduledExecutionServiceSpec extends Specification implements ServiceUnitTest<ScheduledExecutionService>, DataTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
 
@@ -5564,6 +5568,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             }
             service.configurationService = Mock(ConfigurationService)
             service.frameworkService = fwkservice
+            GormUserDataProvider provider = new GormUserDataProvider()
+            service.rundeckDataManager =  Mock(DataManager){
+                getProviderForType(_) >>  {
+                    provider
+                }
+            }
 
 
         when:"the connection values are set directly on the URL"
@@ -5617,6 +5627,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         service.configurationService = Mock(ConfigurationService)
         service.frameworkService = fwkservice
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
+        }
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
@@ -5673,6 +5689,12 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         service.configurationService = Mock(ConfigurationService)
         service.frameworkService = fwkservice
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
+        }
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',

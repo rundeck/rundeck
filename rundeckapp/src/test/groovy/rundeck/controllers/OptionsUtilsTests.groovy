@@ -21,6 +21,8 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.servlet.mvc.GrailsHttpSession
 import groovy.mock.interceptor.MockFor
+import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.spi.data.DataManager
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FrameworkService
@@ -31,6 +33,7 @@ import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertNotNull
 
 class OptionsUtilsTests extends Specification implements ControllerUnitTest<ScheduledExecutionController>, DataTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     def setupSpec() { mockDomains ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats, User }
     /**
@@ -56,67 +59,67 @@ class OptionsUtilsTests extends Specification implements ControllerUnitTest<Sche
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'monkey', OptionsUtil.expandUrl(option, '${option.test1.value}', se,[test1:'monkey'])
+        assertEquals 'monkey', OptionsUtil.expandUrl(option, '${option.test1.value}', se, provider,[test1:'monkey'])
     }
     public void testExpandUrlOptionValueUrl() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'http://some.host/path/a%20monkey', OptionsUtil.expandUrl(option, 'http://some.host/path/${option.test1.value}', se,[test1:'a monkey'])
+        assertEquals 'http://some.host/path/a%20monkey', OptionsUtil.expandUrl(option, 'http://some.host/path/${option.test1.value}', se, provider,[test1:'a monkey'])
     }
     public void testExpandUrlOptionValueParam() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'http://some.host/path/?a+monkey', OptionsUtil.expandUrl(option, 'http://some.host/path/?${option.test1.value}', se,[test1:'a monkey'])
+        assertEquals 'http://some.host/path/?a+monkey', OptionsUtil.expandUrl(option, 'http://some.host/path/?${option.test1.value}', se, provider,[test1:'a monkey'])
     }
     public void testExpandUrlOptionName() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'test1', OptionsUtil.expandUrl(option, '${option.name}', se)
+        assertEquals 'test1', OptionsUtil.expandUrl(option, '${option.name}', se, provider)
     }
 
     public void testExpandUrlJobName() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'blue', OptionsUtil.expandUrl(option, '${job.name}', se)
+        assertEquals 'blue', OptionsUtil.expandUrl(option, '${job.name}', se, provider)
     }
 
     public void testExpandUrlJobGroup() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'some%2Fwhere', OptionsUtil.expandUrl(option, '${job.group}', se)
+        assertEquals 'some%2Fwhere', OptionsUtil.expandUrl(option, '${job.group}', se, provider)
     }
 
     public void testExpandUrlJobDesc() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'a%20job', OptionsUtil.expandUrl(option, '${job.description}', se)
+        assertEquals 'a%20job', OptionsUtil.expandUrl(option, '${job.description}', se, provider)
     }
 
     public void testExpandUrlJobDescParam() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals '?a+job', OptionsUtil.expandUrl(option, '?${job.description}', se)
+        assertEquals '?a+job', OptionsUtil.expandUrl(option, '?${job.description}', se, provider)
     }
 
     public void testExpandUrlJobProject() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'AProject', OptionsUtil.expandUrl(option, '${job.project}', se)
+        assertEquals 'AProject', OptionsUtil.expandUrl(option, '${job.project}', se, provider)
     }
 
     public void testExpandUrlJobProp_nonexistent() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals '${job.noexist}', OptionsUtil.expandUrl(option, '${job.noexist}', se)
+        assertEquals '${job.noexist}', OptionsUtil.expandUrl(option, '${job.noexist}', se, provider)
     }
 
     public void testExpandUrlJobMultipleValues() {
@@ -124,7 +127,7 @@ class OptionsUtilsTests extends Specification implements ControllerUnitTest<Sche
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
         assertEquals 'http://test/action?name=blue&option=test1&project=AProject',
-            OptionsUtil.expandUrl(option, 'http://test/action?name=${job.name}&option=${option.name}&project=${job.project}', se)
+            OptionsUtil.expandUrl(option, 'http://test/action?name=${job.name}&option=${option.name}&project=${job.project}', se, provider)
 
     }
 
@@ -132,7 +135,7 @@ class OptionsUtilsTests extends Specification implements ControllerUnitTest<Sche
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'anonymous', OptionsUtil.expandUrl(option, '${job.user.name}', se)
+        assertEquals 'anonymous', OptionsUtil.expandUrl(option, '${job.user.name}', se, provider)
     }
 
     public void testExpandUrlJobUsername() {
@@ -141,34 +144,34 @@ class OptionsUtilsTests extends Specification implements ControllerUnitTest<Sche
         OptionsUtil.metaClass.static.getHttpSessionInstance = { return mockHttpSession('bob')}
         OptionsUtil.metaClass.static.httpSessionInstance = { return mockHttpSession('bob')}
         then:
-        assertEquals 'bob', OptionsUtil.expandUrl(option, '${job.user.name}', se)
+        assertEquals 'bob', OptionsUtil.expandUrl(option, '${job.user.name}', se, provider)
     }
 
     public void testExpandUrlJobRundeckNodename() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'server1', OptionsUtil.expandUrl(option, '${job.rundeck.nodename}', se)
+        assertEquals 'server1', OptionsUtil.expandUrl(option, '${job.rundeck.nodename}', se, provider)
     }
     public void testExpandUrlJobRundeckNodename2() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'server1', OptionsUtil.expandUrl(option, '${rundeck.nodename}', se)
+        assertEquals 'server1', OptionsUtil.expandUrl(option, '${rundeck.nodename}', se, provider)
     }
 
     public void testExpandUrlJobRundeckServerUUID() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'xyz', OptionsUtil.expandUrl(option, '${job.rundeck.serverUUID}', se)
+        assertEquals 'xyz', OptionsUtil.expandUrl(option, '${job.rundeck.serverUUID}', se, provider)
     }
 
     public void testExpandUrlJobRundeckServerUUID2() {
         when:
         def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
         then:
-        assertEquals 'xyz', OptionsUtil.expandUrl(option, '${rundeck.serverUUID}', se)
+        assertEquals 'xyz', OptionsUtil.expandUrl(option, '${rundeck.serverUUID}', se, provider)
     }
     public void testExpandUrlJobRundeckBasedir() {
         when:
@@ -176,7 +179,7 @@ class OptionsUtilsTests extends Specification implements ControllerUnitTest<Sche
         OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return mockFrameworkService(false)}
         OptionsUtil.metaClass.static.frameworkServiceInstance = { return mockFrameworkService(false)}
         then:
-        assertEquals '/a/path', OptionsUtil.expandUrl(option, '${job.rundeck.basedir}', se,[:],false)
+        assertEquals '/a/path', OptionsUtil.expandUrl(option, '${job.rundeck.basedir}', se, provider, [:],false)
     }
 
     public void testExpandUrlJobRundeckBasedir2() {
@@ -186,7 +189,7 @@ class OptionsUtilsTests extends Specification implements ControllerUnitTest<Sche
         OptionsUtil.metaClass.static.frameworkServiceInstance = { return mockFrameworkService(false)}
 
         then:
-        assertEquals '/a/path', OptionsUtil.expandUrl(option, '${rundeck.basedir}', se,[:],false)
+        assertEquals '/a/path', OptionsUtil.expandUrl(option, '${rundeck.basedir}', se, provider, [:],false)
     }
 
     protected List setupExpandUrlJob(def controller,boolean ishttp=true) {

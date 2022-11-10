@@ -41,7 +41,7 @@ class AuthToken implements AuthenticationToken {
         token(nullable:false,unique:true)
         authRoles(nullable:false)
         uuid(nullable: true)
-        user(nullable:false)
+        user(nullable: false)
         creator(nullable: true)
         expiration(nullable: true)
         lastUpdated(nullable: true)

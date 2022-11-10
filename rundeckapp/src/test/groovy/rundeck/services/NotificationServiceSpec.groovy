@@ -48,7 +48,9 @@ import grails.web.mapping.LinkGenerator
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.Services
+import org.rundeck.spi.data.DataManager
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
@@ -56,6 +58,7 @@ import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
+import rundeck.services.data.UserDataService
 import rundeck.services.logging.ExecutionLogReader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import spock.lang.Specification
@@ -65,9 +68,18 @@ import spock.lang.Unroll
  * Created by greg on 7/12/16.
  */
 class NotificationServiceSpec extends Specification implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest, DataTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     def setupSpec() { mockDomains Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats }
 
+    def setup() {
+        mockDataService(UserDataService)
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
+        }
+    }
 
     private List createTestJob() {
 

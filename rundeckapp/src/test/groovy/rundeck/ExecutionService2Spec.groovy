@@ -34,8 +34,11 @@ import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.spi.data.DataManager
 import org.springframework.context.MessageSource
 import rundeck.services.*
+import rundeck.services.data.UserDataService
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -43,11 +46,19 @@ import static org.junit.Assert.*
 //import grails.test.GrailsMock
 
 class ExecutionService2Spec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     def setupSpec() { mockDomains ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User }
 
     def setup(){
         service.executionValidatorService = new ExecutionValidatorService()
+
+        mockDataService(UserDataService)
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
+        }
     }
 
     /**

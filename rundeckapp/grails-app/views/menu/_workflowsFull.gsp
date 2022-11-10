@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.User; org.rundeck.core.auth.AuthConstants" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 

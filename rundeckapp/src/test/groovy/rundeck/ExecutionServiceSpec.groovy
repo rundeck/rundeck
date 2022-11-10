@@ -29,6 +29,7 @@ import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -58,10 +59,12 @@ import org.grails.web.json.JSONObject
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
+import org.rundeck.spi.data.DataManager
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
 import rundeck.services.*
+import rundeck.services.data.UserDataService
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -77,6 +80,7 @@ import java.time.temporal.ChronoUnit
  * Created by greg on 2/17/15.
  */
 class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     Class[] getDomainClassesToMock() {
         [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats, Notification]
@@ -87,6 +91,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.executionValidatorService = new ExecutionValidatorService()
         service.logFileStorageService=Mock(LogFileStorageService)
         service.fileUploadService=Mock(FileUploadService)
+
+        mockDataService(UserDataService)
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
+        }
     }
 
     private Map createJobParams(Map overrides = [:]) {

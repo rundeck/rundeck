@@ -6,6 +6,7 @@ import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.page.Pageable
+import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
@@ -44,7 +45,7 @@ class GormTokenDataProvider implements TokenDataProvider {
 
     @Override
     String createWithId( final String id, final AuthenticationToken data) throws DataAccessException {
-        User tokenOwner = userService.findOrCreateUser(data.ownerName)
+        RdUser tokenOwner = userService.findOrCreateUser(data.ownerName)
         if (!tokenOwner) {
             throw new DataAccessException("Couldn't find user: ${data.ownerName}")
         }
@@ -54,7 +55,7 @@ class GormTokenDataProvider implements TokenDataProvider {
         AuthToken token = new AuthToken(
                 token: data.token,
                 authRoles: AuthenticationToken.generateAuthRoles(data.getAuthRolesSet()),
-                user: tokenOwner,
+                user: User.get(tokenOwner.getId()),
                 expiration: data.expiration,
                 uuid: id,
                 creator: data.creator,

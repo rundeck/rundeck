@@ -49,10 +49,13 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.spi.data.DataManager
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Storage
+import rundeck.services.data.UserDataService
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -61,8 +64,18 @@ import spock.lang.Unroll
  * Created by greg on 10/15/15.
  */
 class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService>, DataTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     def setupSpec() { mockDomains ScheduledExecution, User, Storage  }
+
+    def setup() {
+        mockDataService(UserDataService)
+        service.rundeckDataManager =  Mock(DataManager){
+            getProviderForType(_) >>  {
+                provider
+            }
+        }
+    }
 
     class TestCloseable implements Closeable {
         boolean closed

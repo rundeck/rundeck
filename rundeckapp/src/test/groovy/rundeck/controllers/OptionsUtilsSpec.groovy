@@ -20,6 +20,8 @@ package rundeck.controllers
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.codecs.URLCodec
+import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.spi.data.DataManager
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FrameworkService
@@ -57,9 +59,10 @@ class OptionsUtilsSpec extends Specification implements ControllerUnitTest<Sched
         def frameworkService = Mock(FrameworkService)
         OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return frameworkService}
         OptionsUtil.metaClass.static.frameworkServiceInstance = { return frameworkService}
+        GormUserDataProvider provider = new GormUserDataProvider()
 
         when:
-        def result = OptionsUtil.expandUrl(option, url, job, optsmap, ishttp)
+        def result = OptionsUtil.expandUrl(option, url, job, provider, optsmap, ishttp)
 
         then:
         expected == result
@@ -95,9 +98,10 @@ class OptionsUtilsSpec extends Specification implements ControllerUnitTest<Sched
         OptionsUtil.metaClass.static.getFrameworkServiceInstance = { return frameworkService}
         OptionsUtil.metaClass.static.frameworkServiceInstance = { return frameworkService}
         OptionsUtil.metaClass.static.getHttpSessionInstance = { return null }
+        GormUserDataProvider provider = new GormUserDataProvider()
 
         when:
-        def result = OptionsUtil.expandUrl(option, url, job, optsmap, ishttp, username)
+        def result = OptionsUtil.expandUrl(option, url, job, provider, optsmap, ishttp, username)
 
         then:
         result == expected

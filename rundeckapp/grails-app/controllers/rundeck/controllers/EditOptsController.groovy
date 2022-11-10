@@ -19,7 +19,9 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import groovy.transform.PackageScope
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.spi.data.DataManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.Option
@@ -35,6 +37,7 @@ import java.util.regex.PatternSyntaxException
 class EditOptsController extends ControllerBase{
     static Logger logger = LoggerFactory.getLogger(EditOptsController)
     def FrameworkService frameworkService
+    DataManager rundeckDataManager
     def fileUploadService
     def optionValuesService
     def static allowedMethods = [
@@ -45,6 +48,9 @@ class EditOptsController extends ControllerBase{
             save: 'POST',
             undo: 'POST',
     ]
+    private UserDataProvider getUserDataProvider() {
+        rundeckDataManager.getProviderForType(UserDataProvider)
+    }
 
     def index() {
         redirect(controller: 'menu', action: 'index')
@@ -685,7 +691,8 @@ class EditOptsController extends ControllerBase{
                 try{
                     def realUrl = opt.realValuesUrl.toExternalForm()
                     ScheduledExecution se = opt.scheduledExecution
-                    def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, [:], realUrl.matches(/(?i)^https?:.*$/))
+                    UserDataProvider udp = getUserDataProvider()
+                    def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
                     def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, 10, 0, 5)
                     if(remoteResult){
                         def remoteJson = remoteResult.json

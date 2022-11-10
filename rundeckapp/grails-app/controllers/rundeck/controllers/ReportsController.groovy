@@ -17,33 +17,30 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
+import com.dtolabs.rundeck.app.support.ReportQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
 import grails.converters.JSON
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
 import rundeck.ReferencedExecution
+import rundeck.ReportFilter
 import rundeck.ScheduledExecution
-import rundeck.services.ApiService
 import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.regex.Matcher
-import com.dtolabs.rundeck.app.support.ExecQuery
-import com.dtolabs.rundeck.app.support.ReportQuery
-import rundeck.User
-import rundeck.ReportFilter
-import rundeck.services.FrameworkService
-import com.dtolabs.rundeck.app.api.ApiVersions
 
 class ReportsController extends ControllerBase{
     def reportService
@@ -104,7 +101,7 @@ class ReportsController extends ControllerBase{
         ){
             return
         }
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def filterPref= userService.parseKeyValuePref(u.filterPref)
         if(params.size()<1 && !params.filterName && u && params.formInput!='true' && actionName=='index'){
             if(filterPref['events']){
@@ -232,7 +229,7 @@ class ReportsController extends ControllerBase{
         if (query.hasErrors()) {
             return render(view: '/common/error', model: [beanErrors: query.errors])
         }
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
 
         if(params.filterName){
             //load a named filter and create a query from it
@@ -407,7 +404,7 @@ class ReportsController extends ControllerBase{
             request.errors=storeFilterCommand.errors
             return renderErrorView([:])
         }
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def ReportFilter filter
         def boolean saveuser=false
         if(params.newFilterName && !params.existsFilterName){
@@ -457,7 +454,7 @@ class ReportsController extends ControllerBase{
                 )
             }
 
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             def ReportFilter filter
             def boolean saveuser = false
             if (query.newFilterName && !query.existsFilterName) {
@@ -534,7 +531,7 @@ class ReportsController extends ControllerBase{
             ]
             )
         }
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def filterset = u.reportfilters?.findAll { it.projFilter == project } ?: []
 
         render(contentType: 'application/json') {
@@ -546,7 +543,7 @@ class ReportsController extends ControllerBase{
 
     def deleteFilter(){
         withForm{
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             def filtername=params.delFilterName
             final def ffilter = ReportFilter.findByNameAndUser(filtername, u)
             if(ffilter){
@@ -578,7 +575,7 @@ class ReportsController extends ControllerBase{
                 ]
                 )
             }
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             def filtername = params.delFilterName
             final def ffilter = ReportFilter.findByNameAndUserAndProjFilter(filtername, u, project)
             if (ffilter) {
