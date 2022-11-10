@@ -75,6 +75,9 @@ public class StepExecutionService
         serviceList.add(dynamicRegistryService);
         serviceList.add(stepPluginAdaptedStepExecutorService);
     }
+    public static boolean isRegistered(String name){
+        return name.equals(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE);
+    }
 
     @Override
     public boolean canLoadWithLoader(final ProviderLoader loader) {

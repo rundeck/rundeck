@@ -132,6 +132,9 @@ public class NodeStepExecutionService
         this.serviceList.add(nodeStepPluginAdaptedNodeStepExecutorService);
         this.serviceList.add(remoteScriptAdaptedNodeStepExecutorService);
     }
+    public boolean isRegistered(String provider){
+        return primaryService.isRegistered(provider) || dynamicRegistryService.isRegistered(provider);
+    }
 
     public ChainedNodeStepPluginService getChainedNodeStepPluginService() {
         return chainedNodeStepPluginService;
