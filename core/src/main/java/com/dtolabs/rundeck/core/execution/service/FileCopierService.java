@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -77,11 +78,20 @@ public class FileCopierService
 
     @Override
     protected String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
-        if (framework.isLocalNode(node)) {
-            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
+        return getProviderNameForNode(
+                framework.isLocalNode(node),
+                framework.getProjectManager().loadProjectConfig(project)
+        );
+    }
+
+    public static String getProviderNameForNode(
+            final boolean isLocal, final IRundeckProjectConfig iRundeckProjectConfig
+    ) {
+        if (isLocal) {
+            final String value = iRundeckProjectConfig.getProperty( SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
             return value != null ? value : DEFAULT_LOCAL_PROVIDER;
         } else {
-            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_PROVIDER_PROPERTY);
+            final String value = iRundeckProjectConfig.getProperty( SERVICE_DEFAULT_PROVIDER_PROPERTY);
             return value != null ? value : DEFAULT_REMOTE_PROVIDER;
         }
     }
@@ -97,7 +107,11 @@ public class FileCopierService
 
     @Override
     protected String getServiceProviderNodeAttributeForNode(INodeEntry node) {
-        if (framework.isLocalNode(node)) {
+        return getNodeAttributeForProvider(framework.isLocalNode(node));
+    }
+
+    public static String getNodeAttributeForProvider(final boolean isLocal) {
+        if (isLocal) {
             return LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE;
         }
         return REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE;

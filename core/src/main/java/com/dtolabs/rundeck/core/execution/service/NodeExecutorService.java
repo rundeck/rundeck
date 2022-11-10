@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
@@ -74,12 +75,10 @@ public class NodeExecutorService
 
     @Override
     protected String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
-        if (framework.isLocalNode(node)) {
-            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
-            return null != value ? value : DEFAULT_LOCAL_PROVIDER;
-        }
-        final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_PROVIDER_PROPERTY);
-        return null != value ? value : DEFAULT_REMOTE_PROVIDER;
+        return getProviderNameForNode(
+                framework.isLocalNode(node),
+                framework.getProjectManager().loadProjectConfig(project)
+        );
     }
 
     public static NodeExecutorService getInstanceForFramework(final Framework framework) {
@@ -93,7 +92,23 @@ public class NodeExecutorService
 
     @Override
     protected String getServiceProviderNodeAttributeForNode(INodeEntry node) {
-        if (framework.isLocalNode(node)) {
+        return getNodeAttributeForProvider(framework.isLocalNode(node));
+    }
+    public static String getProviderNameForNode(
+            final boolean localNode,
+            final IRundeckProjectConfig loadProjectConfig
+    )
+    {
+        if (localNode) {
+            final String value = loadProjectConfig.getProperty( SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
+            return null != value ? value : DEFAULT_LOCAL_PROVIDER;
+        }
+        final String value = loadProjectConfig.getProperty( SERVICE_DEFAULT_PROVIDER_PROPERTY);
+        return null != value ? value : DEFAULT_REMOTE_PROVIDER;
+    }
+
+    public static String getNodeAttributeForProvider(final boolean localNode) {
+        if (localNode) {
             return LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE;
         }
         return NODE_SERVICE_SPECIFIER_ATTRIBUTE;
