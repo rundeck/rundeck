@@ -22,25 +22,12 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 /**
  * Created by greg on 2/20/15.
  */
-public interface IFrameworkServices extends IExecutionServices, IExecutionProviders {
-    /**
-     * @return a service by name
-     * @param name service name
-     */
-    FrameworkSupportService getService(String name);
+public interface IFrameworkServices extends IServicesRegistration, IExecutionServices, IExecutionProviders {
 
     /**
      * initialize
      */
     void initialize(Framework framework);
-
-    /**
-     * Set a service by name
-     * @param name name
-     * @param service service
-     */
-    void setService(String name, FrameworkSupportService service);
-    void overrideService(String name, FrameworkSupportService service);
 
     ExecutionService getExecutionService();
 
