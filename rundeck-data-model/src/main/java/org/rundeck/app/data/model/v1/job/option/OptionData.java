@@ -1,36 +1,35 @@
 package org.rundeck.app.data.model.v1.job.option;
 
+import java.net.URL;
 import java.util.List;
-import java.util.SortedSet;
 
-public interface Option {
+public interface OptionData {
     Integer getSortIndex();
     String getName();
     String getDescription();
     String getDefaultValue();
     String getDefaultStoragePath();
-    Boolean isEnforced();
-    Boolean isRequired();
-    Boolean isDate();
+    Boolean getEnforced();
+    Boolean getRequired();
+    Boolean getIsDate();
     String getDateFormat();
-    SortedSet<String> getValues();
-    String getValuesUrl();
+    URL getValuesUrl();
     String getLabel();
 
-    String getValuesUrlLong();
+    URL getValuesUrlLong();
     String getRegex();
     String getValuesList();
     String getValuesListDelimiter();
-    Boolean isMultivalued();
+    Boolean getMultivalued();
     String getDelimiter();
-    Boolean isSecureInput();
-    Boolean isSecureExposed();
+    Boolean getSecureInput();
+    Boolean getSecureExposed();
     String getOptionType();
     String getConfigData();
-    Boolean isMultivalueAllSelected();
+    Boolean getMultivalueAllSelected();
     String getOptionValuesPluginType();
-    List<OptionValue> getValuesFromPlugin();
-    Boolean isHidden();
-    Boolean isSortValues();
+    List<OptionValueData> getValuesFromPlugin();
+    Boolean getHidden();
+    Boolean getSortValues();
     List<String> getOptionValues();
 }

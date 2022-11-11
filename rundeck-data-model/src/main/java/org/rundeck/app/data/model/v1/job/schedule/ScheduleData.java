@@ -1,6 +1,6 @@
 package org.rundeck.app.data.model.v1.job.schedule;
 
-public interface Schedule {
+public interface ScheduleData {
     String getMinute();
     String getHour();
     String getDayOfMonth();

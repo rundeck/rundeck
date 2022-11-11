@@ -1,10 +1,8 @@
 package org.rundeck.app.data.model.v1.job.notification;
 
-import java.util.Map;
-
-public interface Notification {
+public interface NotificationData {
     String getEventTrigger();
     String getType();
     String getFormat();
-    Map<String,Object> getContent();
+    String getContent();
 }

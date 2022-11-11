@@ -24,12 +24,19 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
+import org.rundeck.app.data.job.RdJob
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.config.LogConfig
+import org.rundeck.app.data.model.v1.job.config.NodeConfig
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
+import org.rundeck.app.data.model.v1.job.option.OptionData
+import org.rundeck.app.data.model.v1.job.schedule.ScheduleData
 import org.rundeck.util.Sizes
 import rundeck.services.JobReferenceImpl
 
 import java.util.stream.Collectors
 
-class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
+class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
     Long id
     SortedSet<Option> options
@@ -56,9 +63,11 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
 
     /** @deprecated unused */
     Date nextExecution
-    boolean scheduled = false
+    Boolean scheduled = false
     Boolean nodesSelectedByDefault = true
+    /** @deprecated unused */
     Long totalTime=0
+    /** @deprecated unused */
     Long execCount=0
     String adhocExecutionType
     Date dateCreated
@@ -1235,6 +1244,59 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      */
     SortedSet<JobOption> jobOptionsSet() {
         new TreeSet<>(options.collect{it.toJobOption()})
+    }
+
+    SortedSet<OptionData> getOptionSet() {
+        return options
+    }
+
+    Set<NotificationData> getNotificationSet() {
+        return notifications
+    }
+
+    LogConfig getLogConfig() {
+        new RdJob.RdLogConfig(loglevel: loglevel,
+                logOutputThreshold: logOutputThreshold,
+                logOutputThresholdAction: logOutputThresholdAction,
+                logOutputThresholdStatus: logOutputThresholdStatus
+        )
+    }
+
+    NodeConfig getNodeConfig() {
+        new RdJob.RdNodeConfig(
+                nodeInclude : nodeInclude,
+                nodeExclude : nodeExclude,
+                nodeIncludeName : nodeIncludeName,
+                nodeExcludeName : nodeExcludeName,
+                nodeIncludeTags : nodeIncludeTags,
+                nodeExcludeTags : nodeExcludeTags,
+                nodeIncludeOsName : nodeIncludeOsName,
+                nodeExcludeOsName : nodeExcludeOsName,
+                nodeIncludeOsFamily : nodeIncludeOsFamily,
+                nodeExcludeOsFamily : nodeExcludeOsFamily,
+                nodeIncludeOsArch : nodeIncludeOsArch,
+                nodeExcludeOsArch : nodeExcludeOsArch,
+                nodeIncludeOsVersion : nodeIncludeOsVersion,
+                nodeExcludeOsVersion : nodeExcludeOsVersion,
+                nodeExcludePrecedence : nodeExcludePrecedence,
+                successOnEmptyNodeFilter: successOnEmptyNodeFilter,
+                filter: filter,
+                filterExclude: filterExclude,
+                excludeFilterUncheck: se.excludeFilterUncheck
+        )
+    }
+
+    ScheduleData getSchedule() {
+        new RdJob.RdScheduleData(
+                year : se.year,
+                month : se.month,
+                dayOfWeek : se.dayOfWeek,
+                dayOfMonth : se.dayOfMonth,
+                hour : se.hour,
+                minute : se.minute,
+                seconds : se.seconds,
+                crontabString : se.crontabString
+        )
     }
 
     /**

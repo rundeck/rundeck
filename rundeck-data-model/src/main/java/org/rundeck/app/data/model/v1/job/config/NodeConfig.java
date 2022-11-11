@@ -1,18 +1,25 @@
 package org.rundeck.app.data.model.v1.job.config;
 
 public interface NodeConfig {
-    Boolean isSelectedByDefault();
-    Boolean isKeepgoing();
-    Boolean isDoNodedispatch();
-    Boolean isRankOrderAscending();
-    Boolean isFilterEditable();
-    Boolean isExcludePrecedence();
-    Boolean isSuccessOnEmptyNodeFilter();
-    Boolean isExcludeFilterUncheck();
-    String  getRankAttribute();
-    String  getRankOrder();
-    String  getThreadcountDynamic();
-    String  getFilter();
-    String  getFilterExclude();
-    Integer getThreadcount();
+
+    String getNodeInclude();
+    String getNodeExclude();
+    String getNodeIncludeName();
+    String getNodeExcludeName();
+    String getNodeIncludeTags();
+    String getNodeExcludeTags();
+    String getNodeIncludeOsName();
+    String getNodeExcludeOsName();
+    String getNodeIncludeOsFamily();
+    String getNodeExcludeOsFamily();
+    String getNodeIncludeOsArch();
+    String getNodeExcludeOsArch();
+    String getNodeIncludeOsVersion();
+    String getNodeExcludeOsVersion();
+    Boolean getNodeExcludePrecedence(); //y
+    Boolean getSuccessOnEmptyNodeFilter(); //y
+    Boolean getExcludeFilterUncheck(); //y
+    String  getFilter(); //y
+    String  getFilterExclude(); //y
+
 }

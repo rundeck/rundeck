@@ -1,13 +1,13 @@
 package org.rundeck.app.data.model.v1.execution;
 
-import org.rundeck.app.data.model.v1.job.Job;
+import org.rundeck.app.data.model.v1.job.JobData;
 import org.rundeck.app.data.model.v1.logstorage.LogFileStorageRequest;
 
 import java.io.Serializable;
 
 public interface Execution {
     Serializable getId();
-    Job getJob();
+    JobData getJob();
     String getUuid();
     String getProject();
     String getStatus();

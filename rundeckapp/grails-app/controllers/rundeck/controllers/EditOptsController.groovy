@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import groovy.transform.PackageScope
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.core.auth.AuthConstants
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -37,6 +38,7 @@ class EditOptsController extends ControllerBase{
     def FrameworkService frameworkService
     def fileUploadService
     def optionValuesService
+    def userService
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -610,7 +612,7 @@ class EditOptsController extends ControllerBase{
      * @param opt the option
      * @param params input params if any
      */
-    protected validateFileOpt(Option opt, Map results) {
+    protected validateFileOpt(OptionData opt, Map results) {
         results.configMapValidate = fileUploadService.validateFileOptConfig(opt)
         results
     }
@@ -619,7 +621,7 @@ class EditOptsController extends ControllerBase{
      * @param opt the option
      * @param params input params if any
      */
-    public static _validateOption(Option opt, Map params = null, boolean jobWasScheduled=false) {
+    public static _validateOption(OptionData opt, Map params = null, boolean jobWasScheduled=false) {
         opt.validate(deepValidate: false)
         def result = [:]
         if (jobWasScheduled && opt.required && opt.typeFile) {

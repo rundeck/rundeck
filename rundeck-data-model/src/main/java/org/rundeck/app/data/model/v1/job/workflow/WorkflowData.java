@@ -2,10 +2,10 @@ package org.rundeck.app.data.model.v1.job.workflow;
 
 import java.util.List;
 
-public interface Workflow {
+public interface WorkflowData {
     Integer getThreadcount();
-    Boolean isKeepgoing();
-    List<WorkflowStep> getCommands();
+    Boolean getKeepgoing();
+    List<WorkflowStepData> getSteps();
     String getStrategy();
     String getPluginConfig();
 }

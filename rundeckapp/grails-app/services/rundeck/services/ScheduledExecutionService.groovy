@@ -26,7 +26,6 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
-import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
 import grails.orm.HibernateCriteriaBuilder
@@ -45,6 +44,11 @@ import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
+import org.rundeck.app.data.model.v1.job.option.OptionData
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.validators.OptionDataValidator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -81,6 +85,7 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
+import org.rundeck.spi.data.DataManager
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -185,6 +190,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
+    JobDataProvider jobDataProvider
+    UserService userService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -204,6 +211,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @Override
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
 
+    JobData saveJob(JobData job) {
+        jobDataProvider.save(job)
+    }
     /**
      * Return project config for node cache delay
      * @param project
@@ -2938,7 +2948,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def notifications = parseParamNotifications(params)
             notificationSet=notifications.collect {Map notif ->
                 String trigger = notif.eventTrigger
-                def Notification n
                 if ( notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
                     defineEmailNotification(scheduledExecution,trigger,notif)
                 } else if ( notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {

@@ -37,36 +37,23 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import org.apache.commons.collections.list.TreeList
-import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
-import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.AuthCache
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.client.utils.DateUtils
-import org.apache.http.impl.auth.BasicScheme
-import org.apache.http.impl.client.BasicAuthCache
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.impl.client.StandardHttpRequestRetryHandler
-import org.apache.http.impl.cookie.DateParseException
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.auth.types.AuthorizingProject
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.data.job.RdJob
+import org.rundeck.app.data.job.ScheduledExecutionToJobConverter
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
-import org.rundeck.core.auth.web.IdParameter
 import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
@@ -794,24 +781,24 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    /**
-     * Map of descriptive property name to ScheduledExecution domain class property names
-     * used by expandUrl for embedded property references in remote options URL
-     */
-    private static jobprops=[
-        name:'jobName',
-        group:'groupPath',
-        description:'description',
-        project:'project',
-    ]
-    /**
-     * Map of descriptive property name to Option domain class property names
-     * used by expandUrl for embedded property references in remote options URL
-     */
-    private static optprops=[
-        name:'name',
-
-    ]
+//    /**
+//     * Map of descriptive property name to ScheduledExecution domain class property names
+//     * used by expandUrl for embedded property references in remote options URL
+//     */
+//    private static jobprops=[
+//        name:'jobName',
+//        group:'groupPath',
+//        description:'description',
+//        project:'project',
+//    ]
+//    /**
+//     * Map of descriptive property name to Option domain class property names
+//     * used by expandUrl for embedded property references in remote options URL
+//     */
+//    private static optprops=[
+//        name:'name',
+//
+//    ]
 
     /**
      * Make a remote URL request and return the parsed JSON data and statistics for http requests in a map.
@@ -4151,6 +4138,19 @@ class ScheduledExecutionController  extends ControllerBase{
                 ] as JSON)
             }
         }
+    }
+
+    ObjectMapper mapper = new ObjectMapper()
+
+    def asjob() {
+        response.contentType = "application/json;utf-8"
+       // render mapper.writeValueAsString(ScheduledExecutionToJobConverter.convert(ScheduledExecution.get(params.id.toLong())))
+        render ScheduledExecutionToJobConverter.convert(ScheduledExecution.get(params.id.toLong())) as JSON
+    }
+
+    def fromjob() {
+        RdJob job = new ObjectMapper().readValue(request.inputStream, RdJob)
+        render mapper.writeValueAsString(scheduledExecutionService.saveJob(job))
     }
 }
 

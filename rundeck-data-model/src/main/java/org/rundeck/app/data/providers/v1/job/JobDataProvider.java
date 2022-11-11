@@ -1,47 +1,44 @@
 package org.rundeck.app.data.providers.v1.job;
 
-import org.rundeck.app.data.model.v1.job.Job;
+import org.rundeck.app.data.model.v1.job.JobData;
 import org.rundeck.spi.data.DataAccessException;
 
 import java.io.Serializable;
 
 public interface JobDataProvider {
     /**
-     * Retrieves a Job based on the id/uuid provided.
+     * Retrieves a Job based on the id provided.
      *
      * @param id of the Job, format Serializable
      * @return Job if found, otherwise null
      */
-    Job getData(Serializable id);
+    JobData get(Serializable id);
 
     /**
-     * Creates a Job with a generated id
+     * Retrieves a Job based on the uuid provided.
+     *
+     * @param uuid of the Job, format String
+     * @return Job if found, otherwise null
+     */
+    JobData findByUuid(String uuid);
+
+    /**
+     * Checks if the job exists in the database
+     *
+     * @param uuid of the Job, format String
+     * @return boolean representing job existence
+     */
+    boolean existsByUuid(String uuid);
+
+    /**
+     * Save a Job with a generated id
      *
      * @param data Job attributes
      *
-     * @return id of the created Job
+     * @return object of the created Job
      * @throws DataAccessException on error
      */
-    String create(Job data) throws DataAccessException;
-
-    /**
-     * Creates a Job with the supplied id
-     *
-     * @param data Job attributes
-     * @param id id
-     * @return id of the created Job
-     * @throws DataAccessException on error
-     */
-    String createWithId(Serializable id, Job data) throws DataAccessException;
-
-    /**
-     * Updates a Job with the supplied attributes
-     *
-     * @param data Job attributes
-     * @param id id
-     * @throws DataAccessException on error
-     */
-    void update(Serializable id, Job data) throws DataAccessException;
+    JobData save(JobData data) throws DataAccessException;
 
     /**
      * Removes a Job
