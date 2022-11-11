@@ -64,6 +64,9 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
         tempDir = Files.createTempDirectory("LogFileStorageServiceSpec").toFile()
         tempDir.deleteOnExit()
         service.logFileStorageRequestProvider = new GormLogFileStorageRequestProvider()
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
+        }
     }
 
     def "resume incomplete delayed"() {
@@ -91,6 +94,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             1 * getFrameworkPropertyResolverFactory('test') >> Mock(PropertyResolverFactory.Factory)
         }
         service.grailsLinkGenerator = Mock(LinkGenerator)
+        service.executionService = new ExecutionService()
         def e1 = new Execution(dateStarted: new Date(),
                                dateCompleted: null,
                                user: 'user1',
@@ -155,6 +159,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             }
         }
         service.grailsLinkGenerator = Mock(LinkGenerator)
+        service.executionService = new ExecutionService()
         def e1 = new Execution(
             dateStarted: new Date(),
             dateCompleted: null,
@@ -259,7 +264,7 @@ class LogFileStorageServiceSpec extends Specification implements ServiceUnitTest
             completed: false
         ).save()
 
-
+        service.executionService = new ExecutionService()
         service.logFileStorageTaskScheduler = Mock(TaskScheduler)
         when:
         service.resumeIncompleteLogStorage(serverUUID)

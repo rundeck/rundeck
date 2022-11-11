@@ -23,9 +23,11 @@ import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.common.IFrameworkNodes
 import com.dtolabs.rundeck.core.common.INodeSet
 import grails.compiler.GrailsCompileStatic
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
-import rundeck.ScheduledExecution
+import rundeck.data.util.JobDataUtil
+import rundeck.services.RdJobService
 
 import java.util.function.Function
 
@@ -36,6 +38,7 @@ import java.util.function.Function
 class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
     AuthCache authContextEvaluatorCacheManager
     IFrameworkNodes nodeSupport
+    RdJobService rdJobService
 
     @Override
     boolean authorizeApplicationResourceTypeAll(
@@ -220,8 +223,8 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
      * @return
      */
     @Override
-    def Map<String,String> authResourceForJob(ScheduledExecution se) {
-        return authResourceForJob(se.jobName, se.groupPath, se.extid)
+    def Map<String,String> authResourceForJob(JobData se) {
+        return authResourceForJob(se.jobName, se.groupPath, JobDataUtil.getExtId(se))
     }
 
     /**
@@ -244,9 +247,9 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
      */
     @Override
     boolean authorizeProjectExecutionAll(AuthContext authContext, Execution exec, Collection<String> actions) {
-        def ScheduledExecution se = exec.scheduledExecution
-        return se ?
-               authorizeProjectJobAll(authContext, se, actions, se.project) :
+        JobData job = exec.jobUuid ? rdJobService.getJobByUuid(exec.jobUuid) : null
+        return job ?
+               authorizeProjectJobAll(authContext, job, actions, job.project) :
                authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
 
     }
@@ -259,9 +262,9 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
      */
     @Override
     boolean authorizeProjectExecutionAny(AuthContext authContext, Execution exec, Collection<String> actions) {
-        def ScheduledExecution se = exec.scheduledExecution
-        return se ?
-               authorizeProjectJobAny(authContext, se, actions, se.project) :
+        JobData job = exec.jobUuid ? rdJobService.getJobByUuid(exec.jobUuid) : null
+        return job ?
+               authorizeProjectJobAny(authContext, job, actions, job.project) :
                authorizeProjectResourceAny(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
 
     }
@@ -283,16 +286,16 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
         def adhocauth = null
         def results = []
         execs.each { Execution exec ->
-            def ScheduledExecution se = exec.scheduledExecution
-            if (se && null == semap[se.id]) {
-                semap[se.id] = authorizeProjectJobAll(authContext, se, actions, se.project)
-            } else if (!se && null == adhocauth) {
+            JobData job = exec.jobUuid ? rdJobService.getJobByUuid(exec.jobUuid) : null
+            if (job && null == semap[job.uuid]) {
+                semap[job.uuid] = authorizeProjectJobAll(authContext, job, actions, job.project)
+            } else if (!job && null == adhocauth) {
                 adhocauth = authorizeProjectResourceAll(
                     authContext, AuthConstants.RESOURCE_ADHOC, actions,
                     exec.project
                 )
             }
-            if (se ? semap[se.id] : adhocauth) {
+            if (job ? semap[job.uuid] : adhocauth) {
                 results << exec
             }
         }
@@ -309,7 +312,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
     @Override
     boolean authorizeProjectJobAny(
         AuthContext authContext,
-        ScheduledExecution job,
+        JobData job,
         Collection<String> actions,
         String project
     ) {
@@ -328,7 +331,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
     @Override
     boolean authorizeProjectJobAll(
         AuthContext authContext,
-        ScheduledExecution job,
+        JobData job,
         Collection<String> actions,
         String project
     ) {

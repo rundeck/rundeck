@@ -6,6 +6,7 @@ import grails.compiler.GrailsCompileStatic
 import grails.util.Holders
 import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.job.orchestrator.OrchestratorData
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
@@ -92,8 +93,13 @@ class ScheduledExecutionFromRdJobUpdater {
     static void updateOrchestrator(ScheduledExecution se, RdOrchestrator rdo) {
         if(!se.orchestrator && !rdo) return
         if(!se.orchestrator) se.orchestrator = new Orchestrator()
-        se.orchestrator.type = rdo.type
-        se.orchestrator.content = mapper.writeValueAsString(rdo.configuration)
+        updateOrchestrator(se.orchestrator, rdo)
+    }
+
+    static Orchestrator updateOrchestrator(Orchestrator orchestrator, OrchestratorData rdo) {
+        orchestrator.type = rdo.type
+        orchestrator.content = mapper.writeValueAsString(rdo.configuration)
+        orchestrator
     }
 
     static void updateJobOptions(ScheduledExecution se, SortedSet<RdOption> rdopts) {
@@ -190,15 +196,19 @@ class ScheduledExecutionFromRdJobUpdater {
         se.crontabString = schedule?.crontabString
     }
 
-    static void updateWorkflow(ScheduledExecution se, RdWorkflow rdw) {
+    static Workflow updateWorkflow(ScheduledExecution se, RdWorkflow rdw) {
         if(!se.workflow) se.workflow = new Workflow(commands: [])
-        Workflow wkf = se.workflow
+        updateWorkflow(se.workflow, rdw)
+    }
+
+    static Workflow updateWorkflow(Workflow wkf, RdWorkflow rdw) {
         wkf.threadcount = rdw.threadcount
         wkf.keepgoing = rdw.keepgoing
         wkf.strategy = rdw.strategy
         wkf.pluginConfigMap = rdw.pluginConfigMap
+        int stepCount = wkf?.commands?.size() ?: 0
         //remove all previous steps
-        for(int x = 0; x < wkf.commands.size(); x++) {
+        for(int x = 0; x < stepCount; x++) {
             def cmd = wkf.commands[x]
             wkf.removeFromCommands(cmd)
             cmd.delete()

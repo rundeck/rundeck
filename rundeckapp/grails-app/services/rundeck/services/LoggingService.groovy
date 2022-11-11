@@ -62,6 +62,7 @@ class LoggingService implements ExecutionFileProducer {
     def StreamingLogReaderPluginProviderService streamingLogReaderPluginProviderService
     def grailsApplication
     def grailsLinkGenerator
+    def executionService
 
     public boolean isLocalFileStorageEnabled() {
         boolean fileDisabled = configurationService.getString("execution.logs.localFileStorageEnabled") in ['false', false]
@@ -114,7 +115,7 @@ class LoggingService implements ExecutionFileProducer {
         def names = listConfiguredStreamingWriterPluginNames()
         if (names) {
             Map<String, Object> jobcontext = new HashMap<>(
-                ExecutionService.exportContextForExecution(execution, grailsLinkGenerator)
+                executionService.exportContextForExecution(execution, grailsLinkGenerator)
             )
             def labels = [:]
             execution.workflow?.commands?.eachWithIndex { WorkflowStep entry, int index ->
@@ -231,7 +232,7 @@ class LoggingService implements ExecutionFileProducer {
     public ExecutionLogReader getLogReader(Execution execution) {
         def pluginName = getConfiguredStreamingReaderPluginName()
         if (pluginName) {
-            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(
+            HashMap<String, String> jobcontext = executionService.exportContextForExecution(
                     execution,
                     grailsLinkGenerator
             )

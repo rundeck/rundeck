@@ -28,11 +28,13 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.data.job.JobReferenceImpl
 import spock.lang.Specification
 
 import static org.junit.Assert.assertNotNull
@@ -62,6 +64,9 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                 ret
             }
         }
+        service.rdJobService = Mock(RdJobService) {
+            getJobDataProvider() >> Mock(JobDataProvider)
+        }
 
     }
 
@@ -81,6 +86,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                 uuid: jobUuid,
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
         ).save()
+        service.rdJobService.getJobByIdOrUuid(_) >> null
 
         when:
         def ref = service.jobForID(null,dnejobUuid, projectName)
@@ -106,6 +112,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     uuid: jobUuid,
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
+            service.rdJobService.getJobByIdOrUuid(_) >> job
 
         when:
         def ref = service.jobForID(null,jobUuid, projectName)
@@ -132,6 +139,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     uuid: jobUuid,
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
 
         when:
         def ref = service.jobForName(null,groupPath,jobName, projectName)
@@ -158,6 +166,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     uuid: jobUuid,
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> null
 
         when:
         def ref = service.jobForName(null,'bogus',jobName, projectName)
@@ -183,6 +192,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     uuid: jobUuid,
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
 
         when:
         def ref = service.jobForName(null,groupPath+'/'+jobName, projectName)
@@ -209,6 +219,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     uuid: jobUuid,
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> null
 
         when:
         def ref = service.jobForName(null,'wrong/'+jobName, projectName)
@@ -234,6 +245,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     uuid: jobUuid,
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
 
         when:
         def ref = service.jobForName(null,jobName, projectName)
@@ -260,6 +272,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     uuid: jobUuid,
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
+        service.rdJobService.getJobByIdOrUuid(_) >> job
             def reference=service.jobForID(null,jobUuid,projectName)
 
         when:
@@ -286,12 +299,13 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
             def exec = new Execution(
-                    scheduledExecution: job,
+                    jobUuid: job.uuid,
                     dateStarted: new Date(),
                     dateCompleted: null,
                     user:'user',
                     project: projectName
             ).save()
+        service.rdJobService.getJobByIdOrUuid(_) >> job
             def reference=service.jobForID(null,jobUuid,projectName)
 
         when:
@@ -321,19 +335,20 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
             def exec = new Execution(
-                    scheduledExecution: job,
+                    jobUuid: job.uuid,
                     dateStarted: new Date(),
                     dateCompleted: null,
                     user:'user',
                     project: projectName
             ).save()
             def exec2 = new Execution(
-                    scheduledExecution: job,
+                    jobUuid: job.uuid,
                     dateStarted: new Date(),
                     dateCompleted: null,
                     user:'user2',
                     project: projectName
             ).save()
+        service.rdJobService.getJobByIdOrUuid(_) >> job
             def reference=service.jobForID(null,jobUuid,projectName)
 
         when:
@@ -372,6 +387,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     project: projectName
             ).save()
 
+        service.rdJobService.getJobByIdOrUuid(_) >> job
         service.frameworkService=Mock(FrameworkService){
             0 * _(*_)
         }
@@ -442,7 +458,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
             def exec = new Execution(
-                    scheduledExecution: job,
+                    jobUuid: job.uuid,
                     dateStarted: new Date(),
                     dateCompleted: new Date(),
                     user:'user',
@@ -453,7 +469,8 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     timedOut: timedOut,
                     willRetry: retried,
             ).save()
-            def reference=service.jobForID(null,jobUuid,projectName)
+        service.rdJobService.getJobByIdOrUuid(_) >> job
+        def reference=service.jobForID(null,jobUuid,projectName)
 
         def state = service.getJobState(null,reference)
 
@@ -476,11 +493,17 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
     void "start job"(){
         def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
         def projectName = 'testProj'
-        JobReference job = new JobReferenceImpl()
-        job.project=projectName
-        job.id=jobUuid
+        def jobName = 'abc'
+        def groupPath = 'elf'
         def auth = new SubjectAuthContext(null,null)
         given:
+        def job = new ScheduledExecution(
+                jobName: jobName,
+                groupPath: groupPath,
+                project: projectName,
+                uuid: jobUuid,
+                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
+        ).save()
         Execution e1=setTestExecutions(projectName,jobUuid)
         service.frameworkService=Stub(FrameworkService){
             authorizeProjectJobAll(null,!null,!null,!null) >>> [true,true]
@@ -497,8 +520,10 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                 ret
             }
         }
+        service.rdJobService.getJobByIdOrUuid(_) >> job
+        def reference=service.jobForID(null,jobUuid,projectName)
         when:
-            def ref = service.runJob(auth, job, (String) null, null, null)
+            def ref = service.runJob(auth, reference, (String) null, null, null)
         then:
         ref
             ref.id == e1.id.toString()
@@ -576,7 +601,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
         ).save()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: projectName, loglevel: 'WARN',
-                doNodedispatch: false, scheduledExecution: se, status: 'incomplete', dateStarted: dateStarted, id:1)
+                doNodedispatch: false, jobUuid: se.uuid, status: 'incomplete', dateStarted: dateStarted, id:1)
         assertNotNull(e.save())
         def seB = new ScheduledExecution(
                 jobName: 'def',
@@ -586,7 +611,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                 workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
         ).save()
         Execution eB = new Execution(argString: "-test args", user: "testuser", project: projectName, loglevel: 'WARN',
-                doNodedispatch: false, scheduledExecution: seB, status: 'incomplete', dateStarted: dateStartedB, id:2)
+                doNodedispatch: false, jobUuid: seB.uuid, status: 'incomplete', dateStarted: dateStartedB, id:2)
         assertNotNull(eB.save())
         return e
     }
@@ -611,6 +636,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
                     workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'echo hi')])
             ).save()
             def execRef = Mock(ExecutionReference)
+            service.rdJobService.getJobByIdOrUuid(_) >> job
 
         when:
             def result = service.runJob(auth, ref, opts, null, null, meta)
@@ -622,7 +648,7 @@ class JobStateServiceSpec extends Specification implements ServiceUnitTest<JobSt
             }
             ) >> [
                     success  : true,
-                    execution: [asReference: { ->
+                    execution: [asReferenceWithJobData: { jobdata ->
                         execRef
                     }]
             ]

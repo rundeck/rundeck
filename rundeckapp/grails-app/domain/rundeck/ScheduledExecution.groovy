@@ -31,16 +31,15 @@ import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.job.RdSchedule
+
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
-import org.rundeck.util.Sizes
+import rundeck.data.util.JobDataUtil
 import rundeck.data.validation.shared.SharedJobConstraints
-import rundeck.data.validation.shared.SharedJobScheduleConstraints
 import rundeck.data.validation.shared.SharedLogConfigConstraints
 import rundeck.data.validation.shared.SharedNodeConfigConstraints
 import rundeck.data.validation.shared.SharedProjectNameConstraints
-import rundeck.services.JobReferenceImpl
 
 import java.util.stream.Collectors
 
@@ -218,7 +217,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     }
 
     void setPluginConfigVal(String key, Object val) {
-        Map map = pluginConfigMap
+        Map map = pluginConfigMap ?: [:]
         map[key] = val
         setPluginConfigMap(map)
     }
@@ -658,23 +657,23 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
     }
 
     def String generateJobScheduledName(){
-        return [id,jobName].join(":")
+        return JobDataUtil.generateJobScheduledName(this)
     }
      // generate a Quartz jobGroupName identification string suitable for use with the scheduler
     def String generateJobGroupName() {
-        return [project, jobName,groupPath?groupPath: ''].join(":")
+        return JobDataUtil.generateJobGroupName(this)
     }
 
     // various utility methods to the process crontab entry data
     def String generateCrontabExression() {
-        return [seconds?seconds:'0',minute,hour,dayOfMonth?.toUpperCase(),month?.toUpperCase(),dayOfMonth=='?'?dayOfWeek?.toUpperCase():'?',year?year:'*'].join(" ")
+        return JobDataUtil.generateCrontabExpression(this)
     }
 
     /**
      * Return full name with group path
      */
     def String generateFullName(){
-        return generateFullName(groupPath,jobName)
+        return  JobDataUtil.generateFullName(this)
     }
 
 
@@ -684,7 +683,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @param jobname job name
      */
     static String generateFullName(String group,String jobname){
-        return [group?:'',jobname].join("/")
+        return JobDataUtil.generateFullName(group, jobname)
     }
 
     /**
@@ -761,7 +760,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @return
      */
     public long getTimeoutDuration(){
-        timeout? Sizes.parseTimeDuration(timeout):-1
+        JobDataUtil.getTimeoutDuration(this)
     }
 
     /**
@@ -1218,13 +1217,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @return reference interface for this job
      */
     JobReference asReference() {
-        new JobReferenceImpl(
-            id: extid,
-            jobName: jobName,
-            groupPath: groupPath,
-            project: project,
-            serverUUID: serverNodeUUID
-        )
+        JobDataUtil.asJobReference(this)
     }
 
     JobDataSummary toJobDataSummary() {

@@ -12,9 +12,9 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import rundeck.ScheduledExecution
+import rundeck.data.job.JobRevReferenceImpl
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
-import rundeck.services.JobRevReferenceImpl
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.StoredJobChangeEvent

@@ -57,11 +57,13 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.data.job.JobRevReferenceImpl
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
@@ -1221,7 +1223,7 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobState> exportStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs, boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
+    Map<String, JobState> exportStatusForJobs(String project, UserAndRolesAuthContext auth, List<JobData> jobs, boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
         def clusterMode = frameworkService.isClusterModeEnabled()
 
         if(jobs && jobs.size()>0 && clusterMode && runClusterFix){
@@ -1276,7 +1278,7 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<ScheduledExecution> jobs,  boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
+    Map<String, JobImportState> importStatusForJobs(String project, UserAndRolesAuthContext auth, List<JobData> jobs,  boolean runClusterFix = true, Map<String, Map> jobsPluginMeta = null) {
         def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode && runClusterFix ){

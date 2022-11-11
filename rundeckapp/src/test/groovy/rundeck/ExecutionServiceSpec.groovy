@@ -34,6 +34,10 @@ import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.job.option.RemoteOptionValueLoader
+import org.rundeck.app.job.option.RemoteOptionValuesResponse
+import org.rundeck.app.jobfilerecord.JobFileRecordValidator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -66,6 +70,10 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
+import rundeck.data.exceptions.ExecutionServiceExecutionException
+import rundeck.data.exceptions.ExecutionServiceValidationException
+import rundeck.data.execution.ExecutionOptionProcessor
+import rundeck.data.storage.AuthorizedKeyStorageTreeProvider
 import rundeck.services.*
 import rundeck.services.data.UserDataService
 import rundeck.services.logging.WorkflowStateFileLoader
@@ -102,10 +110,15 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.execReportDataProvider = providerExec
         service.referencedExecutionDataProvider = referencedExecutionDataProvider
         service.jobStatsDataProvider = new GormJobStatsDataProvider()
+        service.executionOptionProcessor = new ExecutionOptionProcessor()
+        service.rdJobService = Mock(RdJobService) {
+            jobDataProvider >> Mock(JobDataProvider)
+        }
     }
 
     private Map createJobParams(Map overrides = [:]) {
         [
+                uuid          : UUID.randomUUID().toString(),
                 jobName       : 'blue',
                 project       : 'AProject',
                 groupPath     : 'some/where',
@@ -143,31 +156,17 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "retry execution otherwise running"() {
 
         given:
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                uuid: UUID.randomUUID().toString(),
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([retry: '1']))
         job.save()
         def exec = new Execution(
-                scheduledExecution: job,
+                jobUuid: job.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'userB',
                 project: 'AProject'
         ).save()
         def exec2 = new Execution(
-                scheduledExecution: job,
+                jobUuid: job.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'user',
@@ -183,7 +182,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec2.id)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.code == 'conflict'
         e.message ==~ /.*running executions has been reached.*/
     }
@@ -191,23 +190,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "retry execution new execution"() {
 
         given:
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([retry: '1']))
         job.save()
         def exec = new Execution(
-                scheduledExecution: job,
+                jobUuid: job.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'user',
@@ -234,20 +220,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "create execution as user"() {
 
         given:
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([retry: '1']))
         job.save()
 
         service.frameworkService = Stub(FrameworkService) {
@@ -275,20 +248,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "create execution expand date strings"() {
 
         given:
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: argString,
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([argString: argString, retry: '1']))
         job.save()
 
         service.frameworkService = Stub(FrameworkService) {
@@ -322,6 +282,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         given:
         ScheduledExecution scheduledExecution = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'Temp/adHoc',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -377,21 +338,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "execute job as user"() {
 
         given:
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                user: 'test1',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([user: 'test1', retry: '1']))
         job.save()
         service.frameworkService = Stub(FrameworkService) {
             getServerUUID() >> null
@@ -430,6 +377,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         given:
         ScheduledExecution job = new ScheduledExecution(
                 jobName: 'purple',
+                uuid: UUID.randomUUID().toString(),
                 project: 'AProject',
                 user: 'test1',
                 groupPath: 'some/where',
@@ -783,18 +731,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 user('aUser')
                 .
                 build()
-        ScheduledExecution se = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-        )
+        ScheduledExecution se = new ScheduledExecution(createJobParams(argString: ""))
         null != se
         def opt1 = new Option(
                 name: 'test1',
@@ -830,6 +767,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
         service.storageService = Mock(StorageService)
+        service.executionOptionProcessor.storageService = Mock(AuthorizedKeyStorageTreeProvider)
 
         when:
 
@@ -846,7 +784,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         newCtxt.dataContext['option'] == ['test2': 'newtest2']
         newCtxt.privateDataContext['option'] == ['test1': 'newtest1']
 
-        service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+        service.executionOptionProcessor.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
             1 * hasPassword('keys/test1') >> true
             1 * readPassword('keys/test1') >> {
                 return 'newtest1'.bytes
@@ -1639,7 +1577,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         }
         opt1result == secureOpts['opt1']
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message.contains(expecterr)
 
         where:
@@ -1864,7 +1802,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message == 'domain.Option.validation.regex.invalid'
 
         where:
@@ -1889,7 +1827,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message == 'domain.Option.validation.regex.invalid'
 
         where:
@@ -1935,7 +1873,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message == 'domain.Option.validation.allowed.invalid'
 
         where:
@@ -1986,7 +1924,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message == 'domain.Option.validation.allowed.values'
 
         where:
@@ -2048,7 +1986,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message == 'domain.Option.validation.regex.values'
 
         where:
@@ -2100,7 +2038,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message == 'domain.Option.validation.required'
 
 
@@ -2131,7 +2069,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message == message
 
 
@@ -2162,7 +2100,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def validation = service.validateOptionValues(se, opts)
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.message == message
 
 
@@ -2707,13 +2645,16 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     def "abort execution"() {
         given:
         def serverUuid='541bf763-39a6-44ff-8c68-c9d53f6eec33'
-        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService) {
+        }
+        service.scheduledExecutionService.rdJobService = Mock(RdJobService)
         service.metricService = Mock(MetricService)
         service.frameworkService = Mock(FrameworkService)
             service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         service.reportService = Mock(ReportService)
         service.notificationService = Mock(NotificationService)
         service.workflowService = Mock(WorkflowService)
+        service.rdJobService = Mock(RdJobService)
         def job = new ScheduledExecution(
                 createJobParams(
                         scheduled: false,
@@ -2724,7 +2665,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         ).save()
 
         def e = new Execution(
-                scheduledExecution: job,
+                jobUuid: job.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'userB',
@@ -2766,6 +2707,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e.cancelled == ecancelled
         e.abortedby==(cmatch?(asuser?:'userB'):null)
 
+        _ * service.rdJobService.getJobByUuid(_) >> job
         1 * service.scheduledExecutionService.getJobIdent(job, e) >> [jobname: 'test', groupname: 'testgroup']
         1 * service.rundeckAuthContextProcessor.authorizeProjectExecutionAll(auth, e, [AuthConstants.ACTION_KILL]) >> true
         if(asuser) {
@@ -3090,7 +3032,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def nodeSet = new NodeSetImpl()
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
-
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -3170,6 +3112,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 jobName: jobname,
                 project: project,
                 groupPath: group,
+                uuid: 'job_uuid',
                 description: 'a job',
                 argString: '-test1 b',
                 workflow: new Workflow(
@@ -3199,7 +3142,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def nodeSet = new NodeSetImpl()
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
-
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
@@ -3210,7 +3153,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 1 * authorizeProjectJobAll(*_) >> true
             }
         service.frameworkService = Mock(FrameworkService)
-
+        service.executionOptionProcessor.remoteOptionValueLoader = Mock(RemoteOptionValueLoader)
 
         service.notificationService = Mock(NotificationService)
         def executionListener = Mock(ExecutionListener)
@@ -3264,7 +3207,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def res = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
-        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_,_) >> {
+        1 * service.executionOptionProcessor.remoteOptionValueLoader.loadOptionsRemoteValues(_,_,_) >> {
             [
                     optionSelect : opt,
                     values       : ["A", "B", "C"],
@@ -3318,6 +3261,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -3435,6 +3379,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -3558,6 +3503,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
@@ -3630,21 +3576,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "create execution dynamic threadcount from option"() {
 
         given:
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                nodeThreadcountDynamic: "\${option.threadCount}",
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([nodeThreadcountDynamic: "\${option.threadCount}"]))
         job.save()
 
         def opt1 = new Option(name: 'threadCount', enforced: false, required: false, defaultValue: "10")
@@ -3680,21 +3612,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     void "create execution dynamic threadcount from value"() {
         given:
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                nodeThreadcountDynamic: "15",
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([nodeThreadcountDynamic: "15"]))
         job.save()
 
         service.frameworkService = Stub(FrameworkService) {
@@ -3723,21 +3641,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     void "wrong execution dynamic threadcount from option"() {
 
         given:
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                nodeThreadcountDynamic: "\${option.threadCount}",
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([nodeThreadcountDynamic: "\${option.threadCount}"]))
         job.save()
 
         def opt1 = new Option(name: 'threadCount', enforced: false, required: false, defaultValue: "wrongthreadcountvalue")
@@ -3809,6 +3713,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.getJobByUuid("bd80d431-b70a-42ad-8ea8-37ad4885ea0d") >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -3921,6 +3826,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.getJobByUuid(job.uuid) >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -3993,7 +3899,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
         def refexec = ReferencedExecution.findByJobUuid(job.uuid)
-        def seStats = ScheduledExecutionStats.findByJobUuid(job.uuid)
+        def seStats = ScheduledExecutionStats.getOrCreate(job.uuid)
         if(expectedRef){
             seStats.getContentMap().refExecCount==0
         }else{
@@ -4255,10 +4161,12 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             }
 
         service.fileUploadService = Mock(FileUploadService) {
+            1 * executionBeforeStart(_,true)
+        }
+        service.executionOptionProcessor.jobFileRecordValidator = Mock(JobFileRecordValidator) {
             1 * validateFileRefForJobOption(_, _, _, _) >> [
                     valid: true
             ]
-            1 * executionBeforeStart(_,true)
         }
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
@@ -4299,18 +4207,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 user('aUser')
                                           .
                 build()
-        ScheduledExecution se = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                )
+        ScheduledExecution se = new ScheduledExecution(createJobParams(argString: ''))
         null != se
         def opt1 = new Option(name: 'test1', enforced: false, required: false, defaultValue: "test123.")
         assert opt1.validate()
@@ -4359,24 +4256,14 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 user('aUser')
                                           .
                 build()
-        ScheduledExecution se = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                )
+        ScheduledExecution se = new ScheduledExecution(createJobParams([argString:'']))
         null != se
         def opt1 = new Option(name: 'test1', multivalued: true, delimiter: "," , enforced: false, required: false, defaultValue: "A,B")
         assert opt1.validate()
         se.addToOptions(opt1)
         null != se.save()
 
+        service.rdJobService.getJobByUuid(se.uuid) >> se
         service.frameworkService = Mock(FrameworkService) {
             1 * filterNodeSet(null, 'AProject')
             1 * getProjectGlobals(*_)
@@ -4389,6 +4276,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
+        service.executionOptionProcessor.jobFileRecordValidator = Mock(JobFileRecordValidator) {
+            validateFileRefForJobOption(_,_,_,_) >> true
+        }
 
         when:
 
@@ -4560,6 +4450,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.getJobByUuid(job.uuid) >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -4686,7 +4577,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
-        service.storageService = Mock(StorageService)
+        service.executionOptionProcessor.storageService = Mock(AuthorizedKeyStorageTreeProvider)
         def authContext = Mock(AuthContext)
         when:
 
@@ -4700,7 +4591,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
 
-        2*service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+        1*service.executionOptionProcessor.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
             hasPassword('keys/admin/pass')>>true
             readPassword('keys/admin/pass') >> {
                 return 'pass1'.bytes
@@ -4775,7 +4666,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
-        service.storageService = Mock(StorageService)
+        service.executionOptionProcessor.storageService = Mock(AuthorizedKeyStorageTreeProvider)
 
         when:
 
@@ -4791,7 +4682,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         newCtxt.dataContext['secureOption'] == ['password': 'newtest1']
         newCtxt.dataContext['option'] == ['optionchild': 'pass', 'password':'newtest1']
 
-        service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+        service.executionOptionProcessor.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
             1 * hasPassword('keys/pass/myPassword') >> true
             1 * readPassword('keys/pass/myPassword') >> {
                 return 'newtest1'.bytes
@@ -4837,6 +4728,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -4921,6 +4813,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         given:
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -5032,6 +4925,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         given:
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 description: 'a job',
@@ -5107,6 +5001,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -5224,6 +5119,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
@@ -5383,20 +5279,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             }
         }
 
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
         job.save()
 
         service.frameworkService = Stub(FrameworkService) {
@@ -5441,20 +5324,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             }
         }
 
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams([retry: '1']))
         job.save()
 
         service.frameworkService = Stub(FrameworkService) {
@@ -5501,20 +5371,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             }
         }
 
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
         job.save()
 
         service.frameworkService = Stub(FrameworkService) {
@@ -5578,6 +5435,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def group = 'path'
         def project = 'AProject'
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: jobname,
                 project: project,
                 groupPath: group,
@@ -5655,7 +5513,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false
         )
 
-
+        service.rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(_,_,_) >> job
         service.notificationService = Mock(NotificationService)
         def dispatcherResult = Mock(DispatcherResult)
         def wresult = Mock(WorkflowExecutionResult){
@@ -5778,6 +5636,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.reportService = Mock(ReportService){
             reportExecutionResult(_) >> [:]
         }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByUuid(_) >> job
+        }
 
         HashSet<String> nodeNames = new HashSet<>(nodeSet.getNodeNames());
         HashMap<String, NodeStepResult> failures = new HashMap<>();
@@ -5890,6 +5751,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         def refAuth = Mock(SubjectAuthContext)
 
+        service.rdJobService.getJobByUuid('bd80d431-b70a-42ad-8ea8-37ad4885ea0d') >> job
         service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)

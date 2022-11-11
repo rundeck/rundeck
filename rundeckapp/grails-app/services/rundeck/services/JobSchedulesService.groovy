@@ -3,7 +3,10 @@ package rundeck.services
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import org.quartz.*
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
+import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.ScheduledExecution
+import rundeck.data.paging.RdPageable
+import rundeck.data.util.JobDataUtil
 
 class JobSchedulesService implements SchedulesManager {
 
@@ -40,7 +43,7 @@ class JobSchedulesService implements SchedulesManager {
     }
 
     @Override
-    List getAllScheduled(String serverUUID = null, String project = null) {
+    List getAllScheduled(String serverUUID, String project) {
         return rundeckJobSchedulesManager.getAllScheduled(serverUUID, project)
     }
 
@@ -77,11 +80,12 @@ class LocalJobSchedulesManager implements SchedulesManager {
     def scheduledExecutionService
     def frameworkService
     Scheduler quartzScheduler
+    RdJobService rdJobService
 
     @Override
     Map handleScheduleDefinitions(String jobUUID, boolean isUpdate) {
-        def se = ScheduledExecution.findByUuid(jobUUID)
-        def jobDetail = scheduledExecutionService.createJobDetail(se, se.generateJobScheduledName(), se.generateJobGroupName())
+        def se = rdJobService.getJobByUuid(jobUUID)
+        def jobDetail = scheduledExecutionService.createJobDetail(se, JobDataUtil.generateJobScheduledName(se), JobDataUtil.generateJobGroupName(se))
         def trigger = createTriggerBuilder(se)
         jobDetail.getJobDataMap().put("bySchedule", true)
         Date nextTime
@@ -211,17 +215,19 @@ class LocalJobSchedulesManager implements SchedulesManager {
         return (new TriggerHelperImpl(triggerBuilder, null))
     }
 
-    TriggerBuilderHelper createTriggerBuilder(ScheduledExecution se) {
+    TriggerBuilderHelper createTriggerBuilder(JobData se) {
         TriggerBuilder triggerBuilder
         def cronExpression = se.generateCrontabExression()
         def builderParams = [:]
         try {
+            String jobSchedName = JobDataUtil.generateJobScheduledName(se)
+            String jobGroupName = JobDataUtil.generateJobGroupName(se)
             if(se.timeZone){
-                triggerBuilder = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
+                triggerBuilder = TriggerBuilder.newTrigger().withIdentity(jobSchedName, jobGroupName)
                         .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(TimeZone.getTimeZone(se.timeZone)))
                 builderParams[TriggerHelperImpl.TIME_ZONE_KEY] = TimeZone.getTimeZone(se.timeZone)
             }else {
-                triggerBuilder = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
+                triggerBuilder = TriggerBuilder.newTrigger().withIdentity(jobSchedName, jobGroupName)
                         .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
             }
         } catch (java.text.ParseException ex) {
@@ -237,14 +243,17 @@ class LocalJobSchedulesManager implements SchedulesManager {
      * @return
      */
     def listScheduledJobs(String serverUUID = null, String project = null){
-        def results = ScheduledExecution.scheduledJobs()
-        if (serverUUID) {
-            results = results.withServerUUID(serverUUID)
+        def results = []
+        boolean last = false
+        int offset = 0
+        int max = 200
+        while(!last) {
+            def page = rdJobService.jobDataProvider.getAllScheduledJobs(project, serverUUID, new RdPageable(offset: offset,max:max))
+            results.addAll(page.results)
+            offset += max
+            last = page.total >= results.size()
         }
-        if(project) {
-            results = results.withProject(project)
-        }
-        results.list()
+        results
     }
 
 }

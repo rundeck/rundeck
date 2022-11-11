@@ -35,7 +35,8 @@ import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.util.Sizes
+import rundeck.ScheduledExecution
+import rundeck.data.util.Sizes
 import rundeck.Execution
 
 import javax.servlet.http.HttpServletRequest
@@ -836,18 +837,24 @@ class ApiService implements WebUtilService{
         return dateFormater.format(date);
     }
 
-    String apiHrefForJob(def scheduledExecution) {
+    String apiHrefForJob(String jobUuid) {
         return grailsLinkGenerator.link(controller: 'scheduledExecution',
-                id: scheduledExecution.extid,
+                id: jobUuid,
                 params: [api_version:ApiVersions.API_CURRENT_VERSION],
                 absolute: true)
     }
-    String guiHrefForJob(def scheduledExecution) {
+    String guiHrefForJob(String jobUuid, String project) {
         return grailsLinkGenerator.link(controller: 'scheduledExecution',
                 action:"show",
-                id: scheduledExecution.extid,
-                params: [project:scheduledExecution.project],
+                id: jobUuid,
+                params: [project:project],
                 absolute: true)
+    }
+    String apiHrefForJob(ScheduledExecution scheduledExecution) {
+        return apiHrefForJob(scheduledExecution.uuid)
+    }
+    String guiHrefForJob(ScheduledExecution scheduledExecution) {
+        return guiHrefForJob(scheduledExecution.uuid, scheduledExecution.project)
     }
     String apiHrefForExecution(Execution execution) {
         return grailsLinkGenerator.link(controller: 'execution', id: execution.id,

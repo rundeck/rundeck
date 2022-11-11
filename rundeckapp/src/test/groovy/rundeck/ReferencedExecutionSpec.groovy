@@ -28,6 +28,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 )
         ).save()
         def seb = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'test2',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -54,10 +55,10 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: seb
+                jobUuid: seb.uuid
         ).save()
 
-        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
+        def re = new ReferencedExecution(jobUuid: se.uuid,execution: exec).save()
 
         when:
         List l = ReferencedExecution.executionProjectList(se.uuid)
@@ -116,7 +117,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: seb
+                jobUuid: seb.uuid
         ).save()
 
         def exec2 = new Execution(
@@ -129,11 +130,11 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: seb
+                jobUuid: seb.uuid
         ).save()
 
-        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
-        def re2 = new ReferencedExecution(jobUuid: "000000",execution: exec2).save()
+        def re = new ReferencedExecution(jobUuid: se.uuid,execution: exec).save()
+        def re2 = new ReferencedExecution(jobUuid: se.uuid,execution: exec2).save()
 
         def executionIdList = [[executionId: exec.id, project: exec.project], [executionId: exec2.id, project: exec2.project]]
 
@@ -173,6 +174,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 )
         ).save()
         def seb = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'test2',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -199,10 +201,10 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: seb
+                jobUuid: seb.uuid
         ).save()
 
-        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
+        def re = new ReferencedExecution(jobUuid: se.uuid,execution: exec).save()
 
         when:
         List l = ReferencedExecution.parentJobSummaries(se.uuid)
@@ -234,6 +236,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 )
         ).save()
         def seb = new ScheduledExecution(
+                uuid: "11111",
                 jobName: 'test2',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -252,6 +255,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
         ).save()
 
         def seb2 = new ScheduledExecution(
+                uuid: "22222",
                 jobName: 'test3',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -278,7 +282,7 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: seb
+                jobUuid: seb.uuid
         ).save()
 
         def exec2 = new Execution(
@@ -291,18 +295,18 @@ class ReferencedExecutionSpec extends RundeckHibernateSpec
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: seb2
+                jobUuid: seb2.uuid
         ).save()
 
-        def re = new ReferencedExecution(jobUuid: "000000",execution: exec).save()
-        def re2 = new ReferencedExecution(jobUuid: "000000",execution: exec2).save()
+        def re = new ReferencedExecution(jobUuid: se.uuid,execution: exec).save()
+        def re2 = new ReferencedExecution(jobUuid: se.uuid,execution: exec2).save()
 
         when:
         List l = ReferencedExecution.parentJobSummaries(se.uuid, max)
 
         then:
         l.size() == sizeList
-        l.collect {s-> "${s.groupPath}/${s.jobName} - null".toString()} == result
+        l.collect {s-> s.toString()} == result
 
         where:
         max  | sizeList | result

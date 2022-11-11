@@ -4,8 +4,10 @@ import com.dtolabs.rundeck.core.execution.ExecutionValidator
 import com.dtolabs.rundeck.core.execution.JobValidationReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.annotation.Subscriber
+import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.data.util.JobDataUtil
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -62,16 +64,14 @@ class ExecutionValidatorService implements ExecutionValidator {
     }
 
     if (maxExecutions > 0) {
-      synchronized (syncForJob(jobReference.id)) {
+      synchronized (syncForJob(jobReference.uuid)) {
         //find any currently running executions for this job, and if so, throw exception
         def found = Execution.createCriteria().get {
           projections {
             count()
           }
           isNull('dateCompleted')
-          scheduledExecution {
-            eq('id', jobReference.databaseId)
-          }
+          eq('jobUuid', jobReference.uuid)
           isNotNull('dateStarted')
           if (withRetry) {
             ne('id', prevRetryId)
@@ -89,16 +89,15 @@ class ExecutionValidatorService implements ExecutionValidator {
   /**
    * Builds a new job validation reference implementation.
    */
-  public static JobValidationReference buildJobReference(final ScheduledExecution se) {
+  public static JobValidationReference buildJobReference(final JobData se) {
     return new JobValidationReferenceImpl(
-        id: se.extid,
-        databaseId: se.id,
+        id: JobDataUtil.getExtId(se),
         uuid: se.uuid,
         project: se.project,
         jobName: se.jobName,
         groupPath: se.groupPath,
         serverUUID: se.serverNodeUUID,
-        hasSecureOptions: se.hasSecureOptions(),
+        hasSecureOptions: JobDataUtil.hasSecureOptions(se),
         multipleExecutions: se.multipleExecutions,
         maxMultipleExecutions: se.maxMultipleExecutions?.isInteger() ? Integer.parseInt(se.maxMultipleExecutions) : null
 
@@ -106,7 +105,7 @@ class ExecutionValidatorService implements ExecutionValidator {
   }
 
   static class JobValidationReferenceImpl implements JobValidationReference {
-    Long databaseId
+    Serializable databaseId
     String uuid
     Boolean multipleExecutions
     Integer maxMultipleExecutions

@@ -58,6 +58,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.data.exceptions.ExecutionServiceExecutionException
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
@@ -792,7 +793,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         DescribedPlugin provider = null
         try {
             provider = pluginService.getPluginDescriptor(type, service)
-        } catch (ExecutionServiceException e) {
+        } catch (ExecutionServiceExecutionException e) {
             result.error = e.message
         }
         if (!provider) {
@@ -1101,7 +1102,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                 if(described?.description) {
                     properties = Validator.demapProperties(props, described.description)
                 }
-            } catch (ExecutionServiceException e) {
+            } catch (ExecutionServiceExecutionException e) {
                 log.error(e.message)
                 log.debug(e.message,e)
             }
@@ -1117,7 +1118,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                 if(described?.description) {
                     properties = Validator.demapPluginGroupProperties(props, described.description)
                 }
-            } catch (ExecutionServiceException e) {
+            } catch (ExecutionServiceExecutionException e) {
                 log.error(e.message)
                 log.debug(e.message,e)
             }
@@ -1139,7 +1140,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
                 if(described?.description) {
                     properties = Validator.mapProperties(report.errors, described.description)
                 }
-            } catch (ExecutionServiceException e) {
+            } catch (ExecutionServiceExecutionException e) {
                 log.error(e.message)
                 log.debug(e.message,e)
             }

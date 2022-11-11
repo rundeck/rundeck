@@ -18,6 +18,7 @@ package rundeck.services.events
 
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import groovy.transform.ToString
+import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.Execution
 import rundeck.ScheduledExecution
 
@@ -28,7 +29,7 @@ import rundeck.ScheduledExecution
 @ToString(includeNames = true)
 class ExecutionPrepareEvent {
     Execution execution
-    ScheduledExecution job
+    JobData job
     StepExecutionContext context
     Map<String,String> options
 }

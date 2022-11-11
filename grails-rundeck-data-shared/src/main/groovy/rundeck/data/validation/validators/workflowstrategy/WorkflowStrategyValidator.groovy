@@ -52,7 +52,7 @@ class WorkflowStrategyValidator implements Validator {
         }
         def report=validation.report
         if (!report||report.valid) {
-            def workflowItem = frameworkService.workflowExecutionItemFactory.createExecutionItemForWorkflow(jobData.workflow)
+            def workflowItem = frameworkService.workflowExecutionItemFactory.createExecutionItemForWorkflow(jobData.workflow, jobData.project)
             def workflowStrategy = workflowStrategyService.getStrategyForWorkflow(workflowItem, resolver)
 
             report = workflowStrategy.validate(workflowItem.workflow)

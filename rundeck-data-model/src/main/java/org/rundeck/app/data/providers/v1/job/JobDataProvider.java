@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface JobDataProvider extends JobQueryProvider {
+
     /**
      * Retrieves a Job based on the id provided.
      *
@@ -26,6 +27,8 @@ public interface JobDataProvider extends JobQueryProvider {
      * @return Job if found, otherwise null
      */
     JobData findByUuid(String uuid);
+
+    JobData findByProjectAndJobNameAndGroupPath(String project, String jobName, String groupPath);
 
     /**
      * Checks if the job exists in the database
@@ -70,4 +73,30 @@ public interface JobDataProvider extends JobQueryProvider {
      * @throws DataAccessException on error
      */
     DeletionResult deleteByUuid(final String uuid) throws DataAccessException;
+
+    /**
+     * Return jobs  that should be claimed for rescheduling on a cluster member, which includes
+     * all jobs that are either *scheduled* or in the jobids list or have adhoc scheduled executions, where the cluster owner
+     * matches the criteria
+     * @param toServerUUID node ID of claimant
+     * @param fromServerUUID null for unclaimed jobs, or owner server node ID
+     * @param selectAll if true, match jobs not owned by claimant, if false match based on fromServerUUID setting
+     * @param projectFilter project name for jobs, or null for any project
+     * @param jobids explicit list of job IDs to select
+     * @param ignoreInnerScheduled if true, do not select only scheduled jobs
+     * @return
+     */
+    List<JobData> getScheduledJobsToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, boolean ignoreInnerScheduled);
+
+    /**
+     * Return jobs  that should be claimed for rescheduling on a cluster member, which includes
+     * all jobs that are have adhoc scheduled executions, where the cluster owner
+     * matches the criteria
+     * @param toServerUUID node ID of claimant
+     * @param fromServerUUID null for unclaimed jobs, or owner server node ID
+     * @param selectAll if true, match jobs not owned by claimant, if false match based on fromServerUUID setting
+     * @param projectFilter project name for jobs, or null for any project
+     * @return
+     */
+    List<JobData> getJobsWithAdhocScheduledExecutionsToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter);
 }

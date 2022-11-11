@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -35,9 +36,9 @@ import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.gorm.transactions.Transactional
-import org.rundeck.util.Sizes
+import rundeck.data.util.Sizes
 import rundeck.Execution
-import rundeck.ScheduledExecution
+import rundeck.data.util.JobDataUtil
 import rundeck.services.jobs.AuthorizingJobService
 import rundeck.services.jobs.ResolvedAuthJobService
 
@@ -47,30 +48,31 @@ import java.util.concurrent.TimeUnit
 class JobStateService implements AuthorizingJobService {
     def frameworkService
     AppAuthContextEvaluator rundeckAuthContextEvaluator
+    RdJobService rdJobService
 
     @Override
     JobReference jobForID(AuthContext auth, String uuid, String project) throws JobNotFound {
-        def job = ScheduledExecution.getByIdOrUUID(uuid)
+        def job = rdJobService.getJobByIdOrUuid(uuid)
         if (null == job || job.project != project) {
             throw new JobNotFound("Not found", uuid, project)
         }
         checkJobView(auth, job, uuid, project)
-        return job.asReference()
+        return JobDataUtil.asJobReference(job)
     }
 
-    public void checkJobView(AuthContext auth, ScheduledExecution job, String uuid, String project) {
+    public void checkJobView(AuthContext auth, JobData job, String uuid, String project) {
         if (!authCheckJob(auth, job)) {
             throw new JobNotFound("Not found", uuid, project)
         }
     }
 
-    public void checkJobView(AuthContext auth, ScheduledExecution job, String name, String group, String project) {
+    public void checkJobView(AuthContext auth, JobData job, String name, String group, String project) {
         if (!authCheckJob(auth, job)) {
             throw new JobNotFound("Not found", name, group, project)
         }
     }
 
-    public boolean authCheckJob(AuthContext auth, ScheduledExecution job) {
+    public boolean authCheckJob(AuthContext auth, JobData job) {
         rundeckAuthContextEvaluator.authorizeProjectJobAny(
             auth,
             job,
@@ -91,26 +93,26 @@ class JobStateService implements AuthorizingJobService {
 
     @Override
     JobReference jobForName(AuthContext auth, String group, String name, String project) throws JobNotFound {
-        def job = ScheduledExecution.findByProjectAndJobNameAndGroupPath(project, name, group)
+        def job = rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(project, name, group)
         if (null == job) {
             throw new JobNotFound("Not found", name, group, project)
         }
         checkJobView(auth, job, name, group, project)
 
-        return job.asReference()
+        return JobDataUtil.asJobReference(job)
     }
 
     @Override
     JobState getJobState(AuthContext auth, JobReference jobReference) throws JobNotFound {
-        def job = ScheduledExecution.getByIdOrUUID(jobReference.id)
+        def job =  rdJobService.getJobByIdOrUuid(jobReference.id)
         if (null == job) {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
         checkJobView(auth, job, jobReference.id, jobReference.project)
 
-        List<Execution> running = Execution.findAllByScheduledExecutionAndDateCompletedIsNull(job)
-        List<Execution> lastExec = Execution.findAllByScheduledExecutionAndDateCompletedIsNotNull(
-                job,
+        List<Execution> running = Execution.findAllByJobUuidAndDateCompletedIsNull(job.uuid)
+        List<Execution> lastExec = Execution.findAllByJobUuidAndDateCompletedIsNotNull(
+                job.uuid,
                 [order: 'desc', sort: 'dateCompleted', max: 1]
         )
         def previousState = null
@@ -217,7 +219,7 @@ class JobStateService implements AuthorizingJobService {
         if(!exec){
             throw new ExecutionNotFound("Execution not found", id, project)
         }
-        ScheduledExecution se = exec.scheduledExecution
+        JobData se = exec.scheduledExecution
         def isAuth = null
         if(se){
             isAuth = rundeckAuthContextEvaluator.authorizeProjectJobAny(
@@ -321,7 +323,7 @@ class JobStateService implements AuthorizingJobService {
 
         inputOpts['executionType'] = 'user'
 
-        def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
+        def se =  rdJobService.getJobByIdOrUuid(jobReference.id)
         if (!se || !rundeckAuthContextEvaluator.authorizeProjectJobAny(
             auth,
             se,
@@ -335,7 +337,7 @@ class JobStateService implements AuthorizingJobService {
         }
         def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
         if (result && result.success && result.execution) {
-            return result.execution.asReference()
+            return result.execution.asReferenceWithJobData(se)
         }
         throw new JobExecutionError(
             result?.message ?: result?.error ?: "Unknown: ${result}",

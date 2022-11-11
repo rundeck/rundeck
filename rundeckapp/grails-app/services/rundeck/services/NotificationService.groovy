@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -34,6 +35,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import grails.async.Promises
+import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import grails.gorm.transactions.Transactional
 import grails.util.Holders
@@ -46,15 +48,17 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.rundeck.app.AppConstants
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
-import rundeck.Notification
-import rundeck.ScheduledExecution
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import rundeck.ScheduledExecution
+import rundeck.data.util.JobDataUtil
 
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
@@ -75,7 +79,7 @@ public class NotificationService implements ApplicationContextAware{
     static final String POST = "post"
     static final String GET = "get"
 
-    def defaultThreadTO = 120000
+    Long defaultThreadTO = 120000L
     def grailsLinkGenerator
 
     ApplicationContext applicationContext
@@ -89,9 +93,10 @@ public class NotificationService implements ApplicationContextAware{
     def executionService
     def workflowService
     OrchestratorPluginService orchestratorPluginService
-    def featureService
-    def configurationService
+    FeatureService featureService
+    ConfigurationService configurationService
     UserDataProvider userDataProvider
+    RdJobService rdJobService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService, project,config, PropertyScope.Instance, PropertyScope.Project)
@@ -146,36 +151,35 @@ public class NotificationService implements ApplicationContextAware{
         return pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
     }
     def Map listNotificationPluginsDynamicProperties(String project, Services services){
-        ScheduledExecution.withNewSession {
-            def plugins = pluginService.listPlugins(NotificationPlugin, notificationPluginProviderService)
-            def result = [:]
-            plugins.forEach { name, plugin ->
-                def dynamicProperties = pluginService.getDynamicProperties(
-                        frameworkService.getRundeckFramework(),
-                        ServiceNameConstants.Notification,
-                        plugin.name,
-                        project,
-                        services
-                )
-                if (dynamicProperties) {
-                    result.put(name, dynamicProperties)
-                } else {
-                    result.put(name, [:])
-                }
+        def plugins = pluginService.listPlugins(NotificationPlugin, notificationPluginProviderService)
+        def result = [:]
+        plugins.forEach { name, plugin ->
+            def dynamicProperties = pluginService.getDynamicProperties(
+                    frameworkService.getRundeckFramework(),
+                    ServiceNameConstants.Notification,
+                    plugin.name,
+                    project,
+                    services
+            )
+            if (dynamicProperties) {
+                result.put(name, dynamicProperties)
+            } else {
+                result.put(name, [:])
             }
-            result
         }
+        result
     }
 
+    @GrailsCompileStatic
     @Transactional
-    void asyncTriggerJobNotification(String trigger, schedUuid, Map content){
+    void asyncTriggerJobNotification(String trigger, String schedUuid, Map content){
         if(trigger && schedUuid){
             if(featureService.featurePresent(Features.NOTIFICATIONS_OWN_THREAD)){
                 def notificationTask = Promises.task {
                     ScheduledExecution.withNewTransaction {
-                        ScheduledExecution scheduledExecution = ScheduledExecution.findByUuid(schedUuid)
-                        if(null != scheduledExecution) {
-                            triggerJobNotification(trigger, scheduledExecution, content)
+                        JobData jobData = rdJobService.getJobByIdOrUuid(schedUuid)
+                        if(null != jobData) {
+                            triggerJobNotification(trigger, jobData, content)
                         }
                     }
                 }
@@ -187,9 +191,9 @@ public class NotificationService implements ApplicationContextAware{
                 }
             }else{
                 ScheduledExecution.withNewTransaction {
-                    ScheduledExecution scheduledExecution = ScheduledExecution.findByUuid(schedUuid)
-                    if(null != scheduledExecution){
-                        triggerJobNotification(trigger, scheduledExecution, content)
+                    def job = rdJobService.getJobByUuid(schedUuid)
+                    if(null != job){
+                        triggerJobNotification(trigger, job, content)
                     }
                 }
             }
@@ -277,11 +281,11 @@ public class NotificationService implements ApplicationContextAware{
         return map;
     }
 
-    boolean triggerJobNotification(String trigger, ScheduledExecution source, Map content){
+    boolean triggerJobNotification(String trigger, JobData source, Map content){
         def didsend = false
-        if(source.notifications && source.notifications.find{it.eventTrigger=='on'+trigger}){
-            def notes = source.notifications.findAll{it.eventTrigger=='on'+trigger}
-            notes.each{ Notification n ->
+        if(source.notificationSet && source.notificationSet.find{it.eventTrigger=='on'+trigger}){
+            def notes = source.notificationSet.findAll{it.eventTrigger=='on'+trigger}
+            notes.each{ NotificationData n ->
                 try{
 
                     frameworkService.getPluginControlService(source.project).
@@ -626,7 +630,7 @@ public class NotificationService implements ApplicationContextAware{
                 href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                         params: [project: e.project]),
                 status: e.executionState,
-                summary: executionService.summarizeJob(e.scheduledExecution, e)
+                summary: executionService.summarizeJob(e)
             ]
         },paging,delegate)
     }
@@ -640,7 +644,7 @@ public class NotificationService implements ApplicationContextAware{
                     href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                                                    params: [project: e.project]),
                     status: e.executionState,
-                    summary: executionService.summarizeJob(e.scheduledExecution, e)
+                    summary: executionService.summarizeJob(e)
             ]
         },paging,delegate)
     }
@@ -700,6 +704,7 @@ public class NotificationService implements ApplicationContextAware{
 
     protected Map exportExecutionData(Execution e) {
         def modifiedSuccessNodeList = executionService.getEffectiveSuccessNodeList(e)
+        JobData job = rdJobService.getJobByUuid(e.jobUuid)
         def emap = [
             id: e.id,
             href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
@@ -709,7 +714,7 @@ public class NotificationService implements ApplicationContextAware{
             dateStarted: e.dateStarted,
             'dateStartedUnixtime': e.dateStarted.time,
             'dateStartedW3c': w3cDateValue( e.dateStarted),
-            description: e.scheduledExecution.description?:'',
+            description: job.description?:'',
             argstring: e.argString,
             project: e.project,
             failedNodeListString: e.failedNodeList,
@@ -743,21 +748,21 @@ public class NotificationService implements ApplicationContextAware{
         modifiedSuccessNodeList
     }
 
-    protected Map exportJobdata(ScheduledExecution scheduledExecution) {
+    protected Map exportJobdata(JobData jobData) {
         def job = [
-                id: scheduledExecution.extid,
+                id: jobData.uuid,
                 href: grailsLinkGenerator.link(controller: 'scheduledExecution', action: 'show',
-                        id: scheduledExecution.extid, absolute: true,
-                        params: [project: scheduledExecution.project]),
-                name: scheduledExecution.jobName,
-                group: scheduledExecution.groupPath ?: '',
-                schedule : scheduledExecution.scheduled? scheduledExecution.generateCrontabExression():'',
-                project: scheduledExecution.project,
-                description: scheduledExecution.description
+                        id: jobData.uuid, absolute: true,
+                        params: [project: jobData.project]),
+                name: jobData.jobName,
+                group: jobData.groupPath ?: '',
+                schedule : jobData.scheduled? JobDataUtil.generateCrontabExpression(jobData):'',
+                project: jobData.project,
+                description: jobData.description
         ]
-        def averageDuration = executionService.getAverageDuration(scheduledExecution.uuid)
-        if (averageDuration > 0) {
-            job.averageDuration = averageDuration
+        long avgDuration = executionService.getAverageDuration(jobData.uuid)
+        if (avgDuration > 0) {
+            job.averageDuration = avgDuration
         }
         job
     }
@@ -810,7 +815,7 @@ public class NotificationService implements ApplicationContextAware{
         true
     }
 
-    String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger, Map export){
+    String expandWebhookNotificationUrl(String url,Execution exec, JobData job, String trigger, Map export){
         def state= exec.executionState
         def props = export ?: [:]
 
@@ -820,7 +825,7 @@ public class NotificationService implements ApplicationContextAware{
          * limited
          */
          props << [
-            job:[id:job.extid,name:job.jobName,group:job.groupPath?:'',project:job.project],
+            job:[id:job.uuid,name:job.jobName,group:job.groupPath?:'',project:job.project],
             execution:[id:exec.id,status:state,user:exec.user],
             notification:[trigger:trigger]
         ]
@@ -934,7 +939,7 @@ public class NotificationService implements ApplicationContextAware{
         return false
     }
 
-    def generateNotificationContext(Execution exec, Map content, ScheduledExecution source){
+    def generateNotificationContext(Execution exec, Map content, JobData source){
         def appUrl = grailsLinkGenerator.link(action: 'home', controller: 'menu',absolute: true)
         def projUrl = grailsLinkGenerator.link(action: 'index', controller: 'menu', params: [project:  exec.project], absolute: true)
 

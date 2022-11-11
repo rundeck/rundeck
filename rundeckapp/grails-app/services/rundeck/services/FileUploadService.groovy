@@ -9,9 +9,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.util.SHAInputStream
 import org.rundeck.util.SHAOutputStream
-import org.rundeck.util.Sizes
+import rundeck.data.util.Sizes
 import org.rundeck.util.ThresholdInputStream
 import rundeck.Execution
 import rundeck.JobFileRecord
@@ -298,8 +299,8 @@ class FileUploadService {
         JobFileRecord.findAllByExecution(e).each this.&deleteRecord
     }
 
-    def deleteRecordsForScheduledExecution(ScheduledExecution job) {
-        JobFileRecord.findAllByJobId(job.extid).each this.&deleteRecord
+    def deleteRecordsForScheduledExecution(JobData job) {
+        JobFileRecord.findAllByJobId(job.uuid).each this.&deleteRecord
     }
 
     def deleteRecordsForProject(String project) {
@@ -500,13 +501,13 @@ class FileUploadService {
      */
     Map<String, String> loadFileOptionInputs(
             Execution execution,
-            ScheduledExecution scheduledExecution,
+            JobData scheduledExecution,
             StepExecutionContext context,
             boolean skip = false
     )
     {
         def loadedFiles = [:]
-        def fileopts = scheduledExecution.listFileOptions()
+        def fileopts = scheduledExecution.optionSet?.findAll { it.optionType == 'file'}
         fileopts?.each {
             def key = context.dataContext['option'][it.name]
             if (key) {

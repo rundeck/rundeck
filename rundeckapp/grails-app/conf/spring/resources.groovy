@@ -110,10 +110,12 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.data.providers.GormExecReportDataProvider
+import org.rundeck.app.data.jobfilerecord.AdaptingJobFileRecordValidator
 import org.rundeck.app.data.options.DefaultJobOptionUrlExpander
 import org.rundeck.app.data.options.DefaultRemoteJsonOptionRetriever
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
 import org.rundeck.app.data.providers.GormPluginMetaDataProvider
+import org.rundeck.app.data.options.DefaultRemoteOptionValueLoader
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormJobDataProvider
 import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
@@ -150,6 +152,7 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import rundeck.data.execution.ExecutionOptionProcessor
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.ExecutionLifecycleComponentService
@@ -355,6 +358,7 @@ beans={
     baseAuthContextEvaluator(BaseAuthContextEvaluator){
         authContextEvaluatorCacheManager = ref('authContextEvaluatorCacheManager')
         nodeSupport = ref('rundeckNodeSupport')
+        rdJobService = ref('rdJobService')
     }
     rundeckAuthContextEvaluator(TimedAuthContextEvaluator){
         rundeckAuthContextEvaluator = ref('baseAuthContextEvaluator')
@@ -415,6 +419,7 @@ beans={
         scheduledExecutionService = ref('scheduledExecutionService')
         frameworkService = ref('frameworkService')
         quartzScheduler = ref('quartzScheduler')
+        rdJobService = ref("rdJobService")
     }
 
     executionValidatorService(ExecutionValidatorService)
@@ -904,6 +909,20 @@ beans={
     }
     remoteJsonOptionRetriever(DefaultRemoteJsonOptionRetriever)
     workflowExecutionItemFactory(WorkflowDataWorkflowExecutionItemFactory)
+    jobFileRecordValidator(AdaptingJobFileRecordValidator)
+    remoteOptionValueLoader(DefaultRemoteOptionValueLoader) {
+        remoteJsonOptionRetriever = ref('remoteJsonOptionRetriever')
+        jobOptionUrlExpander = ref('jobOptionUrlExpander')
+        configurationService = ref('configurationService')
+        frameworkService = ref('frameworkService')
+    }
+    executionOptionProcessor(ExecutionOptionProcessor) {
+        messageSource = ref('messageSource')
+        remoteOptionValueLoader = ref('remoteOptionValueLoader')
+        jobFileRecordValidator = ref('jobFileRecordValidator')
+        storageAccessChecks = ref('executionService')
+        storageService = ref('storageService')
+    }
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
