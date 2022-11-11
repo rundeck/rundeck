@@ -16,6 +16,12 @@ public interface JobPreExecutionEvent {
 
     /**
      *
+     * @return Job UUID
+     */
+    String getJobUUID();
+
+    /**
+     *
      * @return String project name.
      */
     String getProjectName();

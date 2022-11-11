@@ -16,6 +16,7 @@ import java.util.SortedSet;
 public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     
     private String jobName;
+    private String jobUUID;
     private String projectName;
     private String userName;
     private SortedSet<JobOption> options;
@@ -26,6 +27,7 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     
     
     public JobPreExecutionEventImpl(String jobName,
+                                    String jobUUID,
                                     String projectName,
                                     String userName,
                                     SortedSet<JobOption> options,
@@ -35,6 +37,7 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
                                     Map executionMetadata) {
         
         this.jobName = jobName;
+        this.jobUUID = jobUUID;
         this.projectName = projectName;
         this.userName = userName;
         this.options = options;
@@ -51,6 +54,7 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     public JobPreExecutionEventImpl(JobPreExecutionEvent origin) {
         this(
             origin.getJobName(),
+            origin.getJobUUID(),
             origin.getProjectName(),
             origin.getUserName(),
             origin.getOptions(),
