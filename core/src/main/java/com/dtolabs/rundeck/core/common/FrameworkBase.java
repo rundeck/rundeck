@@ -219,7 +219,12 @@ public class FrameworkBase implements IFramework{
         return FilesystemFramework.createPropertyRetriever(basedir);
     }
     public static Framework getInstance(String basedir, String projectsdir) {
-        return FrameworkFactory.createForFilesystem(basedir, new ServiceSupport());
+        ServiceSupport serviceSupport = new ServiceSupport();
+        BaseFrameworkExecutionServices executionServices = new BaseFrameworkExecutionServices();
+        serviceSupport.setExecutionServices(executionServices);
+        Framework framework = FrameworkFactory.createForFilesystem(basedir, serviceSupport);
+        executionServices.setFramework(framework);
+        return framework;
     }
 
 
