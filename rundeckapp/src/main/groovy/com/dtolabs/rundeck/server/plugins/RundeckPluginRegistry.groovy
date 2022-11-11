@@ -69,7 +69,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     /**
      * Registry of spring bean plugin providers, "providername"->"beanname"
      */
-    HashMap pluginRegistryMap
+    Map<String,String> pluginRegistryMap
     def ApplicationContext applicationContext
     /**
      * groovy plugin sources loaded dynamically will live in a sub context
@@ -584,7 +584,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     }
     private <T> DescribedPlugin<T> loadBeanDescriptor(String name, String type = null) {
         try {
-            def beanName = pluginRegistryMap["${type}:${name}"] ?: pluginRegistryMap[name]
+            def beanName = pluginRegistryMap[type + ':' + name] ?: pluginRegistryMap[name]
             if (beanName) {
                 def bean = findBean(beanName)
                 if(!bean){
@@ -661,6 +661,10 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         pluginRegistryMap.each { String k, String v ->
             try {
                 String pluginName = extractPluginName(k)
+                String svcName = extractPluginSvc(k)
+                if (svcName && svcName != service.name) {
+                    return
+                }
                 if(rundeckPluginBlocklist.isPluginProviderPresent(service.name, pluginName)){
                     return
                 }
@@ -732,6 +736,14 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         List k = key?.split(':')
         if(k?.size() > 1) {
             return k.get(1)
+        }
+
+        return key
+    }
+    private String extractPluginSvc(String key){
+        List k = key?.split(':')
+        if(k?.size() > 1) {
+            return k.get(0)
         }
 
         return key

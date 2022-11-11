@@ -305,19 +305,19 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         FileReader reader = Mock(FileReader)
         sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist){
-            1 * isPluginProviderPresent(_,"plugin2") >> false
-            1 * isPluginProviderPresent(_,"plugin1") >> true
+            1 * isPluginProviderPresent(_,"plugin2") >> true
+            0 * isPluginProviderPresent(_,"plugin1") >> true
             1 * isPluginProviderPresent(_,"plugin3") >> false
         }
         def svc = Mock(PluggableProviderService){
-            getName() >> "NodeExecutor"
+            getName() >> "otherservice"
         }
 
         when:
-        def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
+        def result = sut.listPluginDescriptors(APluginType, svc)
 
         then:
-        result.size() == 2
+        result.size() == 1
         result["plugin3"].description == description3
 
     }
@@ -618,10 +618,12 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist)
 
-        def svc = Mock(PluggableProviderService)
+        def svc = Mock(PluggableProviderService){
+            getName() >> 'otherservice'
+        }
 
         when:
-        def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
+        def result = sut.listPluginDescriptors(APluginType, svc)
 
         then:
         result
@@ -931,9 +933,11 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             TestPlugin2
         }
     }
+    static interface OtherPluginType{
 
+    }
     @Plugin(service = "aservicename", name = 'providername')
-    static class TestPluginWithAnnotation implements Configurable, Describable {
+    static class TestPluginWithAnnotation implements Configurable, Describable,OtherPluginType {
         Properties configuration
         Description description
 
@@ -1047,7 +1051,10 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             return null
         }
     }
-    static class TestPluginWithAnnotation2 implements Configurable, Describable {
+    static interface APluginType{
+
+    }
+    static class TestPluginWithAnnotation2 implements Configurable, Describable, APluginType {
         Properties configuration
         Description description
 
@@ -1059,9 +1066,11 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     static class TestBuilder2 implements PluginBuilder<TestPluginWithAnnotation> {
         TestPluginWithAnnotation instance
+        int buildCount=0
 
         @Override
         TestPluginWithAnnotation buildPlugin() {
+            buildCount++
             return instance
         }
 
