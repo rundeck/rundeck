@@ -18,23 +18,28 @@ package com.dtolabs.rundeck.core.execution.workflow
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IExecutionProviders
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher
+import com.dtolabs.rundeck.core.execution.dispatch.SequentialNodeDispatcher
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import spock.lang.Specification
 
 /**
@@ -44,9 +49,25 @@ class NodeFirstWorkflowStrategySpec extends Specification {
     public static final String TEST_PROJ = 'NodeFirstWorkflowStrategySpec'
     Framework framework
     FrameworkProject testProject
+    ServiceSupport serviceSupport
+    ExecutionServiceImpl executionServiceImpl
 
     def setup() {
-        framework = AbstractBaseTest.createTestFramework()
+        serviceSupport=new ServiceSupport()
+
+        executionServiceImpl = new ExecutionServiceImpl()
+
+        IExecutionProviders frameworkPlugins = Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem(_, _) >> Mock(StepExecutor)
+            _ * getFileCopierForNodeAndProject(_, _) >> Mock(FileCopier)
+            _ * getNodeDispatcherForContext(_) >> Mock(NodeDispatcher)
+            _ * getNodeExecutorForNodeAndProject(_, _) >> Mock(NodeExecutor)
+            _ * getNodeStepExecutorForItem(_, _) >> Mock(NodeStepExecutor)
+        }
+        executionServiceImpl.setExecutionProviders(frameworkPlugins)
+        serviceSupport.executionProviders = frameworkPlugins
+        serviceSupport.executionService = executionServiceImpl
+        framework = AbstractBaseTest.createTestFramework(serviceSupport)
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(TEST_PROJ)
     }
 
@@ -111,8 +132,15 @@ class NodeFirstWorkflowStrategySpec extends Specification {
             componentsForType(_) >> []
             getComponentList()>>[]
         }
-        framework.getStepExecutionService().registerClass('typeA', TestFailStepExecutor)
-        framework.getStepExecutionService().registerClass('typeB', TestSuccessNodeExecutor)
+
+
+        def execPluginsMock = Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem({ it.type == 'typeA' }, _) >> new TestFailStepExecutor()
+            _ * getStepExecutorForItem({ it.type == 'typeB' }, _) >> new TestSuccessNodeExecutor()
+            _ * getNodeDispatcherForContext(_) >> new SequentialNodeDispatcher(framework)
+        }
+        serviceSupport.setExecutionProviders(execPluginsMock)
+        executionServiceImpl.setExecutionProviders(execPluginsMock)
 
 
         def item = Mock(WorkflowExecutionItem) {
@@ -189,4 +217,6 @@ class NodeFirstWorkflowStrategySpec extends Specification {
         false   | _
 
     }
+
+
 }

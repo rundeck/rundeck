@@ -3,17 +3,24 @@ package com.dtolabs.rundeck.core.execution.workflow
 import com.dtolabs.rundeck.core.NodesetEmptyException
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.common.IExecutionProviders
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride
+import com.dtolabs.rundeck.core.execution.ExecutionService
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.FailedNodesListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
@@ -21,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.rules.Condition
 import com.dtolabs.rundeck.core.rules.RuleEngine
@@ -42,9 +50,25 @@ class EngineWorkflowExecutorSpec extends Specification {
     public static final String PROJECT_NAME = 'EngineWorkflowExecutorSpec'
     Framework framework
     FrameworkProject testProject
+    ServiceSupport serviceSupport
+    ExecutionServiceImpl executionServiceImpl
+
 
     def setup() {
-        framework = AbstractBaseTest.createTestFramework()
+        serviceSupport=new ServiceSupport()
+
+        executionServiceImpl = new ExecutionServiceImpl()
+
+        IExecutionProviders frameworkPlugins = Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem(_, _) >> Mock(StepExecutor)
+            _ * getFileCopierForNodeAndProject(_, _) >> Mock(FileCopier)
+            _ * getNodeDispatcherForContext(_) >> Mock(NodeDispatcher)
+            _ * getNodeExecutorForNodeAndProject(_, _) >> Mock(NodeExecutor)
+            _ * getNodeStepExecutorForItem(_, _) >> Mock(NodeStepExecutor)
+        }
+        executionServiceImpl.setExecutionProviders(frameworkPlugins)
+        serviceSupport.executionService = executionServiceImpl
+        framework = AbstractBaseTest.createTestFramework(serviceSupport)
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
     }
 
@@ -91,22 +115,28 @@ class EngineWorkflowExecutorSpec extends Specification {
     def "basic success"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        serviceSupport.executionService = Mock(ExecutionService){
+            1 * executeStep(_,_)>>Mock(StepExecutionResult){
+                isSuccess()>>true
+            }
+        }
         framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
 
         def context = Mock(StepExecutionContext) {
-            getExecutionListener() >> Mock(ExecutionListener){
+            _*getExecutionListener() >> Mock(ExecutionListener){
                 createOverride()>>Mock(ExecutionListenerOverride)
             }
-            getNodes() >> Mock(INodeSet){
-                getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
+            _ * getNodes() >> Mock(INodeSet) {
+                _ * getNodes() >> {
+                return     [new NodeEntryImpl("set1node1")]
+                }
             }
-            getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
-            getFrameworkProject() >> PROJECT_NAME
-            getFramework() >> framework
-            componentForType(_) >> Optional.empty()
-            componentsForType(_) >> []
-            useSingleComponentOfType(_) >> Optional.empty()
+            _*getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
+            _*getFrameworkProject() >> PROJECT_NAME
+            _*getFramework() >> framework
+            _*componentForType(_) >> Optional.empty()
+            _*componentsForType(_) >> []
+            _*useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -308,8 +338,10 @@ class EngineWorkflowExecutorSpec extends Specification {
         given:
         def engine = new EngineWorkflowExecutor(framework)
 
-        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
-        framework.getStepExecutionService().registerClass('blah2', TestSuccessStepExecutor)
+        executionServiceImpl.setExecutionProviders(Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem({ it.type=='blah' }, _) >> new TestSuccessStepExecutor()
+            _ * getStepExecutorForItem({ it.type=='blah2' }, _) >> new TestSuccessStepExecutor()
+        })
         framework.getWorkflowStrategyService().
             registerClass('test-skip-3-not-strategy', TestSkipProfileWorkflowStrategy)
 
@@ -379,8 +411,10 @@ class EngineWorkflowExecutorSpec extends Specification {
         given:
         def engine = new EngineWorkflowExecutor(framework)
 
-        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
-        framework.getStepExecutionService().registerClass('blah2', TestSuccessStepExecutor)
+        executionServiceImpl.setExecutionProviders(Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem({ it.type=='blah' }, _) >> new TestSuccessStepExecutor()
+            _ * getStepExecutorForItem({ it.type=='blah2' }, _) >> new TestSuccessStepExecutor()
+        })
         framework.getWorkflowStrategyService().
             registerClass('test-skip-3-not-both-strategy', TestSkip3NotBothWorkflowStrategy)
 
@@ -443,8 +477,10 @@ class EngineWorkflowExecutorSpec extends Specification {
     def "don't skip after success"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
-        framework.getStepExecutionService().registerClass('blah2', TestSuccessStepExecutor)
+        executionServiceImpl.setExecutionProviders(Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem({ it.type=='blah' }, _) >> new TestSuccessStepExecutor()
+            _ * getStepExecutorForItem({ it.type=='blah2' }, _) >> new TestSuccessStepExecutor()
+        })
         framework.getWorkflowStrategyService().
             registerClass('test-skip-2-not-success-1-strategy', TestSkip2NotSuccess1WorkflowStrategy)
 
@@ -516,7 +552,9 @@ class EngineWorkflowExecutorSpec extends Specification {
     def "basic failure"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        framework.getStepExecutionService().registerClass('blah',TestBasicFailStepExecutor)
+        executionServiceImpl.setExecutionProviders(Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem({ it.type=='blah' }, _) >> new TestBasicFailStepExecutor()
+        })
         framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
 
         def context = Mock(StepExecutionContext) {
@@ -709,8 +747,10 @@ class EngineWorkflowExecutorSpec extends Specification {
         engine.setWorkflowSystemBuilderSupplier({->builder})
         TestCountDownLatch = new CountDownLatch(1)
 
-        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
-        framework.getStepExecutionService().registerClass('blah2', TestAbortStepExecutor)
+        executionServiceImpl.setExecutionProviders(Mock(IExecutionProviders) {
+            _ * getStepExecutorForItem({ it.type=='blah' }, _) >> new TestSuccessStepExecutor()
+            _ * getStepExecutorForItem({ it.type=='blah2' }, _) >> new TestAbortStepExecutor()
+        })
         framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
         def logger = new LogListener()
         def nodeSet = Mock(INodeSet){

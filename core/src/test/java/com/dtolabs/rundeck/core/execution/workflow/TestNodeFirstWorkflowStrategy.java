@@ -70,7 +70,13 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
     protected void setUp() {
         super.setUp();
-        testFramework = getFrameworkInstance();
+        ServiceSupport services = new ServiceSupport();
+        ExecutionServiceImpl executionService = new ExecutionServiceImpl();
+        services.setExecutionService(executionService);
+        testFramework = createTestFramework(services);
+        BaseFrameworkExecutionProviders frameworkExecutionPlugins = BaseFrameworkExecutionProviders.create(testFramework);
+        executionService.setExecutionProviders(frameworkExecutionPlugins);
+        services.setExecutionProviders(frameworkExecutionPlugins);
         testnode = testFramework.getFrameworkNodeName();
         final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
                 TEST_PROJECT,
