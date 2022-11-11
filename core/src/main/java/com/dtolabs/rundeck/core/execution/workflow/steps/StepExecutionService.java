@@ -54,6 +54,7 @@ public class StepExecutionService
     private final PluginStepExecutionService pluginStepExecutionService;
 
     private List<ProviderService<StepExecutor>>             serviceList;
+    @Deprecated()
     private PresetBaseProviderRegistryService<StepExecutor> builtinStepExecutionService;
     private PresetBaseProviderRegistryService<StepExecutor> dynamicRegistryService;
 
@@ -127,10 +128,11 @@ public class StepExecutionService
         return DescribableServiceUtil.listDescriptions(this);
     }
 
+    @Deprecated
     public void registerClass(String name, Class<? extends StepExecutor> clazz) {
         builtinStepExecutionService.registerClass(name, clazz);
     }
-
+    @Deprecated
     public void registerInstance(String name, StepExecutor object) {
         builtinStepExecutionService.registerInstance(name, object);
     }
@@ -138,6 +140,7 @@ public class StepExecutionService
     /**
      * @return dynamic registry for providers
      */
+    @Deprecated
     public ProviderRegistryService<StepExecutor> getProviderRegistryService() {
         return dynamicRegistryService;
     }
