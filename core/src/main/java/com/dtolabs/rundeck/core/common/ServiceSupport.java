@@ -54,19 +54,18 @@ public class ServiceSupport implements IFrameworkServices {
      * Initialize children, the various resource management objects
      */
     public void initialize(Framework framework) {
-        setFramework(framework);
-        //plugin manager service inited first.  any pluggable services will then be
-        //able to try to load providers via the plugin manager
-        NodeStepExecutionService.getInstanceForFramework(getFramework());
-        NodeExecutorService.getInstanceForFramework(getFramework());
-        FileCopierService.getInstanceForFramework(getFramework());
-        NodeDispatcherService.getInstanceForFramework(getFramework());
-        getExecutionService();
-        WorkflowExecutionService.getInstanceForFramework(getFramework());
-        StepExecutionService.getInstanceForFramework(getFramework());
-        ResourceModelSourceService.getInstanceForFramework(getFramework());
-        ResourceFormatParserService.getInstanceForFramework(getFramework());
-        ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
+        if (null == this.framework) {
+            setFramework(framework);
+            NodeStepExecutionService.getInstanceForFramework(getFramework());
+            NodeExecutorService.getInstanceForFramework(getFramework());
+            FileCopierService.getInstanceForFramework(getFramework());
+            NodeDispatcherService.getInstanceForFramework(getFramework());
+            WorkflowExecutionService.getInstanceForFramework(getFramework());
+            StepExecutionService.getInstanceForFramework(getFramework());
+            ResourceModelSourceService.getInstanceForFramework(getFramework());
+            ResourceFormatParserService.getInstanceForFramework(getFramework());
+            ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
+        }
     }
 
     /**

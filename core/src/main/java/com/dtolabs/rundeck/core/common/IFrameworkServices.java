@@ -43,6 +43,11 @@ public interface IFrameworkServices {
     FrameworkSupportService getService(String name);
 
     /**
+     * initialize
+     */
+    void initialize(Framework framework);
+
+    /**
      * Set a service by name
      * @param name name
      * @param service service

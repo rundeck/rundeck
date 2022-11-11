@@ -83,6 +83,12 @@ public class FrameworkBase implements IFramework{
 
     }
 
+    @Override
+    public void initialize(final Framework framework) {
+        frameworkServices.initialize(framework);
+    }
+
+
     /**
      * Gets DepotMgr for this framework instance
      * @return returns instance of IFrameworkProjectMgr
@@ -197,7 +203,7 @@ public class FrameworkBase implements IFramework{
         return FilesystemFramework.createPropertyRetriever(basedir);
     }
     public static Framework getInstance(String basedir, String projectsdir) {
-        return FrameworkFactory.createForFilesystem(basedir);
+        return FrameworkFactory.createForFilesystem(basedir, new ServiceSupport());
     }
 
 

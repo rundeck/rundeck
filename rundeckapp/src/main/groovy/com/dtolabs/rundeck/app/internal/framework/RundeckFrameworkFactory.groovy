@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.FilesystemFramework
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.FrameworkSupportService
+import com.dtolabs.rundeck.core.common.IFrameworkServices
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
@@ -38,13 +39,16 @@ class RundeckFrameworkFactory {
     ProjectManager dbProjectManager
     IPropertyLookup propertyLookup
     PluginManagerService pluginManagerService
+    IFrameworkServices serviceSupport
 
     Framework createFramework() {
         Map<String, FrameworkSupportService> services = new HashMap<>()
         services.put(PluginManagerService.SERVICE_NAME, pluginManagerService)
 
-        logger.info("Creating DB project manager")
-        return FrameworkFactory.createFramework(propertyLookup, frameworkFilesystem, dbProjectManager, services)
+        def framework = FrameworkFactory
+            .createFramework(propertyLookup, frameworkFilesystem, dbProjectManager, services, serviceSupport)
+        serviceSupport.initialize(framework)
+        return framework
     }
 
 }
