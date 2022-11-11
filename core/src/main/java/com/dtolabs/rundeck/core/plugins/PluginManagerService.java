@@ -25,12 +25,14 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import com.dtolabs.rundeck.plugins.ServiceTypes;
 import lombok.Getter;
 import lombok.Setter;
+import org.rundeck.core.plugins.PluginProviderServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +54,8 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     @Getter @Setter private File cachedir;
     @Getter @Setter private  PluginCache cache;
     @Getter @Setter private Map<String, String> serviceAliases;
+    @Getter @Setter private PluginProviderServices frameworkExecutionProviderServices;
+
     /**
      * Create a PluginManagerService
      */
@@ -72,6 +76,10 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         PluggableProviderService<T> pluginProviderService = ServiceTypes.getPluginProviderService(type, serviceName, this);
         if (null != pluginProviderService) {
             return pluginProviderService;
+        }
+        if (frameworkExecutionProviderServices != null
+            && frameworkExecutionProviderServices.hasServiceFor(type, serviceName)) {
+            return frameworkExecutionProviderServices.getServiceProviderFor(type, serviceName, this);
         }
 
         //otherwise construct default service implementation
