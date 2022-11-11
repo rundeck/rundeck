@@ -211,16 +211,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         applicationIsShutdown = true;
     }
 
-
-    void initialize(){
-        //TODO: use plugin registry instead
-        //ExecutionService handles Job reference steps
-        final cis = frameworkService.rundeckFramework.stepExecutionService
-        cis.providerRegistryService.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
-        //ExecutionService handles Job reference node steps
-        final nis = frameworkService.rundeckFramework.nodeStepExecutorService
-        nis.providerRegistryService.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
-    }
     /**
      * Render execution document for api response
      */

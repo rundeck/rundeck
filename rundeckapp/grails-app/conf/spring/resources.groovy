@@ -35,9 +35,15 @@ import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.authorization.providers.BaseValidatorImpl
 import com.dtolabs.rundeck.core.authorization.providers.YamlValidator
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
+import com.dtolabs.rundeck.core.common.BaseFrameworkExecutionProviders
+import com.dtolabs.rundeck.core.common.BaseFrameworkExecutionServices
+import com.dtolabs.rundeck.core.common.FrameworkExecutionProviderServices
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
+import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
+import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
@@ -52,11 +58,15 @@ import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.server.plugins.AppExecutionPluginLoader
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.PluginFactoryBean
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.jobreference.JobReferenceNodeStepExecutor
+import com.dtolabs.rundeck.server.plugins.jobreference.JobReferencePluginFactoryBean
+import com.dtolabs.rundeck.server.plugins.jobreference.JobReferenceStepExecutor
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
@@ -257,8 +267,37 @@ beans={
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
+    rundeckNodeSpecifiedProviderNames(NodeSpecifiedPlugins){
+        projectManager = ref('projectManagerService')
+        frameworkNodes = ref('rundeckNodeSupport')
+    }
+    rundeckBaseFrameworkExecutionServices(BaseFrameworkExecutionServices){
+        framework = ref('rundeckFramework')
+    }
+    rundeckBaseFrameworkExecutionProviders(BaseFrameworkExecutionProviders){
+        executionServices = ref('rundeckBaseFrameworkExecutionServices')
+    }
+
+    rundeckappExecutionPluginsLoader(AppExecutionPluginLoader){
+        pluginService=ref('pluginService')
+        rundeckNodeSupport=ref('rundeckNodeSupport')
+        nodeProviderName=ref('rundeckNodeSpecifiedProviderNames')
+        /////////
+        //NOTE: these two dependencies are purposely disabled, they must be lazy loaded due to cyclic dependency
+        //rundeckBaseFrameworkExecutionProviders = ref('rundeckBaseFrameworkExecutionProviders')
+        //framework = ref('rundeckFramework')
+        ////////
+    }
+    rundeckExecutionPluginService(ExecutionServiceImpl){
+        executionProviders = ref('rundeckappExecutionPluginsLoader')
+    }
+    rundeckFrameworkServiceSupport(ServiceSupport){
+        executionService = ref('rundeckExecutionPluginService')
+        executionProviders = ref('rundeckappExecutionPluginsLoader')
+    }
 
     frameworkFactory(RundeckFrameworkFactory){
+        serviceSupport = ref('rundeckFrameworkServiceSupport')
         frameworkFilesystem=frameworkFilesystem
         propertyLookup=ref('frameworkPropertyLookup')
         dbProjectManager=ref('projectManagerService')
@@ -388,6 +427,10 @@ beans={
         ]
     }
 
+    rundeckFrameworkExecutionProviderServices(FrameworkExecutionProviderServices){
+         frameworkExecutionServices = ref('rundeckFrameworkServiceSupport')
+    }
+
     /*
      * Define beans for Rundeck core-style plugin loader to load plugins from jar/zip files
      */
@@ -396,6 +439,7 @@ beans={
         cachedir = cacheDir
         cache = filePluginCache
         serviceAliases = [WorkflowNodeStep: 'RemoteScriptNodeStep']
+        frameworkExecutionProviderServices = ref('rundeckFrameworkExecutionProviderServices')
     }
 
     /**
@@ -613,6 +657,15 @@ beans={
         basePath = uploadsDir.absolutePath
     }
     pluginRegistry[ServiceNameConstants.FileUpload + ":" +FSFileUploadPlugin.PROVIDER_NAME] = 'fsFileUploadPlugin'
+
+    //list of plugin classes to generate factory beans for
+    [
+            //Job reference plugins
+            JobReferenceNodeStepExecutor,
+            JobReferenceStepExecutor
+    ].each {
+        "rundeckAppPlugin_${it.simpleName}"(JobReferencePluginFactoryBean, it)
+    }
 
     //list of plugin classes to generate factory beans for
     [
