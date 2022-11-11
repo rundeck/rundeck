@@ -53,6 +53,7 @@ import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
+import com.dtolabs.rundeck.server.plugins.PluginFactoryBean
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
