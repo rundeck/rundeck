@@ -722,11 +722,67 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * fwkService.listDescriptions() >> [null, null, null]
             1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
             1 * fwkService.getRundeckFramework()
-            1 * fwkService.listPluginGroupDescriptions() >> null
             1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
             1 * fwkService.refreshSessionProjects(_,_)
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
             0 * fwkService._(*_)
+    }
+    def "save project plugin groups"() {
+        setup:
+            def fwkService = Mock(FrameworkService)
+            controller.frameworkService = fwkService
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            controller.featureService = Mock(FeatureService){
+                (pgEnabled ? 1 : 0) * featurePresent(Features.PLUGIN_GROUPS) >> pgEnabled
+                _ * featurePresent(Features.CLEAN_EXECUTIONS_HISTORY,_) >> false
+            }
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                isProjectExecutionEnabled(_) >> true
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+
+
+            params.project = "TestSaveProject"
+            params.label = 'A Label'
+            if(json){
+                params['pluginValues.PluginGroup.json']=json
+            }
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProject()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * fwkService.updateFrameworkProjectConfig(
+                _,
+                { it.subMap(expected.keySet())==expected },
+                { it.containsAll(rmPrefixes) }
+            ) >> [success: true]
+
+
+            1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
+            1 * controller.rundeckAuthContextProcessor.authorizeProjectConfigure(_,'TestSaveProject') >> true
+            1 * fwkService.listDescriptions() >> [null, null, null]
+            1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
+            1 * fwkService.getRundeckFramework()
+            (pgEnabled?1:0) * fwkService.listPluginGroupDescriptions() >> null
+            1 * fwkService.handleProjectSchedulingEnabledChange(_,_,_,_,_)
+            1 * fwkService.refreshSessionProjects(_,_)
+            1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
+            0 * fwkService._(*_)
+            1 * controller.pluginGroupPasswordFieldsService.reset()
+            (expected?1:0) * controller.pluginGroupPasswordFieldsService.untrack([[config: [type: 'aplugin', props: [a:'b']], type: 'aplugin', index: 0]],_)
+        where:
+            pgEnabled | rmPrefixes                                              | json |expected
+            true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | ''   |[:]
+            true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | '[]' |[:]
+            true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | '[{"type":"aplugin","config":{"a":"b"}}]'|['project.PluginGroup.aplugin.enabled':'true','project.plugin.PluginGroup.aplugin.a':'b']
     }
     def "save project with out description"(){
         setup:

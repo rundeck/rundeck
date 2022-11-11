@@ -290,7 +290,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         }
 
 
-        1 * fwk.getFrameworkProject(_) >>proj
+        _ * fwk.getFrameworkProject(_) >>proj
 
         _ * fwk.listDescriptions()>> [[withPasswordFieldDescription], null, null]
         _ * fwk.getDefaultNodeExecutorService()
@@ -304,6 +304,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
                 stringProperty('aprop','blah',false,'title','desc').
                 build()
         ]
+            (pgFeatureEnabled?1:0)*fwk.hasPluginGroupConfigurationForType('somePlugin',_)>>true
             (pgFeatureEnabled?1:0)*fwk.getPluginGroupConfigurationForType('somePlugin',_)>>[
                 aprop:'avalue'
             ]
