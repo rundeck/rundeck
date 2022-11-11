@@ -262,6 +262,11 @@ class PluginServiceTests extends Specification {
         void registerPlugin(String type, String name, String beanName) {
 
         }
+
+        @Override
+        boolean hasRegisteredPlugin(final String type, final String name) {
+            return false
+        }
     }
 
     void testGetPluginDNE() {

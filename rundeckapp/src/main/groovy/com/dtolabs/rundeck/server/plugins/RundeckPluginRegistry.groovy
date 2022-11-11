@@ -547,6 +547,41 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         return DescribableServiceUtil.loadDescriptionForType(service, name, true)
     }
 
+    public boolean hasRegisteredPlugin(String type, String name) {
+        try {
+            def beanName = pluginRegistryMap[type + ':' + name] ?: pluginRegistryMap[name]
+            if (beanName) {
+                def bean = findBean(beanName)
+                if(!bean){
+                    return false
+                }
+                if (bean instanceof PluginBuilder) {
+                    bean = ((PluginBuilder) bean).buildPlugin()
+                }
+                if(!bean){
+                    return false
+                }
+
+                final Plugin annotation1 = bean.getClass().getAnnotation(Plugin.class);
+                if (type && annotation1 && annotation1.service() != type) {
+                    return false
+                }
+
+                Description desc = null
+                if (bean instanceof Describable) {
+                    desc = ((Describable) bean).description
+                } else if (PluginAdapterUtility.canBuildDescription(bean)) {
+                    desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
+                }
+                if(!desc){
+                    return false
+                }
+                return true
+            }
+        } catch (NoSuchBeanDefinitionException ignored) {
+        }
+        return false
+    }
     private <T> DescribedPlugin<T> loadBeanDescriptor(String name, String type = null) {
         try {
             def beanName = pluginRegistryMap["${type}:${name}"] ?: pluginRegistryMap[name]

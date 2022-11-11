@@ -260,4 +260,12 @@ public interface PluginRegistry {
      * @param beanName
      */
     void registerPlugin(String type, String name, String beanName);
+
+    /**
+     *
+     * @param type
+     * @param name
+     * @return true if the plugin was registered
+     */
+    boolean hasRegisteredPlugin(String type, String name);
 }
