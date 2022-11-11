@@ -144,7 +144,12 @@ public abstract class AbstractBaseTest extends TestCase {
     }
 
     public static Framework createTestFramework() {
-        return createTestFramework(new ServiceSupport());
+        ServiceSupport serviceSupport = new ServiceSupport();
+        BaseFrameworkExecutionServices services = new BaseFrameworkExecutionServices();
+        serviceSupport.setExecutionServices(services);
+        Framework framework = AbstractBaseTest.createTestFramework(serviceSupport);
+        services.setFramework(framework);
+        return framework;
     }
     public static Framework createTestFramework(IFrameworkServices services) {
         if(!new File(RDECK_BASE).exists()) {
