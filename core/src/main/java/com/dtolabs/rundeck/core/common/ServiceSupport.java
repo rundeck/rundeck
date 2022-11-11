@@ -47,7 +47,7 @@ public class ServiceSupport implements IFrameworkServices, IExecutionProviders, 
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
 
-    private Framework framework;
+    @Getter @Setter private Framework framework;
     @Getter @Setter private ExecutionService executionService;
     @Getter @Setter private IExecutionProviders executionProviders;
 
@@ -190,12 +190,4 @@ public class ServiceSupport implements IFrameworkServices, IExecutionProviders, 
         return null;
     }
 
-
-    public Framework getFramework() {
-        return framework;
-    }
-
-    public void setFramework(final Framework framework) {
-        this.framework = framework;
-    }
 }
