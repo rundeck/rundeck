@@ -19,9 +19,10 @@ package rundeck
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.dirty.checking.DirtyCheck
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 
 @DirtyCheck
-abstract class WorkflowStep {
+abstract class WorkflowStep implements WorkflowStepData {
     WorkflowStep errorHandler
     Boolean keepgoingOnSuccess
     String description

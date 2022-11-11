@@ -4,6 +4,8 @@ import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -30,7 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
  * $Id$
  */
 
-public class Workflow {
+public class Workflow implements WorkflowData {
 
     Integer threadcount=1
     Boolean keepgoing=false
@@ -53,6 +55,10 @@ public class Workflow {
     }
     //ignore fake property 'configuration' and do not store it
     static transients = ['pluginConfigMap']
+
+    List<WorkflowStepData> getSteps() {
+        return commands
+    }
 
     public Map getPluginConfigMap() {
         //de-serialize the json

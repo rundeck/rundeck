@@ -16,13 +16,14 @@
 
 package rundeck
 
-import com.dtolabs.rundeck.app.api.marshall.CollectionElement
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.util.StringNumericSort
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.job.option.OptionData
+import org.rundeck.app.data.model.v1.job.option.OptionValueData
 
 import java.util.regex.Pattern
 
@@ -43,7 +44,7 @@ import java.util.regex.Pattern
  * $Id$
  */
 
-public class Option implements Comparable{
+public class Option implements Comparable, OptionData {
 
     static final String DEFAULT_DELIMITER =','
 
@@ -112,6 +113,9 @@ public class Option implements Comparable{
         sortValues(nullable: true)
     }
 
+    List<OptionValueData> getValuesFromPlugin() {
+        return valuesFromPlugin
+    }
 
     public Map getConfigMap() {
         //de-serialize the json

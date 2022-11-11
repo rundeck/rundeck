@@ -94,6 +94,11 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         return "job: ${this.getJobIdentifier()}${argString?' -- '+argString:''}"
     }
 
+    public Map getConfiguration() { null }
+
+    public String getPluginType() {
+        return "builtin-jobref"
+    }
 
     public String getJobIdentifier() {
         if(!useName && uuid){
@@ -220,8 +225,13 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         return map
     }
 
-    static JobExec jobExecFromMap(Map map){
-        JobExec exec = new JobExec()
+    static JobExec jobExecFromMap(Map map) {
+        def exec = new JobExec()
+        updateFromMap(exec, map)
+        return exec
+    }
+
+    static void updateFromMap(JobExec exec, Map map) {
         exec.jobGroup=map.jobref.group
         exec.jobName=map.jobref.name
         if (map.jobref.project || map.project) {
@@ -311,6 +321,5 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             exec.useName=false
         }
         //nb: error handler is created inside Workflow.fromMap
-        return exec
     }
 }

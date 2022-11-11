@@ -18,6 +18,7 @@ package rundeck
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.job.orchestrator.OrchestratorData
 
 /*
  * Notification.java
@@ -30,7 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 /**
  * Represents a registration of a orchestrator and configuration
  */
-public class Orchestrator {
+public class Orchestrator implements OrchestratorData {
     /**
      * type is the type of orchestrator to initiate, e.g. "limitRun" 
      */

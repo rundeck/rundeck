@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import io.micronaut.http.MediaType
@@ -57,6 +58,8 @@ import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.job.RdJob
+import org.rundeck.app.data.job.ScheduledExecutionToJobConverter
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -800,24 +803,24 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    /**
-     * Map of descriptive property name to ScheduledExecution domain class property names
-     * used by expandUrl for embedded property references in remote options URL
-     */
-    private static jobprops=[
-        name:'jobName',
-        group:'groupPath',
-        description:'description',
-        project:'project',
-    ]
-    /**
-     * Map of descriptive property name to Option domain class property names
-     * used by expandUrl for embedded property references in remote options URL
-     */
-    private static optprops=[
-        name:'name',
-
-    ]
+//    /**
+//     * Map of descriptive property name to ScheduledExecution domain class property names
+//     * used by expandUrl for embedded property references in remote options URL
+//     */
+//    private static jobprops=[
+//        name:'jobName',
+//        group:'groupPath',
+//        description:'description',
+//        project:'project',
+//    ]
+//    /**
+//     * Map of descriptive property name to Option domain class property names
+//     * used by expandUrl for embedded property references in remote options URL
+//     */
+//    private static optprops=[
+//        name:'name',
+//
+//    ]
 
     /**
      * Make a remote URL request and return the parsed JSON data and statistics for http requests in a map.
@@ -4234,6 +4237,19 @@ class ScheduledExecutionController  extends ControllerBase{
                 ] as JSON)
             }
         }
+    }
+
+    ObjectMapper mapper = new ObjectMapper()
+
+    def asjob() {
+        response.contentType = "application/json;utf-8"
+       // render mapper.writeValueAsString(ScheduledExecutionToJobConverter.convert(ScheduledExecution.get(params.id.toLong())))
+        render ScheduledExecutionToJobConverter.convert(ScheduledExecution.get(params.id.toLong())) as JSON
+    }
+
+    def fromjob() {
+        RdJob job = new ObjectMapper().readValue(request.inputStream, RdJob)
+        render mapper.writeValueAsString(scheduledExecutionService.saveJob(job))
     }
 }
 

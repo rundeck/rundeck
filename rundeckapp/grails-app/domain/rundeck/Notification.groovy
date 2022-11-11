@@ -18,6 +18,7 @@ package rundeck
 
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
 
 /*
  * Notification.java
@@ -30,7 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 /**
  * Represents a registration of notification to happen on some event trigger, and some type of notification.
  */
-public class Notification {
+public class Notification implements NotificationData {
     /**
      * eventTrigger is the name of the event to cause the notification, e.g. "onfailure" to happen when a
      * failure of some type occurs
