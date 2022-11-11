@@ -29,7 +29,8 @@ import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import com.dtolabs.rundeck.plugins.ServiceTypes;
-import org.rundeck.core.plugins.PluginTypes;
+import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,10 +48,10 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     private static final Logger log          = LoggerFactory.getLogger(PluginManagerService.class.getName());
     public static final  String SERVICE_NAME = "PluginManager";
 
-    private File extdir;
-    private File cachedir;
-    private  PluginCache cache;
-    private Map<String, String> serviceAliases;
+    @Getter @Setter private File extdir;
+    @Getter @Setter private File cachedir;
+    @Getter @Setter private  PluginCache cache;
+    @Getter @Setter private Map<String, String> serviceAliases;
     /**
      * Create a PluginManagerService
      */
@@ -194,35 +195,4 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return null;
     }
 
-    public File getExtdir() {
-        return extdir;
-    }
-
-    public void setExtdir(File extdir) {
-        this.extdir = extdir;
-    }
-
-    public File getCachedir() {
-        return cachedir;
-    }
-
-    public void setCachedir(File cachedir) {
-        this.cachedir = cachedir;
-    }
-
-    public PluginCache getCache() {
-        return cache;
-    }
-
-    public void setCache(PluginCache cache) {
-        this.cache = cache;
-    }
-
-    public Map<String, String> getServiceAliases() {
-        return serviceAliases;
-    }
-
-    public void setServiceAliases(Map<String, String> serviceAliases) {
-        this.serviceAliases = serviceAliases;
-    }
 }
