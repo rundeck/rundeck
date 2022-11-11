@@ -31,7 +31,7 @@
     "core-js": "^3.6.5",
     "markdown-it-vue": "^1.1.6",
     "mobx": "^5.15.4",
-    "moment": "^2.25.3",
+    "moment": "^2.29.4",
     "npm": "^8.3.1",
     "perfect-scrollbar": "^1.5.0",
     "prex": "^0.4.7",
