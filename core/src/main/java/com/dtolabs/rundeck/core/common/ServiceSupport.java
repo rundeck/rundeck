@@ -43,13 +43,11 @@ import java.util.HashMap;
 /**
  * Created by greg on 2/20/15.
  */
-public class ServiceSupport implements IFrameworkServices, IExecutionProviders, IExecutionServices {
-
-    final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
-
+public class ServiceSupport implements IFrameworkServices {
     @Getter @Setter private Framework framework;
     @Getter @Setter private ExecutionService executionService;
     @Getter @Setter private IExecutionProviders executionProviders;
+    @Getter @Setter private IExecutionServicesRegistration executionServices;
 
     public ServiceSupport() {
 
@@ -61,15 +59,6 @@ public class ServiceSupport implements IFrameworkServices, IExecutionProviders, 
     public void initialize(Framework framework) {
         if (null == this.framework) {
             setFramework(framework);
-            NodeStepExecutionService.getInstanceForFramework(getFramework());
-            NodeExecutorService.getInstanceForFramework(getFramework());
-            FileCopierService.getInstanceForFramework(getFramework());
-            NodeDispatcherService.getInstanceForFramework(getFramework());
-            WorkflowExecutionService.getInstanceForFramework(getFramework());
-            StepExecutionService.getInstanceForFramework(getFramework());
-            ResourceModelSourceService.getInstanceForFramework(getFramework());
-            ResourceFormatParserService.getInstanceForFramework(getFramework());
-            ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
         }
     }
 
@@ -79,7 +68,7 @@ public class ServiceSupport implements IFrameworkServices, IExecutionProviders, 
      */
     @Override
     public FrameworkSupportService getService(String name) {
-        return services.get(name);
+        return executionServices.getService(name);
     }
     /**
      * Set a service by name
@@ -88,40 +77,32 @@ public class ServiceSupport implements IFrameworkServices, IExecutionProviders, 
      */
     @Override
     public void setService(final String name, final FrameworkSupportService service){
-        synchronized (services){
-            if(null==services.get(name) && null!=service) {
-                services.put(name, service);
-            }else if(null==service) {
-                services.remove(name);
-            }
-        }
+        executionServices.setService(name, service);
     }
 
     @Override
     public void overrideService(final String name, final FrameworkSupportService service) {
-        synchronized (services) {
-            services.put(name, service);
-        }
+        executionServices.overrideService(name, service);
     }
 
     @Override
     public OrchestratorService getOrchestratorService() {
-        return OrchestratorService.getInstanceForFramework(getFramework());
+        return executionServices.getOrchestratorService();
     }
 
     @Override
     public WorkflowExecutionService getWorkflowExecutionService() {
-        return WorkflowExecutionService.getInstanceForFramework(getFramework());
+        return executionServices.getWorkflowExecutionService();
     }
 
     @Override
     public WorkflowStrategyService getWorkflowStrategyService() {
-        return WorkflowStrategyService.getInstanceForFramework(getFramework());
+        return executionServices.getWorkflowStrategyService();
     }
 
     @Override
     public StepExecutionService getStepExecutionService() {
-        return StepExecutionService.getInstanceForFramework(getFramework());
+        return executionServices.getStepExecutionService();
     }
 
     @Override
@@ -138,7 +119,7 @@ public class ServiceSupport implements IFrameworkServices, IExecutionProviders, 
 
     @Override
     public FileCopierService getFileCopierService() {
-        return FileCopierService.getInstanceForFramework(getFramework());
+        return executionServices.getFileCopierService();
     }
 
     @Override
@@ -147,11 +128,11 @@ public class ServiceSupport implements IFrameworkServices, IExecutionProviders, 
     }
     @Override
     public NodeExecutorService getNodeExecutorService() {
-        return NodeExecutorService.getInstanceForFramework(getFramework());
+        return executionServices.getNodeExecutorService();
     }
     @Override
     public NodeStepExecutionService getNodeStepExecutorService() {
-        return NodeStepExecutionService.getInstanceForFramework(getFramework());
+        return executionServices.getNodeStepExecutorService();
     }
     @Override
     public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item, final String project) throws ExecutionServiceException {
@@ -164,28 +145,28 @@ public class ServiceSupport implements IFrameworkServices, IExecutionProviders, 
 
     @Override
     public NodeDispatcherService getNodeDispatcherService() {
-        return NodeDispatcherService.getInstanceForFramework(getFramework());
+        return executionServices.getNodeDispatcherService();
     }
 
     @Override
     public ResourceModelSourceService getResourceModelSourceService() {
-        return ResourceModelSourceService.getInstanceForFramework(getFramework());
+        return executionServices.getResourceModelSourceService();
     }
 
     @Override
     public ResourceFormatParserService getResourceFormatParserService() {
-        return ResourceFormatParserService.getInstanceForFramework(getFramework());
+        return executionServices.getResourceFormatParserService();
     }
 
     @Override
     public ResourceFormatGeneratorService getResourceFormatGeneratorService() {
-        return ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
+        return executionServices.getResourceFormatGeneratorService();
     }
 
     @Override
-    public ServiceProviderLoader getPluginManager(){
-        if(null!=getService(PluginManagerService.SERVICE_NAME)) {
-            return PluginManagerService.getInstanceForFramework(getFramework());
+    public ServiceProviderLoader getPluginManager() {
+        if (null != executionServices.getService(PluginManagerService.SERVICE_NAME)) {
+            return PluginManagerService.getInstanceForFramework(getFramework(), executionServices);
         }
         return null;
     }

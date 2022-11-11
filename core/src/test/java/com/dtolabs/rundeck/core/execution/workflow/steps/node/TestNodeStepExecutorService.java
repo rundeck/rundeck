@@ -69,7 +69,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
     public void testGetInterpreterForExecutionItem() throws Exception {
         final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
-            getFrameworkInstance());
+            getFrameworkInstance(),getFrameworkInstance());
 
         {
             //exec item should return default ExecNodeStepExecutor
@@ -146,7 +146,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
     public void testGetInstanceForFramework() throws Exception {
         final Framework framework = getFrameworkInstance();
         final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
-            framework);
+            framework,framework);
         assertNotNull(service);
         final FrameworkSupportService foundservice = framework.getService(ServiceNameConstants.WorkflowNodeStep);
         assertNotNull(foundservice);
@@ -156,7 +156,7 @@ public class TestNodeStepExecutorService extends AbstractBaseTest {
 
     public void testGetName() throws Exception {
         final NodeStepExecutionService service = NodeStepExecutionService.getInstanceForFramework(
-            getFrameworkInstance());
+            getFrameworkInstance(),createTestFramework());
         assertEquals(ServiceNameConstants.WorkflowNodeStep, service.getName());
     }
 }

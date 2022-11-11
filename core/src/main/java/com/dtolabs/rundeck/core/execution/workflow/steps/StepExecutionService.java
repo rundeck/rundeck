@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -105,13 +106,14 @@ public class StepExecutionService
         return serviceList;
     }
 
-    public static StepExecutionService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static StepExecutionService getInstanceForFramework(final Framework framework,
+                                                               final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final StepExecutionService service = new StepExecutionService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (StepExecutionService) framework.getService(SERVICE_NAME);
+        return (StepExecutionService) registration.getService(SERVICE_NAME);
     }
 
     public StepExecutor getExecutorForItem(final StepExecutionItem item) throws ExecutionServiceException {

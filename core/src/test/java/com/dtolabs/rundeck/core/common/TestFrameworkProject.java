@@ -528,8 +528,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
     }
     public void testLoadNodesProvidersBasic() throws Exception {
 
-        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
-            getFrameworkInstance());
+        final ResourceModelSourceService service = getResourceModelSourceService();
         testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
@@ -558,8 +557,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
     public void testLoadNodesProvidersMultiples() throws Exception {
 
-        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
-            getFrameworkInstance());
+        final ResourceModelSourceService service = getResourceModelSourceService();
         testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
@@ -625,8 +623,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
      */
     public void testMergedAttributesDefault() throws Exception {
 
-        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
-            getFrameworkInstance());
+        final ResourceModelSourceService service = getResourceModelSourceService();
         testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
@@ -703,8 +700,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         //disable merged attributes
         props1.setProperty(FrameworkProject.PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES, "false");
 
-        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
-            getFrameworkInstance());
+        final ResourceModelSourceService service = getResourceModelSourceService();
         testSource provider1 = new testSource();
         final NodeSetImpl set1 = new NodeSetImpl();
         set1.putNode(new NodeEntryImpl("set1node1"));
@@ -767,5 +763,11 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertEquals("789", nodeSet.getNode("set2node1").getAttributes().get("ghi"));
         assertNull(nodeSet.getNode("set3node1"));
         projectPropsFile.delete();
+    }
+
+    private ResourceModelSourceService getResourceModelSourceService() {
+        final ResourceModelSourceService service = ResourceModelSourceService.getInstanceForFramework(
+            getFrameworkInstance(),getFrameworkInstance());
+        return service;
     }
 }

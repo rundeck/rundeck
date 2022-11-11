@@ -14,21 +14,20 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * base (legacy) implementation to provide Execution service providers using the Framework service registration
- * mechanism
+ * base (legacy) implementation to provide Execution service providers via the IExecutionServices
  */
 public class BaseFrameworkExecutionProviders
         implements IExecutionProviders
 {
-    @Getter @Setter private Framework framework;
+    @Getter @Setter private IExecutionServices executionServices;
 
     public BaseFrameworkExecutionProviders() {
 
     }
 
-    public static BaseFrameworkExecutionProviders create(final Framework testFramework) {
+    public static BaseFrameworkExecutionProviders create(final IExecutionServices executionServices) {
         BaseFrameworkExecutionProviders baseFrameworkExecutionProviders = new BaseFrameworkExecutionProviders();
-        baseFrameworkExecutionProviders.setFramework(testFramework);
+        baseFrameworkExecutionProviders.setExecutionServices(executionServices);
         return baseFrameworkExecutionProviders;
     }
 
@@ -36,32 +35,32 @@ public class BaseFrameworkExecutionProviders
     public StepExecutor getStepExecutorForItem(final StepExecutionItem item, final String project)
             throws ExecutionServiceException
     {
-        return StepExecutionService.getInstanceForFramework(framework).getExecutorForItem(item);
+        return executionServices.getStepExecutionService().getExecutorForItem(item);
     }
 
     @Override
     public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final String project)
             throws ExecutionServiceException
     {
-        return FileCopierService.getInstanceForFramework(framework).getProviderForNodeAndProject(node, project);
+        return executionServices.getFileCopierService().getProviderForNodeAndProject(node, project);
     }
 
     @Override
     public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final String project)
             throws ExecutionServiceException
     {
-        return NodeExecutorService.getInstanceForFramework(framework).getProviderForNodeAndProject(node, project);
+        return executionServices.getNodeExecutorService().getProviderForNodeAndProject(node, project);
     }
 
     @Override
     public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, final String project)
             throws ExecutionServiceException
     {
-        return NodeStepExecutionService.getInstanceForFramework(framework).getExecutorForExecutionItem(item);
+        return executionServices.getNodeStepExecutorService().getExecutorForExecutionItem(item);
     }
 
     @Override
     public NodeDispatcher getNodeDispatcherForContext(final ExecutionContext context) throws ExecutionServiceException {
-        return NodeDispatcherService.getInstanceForFramework(context.getIFramework()).getNodeDispatcher(context);
+        return executionServices.getNodeDispatcherService().getNodeDispatcher(context);
     }
 }

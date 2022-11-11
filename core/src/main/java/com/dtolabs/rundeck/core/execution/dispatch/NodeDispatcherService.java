@@ -67,13 +67,14 @@ public class NodeDispatcherService
         }
     }
 
-    public static NodeDispatcherService getInstanceForFramework(IFramework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static NodeDispatcherService getInstanceForFramework(IFramework framework,
+                                                                final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final NodeDispatcherService service = new NodeDispatcherService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (NodeDispatcherService) framework.getService(SERVICE_NAME);
+        return (NodeDispatcherService) registration.getService(SERVICE_NAME);
     }
 
 

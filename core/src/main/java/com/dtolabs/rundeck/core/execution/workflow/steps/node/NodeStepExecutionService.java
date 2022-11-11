@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
@@ -232,13 +233,17 @@ public class NodeStepExecutionService
         return providerOfType(item.getNodeStepType());
     }
 
-    public static NodeStepExecutionService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static NodeStepExecutionService getInstanceForFramework(
+            final Framework framework,
+            final IServicesRegistration registration
+    )
+    {
+        if (null == registration.getService(SERVICE_NAME)) {
             final NodeStepExecutionService service = new NodeStepExecutionService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (NodeStepExecutionService) framework.getService(SERVICE_NAME);
+        return (NodeStepExecutionService) registration.getService(SERVICE_NAME);
     }
 
 

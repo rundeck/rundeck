@@ -61,8 +61,8 @@ class ProjectNodeSupportSpec extends Specification {
             ] as Properties)
             getConfigLastModifiedTime() >> modifiedTime
         }
-        def generatorService = new ResourceFormatGeneratorService(framework)
-        def sourceService = new ResourceModelSourceService(framework)
+        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework,framework)
+        def sourceService = ResourceModelSourceService.getInstanceForFramework(framework,framework)
 
         def support = new ProjectNodeSupport(config, generatorService, sourceService)
 
@@ -102,8 +102,8 @@ class ProjectNodeSupportSpec extends Specification {
             )
             getConfigLastModifiedTime() >> modifiedTime
         }
-        def generatorService = new ResourceFormatGeneratorService(framework)
-        def sourceService = new ResourceModelSourceService(framework)
+        def generatorService = ResourceFormatGeneratorService.getInstanceForFramework(framework,framework)
+        def sourceService = ResourceModelSourceService.getInstanceForFramework(framework,framework)
 
         def factory = { ProjectNodeSupport.SourceDefinition defe ->
             sourceService.getCloseableSourceForConfiguration(defe.type, defe.properties)

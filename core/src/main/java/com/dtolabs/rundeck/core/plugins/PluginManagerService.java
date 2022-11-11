@@ -113,8 +113,8 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return SERVICE_NAME;
     }
 
-    public static PluginManagerService getInstanceForFramework(final Framework framework) {
-        return (PluginManagerService) framework.getService(SERVICE_NAME);
+    public static PluginManagerService getInstanceForFramework(final Framework framework, IServicesRegistration registration) {
+        return (PluginManagerService) registration.getService(SERVICE_NAME);
     }
 
     public synchronized List<ProviderIdent> listProviders() {

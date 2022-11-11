@@ -75,8 +75,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
     public void testGetNodeDispatcher_parallel_node2_threadcount2() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(frameworkInstance);
-            final NodeSet nodeSet = new NodeSet();
+        final NodeDispatcherService
+                service =
+                getNodeDispatcherService(frameworkInstance);
+        final NodeSet nodeSet = new NodeSet();
             nodeSet.createInclude().setName(".*");
             nodeSet.setThreadCount(2);
             //get node dispatcher for a context.  nodeset>1 and threadcount>1 returns parallel provider
@@ -108,9 +110,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
         //get node dispatcher for a context.  nodeset>1 and threadcount<2 returns sequential provider
 
         final Framework frameworkInstance = getFrameworkInstance();
-        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(
-                frameworkInstance);
-            final NodeSet nodeSet = new NodeSet();
+        final NodeDispatcherService
+                service =
+                getNodeDispatcherService(frameworkInstance);
+        final NodeSet nodeSet = new NodeSet();
             nodeSet.createInclude().setName(".*");
             nodeSet.setThreadCount(1);
             final ExecutionContext context = ExecutionContextImpl.builder()
@@ -133,8 +136,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
         //get node dispatcher for a context.  nodeset<2 and threadcount<2 returns sequential provider
 
         final Framework frameworkInstance = getFrameworkInstance();
-        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(frameworkInstance);
-            final NodeSet nodeSet = new NodeSet();
+        final NodeDispatcherService
+                service =
+                getNodeDispatcherService(frameworkInstance);
+        final NodeSet nodeSet = new NodeSet();
             nodeSet.setSingleNodeName("test1");
             nodeSet.setThreadCount(1);
             final ExecutionContext context = ExecutionContextImpl.builder()
@@ -157,8 +162,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
         //get node dispatcher for a context.  nodeset<2 and threadcount>1 returns sequential provider
 
         final Framework frameworkInstance = getFrameworkInstance();
-        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(frameworkInstance);
-            final NodeSet nodeSet = new NodeSet();
+        final NodeDispatcherService
+                service =
+                getNodeDispatcherService(frameworkInstance);
+        final NodeSet nodeSet = new NodeSet();
             nodeSet.setSingleNodeName("test1");
             nodeSet.setThreadCount(2);
             final ExecutionContext context = ExecutionContextImpl.builder()
@@ -186,8 +193,9 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
      */
     public void testExtResources() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(
-            frameworkInstance);
+        final NodeDispatcherService
+                service =
+                getNodeDispatcherService(frameworkInstance);
         {   //use test-1 file
             final NodeSet nodeSet = new NodeSet();
             nodeSet.createInclude().setTags("priority1"); //matches single nodes in test1 file
@@ -231,5 +239,10 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof ParallelNodeDispatcher);
         }
+    }
+
+    private static NodeDispatcherService getNodeDispatcherService(final Framework frameworkInstance) {
+        return NodeDispatcherService.getInstanceForFramework(
+                frameworkInstance, frameworkInstance);
     }
 }

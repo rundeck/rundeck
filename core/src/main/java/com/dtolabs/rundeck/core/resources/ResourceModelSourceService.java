@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -72,13 +73,14 @@ public class ResourceModelSourceService
     }
 
 
-    public static ResourceModelSourceService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static ResourceModelSourceService getInstanceForFramework(final Framework framework,
+                                                                     final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final ResourceModelSourceService service = new ResourceModelSourceService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (ResourceModelSourceService) framework.getService(SERVICE_NAME);
+        return (ResourceModelSourceService) registration.getService(SERVICE_NAME);
     }
 
 

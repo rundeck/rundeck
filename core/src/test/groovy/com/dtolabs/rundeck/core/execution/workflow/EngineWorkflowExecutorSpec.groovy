@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.execution.workflow
 
 import com.dtolabs.rundeck.core.NodesetEmptyException
+import com.dtolabs.rundeck.core.common.BaseFrameworkExecutionServices
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IExecutionProviders
@@ -56,6 +57,8 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     def setup() {
         serviceSupport=new ServiceSupport()
+        def services = new BaseFrameworkExecutionServices()
+        serviceSupport.setExecutionServices(services)
 
         executionServiceImpl = new ExecutionServiceImpl()
 
@@ -69,6 +72,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         executionServiceImpl.setExecutionProviders(frameworkPlugins)
         serviceSupport.executionService = executionServiceImpl
         framework = AbstractBaseTest.createTestFramework(serviceSupport)
+        services.setFramework(framework)
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
     }
 

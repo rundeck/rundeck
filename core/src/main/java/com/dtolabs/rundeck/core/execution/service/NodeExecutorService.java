@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.service;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
@@ -92,13 +93,14 @@ public class NodeExecutorService
         );
     }
 
-    public static NodeExecutorService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static NodeExecutorService getInstanceForFramework(final Framework framework,
+                                                              final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final NodeExecutorService service = new NodeExecutorService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (NodeExecutorService) framework.getService(SERVICE_NAME);
+        return (NodeExecutorService) registration.getService(SERVICE_NAME);
     }
 
     @Override

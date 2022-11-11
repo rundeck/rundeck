@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.execution.workflow
 
+import com.dtolabs.rundeck.core.common.BaseFrameworkExecutionServices
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IExecutionProviders
@@ -54,6 +55,8 @@ class NodeFirstWorkflowStrategySpec extends Specification {
 
     def setup() {
         serviceSupport=new ServiceSupport()
+        def execServices=new BaseFrameworkExecutionServices()
+        serviceSupport.setExecutionServices(execServices)
 
         executionServiceImpl = new ExecutionServiceImpl()
 
@@ -68,6 +71,7 @@ class NodeFirstWorkflowStrategySpec extends Specification {
         serviceSupport.executionProviders = frameworkPlugins
         serviceSupport.executionService = executionServiceImpl
         framework = AbstractBaseTest.createTestFramework(serviceSupport)
+        execServices.framework=framework
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(TEST_PROJ)
     }
 

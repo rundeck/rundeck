@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -82,13 +83,14 @@ public class WorkflowExecutionService extends ChainedProviderService<WorkflowExe
         return serviceList;
     }
 
-    public static WorkflowExecutionService getInstanceForFramework(Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static WorkflowExecutionService getInstanceForFramework(Framework framework,
+                                                                   final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final WorkflowExecutionService service = new WorkflowExecutionService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (WorkflowExecutionService) framework.getService(SERVICE_NAME);
+        return (WorkflowExecutionService) registration.getService(SERVICE_NAME);
     }
 
     public WorkflowExecutor getExecutorForItem(final WorkflowExecutionItem workflow) throws ExecutionServiceException {

@@ -70,11 +70,14 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
 
     protected void setUp() {
         super.setUp();
+        BaseFrameworkExecutionServices executionServices = new BaseFrameworkExecutionServices();
         ServiceSupport services = new ServiceSupport();
+        services.setExecutionServices(executionServices);
         ExecutionServiceImpl executionService = new ExecutionServiceImpl();
         services.setExecutionService(executionService);
         testFramework = createTestFramework(services);
-        BaseFrameworkExecutionProviders frameworkExecutionPlugins = BaseFrameworkExecutionProviders.create(testFramework);
+        executionServices.setFramework(testFramework);
+        BaseFrameworkExecutionProviders frameworkExecutionPlugins = BaseFrameworkExecutionProviders.create(executionServices);
         executionService.setExecutionProviders(frameworkExecutionPlugins);
         services.setExecutionProviders(frameworkExecutionPlugins);
         testnode = testFramework.getFrameworkNodeName();
@@ -261,8 +264,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .framework(testFramework).build();
 
             //setup testInterpreter for all command types
-            final NodeStepExecutionService interpreterService = NodeStepExecutionService.getInstanceForFramework(
-                testFramework);
+            final NodeStepExecutionService interpreterService = getInstanceForFramework();
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
             failMock.shouldThrowException = true;
@@ -349,8 +351,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     //specify ext resources file
 
             //setup testInterpreter for all command types
-            final NodeStepExecutionService interpreterService = NodeStepExecutionService.getInstanceForFramework(
-                testFramework);
+            final NodeStepExecutionService interpreterService = getInstanceForFramework();
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
             failMock.shouldThrowException = true;
@@ -550,8 +551,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 .build();
 
         //setup testInterpreter for all command types
-        final NodeStepExecutionService interpreterService = NodeStepExecutionService.getInstanceForFramework(
-            testFramework);
+        final NodeStepExecutionService interpreterService = getInstanceForFramework();
         testInterpreter interpreterMock = new testInterpreter();
         testInterpreter failMock = new testInterpreter();
         failMock.shouldThrowException = true;
@@ -619,8 +619,7 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .build();
 
             //setup testInterpreter for all command types
-            final NodeStepExecutionService interpreterService = NodeStepExecutionService.getInstanceForFramework(
-                testFramework);
+            final NodeStepExecutionService interpreterService = getInstanceForFramework();
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
             failMock.shouldThrowException = true;
@@ -725,5 +724,10 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 assertEquals(SelectorUtils.singleNode("testnode2"), executionContext.getNodeSelector());
             }
         }
+    }
+
+    private NodeStepExecutionService getInstanceForFramework() {
+        return NodeStepExecutionService.getInstanceForFramework(
+                testFramework, testFramework);
     }
 }

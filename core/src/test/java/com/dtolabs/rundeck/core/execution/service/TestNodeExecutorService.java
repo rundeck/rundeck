@@ -70,7 +70,7 @@ public class TestNodeExecutorService extends AbstractBaseTest {
 
     public void testGetProviderForNode() throws Exception {
         final NodeExecutorService service = NodeExecutorService.getInstanceForFramework(
-            getFrameworkInstance());
+            getFrameworkInstance(),getFrameworkInstance());
         {
             //default for local node should be local provider
             final NodeEntryImpl test1 = new NodeEntryImpl("test1");

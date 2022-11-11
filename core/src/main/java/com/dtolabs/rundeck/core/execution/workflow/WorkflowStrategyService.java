@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
@@ -83,13 +84,14 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         return serviceList;
     }
 
-    public static WorkflowStrategyService getInstanceForFramework(IFramework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static WorkflowStrategyService getInstanceForFramework(IFramework framework,
+                                                                  final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final WorkflowStrategyService service = new WorkflowStrategyService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (WorkflowStrategyService) framework.getService(SERVICE_NAME);
+        return (WorkflowStrategyService) registration.getService(SERVICE_NAME);
     }
 
     /**

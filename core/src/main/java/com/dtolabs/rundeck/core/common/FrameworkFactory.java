@@ -158,7 +158,7 @@ public class FrameworkFactory {
         if(null!=services) {
             //load predefined services
             for (String s : services.keySet()) {
-                framework.setService(s, services.get(s));
+                frameworkServices.setService(s, services.get(s));
             }
         }
 
