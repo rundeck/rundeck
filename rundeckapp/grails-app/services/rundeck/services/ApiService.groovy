@@ -54,11 +54,7 @@ class ApiService implements WebUtilService{
     def userService
     @Delegate
     WebUtilService rundeckWebUtil
-    DataManager rundeckDataManager
-
-    private TokenDataProvider getTokenProvider() {
-        rundeckDataManager.getProviderForType(TokenDataProvider)
-    }
+    TokenDataProvider tokenDataProvider
 
     public static final Map<String,String> HTTP_METHOD_ACTIONS = Collections.unmodifiableMap (
             POST: AuthConstants.ACTION_CREATE,
@@ -120,7 +116,7 @@ class ApiService implements WebUtilService{
         String encToken = AuthenticationToken.encodeTokenValue(newtoken, tokenMode)
 
         // regenerate if we find collisions.
-        while (tokenProvider.tokenLookup(encToken) != null) {
+        while (tokenDataProvider.tokenLookup(encToken) != null) {
             newtoken = genRandomString()
             encToken = AuthenticationToken.encodeTokenValue(newtoken, tokenMode)
         }
@@ -135,10 +131,12 @@ class ApiService implements WebUtilService{
                 .setName(tokenData.name)
                 .setUuid(uuid)
 
+        String id = tokenDataProvider.create(token1);
+        AuthenticationToken token = tokenDataProvider.getData(id)
+        SimpleTokenBuilder createdToken = SimpleTokenBuilder.with(token)
+        createdToken.clearToken  = newtoken
 
-        String id = tokenProvider.create(token1);
-        AuthenticationToken token = tokenProvider.getData(id)
-        return token
+        return createdToken
     }
 
     /**
@@ -156,21 +154,21 @@ class ApiService implements WebUtilService{
      * Find a token by UUID and creator
      */
     AuthenticationToken findUserTokenId(String creator, String id) {
-        tokenProvider.findByUuidAndCreator(id, creator)
+        tokenDataProvider.findByUuidAndCreator(id, creator)
     }
 
     /**
      * Find a token by UUID and creator
      */
     List<AuthenticationToken> findUserTokensCreator(String creator) {
-        tokenProvider.findAllByCreator(creator)
+        tokenDataProvider.findAllByCreator(creator)
     }
 
     /**
      * Find a token by UUID
      */
     AuthenticationToken findTokenId(String id) {
-        tokenProvider.getData(id)
+        tokenDataProvider.getData(id)
     }
 
     /**
@@ -877,7 +875,7 @@ class ApiService implements WebUtilService{
         def id = token.getUuid()
         def oldAuthRoles = token.getAuthRolesSet()
 
-        tokenProvider.delete(id)
+        tokenDataProvider.delete(id)
 
         log.info("DELETED TOKEN ${id} (creator:$creator) User ${user} with roles: ${oldAuthRoles}")
     }
@@ -890,10 +888,10 @@ class ApiService implements WebUtilService{
     @Transactional
     def removeAllExpiredTokens(final String creator) {
         def now = Date.from(Clock.systemUTC().instant())
-        List<AuthenticationToken> found = tokenProvider.findAllByCreatorAndExpirationLessThan(creator, now)
+        List<AuthenticationToken> found = tokenDataProvider.findAllByCreatorAndExpirationLessThan(creator, now)
         if (found) {
             found.each {
-                tokenProvider.delete(it.uuid)
+                tokenDataProvider.delete(it.uuid)
             }
         }
         found.size()
@@ -908,10 +906,10 @@ class ApiService implements WebUtilService{
     @CompileStatic
     def removeAllExpiredTokens() {
         def now = Date.from(Clock.systemUTC().instant())
-        def found = tokenProvider.findAllByExpirationLessThan(now)
+        def found = tokenDataProvider.findAllByExpirationLessThan(now)
         if (found) {
             found.each {
-                tokenProvider.delete(it.uuid)
+                tokenDataProvider.delete(it.uuid)
             }
         }
         found.size()
@@ -920,25 +918,25 @@ class ApiService implements WebUtilService{
     @Transactional
     @CompileStatic
     AuthenticationToken findByTokenAndCreator(final String token, String creator){
-        List<AuthenticationToken> userTokens =  tokenProvider.findAllByCreator(creator)
+        List<AuthenticationToken> userTokens =  tokenDataProvider.findAllByCreator(creator)
         return userTokens.find{it.getToken() == token}
     }
 
     @Transactional
     @CompileStatic
     AuthenticationToken tokenLookup(final String token){
-        return tokenProvider.tokenLookup(token)
+        return tokenDataProvider.tokenLookup(token)
     }
 
     @Transactional
     @CompileStatic
     AuthenticationToken tokenLookupWithType(final String token, AuthenticationToken.AuthTokenType type){
-        return tokenProvider.tokenLookupWithType(token, type)
+        return tokenDataProvider.tokenLookupWithType(token, type)
     }
 
     @Transactional
     @CompileStatic
     List<AuthenticationToken> listTokens(){
-        return tokenProvider.list()
+        return tokenDataProvider.list()
     }
 }
