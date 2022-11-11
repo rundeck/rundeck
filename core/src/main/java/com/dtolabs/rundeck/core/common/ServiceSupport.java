@@ -18,7 +18,7 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
-import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
@@ -34,17 +35,21 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 
 /**
  * Created by greg on 2/20/15.
  */
-public class ServiceSupport implements IFrameworkServices {
+public class ServiceSupport implements IFrameworkServices, IExecutionProviders, IExecutionServices {
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
 
     private Framework framework;
+    @Getter @Setter private ExecutionService executionService;
+    @Getter @Setter private IExecutionProviders executionProviders;
 
     public ServiceSupport() {
 
@@ -105,10 +110,6 @@ public class ServiceSupport implements IFrameworkServices {
     }
 
     @Override
-    public ExecutionService getExecutionService() {
-        return ExecutionServiceFactory.getInstanceForFramework(getFramework());
-    }
-    @Override
     public WorkflowExecutionService getWorkflowExecutionService() {
         return WorkflowExecutionService.getInstanceForFramework(getFramework());
     }
@@ -124,10 +125,15 @@ public class ServiceSupport implements IFrameworkServices {
     }
 
     @Override
+    public StepExecutor getStepExecutorForItem(final StepExecutionItem item, final String project) throws ExecutionServiceException {
+        return executionProviders.getStepExecutorForItem(item, project);
+    }
+
+    @Override
     public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws
             ExecutionServiceException
     {
-        return getFileCopierService().getProviderForNodeAndProject(node, project);
+        return executionProviders.getFileCopierForNodeAndProject(node, project);
     }
 
     @Override
@@ -137,7 +143,7 @@ public class ServiceSupport implements IFrameworkServices {
 
     @Override
     public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
-        return getNodeExecutorService().getProviderForNodeAndProject(node, project);
+        return executionProviders.getNodeExecutorForNodeAndProject(node, project);
     }
     @Override
     public NodeExecutorService getNodeExecutorService() {
@@ -148,13 +154,19 @@ public class ServiceSupport implements IFrameworkServices {
         return NodeStepExecutionService.getInstanceForFramework(getFramework());
     }
     @Override
-    public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item) throws ExecutionServiceException {
-        return NodeStepExecutionService.getInstanceForFramework(getFramework()).getExecutorForExecutionItem(item);
+    public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item, final String project) throws ExecutionServiceException {
+        return executionProviders.getNodeStepExecutorForItem(item, project);
     }
     @Override
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
-        return NodeDispatcherService.getInstanceForFramework(getFramework()).getNodeDispatcher(context);
+        return executionProviders.getNodeDispatcherForContext(context);
     }
+
+    @Override
+    public NodeDispatcherService getNodeDispatcherService() {
+        return NodeDispatcherService.getInstanceForFramework(getFramework());
+    }
+
     @Override
     public ResourceModelSourceService getResourceModelSourceService() {
         return ResourceModelSourceService.getInstanceForFramework(getFramework());
