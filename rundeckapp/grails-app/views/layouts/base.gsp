@@ -61,9 +61,9 @@
     <asset:javascript src="bootstrap-all.js"/>
     <g:set var="includePrototypeJs" value="${true}" scope="page"/>
 
-    <g:ifPageProperty name="meta.skipPrototypeJs">
-        <g:set var="includePrototypeJs" value="${false}" scope="page"/>
-    </g:ifPageProperty>
+%{--    <g:ifPageProperty name="meta.skipPrototypeJs">--}%
+    <g:set var="includePrototypeJs" value="${false}" scope="page"/>
+%{--    </g:ifPageProperty>--}%
     <g:if test="${includePrototypeJs}">
     <asset:javascript src="prototype-bundle.js"/>
     </g:if>
@@ -194,7 +194,7 @@
                         controller: 'plugin',
                         action: 'pluginFile',
                         params: [service: 'UI', name: pluginname, path: scriptPath]
-                )}" type="text/javascript"></script>
+                )}" type="text/javascript" defer></script>
             </g:each>
             <!-- END UI Plugin scripts for ${pluginname} -->
         </g:each>
