@@ -46,6 +46,11 @@ import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
 import org.rundeck.app.data.providers.v1.UserDataProvider
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
+import org.rundeck.app.data.model.v1.job.option.OptionData
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.validators.OptionDataValidator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -186,7 +191,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
+<<<<<<< HEAD
     UserDataProvider userDataProvider
+=======
+    JobDataProvider jobDataProvider
+    UserService userService
+>>>>>>> e995f7150 (Update models and converters for Rundeck jobs.)
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -206,6 +216,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @Override
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
 
+    JobData saveJob(JobData job) {
+        jobDataProvider.save(job)
+    }
     /**
      * Return project config for node cache delay
      * @param project
@@ -2940,7 +2953,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def notifications = parseParamNotifications(params)
             notificationSet=notifications.collect {Map notif ->
                 String trigger = notif.eventTrigger
-                def Notification n
                 if ( notif.type == ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE ) {
                     defineEmailNotification(scheduledExecution,trigger,notif)
                 } else if ( notif.type == ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE ) {
