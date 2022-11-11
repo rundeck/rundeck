@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface JobDataProvider extends JobQueryProvider {
+
     /**
      * Retrieves a Job based on the id provided.
      *

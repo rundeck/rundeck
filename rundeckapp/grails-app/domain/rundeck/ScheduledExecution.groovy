@@ -31,12 +31,12 @@ import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.job.RdSchedule
+import org.rundeck.app.data.job.RdJob
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.util.Sizes
 import rundeck.data.validation.shared.SharedJobConstraints
-import rundeck.data.validation.shared.SharedJobScheduleConstraints
 import rundeck.data.validation.shared.SharedLogConfigConstraints
 import rundeck.data.validation.shared.SharedNodeConfigConstraints
 import rundeck.data.validation.shared.SharedProjectNameConstraints

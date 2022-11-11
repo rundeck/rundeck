@@ -76,6 +76,8 @@ import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.job.RdJob
+import org.rundeck.app.data.job.ScheduledExecutionToJobConverter
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -845,24 +847,24 @@ if the step is a node step. Implicitly `"true"` if not present and not a job ste
             }
         }
     }
-    /**
-     * Map of descriptive property name to ScheduledExecution domain class property names
-     * used by expandUrl for embedded property references in remote options URL
-     */
-    private static jobprops=[
-        name:'jobName',
-        group:'groupPath',
-        description:'description',
-        project:'project',
-    ]
-    /**
-     * Map of descriptive property name to Option domain class property names
-     * used by expandUrl for embedded property references in remote options URL
-     */
-    private static optprops=[
-        name:'name',
-
-    ]
+//    /**
+//     * Map of descriptive property name to ScheduledExecution domain class property names
+//     * used by expandUrl for embedded property references in remote options URL
+//     */
+//    private static jobprops=[
+//        name:'jobName',
+//        group:'groupPath',
+//        description:'description',
+//        project:'project',
+//    ]
+//    /**
+//     * Map of descriptive property name to Option domain class property names
+//     * used by expandUrl for embedded property references in remote options URL
+//     */
+//    private static optprops=[
+//        name:'name',
+//
+//    ]
 
     /**
      * Make a remote URL request and return the parsed JSON data and statistics for http requests in a map.

@@ -16,6 +16,7 @@
 
 package rundeck
 
+<<<<<<< HEAD
 
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.dtolabs.rundeck.core.jobs.JobOption

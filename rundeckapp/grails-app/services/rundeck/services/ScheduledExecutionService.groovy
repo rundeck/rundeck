@@ -53,7 +53,10 @@ import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.execution.JobStatsDataProvider
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
+import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.app.data.validators.OptionDataValidator
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -199,8 +202,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
-    UserDataProvider userDataProvider
     JobDataProvider jobDataProvider
+    UserDataProvider userDataProvider
     UserService userService
 
     @Override

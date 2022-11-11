@@ -1,15 +1,15 @@
 package org.rundeck.app.data.job
 
-import grails.util.Holders
-import org.grails.spring.beans.factory.InstanceFactoryBean
-import org.grails.testing.GrailsUnitTest
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdOption
 import rundeck.data.job.RdSchedule
-import rundeck.services.FrameworkService
 import rundeck.services.UserService
-import spock.lang.Specification
 import spock.lang.Unroll
+import grails.util.Holders
+import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.grails.testing.GrailsUnitTest
+import rundeck.services.FrameworkService
+import spock.lang.Specification
 
 class RdJobSpec extends Specification implements GrailsUnitTest {
 
