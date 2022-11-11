@@ -95,7 +95,7 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
             //split workflow around non-node dispatched items, and loop
             //each dispatched sequence should be wrapped in a separate dispatch
             //and each non-dispatched step performed separately
-            final List<IWorkflow> sections = splitWorkflowDispatchedSections(workflow);
+            final List<IWorkflow> sections = splitWorkflowDispatchedSections(workflow, executionContext);
             int stepCount = 1;
             if (sections.size() > 1) {
                 logger.debug("Split workflow into " + sections.size() + " sections");
@@ -108,8 +108,10 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 WorkflowStatusResult sectionSuccess;
                 WorkflowDataResult sectionData;
 
-                StepExecutor stepExecutor = getFramework().getStepExecutionService()
-                                                          .getExecutorForItem(flowsection.getCommands().get(0));
+                StepExecutor
+                        stepExecutor =
+                        getFramework().getStepExecutorForItem(flowsection.getCommands().get(0),
+                                                              executionContext.getFrameworkProject());
 
                 if (stepExecutor.isNodeDispatchStep(flowsection.getCommands().get(0))) {
                     WorkflowStatusDataResult workflowStatusDataResult = executeWFSectionNodeDispatch(
@@ -500,11 +502,11 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
     /**
      * Splits a workflow into a sequence of sub-workflows, separated along boundaries of node-dispatch sets.
      */
-    private List<IWorkflow> splitWorkflowDispatchedSections(IWorkflow workflow) throws ExecutionServiceException {
+    private List<IWorkflow> splitWorkflowDispatchedSections(IWorkflow workflow, final StepExecutionContext executionContext) throws ExecutionServiceException {
         ArrayList<StepExecutionItem> dispatchItems = new ArrayList<>();
         ArrayList<IWorkflow> sections = new ArrayList<>();
         for (final StepExecutionItem item : workflow.getCommands()) {
-            StepExecutor executor = getFramework().getStepExecutionService().getExecutorForItem(item);
+            StepExecutor executor = getFramework().getStepExecutorForItem(item, executionContext.getFrameworkProject());
             if (executor.isNodeDispatchStep(item)) {
                 dispatchItems.add(item);
             } else {
