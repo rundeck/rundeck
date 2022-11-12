@@ -32,7 +32,7 @@ public class ConfiguredPlugin<T> {
         this.configuration = configuration;
     }
 
-    public ConfiguredPlugin(final T instance, final Map<String, Object> configuration, final Closeable closeable) {
+    public ConfiguredPlugin(final T instance, final Map<String, Object> configuration, final CloseableProvider<T> closeable) {
         this.instance = instance;
         this.configuration = configuration;
         this.closeable = closeable;
@@ -40,5 +40,5 @@ public class ConfiguredPlugin<T> {
 
     @Getter T instance;
     @Getter Map<String, Object> configuration;
-    @Getter Closeable closeable;
+    @Getter CloseableProvider<T> closeable;
 }
