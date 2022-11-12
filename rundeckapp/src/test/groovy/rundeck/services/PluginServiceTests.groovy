@@ -117,6 +117,16 @@ class PluginServiceTests extends Specification {
         }
 
         @Override
+        def <T> ConfiguredPlugin<T> retainConfigurePluginByName(
+            final String name,
+            final PluggableProviderService<T> service,
+            final PropertyResolverFactory.Factory resolverFactory,
+            final PropertyScope defaultScope
+        ) {
+            return null
+        }
+
+        @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                       IFramework framework, String project, Map instanceConfiguration) {
             cpWithFrameworkCalled=true
