@@ -167,16 +167,11 @@ public class ResourceModelSourceService
         final Properties configuration
     )
     {
-        //nb: not using lambda due to inability to mock this class within grails tests, some conflict with cglib and
-        // j8 lambdas
-        return new Function<ResourceModelSourceFactory, ResourceModelSource>() {
-            @Override
-            public ResourceModelSource apply(final ResourceModelSourceFactory resourceModelSourceFactory) {
-                try {
-                    return resourceModelSourceFactory.createResourceModelSource(services, configuration);
-                } catch (ConfigurationException e) {
-                    throw new RuntimeException(e);
-                }
+        return resourceModelSourceFactory -> {
+            try {
+                return resourceModelSourceFactory.createResourceModelSource(services, configuration);
+            } catch (ConfigurationException e) {
+                throw new RuntimeException(e);
             }
         };
     }
