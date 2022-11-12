@@ -207,7 +207,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 pluginDesc.groupDescribedPlugin.name,
                 createPluggableService(PluginGroup),
                 resolverFactory,
-                defaultScope
+                PropertyScope.Project
             )
             if(grouped.instance){
                 ((ConfiguredBy)plugin).pluginGroup=grouped.instance
@@ -268,7 +268,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                 pluginDesc.groupDescribedPlugin.name,
                 createPluggableService(PluginGroup),
                 resolverFactory,
-                defaultScope
+                PropertyScope.Project
             )
             if(grouped.instance){
                 ((ConfiguredBy)plugin).pluginGroup=grouped.instance
@@ -488,7 +488,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      * @return DescribedPlugin, or null if it cannot be loaded
      */
     public <T> DescribedPlugin<T> loadPluginDescriptorByName(String name, PluggableProviderService<T> service) {
-         DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name, service.name)
+        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name, service.name)
         if (null != beanPlugin) {
             return beanPlugin
         }
