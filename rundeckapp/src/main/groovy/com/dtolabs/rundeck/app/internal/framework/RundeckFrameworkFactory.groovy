@@ -33,20 +33,16 @@ import org.slf4j.LoggerFactory
  */
 @CompileStatic
 class RundeckFrameworkFactory {
-    public static final Logger logger = LoggerFactory.getLogger(RundeckFrameworkFactory)
     FilesystemFramework frameworkFilesystem
-    String type
     ProjectManager dbProjectManager
     IPropertyLookup propertyLookup
     PluginManagerService pluginManagerService
     IFrameworkServices serviceSupport
 
     Framework createFramework() {
-        Map<String, FrameworkSupportService> services = new HashMap<>()
-        services.put(PluginManagerService.SERVICE_NAME, pluginManagerService)
-
+        serviceSupport.setService(PluginManagerService.SERVICE_NAME, pluginManagerService)
         def framework = FrameworkFactory
-            .createFramework(propertyLookup, frameworkFilesystem, dbProjectManager, services, serviceSupport)
+            .createFramework(propertyLookup, frameworkFilesystem, dbProjectManager, [:], serviceSupport)
         serviceSupport.initialize(framework)
         return framework
     }

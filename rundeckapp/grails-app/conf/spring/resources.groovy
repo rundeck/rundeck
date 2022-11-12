@@ -294,6 +294,7 @@ beans={
     rundeckFrameworkServiceSupport(ServiceSupport){
         executionService = ref('rundeckExecutionPluginService')
         executionProviders = ref('rundeckappExecutionPluginsLoader')
+        executionServices = ref('rundeckBaseFrameworkExecutionServices')
     }
 
     frameworkFactory(RundeckFrameworkFactory){
@@ -428,7 +429,7 @@ beans={
     }
 
     rundeckFrameworkExecutionProviderServices(FrameworkExecutionProviderServices){
-         frameworkExecutionServices = ref('rundeckFrameworkServiceSupport')
+         frameworkExecutionServices = ref('rundeckBaseFrameworkExecutionServices')
     }
 
     /*
