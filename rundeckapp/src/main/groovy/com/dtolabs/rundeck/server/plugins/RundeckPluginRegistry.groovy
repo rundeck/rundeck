@@ -202,7 +202,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         if (description) {
             config = PluginAdapterUtility.configureProperties(resolverFactory.create(service.name,name), description, plugin, defaultScope);
         }
-        if(plugin instanceof ConfiguredBy && pluginDesc.groupDescribedPlugin) {
+        if(plugin instanceof ConfiguredBy && pluginDesc.groupDescribedPlugin && service.name != ServiceNameConstants.PluginGroup) {
             def grouped = configurePluginByName(
                 pluginDesc.groupDescribedPlugin.name,
                 createPluggableService(PluginGroup),
@@ -476,7 +476,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             }
             if (null != instance) {
                 def d = loadPluginDescription(service, name)
-                return new CloseableDescribedPlugin<T>(instance, d, name,null,loadGroupDescribedPlugin(d, service.name))
+                return new CloseableDescribedPlugin<T>(instance, d, name,null, loadGroupDescribedPlugin(d, service.name))
             }
         }
         null
