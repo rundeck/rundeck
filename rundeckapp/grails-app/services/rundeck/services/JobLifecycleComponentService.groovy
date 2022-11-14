@@ -46,7 +46,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
     Map<String, String> configProperties
     List<Property> projectConfigProperties
     
-    @Autowired
+    @Autowired(required = false)
     List<JobLifecycleComponent> beanComponents
 
 
@@ -138,17 +138,24 @@ class JobLifecycleComponentService implements ProjectConfigurable {
         handleEvent(event, EventType.BEFORE_SAVE, plugins)
     }
 
-    List<NamedJobLifecycleComponent> loadProjectComponents(String project){
+    /**
+     * Load all available components for a project.
+     * @param project
+     * @return
+     */
+    List<NamedJobLifecycleComponent> loadProjectComponents(String project) {
         List compList = []
-        compList.addAll(beanComponents.collect {
-            new NamedJobLifecycleComponent(
-                component: it,
-                name: it.class.canonicalName)
-        })
+        if (beanComponents) {
+            compList.addAll(beanComponents.collect {
+                new NamedJobLifecycleComponent(
+                    component: it,
+                    name: it.class.canonicalName)
+            })
+        }
         compList.addAll(loadProjectConfiguredPlugins(project))
         compList
     }
-    
+
     /**
      * Load configured JobLifecyclePlugin instances
      * @param project

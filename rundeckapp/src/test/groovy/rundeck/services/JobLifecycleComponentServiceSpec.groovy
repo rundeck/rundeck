@@ -1,6 +1,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponent
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
@@ -163,7 +165,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
         given:
             def evt = Mock(JobPersistEvent)
             def plugins = [new NamedJobLifecycleComponent(
-                    name: 'test', plugin: Mock(JobLifecyclePlugin) {
+                    name: 'test', component: Mock(JobLifecycleComponent) {
                 beforeSaveJob(_) >> {
                     throw new JobLifecyclePluginException("oops")
                 }
@@ -172,17 +174,18 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
         when:
             def result = service.handleEvent(evt, type, plugins)
         then:
-            JobLifecyclePluginException err = thrown()
+            JobLifecycleComponentException err = thrown()
             err.message =~ /oops/
         where:
             type                                            | _
             JobLifecycleComponentService.EventType.BEFORE_SAVE | _
     }
+    
     def "handleEvent plugin exception PRE_EXECUTION"() {
         given:
             def evt = Mock(JobPreExecutionEvent)
             def plugins = [new NamedJobLifecycleComponent(
-                    name: 'test', plugin: Mock(JobLifecyclePlugin) {
+                    name: 'test', component: Mock(JobLifecycleComponent) {
                 beforeJobExecution(_) >> {
                     throw new JobLifecyclePluginException("oops")
                 }
@@ -191,7 +194,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
         when:
             def result = service.handleEvent(evt, type, plugins)
         then:
-            JobLifecyclePluginException err = thrown()
+        JobLifecycleComponentException err = thrown()
             err.message =~ /oops/
         where:
             type                                            | _
