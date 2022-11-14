@@ -25,24 +25,20 @@ import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.spi.data.DataAccessException
-import org.rundeck.spi.data.DataManager
 
 @Transactional
 class UserService {
     public static final String G_EVENT_LOGIN_PROFILE_CHANGE = 'user.login.profile.change'
     ConfigurationService configurationService
     FrameworkService frameworkService
-    DataManager rundeckDataManager
+    UserDataProvider userDataProvider
+
     public static final int DEFAULT_TIMEOUT = 30
     public static final String SESSION_ID_ENABLED = 'userService.login.track.sessionId.enabled'
     public static final String SESSION_ID_METHOD = 'userService.login.track.sessionId.method'
     public static final String SESSION_ABANDONDED_MINUTES = 'userService.login.track.sessionAbandoned'
     public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
     public static final String SHOW_LOGGED_USERS_DEFAULT = 'gui.userSummaryShowLoggedUsersDefault'
-
-    private UserDataProvider getUserDataProvider() {
-        rundeckDataManager.getProviderForType(UserDataProvider)
-    }
 
     RdUser findOrCreateUser(String login) {
         return userDataProvider.findOrCreateUser(login)

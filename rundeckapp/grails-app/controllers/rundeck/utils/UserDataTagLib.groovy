@@ -6,14 +6,10 @@ import org.rundeck.spi.data.DataManager
 class UserDataTagLib {
     static namespace = "user"
 
-    DataManager rundeckDataManager
-
-    private UserDataProvider getUserDataProvider() {
-        rundeckDataManager.getProviderForType(UserDataProvider)
-    }
+    UserDataProvider userDataProvider
 
     def getJobFilters = { attrs, body ->
-        def jobFilters = getUserDataProvider().findByLogin(attrs.user)?.jobfilters
+        def jobFilters = userDataProvider.findByLogin(attrs.user)?.jobfilters
         def var = attrs.var ?: "filters"
         if(jobFilters) {
             out << body((var): jobFilters)
@@ -21,7 +17,7 @@ class UserDataTagLib {
     }
 
     def getNodeFilters = { attrs, body ->
-        def nodeFilters = getUserDataProvider().findByLogin(attrs.user)?.nodefilters
+        def nodeFilters = userDataProvider.findByLogin(attrs.user)?.nodefilters
         def var = attrs.var ?: "filters"
         if(nodeFilters) {
             out << body((var): nodeFilters)
@@ -29,7 +25,7 @@ class UserDataTagLib {
     }
 
     def getReportFilters = { attrs, body ->
-        def reportFilters = getUserDataProvider().findByLogin(attrs.user)?.reportfilters
+        def reportFilters = userDataProvider.findByLogin(attrs.user)?.reportfilters
         def var = attrs.var ?: "filters"
         if(reportFilters) {
             out << body((var): reportFilters)

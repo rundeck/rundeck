@@ -49,7 +49,6 @@ import org.rundeck.app.AppConstants
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
-import org.rundeck.spi.data.DataManager
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -92,11 +91,7 @@ public class NotificationService implements ApplicationContextAware{
     OrchestratorPluginService orchestratorPluginService
     def featureService
     def configurationService
-    DataManager rundeckDataManager
-
-    private UserDataProvider getUserDataProvider() {
-        rundeckDataManager.getProviderForType(UserDataProvider)
-    }
+    UserDataProvider userDataProvider
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService, project,config, PropertyScope.Instance, PropertyScope.Project)

@@ -46,10 +46,7 @@ class UserController extends ControllerBase{
     GrailsApplication grailsApplication
     def configurationService
     TokenDataProvider tokenDataProvider
-
-    private UserDataProvider getUserDataProvider() {
-        rundeckDataManager.getProviderForType(UserDataProvider)
-    }
+    UserDataProvider userDataProvider
 
     static allowedMethods = [
             addFilterPref      : 'POST',

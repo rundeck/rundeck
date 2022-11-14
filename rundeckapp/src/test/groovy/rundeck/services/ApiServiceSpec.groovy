@@ -525,7 +525,6 @@ class ApiServiceSpec extends Specification implements ControllerUnitTest<ApiCont
         then:
         result != null
         result.getOwnerName() == user.login
-        result.userId == user.getId()
         result.getAuthRolesSet() == tokenRoles
         result.expiration != null
         service.rundeckAuthContextEvaluator.authorizeApplicationResourceAny(auth, AuthConstants.RESOURCE_TYPE_APITOKEN, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true

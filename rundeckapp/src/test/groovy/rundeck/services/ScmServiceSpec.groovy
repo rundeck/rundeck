@@ -64,17 +64,12 @@ import spock.lang.Unroll
  * Created by greg on 10/15/15.
  */
 class ScmServiceSpec extends Specification implements ServiceUnitTest<ScmService>, DataTest {
-    GormUserDataProvider provider = new GormUserDataProvider()
-
     def setupSpec() { mockDomains ScheduledExecution, User, Storage  }
 
     def setup() {
         mockDataService(UserDataService)
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
     }
 
     class TestCloseable implements Closeable {

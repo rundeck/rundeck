@@ -20,6 +20,7 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -34,6 +35,7 @@ import spock.lang.Unroll
  * Created by greg on 2/11/16.
  */
 class EditOptsControllerSpec extends Specification implements ControllerUnitTest<EditOptsController>, DataTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     def setupSpec() { mockDomains Option, ScheduledExecution, CommandExec, Workflow }
 
@@ -172,7 +174,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval, enforced: false)
 
         when:
-        EditOptsController._validateOption(opt, params, true)
+        EditOptsController._validateOption(opt, provider, params, true)
         then:
         iserr == opt.errors.hasFieldErrors('defaultValue')
 
@@ -189,7 +191,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         Option opt = new Option(required: true, optionType: 'file', name: 'abc',enforced: false)
 
         when:
-        EditOptsController._validateOption(opt, params, isched)
+        EditOptsController._validateOption(opt, provider, params, isched)
         then:
         iserr == opt.errors.hasFieldErrors('required')
 
@@ -666,7 +668,7 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
         opt.name = "opt1"
         opt.optionValuesPluginType = "optionValues"
         opt.enforced = true
-        def result = controller._validateOption(opt)
+        def result = controller._validateOption(opt, provider)
 
         then:
         result.isEmpty()

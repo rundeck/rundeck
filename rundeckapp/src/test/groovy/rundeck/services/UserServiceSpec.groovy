@@ -50,11 +50,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         provider.userDataService = applicationContext.getBean(UserDataService)
 
         service = new UserService()
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        service.userDataProvider = provider
     }
     def "UpdateUserProfile"() {
         setup:

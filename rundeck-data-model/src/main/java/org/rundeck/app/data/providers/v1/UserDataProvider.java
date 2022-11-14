@@ -8,7 +8,7 @@ import org.rundeck.spi.data.DataAccessException;
 import java.util.HashMap;
 import java.util.List;
 
-public interface UserDataProvider {
+public interface UserDataProvider extends DataProvider {
     /**
      * Retrieves a User based on the login, otherwise create a User with that login.
      *

@@ -46,7 +46,6 @@ import static org.junit.Assert.*
 //import grails.test.GrailsMock
 
 class ExecutionService2Spec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest {
-    GormUserDataProvider provider = new GormUserDataProvider()
 
     def setupSpec() { mockDomains ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User }
 
@@ -54,11 +53,8 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
         service.executionValidatorService = new ExecutionValidatorService()
 
         mockDataService(UserDataService)
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
     }
 
     /**

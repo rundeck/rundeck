@@ -187,11 +187,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
-    DataManager rundeckDataManager
-
-    private UserDataProvider getUserDataProvider() {
-        rundeckDataManager.getProviderForType(UserDataProvider)
-    }
+    UserDataProvider userDataProvider
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -2714,7 +2710,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, null, scheduledExecution.scheduled)
+            EditOptsController._validateOption(origopt, userDataProvider, null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
@@ -3876,8 +3872,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
-        UserDataProvider udp = getUserDataProvider()
-        String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, udp, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
+        String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
         String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
         def remoteResult = [:]
         def result = null
@@ -4224,7 +4219,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def optfailed = false
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
-            EditOptsController._validateOption(opt, null,scheduledExecution.scheduled)
+            EditOptsController._validateOption(opt, userDataProvider, null,scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(opt)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")

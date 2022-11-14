@@ -5569,11 +5569,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.configurationService = Mock(ConfigurationService)
             service.frameworkService = fwkservice
             GormUserDataProvider provider = new GormUserDataProvider()
-            service.rundeckDataManager =  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    provider
-                }
-            }
+            service.userDataProvider = provider
 
 
         when:"the connection values are set directly on the URL"
@@ -5628,11 +5624,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.configurationService = Mock(ConfigurationService)
         service.frameworkService = fwkservice
         GormUserDataProvider provider = new GormUserDataProvider()
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        service.userDataProvider = provider
+
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
@@ -5690,11 +5683,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.configurationService = Mock(ConfigurationService)
         service.frameworkService = fwkservice
         GormUserDataProvider provider = new GormUserDataProvider()
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        service.userDataProvider = provider
+
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',

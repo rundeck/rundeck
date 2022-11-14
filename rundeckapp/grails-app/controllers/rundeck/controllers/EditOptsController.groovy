@@ -37,7 +37,7 @@ import java.util.regex.PatternSyntaxException
 class EditOptsController extends ControllerBase{
     static Logger logger = LoggerFactory.getLogger(EditOptsController)
     def FrameworkService frameworkService
-    DataManager rundeckDataManager
+    UserDataProvider userDataProvider
     def fileUploadService
     def optionValuesService
     def static allowedMethods = [
@@ -48,9 +48,6 @@ class EditOptsController extends ControllerBase{
             save: 'POST',
             undo: 'POST',
     ]
-    private UserDataProvider getUserDataProvider() {
-        rundeckDataManager.getProviderForType(UserDataProvider)
-    }
 
     def index() {
         redirect(controller: 'menu', action: 'index')
@@ -110,7 +107,7 @@ class EditOptsController extends ControllerBase{
         if(null != params.name && editopts[params.name]){
 
             def opt = editopts[params.name]
-            outparams = _validateOption(opt, null, params.jobWasScheduled == 'true')
+            outparams = _validateOption(opt, userDataProvider, null, params.jobWasScheduled == 'true')
             outparams = validateFileOpt(opt, outparams)
         }
 
@@ -525,7 +522,7 @@ class EditOptsController extends ControllerBase{
         } else if ('insert' == input.action) {
             def name = input.name
             def option = _setOptionFromParams(new Option(), input.params)
-            def vres = _validateOption(option, input.params,input.params.jobWasScheduled=='true')
+            def vres = _validateOption(option, userDataProvider, input.params,input.params.jobWasScheduled=='true')
             vres = validateFileOpt(option, vres)
             if (null != editopts[name]) {
                 option.errors.rejectValue('name', 'option.name.duplicate.message', [name] as Object[], "Option already exists: {0}")
@@ -590,7 +587,7 @@ class EditOptsController extends ControllerBase{
             def clone = option.createClone()
             def moditem = option.createClone()
             _setOptionFromParams(moditem, input.params)
-            def vres = _validateOption(moditem, input.params,input.params.jobWasScheduled=='true')
+            def vres = _validateOption(moditem, userDataProvider, input.params,input.params.jobWasScheduled=='true')
             vres = validateFileOpt(moditem, vres)
             if (moditem.name != name && null != editopts[moditem.name]) {
                 moditem.errors.rejectValue('name', 'option.name.duplicate.message', [moditem.name] as Object[], "Option already exists: {0}")
@@ -625,7 +622,7 @@ class EditOptsController extends ControllerBase{
      * @param opt the option
      * @param params input params if any
      */
-    public static _validateOption(Option opt, Map params = null, boolean jobWasScheduled=false) {
+    public static _validateOption(Option opt, UserDataProvider udp, Map params = null, boolean jobWasScheduled=false) {
         opt.validate(deepValidate: false)
         def result = [:]
         if (jobWasScheduled && opt.required && opt.typeFile) {
@@ -691,7 +688,6 @@ class EditOptsController extends ControllerBase{
                 try{
                     def realUrl = opt.realValuesUrl.toExternalForm()
                     ScheduledExecution se = opt.scheduledExecution
-                    UserDataProvider udp = getUserDataProvider()
                     def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
                     def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, 10, 0, 5)
                     if(remoteResult){

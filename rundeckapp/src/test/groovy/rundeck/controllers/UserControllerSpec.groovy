@@ -32,8 +32,6 @@ import javax.servlet.http.HttpServletResponse
 import java.lang.annotation.Annotation
 
 class UserControllerSpec extends Specification implements ControllerUnitTest<UserController>, DataTest {
-    GormUserDataProvider provider = new GormUserDataProvider()
-
     void setupSpec() {
         mockDomain Execution
         mockDomain User
@@ -57,11 +55,9 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         session.subject = new Subject()
 
         mockDataService(UserDataService)
-        controller.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        GormUserDataProvider provider = new GormUserDataProvider()
+        controller.userDataProvider = provider
+
     }
 
     protected void setupFormTokens(params) {

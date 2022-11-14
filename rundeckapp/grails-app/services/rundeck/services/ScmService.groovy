@@ -58,7 +58,6 @@ import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderServic
 import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.data.providers.v1.UserDataProvider
-import org.rundeck.spi.data.DataManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.ScheduledExecution
@@ -97,16 +96,12 @@ class ScmService {
     PluginConfigService pluginConfigService
     def StorageService storageService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
-    DataManager rundeckDataManager
+    UserDataProvider userDataProvider
     final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
     Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
     Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedImportListeners = Collections.synchronizedMap([:])
-
-    private UserDataProvider getUserDataProvider() {
-        rundeckDataManager.getProviderForType(UserDataProvider)
-    }
 
     def initialize() {
         if(!isScmInitDeferred()) {

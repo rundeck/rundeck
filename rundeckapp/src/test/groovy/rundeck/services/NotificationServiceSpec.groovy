@@ -68,17 +68,12 @@ import spock.lang.Unroll
  * Created by greg on 7/12/16.
  */
 class NotificationServiceSpec extends Specification implements ServiceUnitTest<NotificationService>, GrailsWebUnitTest, DataTest {
-    GormUserDataProvider provider = new GormUserDataProvider()
-
     def setupSpec() { mockDomains Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats }
 
     def setup() {
         mockDataService(UserDataService)
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider =  provider
     }
 
     private List createTestJob() {

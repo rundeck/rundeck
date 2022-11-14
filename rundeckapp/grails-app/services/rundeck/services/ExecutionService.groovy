@@ -78,7 +78,6 @@ import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
-import org.rundeck.spi.data.DataManager
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
@@ -154,7 +153,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecyclePluginService
     AuditEventsService auditEventsService
-    DataManager rundeckDataManager
+    UserDataProvider userDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -202,10 +201,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             scheduledExecutionService.unscheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
         }
-    }
-
-    private UserDataProvider getUserDataProvider() {
-        rundeckDataManager.getProviderForType(UserDataProvider)
     }
 
     private boolean applicationIsShutdown

@@ -80,7 +80,6 @@ import java.time.temporal.ChronoUnit
  * Created by greg on 2/17/15.
  */
 class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
-    GormUserDataProvider provider = new GormUserDataProvider()
 
     Class[] getDomainClassesToMock() {
         [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats, Notification]
@@ -93,11 +92,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.fileUploadService=Mock(FileUploadService)
 
         mockDataService(UserDataService)
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
     }
 
     private Map createJobParams(Map overrides = [:]) {
