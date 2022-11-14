@@ -25,8 +25,7 @@ class DummyWebhookNotificationPlugin implements NotificationPlugin {
         title = "URL(s)",
         description = "Enter comma-separated URLs",
         required = true,
-        validatorClass =
-        WebhookUrlValidator
+        validatorClass = WebhookUrlValidator
     )
     @RenderingOption(key = 'displayType', value = 'MULTI_LINE')
     String urls
