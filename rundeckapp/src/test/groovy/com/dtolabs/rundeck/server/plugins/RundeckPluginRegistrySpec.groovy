@@ -895,6 +895,30 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         result == null
     }
 
+    def "extract plugin name"() {
+        when:
+            def result = RundeckPluginRegistry.extractPluginName(input)
+        then:
+            result == expected
+        where:
+            input   || expected
+            'a:b'   || 'b'
+            'asdf'  || 'asdf'
+            'a:b:c' || 'b:c'
+    }
+
+    def "extract plugin svc"() {
+        when:
+            def result = RundeckPluginRegistry.extractPluginSvc(input)
+        then:
+            result == expected
+        where:
+            input   || expected
+            'a:b'   || 'a'
+            'asdf'  || null
+            'a:b:c' || 'a'
+    }
+
 
       static class mapRetriever implements PropertyRetriever {
         private Map<String, String> map;

@@ -732,16 +732,19 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         list
     }
 
-    private String extractPluginName(String key){
-        List k = key?.split(':')
+    static String extractPluginName(String key){
+        List k = key?.split(':',2)
         if(k?.size() > 1) {
             return k.get(1)
         }
 
         return key
     }
-    private String extractPluginSvc(String key){
-        List k = key?.split(':')
+    static String extractPluginSvc(String key){
+        if(!key.contains(':')){
+            return null
+        }
+        List k = key?.split(':',2)
         if(k?.size() > 1) {
             return k.get(0)
         }
