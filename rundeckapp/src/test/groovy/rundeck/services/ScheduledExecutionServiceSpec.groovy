@@ -2389,6 +2389,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         def pluginService = service.pluginService
         1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
+        1 * pluginService.getPluginDescriptor('node-first', _)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true,
@@ -2429,6 +2430,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def newJob = new ScheduledExecution(createJobParams())
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
             def pluginService = service.pluginService
+            1 * pluginService.getPluginDescriptor('node-first', _)
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             def pluginConfigSet = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle,
@@ -2472,6 +2474,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def newJob = new ScheduledExecution(createJobParams())
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
             def pluginService = service.pluginService
+            1 * pluginService.getPluginDescriptor('node-first', _)
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             def configSet = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle,
@@ -2526,6 +2529,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def pluginService = service.pluginService
 
         1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
+        1 * pluginService.getPluginDescriptor('node-first', _)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','wrong')

@@ -3690,7 +3690,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def workflowStrategy = service.getStrategyForWorkflow(
                 workflowItem,
                 pluginConfigFactory
-                    .create(ServiceNameConstants.WorkflowStrategy, described.description)
+                    .create(ServiceNameConstants.WorkflowStrategy, described?.description)
             )
 
             report = workflowStrategy.validate(workflowItem.workflow)

@@ -293,6 +293,7 @@ public class PropertyResolverFactory {
 
                 if (value == null
                     && legacyMappingEnabled
+                    && description != null
                     && description.getPropertiesMapping() != null
                     && description.getPropertiesMapping().containsKey(name)) {
                     String key = description.getPropertiesMapping().get(name);
@@ -307,6 +308,7 @@ public class PropertyResolverFactory {
 
             if (value == null
                 && legacyMappingEnabled
+                && description != null
                 && description.getFwkPropertiesMapping() != null
                 && description.getFwkPropertiesMapping().containsKey(name)) {
                 String key = description.getFwkPropertiesMapping().get(name);
