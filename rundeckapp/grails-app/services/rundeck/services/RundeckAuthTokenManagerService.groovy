@@ -15,26 +15,22 @@ import org.rundeck.spi.data.DataManager
 class RundeckAuthTokenManagerService implements AuthTokenManager {
 
     ApiService apiService
-    DataManager rundeckDataManager
-
-    private TokenDataProvider getTokenProvider() {
-        rundeckDataManager.getProviderForType(TokenDataProvider)
-    }
+    TokenDataProvider tokenDataProvider
 
     @Override
     AuthenticationToken getToken(final String token) {
-        return tokenProvider.tokenLookup(token)
+        return tokenDataProvider.tokenLookup(token)
     }
 
     @Override
     AuthenticationToken getTokenWithType(final String token, final AuthTokenType type) {
-        return tokenProvider.tokenLookupWithType(token,type)
+        return tokenDataProvider.tokenLookupWithType(token,type)
     }
 
     @Override
     boolean updateAuthRoles(UserAndRolesAuthContext authContext, final String token, final Set<String> roleSet)
         throws Exception {
-        AuthenticationToken token1 = tokenProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)
+        AuthenticationToken token1 = tokenDataProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)
         if (!token1) {
             return false
         }
@@ -47,7 +43,7 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
 
         newToken.authRolesSet = check.roles
          try {
-            tokenProvider.update(token1.uuid, newToken)
+            tokenDataProvider.update(token1.uuid, newToken)
             return true
         } catch (Exception ex) {
             log.error("Save token ${token} failed:", ex)
@@ -58,7 +54,7 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     @Override
     boolean deleteToken(final String uuid) {
         try {
-            tokenProvider.delete(uuid)
+            tokenDataProvider.delete(uuid)
             return true
         } catch(Exception ex) {
             log.error("Delete token ${uuid} failed:",ex)
@@ -71,7 +67,7 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
         try {
             AuthenticationToken authToken = getTokenWithType(token, type)
             if(authToken) {
-                tokenProvider.delete(authToken.getUuid())
+                tokenDataProvider.delete(authToken.getUuid())
                 return true
             }
         } catch(Exception ex) {
@@ -91,11 +87,11 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
             final String user,
             final Set<String> roleSet
     ) throws Exception {
-        if (tokenProvider.tokenLookup(token)) {
+        if (tokenDataProvider.tokenLookup(token)) {
             throw new Exception("Cannot import webhook token")
         }
-        AuthenticationToken webookToken = tokenProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)
-        if (tokenProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)) {
+        AuthenticationToken webhookToken = tokenDataProvider.findByTokenAndType(token, AuthenticationToken.AuthTokenType.WEBHOOK)
+        if (webhookToken) {
             return updateAuthRoles(authContext, token, roleSet)
         }
 
