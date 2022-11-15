@@ -57,6 +57,7 @@ import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
+import com.dtolabs.rundeck.core.utils.cache.FileCache
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.plugins.AppExecutionPluginLoader
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
@@ -408,9 +409,7 @@ beans={
     }
 
     //cache for provider loaders bound to a file
-    providerFileCache(PluginManagerService) { bean ->
-        bean.factoryMethod = 'createProviderLoaderFileCache'
-    }
+    providerFileCache(FileCache)
 
     pluginDirProvider(WatchingPluginDirProvider, pluginDir)
 
