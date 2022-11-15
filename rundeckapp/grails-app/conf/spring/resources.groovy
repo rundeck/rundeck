@@ -555,19 +555,7 @@ beans={
     }
 
     def storageDir= new File(varDir, 'storage')
-    rundeckStorageTreeFactory(StorageTreeFactory){
-        frameworkPropertyLookup=ref('frameworkPropertyLookup')
-        pluginRegistry=ref("rundeckPluginRegistry")
-        storagePluginProviderService=ref('storagePluginProviderService')
-        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
-        configuration = application.config.rundeck?.storage?.toFlatConfig()
-        storageConfigPrefix='provider'
-        converterConfigPrefix='converter'
-        baseStorageType='file'
-        baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
-        defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
-        loggerName='org.rundeck.storage.events'
-    }
+
     rundeckStorageTreeCreator(StorageTreeCreator){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
