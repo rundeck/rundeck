@@ -3685,12 +3685,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!report||report.valid) {
             //validate input values of configured plugin in context of the workflow defintion
             def workflowItem = executionUtilService.createExecutionItemForWorkflow(workflow)
-
+            def described = pluginService.getPluginDescriptor(name, service)
             //TODO: use plugin registry to construct the plugin
             def workflowStrategy = service.getStrategyForWorkflow(
                 workflowItem,
                 pluginConfigFactory
-                    .create(ServiceNameConstants.WorkflowStrategy, name)
+                    .create(ServiceNameConstants.WorkflowStrategy, described.description)
             )
 
             report = workflowStrategy.validate(workflowItem.workflow)

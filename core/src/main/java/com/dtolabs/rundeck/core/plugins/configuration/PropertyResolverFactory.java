@@ -194,7 +194,7 @@ public class PropertyResolverFactory {
      * create resolver using service name and provider name arguments
      */
     public static interface Factory {
-        PropertyResolver create(String service, String provider);
+        PropertyResolver create(String service, Description description);
     }
 
     public static Factory creates(PropertyResolver resolver){
@@ -245,29 +245,75 @@ public class PropertyResolverFactory {
      * @param frameworkScope scope
      */
     public static Factory pluginPrefixedScoped(final PropertyRetriever instance, final PropertyRetriever projectScope, final PropertyRetriever frameworkScope) {
-        return (String pluginType, String providerName)-> {
+        return (String pluginType, Description description)-> {
+            String providerName=description.getName();
             final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
             final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
-            return (PropertyResolver) (name, scope) -> {
-                String value = null;
-                if (scope.isInstanceLevel() && instance != null) {
-                    value = (String) instance.getProperty(name);
-                }
-                if (null != value || scope == PropertyScope.InstanceOnly) {
-                    return value;
-                }
-
-                if (scope.isProjectLevel() && projectScope != null) {
-                    value = (String) projectScope.getProperty(projectPrefix + name);
-                }
-                if (null != value || scope == PropertyScope.ProjectOnly) {
-                    return value;
-                }
-
-                value = (String) frameworkScope.getProperty(frameworkPrefix + name);
-                return value;
-            };
+            return new ScopedResolver(instance, projectScope, frameworkScope, description, projectPrefix, frameworkPrefix);
         };
+    }
+    public static class ScopedResolver implements PropertyResolver {
+        final PropertyRetriever instance;
+        final PropertyRetriever projectScope;
+        final PropertyRetriever frameworkScope;
+        final Description description;
+        final String projectPrefix ;
+        final String frameworkPrefix;
+        boolean legacyMappingEnabled = true;
+
+        public ScopedResolver(
+                final PropertyRetriever instance,
+                final PropertyRetriever projectScope,
+                final PropertyRetriever frameworkScope,
+                final Description description,
+                final String projectPrefix,
+                final String frameworkPrefix
+        )
+        {
+            this.instance = instance;
+            this.projectScope = projectScope;
+            this.frameworkScope = frameworkScope;
+            this.description = description;
+            this.projectPrefix = projectPrefix;
+            this.frameworkPrefix = frameworkPrefix;
+        }
+
+        @Override
+        public Object resolvePropertyValue(final String name, final PropertyScope scope) {
+            String value = null;
+            if (scope.isInstanceLevel() && instance != null) {
+                value = instance.getProperty(name);
+            }
+            if (null != value || scope == PropertyScope.InstanceOnly) {
+                return value;
+            }
+
+            if (scope.isProjectLevel() && projectScope != null) {
+                value = projectScope.getProperty(projectPrefix + name);
+
+                if (value == null
+                    && legacyMappingEnabled
+                    && description.getPropertiesMapping() != null
+                    && description.getPropertiesMapping().containsKey(name)) {
+                    String key = description.getPropertiesMapping().get(name);
+                    value = projectScope.getProperty(key);
+                }
+            }
+            if (null != value || scope == PropertyScope.ProjectOnly) {
+                return value;
+            }
+
+            value = frameworkScope.getProperty(frameworkPrefix + name);
+
+            if (value == null
+                && legacyMappingEnabled
+                && description.getFwkPropertiesMapping() != null
+                && description.getFwkPropertiesMapping().containsKey(name)) {
+                String key = description.getFwkPropertiesMapping().get(name);
+                value = frameworkScope.getProperty(key);
+            }
+            return value;
+        }
     }
 
     /**

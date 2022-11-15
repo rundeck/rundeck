@@ -200,7 +200,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         def description = pluginDesc.description
         Map<String, Object> config=null
         if (description) {
-            config = PluginAdapterUtility.configureProperties(resolverFactory.create(service.name,name), description, plugin, defaultScope);
+            config = PluginAdapterUtility.configureProperties(resolverFactory.create(service.name,description), description, plugin, defaultScope);
         }
         if(plugin instanceof ConfiguredBy && pluginDesc.groupDescribedPlugin && service.name != ServiceNameConstants.PluginGroup) {
             def grouped = configurePluginByName(
@@ -261,7 +261,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         def description = pluginDesc.description
         Map<String, Object> config = null
         if (description) {
-            config = PluginAdapterUtility.configureProperties(resolverFactory.create(service.name,name), description, plugin, defaultScope);
+            config = PluginAdapterUtility.configureProperties(resolverFactory.create(service.name,description), description, plugin, defaultScope);
         }
         if(plugin instanceof ConfiguredBy && pluginDesc.groupDescribedPlugin) {
             def grouped = configurePluginByName(
@@ -291,7 +291,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         def description = pluginDesc.description
         Map<String, Object> config=[:]
         if (description && description instanceof Description) {
-            config = PluginAdapterUtility.mapDescribedProperties(factory.create(service.name,name), description, defaultScope)
+            config = PluginAdapterUtility.mapDescribedProperties(factory.create(service.name,description), description, defaultScope)
         }
         return config
     }
@@ -311,9 +311,16 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
             String project, Map instanceConfiguration
     )
     {
-        final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
-                project, instanceConfiguration, service.getName(), name);
-        return validatePluginByName(name, service, resolver, PropertyScope.Instance)
+        return validatePluginByName(
+            name,
+            service,
+            PropertyResolverFactory.createFrameworkProjectRuntimeResolverFactory(
+                framework,
+                project,
+                instanceConfiguration
+            ),
+            PropertyScope.Instance
+        )
     }
 
     /**
@@ -414,7 +421,8 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         ValidatedPlugin result = new ValidatedPlugin()
         def description = pluginDesc.description
         if (description && description instanceof Description) {
-            def report = Validator.validate(resolverFactory.create(service.name,name), description, defaultScope, ignoredScope)
+            def report = Validator
+                .validate(resolverFactory.create(service.name, description), description, defaultScope, ignoredScope)
             result.valid = report.valid
             result.report = report
         }
