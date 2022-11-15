@@ -9,17 +9,18 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 
 @CompileStatic
-class DelegateStorageTree implements StorageTree, InitializingBean {
-    @Delegate
-    StorageTree delegate
-
+class DelegateStorageTree implements StorageTree {
     StorageTreeCreator creator
     Map<String,String> configuration
+    private StorageTree storageTree
 
-    @Override
-    void afterPropertiesSet() {
-        delegate = creator.create(true)
-        configuration=creator.configuration
+    @Delegate
+    StorageTree getDelegate() {
+        if (null == storageTree) {
+            storageTree = creator.create(true)
+            configuration = creator.configuration
+        }
+        return storageTree
     }
 
     @Subscriber('rundeck.configuration.refreshed')
@@ -53,7 +54,7 @@ class DelegateStorageTree implements StorageTree, InitializingBean {
             }
         }
         if(configuration != config && (converterPresent && converterPathSet && converterTypeSet) || (providerPresent && providerPathSet && providerTypeSet)){
-            delegate = creator.create(false)
+            storageTree = creator.create(false)
             configuration = config
         }
     }
