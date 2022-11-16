@@ -812,14 +812,6 @@ beans={
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
     projectDataProvider(GormProjectDataProvider)
-
-    //manager setup
-    rundeckDataManager(BaseDataManager)
-    rundeckDataProviderRegistration(ProviderRegistration) {
-        dataManager = ref('rundeckDataManager')
-        providers = [
-            ref('tokenDataProvider'),
-        ]
-    }
+    
 
 }
