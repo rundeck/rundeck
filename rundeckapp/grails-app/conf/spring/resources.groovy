@@ -94,11 +94,7 @@ import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
-<<<<<<< HEAD
-import org.rundeck.app.data.ProviderRegistration
 import org.rundeck.app.data.providers.GormProjectDataProvider
-=======
->>>>>>> Add marker interface for all data providers.
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
