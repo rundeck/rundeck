@@ -86,11 +86,11 @@ function JobFilters (data) {
             method: 'post',
             url: _genUrl(appLinks.menuDeleteJobFilterAjax, {filtername: filter.name()}),
             beforeSend: _createAjaxSendTokensHandler('ajaxFilterTokens')
-        }).success(function (resp, status, jqxhr) {
+        }).done(function (resp, status, jqxhr) {
             self.filterToDelete(null)
             self.filters.remove(filter)
             document.location = self.redirectUrl()
-        }).success(_createAjaxReceiveTokensHandler('ajaxFilterTokens'))
+        }).done(_createAjaxReceiveTokensHandler('ajaxFilterTokens'))
     }
     self.genFilterNameUrl = function (filterName) {
         return _genUrl(appLinks.menuJobs, {filterName: filterName})
@@ -122,17 +122,17 @@ function JobFilters (data) {
             data: JSON.stringify(queryParamsData),
             contentType: 'application/json',
             dataType: 'json'
-        }).error(function (resp, status, error) {
+        }).fail(function (resp, status, error) {
             _ajaxReceiveTokens('ajaxFilterTokens', null, status, resp)
             if (resp.responseJSON && resp.responseJSON.message) {
                 self.newFilterError(resp.responseJSON.message)
             } else {
                 self.newFilterError("An error occurred: " + error)
             }
-        }).success(function (resp, status, jqxhr) {
+        }).done(function (resp, status, jqxhr) {
             jQuery('#saveJobFilterKOModal').modal('hide')
             self.redirectFilterName(self.newFilterName())
-        }).success(_createAjaxReceiveTokensHandler('ajaxFilterTokens'))
+        }).done(_createAjaxReceiveTokensHandler('ajaxFilterTokens'))
     }
     if (data) {
         ko.mapping.fromJS(data, {

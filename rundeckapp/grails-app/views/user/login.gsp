@@ -53,7 +53,7 @@
     <g:render template="/common/css"/>
     <script language="javascript">
         //<!--
-        jQuery(function() {jQuery('#login').focus();});
+        jQuery(function() {jQuery('#login').trigger('focus');});
         if (typeof(oopsEmbeddedLogin) == 'function') {
             oopsEmbeddedLogin();
         }

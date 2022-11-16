@@ -10,6 +10,9 @@ https://github.com/imakewebthings/waypoints/blob/master/licenses.txt
   var keyCounter = 0
   var allWaypoints = {}
 
+  function isFunction(func){
+    return typeof func === "function";
+  }
   /* http://imakewebthings.com/waypoints/api/waypoint */
   function Waypoint(options) {
     if (!options) {
@@ -620,7 +623,7 @@ https://github.com/imakewebthings/waypoints/blob/master/licenses.txt
       var waypoints = []
       var overrides = arguments[0]
 
-      if (framework.isFunction(arguments[0])) {
+      if (isFunction(arguments[0])) {
         overrides = framework.extend({}, arguments[1])
         overrides.handler = arguments[0]
       }
