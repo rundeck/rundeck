@@ -13,6 +13,7 @@ class DelegateStorageTree implements StorageTree {
     StorageTreeCreator creator
     Map<String,String> configuration
     private StorageTree storageTree
+    boolean refreshable
 
     @Delegate
     StorageTree getDelegate() {
@@ -26,6 +27,9 @@ class DelegateStorageTree implements StorageTree {
     @Subscriber('rundeck.configuration.refreshed')
     @CompileDynamic
     def updateTreeConfig(def event) {
+        if(!refreshable){
+            return
+        }
         Map<String, String> config = creator.getStorageConfigMap()
         Boolean providerTypeSet = false
         Boolean providerPathSet = false

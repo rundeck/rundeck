@@ -572,6 +572,7 @@ beans={
     }
     rundeckStorageTree(DelegateStorageTree){
         creator=ref('rundeckStorageTreeCreator')
+        refreshable=true
     }
     if(grailsApplication.config.getProperty("rundeck.feature.projectKeyStorage.enabled", Boolean.class, false)) {
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
