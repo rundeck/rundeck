@@ -18,8 +18,9 @@ class StorageTreeCreatorSpec extends Specification{
 
 
         StorageTreeCreator creator = new StorageTreeCreator()
+        creator.appConfigString = appConfigString
         creator.configurationService = Mock(ConfigurationService){
-            getAppConfig() >> storageMap
+            getValue(appConfigString) >> providerMap
         }
 
         when:
@@ -29,7 +30,11 @@ class StorageTreeCreatorSpec extends Specification{
             result.size()==5
             result.containsKey("provider.1.type")
             result.containsKey("provider.1.config.address")
-
+        where:
+            appConfigString <<[
+                'storage',
+                'config.storage'
+            ]
     }
 
 }

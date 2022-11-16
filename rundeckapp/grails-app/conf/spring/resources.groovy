@@ -563,6 +563,7 @@ beans={
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
         storageConfigPrefix='provider'
         startupConfiguration = application.config.rundeck?.storage?.toFlatConfig()
+        appConfigString = 'storage'
         converterConfigPrefix='converter'
         baseStorageType='file'
         baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
