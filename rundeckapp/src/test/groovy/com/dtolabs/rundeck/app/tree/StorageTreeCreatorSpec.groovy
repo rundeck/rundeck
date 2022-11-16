@@ -18,9 +18,11 @@ class StorageTreeCreatorSpec extends Specification{
 
 
         StorageTreeCreator creator = new StorageTreeCreator()
+        creator.storageConfigPrefix = 'provider'
+        creator.converterConfigPrefix = 'converter'
         creator.appConfigString = appConfigString
         creator.configurationService = Mock(ConfigurationService){
-            getValue(appConfigString) >> providerMap
+           1 * getValue(appConfigString) >> providerMap
         }
 
         when:
