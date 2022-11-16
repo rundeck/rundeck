@@ -215,10 +215,7 @@ class ApiController extends ControllerBase{
      * @return
      */
     private boolean featurePresent(def name){
-        boolean featureStatus = configurationService.getBoolean("feature.incubator.${name}", false)
-
-        def splat=configurationService.getBoolean("feature.incubator.*", false)
-        return splat || featureStatus
+        return configurationService.getBoolean("feature.${name}", false)
     }
     /**
      * Set an incubator feature toggle on or off
@@ -226,7 +223,7 @@ class ApiController extends ControllerBase{
      * @param enable
      */
     private void toggleFeature(def name, boolean enable){
-        grailsApplication.config.feature?.incubator?.putAt(name, enable)
+        grailsApplication.config.feature?.putAt(name, enable)
     }
     /**
      * Feature toggle api endpoint for development mode
@@ -254,7 +251,7 @@ class ApiController extends ControllerBase{
         }else{
             response.contentType='text/plain'
             response.outputStream.withWriter('UTF-8') { w ->
-                grailsApplication.config.feature?.incubator?.each { k, v ->
+                grailsApplication.config.feature?.each { k, v ->
                     appendOutput(response, "${k}:${v in [true, 'true']}\n")
                 }
             }
