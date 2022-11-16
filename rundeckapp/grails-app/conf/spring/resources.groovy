@@ -593,12 +593,13 @@ beans={
 
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree, rundeckKeyStorageContextProvider)
 
-    rundeckConfigStorageTreeFactory(StorageTreeFactory){
+    rundeckConfigStorageTreeCreator(StorageTreeCreator){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
-        configuration = application.config.rundeck?.config?.storage?.toFlatConfig()
+        startupConfiguration = application.config.rundeck?.config?.storage?.toFlatConfig()
+        appConfigString = 'config.storage'
         storageConfigPrefix='provider'
         converterConfigPrefix='converter'
         baseStorageType='db'
@@ -606,7 +607,10 @@ beans={
         defaultConverters=['StorageTimestamperConverter']
         loggerName='org.rundeck.config.storage.events'
     }
-    rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
+    rundeckConfigStorageTree(DelegateStorageTree){
+        creator = ref('rundeckConfigStorageTreeCreator')
+        refreshable = false
+    }
 
     rundeckConfigStorageManager(TreeStorageManager, ref('rundeckConfigStorageTree')){ bean->
         bean.factoryMethod='createFromStorageTree'
