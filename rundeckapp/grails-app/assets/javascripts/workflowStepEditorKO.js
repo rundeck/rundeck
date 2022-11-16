@@ -290,8 +290,7 @@ function WorkflowStepLogFilterEditor(data) {
                 callback(err);
             }
         })
-            .success(_createAjaxReceiveTokensHandler('job_edit_tokens'))
-            ;
+        .done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
     };
 
     self.saveFilter = function (stepfilter, newtype, callback) {
@@ -330,8 +329,7 @@ function WorkflowStepLogFilterEditor(data) {
                 callback(err);
             }
         })
-            .success(_createAjaxReceiveTokensHandler('job_edit_tokens'))
-            ;
+        .done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
     };
 
     self.editFilter = function (step, stepfilter, newtype, validate, validatedata, callback) {

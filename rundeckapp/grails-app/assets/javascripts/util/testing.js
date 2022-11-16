@@ -31,7 +31,7 @@ var TestHarness = function (name,data) {
             return false;
         }
         //todo: array and object compare
-        if(expect!=null && val!=null && jQuery.type(expect)=='array' && jQuery.type(val)=='array'){
+        if(expect!=null && val!=null && typeof expect == 'array' && typeof val == 'array'){
             if(expect.length!=val.length){
                 return false;
             }
