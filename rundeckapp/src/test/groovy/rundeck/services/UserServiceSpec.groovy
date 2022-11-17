@@ -288,7 +288,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             def logginStatus = service.getLoginStatus(user)
         then:
             logginStatus
-            logginStatus == expect.getValue()
+            logginStatus == expect.value
         where:
             execTime   | lastLogin                                        |logout| timeout | expect
             null       | null                                             |null| 30      | LoginStatus.NOTLOGGED

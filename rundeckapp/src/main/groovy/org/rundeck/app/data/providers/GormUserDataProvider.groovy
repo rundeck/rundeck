@@ -114,9 +114,9 @@ class GormUserDataProvider implements UserDataProvider {
 
     @Override
     String getLoginStatus(RdUser user) {
-        String status = LoginStatus.NOTLOGGED.getValue()
+        String status = LoginStatus.NOTLOGGED.value
         if (user) {
-            Date lastDate = user.getLastLogin()
+            Date lastDate = user.lastLogin
             if (lastDate != null) {
                 int minutes = configurationService.getInteger(SESSION_ABANDONED_MINUTES, DEFAULT_TIMEOUT)
                 Calendar calendar = Calendar.getInstance()
@@ -125,20 +125,20 @@ class GormUserDataProvider implements UserDataProvider {
                 if (user.lastLogout != null) {
                     if (lastDate.after(user.lastLogout)) {
                         if (calendar.getTime().before(new Date())) {
-                            status = LoginStatus.ABANDONED.getValue()
+                            status = LoginStatus.ABANDONED.value
                         } else {
-                            status = LoginStatus.LOGGEDIN.getValue()
+                            status = LoginStatus.LOGGEDIN.value
                         }
                     } else {
-                        status = LoginStatus.LOGGEDOUT.getValue()
+                        status = LoginStatus.LOGGEDOUT.value
                     }
                 } else if (calendar.getTime().after(new Date())) {
-                    status = LoginStatus.LOGGEDIN.getValue()
+                    status = LoginStatus.LOGGEDIN.value
                 } else {
-                    status = LoginStatus.ABANDONED.getValue()
+                    status = LoginStatus.ABANDONED.value
                 }
             } else {
-                status = LoginStatus.NOTLOGGED.getValue()
+                status = LoginStatus.NOTLOGGED.value
             }
         }
         return status
@@ -151,7 +151,7 @@ class GormUserDataProvider implements UserDataProvider {
         Calendar calendar = Calendar.getInstance()
         calendar.add(Calendar.MINUTE, -timeOutMinutes)
 
-        def totalRecords = new DetachedCriteria(User).build {
+        Integer totalRecords = new DetachedCriteria(User).build {
             if (showLoginStatus && loggedInOnly) {
                 or {
                     and {
@@ -173,7 +173,7 @@ class GormUserDataProvider implements UserDataProvider {
                 }
             }
 
-        }.count()
+        }.count() as Integer
 
         List<RdUser> users = []
         if (totalRecords > 0) {
@@ -234,6 +234,14 @@ class GormUserDataProvider implements UserDataProvider {
     @Override
     RdUser buildUser(String login) {
         return new User(login: login)
+    }
+
+    @Override
+    SaveUserResponse updateFilterPref(String login, String filterPref) {
+        User user = User.findByLogin(login)
+        user.filterPref = filterPref
+        Boolean isSaved = user.save()
+        return new SaveUserResponse(user: user, isSaved: isSaved, errors: user.errors)
     }
 
     @Override

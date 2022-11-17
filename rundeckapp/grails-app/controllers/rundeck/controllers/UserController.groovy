@@ -302,9 +302,9 @@ class UserController extends ControllerBase{
             if(!succeed){
                 return
             }
-            String lastName = (config.containsKey("lastName")) ? config.lastName : u.getLastName()
-            String firstName = (config.containsKey("firstName")) ? config.firstName : u.getFirstName()
-            String email = (config.containsKey("email")) ? config.email : u.getEmail()
+            String lastName = (config.containsKey("lastName")) ? config.lastName : u.lastName
+            String firstName = (config.containsKey("firstName")) ? config.firstName : u.firstName
+            String email = (config.containsKey("email")) ? config.email : u.email
             def updateResponse = userDataProvider.updateUserProfile(username, lastName, firstName, email)
             if(!updateResponse.isSaved){
                 def errorMsg= updateResponse.errors.allErrors.collect { g.message(error:it) }.join(";")
@@ -318,10 +318,10 @@ class UserController extends ControllerBase{
         withFormat {
             def xmlClosure = {
                 delegate.'user' {
-                    login(u.getLogin())
-                    firstName(u.getFirstName())
-                    lastName(u.getLastName())
-                    email(u.getEmail())
+                    login(u.login)
+                    firstName(u.firstName)
+                    lastName(u.lastName)
+                    email(u.email)
                 }
             }
             xml {
@@ -400,19 +400,19 @@ class UserController extends ControllerBase{
             def userList = [:]
             userDataProvider.listAllOrderByLogin().each {
                 def obj = [:]
-                obj.login = it.getLogin()
-                obj.firstName = it.getFirstName()
-                obj.lastName = it.getLastName()
-                obj.email = it.getEmail()
-                obj.created = it.getDateCreated()
-                obj.updated = it.getLastUpdated()
-                def lastExec = Execution.lastExecutionByUser(it.getLogin()).list()
+                obj.login = it.login
+                obj.firstName = it.firstName
+                obj.lastName = it.lastName
+                obj.email = it.email
+                obj.created = it.dateCreated
+                obj.updated = it.lastUpdated
+                def lastExec = Execution.lastExecutionByUser(it.login).list()
                 if(lastExec?.size()>0){
                     obj.lastJob = lastExec.get(0).dateStarted
                 }
                 def tokenList = tokenDataProvider.findAllByUser(it.id.toString())
                 obj.tokens = tokenList?.size()
-                userList.put(it.getLogin(),obj)
+                userList.put(it.login, obj)
             }
             userList.each{k,v -> users<<v}
         }else{
@@ -424,10 +424,10 @@ class UserController extends ControllerBase{
             def xmlClosure = {
                     users.each { u ->
                         delegate.'user' {
-                            login(u.getLogin())
-                            firstName(u.getFirstName())
-                            lastName(u.getLastName())
-                            email(u.getEmail())
+                            login(u.login)
+                            firstName(u.firstName)
+                            lastName(u.lastName)
+                            email(u.email)
                             if(request.api_version >= ApiVersions.V27){
                                 created(u.created)
                                 updated(u.updated)
@@ -447,7 +447,7 @@ class UserController extends ControllerBase{
                         if(request.api_version >= ApiVersions.V27){
                             u = it
                         }else{
-                            u = [login: it.getLogin(), firstName: it.getFirstName(), lastName: it.getLastName(), email: it.getEmail()]
+                            u = [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email]
                         }
                         element(u)
                     }
@@ -500,26 +500,26 @@ class UserController extends ControllerBase{
         def userList = []
         result.users.each {
             def obj = [:]
-            obj.login = it.getLogin()
-            obj.firstName = it.getFirstName()
-            obj.lastName = it.getLastName()
-            obj.email = it.getEmail()
-            obj.created = it.getDateCreated()
-            obj.updated = it.getLastUpdated()
+            obj.login = it.login
+            obj.firstName = it.firstName
+            obj.lastName = it.lastName
+            obj.email = it.email
+            obj.created = it.dateCreated
+            obj.updated = it.lastUpdated
             if(includeExec){
-                def lastExec = Execution.lastExecutionDateByUser(it.getLogin()).get()
+                def lastExec = Execution.lastExecutionDateByUser(it.login).get()
                 if (lastExec) {
                     obj.lastJob = lastExec
                 }
             }
             obj.tokens = tokenDataProvider.countTokensByUser(it.id.toString())
             obj.loggedStatus = userService.getLoginStatus(it)
-            obj.lastHostName = it.getLastLoggedHostName()
+            obj.lastHostName = it.lastLoggedHostName
             if (userService.isSessionIdRegisterEnabled()) {
-                obj.lastSessionId = it.getLastSessionId()
+                obj.lastSessionId = it.lastSessionId
             }
-            obj.loggedInTime = it.getLastLogin()
-            if (result.showLoginStatus && loggedOnly && obj.loggedStatus.equals(LoginStatus.LOGGEDIN.getValue())) {
+            obj.loggedInTime = it.lastLogin
+            if (result.showLoginStatus && loggedOnly && obj.loggedStatus.equals(LoginStatus.LOGGEDIN.value)) {
                 userList.add(obj)
             } else {
                 userList.add(obj)
@@ -864,7 +864,7 @@ class UserController extends ControllerBase{
             }
 
         }
-        def login = user.getLogin()
+        def login = user.login
         def result
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         def adminAuth = apiService.hasTokenAdminAuth(authContext)

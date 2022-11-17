@@ -34,8 +34,33 @@ public interface UserDataProvider extends DataProvider {
     List<RdUser> listAllOrderByLogin();
     List<RdUser> findAll();
     RdUser findByLogin(String login);
+    /**
+     * Retrieves an new instance of RdUser, not stored on the database
+     *
+     * @return User instance
+     */
     RdUser buildUser();
+    /**
+     * Retrieves an new instance of RdUser with given login, not stored on the database
+     *
+     * @param login of the User, format String
+     * @return User instance
+     */
     RdUser buildUser(String login);
+    /**
+     * Updates filterPref from a user given by its login
+     *
+     * @param login of the User, format String
+     * @param filterPref new filter pref for user, format String
+     * @return SaveUserResponse, that has the updated User, if its saved correctly and its errors if not
+     */
+    SaveUserResponse updateFilterPref(String login, String filterPref);
+    /**
+     * Retrieves the User's email based on the login, opening a new session on the database
+     *
+     * @param login of the User, format String
+     * @return User's email
+     */
     String getEmailWithNewSession(String login);
 
 }

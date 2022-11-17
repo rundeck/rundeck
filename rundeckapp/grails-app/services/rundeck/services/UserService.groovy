@@ -132,8 +132,7 @@ class UserService {
         storedpref.putAll(inpref)
         storedpref=storedpref.findAll{it.value!='!'}
 
-        u.filterPref=genKeyValuePref(storedpref)
-        u.save()
+        userDataProvider.updateFilterPref(username, genKeyValuePref(storedpref))
         return [user:u,storedpref:storedpref]
     }
 

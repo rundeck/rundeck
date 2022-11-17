@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 public class UserFilteredResponse {
-    Number totalRecords;
+    Integer totalRecords;
     List<RdUser> users;
     boolean showLoginStatus;
 }
