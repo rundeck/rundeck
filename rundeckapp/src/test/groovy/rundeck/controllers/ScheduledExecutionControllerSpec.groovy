@@ -35,7 +35,9 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.web.WebExceptionHandler
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.springframework.web.multipart.commons.CommonsMultipartFile
@@ -3734,6 +3736,43 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         then:
         controller.response.redirectedUrl == null
         flash.message != null
+    }
+    def "test job edit not found"() {
+        given:
+            def badid='123badid'
+            params.id = badid
+            params.project = 'testProject'
+
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                getByIDorUUID('123badid') >> null
+            }
+
+            def handler = Mock(WebExceptionHandler)
+            controller.rundeckExceptionHandler= handler
+        when:
+            controller.edit()
+        then:
+            1 * handler.handleException(_,_,_ as NotFound)
+    }
+    def "test job update not found"() {
+        given:
+            def badid='123badid'
+            params.id = badid
+            params.project = 'testProject'
+
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                getByIDorUUID('123badid') >> null
+            }
+
+            def handler = Mock(WebExceptionHandler)
+            controller.rundeckExceptionHandler= handler
+
+            setupFormTokens(params)
+            request.method='POST'
+        when:
+            controller.update()
+        then:
+            1 * handler.handleException(_,_,_ as NotFound)
     }
 
     def "test special chars in URL user-password"() {
