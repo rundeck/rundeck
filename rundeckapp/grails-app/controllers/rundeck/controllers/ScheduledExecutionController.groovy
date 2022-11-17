@@ -226,7 +226,6 @@ class ScheduledExecutionController  extends ControllerBase{
             redirect(action:'index',params: [project:params.project])
         }
     }
-    def list = {redirect(action:index,params:params) }
 
     def groupTreeFragment = {
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
