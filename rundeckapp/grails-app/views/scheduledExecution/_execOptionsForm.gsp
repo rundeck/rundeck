@@ -437,8 +437,8 @@
 
                 /** reset focus on click, so that IE triggers onchange event*/
                 jQuery('#doReplaceFilters').on( 'click', function (evt) {
-                    this.blur();
-                    this.focus();
+                    this.trigger('blur');
+                    this.trigger('focus');
                 });
 
             </g:javascript>

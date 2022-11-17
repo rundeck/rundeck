@@ -4,6 +4,7 @@
     "/vendor/jquery-ui.css": "/vendor/jquery-ui.css",
     "/vendor/jquery-ui-timepicker-addon.js": "/vendor/jquery-ui-timepicker-addon.js",
     "/vendor/knockout.min.js": "/vendor/knockout.min.js",
+    "/jquery.autocomplete.min.js": "/jquery.autocomplete.min.js",
     "/vendor/knockout-mapping.js": "/vendor/knockout-mapping.js",
     "/vendor/perfect-scrollbar.js": "/vendor/perfect-scrollbar.js",
     "/vendor/perfect-scrollbar.css": "/vendor/perfect-scrollbar.css",

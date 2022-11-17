@@ -44,7 +44,7 @@ var ResourceModelConfigControl = Class.create({
     }else{
         content.addClassName('rsrcConfigContent');
     }
-    $(content).select('input').each(function(elem) {
+    $(content).on('select',jQuery('input')).each(function(elem) {
         if (elem.type == 'text') {
             elem.observe('keypress', noenter);
         }
@@ -231,7 +231,7 @@ addConfig: function(type) {
 checkForm: function () {
     if ($('configs').down('button.needsSave')) {
         var p=[];
-        $('configs').select('button.needsSave').each(function(e) {
+        $('configs').on('select',jQuery('#configs button.needsSave')).each(function(e) {
             jQuery($(e).up('div.panel')).highlight(2000);
             p.push($(e).up('div.panel'));
         });

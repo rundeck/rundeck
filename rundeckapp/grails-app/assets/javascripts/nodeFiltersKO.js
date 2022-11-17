@@ -49,7 +49,7 @@ function NodeSummary(data){
                   self.error('Nodes Summary: request failed: ' + err)
               }
           }
-      }).success(function(data){
+      }).done(function(data){
           ko.mapping.fromJS(data,{},self);
       });
     };
@@ -119,10 +119,10 @@ function NodeSummary(data){
         jQuery.ajax({
             url:_genUrl(appLinks.frameworkDeleteNodeFilterAjax,{filtername:filter.name()}),
             beforeSend: _createAjaxSendTokensHandler('ajaxDeleteFilterTokens')
-        }).success(function (resp, status, jqxhr) {
+        }).done(function (resp, status, jqxhr) {
             self.filterToDelete(null);
             self.filters.remove(filter);
-        }).success(_createAjaxReceiveTokensHandler('ajaxDeleteFilterTokens'));
+        }).done(_createAjaxReceiveTokensHandler('ajaxDeleteFilterTokens'));
     };
     if(data) {
         ko.mapping.fromJS(data, {}, self);

@@ -31,7 +31,7 @@ var ExecutionOptions = {
         //show warning text if all checkboxes unchecked
         var parent = $(check).up('div.optionmultiarea');
         var test = true;
-        $(parent).select("input[type='checkbox']").each(function(e) {
+        $(parent).trigger('select',"input[type='checkbox']").each(function(e) {
             if ($(e).checked) {
                 test = false;
             }
@@ -110,6 +110,6 @@ var ExecutionOptions = {
             }
             );
 
-        $(inpu2).focus();
+        $(inpu2).trigger('focus');
     }
 };

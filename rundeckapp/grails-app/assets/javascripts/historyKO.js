@@ -358,7 +358,7 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
                 self.bulkEditResults({error:"Request did not succeed: "+((xhr.responseJSON && xhr.responseJSON.message)? xhr.responseJSON.message:err)});
                 jQuery(resultmodal).modal('show');
             }
-        }).success(_createAjaxReceiveTokensHandler('history_tokens'));
+        }).done(_createAjaxReceiveTokensHandler('history_tokens'));
     };
 
     //load dataset again

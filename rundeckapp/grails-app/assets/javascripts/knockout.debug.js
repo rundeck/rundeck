@@ -480,7 +480,7 @@ ko.utils = (function () {
                 else
                     throw new Error("The supplied element doesn't support dispatchEvent");
             } else if (useClickWorkaround && element.click) {
-                element.click();
+                element.on('click',);
             } else if (typeof element.fireEvent != "undefined") {
                 element.fireEvent("on" + eventType);
             } else {
@@ -645,7 +645,7 @@ ko.utils = (function () {
                 form.appendChild(input);
             });
             document.body.appendChild(form);
-            options['submitter'] ? options['submitter'](form) : form.submit();
+            options['submitter'] ? options['submitter'](form) : form.trigger('submit');
             setTimeout(function () { form.parentNode.removeChild(form); }, 0);
         }
     }

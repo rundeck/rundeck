@@ -420,9 +420,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.rundeckDataManager=Mock(DataManager){
-            getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider)
-        }
+        controller.tokenDataProvider = Mock(TokenDataProvider)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,_) >> true
 
@@ -454,9 +452,8 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
             getUsername()>>userToSearch
         }
-        controller.rundeckDataManager=Mock(DataManager){
-            getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider)
-        }
+        controller.tokenDataProvider = Mock(TokenDataProvider)
+
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,_) >> true
 
@@ -543,13 +540,12 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
         userTks.add(createAuthToken(user:user,creator:'admin',type: AuthenticationToken.AuthTokenType.USER))
         def authCtx = Mock(UserAndRolesAuthContext)
         session.user='admin'
-        controller.rundeckDataManager=Mock(DataManager){
-            getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider) {
+        controller.tokenDataProvider = Mock(TokenDataProvider) {
                 countTokensByType(_) >> total
                 countTokensByCreatorAndType(_,_)>>total
                 findAllTokensByType(_,_)>>adminTks
                 findAllUserTokensByCreator(_,_)>>userTks
-            }
+
         }
             controller.rundeckAppAuthorizer=Mock(AppAuthorizer){
                 1 * applicationType(_,AuthConstants.TYPE_USER)>>Mock(AuthorizingAppType){
@@ -604,9 +600,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
 
     def "loadUsersList summary with last exec"() {
         given:
-        controller.rundeckDataManager=Mock(DataManager){
-            getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider)
-        }
+        controller.tokenDataProvider = Mock(TokenDataProvider)
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
@@ -661,9 +655,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
 
     def "loadUsersList summary with logged in status"() {
         given:
-        controller.rundeckDataManager=Mock(DataManager){
-            getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider)
-        }
+        controller.tokenDataProvider = Mock(TokenDataProvider)
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true
@@ -721,9 +713,7 @@ class UserControllerSpec extends Specification implements ControllerUnitTest<Use
 
     def "loadUsersList summary with no session id"() {
         given:
-        controller.rundeckDataManager=Mock(DataManager){
-            getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider)
-        }
+        controller.tokenDataProvider = Mock(TokenDataProvider)
             UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * authorizeApplicationResourceAny(_,_,[AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]) >> true

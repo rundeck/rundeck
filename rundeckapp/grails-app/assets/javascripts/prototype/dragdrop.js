@@ -191,7 +191,7 @@ var Draggables = {
 
   keyPress: function(event) {
     if(this.activeDraggable)
-      this.activeDraggable.keyPress(event);
+      this.activeDraggable.on('keypress',event);
   },
 
   addObserver: function(observer) {
