@@ -52,9 +52,11 @@ class JobLifecycleComponentService implements ProjectConfigurable {
 
     @Subscriber('rundeck.bootstrap')
     void init() throws Exception {
-        LOG.debug("Initializing " + JobLifecycleComponentService.getSimpleName())
-        beanComponents?.each {
-            LOG.debug("Loaded JobLifecycleComponent Bean: ${it.toString()}")
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initializing " + JobLifecycleComponentService.getSimpleName())
+            beanComponents?.each {
+                LOG.debug("Loaded JobLifecycleComponent Bean: ${it.toString()}")
+            }
         }
     }
 
@@ -164,7 +166,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
     List<NamedJobLifecycleComponent> loadProjectConfiguredPlugins(String project) {
         List<NamedJobLifecycleComponent> configured = []
         def rundeckProject = frameworkService.getFrameworkProject(project)
-        def defaultPluginTypes = new HashSet<String>(getProjectDefaultJobLifecyclePlugins(rundeckProject))
+        def defaultPluginTypes = new LinkedHashSet<String>(getProjectDefaultJobLifecyclePlugins(rundeckProject))
 
         defaultPluginTypes.each{type->
             def configuredPlugin = pluginService.configurePlugin(

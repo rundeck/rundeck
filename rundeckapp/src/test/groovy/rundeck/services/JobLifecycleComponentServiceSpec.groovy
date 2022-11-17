@@ -1,12 +1,15 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatusImpl
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
@@ -200,4 +203,169 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
             type                                            | _
             JobLifecycleComponentService.EventType.PRE_EXECUTION | _
     }
+
+
+    def "merge execution metadata replacing values"() {
+        given:
+
+        def status = JobLifecycleStatusImpl.builder()
+            .useNewMetadata(newMeta != null && !newMeta.isEmpty())
+            .newExecutionMetadata(newMeta)
+            .build()
+
+
+        when:
+        def result = service.mergePreExecutionMetadata(initial, status)
+
+        then:
+        (result == null) == (initial == null && !status.useNewMetadata)
+        result?.size() == resultSize
+        result?.first == firstResult
+        result?.second == secondResult
+        result?.third == thirdResult
+        result?.fourth == fourthResult
+
+        where:
+        initial                                                  | newMeta                        | resultSize | firstResult | secondResult | thirdResult | fourthResult
+        null                                                     | null                           | null       | null        | null         | null        | null
+        ["first": "first", "second": "second", "third": "third"] | null                           | 3          | "first"     | "second"     | "third"     | null
+        ["first": "first", "second": "second", "third": "third"] | ["second": "2", "fourth": "4"] | 4          | "first"     | "2"          | "third"     | "4"
+        null                                                     | ["second": "2", "fourth": "4"] | 2          | null        | "2"          | null        | "4"
+
+
+    }
+
+    def "lifecycle component loading"() {
+        given:
+        def project = Stub(IRundeckProject) {
+            getProjectProperties() >> {
+                Map<String,String> map = new LinkedHashMap()
+                map.put(JobLifecycleComponentService.CONF_PROJECT_ENABLED + 'pluginA', 'true')
+                map.put(JobLifecycleComponentService.CONF_PROJECT_ENABLED + 'pluginB', 'true')
+                return map
+            }
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject("TestProject") >> {
+                return project
+            }
+        }
+
+        service.pluginService = Stub(PluginService) {
+            configurePlugin(*_) >> { args ->
+                return new ConfiguredPlugin<JobLifecyclePlugin>(new JLPluginTestImpl(name: args[0]), [:])
+            }
+        }
+
+        service.beanComponents = [
+            new JLCompTestImpl(name: "Comp1"),
+            new JLCompTestImpl(name: "Comp2")
+        ]
+
+        when:
+        def result = service.loadProjectComponents("TestProject")
+
+        then:
+        result.size() == 4
+        result[0].component instanceof JLCompTestImpl
+        result[0].component.name == "Comp1"
+        result[1].component instanceof JLCompTestImpl
+        result[1].component.name == "Comp2"
+        result[2].component instanceof JLPluginTestImpl
+        result[2].component.name == "pluginA"
+        result[3].component instanceof JLPluginTestImpl
+        result[3].component.name == "pluginB"
+
+    }
+
+
+    def "lifecycle component loading with plugins only"() {
+        given:
+        def project = Stub(IRundeckProject) {
+            getProjectProperties() >> {
+                Map<String,String> map = new LinkedHashMap()
+                map.put(JobLifecycleComponentService.CONF_PROJECT_ENABLED + 'pluginA', 'true')
+                map.put(JobLifecycleComponentService.CONF_PROJECT_ENABLED + 'pluginB', 'true')
+                return map
+            }
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject("TestProject") >> {
+                return project
+            }
+        }
+
+        service.pluginService = Stub(PluginService) {
+            configurePlugin(*_) >> { args ->
+                return new ConfiguredPlugin<JobLifecyclePlugin>(new JLPluginTestImpl(name: args[0]), [:])
+            }
+        }
+
+        service.beanComponents = null
+
+        when:
+        def result = service.loadProjectComponents("TestProject")
+
+        then:
+        result.size() == 2
+        result[0].component instanceof JLPluginTestImpl
+        result[0].component.name == "pluginA"
+        result[1].component instanceof JLPluginTestImpl
+        result[1].component.name == "pluginB"
+
+    }
+
+
+    def "lifecycle component loading with internal components only"() {
+        given:
+        def project = Stub(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject("TestProject") >> {
+                return project
+            }
+        }
+
+        service.beanComponents = [
+            new JLCompTestImpl(name: "Comp1"),
+            new JLCompTestImpl(name: "Comp2")
+        ]
+
+        when:
+        def result = service.loadProjectComponents("TestProject")
+
+        then:
+        result.size() == 2
+        result[0].component instanceof JLCompTestImpl
+        result[0].component.name == "Comp1"
+        result[1].component instanceof JLCompTestImpl
+        result[1].component.name == "Comp2"
+
+    }
+
+
+    class JLCompTestImpl implements JobLifecycleComponent {
+
+        String name
+
+        @Override
+        JobLifecycleStatus beforeJobExecution(JobPreExecutionEvent event) throws JobLifecycleComponentException {
+            return null
+        }
+
+        @Override
+        JobLifecycleStatus beforeSaveJob(JobPersistEvent event) throws JobLifecycleComponentException {
+            return null
+        }
+    }
+
+    class JLPluginTestImpl implements JobLifecyclePlugin {
+        String name
+
+    }
+
 }
