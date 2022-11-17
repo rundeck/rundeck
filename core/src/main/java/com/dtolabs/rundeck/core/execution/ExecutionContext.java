@@ -223,4 +223,10 @@ public interface ExecutionContext {
     public LoggingManager getLoggingManager();
 
     public PluginControlService getPluginControlService();
+    
+    /**
+     * Gets a reference to the execution being processed.
+     * @return An {@link ExecutionReference} to the execution, or null if doesn't apply.
+     */
+    public ExecutionReference getExecution();
 }

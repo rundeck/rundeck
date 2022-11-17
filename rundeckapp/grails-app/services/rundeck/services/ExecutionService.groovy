@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
 import com.dtolabs.rundeck.core.execution.JobValidationReference
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
@@ -1579,6 +1580,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             orchestrator = null;
         }
+        
+        def ExecutionReference executionReference = null
+        if(execMap instanceof Execution) {
+            executionReference = execMap.asReference()
+        }
+        
 
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
@@ -1597,6 +1604,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             privateDataContext(privatecontext)
             executionListener(listener)
             workflowExecutionListener(wlistener)
+            execution(executionReference)
         }
         builder.charsetEncoding(charsetEncoding)
         builder.framework(framework)
