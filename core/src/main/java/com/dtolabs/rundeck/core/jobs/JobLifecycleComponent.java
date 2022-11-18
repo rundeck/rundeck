@@ -1,7 +1,5 @@
 package com.dtolabs.rundeck.core.jobs;
 
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException;
-
 /**
  * A Job LifeCycle Components allow independent components and plugins to intervene and
  * modify a job behavior through various phases of its lifecycle.

@@ -45,8 +45,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.logging.*
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -4244,7 +4244,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.extraMetadataMap)
         try {
             return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
-        } catch (JobLifecyclePluginException jpe) {
+        } catch (JobLifecycleComponentException jpe) {
             throw new ExecutionServiceValidationException(jpe.message, optparams, null)
         }
     }

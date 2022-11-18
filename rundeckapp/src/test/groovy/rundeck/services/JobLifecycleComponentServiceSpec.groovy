@@ -10,7 +10,6 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import grails.testing.services.ServiceUnitTest
@@ -170,7 +169,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
             def plugins = [new NamedJobLifecycleComponent(
                     name: 'test', component: Mock(JobLifecycleComponent) {
                 beforeSaveJob(_) >> {
-                    throw new JobLifecyclePluginException("oops")
+                    throw new JobLifecycleComponentException("oops")
                 }
             }
             )]
@@ -190,7 +189,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
             def plugins = [new NamedJobLifecycleComponent(
                     name: 'test', component: Mock(JobLifecycleComponent) {
                 beforeJobExecution(_) >> {
-                    throw new JobLifecyclePluginException("oops")
+                    throw new JobLifecycleComponentException("oops")
                 }
             }
             )]

@@ -22,8 +22,8 @@ import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.converters.JSON
@@ -4157,7 +4157,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def jobEventStatus
         try {
             jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution, jobPersistEvent)
-        } catch (JobLifecyclePluginException exception) {
+        } catch (JobLifecycleComponentException exception) {
             log.debug("JobLifecycle error: " + exception.message, exception)
             log.warn("JobLifecycle error: " + exception.message)
             return [success: false, scheduledExecution: scheduledExecution, error: exception.message]

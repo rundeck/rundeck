@@ -19,8 +19,8 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -3527,7 +3527,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         se.errors.hasErrors()
         se.errors.hasGlobalErrors()
         1 * service.jobLifecycleComponentService.beforeJobSave(se,_) >> {
-            throw new JobLifecyclePluginException('an error')
+            throw new JobLifecycleComponentException('an error')
         }
 
         where:
@@ -3571,7 +3571,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.errors.hasGlobalErrors()
         results.scheduledExecution.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
         1 * service.jobLifecycleComponentService.beforeJobSave(_,_) >> {
-            throw new JobLifecyclePluginException('an error')
+            throw new JobLifecycleComponentException('an error')
         }
 
     }
@@ -4006,7 +4006,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             se.errors.hasGlobalErrors()
             se.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
             1 * service.jobLifecycleComponentService.beforeJobSave(se,_) >> {
-                throw new JobLifecyclePluginException('an error')
+                throw new JobLifecycleComponentException('an error')
             }
 
 

@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import grails.testing.gorm.DataTest
 
 /*
@@ -66,7 +66,7 @@ public class ScheduledExecutionServiceSpec extends Specification implements Data
         def authContext = Mock(UserAndRolesAuthContext)
         service.frameworkService = Mock(FrameworkService)
         service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
-            beforeJobSave(_, _) >> {throw new JobLifecyclePluginException("message from life cycle plugin")}
+            beforeJobSave(_, _) >> {throw new JobLifecycleComponentException("message from life cycle plugin")}
         }
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])

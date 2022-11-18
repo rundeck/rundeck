@@ -9,7 +9,6 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
@@ -124,7 +123,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @return JobEventStatus response from plugin implementation
      */
     JobLifecycleStatus beforeJobExecution(ScheduledExecution job, JobPreExecutionEvent event)
-            throws JobLifecyclePluginException {
+            throws JobLifecycleComponentException {
         def components = loadProjectComponents(job.project)
         handleEvent(event, EventType.PRE_EXECUTION, components)
     }
@@ -135,7 +134,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobLifecycleStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) throws JobLifecyclePluginException {
+    JobLifecycleStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) throws JobLifecycleComponentException {
         def plugins = loadProjectComponents(job.project)
         handleEvent(event, EventType.BEFORE_SAVE, plugins)
     }
