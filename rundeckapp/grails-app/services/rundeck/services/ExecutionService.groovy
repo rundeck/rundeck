@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionValidator
 import com.dtolabs.rundeck.core.execution.JobValidationReference
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
@@ -44,8 +45,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.logging.*
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -148,7 +149,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
-    JobLifecyclePluginService jobLifecyclePluginService
+    JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecyclePluginService
     AuditEventsService auditEventsService
 
@@ -1569,6 +1570,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             orchestrator = null;
         }
+        
+        def ExecutionReference executionReference = null
+        if(execMap instanceof Execution) {
+            executionReference = execMap.asReference()
+        }
+        
 
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
@@ -1587,6 +1594,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             privateDataContext(privatecontext)
             executionListener(listener)
             workflowExecutionListener(wlistener)
+            execution(executionReference)
         }
         builder.charsetEncoding(charsetEncoding)
         builder.framework(framework)
@@ -2361,7 +2369,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map securedOpts,
             Map secureExposedOpts
     ) {
-        def props = [:]
+        Map props = [:]
 
         se = ScheduledExecution.get(se.id)
         def propset=[
@@ -2424,10 +2432,34 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new ExecutionServiceException("executionType is required")
         }
         if(input['meta'] instanceof Map){
-            props['extraMetadataMap'] = input['meta']
+            props.extraMetadataMap = input['meta']
         }
-        //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, se, authContext, securedOpts, secureExposedOpts)
+ 
+        // Parse base received options for processing and validation.
+        HashMap baseOptParams = parseJobOptionInput(props, se, authContext)
+
+        /* 
+        Process job lifecycle before execution event 
+        */
+        
+        def beforeExecutionResult = checkBeforeJobExecution(se, baseOptParams, props, authContext)
+
+        // Process metadata updates
+        if (beforeExecutionResult?.isUseNewMetadata()) {
+            props.extraMetadataMap = beforeExecutionResult.newExecutionMetadata
+        }
+
+        // Process option values updates
+        Map optparams = baseOptParams
+        if (beforeExecutionResult?.isUseNewValues()) {
+            optparams = beforeExecutionResult.optionsValues
+            checkSecuredOptions(beforeExecutionResult.optionsValues, securedOpts, secureExposedOpts)
+        }
+
+        /* End job lifecycle processing */
+
+        // Final option values validation
+        validateOptionValues(se, optparams, authContext)
 
         optparams = removeSecureOptionEntries(se, optparams)
 
@@ -2546,29 +2578,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return newExec
     }
 
-    /**
-     * Parse input "option.NAME" values, or a single "argString" value. Add default missing defaults for required
-     * options. Validate the values for the Job options and throw exception if validation fails. Return a map of name
-     * to value for the parsed options.
-     * @param props
-     * @param scheduledExec
-     * @param authContext auth for reading storage defaults
-     * @param optionValues values modified by a job plugin
-     * @param securedOpts
-     * @param securedExposedOpts
-     * @return
-     */
-    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map securedOpts, Map securedExposedOpts) {
-        HashMap optparams
-        optparams = parseJobOptionInput(props, scheduledExec, authContext)
-        def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
-        if(result?.isUseNewValues()){
-            optparams = result.optionsValues
-            checkSecuredOptions(result.optionsValues, securedOpts, securedExposedOpts)
-        }
-        validateOptionValues(scheduledExec, optparams,authContext)
-        return optparams
-    }
 
     /**
      * It replaces values coming from optionsValues into secured options and secured exposed options
@@ -4201,21 +4210,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return list
     }
 
+    /**
+     * Process the beforeJobExecution event for existing Job Lifecycle Components
+     * @param scheduledExecution The Job
+     * @param optparams Option parameters
+     * @param props Execution properties
+     * @param authContext Authentication Context
+     * @return JobLifecycleStatus object with process result.
+     */
     def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
 
         INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext, new HashSet<String>([AuthConstants.ACTION_READ, AuthConstants.ACTION_RUN]))
-        def nodeFilter = props.filter? props.filter : scheduledExecution.asFilter()
+        def nodeFilter = props.filter ? props.filter : scheduledExecution.asFilter()
         JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(
-                scheduledExecution.jobName,
-                props.project,
-                props.user,
-                optparams,
-                nodes,
-                nodeFilter,
-                scheduledExecution.jobOptionsSet())
+            scheduledExecution.jobName,
+            scheduledExecution.uuid,
+            props.project,
+            props.user,
+            scheduledExecution.jobOptionsSet(),
+            optparams,
+            nodeFilter,
+            nodes,
+            props.extraMetadataMap)
         try {
-            return jobLifecyclePluginService.beforeJobExecution(scheduledExecution, event)
-        } catch (JobLifecyclePluginException jpe) {
+            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
+        } catch (JobLifecycleComponentException jpe) {
             throw new ExecutionServiceValidationException(jpe.message, optparams, null)
         }
     }

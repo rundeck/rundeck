@@ -19,8 +19,8 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -131,7 +131,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{
@@ -2395,7 +2395,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 valid: true,
         ]
         0 * service.frameworkService.validateDescription(*_)
-        0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+        0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
         1 * service.frameworkService.getFrameworkNodeName()
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,['update'],'AProject')>>true
         2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
@@ -2445,7 +2445,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> pluginConfigSet
             1 * service.frameworkService.getFrameworkNodeName()
             1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,['update'],_)>>true
-            0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+            0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
             1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
             1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
             service.jobSchedulesService = Mock(SchedulesManager){
@@ -2489,7 +2489,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> configSet
             0 * service.frameworkService.getFrameworkNodeName()
-            0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+            0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
             0 * service.rundeckJobDefinitionManager.persistComponents(_,_)>>true
             service.jobSchedulesService = Mock(SchedulesManager){
                 1 * isScheduled(_)
@@ -2535,7 +2535,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 valid: false, report: Validator.errorReport('a','wrong')
         ]
         0 * service.frameworkService.validateDescription(*_)
-        0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+        0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
         0 * service.frameworkService.getFrameworkNodeName()
         2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
         1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
@@ -3510,7 +3510,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def uuid=setupDoUpdate(true, serverUuid)
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -3518,7 +3518,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then:
         results.success
-        1 * service.jobLifecyclePluginService.beforeJobSave(se,_)>>lfresult
+        1 * service.jobLifecycleComponentService.beforeJobSave(se,_)>>lfresult
 
         where:
         inparams                                        | lfresult
@@ -3534,7 +3534,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def uuid=setupDoUpdate(true, serverUuid)
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
         when:
@@ -3544,8 +3544,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         !results.success
         se.errors.hasErrors()
         se.errors.hasGlobalErrors()
-        1 * service.jobLifecyclePluginService.beforeJobSave(se,_) >> {
-            throw new JobLifecyclePluginException('an error')
+        1 * service.jobLifecycleComponentService.beforeJobSave(se,_) >> {
+            throw new JobLifecycleComponentException('an error')
         }
 
         where:
@@ -3562,7 +3562,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                     workflow: new Workflow(threadcount: 1, keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'test what')]),
             ]
         service.jobSchedulerService = Mock(JobSchedulerService)
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject('testProject') >> true
@@ -3590,8 +3590,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         results.scheduledExecution.errors.hasErrors()
         results.scheduledExecution.errors.hasGlobalErrors()
         results.scheduledExecution.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
-        1 * service.jobLifecyclePluginService.beforeJobSave(_,_) >> {
-            throw new JobLifecyclePluginException('an error')
+        1 * service.jobLifecycleComponentService.beforeJobSave(_,_) >> {
+            throw new JobLifecycleComponentException('an error')
         }
 
     }
@@ -4026,7 +4026,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
-        service.jobLifecyclePluginService=Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
         when:
@@ -4037,8 +4037,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             se.errors.hasErrors()
             se.errors.hasGlobalErrors()
             se.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
-            1 * service.jobLifecyclePluginService.beforeJobSave(se,_) >> {
-                throw new JobLifecyclePluginException('an error')
+            1 * service.jobLifecycleComponentService.beforeJobSave(se,_) >> {
+                throw new JobLifecycleComponentException('an error')
             }
 
 

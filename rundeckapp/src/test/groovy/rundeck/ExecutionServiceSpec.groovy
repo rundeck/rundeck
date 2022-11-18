@@ -1,7 +1,4 @@
 package rundeck
-
-import com.dtolabs.rundeck.app.support.ExecutionQuery
-
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -29,7 +26,6 @@ import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import groovy.time.TimeCategory
-import org.hibernate.JDBCException
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -87,7 +83,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     }
 
     def setup(){
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
         service.executionValidatorService = new ExecutionValidatorService()
         service.logFileStorageService=Mock(LogFileStorageService)
         service.fileUploadService=Mock(FileUploadService)
@@ -5326,7 +5322,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure remote option changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedOption1" : "secured option changed value"]
@@ -5384,7 +5380,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure exposed option changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value"]
@@ -5443,7 +5439,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "execute job with secure remote and exposed options changed by job life cycle" () {
         given:
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
             beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value",
