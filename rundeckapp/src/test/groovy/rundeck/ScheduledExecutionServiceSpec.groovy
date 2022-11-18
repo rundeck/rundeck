@@ -2,14 +2,10 @@ package rundeck
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.IFrameworkNodes
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
-import grails.test.hibernate.HibernateSpec
+import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import grails.testing.gorm.DataTest
-import groovy.mock.interceptor.MockFor
-import net.bytebuddy.implementation.bytecode.Throw
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -31,7 +27,7 @@ import net.bytebuddy.implementation.bytecode.Throw
 
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import rundeck.services.FrameworkService
-import rundeck.services.JobLifecyclePluginService
+import rundeck.services.JobLifecycleComponentService
 import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
 
@@ -69,8 +65,8 @@ public class ScheduledExecutionServiceSpec extends Specification implements Data
         ScheduledExecutionService service = new ScheduledExecutionService()
         def authContext = Mock(UserAndRolesAuthContext)
         service.frameworkService = Mock(FrameworkService)
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
-            beforeJobSave(_, _) >> {throw new JobLifecyclePluginException("message from life cycle plugin")}
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService){
+            beforeJobSave(_, _) >> {throw new JobLifecycleComponentException("message from life cycle plugin")}
         }
         def fwknode = new NodeEntryImpl('fwknode')
         def filtered = new NodeSetImpl([fwknode: fwknode])
