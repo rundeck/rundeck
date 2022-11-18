@@ -25,6 +25,7 @@
 <head>
     <g:set var="rkey" value="${g.rkey()}"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="skipPrototypeJs" content="true"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code:'configuration')}"/>
@@ -82,22 +83,36 @@
                     FileCopier: fileCopierPluginsData,
             ]
     ]}"/>
-    <asset:javascript src="prototype/effects"/>
+    <g:embedJSON id="pluginGroupJSON" data="${[
+            project          : projectName,
+            config: pluginGroupConfig
+    ]}"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="framework/editProject.js"/>
+    <asset:javascript src="static/pages/project-config.js" defer="defer" />
+    <asset:stylesheet href="static/css/pages/project-config.css" />
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 
-    var confirm = new PageConfirm(message('page.unsaved.changes'));
+    var confirm = new PageConfirm(message('page.unsaved.changes'),{
+        skipbehavior:true,
+        setNeedsConfirm(){
+            window._rundeck.eventBus.$emit('page-modified','Edit Page')
+        },
+        clearNeedConfirm(){
+            window._rundeck.eventBus.$emit('page-reset','*')
+        }
+    });
     function init(){
-        $$('input').each(function(elem){
-            if(elem.type=='text'){
-                elem.observe('keypress',noenter);
-            }
-        });
+        jQuery('input[type=text]').on('keydown', noenter);
     }
     var _storageBrowseSelected=confirm.setNeedsConfirm;
     jQuery(init);
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data: {
+            pluginGroups: loadJsonData("pluginGroupJSON")
+        }
+    })
     </g:javascript>
 </head>
 
@@ -114,7 +129,7 @@
       </div>
   </div>
   <div class="row">
-    <g:form action="saveProject" method="post" useToken="true" onsubmit="return configControl.checkForm();" class="form">
+    <g:form action="saveProject" method="post" useToken="true" class="form">
     <div class="col-xs-12">
       <div class="card"  id="createform">
           <div class="card-header" data-ko-bind="editProject">
@@ -160,6 +175,12 @@
         <div class="card-footer">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
           <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-cta reset_page_confirm"/>
+
+            <page-confirm :event-bus="EventBus"
+                          class="project-config-plugins-vue text-warning"
+                          message="${enc(attr: message(code: 'page.unsaved.changes'))}"
+                          :display="true">
+            </page-confirm>
         </div>
       </div>
     </div>

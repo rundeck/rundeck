@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
@@ -592,7 +593,7 @@ class LogFileStorageService
      * @param e
      */
     boolean pluginEnabledForPartialStorage(Execution e) {
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
         return plugin ? pluginSupportsPartialStorage(plugin) : false
     }
     /**
@@ -600,7 +601,7 @@ class LogFileStorageService
      * @param e
      */
     void submitForPartialStorage(Execution e, long sizeChange, long timeDiff) {
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
         if (null == plugin || !pluginSupportsPartialStorage(plugin)) {
             return
         }
@@ -624,7 +625,7 @@ class LogFileStorageService
      * @param e
      */
     void submitForStorage(Execution e) {
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
         if(null==plugin || !pluginSupportsStorage(plugin)){
             return
         }
@@ -733,7 +734,7 @@ class LogFileStorageService
             return
         }
         log.debug("re-queueing incomplete log storage request for execution ${e.id}")
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
         if (null != plugin && pluginSupportsStorage(plugin)) {
             //re-queue storage request immediately, pass -1 to skip counter increment
             storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, -1)
@@ -931,7 +932,7 @@ class LogFileStorageService
                 invalid << request.id
                 return
             }
-                def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+                def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
                 if(null!=plugin && pluginSupportsStorage(plugin)) {
                     //re-queue storage request
                     storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, delay)
@@ -1396,9 +1397,9 @@ class LogFileStorageService
      * @param execution
      * @param resolver @return
      */
-    private ExecutionFileStoragePlugin getConfiguredPluginForExecution(Execution execution, PropertyResolver resolver) {
+    private ExecutionFileStoragePlugin getConfiguredPluginForExecution(Execution execution, PropertyResolverFactory.Factory factory) {
         def jobcontext = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
-        def plugin = getConfiguredPlugin(jobcontext, resolver)
+        def plugin = getConfiguredPlugin(jobcontext, factory)
         plugin
     }
 
@@ -1407,14 +1408,14 @@ class LogFileStorageService
      * @param context
      * @param resolver @return
      */
-    private ExecutionFileStoragePlugin getConfiguredPlugin(Map context, PropertyResolver resolver){
+    private ExecutionFileStoragePlugin getConfiguredPlugin(Map context, PropertyResolverFactory.Factory factory){
         def pluginName=getConfiguredPluginName()
         if (!pluginName) {
             return null
         }
         def result
         try {
-            result= pluginService.configurePlugin(pluginName, executionFileStoragePluginProviderService, resolver, PropertyScope.Instance)
+            result= pluginService.configurePlugin(pluginName, executionFileStoragePluginProviderService, factory, PropertyScope.Instance)
         } catch (Throwable e) {
             log.error("Failed to create LogFileStoragePlugin '${pluginName}': ${e.class.name}:" + e.message,e)
             log.debug("Failed to create LogFileStoragePlugin '${pluginName}': ${e.class.name}:" + e.message, e)
@@ -1494,7 +1495,7 @@ class LogFileStorageService
         //handle cases where execution is still running or just started
         //and the file may not be available yet
 
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
         def partialRetrieveSupported = plugin && pluginSupportsPartialRetrieval(plugin)
         def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
                 frameworkService.getServerUUID()
@@ -1617,8 +1618,7 @@ class LogFileStorageService
      * @return state of the log file
      */
     private ExecutionFileState requestLogFileRetrieval(
-            Execution execution, String filetype, ExecutionFileStorage
-                    plugin
+            Execution execution, String filetype, ExecutionFileStorage plugin
     ) {
         requestLogFileRetrieval(execution, filetype, plugin, null)
     }
@@ -2053,7 +2053,7 @@ class LogFileStorageService
      * @return Map containing success: true/false, and error: String indicating the error if there was one
      */
    Map removeRemoteLogFile(Execution e, String filetype, int delay=0) {
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolverFactory(e.project))
 
        if(!plugin){
            return [started: false, error: "Not plugin enabled"]

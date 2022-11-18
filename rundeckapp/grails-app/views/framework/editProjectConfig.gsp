@@ -20,22 +20,18 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="skipPrototypeJs" content="true"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code:'configuration')}"/>
     <title><g:message code="project.config.editor.title" default="Edit Project Configuration File"/></title>
 
-    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 
     function init(){
-        $$('input').each(function(elem){
-            if(elem.type=='text'){
-                elem.observe('keypress',noenter);
-            }
-        });
+        jQuery('input[type=text]').on('keydown', noenter);
         var confirm = new PageConfirm(message('page.unsaved.changes'));
         jQuery('.apply_ace').each(function () {
             _setupAceTextareaEditor(this,confirm.setNeetsConfirm);

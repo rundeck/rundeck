@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution.dispatch;
 
 import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
@@ -61,9 +61,9 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
     public static final String NODE_NAME_LOCAL_REF_ID = ParallelNodeDispatcher.class.getName() + ":node.name";
     public static final String NODE_USER_LOCAL_REF_ID = ParallelNodeDispatcher.class.getName() + ":node.user";
 
-    private Framework framework;
+    private IFramework framework;
 
-    public ParallelNodeDispatcher(Framework framework) {
+    public ParallelNodeDispatcher(IFramework framework) {
         this.framework = framework;
     }
 
@@ -195,14 +195,14 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         final HashMap<String, NodeStepResult> resultMap;
         final INodeEntry node;
         final Map<String, NodeStepResult> failureMap;
-        final Framework framework;
+        final IFramework framework;
 
         ExecNodeStepCallable(StepExecutionContext context,
                              NodeStepExecutionItem item,
                              HashMap<String, NodeStepResult> resultMap,
                              INodeEntry node,
                              Map<String, NodeStepResult> failureMap,
-                             Framework framework) {
+                             IFramework framework) {
             this.context = context;
             this.item = item;
             this.resultMap = resultMap;

@@ -28,12 +28,15 @@ import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
@@ -286,6 +289,51 @@ public class TestDefaultFileCopierUtil extends TestCase {
         }
 
         @Override
+        public NodeDispatcherService getNodeDispatcherService() {
+            return null;
+        }
+
+        @Override
+        public void initialize(final Framework framework) {
+
+        }
+
+        @Override
+        public StepExecutor getStepExecutorForItem(final StepExecutionItem item, final String project)
+                throws ExecutionServiceException
+        {
+            return null;
+        }
+
+        @Override
+        public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final String project)
+                throws ExecutionServiceException
+        {
+            return null;
+        }
+
+        @Override
+        public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final String project)
+                throws ExecutionServiceException
+        {
+            return null;
+        }
+
+        @Override
+        public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, final String project)
+                throws ExecutionServiceException
+        {
+            return null;
+        }
+
+        @Override
+        public NodeDispatcher getNodeDispatcherForContext(final ExecutionContext context)
+                throws ExecutionServiceException
+        {
+            return null;
+        }
+
+        @Override
         public String getFrameworkNodeHostname() {
             return null;
         }
@@ -361,26 +409,13 @@ public class TestDefaultFileCopierUtil extends TestCase {
             return null;
         }
 
-        @Override
-        public FileCopier getFileCopierForNodeAndProject(
-                final INodeEntry node, final String project
-        ) throws ExecutionServiceException
-        {
-            return null;
-        }
+
 
         @Override
         public FileCopierService getFileCopierService() {
             return null;
         }
 
-        @Override
-        public NodeExecutor getNodeExecutorForNodeAndProject(
-                final INodeEntry node, final String project
-        ) throws ExecutionServiceException
-        {
-            return null;
-        }
 
         @Override
         public NodeExecutorService getNodeExecutorService()  {
@@ -389,20 +424,6 @@ public class TestDefaultFileCopierUtil extends TestCase {
 
         @Override
         public NodeStepExecutionService getNodeStepExecutorService()  {
-            return null;
-        }
-
-        @Override
-        public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item)
-                throws ExecutionServiceException
-        {
-            return null;
-        }
-
-        @Override
-        public NodeDispatcher getNodeDispatcherForContext(final ExecutionContext context)
-                throws ExecutionServiceException
-        {
             return null;
         }
 

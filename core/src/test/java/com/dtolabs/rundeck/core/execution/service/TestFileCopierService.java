@@ -68,7 +68,7 @@ public class TestFileCopierService extends AbstractBaseTest {
     }
 
     public void testGetProviderForNode() throws Exception {
-        final FileCopierService service = FileCopierService.getInstanceForFramework(getFrameworkInstance());
+        final FileCopierService service = FileCopierService.getInstanceForFramework(getFrameworkInstance(),getFrameworkInstance());
         {
             //default for local node should be local provider
             final NodeEntryImpl test1 = new NodeEntryImpl("test1");

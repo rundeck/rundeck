@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.resources.format;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -227,13 +228,14 @@ public class ResourceFormatGeneratorService extends PluggableProviderRegistrySer
         return list;
     }
 
-    public static ResourceFormatGeneratorService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static ResourceFormatGeneratorService getInstanceForFramework(final Framework framework,
+                                                                         final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final ResourceFormatGeneratorService service = new ResourceFormatGeneratorService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (ResourceFormatGeneratorService) framework.getService(SERVICE_NAME);
+        return (ResourceFormatGeneratorService) registration.getService(SERVICE_NAME);
 
     }
 }

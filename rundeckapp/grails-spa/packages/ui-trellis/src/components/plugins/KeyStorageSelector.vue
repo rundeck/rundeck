@@ -21,7 +21,7 @@
             <slot>Select… <i class="glyphicon glyphicon-folder-open"></i></slot>
         </btn>
 
-        <modal v-model="modalOpen" title="Select a Storage File" id="storage-file" ref="modalkeys" auto-focus
+        <modal v-model="modalOpen" title="Select a Storage File" id="storage-file" disabled="readOnly" ref="modalkeys" auto-focus
                append-to-body>
 
             <div class="alert alert-warning" v-if="errorMsg!=''">
@@ -36,6 +36,7 @@
                         </div>
                         <input type="text" class="form-control" style="padding-left:18px"
                                v-model="inputPath" @keyup.enter="loadDirInputPath()"
+                               :disabled="readOnly"
                                placeholder="Enter a path"/>
                     </div>
                 </div>
@@ -346,7 +347,8 @@
         props: [
             'value',
             'storageFilter',
-            'allowUpload'
+            'allowUpload',
+            'readOnly'
         ],
         data() {
             return {
@@ -379,16 +381,18 @@
         },
         methods: {
             openSelector() {
-                this.invalid = false;
-                this.setRootPath();
-                this.clean();
-                if (this.value != null) {
+                if(this.readOnly!==true) {
+                  this.invalid = false;
+                  this.setRootPath();
+                  this.clean();
+                  if (this.value != null) {
                     const parentDir = this.parentDirString(this.value)
                     this.loadDir(parentDir);
                     this.loadUpPath();
                     this.defaultSelectKey(this.value);
+                  }
+                  this.modalOpen = true;
                 }
-                this.modalOpen = true;
             },
             setRootPath() {
                 if (this.rootPath == null || this.rootPath === '') {

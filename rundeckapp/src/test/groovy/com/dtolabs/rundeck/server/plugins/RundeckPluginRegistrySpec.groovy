@@ -14,6 +14,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.plugins.config.ConfiguredBy
+import com.dtolabs.rundeck.plugins.config.Group
+import com.dtolabs.rundeck.plugins.config.PluginGroup
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
@@ -114,6 +118,75 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             [:] | [:] | 'prop1' | null
             ['project.plugin.TestSvc.aplugin.prop1': 'propval'] | [:] | 'prop1' | 'propval'
             [:] | ['framework.plugin.TestSvc.aplugin.prop1': 'fwkval'] | 'prop1' | 'fwkval'
+
+    }
+
+    @Plugin(service = "PluginGroup", name = 'testgroup')
+    static class TestGroup implements PluginGroup{
+        @PluginProperty
+        String groupVal
+
+    }
+    @Plugin(service = "TestService", name = 'testprov1')
+    @Group(TestGroup)
+    static class TestPluginWithGroup implements ConfiguredBy<TestGroup> {
+        TestGroup pluginGroup
+        @PluginProperty
+        String prop1
+    }
+
+    @Unroll
+    def "configure plugin by name with group"() {
+        given:
+
+            def sut = new RundeckPluginRegistry()
+            sut.pluginRegistryMap=[:]
+            sut.pluginDirectory = File.createTempDir('test', 'dir')
+            sut.applicationContext = applicationContext
+            def fwk = Mock(IFramework) {
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    getFrameworkProject(project) >> Mock(IRundeckProject) {
+                        getProperties() >> projProps
+                    }
+                }
+                getPropertyRetriever() >> new mapRetriever(fwkProps)
+
+            }
+            def svc = Mock(PluggableProviderService) {
+                _*getName() >> 'TestService'
+                _*providerOfType('testprov1') >> { new TestPluginWithGroup() }
+
+            }
+            def grpSvc = Mock(PluggableProviderService) {
+                _*getName() >> 'PluginGroup'
+                _*providerOfType('testgroup') >> { new TestGroup() }
+            }
+            sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader){
+                createPluginService(PluginGroup, 'PluginGroup') >> grpSvc
+            }
+            sut.rundeckPluginBlocklist=Mock(RundeckPluginBlocklist)
+        when:
+            def result = sut.configurePluginByName('testprov1', svc, fwk, project, [:])
+        then:
+            result
+            result.instance instanceof TestPluginWithGroup
+            TestPluginWithGroup plugin = result.instance
+            plugin.prop1==propval
+            plugin.pluginGroup
+            plugin.pluginGroup.groupVal==groupVal
+
+
+        where:
+            project='AProject'
+            projProps | fwkProps | propval | groupVal
+            [:] | [:] | null | null
+            [:] | ['framework.plugin.TestService.testprov1.prop1': 'prop1'] | 'prop1' | null
+            ['project.plugin.TestService.testprov1.prop1': 'propval'] | [:] | 'propval' | null
+            ['project.plugin.TestService.testprov1.prop1': 'propval'] | ['framework.plugin.TestService.testprov1.prop1': 'prop1'] | 'propval' | null
+
+            ['project.plugin.PluginGroup.testgroup.groupVal': 'projval2'] | [:] | null | 'projval2'
+            [:] | ['framework.plugin.PluginGroup.testgroup.groupVal': 'fwkval2'] | null | 'fwkval2'
+            ['project.plugin.PluginGroup.testgroup.groupVal': 'projval2'] | ['framework.plugin.PluginGroup.testgroup.groupVal': 'fwkval2'] | null | 'projval2'
 
     }
 
@@ -232,19 +305,19 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         FileReader reader = Mock(FileReader)
         sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist){
-            1 * isPluginProviderPresent(_,"plugin2") >> false
-            1 * isPluginProviderPresent(_,"plugin1") >> true
+            1 * isPluginProviderPresent(_,"plugin2") >> true
+            0 * isPluginProviderPresent(_,"plugin1") >> true
             1 * isPluginProviderPresent(_,"plugin3") >> false
         }
         def svc = Mock(PluggableProviderService){
-            getName() >> "NodeExecutor"
+            getName() >> "otherservice"
         }
 
         when:
-        def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
+        def result = sut.listPluginDescriptors(APluginType, svc)
 
         then:
-        result.size() == 2
+        result.size() == 1
         result["plugin3"].description == description3
 
     }
@@ -545,10 +618,12 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         sut.rundeckServerServiceProviderLoader = Mock(ServiceProviderLoader)
         sut.rundeckPluginBlocklist = Mock(RundeckPluginBlocklist)
 
-        def svc = Mock(PluggableProviderService)
+        def svc = Mock(PluggableProviderService){
+            getName() >> 'otherservice'
+        }
 
         when:
-        def result = sut.listPluginDescriptors(TestPluginWithAnnotation2, svc)
+        def result = sut.listPluginDescriptors(APluginType, svc)
 
         then:
         result
@@ -820,6 +895,30 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
         result == null
     }
 
+    def "extract plugin name"() {
+        when:
+            def result = RundeckPluginRegistry.extractPluginName(input)
+        then:
+            result == expected
+        where:
+            input   || expected
+            'a:b'   || 'b'
+            'asdf'  || 'asdf'
+            'a:b:c' || 'b:c'
+    }
+
+    def "extract plugin svc"() {
+        when:
+            def result = RundeckPluginRegistry.extractPluginSvc(input)
+        then:
+            result == expected
+        where:
+            input   || expected
+            'a:b'   || 'a'
+            'asdf'  || null
+            'a:b:c' || 'a'
+    }
+
 
       static class mapRetriever implements PropertyRetriever {
         private Map<String, String> map;
@@ -858,9 +957,11 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             TestPlugin2
         }
     }
+    static interface OtherPluginType{
 
+    }
     @Plugin(service = "aservicename", name = 'providername')
-    static class TestPluginWithAnnotation implements Configurable, Describable {
+    static class TestPluginWithAnnotation implements Configurable, Describable,OtherPluginType {
         Properties configuration
         Description description
 
@@ -974,7 +1075,10 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
             return null
         }
     }
-    static class TestPluginWithAnnotation2 implements Configurable, Describable {
+    static interface APluginType{
+
+    }
+    static class TestPluginWithAnnotation2 implements Configurable, Describable, APluginType {
         Properties configuration
         Description description
 
@@ -986,9 +1090,11 @@ class RundeckPluginRegistrySpec extends Specification implements GrailsUnitTest 
 
     static class TestBuilder2 implements PluginBuilder<TestPluginWithAnnotation> {
         TestPluginWithAnnotation instance
+        int buildCount=0
 
         @Override
         TestPluginWithAnnotation buildPlugin() {
+            buildCount++
             return instance
         }
 

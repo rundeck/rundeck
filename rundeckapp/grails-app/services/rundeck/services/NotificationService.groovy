@@ -24,9 +24,8 @@ import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -44,23 +43,8 @@ import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.apache.commons.codec.binary.Hex
 import org.apache.commons.codec.digest.DigestUtils
-import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
-import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.AuthCache
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.protocol.HttpClientContext
-import org.apache.http.entity.StringEntity
-import org.apache.http.impl.auth.BasicScheme
-import org.apache.http.impl.client.BasicAuthCache
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.message.BasicHeader
 import org.rundeck.app.AppConstants
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
@@ -109,12 +93,20 @@ public class NotificationService implements ApplicationContextAware{
     def configurationService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
-        return pluginService.validatePlugin(name, notificationPluginProviderService,
-                frameworkService.getFrameworkPropertyResolver(project, config), PropertyScope.Instance, PropertyScope.Project)
+        return pluginService.validatePlugin(name, notificationPluginProviderService, project,config, PropertyScope.Instance, PropertyScope.Project)
     }
     def ValidatedPlugin validatePluginConfig(String name, Map projectProps, Map config) {
-        return pluginService.validatePlugin(name, notificationPluginProviderService,
-                frameworkService.getFrameworkPropertyResolverWithProps(projectProps, config), PropertyScope.Instance, PropertyScope.Project)
+        return pluginService.validatePlugin(
+            name,
+            notificationPluginProviderService,
+            PropertyResolverFactory.pluginPrefixedScoped(
+                PropertyResolverFactory.instanceRetriever(config),
+                PropertyResolverFactory.instanceRetriever(projectProps),
+                frameworkService.getFrameworkProperties()
+            ),
+            PropertyScope.Instance,
+            PropertyScope.Project
+        )
     }
 
     private Map loadExecutionViewPlugins() {
@@ -581,7 +573,7 @@ public class NotificationService implements ApplicationContextAware{
                         }
                     }
 
-                    didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config), content)
+                    didsend=triggerPlugin(trigger,execMap,n.type, source.project,config, content)
                 }else{
                     log.error("Unsupported notification type: " + n.type);
                 }
@@ -774,7 +766,7 @@ public class NotificationService implements ApplicationContextAware{
      * @param type plugin type
      * @param config user configuration
      */
-    private boolean triggerPlugin(String trigger, Map data,String type, PropertyResolver resolver, Map content){
+    private boolean triggerPlugin(String trigger, Map data,String type, String project, Map config, Map content){
 
         Map<Class, Object> servicesMap = [:]
         servicesMap.put(KeyStorageTree, content.context.storageTree)
@@ -783,7 +775,19 @@ public class NotificationService implements ApplicationContextAware{
                 services: servicesMap
         )
         //load plugin and configure with config values
-        def result = pluginService.configurePlugin(type, notificationPluginProviderService, resolver, PropertyScope.Instance, services)
+
+        def pluginConfigFactory = PropertyResolverFactory.pluginPrefixedScoped(
+            PropertyResolverFactory.instanceRetriever(config),
+            frameworkService.getProjectPropertyResolver(project),
+            frameworkService.getFrameworkProperties()
+        )
+        def result = pluginService.configurePlugin(
+            type,
+            notificationPluginProviderService,
+            pluginConfigFactory,
+            PropertyScope.Instance,
+            services
+        )
         if (!result?.instance) {
             return false
         }
@@ -791,8 +795,7 @@ public class NotificationService implements ApplicationContextAware{
         /*
         * contains unmapped configuration values only
          */
-        def config=result.configuration
-        def allConfig = pluginService.getPluginConfiguration(type, notificationPluginProviderService, resolver, PropertyScope.Instance)
+        def allConfig = pluginService.getPluginConfiguration(type, notificationPluginProviderService, pluginConfigFactory, PropertyScope.Instance)
 
         //invoke plugin
         //TODO: use executor

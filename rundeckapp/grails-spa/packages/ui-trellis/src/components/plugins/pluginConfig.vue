@@ -54,7 +54,6 @@
         </span>
       </div>
       <div v-else-if="isShowConfigForm && inputLoaded" class="col-xs-12 col-sm-12 form-horizontal">
-
         <div v-for="(group,gindex) in groupedProperties" :key="group.name">
             <div v-if="!group.name">
               <div v-for="(prop,pindex) in group.props"
@@ -69,6 +68,7 @@
                                 @pluginPropsMounted="notifyHandleAutoComplete"
                                 :validation="validation"
                                 :rkey="'g_'+gindex+'_'+rkey"
+                                :readOnly="readOnly"
                                 :pindex="pindex"
                                 :autocompleteCallback="autocompleteCallback"/>
               </div>
@@ -83,7 +83,6 @@
                   </span>
                 </span>
               </summary>
-
               <div v-for="(prop,pindex) in group.props"
                    :key="'g_'+gindex+'/'+prop.name"
                    :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
@@ -93,6 +92,7 @@
                                 :prop="prop"
                                 :input-values="inputValues"
                                 :validation="validation"
+                                :readOnly="readOnly"
                                 :rkey="'g_'+gindex+'_'+rkey"
                                 :pindex="pindex"
                                 :autocompleteCallback="autocompleteCallback"
@@ -155,6 +155,7 @@ export default Vue.extend({
     'savedProps',
     'pluginConfig',
     'validation',
+    'readOnly',
     'validationWarningText',
     'scope',
     'defaultScope',
@@ -166,6 +167,7 @@ export default Vue.extend({
       props: [] as any[],
       detail: {},
       error: null as any|null,
+      isReadOnly: this.readOnly!== null ? this.readOnly : false,
       propsComputedSelectorData: {},
       inputShowTitle: this.showTitle !== null ? this.showTitle : true,
       inputShowIcon: this.showIcon !== null ? this.showIcon : true,

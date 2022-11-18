@@ -16,12 +16,14 @@
 
 /*
 * Description.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/27/11 4:53 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
+
+import com.dtolabs.rundeck.plugins.config.PluginGroup;
 
 import java.util.List;
 import java.util.Map;
@@ -64,4 +66,14 @@ public interface Description {
      * @return a map of config prop keys to external framework property names, allowing input values to be in properties files
      */
     public Map<String, String> getFwkPropertiesMapping();
+
+    /**
+     * plugin group type if set, otherwise null
+     * @param <T>
+     * @return
+     */
+    public default <T extends PluginGroup> Class<T> getPluginGroupType(){
+        return null;
+    }
+
 }

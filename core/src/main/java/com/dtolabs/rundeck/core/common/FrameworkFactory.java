@@ -16,9 +16,6 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.authorization.AclsUtil;
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
-import com.dtolabs.rundeck.core.authorization.providers.Policies;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
@@ -40,9 +37,10 @@ public class FrameworkFactory {
      *
      * @param rdeck_base_dir path name to the rdeck_base
      *
+     * @param serviceSupport
      * @return a Framework instance
      */
-    public static Framework createForFilesystem(final String rdeck_base_dir) {
+    public static Framework createForFilesystem(final String rdeck_base_dir, final IFrameworkServices serviceSupport) {
         File baseDir = new File(rdeck_base_dir);
 
         if (!baseDir.exists()) {
@@ -59,7 +57,7 @@ public class FrameworkFactory {
                 filesystemFramework
 
         );
-        Framework framework = createFramework(lookup1, filesystemFramework, projectManager);
+        Framework framework = createFramework(lookup1, filesystemFramework, projectManager, serviceSupport);
 
         IProjectNodesFactory nodesFactory = createNodesFactory(
                 filesystemFramework,
@@ -131,17 +129,18 @@ public class FrameworkFactory {
      * @param filesystemFramework filessystem
      * @param projectManager project
      * @param services preloaded services
+     * @param frameworkServices services support
      * @return framework
      */
     public static Framework createFramework(
             final IPropertyLookup lookup1,
             final FilesystemFramework filesystemFramework,
             final ProjectManager projectManager,
-            Map<String,FrameworkSupportService> services
+            Map<String,FrameworkSupportService> services,
+            IFrameworkServices frameworkServices
     )
     {
 
-        ServiceSupport serviceSupport = new ServiceSupport();
 
         NodeSupport iFrameworkNodes = new NodeSupport();
         iFrameworkNodes.setLookup(lookup1);
@@ -152,29 +151,26 @@ public class FrameworkFactory {
                 filesystemFramework,
                 projectManager,
                 lookup1,
-                serviceSupport,
+                frameworkServices,
                 iFrameworkNodes
         );
         filesystemFramework.setFramework(framework);
         if(null!=services) {
             //load predefined services
             for (String s : services.keySet()) {
-                framework.setService(s, services.get(s));
+                frameworkServices.setService(s, services.get(s));
             }
         }
-        serviceSupport.initialize(framework);
 
         return framework;
     }
     private static Framework createFramework(
             final PropertyLookup lookup1,
             final FilesystemFramework filesystemFramework,
-            final IFrameworkProjectMgr projectManager
+            final IFrameworkProjectMgr projectManager,
+            final IFrameworkServices frameworkServices
     )
     {
-
-
-        ServiceSupport serviceSupport = new ServiceSupport();
 
         NodeSupport iFrameworkNodes = new NodeSupport();
         iFrameworkNodes.setLookup(lookup1);
@@ -185,11 +181,11 @@ public class FrameworkFactory {
                 filesystemFramework,
                 projectManager,
                 lookup1,
-                serviceSupport,
+                frameworkServices,
                 iFrameworkNodes
         );
         filesystemFramework.setFramework(framework);
-        serviceSupport.initialize(framework);
+        frameworkServices.initialize(framework);
 
         return framework;
     }

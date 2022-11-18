@@ -35,7 +35,8 @@ public enum Features {
     EVENT_STORE("eventStore"),
     PLUGIN_SECURITY("pluginSecurity"),
     PROJECT_KEY_STORAGE("projectKeyStorage"),
-    FILE_UPLOAD_PLUGIN("fileUploadPlugin");
+    FILE_UPLOAD_PLUGIN("fileUploadPlugin"),
+    PLUGIN_GROUPS("pluginGroups");
 
     private final String propertyName;
 

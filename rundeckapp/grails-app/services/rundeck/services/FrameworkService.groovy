@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
@@ -537,12 +538,49 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
      * @param projectName
      * @return
      */
+    PropertyResolverFactory.Factory pluginConfigFactory(String projectName, Map instanceConfiguration) {
+        pluginConfigFactory(instanceConfiguration, null!=projectName?getFrameworkProject(projectName).getProperties():null)
+    }
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
+    PropertyResolverFactory.Factory pluginConfigFactory(Map instanceConfiguration, Map projectConfig) {
+        PropertyResolverFactory.pluginPrefixedScoped(
+            PropertyResolverFactory.instanceRetriever(instanceConfiguration),
+            PropertyResolverFactory.instanceRetriever(projectConfig),
+            rundeckFramework.getPropertyRetriever()
+        )
+    }
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
     PropertyResolver getFrameworkPropertyResolver(String projectName=null, Map instanceConfiguration=null) {
         return PropertyResolverFactory.createResolver(
                 instanceConfiguration ? PropertyResolverFactory.instanceRetriever(instanceConfiguration) : null,
-                null != projectName ? PropertyResolverFactory.instanceRetriever(getFrameworkProject(projectName).getProperties()) : null,
+                null != projectName ? getProjectPropertyResolver(projectName) : null,
                 rundeckFramework.getPropertyRetriever()
         )
+    }
+
+    /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
+    PropertyResolverFactory.Factory getFrameworkPropertyResolverFactory(String projectName=null, Map instanceConfiguration=null) {
+        return PropertyResolverFactory.createFrameworkProjectRuntimeResolverFactory(
+            rundeckFramework,
+            projectName,
+            instanceConfiguration
+        )
+    }
+
+    public PropertyRetriever getProjectPropertyResolver(String projectName) {
+        PropertyResolverFactory.instanceRetriever(getFrameworkProject(projectName).getProperties())
     }
     /**
      * Get a property resolver for optional project level
@@ -930,6 +968,13 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         return [descriptions, nodeexecdescriptions, filecopydescs]
     }
 
+    List<Description> listPluginGroupDescriptions() {
+        pluginService.listPluginDescriptions(
+                PluginGroup,
+                pluginService.createPluggableService(PluginGroup)
+        )
+    }
+
 
     List<Description> listResourceModelSourceDescriptions() {
         pluginService.listPluginDescriptions(
@@ -971,6 +1016,16 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         getServicePropertiesForType(serviceType, getNodeExecutorService(), project)
     }
 
+    public boolean hasPluginGroupConfigurationForType(String serviceType, Map<String,String> projectProps) {
+        return projectProps.get(
+            "project.PluginGroup.${serviceType}.enabled".toString()
+        )=='true'
+    }
+
+    public Map<String, String> getPluginGroupConfigurationForType(String serviceType, String project) {
+        getServicePropertiesForPluginGroups(serviceType, pluginService.createPluggableService(PluginGroup), project)
+    }
+
     /**
      * Return a map of property name to value
      * @param serviceType
@@ -981,6 +1036,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
         getServicePropertiesMapForType(serviceType, getNodeExecutorService(), properties)
     }
 
+    private Map<String,String> getServicePropertiesForPluginGroups(String serviceType, PluggableProviderService service, String project) {
+        return getServicePropertiesMapForPluginGroups(serviceType,service,getFrameworkProject(project).getProperties())
+    }
     /**
      * Return a map of property name to value for the configured project plugin
      * @param serviceType
@@ -1005,6 +1063,22 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
                 def described = pluginService.getPluginDescriptor(serviceType, service)
                 if(described?.description) {
                     properties = Validator.demapProperties(props, described.description)
+                }
+            } catch (ExecutionServiceException e) {
+                log.error(e.message)
+                log.debug(e.message,e)
+            }
+        }
+        properties
+    }
+
+    public Map<String,String> getServicePropertiesMapForPluginGroups(String serviceType, PluggableProviderService service, Map props) {
+        Map<String,String> properties = new HashMap<>()
+        if (serviceType) {
+            try {
+                def described = pluginService.getPluginDescriptor(serviceType, service)
+                if(described?.description) {
+                    properties = Validator.demapPluginGroupProperties(props, described.description)
                 }
             } catch (ExecutionServiceException e) {
                 log.error(e.message)

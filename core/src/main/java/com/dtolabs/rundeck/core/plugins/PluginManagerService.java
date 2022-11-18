@@ -25,11 +25,14 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 import com.dtolabs.rundeck.plugins.ServiceTypes;
-import org.rundeck.core.plugins.PluginTypes;
+import lombok.Getter;
+import lombok.Setter;
+import org.rundeck.core.plugins.PluginProviderServices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,10 +50,12 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     private static final Logger log          = LoggerFactory.getLogger(PluginManagerService.class.getName());
     public static final  String SERVICE_NAME = "PluginManager";
 
-    private File extdir;
-    private File cachedir;
-    private  PluginCache cache;
-    private Map<String, String> serviceAliases;
+    @Getter @Setter private File extdir;
+    @Getter @Setter private File cachedir;
+    @Getter @Setter private  PluginCache cache;
+    @Getter @Setter private Map<String, String> serviceAliases;
+    @Getter @Setter private PluginProviderServices frameworkExecutionProviderServices;
+
     /**
      * Create a PluginManagerService
      */
@@ -71,6 +76,10 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         PluggableProviderService<T> pluginProviderService = ServiceTypes.getPluginProviderService(type, serviceName, this);
         if (null != pluginProviderService) {
             return pluginProviderService;
+        }
+        if (frameworkExecutionProviderServices != null
+            && frameworkExecutionProviderServices.hasServiceFor(type, serviceName)) {
+            return frameworkExecutionProviderServices.getServiceProviderFor(type, serviceName, this);
         }
 
         //otherwise construct default service implementation
@@ -104,8 +113,8 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return SERVICE_NAME;
     }
 
-    public static PluginManagerService getInstanceForFramework(final Framework framework) {
-        return (PluginManagerService) framework.getService(SERVICE_NAME);
+    public static PluginManagerService getInstanceForFramework(final Framework framework, IServicesRegistration registration) {
+        return (PluginManagerService) registration.getService(SERVICE_NAME);
     }
 
     public synchronized List<ProviderIdent> listProviders() {
@@ -194,35 +203,4 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return null;
     }
 
-    public File getExtdir() {
-        return extdir;
-    }
-
-    public void setExtdir(File extdir) {
-        this.extdir = extdir;
-    }
-
-    public File getCachedir() {
-        return cachedir;
-    }
-
-    public void setCachedir(File cachedir) {
-        this.cachedir = cachedir;
-    }
-
-    public PluginCache getCache() {
-        return cache;
-    }
-
-    public void setCache(PluginCache cache) {
-        this.cache = cache;
-    }
-
-    public Map<String, String> getServiceAliases() {
-        return serviceAliases;
-    }
-
-    public void setServiceAliases(Map<String, String> serviceAliases) {
-        this.serviceAliases = serviceAliases;
-    }
 }

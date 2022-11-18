@@ -715,7 +715,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
 
     public Framework getFramework() {
-        return (Framework)framework;
+        if(framework instanceof Framework) {
+            return (Framework) framework;
+        }else{
+            return null;
+        }
     }
     public IFramework getIFramework() {
         return framework;

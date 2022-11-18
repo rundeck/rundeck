@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import grails.converters.JSON
 import grails.gorm.transactions.NotTransactional
@@ -3669,22 +3670,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return null
         }
         def name = workflow.strategy
-        PropertyResolver resolver = frameworkService.getFrameworkPropertyResolverWithProps(
-                projectProps,
-                configmap
-        )
         //validate input values wrt to property definitions
-        def validation = pluginService.validatePlugin(name,
-                                                      service,
-                                                      resolver,
-                                                      PropertyScope.Instance
+
+        def pluginConfigFactory = frameworkService.pluginConfigFactory(configmap, projectProps)
+        def validation = pluginService.validatePlugin(
+            name,
+            service,
+            pluginConfigFactory,
+            PropertyScope.Instance,
+            null
         )
         def report=validation?.report
         if (!report||report.valid) {
             //validate input values of configured plugin in context of the workflow defintion
             def workflowItem = executionUtilService.createExecutionItemForWorkflow(workflow)
-
-            def workflowStrategy = service.getStrategyForWorkflow(workflowItem, resolver)
+            def described = pluginService.getPluginDescriptor(name, service)
+            //TODO: use plugin registry to construct the plugin
+            def workflowStrategy = service.getStrategyForWorkflow(
+                workflowItem,
+                pluginConfigFactory
+                    .create(ServiceNameConstants.WorkflowStrategy, described?.description)
+            )
 
             report = workflowStrategy.validate(workflowItem.workflow)
         }

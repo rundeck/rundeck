@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -99,6 +100,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             getRundeckBase() >> ''
             getServerUUID() >> 'uuid'
             isClusterModeEnabled() >> clusterEnabled
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
         }
         def quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
@@ -116,7 +120,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             existsFrameworkProject('testProject') >> true
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
-            getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             projectNames(*_)>>[]
             getFrameworkNodeName() >> "testProject"
         }
@@ -485,7 +491,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         valid
         !step.hasErrors()
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -537,7 +543,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         !valid
         step.hasErrors()
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: 'bogus'
         ]
@@ -582,7 +588,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -629,7 +635,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: 'bogus'
         ]
@@ -659,7 +665,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 [config: [a: 'b'], type: 'abc']
         ]
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true
         ]
@@ -694,7 +700,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         params['logFilterValidation']["0"] instanceof Validator.Report
         !params['logFilterValidation']["0"].valid
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','bogus')
         ]
@@ -1382,6 +1388,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                     getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
                 }
             }
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             getFrameworkProject(_) >> projectMock
         }
         service.rundeckJobScheduleManager=Mock(JobScheduleManager){
@@ -1430,7 +1439,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                    create(_,_) >> Mock(PropertyResolver)
+                }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -1446,7 +1457,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             _ * getExecutionsAreActive() >> false
         }
         service.pluginService = Mock(PluginService) {
-            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _)
+            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _, _)
         }
 
         service.executionUtilService = Mock(ExecutionUtilService) {
@@ -2091,6 +2102,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             isClusterModeEnabled() >> false
             existsFrameworkProject(projectName) >> true
             getFrameworkProject(projectName) >> projectMock
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
 
             getRundeckFramework() >> Mock(Framework) {
                 getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
@@ -2299,7 +2313,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         ]
         !results.scheduledExecution.errors.hasFieldErrors('workflow')
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true,
         ]
@@ -2337,7 +2351,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         passparams['logFilterValidation']["0"] instanceof Validator.Report
         !passparams['logFilterValidation']["0"].valid
         1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
+                new DescribedPlugin(null, null, 'abc', null, null)
         service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','bogus')
         ]
@@ -2374,7 +2388,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         def pluginService = service.pluginService
-        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
+        1 * pluginService.getPluginDescriptor('node-first', _)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: true,
@@ -2415,6 +2430,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def newJob = new ScheduledExecution(createJobParams())
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
             def pluginService = service.pluginService
+            1 * pluginService.getPluginDescriptor('node-first', _)
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             def pluginConfigSet = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle,
@@ -2458,6 +2474,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def newJob = new ScheduledExecution(createJobParams())
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
             def pluginService = service.pluginService
+            1 * pluginService.getPluginDescriptor('node-first', _)
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             def configSet = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle,
@@ -2511,7 +2528,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         def pluginService = service.pluginService
 
-        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
+        1 * pluginService.getPluginDescriptor('node-first', _)
         0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
         1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
                 valid: false, report: Validator.errorReport('a','wrong')
@@ -3550,7 +3568,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             existsFrameworkProject('testProject') >> true
             isClusterModeEnabled() >> false
             getServerUUID() >> TEST_UUID1
-            getFrameworkPropertyResolverWithProps(*_) >> Mock(PropertyResolver)
+            pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             projectNames(*_) >> []
             getFrameworkNodeName() >> "testProject"
         }
@@ -3604,7 +3624,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3659,7 +3681,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3736,7 +3760,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3805,7 +3831,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3871,7 +3899,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
@@ -3933,7 +3963,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 }
             }
             _ * frameworkNodeName () >> null
-            _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
+                create(_,_) >> Mock(PropertyResolver)
+            }
             _ * filterNodeSet(*_) >> null
         }
 
