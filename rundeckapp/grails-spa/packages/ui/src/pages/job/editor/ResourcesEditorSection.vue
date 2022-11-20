@@ -1,5 +1,6 @@
 <template>
   <div >
+    <u-i-component section="resources-editor" location="top" :event-bus="eventBus" />
     <resources-editor v-model="updatedData" :event-bus="eventBus" v-if="updatedData"/>
     <json-embed :output-data="updatedData" field-name="resourcesJsonData"/>
   </div>
@@ -7,6 +8,7 @@
 
 <script>
 import ResourcesEditor from '../../../components/job/resources/ResourcesEditor.vue'
+import UIComponent from '../../../components/ui/UIComponent.vue'
 import JsonEmbed from './JsonEmbed.vue'
 
 import {
@@ -14,12 +16,17 @@ import {
   RundeckContext
 } from "@rundeck/ui-trellis"
 
+const rootStore = getRundeckContext().rootStore
 export default {
-  name: 'App',
+  name: 'ResourcesEditorSection',
   props:['eventBus' ],
+  provide:{
+    rootStore
+  },
   components: {
     ResourcesEditor,
-    JsonEmbed
+    JsonEmbed,
+    UIComponent
   },
   data () {
     return {
