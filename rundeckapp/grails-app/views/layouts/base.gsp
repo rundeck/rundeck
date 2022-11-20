@@ -163,6 +163,7 @@
     <asset:javascript src="static/components/central.js"/>
     %{--  Navigation components load early too  --}%
     <asset:javascript src="static/components/navbar.js"/>
+    <asset:javascript src="static/components/uicomponents.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
 
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
