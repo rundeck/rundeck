@@ -21,8 +21,7 @@
  --%>
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.plugins.ServiceNameConstants; com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
-%{--<g:set var="fieldname" value="${}"/>--}%
-%{--<g:set var="origfieldname" value="${}"/>--}%
+
 <g:set var="inputSize" value="${fieldInputSize!=null?fieldInputSize:'input-sm'}"/>
 <g:set var="labelCss" value="control-label ${inputSize}"/>
 <g:set var="labelColType" value="col-sm-2 ${labelCss}"/>
@@ -40,6 +39,20 @@
 <g:set var="propScope"
        value="${prop.scope != null && prop.scope != PropertyScope.Unspecified ? prop.scope : defaultScope}"/>
 <g:unless test="${outofscopeOnly && propScope == PropertyScope.InstanceOnly}">
+
+<g:if
+        test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.HIDDEN, 'HIDDEN']}">
+    <g:set var="fieldid" value="${g.rkey()}"/>
+    <g:set var="valueText" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
+    <g:set var="hiddenIdentity" value="${prop.renderingOptions['hidden_identity']}"/>
+
+    <g:hiddenField id="${fieldid}"
+                   name="${fieldname}"
+                   value="${valueText}"
+                   data-hidden-field-identity="${hiddenIdentity}"
+                   class="_config_prop_display_hidden"/>
+</g:if>
+<g:else>
 <div class="form-group ${enc(attr:hasError)}">
 <g:if test="${outofscope}">
     <label class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
@@ -310,6 +323,22 @@
             <g:enc html="${staticTextValue}"/>
         </g:else>
     </g:elseif>
+%{--    <g:elseif--}%
+%{--            test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.CUSTOM, 'CUSTOM']}">--}%
+%{--        <g:set var="fieldid" value="${g.rkey()}"/>--}%
+%{--        <g:set var="valueText" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>--}%
+%{--        <g:set var="customVals" value="${prop.renderingOptions.findAll{it.key.startsWith('CUSTOM_')}.collectEntries{[it.key.replace('CUSTOM_',''),it.value]}}"/>--}%
+
+%{--        <g:hiddenField id="${fieldid}" name="${fieldname}" value="${valueText}"/>--}%
+%{--        <script type="application/json" id="${fieldid}_custom">${customVals.encodeAsJSON()}</script>--}%
+
+%{--        <div id="custom-form-vue-${enc(attr: fieldid)}"--}%
+%{--             class="custom-form-vue"--}%
+%{--             field-value="${enc(attr: valueText)}"--}%
+%{--             custom-opts="${enc(attr: enc(json:customVals.encodeAsJSON()))}"--}%
+%{--             fieldid="${enc(attr: fieldid)}"--}%
+%{--             fieldname="${enc(attr: fieldname)}"></div>--}%
+%{--    </g:elseif>--}%
     <g:else>
         <g:textField name="${fieldname}" value="${valueText}"
                  id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
@@ -352,4 +381,5 @@
     </g:if>
 </div>
 </div>
+</g:else>
 </g:unless>
