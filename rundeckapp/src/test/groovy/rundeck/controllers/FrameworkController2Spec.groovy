@@ -322,7 +322,7 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
 
 
-        controller.frameworkService = fwk.proxyInstance()
+        controller.frameworkService = fwk
         controller.projectService = Mock(ProjectService){
             projectDataProvider >>  new GormProjectDataProvider()
 
@@ -1026,7 +1026,10 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         def execPFmck = Mock(PasswordFieldsService)
         def fcopyPFmck = Mock(PasswordFieldsService)
         def pluginPFmck = Mock(PasswordFieldsService)
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
 
+        }
 
         controller.execPasswordFieldsService = execPFmck
         controller.fcopyPasswordFieldsService = fcopyPFmck
