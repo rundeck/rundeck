@@ -39,17 +39,17 @@ public class BaseFrameworkExecutionProviders
     }
 
     @Override
-    public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final String project)
+    public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final ExecutionContext context)
             throws ExecutionServiceException
     {
-        return executionServices.getFileCopierService().getProviderForNodeAndProject(node, project);
+        return executionServices.getFileCopierService().getProviderForNodeAndProject(node, context);
     }
 
     @Override
-    public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final String project)
+    public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final ExecutionContext context)
             throws ExecutionServiceException
     {
-        return executionServices.getNodeExecutorService().getProviderForNodeAndProject(node, project);
+        return executionServices.getNodeExecutorService().getProviderForNodeAndProject(node, context);
     }
 
     @Override
