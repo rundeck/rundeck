@@ -327,8 +327,6 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             projectDataProvider >>  new GormProjectDataProvider()
 
         }
-        def execPFmck = new MockFor(PasswordFieldsService)
-        def fcopyPFmck = new MockFor(PasswordFieldsService)
 
         def execPFmck = Mock(PasswordFieldsService)
         def fcopyPFmck = Mock(PasswordFieldsService)
