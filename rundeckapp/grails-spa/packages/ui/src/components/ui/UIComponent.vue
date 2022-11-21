@@ -2,7 +2,9 @@
     <span>
         <slot v-if="items.length<1"></slot>
         <span v-for="i in items">
-            <component :is="i.widget"/>
+            <template v-if="i.text">{{i.text}}</template>
+            <template v-else-if="i.html" v-html="i.html"></template>
+            <component :is="i.widget" v-else-if="i.widget"/>
         </span>
 
     </span>

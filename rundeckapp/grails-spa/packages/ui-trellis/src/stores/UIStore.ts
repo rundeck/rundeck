@@ -21,5 +21,7 @@ export interface UIItem {
   section: string
   location: string
   visible: boolean
-  widget: VueConstructor
+  widget?: VueConstructor
+  html?:string
+  text?:string
 }
