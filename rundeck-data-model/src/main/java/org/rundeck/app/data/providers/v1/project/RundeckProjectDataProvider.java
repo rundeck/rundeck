@@ -1,12 +1,15 @@
 package org.rundeck.app.data.providers.v1.project;
 
 import org.rundeck.app.data.model.v1.project.RdProject;
+import org.rundeck.app.data.providers.v1.DataProvider;
+
 import org.rundeck.spi.data.DataAccessException;
 
 import java.io.Serializable;
 import java.util.Collection;
 
-public interface RundeckProjectDataProvider {
+
+public interface RundeckProjectDataProvider extends DataProvider {
     /**
      * Retrieves a RundeckProject based on the id provided.
      *
@@ -23,7 +26,7 @@ public interface RundeckProjectDataProvider {
      * @return id of the created RundeckProject
      * @throws DataAccessException on error
      */
-    String create(RdProject data) throws DataAccessException;
+    Long create(RdProject data) throws DataAccessException;
 
     /**
      * Updates a RundeckProject with the supplied attributes
