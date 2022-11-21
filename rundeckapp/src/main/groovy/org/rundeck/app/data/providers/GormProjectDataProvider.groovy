@@ -11,7 +11,6 @@ import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import rundeck.Project
-import rundeck.services.UserService
 import rundeck.services.data.ProjectDataService
 
 import javax.transaction.Transactional
@@ -20,10 +19,10 @@ import javax.transaction.Transactional
 @Slf4j
 @Transactional
 class GormProjectDataProvider implements RundeckProjectDataProvider {
+
     @Autowired
     ProjectDataService projectDataService
-    @Autowired
-    UserService userService
+
     @Autowired
     MessageSource messageSource
 
@@ -33,15 +32,19 @@ class GormProjectDataProvider implements RundeckProjectDataProvider {
         return project ?: null
     }
 
-    String create(RdProject data) throws DataAccessException {
+    Long create(RdProject data) throws DataAccessException {
         Project project = new Project(description: data.getDescription(), name: data.getName())
-        if (projectDataService.save(project)) {
-            return project.getId()
-        } else {
-            log.warn(project.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
-            throw new DataAccessException("Failed to save project: ${data.name}")
+        try {
+            if (projectDataService.save(project)) {
+                return project.getId()
+            } else {
+                log.warn(project.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
+                throw new DataAccessException("Failed to create project: ${data.name}")
+            }
+        } catch (Exception e) {
+            throw new DataAccessException("Failed to create project: ${data.name}: ${e}", e)
         }
-    };
+    }
 
     @Override
     void update(final Serializable id, final RdProject data) throws DataAccessException {

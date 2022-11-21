@@ -64,7 +64,6 @@ import org.rundeck.storage.conf.TreeBuilder
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import rundeck.Project
 import rundeck.services.feature.FeatureService
 
 import java.util.concurrent.Callable
