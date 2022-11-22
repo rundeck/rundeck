@@ -25,12 +25,19 @@ import com.google.common.cache.LoadingCache
 import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.providers.GormProjectDataProvider
+import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.grails.events.AppEvents
+import org.rundeck.spi.data.DataAccessException
+import org.rundeck.spi.data.DataManager
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.data.DataUtil
 import rundeck.Project
+import rundeck.User
+import rundeck.services.data.AuthTokenDataService
+import rundeck.services.data.ProjectDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -39,6 +46,12 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
     def setupSpec() { mockDomains Project }
 
     def setup() {
+
+
+        mockDataService(ProjectDataService)
+        GormProjectDataProvider provider = new GormProjectDataProvider()
+        provider.projectDataService = applicationContext.getBean(ProjectDataService)
+        service.projectDataProvider = provider
     }
 
     def cleanup() {
@@ -303,7 +316,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
     void "create project strict already exists"(){
         setup:
-        Project p = new Project(name:'test1').save()
+        Project p = new Project(name:'test1').save(flush: true)
         def props = new Properties()
         props['abc']='def'
 
@@ -376,7 +389,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         0*service.rundeckNodeService._(*_)
-        IllegalArgumentException e = thrown()
+        DataAccessException e = thrown()
         e.message.contains('does not exist')
     }
 
@@ -419,7 +432,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         Properties props1 = new Properties()
         props1['def']='ghi'
         props1['abc']=abcval
-        new Project(name:'test1').save()
+        new Project(name:'test1').save(flush: true)
         service.configStorageService=Stub(ConfigStorageService){
             existsFileResource("projects/test1/etc/project.properties") >> true
             getFileResource("projects/test1/etc/project.properties") >> Stub(Resource){
@@ -471,7 +484,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         setup:
         Properties props1 = new Properties()
         props1['def'] = 'ghi'
-        new Project(name: 'test1').save()
+        new Project(name: 'test1').save(flush: true)
         service.configStorageService=Stub(ConfigStorageService) {
             existsFileResource("projects/test1/etc/project.properties") >> false
             updateFileResource(
