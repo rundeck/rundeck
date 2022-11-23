@@ -75,7 +75,8 @@ class ApiController extends ControllerBase{
             apiTokenCreate       : ['POST'],
             apiTokenRemoveExpired: ['POST'],
             apiTokenGet          : ['GET'],
-            apiTokenDelete       : ['DELETE']
+            apiTokenDelete       : ['DELETE'],
+            featureToggle        : ['GET']
     ]
     def info () {
         respond((Object) [
@@ -207,55 +208,55 @@ class ApiController extends ControllerBase{
     }
 
     /**
-     * API endpoints
+     * Query feature toggle status: True/False for On/Off
      */
-    /**
-     * Return true if grails configuration allows given feature, or '*' features
-     * @param name
-     * @return
-     */
-    private boolean featurePresent(def name){
-        return configurationService.getBoolean("feature.${name}", false)
-    }
-    /**
-     * Set an incubator feature toggle on or off
-     * @param name
-     * @param enable
-     */
-    private void toggleFeature(def name, boolean enable){
-        grailsApplication.config.feature?.putAt(name, enable)
-    }
-    /**
-     * Feature toggle api endpoint for development mode
-     */
-    def featureToggle={
+    @Get(
+        uri= "/feature/{featureName}",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get Rundeck System Feature Status",
+        description = "Return feature's on/off status",
+        parameters = [
+            @Parameter(
+                name='featureName',
+                in = ParameterIn.PATH,
+                description = 'Feature name without the `feature.` prefix, or blank to receive list of all system features',
+                allowEmptyValue = true,
+                required = false,
+                schema = @Schema(
+                    type='string'
+                )
+            )
+        ]
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Map of all system features' status if no specific one specified",
+        content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(implementation = Map)
+        )
+    )
+    @Tag(name = "system")
+    def featureToggle() {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def respond={
-            render(contentType: 'text/plain', text: featurePresent(params.featureName) ? 'true' : 'false')
+
+        if (!apiService.requireVersion(request, response, ApiVersions.V42)) {
+            return
         }
-        if(params.featureName){
-            if(request.method=='GET'){
-                respond()
-            } else if (request.method=='PUT'){
-                toggleFeature(params.featureName, request.inputStream.text=='true')
-                respond()
-            }else if(request.method=='POST'){
-                toggleFeature(params.featureName, true)
-                respond()
-            }else if(request.method=='DELETE'){
-                toggleFeature(params.featureName, false)
-                respond()
-            }
+
+        String featureName = params.featureName
+
+        if(featureName){
+            Map<String, Boolean> enabled = new HashMap<>()
+            enabled.put("enabled", configurationService.getBoolean("feature.${featureName}", false))
+            return respond(enabled, formats: ['json'])
         }else{
-            response.contentType='text/plain'
-            response.outputStream.withWriter('UTF-8') { w ->
-                grailsApplication.config.feature?.each { k, v ->
-                    appendOutput(response, "${k}:${v in [true, 'true']}\n")
-                }
-            }
-            flush(response)
+            return respond(configurationService.appConfig.feature, formats: ['json'])
         }
     }
 
