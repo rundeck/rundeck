@@ -43,6 +43,7 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
+import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
@@ -207,13 +208,8 @@ class ApiController extends ControllerBase{
         forward(uri: servletPath.replace('/*', "/$name"))
     }
 
-    /**
-     * Query feature toggle status: True/False for On/Off
-     */
-    @Get(
-        uri= "/feature/{featureName}",
-        produces = MediaType.APPLICATION_JSON
-    )
+
+
     @Operation(
         method = "GET",
         summary = "Get Rundeck System Feature Status",
@@ -240,7 +236,20 @@ class ApiController extends ControllerBase{
         )
     )
     @Tag(name = "system")
-    def featureToggle() {
+    /**
+     * API endpoint to query system features' toggle status: True/False for On/Off
+     *
+     * The URL is `/feature/{featureName}` where featureName is the specific name of the feature without `rundeck.feature.` prefix and `enabled` surfix.
+     * E.g. The configuration item name of the feature to enable runner is `rundeck.feature.runner.enabled`, to query the status of this feature
+     *      the request will be `/feature/runner`. The result of this query is an JSON object { "enabled": true/false }
+     *
+     * If `featureName` parameter is absent, the query will return all system features' status as an JSON object where the key is the feature's name and value is { "enabled": true/false }
+     */
+    @Get(
+        uri= "/feature/{featureName}",
+        produces = MediaType.APPLICATION_JSON
+    )
+    def featureToggle(@PathVariable(name = "featureName", required = false) String featureName) {
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -249,14 +258,12 @@ class ApiController extends ControllerBase{
             return
         }
 
-        String featureName = params.featureName
-
         if(featureName){
             Map<String, Boolean> enabled = new HashMap<>()
-            enabled.put("enabled", configurationService.getBoolean("feature.${featureName}", false))
+            enabled.put("enabled", configurationService.getBoolean("feature.${featureName}.enabled", false))
             return respond(enabled, formats: ['json'])
         }else{
-            return respond(configurationService.appConfig.feature, formats: ['json'])
+            return respond(configurationService.getAppConfig().feature, formats: ['json'])
         }
     }
 
