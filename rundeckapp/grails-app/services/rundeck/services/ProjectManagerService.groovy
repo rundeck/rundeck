@@ -639,7 +639,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     {
         if(properties['project.description'] != null ) {
             def description = properties['project.description']
-            RdProject dbproj = projectDataProvider.findByName(projectName)
+            RdProject dbproj = projectDataProvider.findByName(project.name)
             SimpleProjectBuilder updatedProject =  SimpleProjectBuilder.with(dbproj)
             updatedProject.setDescription(description ? description : null)
             projectDataProvider.update(dbproj.getId(), updatedProject)
