@@ -67,7 +67,7 @@
     "jest": "^26.0.1",
     "lerna": "^3.4.3",
     "less-loader": "^6.1.0",
-    "node-notifier": "^5.1.2",
+    "node-notifier": "^8.0.0",
     "ora": "^1.2.0",
     "pnp-webpack-plugin": "^1.6.4",
     "portfinder": "^1.0.13",
