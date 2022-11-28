@@ -754,7 +754,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         then:
         rundeckProject.projectConfig.name == "project"
-        rundeckProject.nodesFactory
+        rundeckProject.nodesFactory == service.rundeckNodeService
     }
 
     void "storage exists test"(){
