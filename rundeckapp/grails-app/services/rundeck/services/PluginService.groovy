@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -39,6 +40,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.plugins.RenamedDescription
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -220,12 +222,13 @@ class PluginService implements ResourceFormats, PluginConfigureService {
         )
 
         Description desc = pluginDescriptor.description
+        Boolean projectPluginGroupLoaded = false
 
         //add custom mapping for plugin properties at project level.
         // eg: set the value of the plugin properties based on project setting
         //     builder.mapping("project.path.attr", "attr")
         Map projectProperties = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties()
-        if(desc.getPropertiesMapping()){
+        if(desc.getPropertiesMapping() && pluginDescriptor.groupDescribedPlugin == null){
             Map props = Validator.performMapping(projectProperties, desc.getPropertiesMapping(), true)
 
             if(props){
@@ -237,12 +240,47 @@ class PluginService implements ResourceFormats, PluginConfigureService {
             }
         }
 
+
+        else if(pluginDescriptor.groupDescribedPlugin != null){
+            Map props = frameworkService.getPluginGroupConfigurationForType(pluginDescriptor.groupDescribedPlugin.name, project)
+
+            if(props){
+                props.each {key, value->
+                    if(!config.get(key)){
+                        config.put(key, value)
+                    }
+                }
+                projectPluginGroupLoaded=true
+            }
+        }
+
         //add custom mapping for plugin properties at framework level.
         // eg: set the value of the plugin properties based on framework setting
         //     builder.mapping("framework.path.attr", "attr")
         Map frameworkProperties = rundeckFramework.getPropertyLookup().getPropertiesMap()
-        if(desc.getFwkPropertiesMapping()){
+        if(desc.getFwkPropertiesMapping() && pluginDescriptor.groupDescribedPlugin == null){
             Map props = Validator.performMapping(frameworkProperties, desc.getFwkPropertiesMapping(), true)
+
+            if(props){
+                props.each {key, value->
+                    if(!config.get(key)){
+                        config.put(key, value)
+                    }
+                }
+            }
+        }
+
+        else if(pluginDescriptor.groupDescribedPlugin != null && !projectPluginGroupLoaded){
+            String prefix = "framework.plugin.PluginGroup." + pluginDescriptor.groupDescribedPlugin.name + "."
+            List<Property> propList = pluginDescriptor.description.getProperties()
+            Map<String, String> props = [:]
+            for (i in propList) {
+
+                def pluginGroupConfig = frameworkProperties.find { it.key == prefix + i.name }
+                if (pluginGroupConfig) {
+                    props.put(i.name, pluginGroupConfig.value.toString())
+                }
+            }
 
             if(props){
                 props.each {key, value->
