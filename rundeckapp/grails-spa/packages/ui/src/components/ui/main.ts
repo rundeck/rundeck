@@ -8,7 +8,7 @@ const EventBus = getRundeckContext().eventBus
 window.addEventListener('DOMContentLoaded', initUiComponents)
 
 function initUiComponents() {
-  const elm = document.getElementsByClassName('vue-ui-component')
+  const elm = document.getElementsByClassName('vue-ui-socket')
   for (const elmElement of elm) {
     const vue = new Vue({
       el: elmElement,

@@ -24,7 +24,7 @@ import {UIItem} from '@rundeck/ui-trellis/lib/stores/UIStore'
 const rootStore = getRundeckContext().rootStore
 
 @Component
-export default class UIComponent extends Vue {
+export default class UiSocket extends Vue {
     @Prop({required: true}) readonly section!: string
     @Prop({required: true}) readonly location!: string
     @Prop({required: false}) readonly eventBus!: Vue
@@ -33,7 +33,7 @@ export default class UIComponent extends Vue {
 
     mounted() {
         this.items = rootStore.ui.itemsForLocation(this.section, this.location)
-        this.eventBus.$emit('ui-component-mounted', {section: this.section, location: this.location})
+        this.eventBus.$emit('ui-socket-mounted', {section: this.section, location: this.location})
     }
 }
 </script>

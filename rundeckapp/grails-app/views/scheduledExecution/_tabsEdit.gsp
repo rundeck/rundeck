@@ -39,10 +39,10 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#tab_nodes" data-toggle="tab" class="vue-ui-component">
-                        <u-i-component section="job-edit-page" location="nodes-tab-title" :event-bus="EventBus">
+                    <a href="#tab_nodes" data-toggle="tab" class="vue-ui-socket">
+                        <ui-socket section="job-edit-page" location="nodes-tab-title" :event-bus="EventBus">
                         <g:message code="job.edit.page.tab.nodes.title"/>
-                        </u-i-component>
+                        </ui-socket>
                         <g:set var="sectionProps" value="${g.jobComponentSectionProperties(section:'nodes',jobComponents:jobComponents)}"/>
 
                         <g:if test="${sectionProps.any{jobComponentValidation?.get(it.name)}}">
