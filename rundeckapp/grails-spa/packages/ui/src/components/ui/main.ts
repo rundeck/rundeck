@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-import UIComponent from './UIComponent.vue'
+import UiSocket from './UiSocket.vue'
 import {getRundeckContext} from '@rundeck/ui-trellis'
 
 const rootStore = getRundeckContext().rootStore
@@ -12,7 +12,7 @@ function initUiComponents() {
   for (const elmElement of elm) {
     const vue = new Vue({
       el: elmElement,
-      components: {UIComponent},
+      components: {UiSocket},
       data() {
         return {
           EventBus
