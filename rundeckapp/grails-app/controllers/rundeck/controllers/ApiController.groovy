@@ -77,7 +77,7 @@ class ApiController extends ControllerBase{
             apiTokenRemoveExpired: ['POST'],
             apiTokenGet          : ['GET'],
             apiTokenDelete       : ['DELETE'],
-            featureToggle        : ['GET']
+            featureQuery: ['GET']
     ]
     def info () {
         respond((Object) [
@@ -249,7 +249,7 @@ class ApiController extends ControllerBase{
         uri= "/feature/{featureName}",
         produces = MediaType.APPLICATION_JSON
     )
-    def featureToggle(@PathVariable(name = "featureName", required = false) String featureName) {
+    def featureQuery(@PathVariable(name = "featureName", required = false) String featureName) {
         if (!apiService.requireApi(request, response)) {
             return
         }

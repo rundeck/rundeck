@@ -670,7 +670,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         }
 
         when:
-        controller.featureToggle(featureName)
+        controller.featureQuery(featureName)
 
         then:
         response.status == 200
@@ -699,7 +699,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         }
 
         when:
-        controller.featureToggle()
+        controller.featureQuery()
 
         then:
         response.status == 200

@@ -1,7 +1,4 @@
 package rundeckapp
-
-import com.dtolabs.rundeck.app.api.ApiVersions
-
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -224,7 +221,7 @@ class UrlMappings {
         "/api/$api_version/user/list"(controller: 'user', action: 'apiUserList')
         "/api/$api_version/user/roles"(controller: 'user', action: 'apiListRoles')
 
-        "/api/$api_version/feature/$featureName?"(controller: 'api', action: 'featureToggle')
+        "/api/$api_version/feature/$featureName?"(controller: 'api', action: 'featureQuery')
 
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
