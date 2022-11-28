@@ -1,6 +1,4 @@
-import {RootStore} from './RootStore'
-import {action, computed, observable} from 'mobx'
-import {UtilityBarItem} from './UtilityBar'
+import { observable} from 'mobx'
 import { VueConstructor } from 'vue'
 
 export class UIStore {
