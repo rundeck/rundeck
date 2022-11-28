@@ -3,8 +3,11 @@
     <div class="form-group">
         <div class="col-sm-2 " style="text-align: right">
             <label class="control-label">
+                <ui-socket section="resources-editor" location="section-title">
                 {{ $t('resourcesEditor.Nodes') }}
+                </ui-socket>
             </label>
+            <ui-socket section="resources-editor" location="section-title-help"/>
         </div>
 
       <div class="col-sm-10 ">
@@ -16,7 +19,9 @@
                  v-model="modelData.doNodedispatch"
                  id="doNodedispatchTrue"/>
           <label for="doNodedispatchTrue">
+              <ui-socket section="resources-editor" location="node-dispatch-true-label">
               {{ $t('resourcesEditor.Dispatch to Nodes') }}
+              </ui-socket>
           </label>
         </div>
         <div class="radio radio-inline">
