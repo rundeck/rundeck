@@ -201,6 +201,8 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
                     key = match.group(1)
                     value = match.group(2)
                 }
+                // If the key has a empty value, will be replaced with a space (could be changed)
+                value = value != '' ? value : ' '
                 if (key && value) {
                     if(invalidKeyPattern){
                         def validKey = null
