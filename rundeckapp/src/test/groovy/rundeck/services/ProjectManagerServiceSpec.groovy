@@ -1171,10 +1171,3 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
             [:]                  | ['a', 'b']
     }
 }
-
-class RundeckProjectConfigMock extends RundeckProjectConfig{
-
-    RundeckProjectConfigMock(String name) {
-        super(name, null, null, null, null)
-    }
-}
