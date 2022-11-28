@@ -7,6 +7,10 @@ const translationStrings = {
         Cancel: 'Cancel',
         Revert: 'Revert',
         jobAverageDurationPlaceholder:'leave blank for Job Average duration',
+        resourcesEditor: {
+            'Dispatch to Nodes':'Dispatch to Nodes',
+            Nodes:'Nodes'
+        },
         uiv: {
             modal: {
                 cancel: "Cancel",
