@@ -33,7 +33,9 @@ export default class UiSocket extends Vue {
 
     mounted() {
         this.items = rootStore.ui.itemsForLocation(this.section, this.location)
-        this.eventBus.$emit('ui-socket-mounted', {section: this.section, location: this.location})
+        if(this.eventBus) {
+            this.eventBus.$emit('ui-socket-mounted', {section: this.section, location: this.location})
+        }
     }
 }
 </script>
