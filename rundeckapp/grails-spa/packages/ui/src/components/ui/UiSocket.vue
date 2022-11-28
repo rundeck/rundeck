@@ -3,7 +3,7 @@
         <slot v-if="items.length<1"></slot>
         <template v-for="i in items">
             <template v-if="i.text">{{i.text}}</template>
-            <template v-else-if="i.html" v-html="i.html"></template>
+            <span v-else-if="i.html" v-html="i.html"></span>
             <component :is="i.widget" v-else-if="i.widget"/>
         </template>
     </span>
