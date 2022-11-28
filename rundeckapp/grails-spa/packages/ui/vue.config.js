@@ -8,7 +8,7 @@ module.exports = {
     'components/ko-paginator': { entry: './src/components/ko-paginator/main.ts'},
     'components/motd': { entry: './src/components/motd/main.js'},
     'components/navbar': { entry: './src/components/navbar/main.ts'},
-    'components/uicomponents': { entry: './src/components/ui/main.ts'},
+    'components/uisockets': { entry: './src/components/ui/main.ts'},
     'components/project-picker': { entry: './src/components/project-picker/main.ts'},
     'components/first-run': { entry: './src/components/first-run/main.ts' },
     'components/theme': { entry: './src/components/theme/main.ts'},
