@@ -323,22 +323,6 @@
             <g:enc html="${staticTextValue}"/>
         </g:else>
     </g:elseif>
-%{--    <g:elseif--}%
-%{--            test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.CUSTOM, 'CUSTOM']}">--}%
-%{--        <g:set var="fieldid" value="${g.rkey()}"/>--}%
-%{--        <g:set var="valueText" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>--}%
-%{--        <g:set var="customVals" value="${prop.renderingOptions.findAll{it.key.startsWith('CUSTOM_')}.collectEntries{[it.key.replace('CUSTOM_',''),it.value]}}"/>--}%
-
-%{--        <g:hiddenField id="${fieldid}" name="${fieldname}" value="${valueText}"/>--}%
-%{--        <script type="application/json" id="${fieldid}_custom">${customVals.encodeAsJSON()}</script>--}%
-
-%{--        <div id="custom-form-vue-${enc(attr: fieldid)}"--}%
-%{--             class="custom-form-vue"--}%
-%{--             field-value="${enc(attr: valueText)}"--}%
-%{--             custom-opts="${enc(attr: enc(json:customVals.encodeAsJSON()))}"--}%
-%{--             fieldid="${enc(attr: fieldid)}"--}%
-%{--             fieldname="${enc(attr: fieldname)}"></div>--}%
-%{--    </g:elseif>--}%
     <g:else>
         <g:textField name="${fieldname}" value="${valueText}"
                  id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
