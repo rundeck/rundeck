@@ -115,7 +115,7 @@ class SimpleDataFilterPluginSpec extends Specification {
 
         where:
         dolog | regex                            | lines                           | expect
-        true  | '^\\s*([^\\s]+?)\\s*=\\s*(.*)$'  | ['key=']                        | [key:' ']
+        true  | '^\\s*([^\\s]+?)\\s*=\\s*(.*)$'  | ['key=']                        | [key:'']
 
     }
 
