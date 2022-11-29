@@ -47,6 +47,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
+import javax.validation.constraints.Pattern
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions
