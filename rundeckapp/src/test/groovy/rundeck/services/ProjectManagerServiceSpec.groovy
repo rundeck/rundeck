@@ -21,12 +21,16 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.PropertyLookup
+import com.dtolabs.rundeck.server.projects.RundeckProject
+import com.dtolabs.rundeck.server.projects.RundeckProjectConfig
 import com.google.common.cache.LoadingCache
 import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.grails.events.AppEvents
 import org.rundeck.spi.data.DataAccessException
 import org.rundeck.spi.data.DataManager
@@ -719,6 +723,38 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         null==result.getProperty("def")
         null==result.getProperty("defleopard")
         "789"==result.getProperty("ghi")
+    }
+
+    void "merge project properties"(){
+        given:
+        RundeckProject rundeckProject = new RundeckProject("project", null, service)
+        RundeckProjectDataProvider providerMock = Mock(RundeckProjectDataProvider){
+            findByName("project") >> Mock(RdProject)
+        }
+        service.configStorageService=Stub(ConfigStorageService){
+            existsFileResource("projects/test1/my-resource") >> true
+            existsFileResource("projects/test1/not-my-resource") >> false
+        }
+
+        service.projectDataProvider = providerMock
+
+        def properties = new Properties()
+        properties.setProperty("fwkprop","fwkvalue")
+        properties.setProperty("project.description", "desc")
+
+        service.frameworkService=Stub(FrameworkService){
+            getRundeckFramework() >> Stub(Framework){
+                getPropertyLookup() >> PropertyLookup.create(properties)
+            }
+        }
+        service.rundeckNodeService=Mock(NodeService)
+
+        when:
+        service.mergeProjectProperties(rundeckProject, properties, null)
+
+        then:
+        rundeckProject.projectConfig.name == "project"
+        rundeckProject.nodesFactory == service.rundeckNodeService
     }
 
     void "storage exists test"(){
