@@ -18,7 +18,10 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.PluginConfigureService
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
@@ -40,6 +43,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.plugins.config.ConfiguredBy
 import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.plugins.RenamedDescription
@@ -189,110 +193,18 @@ class PluginService implements ResourceFormats, PluginConfigureService {
         String project,
         Services services
     ) {
-        def pluginDescriptor
 
-        if(serviceName == ServiceNameConstants.WorkflowNodeStep){
-            pluginDescriptor = getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
-        }else if(serviceName == ServiceNameConstants.WorkflowStep){
-            pluginDescriptor = getPluginDescriptor(type, rundeckFramework.getStepExecutionService())
-        }else{
-            pluginDescriptor = getPluginDescriptor(type, serviceName)
-        }
+        PropertyRetriever retriever = PropertyResolverFactory.instanceRetriever([:])
+        PropertyResolverFactory.Factory resolverFactory = PropertyResolverFactory.pluginPrefixedScoped(retriever,frameworkService.getProjectPropertyResolver(project),frameworkService.getRundeckFramework().getPropertyRetriever())
+        def plugin = configurePluginWithoutValidation(type, createPluggableService(getPluginTypeByService(serviceName)), resolverFactory, PropertyScope.Instance, null)
 
-        if(!pluginDescriptor){
-            return null
-        }
-
-        def instance = pluginDescriptor.instance
+        def instance=plugin.instance
         if(!(instance instanceof DynamicProperties)){
             return null
         }
 
-        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
-            project,
-            rundeckFramework,
-            null,
-            serviceName,
-            type
-        )
-        final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
-            resolver,
-            pluginDescriptor.description,
-            PropertyScope.Project
-        )
-
-        Description desc = pluginDescriptor.description
-        Boolean projectPluginGroupLoaded = false
-
-        //add custom mapping for plugin properties at project level.
-        // eg: set the value of the plugin properties based on project setting
-        //     builder.mapping("project.path.attr", "attr")
-        Map projectProperties = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties()
-        if(desc.getPropertiesMapping() && pluginDescriptor.groupDescribedPlugin == null){
-            Map props = Validator.performMapping(projectProperties, desc.getPropertiesMapping(), true)
-
-            if(props){
-                props.each {key, value->
-                    if(!config.get(key)){
-                        config.put(key, value)
-                    }
-                }
-            }
-        }
-
-
-        else if(pluginDescriptor.groupDescribedPlugin != null){
-            Map props = frameworkService.getPluginGroupConfigurationForType(pluginDescriptor.groupDescribedPlugin.name, project)
-
-            if(props){
-                props.each {key, value->
-                    if(!config.get(key)){
-                        config.put(key, value)
-                    }
-                }
-                projectPluginGroupLoaded=true
-            }
-        }
-
-        //add custom mapping for plugin properties at framework level.
-        // eg: set the value of the plugin properties based on framework setting
-        //     builder.mapping("framework.path.attr", "attr")
-        Map frameworkProperties = rundeckFramework.getPropertyLookup().getPropertiesMap()
-        if(desc.getFwkPropertiesMapping() && pluginDescriptor.groupDescribedPlugin == null){
-            Map props = Validator.performMapping(frameworkProperties, desc.getFwkPropertiesMapping(), true)
-
-            if(props){
-                props.each {key, value->
-                    if(!config.get(key)){
-                        config.put(key, value)
-                    }
-                }
-            }
-        }
-
-        else if(pluginDescriptor.groupDescribedPlugin != null && !projectPluginGroupLoaded){
-            String prefix = "framework.plugin.PluginGroup." + pluginDescriptor.groupDescribedPlugin.name + "."
-            List<Property> propList = pluginDescriptor.description.getProperties()
-            Map<String, String> props = [:]
-            for (i in propList) {
-
-                def pluginGroupConfig = frameworkProperties.find { it.key == prefix + i.name }
-                if (pluginGroupConfig) {
-                    props.put(i.name, pluginGroupConfig.value.toString())
-                }
-            }
-
-            if(props){
-                props.each {key, value->
-                    if(!config.get(key)){
-                        config.put(key, value)
-                    }
-                }
-            }
-        }
-
         try{
-            Map<String, Object> dynamicProperties = instance.dynamicProperties(config, services)
+            Map<String, Object> dynamicProperties = instance.dynamicProperties(plugin.configuration, services)
             return dynamicProperties
         }catch(Exception e){
             log.error("error dynamicProperties plugin ${serviceName}: ${e.message}")
@@ -452,6 +364,26 @@ class PluginService implements ResourceFormats, PluginConfigureService {
             logValidationErrors(service.name, name, validation.report)
             return null
         }
+        def result = rundeckPluginRegistry?.configurePluginByName(name, service, resolverFactory, defaultScope)
+
+        if (result.instance != null) {
+            serviceSpiProvider(result, servicesProvider)
+
+            return result
+        }
+        log.error("${service.name} not found: ${name}")
+        return null
+    }
+
+    <T> ConfiguredPlugin<T> configurePluginWithoutValidation(
+            String name,
+            PluggableProviderService<T> service,
+            PropertyResolverFactory.Factory resolverFactory,
+            PropertyScope defaultScope,
+            Services servicesProvider
+    )
+    {
+
         def result = rundeckPluginRegistry?.configurePluginByName(name, service, resolverFactory, defaultScope)
 
         if (result.instance != null) {
