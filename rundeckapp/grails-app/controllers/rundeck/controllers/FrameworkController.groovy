@@ -59,6 +59,7 @@ import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
 import rundeck.services.ProjectService
@@ -416,11 +417,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 def maxByProps = configurationService.getInteger("gui.matchedNodesMaxCount",null)
                 if( maxByProps ) {
                     max = maxByProps
-                }else{
-                    max = Integer.parseInt(params.max)
                 }
+                max=Integer.parseInt(params.max)
             }else{
-                max=30
+                max=20
             }
             if(page<0){
                 //if page is negative, load all remaining values starting at page -1*page
