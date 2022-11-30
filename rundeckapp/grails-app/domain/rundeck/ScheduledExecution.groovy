@@ -25,6 +25,9 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
 import org.rundeck.app.data.job.RdJob
+import org.rundeck.app.data.job.RdLogConfig
+import org.rundeck.app.data.job.RdNodeConfig
+import org.rundeck.app.data.job.RdSchedule
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.config.LogConfig
 import org.rundeck.app.data.model.v1.job.config.NodeConfig
@@ -667,12 +670,12 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         }
     }
 
-    public setUserRoles(List l){
+    public setUserRoles(List<String> l){
         def json = serializeJsonList(l)
         setUserRoleList(json)
     }
 
-    public List getUserRoles(){
+    public List<String> getUserRoles(){
         if(userRoleList){
             //check if the string is a valid JSON
             try {
@@ -1254,16 +1257,16 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         return notifications
     }
 
-    LogConfig getLogConfig() {
-        new RdJob.RdLogConfig(loglevel: loglevel,
+    RdLogConfig getLogConfig() {
+        new RdLogConfig(loglevel: loglevel,
                 logOutputThreshold: logOutputThreshold,
                 logOutputThresholdAction: logOutputThresholdAction,
                 logOutputThresholdStatus: logOutputThresholdStatus
         )
     }
 
-    NodeConfig getNodeConfig() {
-        new RdJob.RdNodeConfig(
+    RdNodeConfig getNodeConfig() {
+        new RdNodeConfig(
                 nodeInclude : nodeInclude,
                 nodeExclude : nodeExclude,
                 nodeIncludeName : nodeIncludeName,
@@ -1282,20 +1285,20 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                 successOnEmptyNodeFilter: successOnEmptyNodeFilter,
                 filter: filter,
                 filterExclude: filterExclude,
-                excludeFilterUncheck: se.excludeFilterUncheck
+                excludeFilterUncheck: excludeFilterUncheck
         )
     }
 
-    ScheduleData getSchedule() {
-        new RdJob.RdScheduleData(
-                year : se.year,
-                month : se.month,
-                dayOfWeek : se.dayOfWeek,
-                dayOfMonth : se.dayOfMonth,
-                hour : se.hour,
-                minute : se.minute,
-                seconds : se.seconds,
-                crontabString : se.crontabString
+    RdSchedule getSchedule() {
+        new RdSchedule (
+                year : year,
+                month : month,
+                dayOfWeek : dayOfWeek,
+                dayOfMonth : dayOfMonth,
+                hour : hour,
+                minute : minute,
+                seconds : seconds,
+                crontabString : crontabString
         )
     }
 

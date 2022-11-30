@@ -61,10 +61,6 @@ class UserService {
         return user
     }
 
-    String getUserEmail(String login) {
-        return User.findByLogin(login)?.email
-    }
-
     def registerLogin(String login, String sessionId){
         User user = User.findByLogin(login)
         if(!user){
@@ -343,5 +339,18 @@ class UserService {
                 loggedOnly      :configurationService.getBoolean(SHOW_LOGGED_USERS_DEFAULT, false),
                 showLoginStatus :configurationService.getBoolean(SHOW_LOGIN_STATUS, false)
         ]
+    }
+
+    UserInfo getCurrentUserInfo() {
+        User user = User.findByLogin(session.user)
+        if(!user) return null
+        return new UserInfo(username: user.login, email: user.email, first: user.firstName, last: user.lastName)
+    }
+
+    static class UserInfo {
+        String username
+        String email
+        String first
+        String last
     }
 }

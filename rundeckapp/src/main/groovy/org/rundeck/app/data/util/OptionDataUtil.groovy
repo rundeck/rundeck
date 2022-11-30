@@ -4,6 +4,7 @@ import groovy.util.logging.Slf4j
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import rundeck.services.FrameworkService
+import rundeck.services.UserService
 
 @Slf4j
 class OptionDataUtil {
@@ -31,19 +32,22 @@ class OptionDataUtil {
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    static String expandUrl(FrameworkService frameworkService, OptionData opt, String url, JobData jobData, selectedoptsmap=[:], boolean isHttp=true, String username="anonymous", String userEmail="") {
+    static String expandUrl(FrameworkService frameworkService, OptionData opt, String url, JobData jobData, Map selectedoptsmap, UserService.UserInfo userInfo) {
         def invalid = []
         def rundeckProps=[
                 'nodename':frameworkService.getFrameworkNodeName(),
                 'serverUUID':frameworkService.serverUUID?:''
         ]
-        if(!isHttp) {
+        def realUrl = opt.realValuesUrl.toExternalForm()
+        if(!realUrl.matches(/(?i)^https?:.*$/)) {
             rundeckProps.basedir= frameworkService.getRundeckBase()
         }
 
         def extraJobProps=[
-                'user.name': (username?: "anonymous"),
-                'user.email': userEmail
+                'user.name': userInfo.username,
+                'user.email': userInfo.email,
+                'user.first': userInfo.first,
+                'user.last': userInfo.last
         ]
         extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
         Map globals=frameworkService.getProjectGlobals(jobData.project)

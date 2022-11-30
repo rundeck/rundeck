@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
 import groovy.transform.CompileStatic
+import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.ScheduledExecution
 
 /**
@@ -235,7 +236,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @param job
      * @return PluginConfigSet for the ExecutionLifecyclePlugin service for the job, or null if not defined or not enabled
      */
-    PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(ScheduledExecution job) {
+    PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(JobData job) {
         if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }
