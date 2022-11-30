@@ -55,14 +55,15 @@
       </div>
       <div v-else-if="isShowConfigForm && inputLoaded" class="col-xs-12 col-sm-12 form-horizontal">
         <div v-for="(group,gindex) in groupedProperties" :key="group.name">
-            <div v-if="!group.name">
-              <template v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
-                  <template v-if="isPropHidden(prop)">
-                      <input type="hidden"
-                             :value="inputValues[prop.name]"
-                             :data-hidden-field-identity="prop.options['hidden_identity']"
-                             class="_config_prop_display_hidden"/>
-                  </template>
+            <div v-if="!group.name"
+                 v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
+
+                  <input type="hidden"
+                         :value="inputValues[prop.name]"
+                         :data-hidden-field-identity="prop.options['hidden_identity']"
+                         class="_config_prop_display_hidden"
+                         v-if="isPropHidden(prop)"/>
+
                   <div :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
                        :data-prop-name="prop.name"
                        v-else
@@ -78,7 +79,7 @@
                                         :pindex="pindex"
                                         :autocompleteCallback="autocompleteCallback"/>
                   </div>
-              </template>
+
             </div>
             <details :open="!group.secondary" v-else class="more-info details-reset">
               <summary >
@@ -90,13 +91,14 @@
                   </span>
                 </span>
               </summary>
-              <template v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
-                  <template v-if="isPropHidden(prop)">
-                      <input type="hidden"
-                             :value="inputValues[prop.name]"
-                             :data-hidden-field-identity="prop.options['hidden_identity']"
-                             class="_config_prop_display_hidden"/>
-                  </template>
+              <div v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
+
+                  <input type="hidden"
+                         :value="inputValues[prop.name]"
+                         :data-hidden-field-identity="prop.options['hidden_identity']"
+                         class="_config_prop_display_hidden"
+                         v-if="isPropHidden(prop)"
+                  />
                   <div :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
                        :data-prop-name="prop.name"
                        v-else
@@ -110,7 +112,7 @@
                                         :pindex="pindex"
                                         :autocompleteCallback="autocompleteCallback"/>
                   </div>
-              </template>
+              </div>
             </details>
         </div>
       </div>
