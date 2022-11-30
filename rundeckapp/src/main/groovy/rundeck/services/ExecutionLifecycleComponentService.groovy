@@ -25,6 +25,7 @@ import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
@@ -290,7 +291,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @return PluginConfigSet for the ExecutionLifecyclePlugin service for the job, or null if not defined or not enabled
      */
     @CompileDynamic
-    PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(ScheduledExecution job) {
+    PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(JobData job) {
         if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }

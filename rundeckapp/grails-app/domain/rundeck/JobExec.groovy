@@ -17,6 +17,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.execution.IWorkflowJobItem
+import org.rundeck.app.WorkflowStepConstants
 
 /*
 * JobExec.java
@@ -97,7 +98,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     public Map getConfiguration() { null }
 
     public String getPluginType() {
-        return "builtin-jobref"
+        return WorkflowStepConstants.TYPE_JOB_REF
     }
 
     public String getJobIdentifier() {

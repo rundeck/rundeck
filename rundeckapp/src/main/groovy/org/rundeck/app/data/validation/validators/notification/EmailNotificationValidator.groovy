@@ -1,38 +1,21 @@
-package org.rundeck.app.data.validators.notification
+package org.rundeck.app.data.validation.validators.notification
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.app.NotificationConstants
-import org.rundeck.app.data.job.RdJob
+import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.springframework.validation.Errors
 import org.springframework.validation.Validator
 import rundeck.services.AnyDomainEmailValidator
 
 class EmailNotificationValidator implements Validator {
-    static ObjectMapper mapper = new ObjectMapper()
 
     @Override
     boolean supports(Class<?> clazz) {
-        return RdJob.RdNotificationData.class.isAssignableFrom(clazz)
-    }
-
-    Map toMailConfiguration(String content) {
-        if (content.startsWith('{') && content.endsWith('}')) {
-            try {
-                return mapper.readValue(content, HashMap)
-            } catch(Exception e) {
-                log.error("Invalid json configuration",e)
-                return null
-            }
-        }
-        return [recipients: content]
+        return NotificationData.class.isAssignableFrom(clazz)
     }
 
     @Override
     void validate(Object target, Errors errors) {
-        RdJob.RdNotificationData n = (RdJob.RdNotificationData)target
-        def fieldNames = NotificationConstants.NOTIFICATION_FIELD_NAMES
-        def fieldAttachedNames = NotificationConstants.NOTIFICATION_FIELD_ATTACHED_NAMES
-        Map conf = toMailConfiguration(n.content)
+        NotificationData n = (NotificationData)target
+        Map conf = n.configuration
         String trigger = n.eventTrigger
         def arr = conf.recipients?.split(",")
         def validator = new AnyDomainEmailValidator()
@@ -43,7 +26,7 @@ class EmailNotificationValidator implements Validator {
                 validcount++
             }else if (email && !validator.isValid(email)) {
                 errors.rejectValue(
-                        fieldNames[trigger],
+                        "configuration",
                         'scheduledExecution.notifications.invalidemail.message',
                         [email] as Object[],
                         'Invalid email address: {0}'
@@ -54,7 +37,7 @@ class EmailNotificationValidator implements Validator {
         }
         if(conf.recipients.isBlank()){
             errors.rejectValue(
-                    fieldNames[trigger],
+                    "configuration",
                     'scheduledExecution.notifications.email.blank.message',
                     'Cannot be blank'
             )
@@ -62,7 +45,7 @@ class EmailNotificationValidator implements Validator {
         if(conf.attachLog){
             if(!conf.containsKey("attachLogInFile") &&  !conf.containsKey("attachLogInline")){
                 errors.rejectValue(
-                        fieldAttachedNames[trigger],
+                        "configuration",
                         'scheduledExecution.notifications.email.attached.blank.message',
                         'You need select one of the options'
                 )
@@ -70,7 +53,7 @@ class EmailNotificationValidator implements Validator {
 
             if(conf.attachLogInFile == false && conf.attachLogInline == false){
                 errors.rejectValue(
-                        fieldAttachedNames[trigger],
+                        "configuration",
                         'scheduledExecution.notifications.email.attached.blank.message',
                         'You need select one of the options'
                 )
