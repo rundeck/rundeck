@@ -171,6 +171,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         service.frameworkService = frameworkService
         service.pluginService = Mock(PluginService){
             listPlugins() >> []
+            getDynamicProperties(_,_,_,_,_) >> ["aKey": "aVal", "bKey": "bVal", "cKey": "cVal"]
         }
         service.jobSchedulesService = Mock(SchedulesManager){
         }
