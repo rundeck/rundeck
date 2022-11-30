@@ -3,12 +3,14 @@ package org.rundeck.app.data.providers.v1;
 import org.rundeck.app.data.model.v1.user.RdUser;
 import org.rundeck.app.data.model.v1.user.dto.SaveUserResponse;
 import org.rundeck.app.data.model.v1.user.dto.UserFilteredResponse;
+import org.rundeck.app.data.model.v1.user.dto.UserProperties;
 import org.rundeck.spi.data.DataAccessException;
 
 import java.util.HashMap;
 import java.util.List;
 
 public interface UserDataProvider extends DataProvider {
+    RdUser get(Long userid);
     /**
      * Retrieves a User based on the login, otherwise create a User with that login.
      *
@@ -62,5 +64,13 @@ public interface UserDataProvider extends DataProvider {
      * @return User's email
      */
     String getEmailWithNewSession(String login);
+
+    /**
+     * Retrieves a map of properties for given users, indexed by each users' login
+     *
+     * @param usernames of the Users to search for
+     * @return A map of properties from given usernames, their key is its login, and it contains firstName, lastName and email from users
+     */
+    HashMap<String, UserProperties> getInfoFromUsers(List<String> usernames);
 
 }

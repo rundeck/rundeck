@@ -9,6 +9,7 @@ import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.model.v1.user.dto.SaveUserResponse
 import org.rundeck.app.data.model.v1.user.dto.UserFilteredResponse
+import org.rundeck.app.data.model.v1.user.dto.UserProperties
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +39,11 @@ class GormUserDataProvider implements UserDataProvider {
     public static final int DEFAULT_TIMEOUT = 30
     public static final String SESSION_ABANDONED_MINUTES = 'userService.login.track.sessionAbandoned'
     public static final String SHOW_LOGIN_STATUS = 'gui.userSummaryShowLoginStatus'
+
+    @Override
+    RdUser get(Long userid) {
+        return User.get(userid)
+    }
 
     @Override
     User findOrCreateUser(String login) throws DataAccessException {
@@ -252,6 +258,19 @@ class GormUserDataProvider implements UserDataProvider {
             if (!userLogin || !userLogin.email) { return "" }
             return userLogin.email
         }
+    }
+
+    @Override
+    HashMap<String, UserProperties> getInfoFromUsers(List<String> usernames) {
+        def infoList = new DetachedCriteria(User).in("login", usernames).projections {
+                property("login")
+                property("firstName")
+                property("lastName")
+                property("email")
+        }.list() as List<String[]>
+        HashMap<String, UserProperties> result = [:]
+        infoList.each { row -> result[row[0]] = new UserProperties(firstname: row[1], lastname: row[2], email: row[3]) }
+        return result
     }
 
     @Override

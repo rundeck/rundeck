@@ -406,4 +406,21 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         result.loggedOnly == false
         result.showLoginStatus == false
     }
+
+    def "getInfoFromUsers should get users"() {
+        given:
+        User u = new User(login: "login", firstName: "first", lastName: "last", email: "user@company.com")
+        u.save()
+        User u2 = new User(login: "test", firstName: "Steve", lastName: "Hyuga", email: "shyuga@niupi.com")
+        u2.save()
+        User u3 = new User(login: "tsubasa", firstName: "Oliver", lastName: "Atom", email: "oatom@niupi.com")
+        u3.save()
+        when:
+        def result = service.getInfoFromUsers(["login", "tsubasa"])
+        then:
+        result.size() == 2
+        result["login"]["firstname"] == "first"
+        result["login"]["lastname"] == "last"
+        result["login"]["email"] == "user@company.com"
+    }
 }
