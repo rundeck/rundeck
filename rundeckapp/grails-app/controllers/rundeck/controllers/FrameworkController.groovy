@@ -413,15 +413,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(params.page){
             page=Integer.parseInt(params.page)
             if(params.max){
-                def maxByParams= Integer.parseInt(params.max)
                 def maxByProps = configurationService.getInteger("gui.matchedNodesMaxCount",null)
-                if( maxByProps > maxByParams ) {
+                if( maxByProps ) {
                     max = maxByProps
                 }else{
-                    max = maxByParams
+                    max = Integer.parseInt(params.max)
                 }
             }else{
-                max=20
+                max=30
             }
             if(page<0){
                 //if page is negative, load all remaining values starting at page -1*page
