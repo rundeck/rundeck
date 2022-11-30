@@ -230,4 +230,17 @@ class UserService {
                 showLoginStatus :configurationService.getBoolean(SHOW_LOGIN_STATUS, false)
         ]
     }
+
+    UserInfo getCurrentUserInfo() {
+        User user = User.findByLogin(session.user)
+        if(!user) return null
+        return new UserInfo(username: user.login, email: user.email, first: user.firstName, last: user.lastName)
+    }
+
+    static class UserInfo {
+        String username
+        String email
+        String first
+        String last
+    }
 }

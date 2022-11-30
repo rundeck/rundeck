@@ -2,6 +2,7 @@ package org.rundeck.app.data.model.v1.job.option;
 
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 
 public interface OptionData {
     Integer getSortIndex();
@@ -13,10 +14,9 @@ public interface OptionData {
     Boolean getRequired();
     Boolean getIsDate();
     String getDateFormat();
-    URL getValuesUrl();
+    URL getRealValuesUrl();
     String getLabel();
 
-    URL getValuesUrlLong();
     String getRegex();
     String getValuesList();
     String getValuesListDelimiter();
@@ -25,7 +25,7 @@ public interface OptionData {
     Boolean getSecureInput();
     Boolean getSecureExposed();
     String getOptionType();
-    String getConfigData();
+    Map<String,Object> getConfigMap();
     Boolean getMultivalueAllSelected();
     String getOptionValuesPluginType();
     List<OptionValueData> getValuesFromPlugin();

@@ -31,6 +31,16 @@ public interface JobDataProvider {
     boolean existsByUuid(String uuid);
 
     /**
+     * Checks if the job exists in the database
+     *
+     * @param project of the Job, format String
+     * @param jobName of the Job, format String
+     * @param groupPath of the Job, format String
+     * @return boolean representing job existence
+     */
+    boolean existsByProjectAndJobNameAndGroupPath(String project, String jobName, String groupPath);
+
+    /**
      * Save a Job with a generated id
      *
      * @param data Job attributes
@@ -47,4 +57,12 @@ public interface JobDataProvider {
      * @throws DataAccessException on error
      */
     void delete(final Serializable id) throws DataAccessException;
+
+    /**
+     * Removes a Job
+     *
+     * @param uuid Job uuid
+     * @throws DataAccessException on error
+     */
+    void deleteByUuid(final String uuid) throws DataAccessException;
 }

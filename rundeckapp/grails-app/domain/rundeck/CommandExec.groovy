@@ -16,6 +16,8 @@
 
 package rundeck
 
+import org.rundeck.app.WorkflowStepConstants
+
 /*
 * CommandExec.java
 *
@@ -103,13 +105,13 @@ public class CommandExec extends WorkflowStep  {
 
     public String getPluginType() {
         if(adhocRemoteString) {
-            return "builtin-command"
+            return WorkflowStepConstants.TYPE_COMMAND
         } else if(adhocLocalString) {
-            return "builtin-script"
+            return WorkflowStepConstants.TYPE_SCRIPT
         } else if(adhocFilepath && adhocFilePathIsUrl()) {
-            return "builtin-scripturl"
+            return WorkflowStepConstants.TYPE_SCRIPT_URL
         } else if(adhocFilepath && !adhocFilePathIsUrl()) {
-            return "builtin-scriptfile"
+            return WorkflowStepConstants.TYPE_SCRIPT_FILE
         }
         return null
     }

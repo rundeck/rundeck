@@ -23,7 +23,7 @@ public interface JobData {
     String getRetry();
     String getRetryDelay();
     String getGroupPath();
-    String getUserRoleList();
+    List<String> getUserRoles();
     Boolean getScheduled();
     Boolean getScheduleEnabled();
     Boolean getExecutionEnabled();
