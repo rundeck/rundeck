@@ -177,7 +177,6 @@ export default class NodeFilterResults extends Vue {
         this.total = data.total
         this.truncated = data.truncated
         this.colkeys = data.colkeys
-        this.maxShown = data.max
       }
     }).catch((err) => {
       this.loading = false
