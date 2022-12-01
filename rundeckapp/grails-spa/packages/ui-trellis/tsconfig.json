@@ -21,7 +21,7 @@
       }
    },
    "include": [
-         "./src/**/*",
+         "./src/library/**/*",
 //         "tests/**/*.ts",
 //         "tests/**/*.tsx"
    ]

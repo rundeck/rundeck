@@ -19,12 +19,13 @@
         }
     },
     "include": [
-        "src/**/*.js",
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "src/**/*.vue",
+        "src/library/**/*.js",
+        "src/library/**/*.ts",
+        "src/library/**/*.tsx",
+        "src/library/**/*.vue",
     ],
     "exclude": [
+        "./src/app",
         "**/*.stories.ts",
         "**/*.stories.tsx",
         "node_modules/**/*"
