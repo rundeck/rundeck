@@ -195,7 +195,8 @@ class PluginService implements ResourceFormats, PluginConfigureService {
     ) {
 
         PropertyRetriever retriever = PropertyResolverFactory.instanceRetriever([:])
-        PropertyResolverFactory.Factory resolverFactory = PropertyResolverFactory.pluginPrefixedScoped(retriever,frameworkService.getProjectPropertyResolver(project),frameworkService.getRundeckFramework().getPropertyRetriever())
+        PropertyRetriever projectRetriever = PropertyResolverFactory.instanceRetriever(rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties())
+        PropertyResolverFactory.Factory resolverFactory = PropertyResolverFactory.pluginPrefixedScoped(retriever,projectRetriever,rundeckFramework.getPropertyRetriever())
         def plugin = configurePluginWithoutValidation(type, createPluggableService(getPluginTypeByService(serviceName)), resolverFactory, PropertyScope.Instance, null)
 
         def instance=plugin.instance
