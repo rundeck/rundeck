@@ -28,4 +28,8 @@ public interface ProxySecretBundleCreator {
     default SecretBundle prepareSecretBundleWorkflowStep(ExecutionContext context, Map<String, Object> configuration){
         return null;
     }
+
+    default SecretBundle prepareSecretBundleWorkflowNodeStep(ExecutionContext context, INodeEntry node, Map<String, Object> configuration){
+        return null;
+    }
 }
