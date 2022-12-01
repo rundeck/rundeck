@@ -416,9 +416,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if(params.max){
                 def maxByProps = configurationService.getInteger("gui.matchedNodesMaxCount",null)
                 if( maxByProps ) {
-                    max = maxByProps
+                    max = Integer.parseInt(maxByProps)
+                }else{
+                    max=Integer.parseInt(params.max)
                 }
-                max=Integer.parseInt(params.max)
             }else{
                 max=20
             }
