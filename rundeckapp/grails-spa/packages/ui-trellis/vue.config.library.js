@@ -8,7 +8,7 @@ const nodeExternals = require('webpack-node-externals');
 
 /** Create a "page" for each component */
 pages = {}
-walk.walkSync('./src/components', {
+walk.walkSync('./src/library/components', {
     listeners: {
         file: (root, stat, next) => {
             const path = Path.parse(stat.name)

@@ -5,7 +5,7 @@ import RundeckInfo from '../widgets/rundeck-info/RundeckInfo.vue'
 
 import {RootStore} from '../../stores/RootStore'
 
-import { UtilityBarItem } from 'src/stores/UtilityBar'
+import { UtilityBarItem } from 'src/library/stores/UtilityBar'
 import { ServerInfo, VersionInfo } from '../../stores/System'
 
 export default {
