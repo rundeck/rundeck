@@ -27,8 +27,10 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 
@@ -69,17 +71,24 @@ public class TestFileCopierService extends AbstractBaseTest {
 
     public void testGetProviderForNode() throws Exception {
         final FileCopierService service = FileCopierService.getInstanceForFramework(getFrameworkInstance(),getFrameworkInstance());
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(PROJ_NAME)
+                .framework(getFrameworkInstance())
+                .user("blah")
+                .threadCount(1)
+                .build();
+
         {
             //default for local node should be local provider
             final NodeEntryImpl test1 = new NodeEntryImpl("test1");
-            final FileCopier provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
+            final FileCopier provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
             assertTrue(provider instanceof LocalFileCopier);
         }
         {
             //default for non-local node should be jsch-scp provider
             final NodeEntryImpl test1 = new NodeEntryImpl("testnode2");
-            final FileCopier provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
+            final FileCopier provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
             assertTrue(provider instanceof JschScpFileCopier);
         }
@@ -93,7 +102,7 @@ public class TestFileCopierService extends AbstractBaseTest {
             test1.setAttributes(new HashMap<String, String>());
             test1.getAttributes().put(FileCopierService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE, "jsch-scp");
 
-            final FileCopier provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
+            final FileCopier provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
             assertTrue(provider instanceof JschScpFileCopier);
         }
@@ -103,7 +112,7 @@ public class TestFileCopierService extends AbstractBaseTest {
             test1.setAttributes(new HashMap<String, String>());
             test1.getAttributes().put(FileCopierService.REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE, "local");
 
-            final FileCopier provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
+            final FileCopier provider = service.getProviderForNodeAndProject(test1, context);
 
             assertNotNull(provider);
             assertTrue(provider instanceof LocalFileCopier);
