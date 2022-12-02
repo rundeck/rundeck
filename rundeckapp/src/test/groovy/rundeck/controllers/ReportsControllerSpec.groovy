@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.AuthContextProvider
+import com.dtolabs.rundeck.core.config.FeatureService
 import grails.test.hibernate.HibernateSpec
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.metricsweb.MetricService
@@ -53,6 +54,9 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
                 "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
         ]
     }}
+    def setup(){
+        controller.featureService=Mock(FeatureService)
+    }
 
     @Unroll
     def "events query date binding format #dateFilter"() {
