@@ -180,13 +180,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             usedFilter='.*'
         }else if (params.filterName) {
             //load a named filter and create a query from it
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
-                if (filter) {
-                    def query2 = filter.createExtNodeFilters()
-                    query = query2
-                    params.filter=query.asFilter()
-                    usedFilter = params.filterName
+            if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+                if (u) {
+                    NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                    if (filter) {
+                        def query2 = filter.createExtNodeFilters()
+                        query = query2
+                        params.filter = query.asFilter()
+                        usedFilter = params.filterName
+                    }
                 }
             }
         } else if (!query.filter && prefs['nodes']) {
@@ -276,17 +278,19 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def usedFilter = null
         if (params.filterName) {
-            def User u = userService.findOrCreateUser(session.user)
-            //load a named filter and create a query from it
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
-                if (filter) {
-                    def query2 = filter.createExtNodeFilters()
-                    //XXX: node query doesn't use pagination, as it is not an actual DB query
-                    query = query2
-                    def props = query.properties
-                    params.putAll(props)
-                    usedFilter = params.filterName
+            if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+                def User u = userService.findOrCreateUser(session.user)
+                //load a named filter and create a query from it
+                if (u) {
+                    NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                    if (filter) {
+                        def query2 = filter.createExtNodeFilters()
+                        //XXX: node query doesn't use pagination, as it is not an actual DB query
+                        query = query2
+                        def props = query.properties
+                        params.putAll(props)
+                        usedFilter = params.filterName
+                    }
                 }
             }
         }
@@ -510,11 +514,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             defaultFilter = filterpref['nodes']
         }
         def filters=[]
-        //load a named filter and create a query from it
-        if (u) {
-            def filterResults = NodeFilter.findAllByUserAndProject(u, project, [sort: 'name', order: 'desc'])
-            filters = filterResults.collect {
-                [name: it.name, filter: it.asFilter(), project: project]
+
+        if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            if (u) {
+                def filterResults = NodeFilter.findAllByUserAndProject(u, project, [sort: 'name', order: 'desc'])
+                filters = filterResults.collect {
+                    [name: it.name, filter: it.asFilter(), project: project]
+                }
             }
         }
 
@@ -556,27 +562,29 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 params.filterName = filterpref['nodes']
             }
         }
-        if (params.filterName) {
-            //load a named filter and create a query from it
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
-                if (filter) {
-                    def query2 = filter.createExtNodeFilters()
-                    query2.excludeFilterUncheck = query.excludeFilterUncheck
-                    //XXX: node query doesn't use pagination, as it is not an actual DB query
-                    query = query2
-                    usedFilter = params.filterName
+        if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            if (params.filterName) {
+                //load a named filter and create a query from it
+                if (u) {
+                    NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                    if (filter) {
+                        def query2 = filter.createExtNodeFilters()
+                        query2.excludeFilterUncheck = query.excludeFilterUncheck
+                        //XXX: node query doesn't use pagination, as it is not an actual DB query
+                        query = query2
+                        usedFilter = params.filterName
+                    }
                 }
             }
-        }
-        if (params.filterExcludeName) {
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterExcludeName, u)
-                if (filter) {
-                    def queryExclude = filter.createExtNodeFilters()
-                    query.filterExclude = queryExclude.filter
-                    query.filterExcludeName = null
-                    usedFilterExclude = params.filterExcludeName
+            if (params.filterExcludeName) {
+                if (u) {
+                    NodeFilter filter = NodeFilter.findByNameAndUser(params.filterExcludeName, u)
+                    if (filter) {
+                        def queryExclude = filter.createExtNodeFilters()
+                        query.filterExclude = queryExclude.filter
+                        query.filterExcludeName = null
+                        usedFilterExclude = params.filterExcludeName
+                    }
                 }
             }
         }
@@ -672,6 +680,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def storeNodeFilter(ExtNodeFilters query, StoreFilterCommand storeFilterCommand) {
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         if (query.hasErrors()) {
             request.errors = query.errors
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
@@ -728,6 +741,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
     }
     def deleteNodeFilter={
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm{
             def User u = userService.findOrCreateUser(session.user)
             def filtername=params.delFilterName
@@ -743,6 +761,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def deleteNodeFilterAjax(String project, String filtername){
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm{
             g.refreshFormTokensHeader()
             def User u = userService.findOrCreateUser(session.user)

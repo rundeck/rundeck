@@ -1654,6 +1654,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                     getUsername() >> 'bob'
                 }
             }
+            controller.featureService = Mock(FeatureService)
         when:
         def result = controller.createFromExecution()
         then:
