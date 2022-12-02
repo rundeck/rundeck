@@ -109,6 +109,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     ScheduledExecutionService scheduledExecutionService
     UserService userService
     ProjectService projectService
+    ConfigurationService configurationService
 
     PasswordFieldsService obscurePasswordFieldsService
     PasswordFieldsService resourcesPasswordFieldsService
