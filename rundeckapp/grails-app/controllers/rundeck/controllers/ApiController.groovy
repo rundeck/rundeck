@@ -138,7 +138,6 @@ class ApiController extends ControllerBase{
                 in = ParameterIn.PATH,
                 description = 'Metric name, or blank to receive list of metrics',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type='string',
                     allowableValues=['metrics', 'ping', 'threads', 'healthcheck']
@@ -403,7 +402,6 @@ class ApiController extends ControllerBase{
                 in = ParameterIn.PATH,
                 description = 'username',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type='string'
                 )
@@ -488,7 +486,6 @@ Since: v11
                 in = ParameterIn.PATH,
                 description = 'username',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type = 'string'
                 )
