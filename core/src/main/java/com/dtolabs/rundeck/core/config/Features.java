@@ -36,7 +36,8 @@ public enum Features {
     PLUGIN_SECURITY("pluginSecurity"),
     PROJECT_KEY_STORAGE("projectKeyStorage"),
     FILE_UPLOAD_PLUGIN("fileUploadPlugin"),
-    PLUGIN_GROUPS("pluginGroups");
+    PLUGIN_GROUPS("pluginGroups"),
+    LEGACY_USER_FILTERS("legacyUserFilters");
 
     private final String propertyName;
 
