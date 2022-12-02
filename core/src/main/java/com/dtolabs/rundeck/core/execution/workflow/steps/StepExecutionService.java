@@ -33,9 +33,7 @@ import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,7 +63,7 @@ public class StepExecutionService
         return SERVICE_NAME;
     }
 
-    public StepExecutionService(final Framework framework) {
+    StepExecutionService(final Framework framework) {
         this.serviceList = new ArrayList<>();
         HashMap<String, Class<? extends StepExecutor>> presets = new HashMap<>();
         presets.put(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE, NodeDispatchStepExecutor.class);
@@ -73,7 +71,7 @@ public class StepExecutionService
         dynamicRegistryService =
             new PresetBaseProviderRegistryService<>(new HashMap<>(), framework, true, SERVICE_NAME);
         pluginStepExecutionService = new PluginStepExecutionService(SERVICE_NAME, framework);
-        stepPluginAdaptedStepExecutorService = getPluginStepExecutionService().adapter(getStepAdapter());
+        stepPluginAdaptedStepExecutorService = getPluginStepExecutionService().adapter(StepPluginAdapter.CONVERTER);
 
         serviceList.add(builtinStepExecutionService);
         serviceList.add(dynamicRegistryService);
@@ -106,10 +104,6 @@ public class StepExecutionService
     @Override
     protected List<ProviderService<StepExecutor>> getServiceList() {
         return serviceList;
-    }
-
-    public void setServiceList(List<ProviderService<StepExecutor>> serviceList) {
-        this.serviceList = serviceList;
     }
 
     public static StepExecutionService getInstanceForFramework(final Framework framework,
@@ -156,9 +150,4 @@ public class StepExecutionService
     public PluginStepExecutionService getPluginStepExecutionService() {
         return pluginStepExecutionService;
     }
-
-    public Converter<StepPlugin, StepExecutor> getStepAdapter(){
-        return StepPluginAdapter.CONVERTER;
-    }
-
 }
