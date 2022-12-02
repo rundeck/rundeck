@@ -301,8 +301,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def User u = userService.findOrCreateUser(session.user)
         if(params.size()<1 && !params.filterName && u ){
             Map filterpref = userService.parseKeyValuePref(u.filterPref)
-            if(filterpref['workflows']){
-                params.filterName=filterpref['workflows']
+
+            if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+                if(filterpref['workflows']){
+                    params.filterName=filterpref['workflows']
+                }
             }
         }
         if(!params.project){
@@ -479,19 +482,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long start=System.currentTimeMillis()
         UserAndRolesAuthContext authContext
         def usedFilter=null
-
-        if(params.filterName){
-            //load a named filter and create a query from it
-            def User u = userService.findOrCreateUser(session.user)
-            if(u){
-                ScheduledExecutionFilter filter = ScheduledExecutionFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
+        if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            if(params.filterName){
+                //load a named filter and create a query from it
+                def User u = userService.findOrCreateUser(session.user)
+                if(u){
+                    ScheduledExecutionFilter filter = ScheduledExecutionFilter.findByNameAndUser(params.filterName,u)
+                    if(filter){
+                        def query2 = filter.createQuery()
+                        query2.setPagination(query)
+                        query=query2
+                        def props=query.properties
+                        params.putAll(props)
+                        usedFilter=params.filterName
+                    }
                 }
             }
         }
@@ -566,7 +570,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def jobsPicker(ScheduledExecutionQuery query) {
 
         AuthContext authContext
-        def usedFilter=null
         if(!query){
             query = new ScheduledExecutionQuery()
         }
@@ -579,10 +582,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             authContext = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
         }
         def results=listWorkflows(query,authContext,session.user)
-        if(usedFilter){
-            results.filterName=usedFilter
-            results.paginateParams['filterName']=usedFilter
-        }
         results.params=params
         if(params.jobsjscallback){
             results.jobsjscallback=params.jobsjscallback
@@ -747,7 +746,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
 
+    /**
+     *
+     * @param query
+     * @param storeFilterCommand
+     * @return
+     * @deprecated legacy filters behavior
+     */
+    @Deprecated
     def storeJobfilter(ScheduledExecutionQuery query, StoreFilterCommand storeFilterCommand){
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm{
         if (storeFilterCommand.hasErrors()) {
             flash.errors = storeFilterCommand.errors
@@ -799,7 +811,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
 
-    def deleteJobfilter={
+    /**
+     * @deprecated legacy filter behavior
+     */
+    def deleteJobfilter(){
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm{
         def User u = userService.findOrCreateUser(session.user)
         def filtername=params.delFilterName
@@ -813,8 +833,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
     }
-
+    /**
+     * @deprecated legacy filter behavior
+     */
     def deleteJobFilterAjax(String project, String filtername) {
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm {
             g.refreshFormTokensHeader()
             def User u = userService.findOrCreateUser(session.user)
@@ -834,8 +861,16 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             )
         }
     }
-
+    /**
+     * @deprecated legacy filter behavior
+     */
     def saveJobFilterAjax(ScheduledExecutionQueryFilterCommand query) {
+
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm {
             g.refreshFormTokensHeader()
             if (query.hasErrors()) {
