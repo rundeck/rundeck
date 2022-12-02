@@ -274,6 +274,21 @@ class GormUserDataProvider implements UserDataProvider {
     }
 
     @Override
+    Integer count() {
+        return count(null)
+    }
+
+    @Override
+    Integer count(Date fromLoginDate) {
+        Integer count = new DetachedCriteria(User).count {
+            if(fromLoginDate) {
+                gt("lastLogin", fromLoginDate)
+            }
+        } as Integer
+        return count
+    }
+
+    @Override
     RdUser buildUser() {
         return new User()
     }

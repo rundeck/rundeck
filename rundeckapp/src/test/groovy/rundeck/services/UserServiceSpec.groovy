@@ -423,4 +423,23 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         result["login"]["lastname"] == "last"
         result["login"]["email"] == "user@company.com"
     }
+
+    def "countUsers should return right count"() {
+        given:
+        User u = new User(login: "login", firstName: "first", lastName: "last", email: "user@company.com", lastLogin: new Date() - 1)
+        u.save()
+        User u2 = new User(login: "test", firstName: "Steve", lastName: "Hyuga", email: "shyuga@niupi.com", lastLogin: new Date() - 1)
+        u2.save()
+        User u3 = new User(login: "tsubasa", firstName: "Oliver", lastName: "Atom", email: "oatom@niupi.com", lastLogin: new Date() - 2)
+        u3.save()
+        when:
+        def result = service.countUsers(date)
+        then:
+        result == expected
+        where:
+        date           | expected
+        new Date() - 1 | 2
+        null           | 3
+        new Date()     | 0
+    }
 }

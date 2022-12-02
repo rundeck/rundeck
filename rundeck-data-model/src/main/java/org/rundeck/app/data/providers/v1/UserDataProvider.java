@@ -6,6 +6,7 @@ import org.rundeck.app.data.model.v1.user.dto.UserFilteredResponse;
 import org.rundeck.app.data.model.v1.user.dto.UserProperties;
 import org.rundeck.spi.data.DataAccessException;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -72,5 +73,8 @@ public interface UserDataProvider extends DataProvider {
      * @return A map of properties from given usernames, their key is its login, and it contains firstName, lastName and email from users
      */
     HashMap<String, UserProperties> getInfoFromUsers(List<String> usernames);
+
+    Integer count();
+    Integer count(Date fromLoginDate);
 
 }

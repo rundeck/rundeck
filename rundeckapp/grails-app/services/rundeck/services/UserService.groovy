@@ -188,6 +188,14 @@ class UserService {
         return userDataProvider.getInfoFromUsers(usernames)
     }
 
+    Integer countUsers() {
+        return userDataProvider.count()
+    }
+
+    Integer countUsers(Date fromLoginDate) {
+        return userDataProvider.count(fromLoginDate)
+    }
+
     /**
      * It looks for property to enable session id related data to be stored at DB.
      * @return boolean
