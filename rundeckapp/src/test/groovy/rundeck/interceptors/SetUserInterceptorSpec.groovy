@@ -10,7 +10,6 @@ import org.rundeck.app.access.InterceptorHelper
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.v1.TokenDataProvider
-import org.rundeck.spi.data.DataManager
 import rundeck.AuthToken
 import rundeck.ConfigTagLib
 import rundeck.GormEventStoreServiceSpec

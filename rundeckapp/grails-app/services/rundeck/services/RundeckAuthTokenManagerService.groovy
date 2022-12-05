@@ -8,7 +8,6 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.data.providers.v1.TokenDataProvider
-import org.rundeck.spi.data.DataManager
 
 @Transactional
 @GrailsCompileStatic

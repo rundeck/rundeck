@@ -30,7 +30,7 @@ import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.spi.data.DataManager
+
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.controllers.ApiController
