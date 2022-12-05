@@ -85,7 +85,8 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-api",
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
-        ":rundeck-storage:rundeck-storage-conf"
+        ":rundeck-storage:rundeck-storage-conf",
+        ":rundeck-data-model"
 ]
 
 project.ext.environment = project.hasProperty('environment') ? environment : 'development'
