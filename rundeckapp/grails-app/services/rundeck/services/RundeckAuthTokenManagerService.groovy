@@ -1,6 +1,6 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenManager
+import org.rundeck.app.util.spi.AuthTokenManager
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
 import org.rundeck.app.data.model.v1.SimpleTokenBuilder
