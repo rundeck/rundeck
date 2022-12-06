@@ -121,6 +121,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject('testProject') >> true
+            existsFrameworkProject('AProject') >> true
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
             pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){
@@ -1567,7 +1568,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
 
-
         then:
         !results.success
         results.scheduledExecution.errors.hasFieldErrors(fieldName)
@@ -1587,7 +1587,6 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
-
 
         then:
         !results.success
@@ -3568,7 +3567,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.frameworkService = Stub(FrameworkService) {
-            existsFrameworkProject('testProject') >> true
+            existsFrameworkProject('AProject') >> true
             isClusterModeEnabled() >> false
             getServerUUID() >> TEST_UUID1
             pluginConfigFactory(_,_) >> Mock(PropertyResolverFactory.Factory){

@@ -25,17 +25,18 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
-import org.rundeck.app.data.job.RdJob
-import org.rundeck.app.data.job.RdLogConfig
-import org.rundeck.app.data.job.RdNodeConfig
-import org.rundeck.app.data.job.RdSchedule
+import rundeck.data.job.RdLogConfig
+import rundeck.data.job.RdNodeConfig
+import rundeck.data.job.RdSchedule
 import org.rundeck.app.data.model.v1.job.JobData
-import org.rundeck.app.data.model.v1.job.config.LogConfig
-import org.rundeck.app.data.model.v1.job.config.NodeConfig
 import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
-import org.rundeck.app.data.model.v1.job.schedule.ScheduleData
 import org.rundeck.util.Sizes
+import rundeck.data.validation.shared.SharedJobConstraints
+import rundeck.data.validation.shared.SharedJobScheduleConstraints
+import rundeck.data.validation.shared.SharedLogConfigConstraints
+import rundeck.data.validation.shared.SharedNodeConfigConstraints
+import rundeck.data.validation.shared.SharedProjectNameConstraints
 import rundeck.services.JobReferenceImpl
 
 import java.util.stream.Collectors
@@ -117,40 +118,17 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                          'pluginConfigMap']
 
     static constraints = {
-        project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+        importFrom SharedProjectNameConstraints
+        importFrom SharedJobConstraints
+        importFrom SharedNodeConfigConstraints
+        importFrom SharedLogConfigConstraints
         workflow(nullable:true)
         options(nullable:true)
-        jobName(blank: false, nullable: false, matches: "[^/]+", maxSize: 1024)
-        groupPath(nullable:true, maxSize: 2048)
         nextExecution(nullable:true)
-        nodeKeepgoing(nullable:true)
-        doNodedispatch(nullable:true)
-        nodeInclude(nullable:true)
-        nodeExclude(nullable:true)
-        nodeIncludeName(nullable:true)
-        nodeExcludeName(nullable:true)
-        nodeIncludeTags(nullable:true)
-        nodeExcludeTags(nullable:true)
-        nodeIncludeOsName(nullable:true)
-        nodeExcludeOsName(nullable:true)
-        nodeIncludeOsFamily(nullable:true)
-        nodeExcludeOsFamily(nullable:true)
-        nodeIncludeOsArch(nullable:true)
-        nodeExcludeOsArch(nullable:true)
-        nodeIncludeOsVersion(nullable:true)
-        nodeExcludeOsVersion(nullable:true)
-        nodeExcludePrecedence(nullable:true)
-        filter(nullable:true)
-        user(nullable:true)
         userRoleList(nullable:true)
-        loglevel(nullable:true)
         totalTime(nullable:true)
         execCount(nullable:true)
-        nodeThreadcount(nullable:true)
         refExecCount(nullable:true)
-        nodeRankOrderAscending(nullable:true)
-        nodeRankAttribute(nullable:true)
-        argString(nullable:true)
         seconds(nullable: true, matches: /^[0-9*\/,-]*$/)
         minute(nullable:true, matches: /^[0-9*\/,-]*$/ )
         hour(nullable:true, matches: /^[0-9*\/,-]*$/ )
@@ -158,39 +136,9 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         month(nullable:true, matches: /^[0-9a-zA-z*\/,-]*$/ )
         dayOfWeek(nullable:true, matches: /^[0-9a-zA-z*\/?,L#-]*$/ )
         year(nullable:true, matches: /^[0-9*\/,-]*$/)
-        description(nullable:true)
         uuid(unique: true, nullable:true, blank:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         orchestrator(nullable:true)
-        multipleExecutions(nullable: true)
-        serverNodeUUID(maxSize: 36, size: 36..36, blank: true, nullable: true, validator: { val, obj ->
-            if (null == val) return true;
-            try { return null != UUID.fromString(val) } catch (IllegalArgumentException e) {
-                return false
-            }
-        })
-        timeout(maxSize: 256, blank: true, nullable: true,)
-        retry(maxSize: 256, blank: true, nullable: true,validator: { val, obj ->
-            if (null == val) return true;
-            if (val.indexOf('${')>=0) return true;
-            try { return Integer.parseInt(val)>=0 } catch (NumberFormatException e) {
-                return false
-            }
-        })
         crontabString(bindable: true,nullable: true)
-        nodesSelectedByDefault(nullable: true)
-        scheduleEnabled(nullable: true)
-        executionEnabled(nullable: true)
-        nodeFilterEditable(nullable: true)
-        logOutputThreshold(maxSize: 256, blank:true, nullable: true)
-        logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
-        logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
-        timeZone(maxSize: 256, blank: true, nullable: true)
-        retryDelay(nullable:true)
-        successOnEmptyNodeFilter(nullable: true)
-        nodeThreadcountDynamic(nullable: true)
-        notifyAvgDurationThreshold(nullable: true)
-        defaultTab(maxSize: 256, blank: true, nullable: true)
-        maxMultipleExecutions(maxSize: 256, blank: true, nullable: true)
         pluginConfig(nullable: true)
     }
 
@@ -1286,7 +1234,15 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                 successOnEmptyNodeFilter: successOnEmptyNodeFilter,
                 filter: filter,
                 filterExclude: filterExclude,
-                excludeFilterUncheck: excludeFilterUncheck
+                excludeFilterUncheck: excludeFilterUncheck,
+                nodesSelectedByDefault : nodesSelectedByDefault,
+                nodeKeepgoing : nodeKeepgoing,
+                doNodedispatch : doNodedispatch,
+                nodeRankAttribute : nodeRankAttribute,
+                nodeRankOrderAscending : nodeRankOrderAscending,
+                nodeFilterEditable : nodeFilterEditable,
+                nodeThreadcount : nodeThreadcount,
+                nodeThreadcountDynamic : nodeThreadcountDynamic
         )
     }
 

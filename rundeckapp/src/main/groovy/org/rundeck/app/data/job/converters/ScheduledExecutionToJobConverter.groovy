@@ -4,15 +4,12 @@ package org.rundeck.app.data.job.converters
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import groovy.transform.TypeCheckingMode
-import org.rundeck.app.data.job.RdJob
-import org.rundeck.app.data.job.RdLogConfig
-import org.rundeck.app.data.job.RdNodeConfig
-import org.rundeck.app.data.job.RdNotification
-import org.rundeck.app.data.job.RdOption
-import org.rundeck.app.data.job.RdOrchestrator
-import org.rundeck.app.data.job.RdSchedule
-import org.rundeck.app.data.job.RdWorkflow
-import org.rundeck.app.data.job.RdWorkflowStep
+import rundeck.data.job.RdJob
+import rundeck.data.job.RdNotification
+import rundeck.data.job.RdOption
+import rundeck.data.job.RdOrchestrator
+import rundeck.data.job.RdWorkflow
+import rundeck.data.job.RdWorkflowStep
 import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.CommandExec
 import rundeck.JobExec
@@ -54,14 +51,6 @@ class ScheduledExecutionToJobConverter {
         job.maxMultipleExecutions = se.maxMultipleExecutions
         job.dateCreated = se.dateCreated
         job.lastUpdated = se.lastUpdated
-        job.nodesSelectedByDefault = se.nodesSelectedByDefault
-        job.nodeKeepgoing = se.nodeKeepgoing
-        job.doNodedispatch = se.doNodedispatch
-        job.nodeRankAttribute = se.nodeRankAttribute
-        job.nodeRankOrderAscending = se.nodeRankOrderAscending
-        job.nodeFilterEditable = se.nodeFilterEditable
-        job.nodeThreadcount = se.nodeThreadcount
-        job.nodeThreadcountDynamic = se.nodeThreadcountDynamic
         job.logConfig = se.logConfig
         job.nodeConfig = se.nodeConfig
         job.optionSet = convertJobOptionSet(se)

@@ -4,7 +4,7 @@ package org.rundeck.app.data.providers
 import grails.compiler.GrailsCompileStatic
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.data.exception.DataValidationException
-import org.rundeck.app.data.job.RdJob
+import rundeck.data.job.RdJob
 import org.rundeck.app.data.job.converters.ScheduledExecutionFromRdJobUpdater
 import org.rundeck.app.data.job.converters.ScheduledExecutionToJobConverter
 import org.rundeck.app.data.model.v1.job.JobData

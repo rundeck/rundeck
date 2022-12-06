@@ -16,7 +16,7 @@
 
 package rundeck
 
-import org.rundeck.app.WorkflowStepConstants
+import rundeck.data.constants.WorkflowStepConstants
 
 /*
 * CommandExec.java

@@ -1,21 +1,12 @@
 package org.rundeck.app.data.job
 
-import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.core.schedule.SchedulesManager
-import com.dtolabs.rundeck.server.projects.RundeckProject
-import com.dtolabs.rundeck.server.projects.RundeckProjectConfig
 import grails.util.Holders
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
-import org.rundeck.app.components.RundeckJobDefinitionManager
-import org.rundeck.app.data.validation.validators.joboptions.JobOptionDataValidator
-import rundeck.Option
-import rundeck.ScheduledExecution
-import rundeck.services.FileUploadService
+import rundeck.data.job.RdJob
+import rundeck.data.job.RdOption
+import rundeck.data.job.RdSchedule
 import rundeck.services.FrameworkService
-import rundeck.services.NotificationService
 import rundeck.services.UserService
 import spock.lang.Specification
 import spock.lang.Unroll

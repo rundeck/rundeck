@@ -1,10 +1,12 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import org.rundeck.app.data.exception.DataValidationException
-import org.rundeck.app.data.job.RdJob
-import org.rundeck.app.data.job.converters.WorkflowExecutionItemFactory
+import rundeck.data.job.RdJob
 import org.rundeck.app.data.validation.ValidationResponse
 import org.springframework.context.MessageSource
 import rundeck.ScheduledExecution
@@ -15,15 +17,22 @@ class RdJobController {
 
     MessageSource messageSource
     RdJobService rdJobService
+    WorkflowExecutionItemFactory workflowExecutionItemFactory
     ObjectMapper mapper = new ObjectMapper()
+
+    RdJobController() {
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    }
 
     def get() {
         response.contentType = "application/json;utf-8"
-        println "lookup id: ${params.id}"
-        if(params.id.toString().length() == 36)
-            render mapper.writeValueAsString(rdJobService.getJobByUuid(params.id))
-        else
-            render mapper.writeValueAsString(rdJobService.getJobById(params.id.toLong()))
+        try {
+            def uuid = UUID.fromString(params.id)
+            render mapper.writeValueAsString(rdJobService.getJobByUuid(uuid.toString()))
+            return
+        } catch(IllegalArgumentException ignored) {}
+
+        render mapper.writeValueAsString(rdJobService.getJobById(params.id.toLong()))
     }
 
     def save() {
@@ -53,7 +62,7 @@ class RdJobController {
     def compare() {
         def rdjob = rdJobService.getJobByUuid(params.id)
         def se = ScheduledExecution.findByUuid(params.id)
-        def newwei = WorkflowExecutionItemFactory.createExecutionItemForWorkflow(rdjob.workflow)
+        def newwei = workflowExecutionItemFactory.createExecutionItemForWorkflow(rdjob.workflow)
         def oldwei = executionUtilService.createExecutionItemForWorkflow(se.workflow)
         response.contentType = "application/json;utf-8"
         render mapper.writeValueAsString([newwei: newwei, oldwei: oldwei])

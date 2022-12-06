@@ -21,5 +21,13 @@ public interface NodeConfig {
     Boolean getExcludeFilterUncheck(); //y
     String  getFilter(); //y
     String  getFilterExclude(); //y
+    Boolean getNodesSelectedByDefault();
+    Boolean getNodeKeepgoing();
+    Boolean getDoNodedispatch();
+    Boolean getNodeRankOrderAscending();
+    Boolean getNodeFilterEditable();
+    Integer getNodeThreadcount();
+    String  getNodeThreadcountDynamic();
+    String  getNodeRankAttribute();
 
 }

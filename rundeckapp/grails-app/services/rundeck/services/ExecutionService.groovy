@@ -154,6 +154,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def executorService
     JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecycleComponentService
+
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
 

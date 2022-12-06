@@ -2,15 +2,15 @@ package org.rundeck.app.data.job.converters
 
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.rundeck.app.data.job.RdJob
-import org.rundeck.app.data.job.RdLogConfig
-import org.rundeck.app.data.job.RdNodeConfig
-import org.rundeck.app.data.job.RdNotification
-import org.rundeck.app.data.job.RdOption
-import org.rundeck.app.data.job.RdOrchestrator
-import org.rundeck.app.data.job.RdSchedule
-import org.rundeck.app.data.job.RdWorkflow
-import org.rundeck.app.data.job.RdWorkflowStep
+import rundeck.data.job.RdJob
+import rundeck.data.job.RdLogConfig
+import rundeck.data.job.RdNodeConfig
+import rundeck.data.job.RdNotification
+import rundeck.data.job.RdOption
+import rundeck.data.job.RdOrchestrator
+import rundeck.data.job.RdSchedule
+import rundeck.data.job.RdWorkflow
+import rundeck.data.job.RdWorkflowStep
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Notification
@@ -45,14 +45,6 @@ class ScheduledExecutionFromRdJobUpdater {
         se.timeZone = job.timeZone
         se.defaultTab = job.defaultTab
         se.maxMultipleExecutions = job.maxMultipleExecutions
-        se.nodesSelectedByDefault = job.nodesSelectedByDefault
-        se.nodeKeepgoing = job.nodeKeepgoing
-        se.doNodedispatch = job.doNodedispatch
-        se.nodeRankAttribute = job.nodeRankAttribute
-        se.nodeRankOrderAscending = job.nodeRankOrderAscending
-        se.nodeFilterEditable = job.nodeFilterEditable
-        se.nodeThreadcount = job.nodeThreadcount
-        se.nodeThreadcountDynamic = job.nodeThreadcountDynamic
         se.save() //This is necessary for inserts to happen in the correct order
         updateWorkflow(se, job.workflow)
         updateSchedule(se, job.schedule)
@@ -170,6 +162,14 @@ class ScheduledExecutionFromRdJobUpdater {
         se.nodeExcludeOsVersion = nodeConfig.nodeExcludeOsVersion
         se.nodeExcludePrecedence = nodeConfig.nodeExcludePrecedence
         se.successOnEmptyNodeFilter = nodeConfig.successOnEmptyNodeFilter
+        se.nodesSelectedByDefault = nodeConfig.nodesSelectedByDefault
+        se.nodeKeepgoing = nodeConfig.nodeKeepgoing
+        se.doNodedispatch = nodeConfig.doNodedispatch
+        se.nodeRankAttribute = nodeConfig.nodeRankAttribute
+        se.nodeRankOrderAscending = nodeConfig.nodeRankOrderAscending
+        se.nodeFilterEditable = nodeConfig.nodeFilterEditable
+        se.nodeThreadcount = nodeConfig.nodeThreadcount
+        se.nodeThreadcountDynamic = nodeConfig.nodeThreadcountDynamic
         se.filter = nodeConfig.filter
         se.filterExclude = nodeConfig.filterExclude
         se.excludeFilterUncheck = nodeConfig.excludeFilterUncheck

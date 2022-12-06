@@ -10,7 +10,7 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
-import rundeck.services.AnyDomainEmailValidator
+import rundeck.data.validation.validators.AnyDomainEmailValidator
 
 
 /**
