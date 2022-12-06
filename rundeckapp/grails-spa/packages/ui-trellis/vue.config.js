@@ -3,8 +3,10 @@ const Glob = require('glob')
 const fse = require('fs-extra')
 const Path = require('path')
 const walk = require('walk')
+const webpack = require('webpack')
 
 const nodeExternals = require('webpack-node-externals');
+const BUILD_COPYRIGHT = `© ${new Date().getFullYear()} PagerDuty, Inc. All Rights Reserved.`
 
 /** Create a "page" for each component */
 pages = {}
@@ -146,5 +148,10 @@ module.exports = {
         })
       }
     })
+    config.plugins.push(
+        new webpack.DefinePlugin({
+          BUILD_COPYRIGHT: JSON.stringify(BUILD_COPYRIGHT)
+        })
+    )
   }
 };
