@@ -1,0 +1,80 @@
+@import '../runstrap/_variables';
+
+.expandComponentHolder{
+  .expandComponentControl{
+    > .more-indicator-verbiage{
+      display: inline-block;
+    }
+    > .less-indicator-verbiage{
+      display: none;
+    }
+  }
+  &.expanded{
+    > .more-indicator-verbiage{
+      display: none;
+    }
+    > .less-indicator-verbiage{
+      display: inline-block;
+    }
+  }
+}
+
+details {
+  > summary {
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &.details-inline {
+    display: inline-block;
+
+    > summary {
+      display: inline-block;
+    }
+  }
+
+  &.details-reset {
+
+    > summary {
+      list-style: none;
+    }
+
+    > summary::before {
+      display: none;
+    }
+
+    > summary::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  &.more-info {
+    > summary {
+      .less-indicator-verbiage {
+        display: none
+      }
+      .more-info-icon {
+        color: var(--medium-gray);
+      }
+    }
+
+    &[open] > summary {
+       .more-indicator-verbiage {
+        display: none
+      }
+
+      .less-indicator-verbiage {
+        display: inline-block;
+      }
+    }
+
+    .more-info-content {
+      margin-top: 1em;
+      margin-bottom: 1em;
+      padding-left: 0.5em;
+    }
+  }
+}

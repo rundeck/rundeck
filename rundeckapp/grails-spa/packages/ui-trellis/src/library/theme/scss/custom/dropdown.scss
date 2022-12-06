@@ -1,0 +1,10 @@
+// @import "../paper/_dropdown";
+//
+// .dropdown-menu > span{
+//   @extend .dropdown-menu
+// }
+.dropdown-form .dropdown-menu > li {
+  &.form-item, &.form-inline {
+    padding: 10px;
+  }
+}

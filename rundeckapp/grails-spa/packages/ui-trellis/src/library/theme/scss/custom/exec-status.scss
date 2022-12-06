@@ -1,0 +1,131 @@
+@import '../runstrap/_variables';
+//execution status text
+.exec-status {
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+
+  &.icon{
+    display: inline;
+  }
+
+  &.other,
+  &[data-execstate=OTHER] {
+    color: var(--warning-color);
+    &.icon{
+      &:before {
+        content: "\f069";
+      }
+    }
+  }
+
+  &[data-execstate=OTHER][data-statusstring=incomplete] {
+    color: var(--warning-color);
+    &.icon{
+      &:before {
+        content: "\f12a";
+      }
+    }
+  }
+
+  &.fail,
+  &[data-execstate=FAILED] {
+    color: var(--danger-color);
+    &.icon{
+      &:before {
+        content: "\f068";
+      }
+    }
+  }
+
+  &.running,
+  &[data-execstate=RUNNING] {
+    color: var(--info-color);
+    &.icon{
+      &:before {
+        content: "\f144";
+      }
+    }
+  }
+
+  &.succeed,
+  &[data-execstate=SUCCEEDED] {
+    color: var(--success-color);
+    &.icon{
+      &:before {
+        content: "\f058";
+      }
+    }
+  }
+
+  &.aborted,
+  &[data-execstate=ABORTED] {
+    color: var(--background-color-accent-lvl3);
+    &.icon{
+      &:after {
+        content: "\f056";
+      }
+    }
+  }
+
+  &.timedout,
+  &[data-execstate=TIMEDOUT] {
+    color: var(--warning-color);
+    &.icon{
+      &:before {
+        content: "\f017";
+      }
+    }
+  }
+
+  &.failedretry,
+  &[data-execstate=FAILED-WITH-RETRY] {
+    color: var(--warning-color);
+    &.icon{
+      &:before {
+        content: "\f01e";
+      }
+    }
+  }
+
+  &.scheduled,
+  &[data-execstate=SCHEDULED] {
+    color: var(--info-color);
+    &.icon{
+      &:before {
+        content: "\f017";
+      }
+    }
+  }
+
+  &.queued,
+  &[data-execstate=QUEUED] {
+    color: var(--primary-color);
+    &.icon{
+      &:before {
+        content: "\f5fd";
+      }
+    }
+  }
+
+  &.missed,
+  &[data-execstate=MISSED] {
+    color: var(--danger-color);
+    &.icon{
+      &:before {
+        content: "\f017";
+      }
+    }
+  }
+}
+
+.exec-status-text.custom-status {
+  font-style: italic;
+}
+
+.exec-status-text.custom-status:before {
+  content: '“';
+}
+
+.exec-status-text.custom-status:after {
+  content: '”';
+}

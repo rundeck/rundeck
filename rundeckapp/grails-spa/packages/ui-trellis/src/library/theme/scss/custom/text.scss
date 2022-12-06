@@ -1,0 +1,111 @@
+@import "../runstrap/variables";
+
+.text-truncated-to-first-character{
+  display:block;
+  visibility:hidden;
+  &:first-letter {
+      visibility:visible;
+  }
+}
+
+.text-header {
+  text-transform: uppercase;
+}
+
+.as-block {
+  display: block;
+}
+
+.visibility-hidden {
+  visibility: hidden;
+}
+
+.hover-reveal-hidden:hover .visibility-hidden {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.as-inline-block {
+  display: inline-block;
+}
+
+.text-strong {
+  font-weight: $font-weight-bold;
+}
+
+.text-h1, .text-h2, .text-h3, .text-h4, .text-h5 {
+  color: var(--font-color);
+  a {
+    color: var(--font-color) !important;
+    font-weight: bold !important;
+  }
+}
+
+%text-h1 {
+  font-size: $font-size-h1;
+  font-weight: 700;
+}
+.text-h1 { @extend %text-h1; }
+
+%text-h2 {
+  font-size: $font-size-h2;
+  font-weight: 700;
+}
+.text-h2 { @extend %text-h2; }
+
+%text-h3 {
+  font-size: $font-size-h3;
+  font-weight: 700;
+}
+.text-h3 { @extend %text-h3 }
+
+
+%text-h4 {
+  font-size: $font-size-h4;
+  font-weight: 700;
+}
+.text-h4 { @extend %text-h4 }
+
+%text-h5 {
+  font-size: $font-size-h5;
+  font-weight: 700;
+  line-height: 1.4em;
+}
+.text-h5 { @extend %text-h5; }
+
+%text-h6 {
+  font-size: $font-size-h6;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.text-h6 { @extend %text-h6; }
+
+.text-base {
+  font-size: $font-size-base;
+}
+
+.row.row-hover:hover {
+
+  background-color: var(--background-color-accent-lvl2);
+}
+
+.row.row-border-top {
+  border-width: 2px 0 0 0;
+  border-color: var(--border-color);
+  border-style: solid;
+}
+
+.colon-after::after {
+  content: ':'
+}
+
+pre.snippet .line{
+  display:block;
+  &.error{
+    color: red;
+  }
+}
+
+.title {
+  margin-bottom: 20px;
+}

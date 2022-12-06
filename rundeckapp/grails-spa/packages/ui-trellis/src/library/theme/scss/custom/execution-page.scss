@@ -1,0 +1,72 @@
+/*!
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../runstrap/variables";
+
+.subtitlebar {
+  &.execution-page {
+    background-color: var(--background-color-accent-lvl2);
+    // border-bottom: 1px solid darken($bg-subheader, 10%);
+    margin-bottom: 20px;
+    border-radius: 6px;
+    .execution-head-info {
+      background: var(--background-color-lvl2);
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+    .execution-aux-info {
+    }
+  }
+}
+
+.execution-action-links {
+  a:not(.btn) {
+    text-decoration: underline;
+  }
+
+  li > a:not(.btn) {
+    text-decoration: none;
+  }
+
+  a {
+    + a, + .btn, + .spacer {
+      margin-left: 10px;
+    }
+  }
+
+  .btn {
+    + a, + .btn, + .spacer {
+      margin-left: 10px;
+    }
+  }
+
+  .spacer {
+    + a, + .btn, + .spacer {
+      margin-left: 10px;
+    }
+  }
+
+}
+.execution-state-summary{
+
+  .execution-user,
+  .execution-retry{
+    display:block;
+  }
+  .execution-summary-status,
+  .execution-duration{
+    margin: 0 5px 0 0;
+  }
+}

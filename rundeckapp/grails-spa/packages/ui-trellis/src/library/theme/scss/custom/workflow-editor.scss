@@ -1,0 +1,43 @@
+@import "../runstrap/variables";
+//workflow editor, option editor, autohilite:
+btn.autohilite:hover,
+span.autohilite:hover {
+  background: var(--info-color);
+  background: var(--light-gray);
+}
+
+span.autoedit {
+  padding: 3px;
+  cursor: pointer;
+}
+
+span.autoedit:hover {
+  padding: 2px;
+  border: 1px dotted var(--info-color);
+}
+/**
+   * single step or option edit box
+   */
+.optEditForm,
+.wfitemEditForm {
+  border: 2px solid #e5e5e5;
+  border-bottom-radius: 5px;
+  border-top-radius: 5px;
+  padding: 10px;
+
+  &.container {
+    background: white;
+  }
+}
+//option values in code sections
+.optvalue {
+  &.optextra {
+    border-bottom: 1px dashed var(--black);
+  }
+}
+
+.optkey {
+  &:after {
+    content: ':';
+  }
+}

@@ -1,0 +1,175 @@
+// *************************************
+//
+//   Grid System
+//   -> Grid Utilities and Containers for layouts
+//   - 1. Container
+//   - 2. Grid Utilities
+//
+// -------------------------------------
+
+// -------------------------------------
+//   1. Container
+// -------------------------------------
+.rs-container {
+  margin: 0 auto;
+  width: var(--screen-none);
+  @media (min-width: $screen-xs) {
+    max-width: var(--screen-xs);
+  }
+  @media (min-width: $screen-sm) {
+    max-width: var(--screen-sm);
+  }
+
+  @media (min-width: $screen-md) {
+    max-width: var(--screen-md);
+  }
+
+  @media (min-width: $screen-lg) {
+    max-width: var(--screen-lg);
+  }
+
+  @media (min-width: $screen-xl) {
+    max-width: var(--screen-xl);
+  }
+  @media (min-width: $screen-2xl) {
+    max-width: var(--screen-2xl);
+  }
+}
+// -------------------------------------
+//   1. Grid Utilities
+// -------------------------------------
+
+.grid-1{
+  display: grid;
+  gap: 1.5em;
+  grid-template-columns: repeat(1,minmax(0,1fr));
+}
+.grid-2{
+  display: grid;
+  gap: 1.5em;
+  grid-template-columns: repeat(1,minmax(0,1fr));
+  @media (min-width: $screen-sm) {
+    grid-template-columns: repeat(2,minmax(0,1fr));
+  }
+}
+.grid-3{
+  display: grid;
+  gap: 1.5em;
+  grid-template-columns: repeat(1,minmax(0,1fr));
+  @media (min-width: $screen-sm) {
+    grid-template-columns: repeat(3,minmax(0,1fr));
+  }
+}
+.grid-4{
+  display: grid;
+  gap: 1.5em;
+  grid-template-columns: repeat(1,minmax(0,1fr));
+  @media (min-width: $screen-sm) {
+    grid-template-columns: repeat(4,minmax(0,1fr));
+  }
+}
+
+// potential move to utilities
+.col-span-3{
+    grid-column: span 3 / span 3;
+}
+.col-span-2{
+    grid-column: span 2 / span 2;
+}
+
+
+
+
+//
+// Grid System (-Legacy Bootstrap 3)
+// --------------------------------------------------
+
+// Container widths
+//
+// Set the container width, and override it for fixed navbars in media queries.
+.container {
+  @include container-fixed;
+
+  @media (min-width: $screen-sm-min) {
+    width: $container-sm;
+  }
+  @media (min-width: $screen-md-min) {
+    width: $container-md;
+  }
+  @media (min-width: $screen-lg-min) {
+    width: $container-lg;
+  }
+}
+
+
+// Fluid container
+//
+// Utilizes the mixin meant for fixed width containers, but without any defined
+// width for fluid, full width layouts.
+
+.container-fluid {
+  @include container-fixed;
+  padding: 0px;
+}
+
+
+// Row
+//
+// Rows contain and clear the floats of your columns.
+
+.row {
+  @include make-row;
+}
+
+.row-no-gutters {
+  margin-right: 0;
+  margin-left: 0;
+
+  [class*="col-"] {
+    padding-right: 0;
+    padding-left: 0;
+  }
+}
+
+
+// Columns
+//
+// Common styles for small and large grid columns
+
+@include make-grid-columns;
+
+
+// Extra small grid
+//
+// Columns, offsets, pushes, and pulls for extra small devices like
+// smartphones.
+
+@include make-grid(xs);
+
+
+// Small grid
+//
+// Columns, offsets, pushes, and pulls for the small device range, from phones
+// to tablets.
+
+@media (min-width: $screen-sm-min) {
+  @include make-grid(sm);
+}
+
+
+// Medium grid
+//
+// Columns, offsets, pushes, and pulls for the desktop device range.
+
+@media (min-width: $screen-md-min) {
+  @include make-grid(md);
+}
+
+
+// Large grid
+//
+// Columns, offsets, pushes, and pulls for the large desktop device range.
+
+@media (min-width: $screen-lg-min) {
+  @include make-grid(lg);
+}

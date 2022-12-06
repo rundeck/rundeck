@@ -1,0 +1,381 @@
+/**
+  Modified less conversion of some of markdeep's generated css.
+*/
+/*
+  Copyright 2015-2016, Morgan McGuire
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without modification,
+  are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+  2. Redistributions in binary form must reproduce the above copyright notice, this
+  list of conditions and the following disclaimer in the documentation and/or other
+  materials provided with the distribution.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+  THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+.md code, pre {
+  font-family: Menlo, 'Lucida Console', monospace;
+  font-size: 13.100000007873037px;
+  line-height: 140%;
+}
+
+.md div.title {
+  font-size: 26px;
+  font-weight: 800;
+  padding-bottom: 5px;
+  line-height: 120%;
+  text-align: center;
+}
+
+.md div.afterTitles {
+  height: 10px;
+}
+
+.md div.subtitle {
+  text-align: center;
+}
+
+.md .image {
+  display: inline-block
+}
+
+.md div.imagecaption, .md div.tablecaption, .md div.listingcaption {
+  margin: 0.2em 0 10px 0;
+  font-style: italic;
+}
+
+.md div.imagecaption {
+  margin-bottom: 0px
+}
+
+.md img {
+  max-width: 100%;
+}
+
+.md div.tilde {
+  margin: 20px 0 -10px 0;
+  text-align: center;
+}
+
+.md blockquote.fancyquote {
+  margin-top: 25px;
+  margin-bottom: 25px;
+  text-align: left;
+  line-height: 160%;
+}
+
+.md blockquote.fancyquote::before {
+  content: "“";
+  color: #DDD;
+  font-family: Times New Roman;
+  font-size: 45px;
+  line-height: 0;
+  margin-right: 6px;
+  vertical-align: -0.3em;
+}
+
+.md span.fancyquote {
+  font-size: 118%;
+  color: #777;
+  font-style: italic;
+}
+
+.md span.fancyquote::after {
+  content: "”";
+  font-style: normal;
+  color: #DDD;
+  font-family: Times New Roman;
+  font-size: 45px;
+  line-height: 0;
+  margin-left: 6px;
+  vertical-align: -0.3em;
+}
+
+.md blockquote.fancyquote .author {
+  width: 100%;
+  margin-top: 10px;
+  display: inline-block;
+  text-align: right;
+}
+
+.md small {
+  font-size: 60%;
+}
+
+.md svg.diagram {
+  display: block;
+  font-family: Menlo, 'Lucida Console', monospace;
+  font-size: 13.100000007873037px;
+  text-align: center;
+  stroke-linecap: round;
+  stroke-width: 2px;
+  stroke: #000;
+  fill: #000;
+}
+
+.md svg.diagram .opendot {
+  fill: #FFF
+}
+
+.md svg.diagram text {
+  stroke: none;
+}
+
+.md a:link.url {
+  //font-family: Georgia, Palatino, 'Times New Roman';
+}
+
+.md .tocHeader {
+  padding-bottom: 3px;
+  padding-top: 15px;
+  border-bottom: 3px solid;
+  border-top: none;
+  font-size: 20px;
+  font-weight: bold;
+  clear: both;
+}
+
+.md table {
+  border-collapse: collapse;
+  line-height: 140%;
+}
+
+.md table.table {
+  margin: auto;
+  // .table-bordered();
+  // .table-condensed();
+  // .table-hover();
+  th{
+    text-transform: capitalize;
+    background: #f9f9f9;
+    font-weight:bold;
+  }
+}
+
+.md table.calendar {
+  width: 100%;
+  margin: auto;
+  font-size: 11px;
+  //font-family: Helvetica, Arial, sans-serif;
+}
+
+.md table.calendar th {
+  font-size: 16px;
+}
+
+.md .today {
+  background: #ECF8FA;
+}
+
+.md div.tablecaption {
+  text-align: center;
+}
+
+.md table.table {
+  th {
+    padding: 8px 15px 8px 15px;
+  }
+
+}
+
+.md pre.tilde {
+  border-top: 1px solid #CCC;
+  border-bottom: 1px solid #CCC;
+  padding: 5px 0 5px 20px;
+  margin-bottom: 30px;
+  background: #FCFCFC;
+}
+
+.md a:link, .md a:visited {
+  color: #38A;
+  text-decoration: none;
+}
+
+.md a:hover {
+  text-decoration: underline
+}
+
+.md dt {
+  font-weight: 700;
+}
+
+.md dd {
+  padding-bottom: 18px;
+}
+
+.md code {
+  white-space: pre;
+}
+
+.md .endnote {
+  font-size: 13px;
+  line-height: 15px;
+  padding-left: 10px;
+  text-indent: -10px;
+}
+
+.md .bib {
+  padding-left: 80px;
+  text-indent: -80px;
+  text-align: left;
+}
+
+.md .markdeepFooter {
+  font-size: 9px;
+  text-align: right;
+  padding-top: 80px;
+  color: #999;
+}
+
+.md .mediumTOC {
+  float: right;
+  font-size: 12px;
+  line-height: 15px;
+  border-left: 1px solid #CCC;
+  padding-left: 15px;
+  margin: 15px 0px 15px 25px;
+}
+
+.md .mediumTOC .level1 {
+  font-weight: 600;
+}
+
+.md .longTOC .level1 {
+  font-weight: 600;
+  display: block;
+  padding-top: 12px;
+  margin-bottom: -20px;
+}
+
+.md .shortTOC {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.md {
+
+  .hljs {
+    display: block;
+    overflow-x: auto;
+    padding: 0.5em;
+    background: #fff;
+    color: #000;
+    -webkit-text-size-adjust: none
+  }
+
+  .hljs-comment {
+    color: #006a00
+  }
+
+  .hljs-keyword {
+    color: #02E
+  }
+
+  .hljs-literal, .nginx .hljs-title {
+    color: #aa0d91
+  }
+
+  .method, .hljs-list .hljs-title, .hljs-tag .hljs-title, .setting .hljs-value, .hljs-winutils, .tex .hljs-command, .http .hljs-title, .hljs-request, .hljs-status, .hljs-name {
+    color: #008
+  }
+
+  .hljs-envvar, .tex .hljs-special {
+    color: #660
+  }
+
+  .hljs-string {
+    color: #c41a16
+  }
+
+  .hljs-tag .hljs-value, .hljs-cdata, .hljs-filter .hljs-argument, .hljs-attr_selector, .apache .hljs-cbracket, .hljs-date, .hljs-regexp {
+    color: #080
+  }
+
+  .hljs-sub .hljs-identifier, .hljs-pi, .hljs-tag, .hljs-tag .hljs-keyword, .hljs-decorator, .ini .hljs-title, .hljs-shebang, .hljs-prompt, .hljs-hexcolor, .hljs-rule .hljs-value, .hljs-symbol, .hljs-symbol .hljs-string, .hljs-number, .css .hljs-function, .hljs-function .hljs-title, .coffeescript .hljs-attribute {
+    color: #A0C
+  }
+
+  .hljs-function .hljs-title {
+    font-weight: bold;
+    color: #000
+  }
+
+  .hljs-class .hljs-title, .smalltalk .hljs-class, .hljs-type, .hljs-typename, .hljs-tag .hljs-attribute, .hljs-doctype, .hljs-class .hljs-id, .hljs-built_in, .setting, .hljs-params, .clojure .hljs-attribute {
+    color: #5c2699
+  }
+
+  .hljs-variable {
+    color: #3f6e74
+  }
+
+  .css .hljs-tag, .hljs-rule .hljs-property, .hljs-pseudo, .hljs-subst {
+    color: #000
+  }
+
+  .css .hljs-class, .css .hljs-id {
+    color: #9b703f
+  }
+
+  .hljs-value .hljs-important {
+    color: #ff7700;
+    font-weight: bold
+  }
+
+  .hljs-rule .hljs-keyword {
+    color: #c5af75
+  }
+
+  .hljs-annotation, .apache .hljs-sqbracket, .nginx .hljs-built_in {
+    color: #9b859d
+  }
+
+  .hljs-preprocessor, .hljs-preprocessor *, .hljs-pragma {
+    color: #643820
+  }
+
+  .tex .hljs-formula {
+    background-color: #eee;
+    font-style: italic
+  }
+
+  .diff .hljs-header, .hljs-chunk {
+    color: #808080;
+    font-weight: bold
+  }
+
+  .diff .hljs-change {
+    background-color: #bccff9
+  }
+
+  .hljs-addition {
+    background-color: #baeeba
+  }
+
+  .hljs-deletion {
+    background-color: #ffc8bd
+  }
+
+  .hljs-comment .hljs-doctag {
+    font-weight: bold
+  }
+
+  .method .hljs-id {
+    color: #000
+  }
+}
