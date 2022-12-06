@@ -3,6 +3,7 @@ package org.rundeck.app.data.job
 import grails.util.Holders
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
+import rundeck.data.job.RdWorkflow
 import rundeck.services.FrameworkService
 import spock.lang.Specification
 

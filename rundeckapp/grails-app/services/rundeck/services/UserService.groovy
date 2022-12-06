@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.user.BaseUserProfile
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
@@ -234,13 +235,13 @@ class UserService {
     UserInfo getCurrentUserInfo() {
         User user = User.findByLogin(session.user)
         if(!user) return null
-        return new UserInfo(username: user.login, email: user.email, first: user.firstName, last: user.lastName)
+        return new UserInfo(username: user.login, email: user.email, firstname: user.firstName, lastname: user.lastName)
     }
 
-    static class UserInfo {
+    static class UserInfo implements BaseUserProfile {
         String username
         String email
-        String first
-        String last
+        String firstname
+        String lastname
     }
 }

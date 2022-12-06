@@ -28,20 +28,12 @@ public interface JobData {
     Boolean getScheduleEnabled();
     Boolean getExecutionEnabled();
     Boolean getMultipleExecutions();
-    Boolean getNodesSelectedByDefault();
-    Boolean getNodeKeepgoing();
-    Boolean getDoNodedispatch();
-    Boolean getNodeRankOrderAscending();
-    Boolean getNodeFilterEditable();
     String getNotifyAvgDurationThreshold();
     String getTimeZone();
     String getDefaultTab();
     String getMaxMultipleExecutions();
     Date getDateCreated();
     Date getLastUpdated();
-    Integer getNodeThreadcount();
-    String  getNodeThreadcountDynamic();
-    String  getNodeRankAttribute();
     String getServerNodeUUID();
     Map<String, Object> getPluginConfigMap();
 

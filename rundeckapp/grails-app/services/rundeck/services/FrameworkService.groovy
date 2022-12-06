@@ -28,6 +28,10 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
+import com.dtolabs.rundeck.core.jobs.IExecutionLifecyclePluginService
+import com.dtolabs.rundeck.core.options.JobOptionUrlExpander
+import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
@@ -61,25 +65,25 @@ import java.util.function.Predicate
  * Interfaces with the core Framework object
  */
 @GrailsCompileStatic
-class FrameworkService implements ApplicationContextAware, ClusterInfoService {
+class FrameworkService implements ApplicationContextAware, ClusterInfoService, FrameworkServiceCapabilities {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
     public static final String FIRST_LOGIN_FILE = ".firstLogin"
     static final String SYS_PROP_SERVER_ID = "rundeck.server.uuid"
 
-    def ApplicationContext applicationContext
+    ApplicationContext applicationContext
     def gormEventStoreService
-    def executionService
+    ExecutionService executionService
     MetricService metricService
-    def Framework rundeckFramework
+    Framework rundeckFramework
     def rundeckPluginRegistry
-    def PluginService pluginService
-    def PluginControlService pluginControlService
+    PluginService pluginService
+    PluginControlService pluginControlService
     def scheduledExecutionService
     def logFileStorageService
     def fileUploadService
-    def EventBus grailsEventBus
-    def AuthContextEvaluator rundeckAuthContextEvaluator
+    EventBus grailsEventBus
+    AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
     JobSchedulerService jobSchedulerService
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
@@ -88,6 +92,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     FeatureService featureService
     ExecutorService executorService
     AppAuthContextProcessor rundeckAuthContextProcessor
+    JobOptionUrlExpander jobOptionUrlExpander
+    RemoteJsonOptionRetriever remoteJsonOptionRetriever
+    WorkflowExecutionItemFactory workflowExecutionItemFactory
 
     String getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath
@@ -436,7 +443,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
             }
         }
     }
-    def existsFrameworkProject(String project) {
+    boolean existsFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
     }
 
@@ -634,13 +641,13 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     }
 
     @CompileStatic(TypeCheckingMode.SKIP)
-    def AuthContext userAuthContext(session) {
+    AuthContext userAuthContext(HttpSession session) {
         if (!session['_Framework:AuthContext']) {
             session['_Framework:AuthContext'] = rundeckAuthContextProvider.getAuthContextForSubject(session.subject)
         }
         return session['_Framework:AuthContext']
     }
-    def IFramework getRundeckFramework(){
+    IFramework getRundeckFramework(){
         return rundeckFramework;
     }
 
@@ -1352,6 +1359,10 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
                 props : projProps,
                 remove: removePrefixes
         ]
+    }
+
+    IExecutionLifecyclePluginService getExecutionLifecyclePluginService() {
+        return executionService.executionLifecyclePluginService
     }
 
     public <T> PluggableProviderService<T> getStorageProviderPluginService() {

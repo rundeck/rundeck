@@ -17,7 +17,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.execution.IWorkflowJobItem
-import org.rundeck.app.WorkflowStepConstants
+import rundeck.data.constants.WorkflowStepConstants
 
 /*
 * JobExec.java

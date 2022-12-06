@@ -395,6 +395,14 @@ class NamedJobLifecycleComponent implements JobLifecycleComponent {
     boolean isPlugin() {
         return component instanceof JobLifecyclePlugin
     }
+
+    JobLifecycleStatus beforeJobExecution(JobPreExecutionEvent event) throws JobLifecycleComponentException {
+        return component.beforeJobExecution(event)
+    }
+
+    JobLifecycleStatus beforeSaveJob(JobPersistEvent event) throws JobLifecycleComponentException {
+        return component.beforeSaveJob(event)
+    }
 }
 
 @CompileStatic

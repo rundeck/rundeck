@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.PluginConfigureService
+import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.AcceptsServices
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -52,7 +53,7 @@ import groovy.transform.CompileStatic
 import org.rundeck.app.spi.Services
 
 @CompileStatic
-class PluginService implements ResourceFormats, PluginConfigureService {
+class PluginService implements ResourceFormats, PluginConfigureService, PluginServiceCapabilities {
 
     def PluginRegistry rundeckPluginRegistry
     def FrameworkService frameworkService
@@ -590,4 +591,7 @@ class PluginService implements ResourceFormats, PluginConfigureService {
         generator
     }
 
+    PluginRegistry getPluginRegistry() {
+        return rundeckPluginRegistry
+    }
 }

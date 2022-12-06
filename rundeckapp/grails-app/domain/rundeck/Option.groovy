@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.model.v1.job.option.OptionValueData
+import rundeck.data.validation.shared.SharedJobOptionConstraints
 
 import java.util.regex.Pattern
 
@@ -85,32 +86,10 @@ public class Option implements Comparable, OptionData {
     static transients = ['realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin','optionValues']
 
     static constraints={
-        name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
-        description(nullable:true)
-        defaultValue(nullable:true)
-        defaultStoragePath(nullable:true,matches: '^(/?)keys/.+')
-        enforced(nullable:false)
-        required(nullable:true)
-        isDate(nullable:true)
-        dateFormat(nullable: true, maxSize: 30)
+        importFrom SharedJobOptionConstraints
         valuesUrl(nullable:true)
         valuesUrlLong(nullable:true)
-        regex(nullable:true)
         scheduledExecution(nullable:true)
-        delimiter(nullable:true)
-        multivalued(nullable:true)
-        secureInput(nullable:true)
-        secureExposed(nullable:true)
-        sortIndex(nullable:true)
-        optionType(nullable: true, maxSize: 255)
-        configData(nullable: true)
-        multivalueAllSelected(nullable: true)
-        label(nullable: true)
-        optionValuesPluginType(nullable: true)
-        hidden(nullable: true)
-        valuesList(nullable: true)
-        valuesListDelimiter(nullable: true)
-        sortValues(nullable: true)
     }
 
     List<OptionValueData> getValuesFromPlugin() {
