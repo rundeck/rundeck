@@ -85,6 +85,14 @@ public class TestFramework extends AbstractBaseTest {
     public void testServices() {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test default service implementations
+        assert null != fw.getStepExecutionService();
+        assert null != fw.getNodeStepExecutorService();
+        assert null != fw.getNodeExecutorService();
+        assert null != fw.getFileCopierService();
+        assert null != fw.getNodeDispatcherService();
+        assert null != fw.getResourceModelSourceService();
+        assert null != fw.getResourceFormatParserService();
+        assert null != fw.getResourceFormatGeneratorService();
         assertNotNull(fw.getService(ServiceNameConstants.WorkflowStep));
         assertNotNull(fw.getService(ServiceNameConstants.WorkflowNodeStep));
         assertNotNull(fw.getService(ServiceNameConstants.NodeExecutor));
@@ -97,6 +105,8 @@ public class TestFramework extends AbstractBaseTest {
     public void testSetService() {
         final Framework fw = Framework.getInstance(getBaseDir(), getFrameworkProjectsBase());
         //test removing services
+
+        assert null != fw.getNodeStepExecutorService();
         final FrameworkSupportService commandInterpreter = fw.getService(ServiceNameConstants.WorkflowNodeStep);
         assertNotNull(commandInterpreter);
         fw.setService(ServiceNameConstants.WorkflowNodeStep, null);

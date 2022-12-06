@@ -25,6 +25,8 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
 import com.dtolabs.rundeck.core.plugins.*;
@@ -33,9 +35,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * FileCopierService is ...
@@ -57,6 +57,14 @@ public class FileCopierService
     public static final String LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE = "local-file-copier";
     public static final String DEFAULT_REMOTE_PROVIDER = JschScpFileCopier.SERVICE_PROVIDER_TYPE;
     public static final String DEFAULT_LOCAL_PROVIDER = LocalFileCopier.SERVICE_PROVIDER_TYPE;
+    private static final Map<String, Class<? extends FileCopier>> PRESET_PROVIDERS ;
+
+    static {
+        Map<String, Class<? extends FileCopier>> map = new HashMap<>();
+        map.put(JschScpFileCopier.SERVICE_PROVIDER_TYPE, JschScpFileCopier.class);
+        map.put(LocalFileCopier.SERVICE_PROVIDER_TYPE, LocalFileCopier.class);
+        PRESET_PROVIDERS = Collections.unmodifiableMap(map);
+    }
 
     public String getName() {
         return SERVICE_NAME;
@@ -69,35 +77,49 @@ public class FileCopierService
     public FileCopierService(Framework framework) {
         super(framework, true);
 
-        //TODO: use plugin framework to configure available FileCopier implementations.
-        registry.put(JschScpFileCopier.SERVICE_PROVIDER_TYPE, JschScpFileCopier.class);
-        registry.put(LocalFileCopier.SERVICE_PROVIDER_TYPE, LocalFileCopier.class);
-
+        registry.putAll(PRESET_PROVIDERS);
     }
 
+    public static boolean isRegistered(String name){
+        return PRESET_PROVIDERS.containsKey(name);
+    }
     @Override
     protected String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
-        if (framework.isLocalNode(node)) {
-            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
+        return getProviderNameForNode(
+                framework.isLocalNode(node),
+                framework.getProjectManager().loadProjectConfig(project)
+        );
+    }
+
+    public static String getProviderNameForNode(
+            final boolean isLocal, final IRundeckProjectConfig iRundeckProjectConfig
+    ) {
+        if (isLocal) {
+            final String value = iRundeckProjectConfig.getProperty( SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY);
             return value != null ? value : DEFAULT_LOCAL_PROVIDER;
         } else {
-            final String value = framework.getProjectProperty(project, SERVICE_DEFAULT_PROVIDER_PROPERTY);
+            final String value = iRundeckProjectConfig.getProperty( SERVICE_DEFAULT_PROVIDER_PROPERTY);
             return value != null ? value : DEFAULT_REMOTE_PROVIDER;
         }
     }
 
-    public static FileCopierService getInstanceForFramework(Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static FileCopierService getInstanceForFramework(Framework framework,
+                                                            final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final FileCopierService service = new FileCopierService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (FileCopierService) framework.getService(SERVICE_NAME);
+        return (FileCopierService) registration.getService(SERVICE_NAME);
     }
 
     @Override
     protected String getServiceProviderNodeAttributeForNode(INodeEntry node) {
-        if (framework.isLocalNode(node)) {
+        return getNodeAttributeForProvider(framework.isLocalNode(node));
+    }
+
+    public static String getNodeAttributeForProvider(final boolean isLocal) {
+        if (isLocal) {
             return LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE;
         }
         return REMOTE_NODE_SERVICE_SPECIFIER_ATTRIBUTE;

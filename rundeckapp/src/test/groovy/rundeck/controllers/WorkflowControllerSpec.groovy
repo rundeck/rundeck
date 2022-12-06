@@ -237,7 +237,7 @@ class WorkflowControllerSpec extends Specification implements ControllerUnitTest
 
         then:
         1 * controller.pluginService.getPluginDescriptor(filtertype, LogFilterPlugin) >>
-                new DescribedPlugin(null, description, filtertype)
+                new DescribedPlugin(null, description, filtertype, null, null)
         1 * controller.frameworkService.validateDescription(description, '', config, _, _, _) >> [
                 valid: true, desc: description, props: validconfig
         ]
@@ -293,7 +293,7 @@ class WorkflowControllerSpec extends Specification implements ControllerUnitTest
 
         then:
         1 * controller.pluginService.getPluginDescriptor(filtertype, LogFilterPlugin) >>
-                new DescribedPlugin(null, description, filtertype)
+                new DescribedPlugin(null, description, filtertype, null, null)
         1 * controller.frameworkService.validateDescription(description, '', config, _, _, _) >> [
                 valid: true, desc: description, props: validconfig
         ]
@@ -376,7 +376,7 @@ class WorkflowControllerSpec extends Specification implements ControllerUnitTest
                 ]
         ]
         1 * controller.pluginService.getPluginDescriptor(type, LogFilterPlugin) >>
-                new DescribedPlugin(null, null, type)
+                new DescribedPlugin(null, null, type, null, null)
         1 * controller.frameworkService.validateDescription(null, '', config, null, _, _) >> [
                 valid: true, desc: null, props: expectconfig,
                 report:'report'

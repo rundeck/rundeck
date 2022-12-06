@@ -18,7 +18,7 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
-import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
@@ -34,6 +35,8 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashMap;
 
@@ -41,10 +44,10 @@ import java.util.HashMap;
  * Created by greg on 2/20/15.
  */
 public class ServiceSupport implements IFrameworkServices {
-
-    final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
-
-    private Framework framework;
+    @Getter @Setter private Framework framework;
+    @Getter @Setter private ExecutionService executionService;
+    @Getter @Setter private IExecutionProviders executionProviders;
+    @Getter @Setter private IExecutionServicesRegistration executionServices;
 
     public ServiceSupport() {
 
@@ -54,19 +57,9 @@ public class ServiceSupport implements IFrameworkServices {
      * Initialize children, the various resource management objects
      */
     public void initialize(Framework framework) {
-        setFramework(framework);
-        //plugin manager service inited first.  any pluggable services will then be
-        //able to try to load providers via the plugin manager
-        NodeStepExecutionService.getInstanceForFramework(getFramework());
-        NodeExecutorService.getInstanceForFramework(getFramework());
-        FileCopierService.getInstanceForFramework(getFramework());
-        NodeDispatcherService.getInstanceForFramework(getFramework());
-        getExecutionService();
-        WorkflowExecutionService.getInstanceForFramework(getFramework());
-        StepExecutionService.getInstanceForFramework(getFramework());
-        ResourceModelSourceService.getInstanceForFramework(getFramework());
-        ResourceFormatParserService.getInstanceForFramework(getFramework());
-        ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
+        if (null == this.framework) {
+            setFramework(framework);
+        }
     }
 
     /**
@@ -75,7 +68,7 @@ public class ServiceSupport implements IFrameworkServices {
      */
     @Override
     public FrameworkSupportService getService(String name) {
-        return services.get(name);
+        return executionServices.getService(name);
     }
     /**
      * Set a service by name
@@ -84,107 +77,98 @@ public class ServiceSupport implements IFrameworkServices {
      */
     @Override
     public void setService(final String name, final FrameworkSupportService service){
-        synchronized (services){
-            if(null==services.get(name) && null!=service) {
-                services.put(name, service);
-            }else if(null==service) {
-                services.remove(name);
-            }
-        }
+        executionServices.setService(name, service);
     }
 
     @Override
     public void overrideService(final String name, final FrameworkSupportService service) {
-        synchronized (services) {
-            services.put(name, service);
-        }
+        executionServices.overrideService(name, service);
     }
 
     @Override
     public OrchestratorService getOrchestratorService() {
-        return OrchestratorService.getInstanceForFramework(getFramework());
+        return executionServices.getOrchestratorService();
     }
 
     @Override
-    public ExecutionService getExecutionService() {
-        return ExecutionServiceFactory.getInstanceForFramework(getFramework());
-    }
-    @Override
     public WorkflowExecutionService getWorkflowExecutionService() {
-        return WorkflowExecutionService.getInstanceForFramework(getFramework());
+        return executionServices.getWorkflowExecutionService();
     }
 
     @Override
     public WorkflowStrategyService getWorkflowStrategyService() {
-        return WorkflowStrategyService.getInstanceForFramework(getFramework());
+        return executionServices.getWorkflowStrategyService();
     }
 
     @Override
     public StepExecutionService getStepExecutionService() {
-        return StepExecutionService.getInstanceForFramework(getFramework());
+        return executionServices.getStepExecutionService();
     }
 
     @Override
-    public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws
+    public StepExecutor getStepExecutorForItem(final StepExecutionItem item, final String project) throws ExecutionServiceException {
+        return executionProviders.getStepExecutorForItem(item, project);
+    }
+
+    @Override
+    public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final ExecutionContext context) throws
             ExecutionServiceException
     {
-        return getFileCopierService().getProviderForNodeAndProject(node, project);
+        return executionProviders.getFileCopierForNodeAndProject(node, context);
     }
 
     @Override
     public FileCopierService getFileCopierService() {
-        return FileCopierService.getInstanceForFramework(getFramework());
+        return executionServices.getFileCopierService();
     }
 
     @Override
-    public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
-        return getNodeExecutorService().getProviderForNodeAndProject(node, project);
+    public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final ExecutionContext context) throws ExecutionServiceException {
+        return executionProviders.getNodeExecutorForNodeAndProject(node, context);
     }
     @Override
     public NodeExecutorService getNodeExecutorService() {
-        return NodeExecutorService.getInstanceForFramework(getFramework());
+        return executionServices.getNodeExecutorService();
     }
     @Override
     public NodeStepExecutionService getNodeStepExecutorService() {
-        return NodeStepExecutionService.getInstanceForFramework(getFramework());
+        return executionServices.getNodeStepExecutorService();
     }
     @Override
-    public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item) throws ExecutionServiceException {
-        return NodeStepExecutionService.getInstanceForFramework(getFramework()).getExecutorForExecutionItem(item);
+    public NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item, final String project) throws ExecutionServiceException {
+        return executionProviders.getNodeStepExecutorForItem(item, project);
     }
     @Override
     public NodeDispatcher getNodeDispatcherForContext(ExecutionContext context) throws ExecutionServiceException {
-        return NodeDispatcherService.getInstanceForFramework(getFramework()).getNodeDispatcher(context);
+        return executionProviders.getNodeDispatcherForContext(context);
     }
+
+    @Override
+    public NodeDispatcherService getNodeDispatcherService() {
+        return executionServices.getNodeDispatcherService();
+    }
+
     @Override
     public ResourceModelSourceService getResourceModelSourceService() {
-        return ResourceModelSourceService.getInstanceForFramework(getFramework());
+        return executionServices.getResourceModelSourceService();
     }
 
     @Override
     public ResourceFormatParserService getResourceFormatParserService() {
-        return ResourceFormatParserService.getInstanceForFramework(getFramework());
+        return executionServices.getResourceFormatParserService();
     }
 
     @Override
     public ResourceFormatGeneratorService getResourceFormatGeneratorService() {
-        return ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
+        return executionServices.getResourceFormatGeneratorService();
     }
 
     @Override
-    public ServiceProviderLoader getPluginManager(){
-        if(null!=getService(PluginManagerService.SERVICE_NAME)) {
-            return PluginManagerService.getInstanceForFramework(getFramework());
+    public ServiceProviderLoader getPluginManager() {
+        if (null != executionServices.getService(PluginManagerService.SERVICE_NAME)) {
+            return PluginManagerService.getInstanceForFramework(getFramework(), executionServices);
         }
         return null;
     }
 
-
-    public Framework getFramework() {
-        return framework;
-    }
-
-    public void setFramework(final Framework framework) {
-        this.framework = framework;
-    }
 }

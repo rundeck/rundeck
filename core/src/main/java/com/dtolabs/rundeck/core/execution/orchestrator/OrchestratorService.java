@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.execution.orchestrator;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
+import com.dtolabs.rundeck.core.common.IServicesRegistration;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
@@ -47,13 +48,14 @@ public class OrchestratorService extends FrameworkPluggableProviderService<Orche
         return null;
     }
     
-    public static OrchestratorService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
+    public static OrchestratorService getInstanceForFramework(final Framework framework,
+                                                              final IServicesRegistration registration) {
+        if (null == registration.getService(SERVICE_NAME)) {
             final OrchestratorService service = new OrchestratorService(framework);
-            framework.setService(SERVICE_NAME, service);
+            registration.setService(SERVICE_NAME, service);
             return service;
         }
-        return (OrchestratorService) framework.getService(SERVICE_NAME);
+        return (OrchestratorService) registration.getService(SERVICE_NAME);
 
     }
 }

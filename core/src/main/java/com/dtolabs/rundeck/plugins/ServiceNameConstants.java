@@ -73,4 +73,5 @@ public class ServiceNameConstants {
     public static final String ExecutionLifecycle = "ExecutionLifecycle";
     public static final String JobLifecycle = "JobLifecycle";
     public static final String AuditEventListener      = "AuditEventListener";
+    public static final String PluginGroup             = "PluginGroup";
 }

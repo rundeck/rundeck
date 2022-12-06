@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFilesystemFramework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -41,6 +40,7 @@ import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
@@ -54,9 +54,13 @@ import org.rundeck.app.components.jobs.JobFormat
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.data.model.v1.project.RdProject
+import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.spi.data.DataAccessException
+import org.rundeck.spi.data.DataManager
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -82,6 +86,7 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 @Transactional
+
 class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     public static final String PROJECT_BASEDIR_PROPS_PLACEHOLDER = '%PROJECT_BASEDIR%'
@@ -101,13 +106,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
+    RundeckProjectDataProvider projectDataProvider
 
     static transactional = false
 
     static Logger projectLogger = LoggerFactory.getLogger("org.rundeck.project.events")
 
+
     private exportJob(ScheduledExecution job, Writer writer, String stripJobRef = null)
-        throws ProjectServiceException {
+            throws ProjectServiceException {
         //convert map to xml
         rundeckJobDefinitionManager.exportAs('xml', [job], JobFormat.options(true, [:], stripJobRef), writer)
     }
@@ -118,22 +125,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def dateConvert = {
             sdf.format(it)
         }
-        BuilderUtil builder = new BuilderUtil(converters:[(Date): dateConvert, (java.sql.Timestamp): dateConvert])
+        BuilderUtil builder = new BuilderUtil(converters: [(Date): dateConvert, (java.sql.Timestamp): dateConvert])
         def map = report.toMap()
-        if(map.jcJobId){
+        if (map.jcJobId) {
             //convert internal job ID to extid
             def se
-            try{
+            try {
                 se = ScheduledExecution.get(Long.parseLong(map.jcJobId))
-                if(se){
-                    map.jcJobId=se.extid
+                if (se) {
+                    map.jcJobId = se.extid
                 }
-            }catch(NumberFormatException e){
+            } catch (NumberFormatException e) {
 
             }
         }
         //convert map to xml
-        zip.file("$name"){ Writer writer ->
+        zip.file("$name") { Writer writer ->
             def xml = new MarkupBuilder(writer)
             builder.objToDom("report", map, xml)
         }
@@ -181,7 +188,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
 
         def File logfile = loggingService.getLogFileForExecution(exec)
-        String logfilepath=null
+        String logfilepath = null
         if (logfile && logfile.isFile()) {
             logfilepath = "output-${exec.id}.rdlog"
         }
@@ -206,7 +213,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return Report object with remapped exec/job ID values
      * @throws ProjectServiceException
      */
-    def loadHistoryReport(xmlinput, Map execIdMap=null, Map jobsByOldIdMap =null, identity=null) throws ProjectServiceException {
+    def loadHistoryReport(xmlinput, Map execIdMap = null, Map jobsByOldIdMap = null, identity = null) throws ProjectServiceException {
         Node doc = parseXml(xmlinput)
         if (!doc) {
             throw new ProjectServiceException("XML Document could not be parsed.")
@@ -220,20 +227,20 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         if (object instanceof Map) {
             //remap job id if necessary
             if (object.jcJobId && jobsByOldIdMap && jobsByOldIdMap[object.jcJobId]) {
-                object.jcJobId= jobsByOldIdMap[object.jcJobId].id
+                object.jcJobId = jobsByOldIdMap[object.jcJobId].id
             }
             //remap exec id if necessary
             //nb: support old "jcExecId" name
             if (object.jcExecId && execIdMap && execIdMap[object.jcExecId]) {
-                object.executionId= execIdMap[object.jcExecId]
-            }else if (object.executionId && execIdMap && execIdMap[object.executionId]) {
-                object.executionId= execIdMap[object.executionId]
-            }else {
+                object.executionId = execIdMap[object.jcExecId]
+            } else if (object.executionId && execIdMap && execIdMap[object.executionId]) {
+                object.executionId = execIdMap[object.executionId]
+            } else {
                 //skip report for exec id that cannot be found
                 return null
             }
             //convert dates
-            convertStringsToDates(object, ['dateStarted', 'dateCompleted'],"Report ${identity}")
+            convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Report ${identity}")
             if (!(object.dateCompleted instanceof Date)) {
                 object.dateCompleted = new Date()
             }
@@ -257,8 +264,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @throws ProjectServiceException
      */
     JobFileRecord loadJobFileRecord(xmlinput, Map execIdMap = null, Map jobIdMap = null, identity = null)
-            throws ProjectServiceException
-    {
+            throws ProjectServiceException {
         Node doc = parseXml(xmlinput)
         if (!doc) {
             throw new ProjectServiceException("XML Document could not be parsed.")
@@ -309,10 +315,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
     }
 
-    private void convertStringsToDates(object, final ArrayList<String> properties, identity=null) {
+    private void convertStringsToDates(object, final ArrayList<String> properties, identity = null) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-        properties.each {dname ->
+        properties.each { dname ->
             def dobj = object[dname]
             if (dobj && dobj instanceof String) {
                 try {
@@ -334,7 +340,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * input IDs from the XML, 'retryidmap' map of new Executions to old the 'retry' execution ID
      * @throws ProjectServiceException if an error occurs
      */
-    def loadExecutions(xmlinput, String projectName, Map jobIdMap=null, skipJobIds = []) throws ProjectServiceException {
+    def loadExecutions(xmlinput, String projectName, Map jobIdMap = null, skipJobIds = []) throws ProjectServiceException {
         Node doc = parseXml(xmlinput)
         if (!doc) {
             throw new ProjectServiceException("XML Document could not be parsed.")
@@ -346,46 +352,46 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             throw new ProjectServiceException("No 'executions/execution' element was found")
         }
 
-        def execlist=[]
-        def execidmap=[:]
-        def retryidmap=[:]
-        def ecount=0
-        doc.execution.each{ enode->
-            def object = XmlParserUtil.toObject(enode,false)
+        def execlist = []
+        def execidmap = [:]
+        def retryidmap = [:]
+        def ecount = 0
+        doc.execution.each { enode ->
+            def object = XmlParserUtil.toObject(enode, false)
             if (object instanceof Map) {
                 JobsXMLCodec.convertXmlWorkflowToMap(object.workflow)
                 //remap job id if necessary
-                def se=null
-                if(object.jobId && jobIdMap && jobIdMap[object.jobId]){
-                    se=scheduledExecutionService.getByIDorUUID(jobIdMap[object.jobId])
-                }else if(object.jobId && skipJobIds && skipJobIds.contains(object.jobId)){
+                def se = null
+                if (object.jobId && jobIdMap && jobIdMap[object.jobId]) {
+                    se = scheduledExecutionService.getByIDorUUID(jobIdMap[object.jobId])
+                } else if (object.jobId && skipJobIds && skipJobIds.contains(object.jobId)) {
                     log.debug("Execution skipped ${object.id} for job ${object.jobId}")
                     return
-                }else if(object.jobId) {
+                } else if (object.jobId) {
                     //look for same ID
                     def found = scheduledExecutionService.getByIDorUUID(object.jobId)
-                    if(found && found.project==projectName){
-                        se=found
+                    if (found && found.project == projectName) {
+                        se = found
                     }
 
                 }
-                if(object.id){
-                    object.id=XmlParserUtil.stringToInt(object.id,-1)
+                if (object.id) {
+                    object.id = XmlParserUtil.stringToInt(object.id, -1)
                 }
                 //convert dates
                 convertStringsToDates(object, ['dateStarted', 'dateCompleted'], "Execution($ecount) ID ${object.id}")
-                if(!(object.dateCompleted instanceof Date)){
-                    object.dateCompleted=new Date()
-                    object.status='false'
-                    object.cancelled=true
-                    object.abortedby='system'
+                if (!(object.dateCompleted instanceof Date)) {
+                    object.dateCompleted = new Date()
+                    object.status = 'false'
+                    object.cancelled = true
+                    object.abortedby = 'system'
                 }
-                def retryExecId= XmlParserUtil.stringToInt(object.remove('retryExecutionId'),0)
+                def retryExecId = XmlParserUtil.stringToInt(object.remove('retryExecutionId'), 0)
                 try {
                     def newexec = Execution.fromMap(object, se)
-                    execidmap[newexec]=object.id
-                    if(retryExecId){
-                        retryidmap[newexec]=retryExecId
+                    execidmap[newexec] = object.id
+                    if (retryExecId) {
+                        retryidmap[newexec] = retryExecId
                     }
                     execlist << newexec
                 } catch (Throwable e) {
@@ -396,7 +402,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 throw new ProjectServiceException("Unexpected data type for Execution($ecount): " + object.class.name)
             }
         }
-        [executions:execlist,execidmap:execidmap, retryidmap: retryidmap]
+        [executions: execlist, execidmap: execidmap, retryidmap: retryidmap]
     }
 
     private Node parseXml(xmlinput) {
@@ -404,11 +410,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def doc
         def reader
         def filestream
-        if (xmlinput instanceof File ) {
-            filestream=new FileInputStream(xmlinput)
-            reader = new InputStreamReader(filestream,"UTF-8")
+        if (xmlinput instanceof File) {
+            filestream = new FileInputStream(xmlinput)
+            reader = new InputStreamReader(filestream, "UTF-8")
         } else if (xmlinput instanceof InputStream) {
-            reader = new InputStreamReader(xmlinput,"UTF-8")
+            reader = new InputStreamReader(xmlinput, "UTF-8")
         } else if (xmlinput instanceof String) {
             reader = new StringReader(xmlinput)
         } else {
@@ -418,9 +424,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         try {
             doc = parser.parse(reader)
         } catch (Exception e) {
-            throw new ProjectServiceException("Unable to parse xml: ${e.message}",e)
-        }finally{
-            if(null!=filestream){
+            throw new ProjectServiceException("Unable to parse xml: ${e.message}", e)
+        } finally {
+            if (null != filestream) {
                 filestream.close()
             }
         }
@@ -437,38 +443,38 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def Map<String, ArchiveRequest> asyncExportRequests
 
     BeanProvider<ProjectComponent> componentBeanProvider = new SpringBeanProvider<ProjectComponent>(
-        applicationContext: applicationContext,
-        clazz: ProjectComponent
+            applicationContext: applicationContext,
+            clazz: ProjectComponent
     )
 
     @Override
     void afterPropertiesSet() throws Exception {
 
-        asyncExportRequests= Collections.synchronizedMap(new HashMap<String,ArchiveRequest>())
+        asyncExportRequests = Collections.synchronizedMap(new HashMap<String, ArchiveRequest>())
 
-        def spec= configurationService.getString("projectService.projectExportCache.spec", "expireAfterAccess=30m")
+        def spec = configurationService.getString("projectService.projectExportCache.spec", "expireAfterAccess=30m")
 
-        asyncExportResults=
+        asyncExportResults =
                 CacheBuilder.
                         from(spec).
-                        removalListener({ RemovalNotification<String,ArchiveRequest> notification->
-                        //when cached item is removed, delete the file if the requests map is not retaining it
-                            if(!asyncExportRequests.containsKey(notification.key)){
+                        removalListener({ RemovalNotification<String, ArchiveRequest> notification ->
+                            //when cached item is removed, delete the file if the requests map is not retaining it
+                            if (!asyncExportRequests.containsKey(notification.key)) {
                                 log.debug("Cache expired for project archive request ${notification.key}, deleting file: ${notification.value.file}")
                                 notification.value.file?.delete()
                             }
-                        } ).
+                        }).
                         build({
-                         //load the request via the requests map, otherwise it does not exist
+                            //load the request via the requests map, otherwise it does not exist
                             def request = asyncExportRequests.get(it);
                             if (null == request) {
                                 throw new Exception("Invalid key: ${it}")
                             }
                             request
-                        } )
+                        })
         componentBeanProvider = new SpringBeanProvider<ProjectComponent>(
-            applicationContext: applicationContext,
-            clazz: ProjectComponent
+                applicationContext: applicationContext,
+                clazz: ProjectComponent
         )
     }
 
@@ -480,16 +486,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return token string to identify the new request
      */
     def exportProjectToFileAsync(
-        IRundeckProject project,
-        IFramework framework,
-        String ident,
-        ProjectArchiveExportRequest options,
-        AuthContext authContext
-    )
-    {
+            IRundeckProject project,
+            IFramework framework,
+            String ident,
+            ProjectArchiveExportRequest options,
+            AuthContext authContext
+    ) {
         String token = UUID.randomUUID().toString()
-        def summary=new ArchiveRequestProgress()
-        def request=new ArchiveRequest(summary:summary,token:token)
+        def summary = new ArchiveRequestProgress()
+        def request = new ArchiveRequest(summary: summary, token: token)
 
         def p = Promises.task {
             try {
@@ -503,7 +508,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
         }
         //store in map
-        asyncExportRequests.put(ident+'/'+token,request)
+        asyncExportRequests.put(ident + '/' + token, request)
         token
     }
 
@@ -517,12 +522,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             String instanceUrl,
             boolean preserveUUID,
             AuthContext authContext
-    )
-    {
-        projectLogger.info("Begin export ["+ project.name + "] to ["+instanceUrl+"]/"+project)
+    ) {
+        projectLogger.info("Begin export [" + project.name + "] to [" + instanceUrl + "]/" + project)
         String token = UUID.randomUUID().toString()
-        def summary=new ExportFileProgress()
-        def request=new ExportFileRequest(summary:summary,token:token)
+        def summary = new ExportFileProgress()
+        def request = new ExportFileRequest(summary: summary, token: token)
 
         def p = Promises.task {
             try {
@@ -531,9 +535,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     request.apitoken = apiToken
                     request.instance = instanceUrl
                     request.result = exportProjectToInstance(project, framework, summary, options,
-                                    iProject, apiToken,instanceUrl,preserveUUID, authContext)
+                            iProject, apiToken, instanceUrl, preserveUUID, authContext)
                     request.file = request.result.file
-                    projectLogger.info("Export ["+ project.name + "] to ["+instanceUrl+"]/"+project + " succeeded")
+                    projectLogger.info("Export [" + project.name + "] to [" + instanceUrl + "]/" + project + " succeeded")
                 }
             } catch (Throwable t) {
                 projectLogger.info("Export of ${project.name} failed: ${t}", t)
@@ -541,7 +545,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
         }
         //store in map
-        asyncExportRequests.put(ident+'/'+token,request)
+        asyncExportRequests.put(ident + '/' + token, request)
         token
     }
     /**
@@ -549,10 +553,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param key key
      * @return request
      */
-    private def ArchiveRequest getRequest(String key){
-        try{
+    private def ArchiveRequest getRequest(String key) {
+        try {
             return asyncExportResults.get(key)
-        }catch (Exception e){
+        } catch (Exception e) {
             return null
         }
     }
@@ -562,8 +566,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param token
      * @return
      */
-    def boolean hasPromise(String ident,String token){
-        return getRequest(ident+'/'+token)!=null
+    def boolean hasPromise(String ident, String token) {
+        return getRequest(ident + '/' + token) != null
     }
     /**
      * Return summary of progress for the request, or null
@@ -571,8 +575,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param token
      * @return
      */
-    def ProgressSummary promiseSummary(String ident,String token){
-        getRequest(ident+'/'+token)?.summary
+    def ProgressSummary promiseSummary(String ident, String token) {
+        getRequest(ident + '/' + token)?.summary
     }
     /**
      *
@@ -580,8 +584,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param token
      * @return result file, or null
      */
-    def File promiseReady(String ident,String token){
-        getRequest(ident+'/'+token)?.file
+    def File promiseReady(String ident, String token) {
+        getRequest(ident + '/' + token)?.file
     }
     /**
      *
@@ -589,8 +593,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param token
      * @return result request
      */
-    def ImportResponse promiseResult(String ident,String token){
-        getRequest(ident+'/'+token)?.result
+    def ImportResponse promiseResult(String ident, String token) {
+        getRequest(ident + '/' + token)?.result
     }
     /**
      *
@@ -598,8 +602,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param token
      * @return date of request, or null
      */
-    def Date promiseRequestStarted(String ident,String token){
-        getRequest(ident+'/'+token)?.dateStarted
+    def Date promiseRequestStarted(String ident, String token) {
+        getRequest(ident + '/' + token)?.dateStarted
     }
     /**
      *
@@ -607,8 +611,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param token
      * @return exception thrown, or null
      */
-    def Throwable promiseError(String ident,String token){
-        return getRequest(ident+'/'+token)?.exception
+    def Throwable promiseError(String ident, String token) {
+        return getRequest(ident + '/' + token)?.exception
     }
     /**
      * marks the request to be expired
@@ -616,9 +620,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param token
      * @return
      */
-    def void releasePromise(String ident,String token){
+    def void releasePromise(String ident, String token) {
         //remove from map, allow to expire via the cache
-        asyncExportRequests.remove(ident+'/'+token)
+        asyncExportRequests.remove(ident + '/' + token)
     }
     /**
      * Export the project to a temp file jar
@@ -631,8 +635,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      */
     @CompileStatic
     File exportProjectToFile(
-        IRundeckProject project, IFramework framework, ProgressListener listener,
-        ProjectArchiveExportRequest options, AuthContext authContext
+            IRundeckProject project, IFramework framework, ProgressListener listener,
+            ProjectArchiveExportRequest options, AuthContext authContext
     ) throws ProjectServiceException {
         File outfile
         try {
@@ -646,17 +650,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         outfile.deleteOnExit()
         outfile
     }
+
     def exportProjectToInstance(IRundeckProject project, IFramework framework, ProgressListener listener,
-                                ProjectArchiveExportRequest options,String iProject,
-                                String apiToken, String instanceUrl,boolean preserveUUID,
+                                ProjectArchiveExportRequest options, String iProject,
+                                String apiToken, String instanceUrl, boolean preserveUUID,
                                 AuthContext authContext
-    ) throws ProjectServiceException{
+    ) throws ProjectServiceException {
         File file = exportProjectToFile(project, framework, listener, options, authContext)
-        Client client = new Client(instanceUrl,apiToken)
-        ProjectImportStatus ret = client.importProjectArchive(iProject,file,true, options.executions,
-                    options.configs,options.acls, options.scm)
-        ImportResponse response = new ImportResponse(file:file,errors: ret.errors, ok:ret.getResultSuccess(),
-                executionErrors:ret.executionErrors, aclErrors:ret.aclErrors)
+        Client client = new Client(instanceUrl, apiToken)
+        ProjectImportStatus ret = client.importProjectArchive(iProject, file, true, options.executions,
+                options.configs, options.acls, options.scm)
+        ImportResponse response = new ImportResponse(file: file, errors: ret.errors, ok: ret.getResultSuccess(),
+                executionErrors: ret.executionErrors, aclErrors: ret.aclErrors)
         listener?.done()
         response
     }
@@ -673,19 +678,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     ProgressListener listener,
                                     ProjectArchiveExportRequest options,
                                     AuthContext authContext
-    ) throws ProjectServiceException
-    {
+    ) throws ProjectServiceException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 
         def Manifest manifest = new Manifest()
-        manifest.mainAttributes.put(Attributes.Name.MANIFEST_VERSION,'1.0')
+        manifest.mainAttributes.put(Attributes.Name.MANIFEST_VERSION, '1.0')
         manifest.mainAttributes.putValue('Rundeck-Application-Version', grailsApplication.metadata.getApplicationVersion())
         manifest.mainAttributes.putValue('Rundeck-Archive-Format-Version', '1.0')
         manifest.mainAttributes.putValue('Rundeck-Archive-Project-Name', project.name)
         manifest.mainAttributes.putValue('Rundeck-Archive-Export-Date', sdf.format(new Date()))
 
-        def zip = new JarOutputStream(stream,manifest)
+        def zip = new JarOutputStream(stream, manifest)
         try {
             exportProjectToStream(project, framework, zip, listener, options, authContext)
         } finally {
@@ -700,8 +704,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             ProgressListener listener,
             ProjectArchiveExportRequest options,
             AuthContext authContext
-    ) throws ProjectServiceException
-    {
+    ) throws ProjectServiceException {
         ZipBuilder zip = new ZipBuilder(output)
 //        zip.debug = true
         String projectName = project.name
@@ -709,32 +712,32 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportExecutions = !options || options.all || options.executions
         def isExportConfigs = !options || options.all || options.configs
         def isExportReadmes = !options || options.all || options.readmes
-        def isExportAcls = hasAclReadAuth(authContext,project.name) && (!options || options.all || options.acls)
-        def isExportScm = hasScmConfigure(authContext,project.name) && (!options || options.all || options.scm)
-        def stripJobRef = (options.stripJobRef != 'no')?options.stripJobRef:null
+        def isExportAcls = hasAclReadAuth(authContext, project.name) && (!options || options.all || options.acls)
+        def isExportScm = hasScmConfigure(authContext, project.name) && (!options || options.all || options.scm)
+        def stripJobRef = (options.stripJobRef != 'no') ? options.stripJobRef : null
         Map<String, ProjectComponent> authedComponents = getProjectComponentsAuthorizedForExport(
-            authContext,
-            project.name
+                authContext,
+                project.name
         )
-        Map<String,ProjectComponent> enabledComponents=authedComponents.findAll { name, exporter ->
+        Map<String, ProjectComponent> enabledComponents = authedComponents.findAll { name, exporter ->
             options.all ||
-            !exporter.exportOptional ||
-            (options.exportComponents && options.exportComponents[name])
+                    !exporter.exportOptional ||
+                    (options.exportComponents && options.exportComponents[name])
         }
         def baseRunBefore = [(BuiltinExportComponents.jobs.name()): [BuiltinExportComponents.executions.name()]]
-        def sortOrder= (BuiltinExportComponents.names()) + (enabledComponents?.keySet()?.toSorted() ?: [])
+        def sortOrder = (BuiltinExportComponents.names()) + (enabledComponents?.keySet()?.toSorted() ?: [])
 
-        def sortResult=Toposort.toposort(sortOrder, { String name->
-            if(baseRunBefore[name]){
+        def sortResult = Toposort.toposort(sortOrder, { String name ->
+            if (baseRunBefore[name]) {
                 return baseRunBefore[name]
             }
             return enabledComponents[name]?.exportMustRunBefore
-        }, {String name->
+        }, { String name ->
             enabledComponents[name]?.exportMustRunAfter
-                                         })
-        if(sortResult.result){
-            sortOrder=sortResult.result
-        }else{
+        })
+        if (sortResult.result) {
+            sortOrder = sortResult.result
+        } else {
             //cyclic dependencies
             log.warn("Project Import: component ordering could not be determined due to cyclic dependency: ${sortResult.cycle}")
         }
@@ -761,7 +764,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             if (isExportAcls) {
                 total += 1
             }
-            if (isExportScm){
+            if (isExportScm) {
                 total += 1
             }
             total += enabledComponents.size()
@@ -770,7 +773,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         zip.dir("rundeck-${projectName}/") {
             //export jobs
-            sortOrder.each{compName->
+            sortOrder.each { compName ->
 
                 if (compName == BuiltinExportComponents.jobs.name() && isExportJobs) {
                     def jobs = ScheduledExecution.findAllByProject(projectName)
@@ -783,8 +786,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         }
                     }
                 } else if (compName == BuiltinExportComponents.executions.name()) {
-                    List<Execution> execs=[]
-                    List<BaseReport> reports=[]
+                    List<Execution> execs = []
+                    List<BaseReport> reports = []
                     if (options.executionsOnly) {
                         //find execs
                         List<Long> execIds = []
@@ -839,9 +842,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 dir('etc/') {
                                     zip.file('project.properties') { Writer writer ->
                                         def map = replaceBasedirForProperties(
-                                            project,
-                                            framework,
-                                            project.getProjectProperties()
+                                                project,
+                                                framework,
+                                                project.getProjectProperties()
                                         )
                                         def projectProps = map as Properties
                                         def sw = new StringWriter()
@@ -874,7 +877,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     dir('acls/') {
                                         policies.each { fname ->
                                             zip.fileStream(fname) { OutputStream stream ->
-                                                manager.loadPolicyFileContents(fname,stream)
+                                                manager.loadPolicyFileContents(fname, stream)
                                             }
                                         }
                                     }
@@ -888,9 +891,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     if (scmconfig) {
                                         zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
                                             def map = replaceBasedirForProperties(
-                                                project,
-                                                framework,
-                                                scmconfig.getProperties()
+                                                    project,
+                                                    framework,
+                                                    scmconfig.getProperties()
                                             )
 
                                             def scmProps = map as Properties
@@ -909,7 +912,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                     }
-                }else if(enabledComponents[compName]) {
+                } else if (enabledComponents[compName]) {
                     ProjectComponent exporter = enabledComponents[compName]
                     exporter.export(projectName, zip, options.exportOpts ? options.exportOpts[exporter.name] : [:])
                     listener?.inc('export', 1)
@@ -921,26 +924,25 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     public String getFilesystemProjectsBasedir(IFramework framework, IRundeckProject project) {
-        if(framework instanceof IFilesystemFramework) {
+        if (framework instanceof IFilesystemFramework) {
             return new File(framework.getFrameworkProjectsBaseDir(), project.name).absolutePath
-        }else{
+        } else {
             return null
         }
     }
 
     Map<String, String> replaceInitialStringInValues(
-        final Map<String, String> projectProperties,
-        String string,
-        String replacement
-    )
-    {
+            final Map<String, String> projectProperties,
+            String string,
+            String replacement
+    ) {
         def Map<String, String> newmap = [:]
 
-        projectProperties.each{k,v->
-            if(v.startsWith(string)){
-                newmap[k]= v.replaceFirst(Pattern.quote(string), Matcher.quoteReplacement(replacement))
-            }else{
-                newmap[k]=v
+        projectProperties.each { k, v ->
+            if (v.startsWith(string)) {
+                newmap[k] = v.replaceFirst(Pattern.quote(string), Matcher.quoteReplacement(replacement))
+            } else {
+                newmap[k] = v
             }
         }
         newmap
@@ -950,34 +952,33 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             final IRundeckProject project,
             final IFramework framework,
             final Properties projectProperties
-    )
-    {
-        def map = new HashMap<String,String>()
+    ) {
+        def map = new HashMap<String, String>()
         map.putAll(projectProperties as Map)
         return replacePlaceholderForProperties(project, framework, map)
     }
+
     Map<String, String> replaceBasedirForProperties(
             final IRundeckProject project,
             final IFramework framework,
             final Map<String, String> projectProperties
-    )
-    {
+    ) {
         def Map<String, String> newmap = [:]
         def basedir = getFilesystemProjectsBasedir(framework, project)
-        if(basedir) {
+        if (basedir) {
             newmap = replaceInitialStringInValues(projectProperties, basedir, PROJECT_BASEDIR_PROPS_PLACEHOLDER)
         }
         newmap
     }
+
     Map<String, String> replacePlaceholderForProperties(
             final IRundeckProject project,
             final IFramework framework,
             final Map<String, String> projectProperties
-    )
-    {
+    ) {
         def Map<String, String> newmap = [:]
         def basedir = getFilesystemProjectsBasedir(framework, project)
-        if(basedir) {
+        if (basedir) {
             newmap = replaceInitialStringInValues(projectProperties, PROJECT_BASEDIR_PROPS_PLACEHOLDER, basedir)
         }
         newmap
@@ -985,7 +986,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     /**
      * Import a zip project archive to the project
      * @param project project
-     * @param  user username of job owner
+     * @param user username of job owner
      * @param roleList role list string for scheduled jobs
      * @param framework framework
      * @param authContext authentication context
@@ -998,8 +999,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             UserAndRolesAuthContext authContext,
             InputStream input,
             ProjectArchiveImportRequest options
-    ) throws ProjectServiceException
-    {
+    ) throws ProjectServiceException {
         ZipReader zip = new ZipReader(new ZipInputStream(input))
 //        zip.debug=true
         def jobxml = []
@@ -1021,28 +1021,28 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         File configtemp = null
         File scmimporttemp = null
         File scmexporttemp = null
-        Map<String, Map<String,File>> importerstemp = new HashMap<>()
+        Map<String, Map<String, File>> importerstemp = new HashMap<>()
         Map<String, File> mdfilestemp = [:]
         Map<String, File> aclfilestemp = [:]
 
         Map<String, ProjectComponent> projectImporters = getProjectComponentsAuthorizedForImport(
-            authContext,
-            project.name
+                authContext,
+                project.name
         )
         def baseRunBefore = [(BuiltinImportComponents.jobs.name()): [BuiltinImportComponents.executions.name()]]
-        def sortOrder= BuiltinImportComponents.names() + (projectImporters?.keySet()?.toSorted() ?: [])
+        def sortOrder = BuiltinImportComponents.names() + (projectImporters?.keySet()?.toSorted() ?: [])
 
-        def sortResult=Toposort.toposort(sortOrder, { String name->
-            if(baseRunBefore[name]){
+        def sortResult = Toposort.toposort(sortOrder, { String name ->
+            if (baseRunBefore[name]) {
                 return baseRunBefore[name]
             }
             return projectImporters[name]?.importMustRunBefore
-        }, {String name->
+        }, { String name ->
             projectImporters[name]?.importMustRunAfter
         })
-        if(sortResult.result){
-            sortOrder=sortResult.result
-        }else{
+        if (sortResult.result) {
+            sortOrder = sortResult.result
+        } else {
             //cyclic dependencies
             log.warn("Project Import: component ordering could not be determined due to cyclic dependency: ${sortResult.cycle}")
         }
@@ -1087,7 +1087,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 configtemp = copyToTemp()
                             }
                         }
-                        if(importScm){
+                        if (importScm) {
                             'scm-import.properties' { path, name, inputs ->
                                 scmimporttemp = copyToTemp()
                             }
@@ -1110,18 +1110,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 if (projectImporters && options.importComponents) {
                     def builder = delegate
                     projectImporters.values().
-                        findAll { options.importComponents[it.name] }.
-                        each { ProjectComponent importer ->
-                            Map<String, File> importFileMap = new HashMap<>()
-                            importerstemp.put(importer.name, importFileMap)
-                            importer.importFilePatterns.each { pattern ->
-                                def parts = pattern.split('/')
-                                builder.dirs(parts) { String path, String name, inputs ->
-                                    def matched=(path+name).split('/',2)
-                                    importFileMap.put(matched[1], copyToTemp())
+                            findAll { options.importComponents[it.name] }.
+                            each { ProjectComponent importer ->
+                                Map<String, File> importFileMap = new HashMap<>()
+                                importerstemp.put(importer.name, importFileMap)
+                                importer.importFilePatterns.each { pattern ->
+                                    def parts = pattern.split('/')
+                                    builder.dirs(parts) { String path, String name, inputs ->
+                                        def matched = (path + name).split('/', 2)
+                                        importFileMap.put(matched[1], copyToTemp())
+                                    }
                                 }
                             }
-                        }
                 }
             }
         }
@@ -1129,15 +1129,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         //have files in dir
         (jobxml + execxml +
-         execout.values() +
-         reportxml +
-         jfrecords +
-         [configtemp] +
-         [scmimporttemp, scmexporttemp] +
-         mdfilestemp.values() +
-         aclfilestemp.values()).
-            each { it?.deleteOnExit() }
-        importerstemp.values().each{it.values()*.deleteOnExit()}
+                execout.values() +
+                reportxml +
+                jfrecords +
+                [configtemp] +
+                [scmimporttemp, scmexporttemp] +
+                mdfilestemp.values() +
+                aclfilestemp.values()).
+                each { it?.deleteOnExit() }
+        importerstemp.values().each { it.values()*.deleteOnExit() }
 
         def loadjobresults = []
         def loadjoberrors = []
@@ -1187,19 +1187,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 break;
                         }
                         def results = scheduledExecutionService.loadImportedJobs(
-                            jobset,
-                            'update',
-                            null,
-                            [:],
-                            authContext,
-                            validateJobref
+                                jobset,
+                                'update',
+                                null,
+                                [:],
+                                authContext,
+                                validateJobref
                         )
 
                         scheduledExecutionService.issueJobChangeEvents(results.jobChangeEvents)
 
                         if (results.errjobs) {
                             log.error(
-                                "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
+                                    "Failed loading (${results.errjobs.size()}) jobs from XML at archive path: ${path}${name}"
 
                             )
                             results.errjobs.each {
@@ -1238,14 +1238,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             } else if (sortKey == BuiltinImportComponents.executions.name() && importExecutions) {
 
                 Map execidmap = importExecutionsToProject(
-                    execxml,
-                    execout,
-                    projectName,
-                    framework,
-                    jobIdMap,
-                    skipJobIds,
-                    execxmlmap,
-                    execerrors
+                        execxml,
+                        execout,
+                        projectName,
+                        framework,
+                        jobIdMap,
+                        skipJobIds,
+                        execxmlmap,
+                        execerrors
                 )
                 //load reports
                 importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
@@ -1279,16 +1279,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     }
                 }
 
-            } else{
-                if (projectImporters && projectImporters[sortKey] && options.importComponents && options.importComponents[sortKey]){
-                    ProjectComponent importer =projectImporters[sortKey]
+            } else {
+                if (projectImporters && projectImporters[sortKey] && options.importComponents && options.importComponents[sortKey]) {
+                    ProjectComponent importer = projectImporters[sortKey]
                     if (importerstemp[importer.name]) {
                         try {
                             def result = importer.doImport(
-                                authContext,
-                                project.name,
-                                importerstemp[importer.name],
-                                options.importOpts[importer.name]
+                                    authContext,
+                                    project.name,
+                                    importerstemp[importer.name],
+                                    options.importOpts[importer.name]
                             )
                             if (result) {
                                 importerErrors[importer.name] = result
@@ -1304,16 +1304,18 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
         }
 
-        (jobxml + execxml + execout.values() + reportxml + [configtemp]+ [scmimporttemp,scmexporttemp] + mdfilestemp.values() + aclfilestemp.values()).
+        (jobxml + execxml + execout.values() + reportxml + [configtemp] + [scmimporttemp, scmexporttemp] + mdfilestemp.values() + aclfilestemp.values()).
                 each { it?.delete() }
-        importerstemp.values().each{it.values()*.delete()}
-        return [success: (loadjoberrors) ? false :
+        importerstemp.values().each { it.values()*.delete() }
+        return [success        : (loadjoberrors) ? false :
                 true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors, scmerrors: scmerrors, importerErrors: importerErrors]
     }
-    static interface BeanProvider<T>{
+
+    static interface BeanProvider<T> {
         Map<String, T> getBeans()
     }
-    static class SpringBeanProvider<T> implements BeanProvider<T>{
+
+    static class SpringBeanProvider<T> implements BeanProvider<T> {
         ApplicationContext applicationContext
         Class<T> clazz
 
@@ -1332,6 +1334,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         values
     }
+
     @CompileStatic
     public Map<String, ProjectComponent> getProjectComponentsAuthorizedForImport(AuthContext authContext, String project) {
         //filter import components based on authorization
@@ -1339,12 +1342,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         Map<String, ProjectComponent> authorized = new HashMap<>()
         getProjectComponents()?.each { k, v ->
             if (!v.importAuthRequiredActions
-                || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
-                authorized[k]=v
+                    || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.importAuthRequiredActions)) {
+                authorized[k] = v
             }
         }
         authorized
     }
+
     @CompileStatic
     public Map<String, ProjectComponent> getProjectComponentsAuthorizedForExport(AuthContext authContext, String project) {
         //filter import components based on authorization
@@ -1352,8 +1356,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         Map<String, ProjectComponent> authorized = new HashMap<>()
         getProjectComponents()?.each { k, v ->
             if (!v.exportAuthRequiredActions
-                || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.exportAuthRequiredActions)) {
-                authorized[k]=v
+                    || rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, projectAuthResource, v.exportAuthRequiredActions)) {
+                authorized[k] = v
             }
         }
         authorized
@@ -1400,15 +1404,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, IRundeckProject project) {
-        def errors=[]
+        def errors = []
         aclfilestemp.each { String k, File v ->
 
             Validation validation = aclFileManagerService.
-                forContext(AppACLContext.project(project.name)).
-                validator.validateYamlPolicy('files/acls/'+k, v)
-            if(!validation.valid){
-                errors<<"files/acls/${k}: "+validation.toString()
-                log.debug("${project.name}: Import failed for acls/${k}: "+validation)
+                    forContext(AppACLContext.project(project.name)).
+                    validator.validateYamlPolicy('files/acls/' + k, v)
+            if (!validation.valid) {
+                errors << "files/acls/${k}: " + validation.toString()
+                log.debug("${project.name}: Import failed for acls/${k}: " + validation)
                 return
             }
 
@@ -1441,22 +1445,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             inputProps.load(reader)
         }
         def map = replacePlaceholderForProperties(
-            project,
-            framework,
-            inputProps
+                project,
+                framework,
+                inputProps
         )
         def newprops = new Properties()
         newprops.putAll(map)
 
-        Properties propResourcesSource = newprops.findAll {String key, String value ->
-                key.startsWith("resources.source.")
+        Properties propResourcesSource = newprops.findAll { String key, String value ->
+            key.startsWith("resources.source.")
         }
 
-        if(!importConfig && importNodes){//import only nodes
+        if (!importConfig && importNodes) {//import only nodes
             project.mergeProjectProperties(propResourcesSource, ["resources.source."] as Set)
-        } else if(importConfig) {
-            if(!importNodes){//import all except the nodes
-                newprops.removeAll {String key, String value -> propResourcesSource.keySet().contains(key)}
+        } else if (importConfig) {
+            if (!importNodes) {//import all except the nodes
+                newprops.removeAll { String key, String value -> propResourcesSource.keySet().contains(key) }
             }
             project.setProjectProperties(newprops)
         }
@@ -1477,23 +1481,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
 
         def map = replacePlaceholderForProperties(
-            project,
-            framework,
-            inputProps
+                project,
+                framework,
+                inputProps
         )
-        String type = map.get('scm.'+integration+'.type')
+        String type = map.get('scm.' + integration + '.type')
 
         def newprops = new Properties()
-        map.each{k,v ->
-            def prefix = 'scm.'+integration+'.config.'
-            if(k.startsWith(prefix)){
-                newprops.put((k-prefix),v)
+        map.each { k, v ->
+            def prefix = 'scm.' + integration + '.config.'
+            if (k.startsWith(prefix)) {
+                newprops.put((k - prefix), v)
             }
         }
-        def result = scmService.savePluginSetup( auth,  integration,  project.name,  type, newprops)
+        def result = scmService.savePluginSetup(auth, integration, project.name, type, newprops)
         if (result.error || !result.valid) {
-            def error = result.error ? result.message :"some input values were not valid"
-            return ["SCM "+integration+": "+error]
+            def error = result.error ? result.message : "some input values were not valid"
+            return ["SCM " + integration + ": " + error]
         }
         []
     }
@@ -1506,7 +1510,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @param execidmap
      * @param projectName
      */
-    private void importReportsToProject(ArrayList reportxml, jobsByOldId, reportxmlnames, Map execidmap, projectName,loadjoberrors) {
+    private void importReportsToProject(ArrayList reportxml, jobsByOldId, reportxmlnames, Map execidmap, projectName, loadjoberrors) {
         def loadedreports = []
         def execids = new ArrayList<Long>(execidmap.values())
         reportxml.each { rxml ->
@@ -1514,12 +1518,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             try {
                 report = loadHistoryReport(rxml, execidmap, jobsByOldId, reportxmlnames[rxml])
             } catch (ProjectServiceException e) {
-                loadjoberrors<<"[${reportxmlnames[rxml]}] ${e.message}"
-                log.debug("[${reportxmlnames[rxml]}] ${e.message}",e)
+                loadjoberrors << "[${reportxmlnames[rxml]}] ${e.message}"
+                log.debug("[${reportxmlnames[rxml]}] ${e.message}", e)
                 log.error("[${reportxmlnames[rxml]}] ${e.message}")
                 return
             }
-            if(!report){
+            if (!report) {
                 log.debug("[${reportxmlnames[rxml]}] Report skipped: no matching execution imported.")
                 return
             }
@@ -1557,8 +1561,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             recordfilenames,
             Map execidmap,
             loadjoberrors
-    )
-    {
+    ) {
         def loadedreports = []
         recordfiles.each { rxml ->
             def report
@@ -1596,21 +1599,20 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map from old execution ID to new ID
      */
     private Map importExecutionsToProject(ArrayList execxml, Map<String, File> execout, projectName,
-                                          IFramework framework, jobIdMap, skipJobIds, Map execxmlmap, execerrors = [] )
-    {
+                                          IFramework framework, jobIdMap, skipJobIds, Map execxmlmap, execerrors = []) {
         // map from old execution ID to new ID
         def execidmap = [:]
         def oldidtoexec = [:]
-        def retryexecs= [:]
+        def retryexecs = [:]
         def loadexecresults = []
         //load executions, and move/rewrite outputfile names
         execxml.each { File exml ->
             def results
             try {
-                results = loadExecutions(exml,projectName, jobIdMap,skipJobIds)
+                results = loadExecutions(exml, projectName, jobIdMap, skipJobIds)
             } catch (ProjectServiceException e) {
-                log.debug("[${execxmlmap[exml]}] ${e.message}",e)
-                execerrors<<"[${execxmlmap[exml]}] ${e.message}"
+                log.debug("[${execxmlmap[exml]}] ${e.message}", e)
+                execerrors << "[${execxmlmap[exml]}] ${e.message}"
                 return
             }
             def execlist = results.executions
@@ -1619,24 +1621,24 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             execlist.each { Execution e ->
                 e.project = projectName
                 if (e.orchestrator && !e.orchestrator.save()) {
-                    execerrors<<"[${execxmlmap[exml]}] Unable to save orchestrator for execution: ${e.orchestrator.errors}"
+                    execerrors << "[${execxmlmap[exml]}] Unable to save orchestrator for execution: ${e.orchestrator.errors}"
                     log.error("[${execxmlmap[exml]}] Unable to save orchestrator for execution: ${e.orchestrator.errors}")
                     return
                 }
                 if (e.workflow && !e.workflow.save()) {
-                    execerrors<<"[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}"
+                    execerrors << "[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}"
                     log.error("[${execxmlmap[exml]}] Unable to save workflow for execution: ${e.workflow.errors}")
                     return
                 }
                 if (!e.save(flush: true)) {
-                    execerrors<<"[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}"
+                    execerrors << "[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}"
                     log.error("[${execxmlmap[exml]}] Unable to save new execution: ${e.errors}")
                     return
                 }
                 loadexecresults << e
                 if (oldids[e]) {
                     execidmap[oldids[e]] = e.id
-                    oldidtoexec[oldids[e]]=e
+                    oldidtoexec[oldids[e]] = e
                 }
                 //check outputfile exists in mapping
                 if (e.outputfilepath && execout[e.outputfilepath]) {
@@ -1648,21 +1650,21 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             false,
                             false
                     )
-                    try{
+                    try {
                         FileUtils.moveFile(oldfile, newfile)
-                    }catch (IOException exc) {
-                        execerrors<<"Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
+                    } catch (IOException exc) {
+                        execerrors << "Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
                         log.error("Failed to move temp log file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
                     }
                     e.outputfilepath = newfile.absolutePath
                 } else {
-                    execerrors<<"New execution ${e.id}, NO matching outfile: ${e.outputfilepath}"
+                    execerrors << "New execution ${e.id}, NO matching outfile: ${e.outputfilepath}"
                     log.error("New execution ${e.id}, NO matching outfile: ${e.outputfilepath}")
                 }
 
                 //copy state.json file
-                if(execout["state-${oldids[e]}.state.json"]){
-                    File statefile= execout["state-${oldids[e]}.state.json"]
+                if (execout["state-${oldids[e]}.state.json"]) {
+                    File statefile = execout["state-${oldids[e]}.state.json"]
                     String filename = logFileStorageService.getFileForExecutionFiletype(
                             e,
                             WorkflowService.STATE_FILE_FILETYPE,
@@ -1673,7 +1675,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     try {
                         FileUtils.moveFile(statefile, newfile)
                     } catch (IOException exc) {
-                        execerrors<<"Failed to move temp state file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
+                        execerrors << "Failed to move temp state file to destination: ${newfile.absolutePath} (old id ${oldids[e]}): ${exc.message}"
                         log.error("Failed to move temp state file to destination: ${newfile.absolutePath} (old id ${oldids[e]})", exc)
                     }
                 }
@@ -1686,12 +1688,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 if (retryExec) {
                     e.retryExecution = retryExec
                     if (!e.save()) {
-                        execerrors<<"Unable to update execution retry link: ${e.errors} (Execution ${e.id})"
+                        execerrors << "Unable to update execution retry link: ${e.errors} (Execution ${e.id})"
                         log.error("Unable to update execution retry link: ${e.errors} (Execution ${e.id})")
                         return
                     }
-                }else{
-                    execerrors<<"Failed to link retry for ${e.id} to ${retryexecs[e]}"
+                } else {
+                    execerrors << "Failed to link retry for ${e.id} to ${retryexecs[e]}"
                     log.error("Failed to link retry for ${e.id} to ${retryexecs[e]}")
                 }
             }
@@ -1700,7 +1702,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         execidmap
     }
 
-    static class DeleteResponse{
+    static class DeleteResponse {
         boolean success
         String error
     }
@@ -1711,7 +1713,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @return map [success:true/false, error: (String errorMessage)]
      */
     @GrailsCompileStatic
-    DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username){
+    DeleteResponse deleteProject(IRundeckProject project, IFramework framework, AuthContext authContext, String username) {
         def result = new DeleteResponse(success: false)
         notify('projectWillBeDeleted', project.name)
 
@@ -1730,13 +1732,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 List<ScheduledExecution> jobs = ScheduledExecution.findAllByProject(project.name)
                 for (ScheduledExecution se : jobs) {
                     ScheduledExecutionService.DeleteJobResult sedresult = scheduledExecutionService.deleteScheduledExecution(se, true, authContext, username)
-                    if(!sedresult.success){
+                    if (!sedresult.success) {
                         throw new Exception(sedresult.error)
                     }
                 }
                 //delete all remaining executions
-                List<Execution> allexecs= Execution.findAllByProject(project.name)
-                def other=allexecs.size()
+                List<Execution> allexecs = Execution.findAllByProject(project.name)
+                def other = allexecs.size()
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
                 log.debug("${other} other executions deleted")
 
@@ -1756,16 +1758,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     throw new Exception("Some components had an error: " + compErrors.join("; "))
                 }
 
-                result.success= true
+                result.success = true
             } catch (Exception e) {
                 status.setRollbackOnly()
                 log.error("Failed to delete project ${project.name}", e)
-                result.error= "Failed to delete project ${project.name}: ${e.message}"
-                result.success=false
+                result.error = "Failed to delete project ${project.name}: ${e.message}"
+                result.success = false
             }
         }
         //if success, delete framework dir
-        if(result.success){
+        if (result.success) {
             framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
             notify('projectWasDeleted', project.name)
         } else {
@@ -1776,17 +1778,38 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     boolean hasAclReadAuth(AuthContext authContext, String project) {
         rundeckAuthContextEvaluator.authorizeApplicationResourceAny(
-            authContext,
-            rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
-            [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
+                authContext,
+                rundeckAuthContextEvaluator.authResourceForProjectAcl(project),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN]
         )
     }
 
     boolean hasScmConfigure(AuthContext authContext, String project) {
         rundeckAuthContextEvaluator.authorizeProjectConfigure(
-            authContext,
-            project
+                authContext,
+                project
         )
+    }
+
+    RdProject findProjectByName(String projectName) {
+        projectDataProvider.findByName(projectName)
+    }
+
+    void update(Serializable id, RdProject data) throws DataAccessException {
+        projectDataProvider.update(id, data)
+    }
+
+    int countFrameworkProjects() {
+        projectDataProvider.countFrameworkProjects()
+    }
+
+    boolean projectExists(String project) {
+        projectDataProvider.projectExists(project)
+
+    }
+
+    String getProjectDescription(String name) {
+        projectDataProvider.getProjectDescription(name)
     }
 }
 

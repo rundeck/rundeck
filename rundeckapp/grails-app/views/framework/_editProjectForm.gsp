@@ -329,3 +329,28 @@
     </div>
 
 </g:each>
+<feature:enabled name="pluginGroups">
+<div class="tab-pane form-horizontal" id="tab_pluginGroups">
+
+    <div class="form-group">
+        <div class=" col-sm-12 help-block"><g:message
+                code="domain.Project.edit.plugins.explanation" default="Project settings for Plugins"/>
+        </div>
+    </div>
+
+    <div class=" form-group spacing-lg">
+        <div class="col-sm-12">
+            <plugin-set-config
+                    class="project-config-plugins-vue"
+                    :event-bus="EventBus"
+                    service-name="PluginGroup"
+                    :mode-toggle="false"
+                    :config-list="[]"
+                    config-prefix="pluginValues.PluginGroup."
+                    @modified="EventBus.$emit('page-modified','Plugins')"
+                    @reset="EventBus.$emit('page-reset','Plugins')"
+            ></plugin-set-config>
+        </div>
+    </div>
+</div>
+</feature:enabled>

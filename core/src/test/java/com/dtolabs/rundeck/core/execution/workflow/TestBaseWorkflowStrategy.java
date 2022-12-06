@@ -62,7 +62,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
     protected void setUp() {
         super.setUp();
-        testFramework = getFrameworkInstance();
+        testFramework = createTestFramework();
         testnode = testFramework.getFrameworkNodeName();
         final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
             TEST_PROJECT);
@@ -237,94 +237,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         return Arrays.asList(item);
     }
 
-    public void testMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError_sequentialNodeDispatcher() throws Exception{
-        mkTestMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError(1);
-    }
-    public void testMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError_parallelNodeDispatcher() throws Exception{
-        mkTestMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError(2);
-    }
-    public void mkTestMultipleNodesShouldExecuteErrorHandlerOnlyAtNodeWithError(int threadCount) throws Exception{
 
-        {
-            String projectName = TEST_PROJECT+"_NODE_EH_"+threadCount;
-            final IRundeckProject frameworkProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(
-                    projectName);
-            final NodeSet nodeset = new NodeSet();
-            nodeset.createInclude().setName(".*");
-
-            final testHandlerNodeDispatchStepItem itemEH = new testHandlerNodeDispatchStepItem();
-            itemEH.type = "dtest2";
-            itemEH.ehKeepgoing=true;
-            final testHandlerNodeDispatchStepItem item = new testHandlerNodeDispatchStepItem();
-            item.type = "dtest1";
-            item.failureHandler=itemEH;
-            Set<String> cmdExecuted=new HashSet<>();
-            NodeStepExecutor object = new NodeStepExecutor() {
-
-                @Override
-                public NodeStepResult executeNodeStep(
-                        final StepExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node
-                ) throws NodeStepException
-                {
-                    cmdExecuted.add(node.getNodename());
-                    if(node.getNodename().equals("testnode1")){
-                        //trigger failure
-                        return new NodeStepResultImpl(new Exception("expected error"),
-                                                      NodeStepFailureReason.ConnectionFailure,
-                                                      "failed",
-                                                      null,
-                                                      node);
-                    }
-                    return new NodeStepResultImpl(node);
-                }
-            };
-            getFrameworkInstance().getNodeStepExecutorService().getProviderRegistryService().registerInstance("dtest1", object);
-
-            Set<String> ehExecuted=new HashSet<>();
-            NodeStepExecutor object2 = new NodeStepExecutor() {
-
-                @Override
-                public NodeStepResult executeNodeStep(
-                        final StepExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node
-                ) throws NodeStepException
-                {
-                    ehExecuted.add(node.getNodename());
-                    return new NodeStepResultImpl(node);
-                }
-            };
-            getFrameworkInstance().getNodeStepExecutorService().getProviderRegistryService().registerInstance("dtest2", object2);
-
-            final BaseWorkflowExecutor strategy = new testSimpleWorkflowExecutor(testFramework);
-            NodeSetImpl allNodes = new NodeSetImpl();
-            allNodes.putNode(new NodeEntryImpl("testnode1"));
-            allNodes.putNode(new NodeEntryImpl("testnode2"));
-            final StepExecutionContext context =
-                    new ExecutionContextImpl.Builder()
-                            .frameworkProject(projectName)
-                            .user("user1")
-                            .nodeSelector(nodeset)
-                            .executionListener(new testListener())
-                            .threadCount(threadCount)
-                            .keepgoing(true)
-                            .nodes(allNodes)
-                            .framework(testFramework).build();
-
-            final BaseWorkflowExecutor.StepResultCapture result = strategy.executeWorkflowStep(
-                    context,
-                    new HashMap<>(),
-                    new ArrayList<>(),
-                    false,
-                    new testWorkflowListener(),
-                    1,
-                    item);
-
-            assertTrue(cmdExecuted.contains("testnode1"));
-            assertTrue(cmdExecuted.contains("testnode2"));
-            assertTrue(ehExecuted.contains("testnode1"));
-            assertFalse(ehExecuted.contains("testnode2"));
-
-        }
-    }
 
     static class testWorkflowListener implements WorkflowExecutionListener {
         @Override

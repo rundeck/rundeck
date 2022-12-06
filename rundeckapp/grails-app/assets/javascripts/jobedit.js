@@ -274,7 +274,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
     elem.addEventListener('keypress', noenter, false);
   });
   if (liitem.find('input[type=text]').length > 0) {
-    liitem.find('input[type=text]')[0].focus();
+    liitem.find('input[type=text]')[0].focus()
   }
   isnodestep = isnodestep || liitem.data('wfitemnodestep');
   var calcnodestep = function () {
@@ -552,7 +552,7 @@ function autocompleteBase(baseVarData, liitem, iseh, isnodestepfunc, istextareat
       formatResult: function (suggestion, currentValue) {
         "use strict";
         if (suggestion.data.title) {
-          return jQuery.Autocomplete.formatResult(suggestion, currentValue) + ' - ' + suggestion.data.title;
+          return `${jQuery.Autocomplete.formatResult(suggestion, currentValue)}-${suggestion.data.title}`
         }
         return jQuery.Autocomplete.formatResult(suggestion, currentValue)
       }
@@ -671,11 +671,11 @@ function _wfisave(key, num, formelem, iseh) {
     success: function (resp, status, jqxhr) {
       var litem = jQuery('#wfli_' + key);
       litem.html(resp);
-      if (litem.find('div.wfitemEditForm').size() < 1) {
+      if (litem.find('div.wfitemEditForm').length < 1) {
         _showWFItemControls();
         if (iseh) {
           _hideWFItemControlsAddEH(num);
-          if (litem.parent().closest('li').find('.wfitem.jobtype').size() > 0) {
+          if (litem.parent().closest('li').find('.wfitem.jobtype').length > 0) {
             //disable the config button
             _disableWFItemControlsConfigButton(num)
           }
@@ -685,7 +685,7 @@ function _wfisave(key, num, formelem, iseh) {
       }
       _vueEmitJobEdited()
     }
-  }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
+  }).done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 var newitemElem;
 
@@ -762,7 +762,7 @@ function _wfisavenew(formelem) {
       }
       _vueEmitJobEdited()
     }
-  }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
+  }).done(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 
 function _wficancelnew() {
@@ -1647,7 +1647,7 @@ function groupChosen(path) {
   jQuery('#groupChooseModal').modal('hide')
 
 }
-jQuery(window).load(function () {
+jQuery(window).on('load',function () {
   jQuery('#groupChooseModal').on('shown.bs.modal', function (e) {
     jQuery.get(appLinks.scheduledExecutionGroupTreeFragment + '?jscallback=true', function (d) {
       jQuery('#groupChooseModalContent').html(d)

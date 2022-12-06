@@ -23,6 +23,8 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.Closeables
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
@@ -102,7 +104,11 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
             }
         }
         1 * service.projectManagerService.getNonAuthorizingProjectServicesForPlugin('test1','ResourceModelSource','file')
-        1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        1 * service.pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
+            1 * retainConfigurePluginByName('file', _, _, _) >>
+            new ConfiguredPlugin(modelSourceFactory, [:], Closeables.closeableProvider(modelSourceFactory, null))
+        }
+        0 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
         1 * modelSourceFactory.createResourceModelSource(_,_) >> modelSource
         _ * modelSource.getNodes() >> nodeSet
         null != nodes1.getNode('anode')
@@ -179,7 +185,11 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
         }
         def modelSourceFactory = Mock(ResourceModelSourceFactory)
         service.pluginService = Mock(PluginService)
-        1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        0 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        1 * service.pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
+            1 * retainConfigurePluginByName('file', _, _, _) >>
+            new ConfiguredPlugin(modelSourceFactory, [:], Closeables.closeableProvider(modelSourceFactory, null))
+        }
         1 * modelSourceFactory.createResourceModelSource(_,{args->
             args['file']=='/tmp/test.xml'
         }) >> modelSource
@@ -420,7 +430,11 @@ class NodeServiceSpec extends Specification implements ServiceUnitTest<NodeServi
             }
         }
         service.pluginService = Mock(PluginService)
-        1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        0 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        1 * service.pluginService.getRundeckPluginRegistry()>>Mock(PluginRegistry){
+            1 * retainConfigurePluginByName('file', _, _, _) >>
+            new ConfiguredPlugin(modelSourceFactory, [:], Closeables.closeableProvider(modelSourceFactory, null))
+        }
         1 * modelSourceFactory.createResourceModelSource(_,{args->
             args['file']=='/tmp/test.xml'
         }) >> modelSource

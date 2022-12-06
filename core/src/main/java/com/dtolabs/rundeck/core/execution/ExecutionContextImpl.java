@@ -82,6 +82,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private OrchestratorConfig orchestrator;
     private PluginControlService pluginControlService;
     @Getter private List<ContextComponent<?>> componentList;
+    
+    private ExecutionReference execution;
 
     private ExecutionContextImpl() {
         stepContext = new ArrayList<>();
@@ -213,6 +215,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         public Builder(final ExecutionContext original) {
             this();
             if(null!=original){
+                ctx.execution = original.getExecution();
                 ctx.frameworkProject = original.getFrameworkProject();
                 ctx.user = original.getUser();
                 ctx.nodeSet = original.getNodeSelector();
@@ -278,6 +281,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             }
             if (null != other.ctx.charsetEncoding) {
                 ctx.charsetEncoding = other.ctx.charsetEncoding;
+            }
+            if (null != other.ctx.execution) {
+                ctx.execution = other.ctx.execution;
             }
             ctx.dataContext.merge(other.ctx.dataContext);
 
@@ -644,6 +650,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.componentList.addAll(components);
             return this;
         }
+        
+        public Builder execution(ExecutionReference execution) {
+            ctx.execution = execution;
+            return this;
+        }
 
         public ExecutionContextImpl build() {
             return ctx;
@@ -704,7 +715,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
 
     public Framework getFramework() {
-        return (Framework)framework;
+        if(framework instanceof Framework) {
+            return (Framework) framework;
+        }else{
+            return null;
+        }
     }
     public IFramework getIFramework() {
         return framework;
@@ -758,4 +773,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     @Override
     public PluginControlService getPluginControlService(){ return pluginControlService; }
+    
+    @Override
+    public ExecutionReference getExecution() { return execution; }
 }

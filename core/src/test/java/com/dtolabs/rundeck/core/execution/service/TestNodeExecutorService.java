@@ -27,8 +27,10 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 
@@ -70,18 +72,26 @@ public class TestNodeExecutorService extends AbstractBaseTest {
 
     public void testGetProviderForNode() throws Exception {
         final NodeExecutorService service = NodeExecutorService.getInstanceForFramework(
-            getFrameworkInstance());
+            getFrameworkInstance(),getFrameworkInstance());
+
+        final StepExecutionContext context = ExecutionContextImpl.builder()
+                .frameworkProject(PROJ_NAME)
+                .framework(getFrameworkInstance())
+                .user("blah")
+                .threadCount(1)
+                .build();
+
         {
             //default for local node should be local provider
             final NodeEntryImpl test1 = new NodeEntryImpl("test1");
-            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
+            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
             assertTrue(provider instanceof LocalNodeExecutor);
         }
         {
             //default for non-node should be jsch-ssh provider
             final NodeEntryImpl test1 = new NodeEntryImpl("testnode2");
-            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
+            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
             assertTrue(provider instanceof JschNodeExecutor);
         }
@@ -93,7 +103,7 @@ public class TestNodeExecutorService extends AbstractBaseTest {
             //set attribute
             test1.setAttributes(new HashMap<String, String>());
             test1.getAttributes().put(NodeExecutorService.LOCAL_NODE_SERVICE_SPECIFIER_ATTRIBUTE, "jsch-ssh");
-            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
+            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
             assertTrue(provider instanceof JschNodeExecutor);
         }
@@ -103,7 +113,7 @@ public class TestNodeExecutorService extends AbstractBaseTest {
             //set attribute
             test1.setAttributes(new HashMap<String, String>());
             test1.getAttributes().put(NodeExecutorService.NODE_SERVICE_SPECIFIER_ATTRIBUTE, "local");
-            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, PROJ_NAME);
+            final NodeExecutor provider = service.getProviderForNodeAndProject(test1, context);
             assertNotNull(provider);
             assertTrue(provider instanceof LocalNodeExecutor);
         }

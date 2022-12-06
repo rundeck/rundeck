@@ -24,7 +24,7 @@ public class Utils {
     public static String encodeAsSHA256(String pluginName) {
         MessageDigest digest = DigestUtils.getSha256Digest();
         digest.update(pluginName.getBytes());
-        return bytesAsHex(digest.digest()).substring(0,12);
+        return bytesAsHex(digest.digest());
     }
 
     public static String bytesAsHex(byte[] bytes) {

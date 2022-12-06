@@ -25,10 +25,8 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
     def "get token calls tokenLookup"(){
         given:
             def token='abc123'
-        service.rundeckDataManager=Mock(DataManager){
-            1 * getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider){
-                 1 * tokenLookup('abc123')>>Mock(AuthenticationToken)
-            }
+        service.tokenDataProvider = Mock(TokenDataProvider){
+            1 * tokenLookup('abc123')>>Mock(AuthenticationToken)
         }
         when:
             def result = service.getToken(token)
@@ -40,10 +38,8 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
     def "get token with type calls tokenLookupWithType"(){
         given:
             def token='abc123'
-        service.rundeckDataManager=Mock(DataManager){
-            1 * getProviderForType(TokenDataProvider)>>Mock(TokenDataProvider){
-                 1 * tokenLookupWithType('abc123',type)>>Mock(AuthenticationToken)
-            }
+        service.tokenDataProvider = Mock(TokenDataProvider) {
+            1 * tokenLookupWithType('abc123',type)>>Mock(AuthenticationToken)
         }
         when:
             def result = service.getTokenWithType(token, type)
@@ -61,11 +57,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
     def "importWebhookToken"() {
         given:
             service.apiService = Mock(ApiService)
-            service.rundeckDataManager =  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    Mock(TokenDataProvider)
-                }
-            }
+            service.tokenDataProvider = Mock(TokenDataProvider)
             def auth = Mock(UserAndRolesAuthContext)
             def token = '123'
             def user = 'auser'
@@ -82,11 +74,8 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
             def provider = new GormTokenDataProvider()
             mockDataService(AuthTokenDataService)
             provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
-            service.rundeckDataManager =  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    provider
-                }
-            }
+            service.tokenDataProvider = provider
+
             User user1 = new User(login: 'auser')
             user1.save()
             AuthToken existing = new AuthToken(
@@ -115,11 +104,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
     def "importWebhookToken existing user token"() {
         given:
             service.apiService = Mock(ApiService)
-            service.rundeckDataManager =  Mock(DataManager){
-                getProviderForType(_) >>  {
-                    new GormTokenDataProvider()
-                }
-            }
+            service.tokenDataProvider = new GormTokenDataProvider()
             User user1 = new User(login: 'auser')
             user1.save()
             AuthToken existing = new AuthToken(
@@ -149,11 +134,7 @@ class RundeckAuthTokenManagerServiceSpec extends Specification
         def provider  = new GormTokenDataProvider()
         provider.authTokenDataService = applicationContext.getBean(AuthTokenDataService)
 
-        service.rundeckDataManager =  Mock(DataManager){
-            getProviderForType(_) >>  {
-                provider
-            }
-        }
+        service.tokenDataProvider = provider
         User user1 = new User(login: 'auser')
         user1.save()
         AuthToken createdToken = new AuthToken(

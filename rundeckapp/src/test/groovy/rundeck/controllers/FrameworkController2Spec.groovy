@@ -18,8 +18,8 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
-import com.dtolabs.rundeck.core.authorization.AuthContextProvider
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -27,11 +27,13 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.services.*
@@ -283,45 +285,64 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
     public void testEditProjectObscurePassword() {
         given:
-        def fwk = new MockFor(FrameworkService)
-        def proj = new MockFor(IRundeckProject)
+        def fwk =  Mock(FrameworkService)
+        def proj = Mock(IRundeckProject){
+            _*getProjectProperties()>>[:]
+        }
 
 
-        fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
+        _ * fwk.getFrameworkProject(_) >>proj
 
-        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
-        fwk.demand.getDefaultNodeExecutorService { project -> null }
-        fwk.demand.getDefaultFileCopyService { project -> null }
-        fwk.demand.getNodeExecConfigurationForType { defaultNodeExec, project -> null }
-        fwk.demand.getFileCopyConfigurationForType { defaultFileCopy, project -> null }
-        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
-        fwk.demand.listResourceModelConfigurations { project ->
+        _ * fwk.listDescriptions()>> [[withPasswordFieldDescription], null, null]
+        _ * fwk.getDefaultNodeExecutorService()
+        _ * fwk.getDefaultFileCopyService()
+        _ * fwk.getNodeExecConfigurationForType(*_)
+        _ * fwk.getFileCopyConfigurationForType(*_)
+        (pgFeatureEnabled?1:0)*fwk.listPluginGroupDescriptions()>>[
+            DescriptionBuilder.
+                builder().
+                name('somePlugin').
+                stringProperty('aprop','blah',false,'title','desc').
+                build()
+        ]
+            (pgFeatureEnabled?1:0)*fwk.hasPluginGroupConfigurationForType('somePlugin',_)>>true
+            (pgFeatureEnabled?1:0)*fwk.getPluginGroupConfigurationForType('somePlugin',_)>>[
+                aprop:'avalue'
+            ]
+        _ * fwk.loadProjectConfigurableInput(*_)>>[:]
+        _ * fwk.listResourceModelConfigurations(_)>>
             [
                     [
                             "type": "withPasswordDescription",
                             "props": PasswordFieldsServiceTests.props("simple=text", "password=secret", "textField=a test field")
                     ],
             ]
+
+        _*fwk.listWriteableResourceModelSources(_)>> []
+
+
+
+        controller.frameworkService = fwk
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
+
         }
-        fwk.demand.listWriteableResourceModelSources { project -> [] }
 
-        proj.demand.getProjectProperties(1..8){-> [:]}
+        def execPFmck = Mock(PasswordFieldsService)
+        def fcopyPFmck = Mock(PasswordFieldsService)
+        def pluginPFmck = Mock(PasswordFieldsService)
 
-        fwk.demand.getAuthContextForSubjectAndProject { subject,pr -> return null}
-
-        controller.frameworkService = fwk.proxyInstance()
-
-        def execPFmck = new MockFor(PasswordFieldsService)
-        def fcopyPFmck = new MockFor(PasswordFieldsService)
-
-        execPFmck.demand.reset{ -> return null}
-        execPFmck.demand.track{a, b -> return null}
-        fcopyPFmck.demand.reset{ -> return null}
-        fcopyPFmck.demand.track{a, b -> return null}
+        1 * pluginPFmck.reset()
+        (pgFeatureEnabled?1:0) * pluginPFmck.track([[type: 'somePlugin', props: [aprop:'avalue']]], true,_)
+        1 * execPFmck.reset()
+        1 * execPFmck.track(_, _)
+        1 * fcopyPFmck.reset()
+        1 * fcopyPFmck.track(_, _)
 
 
-        controller.execPasswordFieldsService = execPFmck.proxyInstance()
-        controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
+        controller.execPasswordFieldsService = execPFmck
+        controller.fcopyPasswordFieldsService = fcopyPFmck
+        controller.pluginGroupPasswordFieldsService = pluginPFmck
 
 
         def passwordFieldsService = new PasswordFieldsService()
@@ -333,6 +354,9 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectConfigure(*_)>>true
         }
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService){
+            1 * featurePresent(Features.PLUGIN_GROUPS) >> pgFeatureEnabled
+        }
         when:
         def model = controller.editProject()
 
@@ -340,6 +364,9 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
         assertEquals("plugin", model["prefixKey"])
         assertEquals(model["project"], "edit_test_project")
         assertEquals(1, passwordFieldsService.fields.size())
+        model.pluginGroupConfig == (pgFeatureEnabled?[[type: 'somePlugin', config: [aprop:'avalue']]]:[])
+        where:
+            pgFeatureEnabled<<[true,false]
     }
 
 
@@ -442,6 +469,9 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
         controller.execPasswordFieldsService = Mock(PasswordFieldsService){
             2 * untrack(_,_)
+            1 * reset(*_)
+        }
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService){
             1 * reset(*_)
         }
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService){
@@ -712,6 +742,9 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             def fcopyPasswordFieldsService = Mock(PasswordFieldsService){
                 1 * reset(*_)
             }
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService){
+                1 * reset(*_)
+            }
             controller.fcopyPasswordFieldsService = fcopyPasswordFieldsService
 
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -830,6 +863,9 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
                 1 * reset(*_)
             }
             controller.fcopyPasswordFieldsService = fcopyPasswordFieldsService
+            controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService){
+                1 * reset(*_)
+            }
 
             controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
                 _ * isProjectExecutionEnabled(_) >> true
@@ -937,13 +973,20 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
             _*reset()
             _*track(*_)
         }
+        controller.pluginGroupPasswordFieldsService = Mock(PasswordFieldsService){
+            1 * reset(*_)
+        }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
                 1 * getAuthContextForSubject(_)
                 1 * authorizeProjectConfigure(*_)>>true
             }
-        params.project = "edit_test_project"
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
 
+        }
+        params.project = "edit_test_project"
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
         when:
         def model = controller.editProject()
 
@@ -982,30 +1025,35 @@ class FrameworkController2Spec extends Specification implements ControllerUnitTe
 
         def execPFmck = Mock(PasswordFieldsService)
         def fcopyPFmck = Mock(PasswordFieldsService)
+        def pluginPFmck = Mock(PasswordFieldsService)
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
 
+        }
 
         controller.execPasswordFieldsService = execPFmck
         controller.fcopyPasswordFieldsService = fcopyPFmck
+        controller.pluginGroupPasswordFieldsService = pluginPFmck
 
 
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.pluginService = Mock(PluginService){
             1 * getPluginDescriptor('TestPluginsNodeExecutor', ServiceNameConstants.NodeExecutor)>>{
                 if(foundNodeExec){
-                    return new DescribedPlugin<NodeExecutor>(Mock(NodeExecutor),null,'TestPluginsNodeExecutor')
+                    return new DescribedPlugin<NodeExecutor>(Mock(NodeExecutor),null,'TestPluginsNodeExecutor', null, null)
                 }
                 null
             }
             1 * getPluginDescriptor('WinRMcpPython', ServiceNameConstants.FileCopier)>>{
                 if(foundFileCopier){
-                    return new DescribedPlugin<FileCopier>(Mock(FileCopier), null, 'WinRMcpPython')
+                    return new DescribedPlugin<FileCopier>(Mock(FileCopier), null, 'WinRMcpPython', null, null)
                 }
                 null
             }
         }
 
         params.project = "edit_test_project"
-
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService)
         when:
         def model = controller.editProject()
 

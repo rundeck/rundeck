@@ -11,7 +11,7 @@ import java.util.List;
  * TokenDataProvider defines a base set of AuthenticationToken datastore methods.
  *
  */
-public interface TokenDataProvider {
+public interface TokenDataProvider extends DataProvider {
     /**
      * Retrieves an AuthenticationToken based on the id/uuid provided.
      *

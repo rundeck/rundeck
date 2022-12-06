@@ -255,7 +255,7 @@ function clearToken(form, row) {
         }, complete: function () {
             jQuery(form).find('.modal').modal('hide');
         }
-    }).success(_createAjaxReceiveTokensHandler('api_req_tokens'));
+    }).done(_createAjaxReceiveTokensHandler('api_req_tokens'));
 }
 
 
@@ -278,7 +278,7 @@ function generateUserToken(login, elem, data) {
             tokenAjaxError(jqxhr.responseJSON && jqxhr.responseJSON.error ? jqxhr.responseJSON.error : error);
         }
     })
-        .success(_createAjaxReceiveTokensHandler('api_req_tokens'))
+        .done(_createAjaxReceiveTokensHandler('api_req_tokens'))
         .then(function () {
             jQuery('#gentokenmodal').modal('hide');
         });
@@ -305,7 +305,7 @@ function revealUserToken(login, elem) {
         error: function (jqxhr, status, error) {
             tokenAjaxError(jqxhr.responseJSON && jqxhr.responseJSON.error ? jqxhr.responseJSON.error : error);
         }
-    }).success(_createAjaxReceiveTokensHandler('api_req_tokens'));
+    }).done(_createAjaxReceiveTokensHandler('api_req_tokens'));
 }
 
 

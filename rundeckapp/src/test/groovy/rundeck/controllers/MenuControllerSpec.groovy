@@ -44,6 +44,7 @@ import org.rundeck.app.auth.CoreTypedRequestAuthorizer
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -56,6 +57,7 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeSystem
+import org.rundeck.spi.data.DataManager
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
@@ -71,9 +73,11 @@ import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulesService
 import rundeck.services.LocalJobSchedulesManager
+import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
+import rundeck.services.data.ProjectDataService
 import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
@@ -1296,9 +1300,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         given:
 
         controller.frameworkService = Mock(FrameworkService)
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
-                    def description = 'desc'
-        new Project(name: 'proj', description: description).save(flush: true)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        def description = 'desc'
+        def prj = new Project(name: 'proj', description: description).save(flush: true)
         def iproj = Mock(IRundeckProject) {
             getName() >> 'proj'
         }
@@ -1306,7 +1310,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        GormProjectDataProvider provider = new GormProjectDataProvider()
 
+        controller.projectService = Mock(ProjectService){
+            findProjectByName(_) >>  prj
+        }
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1334,7 +1342,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
 
+        }
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1362,7 +1373,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
 
+        }
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1390,6 +1404,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
+
+        }
 
         request.addHeader('x-rundeck-ajax', 'true')
         def systemAuth=Mock(UserAndRolesAuthContext)
@@ -1705,7 +1723,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.projectService = Mock(ProjectService){
+            projectDataProvider >>  new GormProjectDataProvider()
 
+        }
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -2091,8 +2112,8 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         }
         (ienabled?expected:0) * controller.scmService.projectHasConfiguredPlugin('import','test')>>iconfiged
         (eenabled?expected:0) * controller.scmService.projectHasConfiguredPlugin('export','test')>>econfiged
-        (econfiged?expected:0) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null)
-        (iconfiged?expected:0) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null)
+        (econfiged?expected:0) * controller.scmService.getPluginDescriptor('export','atype')>>new DescribedPlugin(null,null,null, null, null)
+        (iconfiged?expected:0) * controller.scmService.getPluginDescriptor('import','btype')>>new DescribedPlugin(null,null,null, null, null)
         model.hasConfiguredScmPlugins==hasConfigured
         model.hasConfiguredScmPluginsEnabled==hasEnabled
         where:

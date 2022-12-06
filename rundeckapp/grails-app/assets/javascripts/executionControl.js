@@ -1224,7 +1224,7 @@ var FollowControl = function (eid, elem, params) {
             error: function (jqxhr,status,err) {
                 obj.updatecancel({error: "Failed to kill Job: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
-        }).success(_createAjaxReceiveTokensHandler('exec_cancel_token'));
+        }).done(_createAjaxReceiveTokensHandler('exec_cancel_token'));
     },
 
     doincomplete: function() {
@@ -1241,7 +1241,7 @@ var FollowControl = function (eid, elem, params) {
             error: function (jqxhr,status,err) {
                 obj.updatecancel({error: "Failed to mark Job as incomplete: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
-        }).success(_createAjaxReceiveTokensHandler('exec_cancel_token'));
+        }).done(_createAjaxReceiveTokensHandler('exec_cancel_token'));
     },
     })
 

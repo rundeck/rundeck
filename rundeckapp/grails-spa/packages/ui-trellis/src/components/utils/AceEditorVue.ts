@@ -45,7 +45,7 @@ export default Vue.extend({
             this.editor!.setTheme(this.resolveTheme(newTheme))
         },
         lang: function (newLang): void {
-            this.editor!.getSession().setMode(this.resolveTheme(newLang))
+            this.editor!.getSession().setMode(this.resolveLang(newLang))
         },
         options: function(newOption): void {
             this.editor!.setOptions(newOption)

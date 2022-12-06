@@ -9,6 +9,7 @@
             :id="`${rkey}prop_`+pindex"
             value="true"
             v-model="currentValue"
+            v-if="!readOnly"
           >
           <label :for="`${rkey}prop_`+pindex">{{prop.title}}</label>
         </div>
@@ -27,7 +28,18 @@
             :id="`${rkey}prop_true_`+pindex"
             value="true"
             v-model="currentValue"
+
+            v-if="!readOnly"
           >
+            <input
+                type="radio"
+                :name="`${rkey}prop_`+pindex"
+                :id="`${rkey}prop_true_`+pindex"
+                value="true"
+                :disabled="true"
+                v-model="currentValue"
+                v-else
+            >
             <plugin-prop-val :prop="prop" :value="'true'"/>
           </label>
           <label :for="`${rkey}prop_false_`+pindex" class="radio-inline">
@@ -63,12 +75,28 @@
           v-model="currentValue"
           :id="`${rkey}prop_`+pindex"
           class="form-control input-sm"
+          v-if="!readOnly"
         >
           <option v-if="!prop.required" value>--None Selected--</option>
           <option
             v-for="opt in prop.allowed"
             v-bind:value="opt"
             v-bind:key="opt"
+          ><plugin-prop-val :prop="prop" :value="opt"/></option>
+        </select>
+        <select
+            :name="`${rkey}prop_`+pindex"
+            v-model="currentValue"
+            :id="`${rkey}prop_`+pindex"
+            class="form-control input-sm"
+            :disabled="true"
+            v-else
+        >
+          <option v-if="!prop.required" value>--None Selected--</option>
+          <option
+              v-for="opt in prop.allowed"
+              v-bind:value="opt"
+              v-bind:key="opt"
           ><plugin-prop-val :prop="prop" :value="opt"/></option>
         </select>
       </div>
@@ -81,10 +109,28 @@
             size="100"
             type="text"
             class="form-control input-sm"
+            v-if="!readOnly"
+          >
+          <input
+              :name="`${rkey}prop_`+pindex"
+              v-model="currentValue"
+              :id="`${rkey}prop_`+pindex"
+              size="100"
+              type="text"
+              class="form-control input-sm"
+              :disabled="true"
+              v-else
           >
         </div>
         <div class="col-sm-5">
-          <select class="form-control input-sm" v-model="currentValue">
+          <select class="form-control input-sm" v-model="currentValue" v-if="!readOnly">
+            <option
+                v-for="opt in prop.allowed"
+                v-bind:value="opt"
+                v-bind:key="opt"
+            ><plugin-prop-val :prop="prop" :value="opt"/></option>
+          </select>
+          <select class="form-control input-sm" v-model="currentValue" :disabled="true" v-else>
             <option
                 v-for="opt in prop.allowed"
                 v-bind:value="opt"
@@ -106,6 +152,15 @@
                 v-model="currentValue"
                 :value="opt"
                 :id="`${rkey}opt_`+pindex+'_'+oindex"
+                v-if="!readOnly"
+              >
+              <input
+                  type="checkbox"
+                  v-model="currentValue"
+                  :value="opt"
+                  :id="`${rkey}opt_`+pindex+'_'+oindex"
+                  :disabled="true"
+                  v-else
               >
               <label
                 :for="`${rkey}opt_`+pindex+'_'+oindex"
@@ -122,7 +177,7 @@
           size="100"
           type="number"
           class="form-control input-sm"
-          v-if="['Integer','Long'].indexOf(prop.type)>=0"
+          v-if="['Integer','Long'].indexOf(prop.type)>=0 && !readOnly"
         >
         <template v-else-if="prop.options && prop.options['displayType']==='MULTI_LINE'">
           <textarea
@@ -132,6 +187,18 @@
             rows="10"
             cols="100"
             class="form-control input-sm"
+            v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
+            v-if="!readOnly"
+          ></textarea>
+          <textarea
+              :name="`${rkey}prop_`+pindex"
+              v-model="currentValue"
+              :id="`${rkey}prop_`+pindex"
+              rows="10"
+              cols="100"
+              class="form-control input-sm"
+              :disabled="true"
+              v-else
           ></textarea>
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='CODE'">
@@ -139,14 +206,16 @@
             :name="`${rkey}prop_`+pindex"
             v-model="currentValue"
             :lang="prop.options['codeSyntaxMode']"
-            :codeSyntaxSelectable="prop.options['codeSyntaxSelectable']==='true'"
+            :codeSyntaxSelectable="prop.options['codeSyntaxSelectable']==='true' && !readOnly"
             :id="`${rkey}prop_`+pindex"
             height="200"
             width="100%"
+            :read-only="readOnly"
           />
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='PASSWORD'">
-          <input
+          <div v-if="!readOnly">
+            <input
             :name="`${rkey}prop_`+pindex"
             v-model="currentValue"
             :id="`${rkey}prop_`+pindex"
@@ -154,7 +223,21 @@
             type="password"
             autocomplete="new-password"
             class="form-control input-sm"
-          >
+            >
+          </div>
+          <div v-else>
+            <input
+              :name="`${rkey}prop_`+pindex"
+              v-model="currentValue"
+              :id="`${rkey}prop_`+pindex"
+              size="100"
+              type="password"
+              autocomplete="new-password"
+              class="form-control input-sm"
+              :disabled="true"
+            >
+          </div>
+         
         </template>
         <template v-else-if="prop.options && prop.options['displayType']==='STATIC_TEXT'">
           <span
@@ -183,6 +266,17 @@
           size="100"
           type="text"
           class="form-control input-sm"
+          :disabled="true"
+          v-else-if="readOnly"
+        >
+          <input
+          :name="`${rkey}prop_`+pindex"
+          v-model="currentValue"
+          :id="`${rkey}prop_`+pindex"
+          size="100"
+          type="text"
+          class="form-control input-sm"
+          v-bind:class="contextAutocomplete ? 'context_var_autocomplete' : ''"
           v-else
         >
 
@@ -225,8 +319,8 @@
       <div v-if="prop.options && prop.options['selectionAccessor']==='STORAGE_PATH'" class="col-sm-5">
         <key-storage-selector v-model="currentValue" :storage-filter="prop.options['storage-file-meta-filter']"
                               :allow-upload="true"
-                              :value="keyPath"/>
-
+                              :value="keyPath"
+                              :read-only="readOnly"/>
       </div>
       <slot
         v-else-if="prop.options && prop.options['selectionAccessor'] "
@@ -235,6 +329,7 @@
         :inputValues="inputValues"
         :accessor="prop.options['selectionAccessor']"
       ></slot>
+
     </template>
 
     <div class="col-sm-10 col-sm-offset-2 help-block" v-if="prop.desc">
@@ -286,6 +381,11 @@ export default Vue.extend({
       type:Object,
       required:true
      },
+    'readOnly':{
+      type:Boolean,
+      default:false,
+      required:false
+    },
     'value':{
       required:false,
       default:''

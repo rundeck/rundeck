@@ -1345,6 +1345,7 @@ class ProjectController extends ControllerBase{
                 return
             }
             configProps.putAll(config)
+
         }
         Properties currentProps = project.getProjectProperties() as Properties
 

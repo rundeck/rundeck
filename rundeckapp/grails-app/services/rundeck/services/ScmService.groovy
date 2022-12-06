@@ -320,7 +320,7 @@ class ScmService {
 
     def ValidatedPlugin validateExportPluginSetup(String project, String name, Map config) {
         return pluginService.validatePlugin(name, scmExportPluginProviderService,
-                                            frameworkService.getFrameworkPropertyResolver(project, config),
+                                            frameworkService.pluginConfigFactory(project, config),
                                             PropertyScope.Instance,
                                             PropertyScope.Project
         )
@@ -328,7 +328,7 @@ class ScmService {
 
     def ValidatedPlugin validateImportPluginSetup(String project, String name, Map config) {
         return pluginService.validatePlugin(name, scmImportPluginProviderService,
-                                            frameworkService.getFrameworkPropertyResolver(project, config),
+                                            frameworkService.pluginConfigFactory(project, config),
                                             PropertyScope.Instance,
                                             PropertyScope.Project
         )

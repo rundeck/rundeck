@@ -24,16 +24,14 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.ProviderIdent
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import grails.test.*
 import spock.lang.Specification
 
 class PluginServiceTests extends Specification {
@@ -119,6 +117,16 @@ class PluginServiceTests extends Specification {
         }
 
         @Override
+        def <T> ConfiguredPlugin<T> retainConfigurePluginByName(
+            final String name,
+            final PluggableProviderService<T> service,
+            final PropertyResolverFactory.Factory resolverFactory,
+            final PropertyScope defaultScope
+        ) {
+            return null
+        }
+
+        @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                       IFramework framework, String project, Map instanceConfiguration) {
             cpWithFrameworkCalled=true
@@ -126,10 +134,15 @@ class PluginServiceTests extends Specification {
         }
 
         @Override
-        <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-        PropertyResolver resolver, PropertyScope defaultScope) {
+        def <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service, PropertyResolverFactory.Factory resolverFactory, PropertyScope defaultScope) {
             cpWithResolverCalled=true
             return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
+        }
+
+        @Override
+        <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
+        PropertyResolver resolver, PropertyScope defaultScope) {
+            configurePluginByName(name, service, PropertyResolverFactory.creates(resolver), defaultScope)
         }
 
         @Override
@@ -142,6 +155,7 @@ class PluginServiceTests extends Specification {
         {
             return null
         }
+
         def <T> PluggableProviderService<T> createPluggableService(final Class<T> type) {
             throw new IllegalArgumentException("test not implemented")
         }
@@ -160,28 +174,26 @@ class PluginServiceTests extends Specification {
         }
 
         @Override
-        def <T> ConfiguredPlugin<T> configurePluginByName(
-                final String name,
-                final PluggableProviderService<T> service,
-                final IPropertyLookup frameworkLookup,
-                final IPropertyLookup projectLookup,
-                final Map instanceConfiguration
-        )
-        {
-            return null
+        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service,
+                                               PropertyResolver resolver, PropertyScope defaultScope) {
+            validatePluginByName(name, service, PropertyResolverFactory.creates(resolver), defaultScope)
         }
 
         @Override
-        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service,
-                                               PropertyResolver resolver, PropertyScope defaultScope) {
+        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolverFactory.Factory resolverFactory, PropertyScope defaultScope) {
             validateWithResolverCalled=true
             return pluginValidation
         }
 
         @Override
-        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
+        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolverFactory.Factory resolverFactory, PropertyScope defaultScope, PropertyScope ignoredScope) {
             validateWithResolverIgnoredCalled = true
             return pluginValidation
+        }
+
+        @Override
+        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope, PropertyScope ignoredScope) {
+            validatePluginByName(name, service, PropertyResolverFactory.creates(resolver), defaultScope, ignoredScope)
         }
 
         @Override
@@ -235,6 +247,11 @@ class PluginServiceTests extends Specification {
 
         @Override
         Map getPluginConfigurationByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
+            getPluginConfigurationByName(name, service, PropertyResolverFactory.creates(resolver), defaultScope)
+        }
+
+        @Override
+        def <T> Map<String, Object> getPluginConfigurationByName(String name, PluggableProviderService<T> service, PropertyResolverFactory.Factory resolver, PropertyScope defaultScope) {
             getPluginConfigurationByNameCalled=true
             return allConfiguration
         }
@@ -254,6 +271,11 @@ class PluginServiceTests extends Specification {
         @Override
         void registerPlugin(String type, String name, String beanName) {
 
+        }
+
+        @Override
+        boolean hasRegisteredPlugin(final String type, final String name) {
+            return false
         }
     }
 

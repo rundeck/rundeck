@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
+import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
@@ -33,7 +34,6 @@ import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.feature.FeatureService
 
 import javax.servlet.ServletContext
-import java.text.SimpleDateFormat
 
 class PluginApiService {
 
@@ -52,7 +52,7 @@ class PluginApiService {
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
     ExecutionLifecyclePluginService executionLifecyclePluginService
-    JobLifecyclePluginService jobLifecyclePluginService
+    JobLifecycleComponentService jobLifecycleComponentService
     def rundeckPluginRegistry
     LinkGenerator grailsLinkGenerator
 
@@ -105,7 +105,7 @@ class PluginApiService {
 
         //web-app level plugin descriptions
         if(featureService.featurePresent(Features.JOB_LIFECYCLE_PLUGIN)) {
-            pluginDescs[jobLifecyclePluginService.jobLifecyclePluginProviderService.name]=jobLifecyclePluginService.listJobLifecyclePlugins().collect {
+            pluginDescs[jobLifecycleComponentService.jobLifecyclePluginProviderService.name]=jobLifecycleComponentService.listJobLifecyclePlugins().collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
         }
@@ -163,6 +163,9 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs[ServiceNameConstants.AuditEventListener] = pluginService.listPlugins(AuditEventListenerPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[ServiceNameConstants.PluginGroup] = pluginService.listPlugins(PluginGroup).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 

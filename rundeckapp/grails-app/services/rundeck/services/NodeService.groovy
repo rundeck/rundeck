@@ -27,8 +27,8 @@ import com.dtolabs.rundeck.core.nodes.ProjectNodeService
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.resources.ResourceModelSource
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -228,18 +228,25 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
             resourceModelSourceService,
             { ProjectNodeSupport.SourceDefinition definition ->
                 //load via pluginService to enable app-level plugins
-                def retained = pluginService.retainPlugin(
-                        definition.type,
-                        resourceModelSourceService
+                def retained = pluginService.rundeckPluginRegistry.retainConfigurePluginByName(
+                    definition.type,
+                    resourceModelSourceService,
+                    PropertyResolverFactory.pluginPrefixedScoped(
+                        PropertyResolverFactory.instanceRetriever(definition.properties),
+                        PropertyResolverFactory.instanceRetriever(rdprojectconfig.getProjectProperties()),
+                        framework.getPropertyRetriever()
+                    ),
+                    PropertyScope.Instance
                 )
-                if (null != retained) {
+
+                if (null != retained && null != retained.closeable) {
                     //load services
                     def services = projectManagerService.getNonAuthorizingProjectServicesForPlugin(
                         project,
                         ServiceNameConstants.ResourceModelSource,
                         definition.type
                     )
-                    return retained.convert(
+                    return retained.closeable.convert(
                         ResourceModelSourceService.factoryConverter(
                             rundeckSpiBaseServicesProvider.combine(services),
                             definition.properties

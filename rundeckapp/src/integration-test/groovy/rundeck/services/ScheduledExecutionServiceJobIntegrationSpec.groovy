@@ -156,6 +156,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
                     getFrameworkProject(_) >> iRundeckProject
                 }
                 getPropertyLookup() >> PropertyLookup.create(properties)
+                getPropertyRetriever()>>PropertyLookup.create(properties)
             }
             getProjectGlobals(_) >> [:]
         }

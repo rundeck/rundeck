@@ -23,7 +23,9 @@ import com.dtolabs.rundeck.core.common.ProviderService;
  *
  * @param <T>
  */
-public interface ProviderRegistryService<T> extends ProviderService<T> {
+public interface ProviderRegistryService<T>
+        extends ProviderService<T>
+{
     /**
      * Register a class for a provider
      *
@@ -31,6 +33,7 @@ public interface ProviderRegistryService<T> extends ProviderService<T> {
      * @param clazz class
      */
     void registerClass(String name, Class<? extends T> clazz);
+
 
     /**
      * Register an instance for a provider

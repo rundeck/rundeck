@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import grails.test.hibernate.HibernateSpec
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
@@ -1000,8 +1001,8 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
 
         def test = new testOptionsStoragePlugin()
         test.storeSupported=true
-        service.configurationService=mockWith(ConfigurationService){
-            getString(1..2){String prop,String defval->'test1'}
+        service.configurationService=Mock(ConfigurationService){
+            _ * getString('execution.logs.fileStoragePlugin',_)>>'test1'
         }
 
         Execution execution=createExecution()
@@ -1038,16 +1039,11 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
 
     void prepareSubmitForStorage(test){
 
-        def fmock = new MockFor(FrameworkService)
-        fmock.demand.getFrameworkPropertyResolver() { project ->
-            assert project == "testprojz"
-        }
-        def pmock = new MockFor(PluginService)
-        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
-            assertEquals("test1", pname)
-            assert scope == PropertyScope.Instance
-            [instance: test, configuration: [:]]
-        }
+        def fmock = Mock(FrameworkService)
+        1 * fmock.getFrameworkPropertyResolverFactory('testprojz')>>Mock(PropertyResolverFactory.Factory)
+        def pmock = Mock(PluginService)
+        _* pmock.configurePlugin( 'test1',_, _ as PropertyResolverFactory.Factory, PropertyScope.Instance )>> new ConfiguredPlugin(test,[:])
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -1058,14 +1054,11 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         ExecutionService.metaClass.static.generateExecutionURL= { Execution execution1, LinkGenerator grailsLinkGenerator ->
             ''
         }
-        def emock = new Expando()
-        emock.executeCalled=false
-        emock.execute={Closure cls->
-            emock.executeCalled=true
-            assertNotNull(cls)
+        def emock = Mock(ExecutionService){
         }
-        service.frameworkService = fmock.proxyInstance()
-        service.pluginService = pmock.proxyInstance()
+
+        service.frameworkService = fmock
+        service.pluginService = pmock
         service.executorService=emock
 
     }
@@ -1482,27 +1475,16 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
     private ExecutionLogReader performReaderRequest(test, boolean isClustered, File logfile, boolean performLoad, Execution e, boolean usesStoredPath, Closure svcClosure=null) {
 
         assertNotNull(e.save())
-        def fmock = new StubFor(FrameworkService)
-        fmock.demand.isClusterModeEnabled(0..99) {
-            return isClustered
-        }
-        fmock.demand.getServerUUID(0..99) {
-            UUID.randomUUID()
-        }
-        fmock.demand.getFrameworkPropertyResolver() { project ->
-            assert project == "testprojz"
-        }
-        fmock.demand.getFrameworkProperties(1..2) { ->
-            [
-                    'framework.logs.dir': '/tmp/dir'
-            ] as Properties
-        }
-        def pmock = new MockFor(PluginService)
-        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
-            assertEquals("test1", pname)
-            assert scope == PropertyScope.Instance
-            [instance: test, configuration: [:]]
-        }
+        def fmock = Mock(FrameworkService)
+        _*fmock.isClusterModeEnabled()>> isClustered
+        _ * fmock.getServerUUID() >> UUID.randomUUID()
+
+        1 * fmock.getFrameworkPropertyResolverFactory('testprojz')>>Mock(PropertyResolverFactory.Factory)
+        _ * fmock.getFrameworkProperties() >> (['framework.logs.dir': '/tmp/dir'] as Properties)
+
+        def pmock = Mock(PluginService)
+        _*pmock.configurePlugin('test1',_,_ as PropertyResolverFactory.Factory,PropertyScope.Instance)>> new ConfiguredPlugin( test, [:])
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -1513,9 +1495,9 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
             ''
         }
-        service.frameworkService = fmock.proxyInstance()
+        service.frameworkService = fmock
 //        service.frameworkService.serverUUID = null
-        service.pluginService = pmock.proxyInstance()
+        service.pluginService = pmock
         List useStoredValues = [true, true]
         List partialValues = [false, false]
         int useStoredNdx=0
@@ -1529,10 +1511,9 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
                 logfile
         }
 
-        service.configurationService=mockWith(ConfigurationService){
-            getString(1..4){String prop,String defval->'test1'}
-            getInteger(){String prop, int defval->defval}
-            getString(1..4){String prop,String defval->'test1'}
+        service.configurationService=Mock(ConfigurationService){
+            _*getString(_,_)>>'test1'
+            _*getInteger(_,_)>>{it[1]}
         }
         if(null!= svcClosure){
             service.with(svcClosure)
@@ -1568,16 +1549,11 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
 
     private Map performDeleteStorage(testStoragePlugin test, String filetype, Execution e, File testfile, Map<String, Integer> intvals, Closure clos = null) {
         assertNotNull(e.save())
-        def fmock = new MockFor(FrameworkService)
-        fmock.demand.getFrameworkPropertyResolver() { project ->
-            assert project == "testprojz"
-        }
-        def pmock = new MockFor(PluginService)
-        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
-            assertEquals("test1", pname)
-            assert scope == PropertyScope.Instance
-            [instance: test, configuration: [:]]
-        }
+        def fmock = Mock(FrameworkService)
+        1 * fmock.getFrameworkPropertyResolverFactory('testprojz')>>Mock(PropertyResolverFactory.Factory)
+        def pmock = Mock(PluginService)
+        _*pmock.configurePlugin('test1',_,_ as PropertyResolverFactory.Factory,PropertyScope.Instance) >> new ConfiguredPlugin<>( test,  [:])
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -1588,15 +1564,9 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         ExecutionService.metaClass.static.generateExecutionURL= { Execution execution1, LinkGenerator grailsLinkGenerator ->
             ''
         }
-        def emock = new Expando()
-        emock.executeCalled=false
-        emock.execute={Closure cls->
-            emock.executeCalled=true
-            assertNotNull(cls)
-            cls.call()
-        }
-        service.frameworkService = fmock.proxyInstance()
-        service.pluginService = pmock.proxyInstance()
+        def emock = Mock(ExecutionService)
+        service.frameworkService = fmock
+        service.pluginService = pmock
         service.executorService=emock
         def filetypes = filetype.split(',')
         if(filetype=='*'){
@@ -1608,15 +1578,9 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         }
 
 
-        def appmock = new MockFor(ApplicationContext)
-        appmock.demand.getBeansOfType(1..1){Class clazz->
-            loggingBeans
-        }
-        service.applicationContext=appmock.proxyInstance()
-        service.configurationService=mockWith(ConfigurationService){
-            getString(1..4){String prop,String defval->'test1'}
-            getInteger(){String prop, int defval->defval}
-            getString(1..4){String prop,String defval->'test1'}
+        service.configurationService=Mock(ConfigurationService){
+            _*getString(_,_)>>'test1'
+            _*getInteger(_,_)>>{it[1]}
         }
 
         assertEquals(0, LogFileStorageRequest.list().size())
@@ -1624,11 +1588,10 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         request.validate()
         assertNotNull((request.errors.allErrors*.toString()).join(';'),request.save(flush:true))
 
-        def executor = new MockFor(TaskExecutor)
-        executor.demand.execute() { Closure clos1 ->
-        }
+        def executor = Mock(TaskExecutor)
+        _*executor.execute(_)
 
-        service.logFileStorageDeleteRemoteTask = executor.proxyInstance()
+        service.logFileStorageDeleteRemoteTask = executor
 
         if (null != clos) {
             service.with(clos)
@@ -1649,15 +1612,15 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         LogFileStorageService svc
         assertTrue(testLogFile1.exists())
 
+        when:
         Map remove=performDeleteStorage(test, "rdlog", createExecution(), testLogFile1,[:]) { LogFileStorageService service ->
             svc = service
             assertFalse(test.storeLogFileCalled)
             assertNull(test.storeFiletype)
         }
 
-        assertTrue(remove.started)
-
-        expect:
+        then:
+            remove.started
         // asserts validate test
         1 == 1
     }
@@ -1666,22 +1629,21 @@ class LogFileStorageServiceTests extends Specification implements DataTest, Serv
         grailsApplication.config.clear()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
-        def fmock = new MockFor(FrameworkService)
-        fmock.demand.getFrameworkPropertyResolver() { project ->
-            assert project == "testproj"
-        }
+        def fmock = Mock(FrameworkService)
+        1 * fmock.getFrameworkPropertyResolverFactory('testproj')>>Mock(PropertyResolverFactory.Factory)
+        def pmock = Mock(PluginService)
+
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
-
         ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
             ''
         }
 
-        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution1, LinkGenerator grailsLinkGenerator ->
             ''
         }
-        service.frameworkService=fmock.proxyInstance()
+        service.frameworkService=fmock
 
         def result = service.removeRemoteLogFile(e,"rdlog")
         assertNotNull(result)

@@ -54,7 +54,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
+public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
     protected static Logger  log = LoggerFactory.getLogger(NodeStepPluginAdapter.class.getName());
     private          String  serviceName;
     private          boolean blankIfUnexpanded;

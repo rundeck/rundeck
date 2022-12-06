@@ -19,6 +19,7 @@
 <head>
     <g:set var="rkey" value="${g.rkey()}"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="skipPrototypeJs" content="true"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
     <title><g:message code="domain.Project.choose.title" default="Create a Project"/></title>
@@ -74,20 +75,25 @@
                     FileCopier: fileCopierPluginsData,
             ]
     ]}"/>
+    <g:embedJSON id="pluginGroupJSON" data="${[
+            project: params.newproject,
+            config: pluginGroupConfig
+    ]}"/>
 
-    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="framework/editProject.js"/>
+    <asset:javascript src="static/pages/project-config.js" defer="defer" />
+    <asset:stylesheet href="static/css/pages/project-config.css" />
     <g:javascript>
 
     function init(){
-
-        $$('input').each(function(elem){
-            if(elem.type=='text'){
-                elem.observe('keypress',noenter);
-            }
-        });
+        jQuery('input[type=text]').on('keydown', noenter);
     }
     jQuery(init);
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data: {
+            pluginGroups: loadJsonData("pluginGroupJSON")
+        }
+    })
     </g:javascript>
     <style type="text/css">
     #configs li {
@@ -107,7 +113,7 @@
     <div class="row">
       <div class="col-xs-12">
         <div class="card" id="createform">
-          <g:form action="createProject" useToken="true" method="post" onsubmit="return configControl.checkForm();">
+          <g:form action="createProject" useToken="true" method="post" >
             <div class="card-header" data-ko-bind="editProject">
               <h4 class="card-title"><g:message code="domain.Project.create.message" default="Create a new Project"/></h4>
             </div>

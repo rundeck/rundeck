@@ -191,7 +191,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
                 final Description description,
                 final String name
         ) {
-            super(instance, description, name)
+            super(instance, description, name, null, null)
         }
     }
 

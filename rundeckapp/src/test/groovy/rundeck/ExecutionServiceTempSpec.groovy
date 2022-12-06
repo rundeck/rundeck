@@ -36,7 +36,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         service = new ExecutionService()
         service.executionValidatorService = new ExecutionValidatorService()
         service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
-        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
     }
 
     def "loadSecureOptionStorageDefaults replace job vars"() {

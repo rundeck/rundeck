@@ -16,19 +16,22 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.authorization.*;
-import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
+import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
+import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
+import com.dtolabs.rundeck.core.execution.service.*;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
-import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
-import com.dtolabs.rundeck.core.execution.service.*;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
@@ -38,8 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.URI;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -83,6 +87,12 @@ public class FrameworkBase implements IFramework{
 
     }
 
+    @Override
+    public void initialize(final Framework framework) {
+        frameworkServices.initialize(framework);
+    }
+
+
     /**
      * Gets DepotMgr for this framework instance
      * @return returns instance of IFrameworkProjectMgr
@@ -106,6 +116,18 @@ public class FrameworkBase implements IFramework{
     @Override
     public void setService(final String name, final FrameworkSupportService service) {
         frameworkServices.setService(name, service);
+    }
+
+    @Override
+    public StepExecutor getStepExecutorForItem(final StepExecutionItem item, final String project)
+            throws ExecutionServiceException
+    {
+        return frameworkServices.getStepExecutorForItem(item, project);
+    }
+
+    @Override
+    public NodeDispatcherService getNodeDispatcherService() {
+        return frameworkServices.getNodeDispatcherService();
     }
 
     @Override
@@ -133,10 +155,10 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
-    public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final String project)
+    public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, ExecutionContext context)
             throws ExecutionServiceException
     {
-        return frameworkServices.getFileCopierForNodeAndProject(node,project);
+        return frameworkServices.getFileCopierForNodeAndProject(node, context);
     }
 
     @Override
@@ -145,10 +167,10 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
-    public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final String project)
+    public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, ExecutionContext context)
             throws ExecutionServiceException
     {
-        return frameworkServices.getNodeExecutorForNodeAndProject(node, project);
+        return frameworkServices.getNodeExecutorForNodeAndProject(node, context);
     }
 
     @Override
@@ -162,10 +184,10 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
-    public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item)
+    public NodeStepExecutor getNodeStepExecutorForItem(final NodeStepExecutionItem item, String project)
             throws ExecutionServiceException
     {
-        return frameworkServices.getNodeStepExecutorForItem(item);
+        return frameworkServices.getNodeStepExecutorForItem(item, project);
     }
 
     @Override
@@ -197,7 +219,12 @@ public class FrameworkBase implements IFramework{
         return FilesystemFramework.createPropertyRetriever(basedir);
     }
     public static Framework getInstance(String basedir, String projectsdir) {
-        return FrameworkFactory.createForFilesystem(basedir);
+        ServiceSupport serviceSupport = new ServiceSupport();
+        BaseFrameworkExecutionServices executionServices = new BaseFrameworkExecutionServices();
+        serviceSupport.setExecutionServices(executionServices);
+        Framework framework = FrameworkFactory.createForFilesystem(basedir, serviceSupport);
+        executionServices.setFramework(framework);
+        return framework;
     }
 
 

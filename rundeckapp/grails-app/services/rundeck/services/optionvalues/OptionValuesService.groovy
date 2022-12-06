@@ -2,7 +2,7 @@ package rundeck.services.optionvalues
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.plugins.option.OptionValue
@@ -17,10 +17,10 @@ class OptionValuesService {
     def storageService
 
     def getOptions(String project, String provider, AuthContext authContext) {
-        return doPlugin(provider,frameworkService.getFrameworkPropertyResolver(project,null), authContext)
+        return doPlugin(provider,frameworkService.getFrameworkPropertyResolverFactory(project,null), authContext)
     }
 
-    private List<OptionValue> doPlugin(String provider, PropertyResolver resolver, AuthContext authContext){
+    private List<OptionValue> doPlugin(String provider, PropertyResolverFactory.Factory factory, AuthContext authContext){
 
         KeyStorageTree storageTree = storageService.storageTreeWithContext(authContext)
         Map<Class, Object> servicesMap = [:]
@@ -31,7 +31,7 @@ class OptionValuesService {
         )
 
         //load plugin and configure with config values
-        def result = pluginService.configurePlugin(provider, getOptionValuesPluginService(), resolver, PropertyScope.Instance, services)
+        def result = pluginService.configurePlugin(provider, getOptionValuesPluginService(), factory, PropertyScope.Instance, services)
         if (!result?.instance) {
             log.error("Plugin '${provider}' not found")
             return []

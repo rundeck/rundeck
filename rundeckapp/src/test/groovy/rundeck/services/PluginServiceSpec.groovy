@@ -110,7 +110,7 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
         given:
             service.rundeckPluginRegistry = Mock(PluginRegistry)
             def providerService = Mock(PluggableProviderService)
-            def describedPlugin = new DescribedPlugin(null, null, 'blah')
+            def describedPlugin = new DescribedPlugin(null, null, 'blah', null, null)
         when:
             def result = service.getPluginDescriptor('blah', ServiceNameConstants.LogFilter)
         then:
@@ -202,7 +202,7 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
             def pluginInstance = Mock(DynamicProperties)
 
             service.rundeckPluginRegistry=Mock(PluginRegistry){
-                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type, null, null)
             }
 
 
@@ -255,7 +255,7 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
                                                  .build()
             def pluginInstance = Mock(DynamicProperties)
             service.rundeckPluginRegistry=Mock(PluginRegistry){
-                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type, null, null)
             }
 
         when:
@@ -306,7 +306,7 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
                                                  .build()
             def pluginInstance = Mock(DynamicProperties)
             service.rundeckPluginRegistry=Mock(PluginRegistry){
-                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+                1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type, null, null)
             }
 
         when:
@@ -357,7 +357,7 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
         def pluginInstance = Mock(DynamicProperties)
 
         service.rundeckPluginRegistry=Mock(PluginRegistry){
-            1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type)
+            1 * loadPluginDescriptorByName(type,mockSvc)>>new DescribedPlugin<Object>(pluginInstance, desc, type, null, null)
         }
 
         when:

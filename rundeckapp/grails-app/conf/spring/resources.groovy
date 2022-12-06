@@ -35,9 +35,15 @@ import com.dtolabs.rundeck.core.authorization.Log4jAuthorizationLogger
 import com.dtolabs.rundeck.core.authorization.providers.BaseValidatorImpl
 import com.dtolabs.rundeck.core.authorization.providers.YamlValidator
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
+import com.dtolabs.rundeck.core.common.BaseFrameworkExecutionProviders
+import com.dtolabs.rundeck.core.common.BaseFrameworkExecutionServices
+import com.dtolabs.rundeck.core.common.FrameworkExecutionProviderServices
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
+import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
+import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
+import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
@@ -51,11 +57,17 @@ import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
+import com.dtolabs.rundeck.core.utils.cache.FileCache
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.server.plugins.AppExecutionPluginLoader
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
+import com.dtolabs.rundeck.server.plugins.PluginFactoryBean
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.jobreference.JobReferenceNodeStepExecutor
+import com.dtolabs.rundeck.server.plugins.jobreference.JobReferencePluginFactoryBean
+import com.dtolabs.rundeck.server.plugins.jobreference.JobReferenceStepExecutor
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.*
 import com.dtolabs.rundeck.server.plugins.logs.*
@@ -94,13 +106,12 @@ import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
-import org.rundeck.app.data.ProviderRegistration
+import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.security.*
-import org.rundeck.spi.data.BaseDataManager
 import org.rundeck.web.ExceptionHandler
 import org.rundeck.web.WebUtil
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
@@ -256,8 +267,38 @@ beans={
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
+    rundeckNodeSpecifiedProviderNames(NodeSpecifiedPlugins){
+        projectManager = ref('projectManagerService')
+        frameworkNodes = ref('rundeckNodeSupport')
+    }
+    rundeckBaseFrameworkExecutionServices(BaseFrameworkExecutionServices){
+        framework = ref('rundeckFramework')
+    }
+    rundeckBaseFrameworkExecutionProviders(BaseFrameworkExecutionProviders){
+        executionServices = ref('rundeckBaseFrameworkExecutionServices')
+    }
+
+    rundeckappExecutionPluginsLoader(AppExecutionPluginLoader){
+        pluginService=ref('pluginService')
+        rundeckNodeSupport=ref('rundeckNodeSupport')
+        nodeProviderName=ref('rundeckNodeSpecifiedProviderNames')
+        /////////
+        //NOTE: these two dependencies are purposely disabled, they must be lazy loaded due to cyclic dependency
+        //rundeckBaseFrameworkExecutionProviders = ref('rundeckBaseFrameworkExecutionProviders')
+        //framework = ref('rundeckFramework')
+        ////////
+    }
+    rundeckExecutionPluginService(ExecutionServiceImpl){
+        executionProviders = ref('rundeckappExecutionPluginsLoader')
+    }
+    rundeckFrameworkServiceSupport(ServiceSupport){
+        executionService = ref('rundeckExecutionPluginService')
+        executionProviders = ref('rundeckappExecutionPluginsLoader')
+        executionServices = ref('rundeckBaseFrameworkExecutionServices')
+    }
 
     frameworkFactory(RundeckFrameworkFactory){
+        serviceSupport = ref('rundeckFrameworkServiceSupport')
         frameworkFilesystem=frameworkFilesystem
         propertyLookup=ref('frameworkPropertyLookup')
         dbProjectManager=ref('projectManagerService')
@@ -367,9 +408,7 @@ beans={
     }
 
     //cache for provider loaders bound to a file
-    providerFileCache(PluginManagerService) { bean ->
-        bean.factoryMethod = 'createProviderLoaderFileCache'
-    }
+    providerFileCache(FileCache)
 
     pluginDirProvider(WatchingPluginDirProvider, pluginDir)
 
@@ -387,6 +426,10 @@ beans={
         ]
     }
 
+    rundeckFrameworkExecutionProviderServices(FrameworkExecutionProviderServices){
+         frameworkExecutionServices = ref('rundeckBaseFrameworkExecutionServices')
+    }
+
     /*
      * Define beans for Rundeck core-style plugin loader to load plugins from jar/zip files
      */
@@ -395,6 +438,7 @@ beans={
         cachedir = cacheDir
         cache = filePluginCache
         serviceAliases = [WorkflowNodeStep: 'RemoteScriptNodeStep']
+        frameworkExecutionProviderServices = ref('rundeckFrameworkExecutionProviderServices')
     }
 
     /**
@@ -510,19 +554,7 @@ beans={
     }
 
     def storageDir= new File(varDir, 'storage')
-    rundeckStorageTreeFactory(StorageTreeFactory){
-        frameworkPropertyLookup=ref('frameworkPropertyLookup')
-        pluginRegistry=ref("rundeckPluginRegistry")
-        storagePluginProviderService=ref('storagePluginProviderService')
-        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
-        configuration = application.config.rundeck?.storage?.toFlatConfig()
-        storageConfigPrefix='provider'
-        converterConfigPrefix='converter'
-        baseStorageType='file'
-        baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
-        defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
-        loggerName='org.rundeck.storage.events'
-    }
+
     rundeckStorageTreeCreator(StorageTreeCreator){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
@@ -530,6 +562,7 @@ beans={
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
         storageConfigPrefix='provider'
         startupConfiguration = application.config.rundeck?.storage?.toFlatConfig()
+        appConfigString = 'storage'
         converterConfigPrefix='converter'
         baseStorageType='file'
         baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
@@ -538,6 +571,7 @@ beans={
     }
     rundeckStorageTree(DelegateStorageTree){
         creator=ref('rundeckStorageTreeCreator')
+        refreshable=true
     }
     if(grailsApplication.config.getProperty("rundeck.feature.projectKeyStorage.enabled", Boolean.class, false)) {
         rundeckKeyStorageContextProvider(ProjectKeyStorageContextProvider)
@@ -558,12 +592,13 @@ beans={
 
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree, rundeckKeyStorageContextProvider)
 
-    rundeckConfigStorageTreeFactory(StorageTreeFactory){
+    rundeckConfigStorageTreeCreator(StorageTreeCreator){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
-        configuration = application.config.rundeck?.config?.storage?.toFlatConfig()
+        startupConfiguration = application.config.rundeck?.config?.storage?.toFlatConfig()
+        appConfigString = 'config.storage'
         storageConfigPrefix='provider'
         converterConfigPrefix='converter'
         baseStorageType='db'
@@ -571,7 +606,10 @@ beans={
         defaultConverters=['StorageTimestamperConverter']
         loggerName='org.rundeck.config.storage.events'
     }
-    rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
+    rundeckConfigStorageTree(DelegateStorageTree){
+        creator = ref('rundeckConfigStorageTreeCreator')
+        refreshable = false
+    }
 
     rundeckConfigStorageManager(TreeStorageManager, ref('rundeckConfigStorageTree')){ bean->
         bean.factoryMethod='createFromStorageTree'
@@ -612,6 +650,15 @@ beans={
         basePath = uploadsDir.absolutePath
     }
     pluginRegistry[ServiceNameConstants.FileUpload + ":" +FSFileUploadPlugin.PROVIDER_NAME] = 'fsFileUploadPlugin'
+
+    //list of plugin classes to generate factory beans for
+    [
+            //Job reference plugins
+            JobReferenceNodeStepExecutor,
+            JobReferenceStepExecutor
+    ].each {
+        "rundeckAppPlugin_${it.simpleName}"(JobReferencePluginFactoryBean, it)
+    }
 
     //list of plugin classes to generate factory beans for
     [
@@ -667,6 +714,7 @@ beans={
      * Track passwords on these plugins
      */
     obscurePasswordFieldsService(PasswordFieldsService)
+    pluginGroupPasswordFieldsService(PasswordFieldsService)
     resourcesPasswordFieldsService(PasswordFieldsService)
     execPasswordFieldsService(PasswordFieldsService)
     pluginsPasswordFieldsService(PasswordFieldsService)
@@ -812,15 +860,6 @@ beans={
 
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
-
-
-    //manager setup
-    rundeckDataManager(BaseDataManager)
-    rundeckDataProviderRegistration(ProviderRegistration) {
-        dataManager = ref('rundeckDataManager')
-        providers = [
-            ref('tokenDataProvider')
-        ]
-    }
+    projectDataProvider(GormProjectDataProvider)
 
 }

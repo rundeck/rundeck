@@ -61,6 +61,15 @@ class UserService {
         return user
     }
 
+    String getOwnerName(Long userId) {
+        User.createCriteria().get {
+            eq("id", userId)
+            projections {
+                property "login"
+            }
+        }
+    }
+
     def registerLogin(String login, String sessionId){
         User user = User.findByLogin(login)
         if(!user){
@@ -203,7 +212,7 @@ class UserService {
                         configurePlugin(
                                 prov.key,
                                 groupSourcePluginService,
-                                frameworkService.getFrameworkPropertyResolver(),
+                                frameworkService.getFrameworkPropertyResolverFactory(),
                                 PropertyScope.Unspecified
                         )
                 if(configuredPlugin && configuredPlugin.instance) roles.addAll(configuredPlugin.instance.getGroups(username,configuredPlugin.configuration))

@@ -244,7 +244,7 @@ search
         }
 
         function initJobActionMenus(){
-            jQuery('.act_job_action_dropdown').click(function(){
+            jQuery('.act_job_action_dropdown').on('click',function(){
                 var id=jQuery(this).data('jobId');
                 var el=jQuery(this).parent().find('.dropdown-menu');
                 el.load(

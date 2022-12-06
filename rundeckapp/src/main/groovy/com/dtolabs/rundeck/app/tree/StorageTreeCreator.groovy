@@ -16,7 +16,6 @@ import rundeck.services.ConfigurationService
 class StorageTreeCreator implements TreeCreator{
     IPropertyLookup frameworkPropertyLookup
     PluginRegistry pluginRegistry
-    StorageTreeFactory storageTreeFactory
     PluggableProviderService<StoragePlugin> storagePluginProviderService
     PluggableProviderService<StorageConverterPlugin> storageConverterPluginProviderService
     Map<String, String> startupConfiguration
@@ -24,12 +23,13 @@ class StorageTreeCreator implements TreeCreator{
     @Autowired
     ConfigurationService configurationService
 
-    def storageConfigPrefix='provider'
-    def converterConfigPrefix='converter'
-    def baseStorageType='file'
+    def storageConfigPrefix
+    def converterConfigPrefix
+    def baseStorageType
     Map baseStorageConfig
-    List<String> defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
-    def loggerName='org.rundeck.storage.events'
+    String appConfigString
+    List<String> defaultConverters=[]
+    def loggerName
     Map<String, String> configuration
 
     StorageTree create(Boolean startup){
@@ -38,9 +38,9 @@ class StorageTreeCreator implements TreeCreator{
         factory.pluginRegistry=pluginRegistry
         factory.storagePluginProviderService=storagePluginProviderService
         factory.storageConverterPluginProviderService=storageConverterPluginProviderService
-        factory.storageConfigPrefix='provider'
-        factory.converterConfigPrefix='converter'
-        factory.baseStorageType='file'
+        factory.storageConfigPrefix=storageConfigPrefix
+        factory.converterConfigPrefix=converterConfigPrefix
+        factory.baseStorageType=baseStorageType
         factory.baseStorageConfig=baseStorageConfig
         factory.loggerName=loggerName
         factory.defaultConverters=defaultConverters.toSet()
@@ -57,11 +57,24 @@ class StorageTreeCreator implements TreeCreator{
         factory.createTree()
     }
 
+    /**
+     * Returns the base storage map, using the `appConfigString` to load a config map
+     * @return
+     */
+    private Map<String, Map> getBaseConfigMap() {
+        def value = configurationService.getValue(appConfigString)
+        if(value instanceof Map){
+            return (Map<String,Map>) value
+        }else{
+            throw new IllegalStateException("appConfigString did not evaluate to a Map: ${appConfigString}")
+        }
+    }
+
     Map<String, String> getStorageConfigMap(){
+        Map<String, Map> storageMap = getBaseConfigMap()
         Map<String, String> finalconfigMap = [:]
-        Map<String, Map> storageMap = configurationService.getAppConfig().get("storage") as Map<String, Map>
-        Map<String, Map> providerMap = storageMap.get("provider") as Map<String, Map>
-        Map<String, Map> converterMap = storageMap.get("converter") as Map<String, Map>
+        Map<String, Map> providerMap = storageMap.get(storageConfigPrefix) as Map<String, Map>
+        Map<String, Map> converterMap = storageMap.get(converterConfigPrefix) as Map<String, Map>
         finalconfigMap.put("default", "deleteMe")
         providerMap?.each {
             if (it.key.toString().isInteger()) {

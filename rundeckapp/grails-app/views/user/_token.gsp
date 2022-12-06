@@ -38,8 +38,8 @@
             </g:if>
         </td>
         <td width="10%" title="Creator: ${token.creator}">
-            ${token.user.login}
-            <g:if test="${!token?.user?.login?.equalsIgnoreCase(token.creator)}">
+            ${token.ownerName}
+            <g:if test="${!token.creator.equalsIgnoreCase(token.ownerName)}">
                 (${token.creator})
             </g:if>
         </td>

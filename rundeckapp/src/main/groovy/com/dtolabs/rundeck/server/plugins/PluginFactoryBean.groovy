@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.logging
+package com.dtolabs.rundeck.server.plugins
 
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry

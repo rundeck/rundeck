@@ -25,6 +25,8 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.plugins.config.Group;
+import com.dtolabs.rundeck.plugins.config.PluginGroup;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
@@ -47,7 +49,7 @@ public class PluginAdapterUtility {
      * @return true if the object has a valid Plugin annotation
      */
     public static boolean canBuildDescription(final Object object) {
-        final Plugin annotation1 = object.getClass().getAnnotation(Plugin.class);
+        final String annotation1 = getPluginNameAnnotation(object.getClass());
         return null != annotation1;
     }
 
@@ -61,6 +63,16 @@ public class PluginAdapterUtility {
     public static Description buildDescription(final Object object, final DescriptionBuilder builder) {
         return buildDescription(object, builder, true);
     }
+    /**
+     * @return Create a Description using a builder by analyzing the annotations on a plugin type, and including
+     * annotations on fields as DescriptionProperties.
+     *
+     * @param type  the type
+     * @param builder builder
+     */
+    public static Description buildDescription(final Class<?> type, final DescriptionBuilder builder) {
+        return buildDescription(type, builder, true);
+    }
 
     /**
      * @return Create a Description using a builder by analyzing the annotations on a plugin object.
@@ -70,19 +82,38 @@ public class PluginAdapterUtility {
      * @param includeAnnotatedFieldProperties
      *                if true, add DescriptionProperties to the Description based on annotations of fields in the class of the instance
      */
-    public static Description buildDescription(final Object object, final DescriptionBuilder builder,
-                                               final boolean includeAnnotatedFieldProperties) {
+    public static Description buildDescription(
+            final Object object,
+            final DescriptionBuilder builder,
+            final boolean includeAnnotatedFieldProperties
+    ) {
+        buildDescription(object.getClass(), builder, includeAnnotatedFieldProperties);
+        builder.collaborate(object);
+        return builder.build();
+    }
+
+    /**
+     * @return Create a Description using a builder by analyzing the annotations on a plugin object.
+     *
+     * @param builder builder
+     * @param includeAnnotatedFieldProperties
+     *                if true, add DescriptionProperties to the Description based on annotations of fields in the class of the instance
+     */
+    public static Description buildDescription(
+            final Class<?> type,
+            final DescriptionBuilder builder,
+            final boolean includeAnnotatedFieldProperties
+    ) {
         //analyze this class to determine properties
-        final Plugin annotation1 = object.getClass().getAnnotation(Plugin.class);
-        if (null != annotation1) {
-            final String pluginName = annotation1.name();
-            builder
+        final String pluginName = getPluginNameAnnotation(type);
+        if (null != pluginName) {
+           builder
                     .name(pluginName)
                     .title(pluginName)
                     .description("");
         }
 
-        final PluginDescription descAnnotation = object.getClass().getAnnotation(PluginDescription.class);
+        final PluginDescription descAnnotation = type.getAnnotation(PluginDescription.class);
         if (null != descAnnotation) {
             if (!"".equals(descAnnotation.title())) {
                 builder.title(descAnnotation.title());
@@ -91,13 +122,27 @@ public class PluginAdapterUtility {
                 builder.description(descAnnotation.description());
             }
         }
-        builder.metadata(loadPluginMetadata(object.getClass()));
+        builder.metadata(loadPluginMetadata(type));
+
+        final Group group = type.getAnnotation(Group.class);
+
+        if (null != group && !PluginGroup.class.isAssignableFrom(type)) {
+            Class<?> value = group.value();
+            if (!(PluginGroup.class.isAssignableFrom(value))) {
+                throw new IllegalStateException("Cannot use group type: " + value);
+            }
+            builder.pluginGroup(value.asSubclass(PluginGroup.class));
+        }
 
         if (includeAnnotatedFieldProperties) {
-            buildFieldProperties(object, builder);
+            buildFieldProperties(type, builder);
         }
-        builder.collaborate(object);
         return builder.build();
+    }
+
+    private static String getPluginNameAnnotation(final Class<?> aClass) {
+        final Plugin annotation1 = aClass.getAnnotation(Plugin.class);
+        return annotation1!=null?annotation1.name():null;
     }
 
     public static Map<String, String> loadPluginMetadata(final Class<?> clazz) {
