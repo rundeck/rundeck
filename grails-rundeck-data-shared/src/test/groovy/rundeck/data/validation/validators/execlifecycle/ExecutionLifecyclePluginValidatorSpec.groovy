@@ -1,5 +1,6 @@
 package rundeck.data.validation.validators.execlifecycle
 
+import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities

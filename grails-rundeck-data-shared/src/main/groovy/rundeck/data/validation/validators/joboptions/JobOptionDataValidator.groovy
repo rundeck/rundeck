@@ -1,5 +1,6 @@
 package rundeck.data.validation.validators.joboptions
 
+import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import groovy.util.logging.Slf4j
 import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.JobData

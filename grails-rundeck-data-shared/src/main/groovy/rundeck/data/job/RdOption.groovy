@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import grails.validation.Validateable
 import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.model.v1.job.option.OptionValueData
@@ -74,6 +75,7 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
         return o
     }
 
+
     @Override
     public int compareTo(OptionData obj) {
         if (null != sortIndex && null != obj.sortIndex) {
@@ -88,5 +90,6 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
     @Override
     Map<String, Object> getConfigMap() {
         return configData?.getJobOptionConfigEntries()
+
     }
 }

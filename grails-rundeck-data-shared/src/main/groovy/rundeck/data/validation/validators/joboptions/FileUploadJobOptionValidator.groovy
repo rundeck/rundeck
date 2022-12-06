@@ -1,5 +1,6 @@
 package rundeck.data.validation.validators.joboptions
 
+import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin

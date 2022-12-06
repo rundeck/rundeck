@@ -9,6 +9,7 @@ import grails.util.Holders
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.grails.testing.GrailsUnitTest
 import rundeck.services.FrameworkService
+
 import spock.lang.Specification
 
 class RdJobSpec extends Specification implements GrailsUnitTest {

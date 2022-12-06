@@ -2,6 +2,7 @@ package rundeck.controllers
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import groovy.transform.CompileStatic
 import org.rundeck.app.data.exception.DataValidationException
