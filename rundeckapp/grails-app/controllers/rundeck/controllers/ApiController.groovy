@@ -250,7 +250,7 @@ class ApiController extends ControllerBase{
         uri= "/feature/{featureName}",
         produces = MediaType.APPLICATION_JSON
     )
-    def featureQuery(@PathVariable(name = "featureName", required = false) String featureName) {
+    def featureQuery(@PathVariable(name = "featureName") String featureName) {
         if (!apiService.requireApi(request, response)) {
             return
         }
