@@ -199,7 +199,7 @@ class PluginService implements ResourceFormats, PluginConfigureService {
         PropertyResolverFactory.Factory resolverFactory = PropertyResolverFactory.pluginPrefixedScoped(retriever,projectRetriever,rundeckFramework.getPropertyRetriever())
         def plugin = configurePluginWithoutValidation(type, createPluggableService(getPluginTypeByService(serviceName)), resolverFactory, PropertyScope.Instance, null)
 
-        def instance=plugin.instance
+        def instance=plugin?.instance
         if(!(instance instanceof DynamicProperties)){
             return null
         }
@@ -387,7 +387,7 @@ class PluginService implements ResourceFormats, PluginConfigureService {
 
         def result = rundeckPluginRegistry?.configurePluginByName(name, service, resolverFactory, defaultScope)
 
-        if (result.instance != null) {
+        if (result?.instance != null) {
             serviceSpiProvider(result, servicesProvider)
 
             return result
