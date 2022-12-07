@@ -24,13 +24,18 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.storage.NamespacedStorage
 import grails.gorm.transactions.Transactional
+import groovy.transform.CompileStatic
+import org.rundeck.app.data.model.v1.storage.RundeckStorage
+import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
+import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
+import org.rundeck.app.data.providers.v1.storage.StorageDataProvider
+import org.rundeck.spi.data.DataAccessException
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.impl.ResourceBase
-import rundeck.Storage
 
 import java.util.regex.Pattern
 
@@ -39,17 +44,23 @@ import java.util.regex.Pattern
  */
 class DbStorageService implements NamespacedStorage{
     static transactional = false
+    StorageDataProvider storageDataProvider
+
 
     protected static Resource<ResourceMeta> loadDir(Path path) {
         new ResourceBase(path, null, true)
     }
 
-    protected static Resource<ResourceMeta> loadResource(Storage storage1) {
-        new ResourceBase(PathUtil.asPath(storage1.path),
-                StorageUtil.withStream(lazyData(storage1), storage1.storageMeta), false)
+    @CompileStatic
+    protected static Resource<ResourceMeta> loadResource(RundeckStorage storage1) {
+
+        new ResourceBase(PathUtil.asPath(RundeckStorage.getPath(storage1.getDir(), storage1.getName())),
+                StorageUtil.withStream(lazyData(storage1), RundeckStorage.storageMetaAsMap(storage1.getJsonData())), false)
+
     }
 
-    protected static HasInputStream lazyData(Storage storage1) {
+    @CompileStatic
+    protected static HasInputStream lazyData(RundeckStorage storage1) {
         new HasInputStream() {
             @Override
             InputStream getInputStream() throws IOException {
@@ -76,27 +87,8 @@ class DbStorageService implements NamespacedStorage{
         if(PathUtil.isRoot(path)){
             return true
         }
-        def c = Storage.createCriteria()
-        c.get {
-            if (ns) {
-                eq('namespace', ns)
-            } else {
-                isNull('namespace')
-            }
-            or {
-                and{
-                    eq('name', name)
-                    eq('dir', dir)
-                }
-                or {
-                    eq('dir', path.path)
-                    like('dir', path.path + '/%')
-                }
-            }
-            projections {
-                rowCount()
-            }
-        } > 0
+
+        storageDataProvider.hasPath(ns, path, name, dir)
     }
 
     boolean hasPath(String ns,String path) {
@@ -115,26 +107,11 @@ class DbStorageService implements NamespacedStorage{
 
     @Override
     boolean hasDirectory(String ns,Path path) {
-        def dir, name
-        (dir, name) = splitPath(path)
         if (PathUtil.isRoot(path)) {
             return true
         }
-        def c = Storage.createCriteria()
-        c.get {
-            if (ns) {
-                eq('namespace', ns)
-            } else {
-                isNull('namespace')
-            }
-            or {
-                eq('dir', path.path)
-                like('dir', path.path + '/%')
-            }
-            projections {
-                rowCount()
-            }
-        } > 0
+
+       storageDataProvider.hasDirectory(ns, path)
     }
 
     boolean hasDirectory(String ns,String path) {
@@ -144,7 +121,7 @@ class DbStorageService implements NamespacedStorage{
     @Override
     @Transactional(readOnly = true)
     Resource<ResourceMeta> getPath(String ns,Path path) {
-        Storage found = findResource(ns,path)
+        RundeckStorage found = findResource(ns,path)
         if(found){
             return loadResource(found)
         }else{
@@ -163,35 +140,17 @@ class DbStorageService implements NamespacedStorage{
     @Override
     @Transactional(readOnly = true)
     Resource<ResourceMeta> getResource(String ns,Path path) {
-        Storage found = findResource(ns,path)
+        RundeckStorage found = findResource(ns,path)
         if (!found) {
             throw StorageException.readException(path,"Not found")
         }
         return loadResource(found)
     }
 
-    protected Storage findResource(String ns, Path path) {
+    protected RundeckStorage findResource(String ns, Path path) {
         def dir, name
         (dir, name) = splitPath(path)
-        def found = Storage.createCriteria().get(){
-            if(ns){
-                eq('namespace', ns)
-            }else{
-                isNull('namespace')
-            }
-            if(dir){
-                eq('dir', dir)
-            }else{
-                or{
-                    eq('dir', '')
-                    isNull('dir')
-                }
-            }
-            eq('name', name)
-            cache(false)
-        }
-        found?.refresh()
-        found
+        storageDataProvider.findResource(ns, dir, name)
     }
 
     Resource<ResourceMeta> getResource(String ns,String path) {
@@ -200,7 +159,7 @@ class DbStorageService implements NamespacedStorage{
 
     @Override
     Set<Resource<ResourceMeta>> listDirectoryResources(String ns,Path path) {
-        Storage.findAllByNamespaceAndDir(ns ?: null,path.path,[sort:'name',order:'desc']).collect{ loadResource(it) }
+        storageDataProvider.findAllByNamespaceAndDir(ns ?: null,path.path).collect{ loadResource(it) }
     }
 
     Set<Resource<ResourceMeta>> listDirectoryResources(String ns,String path) {
@@ -210,20 +169,8 @@ class DbStorageService implements NamespacedStorage{
     @Override
     Set<Resource<ResourceMeta>> listDirectory(String ns,Path path) {
         def foundset=new HashSet<String>()
-        def c = Storage.createCriteria()
         def pathkey= path.path ? (path.path + '/') : ''
-        c.list {
-            if(ns){
-                eq('namespace',ns)
-            }else{
-                isNull('namespace')
-            }
-            or {
-                eq('dir', path.path)
-                like('dir', pathkey+'%')
-            }
-            order("name", "desc")
-        }.collect {
+        storageDataProvider.listDirectory(ns, path).collect {
             def m= it.dir =~ "^(${Pattern.quote(pathkey)}[^/]+)/?.*"
             if (it.dir == path.path) {
                 return loadResource(it)
@@ -242,17 +189,8 @@ class DbStorageService implements NamespacedStorage{
     @Override
     Set<Resource<ResourceMeta>> listDirectorySubdirs(String ns,Path path) {
         def foundset = new HashSet<String>()
-        def c = Storage.createCriteria()
         def pathkey = path.path ? (path.path + '/') : ''
-        c.list {
-            if (ns) {
-                eq('namespace', ns)
-            } else {
-                isNull('namespace')
-            }
-            like('dir', pathkey + '%')
-            order("name", "desc")
-        }.collect {
+        storageDataProvider.listDirectorySubdirs(ns, path).collect {
             def m = it.dir =~ "^(${Pattern.quote(pathkey)}[^/]+)/?.*"
             if (m.matches() && !foundset.contains(m[0][1])) {
                 foundset << m[0][1]
@@ -268,11 +206,11 @@ class DbStorageService implements NamespacedStorage{
 
     @Override
     boolean deleteResource(String ns,Path path) {
-        Storage storage1 = findResource(ns,path)
+        RundeckStorage storage1 = findResource(ns,path)
         if (!storage1) {
             throw StorageException.deleteException(path, "Not found")
         }
-        storage1.delete(flush: true)
+        storageDataProvider.delete(storage1.getId())
         return true
     }
 
@@ -293,28 +231,40 @@ class DbStorageService implements NamespacedStorage{
         return loadResource(storage)
     }
 
-    protected Storage saveStorage(Storage storage, ResourceMeta content,String namespace, Path path, String event) {
+    @CompileStatic
+    protected RundeckStorage saveStorage(RundeckStorage storage, ResourceMeta content,String namespace, Path path, String event) {
         def id = storage?.id
         def retry = true
-        Storage saved=null;
+        RundeckStorage saved=null;
         def data = content.getInputStream().bytes
         def saveStorage={
             try {
                 if (id) {
-                    storage = Storage.get(id)
+                    storage = storageDataProvider.getData(id)
                 } else {
-                    storage = new Storage()
+                    storage = new SimpleStorageBuilder()
                 }
+                SimpleStorageBuilder storageBuilder = SimpleStorageBuilder.with(storage)
+                storageBuilder.setNamespace( namespace ? namespace : null)
+                def path1 = PathUtil.asPath(path.path)
+                def parent = PathUtil.parentPath(path1)
+                storageBuilder.setDir(parent?parent.path:'')
+                storageBuilder.setName(path1.name)
 
-                storage.namespace = namespace ? namespace : null
-                storage.path = path.path
-                Map<String, String> newdata = storage.storageMeta?:[:]
-                storage.storageMeta = newdata + content.meta
-                storage.data = data
-                saved = storage.save(flush: true)
-                if (!saved) {
-                    throw new StorageException("Failed to save content at path ${path}: validation error: " +
-                            storage.errors.allErrors.collect { it.toString() }.join("; "),
+                Map<String, String> newdata = RundeckStorage.storageMetaAsMap(storageBuilder.getJsonData()) ?:[:]
+                storageBuilder.setJsonData(RundeckStorage.storageMetaAsString( newdata + content.meta))
+                storageBuilder.setData( data)
+                try {
+                    if (id) {
+                        storageDataProvider.update(id, storageBuilder)
+
+                    } else {
+                        id = storageDataProvider.create(storageBuilder)
+                    }
+                    saved = storageDataProvider.getData(id)
+                } catch (DataAccessException e) {
+                    throw new StorageException("Failed to save content at path ${RundeckStorage.getPath(storageBuilder.getDir(), storageBuilder.getName())}: validation error: " +
+                            e.getMessage(),
                             StorageException.Event.valueOf(event.toUpperCase()),
                             path)
                 }
@@ -336,9 +286,7 @@ class DbStorageService implements NamespacedStorage{
         try{
             if(!saveStorage()){
                 while(retry){
-                    Storage.withNewSession {session->
-                        saveStorage()
-                    }
+                    saveStorage()
                 }
             }
         } catch (Exception e) {

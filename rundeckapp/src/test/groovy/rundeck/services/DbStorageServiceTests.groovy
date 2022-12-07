@@ -19,15 +19,29 @@ package rundeck.services
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.storage.api.StorageException
 import rundeck.Storage
+import rundeck.services.data.AuthTokenDataService
+import rundeck.services.data.StorageDataService
 import spock.lang.Specification
 
 import static org.junit.Assert.*
 
 class DbStorageServiceTests extends Specification implements ServiceUnitTest<DbStorageService>, DataTest {
 
-    def setupSpec() { mockDomain Storage }
+    def setupSpec() {
+    mockDomain Storage
+     }
+
+    void setup() {
+
+        def provider = new GormStorageDataProvider()
+        mockDataService(StorageDataService)
+        provider.storageDataService = applicationContext.getBean(StorageDataService)
+        service.storageDataProvider = provider
+    }
 
     void testHasResource() {
         when:
@@ -759,14 +773,14 @@ class DbStorageServiceTests extends Specification implements ServiceUnitTest<DbS
     }
     void testListDirectoryResources_ok() {
         expect:
-        def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+        def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(validate: true, flush:true)
         assertNotNull storage1
-        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        assertNotNull new Storage(data: 'abc3'.bytes, name: 'abc3', dir: 'xyz', storageMeta: [abc: 'xyz3']).save(true)
+        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(validate: true, flush:true)
+        assertNotNull new Storage(data: 'abc3'.bytes, name: 'abc3', dir: 'xyz', storageMeta: [abc: 'xyz3']).save(validate: true, flush:true)
         assertNotNull new Storage(data: 'abc3'.bytes, name: 'banana.gif', dir: 'xyz/monkey/tree',
-                storageMeta: [abc: 'xyz3']).save(true)
+                storageMeta: [abc: 'xyz3']).save(validate: true, flush:true)
         assertNotNull new Storage(data: 'abc3'.bytes, name: 'def', dir: 'xyz/pyx',
-                storageMeta: [abc: 'xyz3']).save(true)
+                storageMeta: [abc: 'xyz3']).save(validate: true, flush:true)
         def res1 = service.listDirectoryResources(null,'xyz')
         assertNotNull(res1)
         assertEquals(2, res1.size())
@@ -816,7 +830,7 @@ class DbStorageServiceTests extends Specification implements ServiceUnitTest<DbS
         assertNotNull new Storage(data: 'abc3'.bytes, name: 'banana.gif', dir: 'xyz/monkey/tree',
                 storageMeta: [abc: 'xyz3']).save(true)
         assertNotNull new Storage(data: 'abc3'.bytes, name: 'def', dir: 'xyz/pyx',
-                storageMeta: [abc: 'xyz3']).save(true)
+                storageMeta: [abc: 'xyz3']).save(validate:true, flush:true)
         def res1 = service.listDirectoryResources(null,'')
         assertNotNull(res1)
         assertEquals(1, res1.size())
@@ -834,7 +848,7 @@ class DbStorageServiceTests extends Specification implements ServiceUnitTest<DbS
         assertNotNull new Storage(namespace: 'other',data: 'abc3'.bytes, name: 'banana.gif', dir: 'xyz/monkey/tree',
                 storageMeta: [abc: 'xyz3']).save(true)
         assertNotNull new Storage(namespace: 'other',data: 'abc3'.bytes, name: 'def', dir: 'xyz/pyx',
-                storageMeta: [abc: 'xyz3']).save(true)
+                storageMeta: [abc: 'xyz3']).save(validate:true, flush: true)
         def res1 = service.listDirectoryResources(null,'')
         assertNotNull(res1)
         assertEquals(0, res1.size())

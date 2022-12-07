@@ -18,12 +18,13 @@ package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.storage.api.PathUtil
 
 import static grails.gorm.hibernate.mapping.MappingBuilder.orm
 
 
-class Storage {
+class Storage implements RundeckStorage{
     String namespace
     String dir
     String name
