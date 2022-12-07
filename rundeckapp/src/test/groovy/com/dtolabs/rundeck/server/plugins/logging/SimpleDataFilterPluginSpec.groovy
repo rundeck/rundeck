@@ -85,6 +85,41 @@ class SimpleDataFilterPluginSpec extends Specification {
     }
 
     @Unroll
+    def "The plugin supports empty values"() {
+        given:
+        def plugin = new SimpleDataFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = dolog
+        plugin.invalidKeyPattern = null
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def events = []
+        lines.each { line ->
+            events << Mock(LogEventControl) {
+                getMessage() >> line
+                getEventType() >> 'log'
+                getLoglevel() >> LogLevel.NORMAL
+            }
+        }
+        when:
+        plugin.init(context)
+        events.each {
+            plugin.handleEvent(context, it)
+        }
+        plugin.complete(context)
+        then:
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == (expect ? ['data': expect] : null)
+        1 * context.log(2, _, _)
+
+        where:
+        dolog | regex                            | lines                           | expect
+        true  | '^\\s*([^\\s]+?)\\s*=\\s*(.*)$'  | ['key=']                        | [key:'']
+
+    }
+
+    @Unroll
     def "only filter NORMAL log level"() {
         given:
         def plugin = new SimpleDataFilterPlugin()
