@@ -1,10 +1,13 @@
-package com.dtolabs.rundeck.core.authentication;
+package org.rundeck.app.authentication;
 
 import org.rundeck.app.data.model.v1.AuthenticationToken;
 
 import java.io.Serializable;
 import java.security.Principal;
 
+/**
+ * Principal representing a Token based authentication
+ */
 public class Token
         implements Principal, Serializable
 {

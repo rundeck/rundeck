@@ -57,7 +57,7 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeSystem
-import org.rundeck.spi.data.DataManager
+
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution

@@ -60,7 +60,7 @@ import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.spi.data.DataAccessException
-import org.rundeck.spi.data.DataManager
+
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

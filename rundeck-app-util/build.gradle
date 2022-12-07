@@ -4,6 +4,8 @@ repositories {
     mavenCentral()
 }
 dependencies {
+    api project(':core')
+    api project(':rundeck-data-model')
     testImplementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testImplementation "org.spockframework:spock-core:2.0-groovy-3.0"
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
@@ -12,7 +14,7 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok:1.18.24"
 }
 
-ext.description= "Rundeck project ${project.name}"
+ext.description = "Rundeck project ${project.name}"
 ext.publishName = project.name
 
 tasks.withType(Test) {

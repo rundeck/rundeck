@@ -16,7 +16,7 @@ import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingAppType
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
-import org.rundeck.spi.data.DataManager
+
 import rundeck.*
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService

@@ -15,7 +15,7 @@
  */
 package webhooks
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenManager
+import org.rundeck.app.util.spi.AuthTokenManager
 import org.rundeck.app.data.model.v1.AuthTokenMode
 import org.rundeck.app.data.model.v1.AuthenticationToken;
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
