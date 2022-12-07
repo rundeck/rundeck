@@ -40,7 +40,6 @@ import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
-import com.dtolabs.rundeck.server.plugins.RenamedDescription
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import groovy.transform.CompileStatic
 import org.rundeck.app.spi.Services
@@ -583,24 +582,7 @@ class PluginService implements ResourceFormats, PluginConfigureService {
      * @return map of [name: DescribedPlugin]
      */
     def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
-        def plugins = rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
-        //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
-        String svcName=service.name
-        //clean up name of any Groovy plugin without annotations that ends with the service name
-        plugins.each { key, DescribedPlugin plugin ->
-            def desc = plugin.description
-            if(plugin.file && plugin.name.endsWith(svcName)){
-                def newname = plugin.name
-                newname=plugin.name.substring(0, plugin.name.length() - svcName.length())
-                plugin.name = newname
-                if (desc?.name?.endsWith(svcName)) {
-                    plugin.description = new RenamedDescription(delegate: desc, name: newname)
-                }
-            }
-        }
-//        System.err.println("listed plugins: ${plugins}")
-
-        plugins
+        return rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
     }
 
     ResourceFormatParser getResourceFormatParser(String format) {

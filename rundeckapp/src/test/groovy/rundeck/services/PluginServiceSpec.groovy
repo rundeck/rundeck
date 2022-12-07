@@ -390,6 +390,20 @@ class PluginServiceSpec extends Specification implements ServiceUnitTest<PluginS
         result == configuredPlugin
         result.instance.getService() != null
     }
+    def "listPlugins"(){
+        given:
+            def test = [
+                a: new DescribedPlugin(null, null, 'alphaTestService', new File("alphaTestService.groovy"),null),
+                b: new DescribedPlugin(null, null, 'bTestService', new File("bTestService.groovy"),null)
+            ]
+            service.rundeckPluginRegistry = Mock(PluginRegistry)
+        when:
+            def result = service.listPlugins(String, Mock(PluggableProviderService))
+        then:
+            1 * service.rundeckPluginRegistry.listPluginDescriptors(String,_)>>test
+            result['a'].name=='alphaTestService'
+            result['b'].name=='bTestService'
+    }
 
 
     class TestNotificationPlugin implements NotificationPlugin, AcceptsServices{
