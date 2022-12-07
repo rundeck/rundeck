@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 public interface Execution {
     Serializable getId();
-    JobData getJob();
+    Serializable getJobId();
     String getUuid();
     String getProject();
     String getStatus();
@@ -21,10 +21,10 @@ public interface Execution {
     String getExtraMetadata();
     Integer getRetryAttempt();
     Integer getNodeThreadcount();
-    Long getRetryOriginalId();
-    Long getRetryPrevId();
-    Execution getRetryExecution();
-    LogFileStorageRequest getLogFileStorageRequest();
+    Serializable getRetryOriginalId();
+    Serializable getRetryPrevId();
+    Serializable getRetryExecutionId();
+    Serializable getLogFileStorageRequestId();
     Boolean isCancelled();
     Boolean isTimedOut();
     Boolean isWillRetry();
