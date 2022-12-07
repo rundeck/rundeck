@@ -12,7 +12,7 @@
 
         <span v-if="total>maxShown">
             <span class="text-strong">
-                  {{$t('count.nodes.shown',[total,$tc('Node.count.vue',total)])}}
+                  {{$t('count.nodes.shown',[maxShown,$tc('Node.count.vue',maxShown)])}}
             </span>
         </span>
       </div>
@@ -177,6 +177,7 @@ export default class NodeFilterResults extends Vue {
         this.total = data.total
         this.truncated = data.truncated
         this.colkeys = data.colkeys
+        this.maxShown = data.max
       }
     }).catch((err) => {
       this.loading = false

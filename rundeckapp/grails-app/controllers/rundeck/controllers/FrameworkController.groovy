@@ -59,6 +59,7 @@ import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
 import rundeck.services.ProjectService
@@ -108,6 +109,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     ScheduledExecutionService scheduledExecutionService
     UserService userService
     ProjectService projectService
+    ConfigurationService configurationService
 
     PasswordFieldsService obscurePasswordFieldsService
     PasswordFieldsService resourcesPasswordFieldsService
@@ -413,7 +415,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(params.page){
             page=Integer.parseInt(params.page)
             if(params.max){
-                max=Integer.parseInt(params.max)
+                def maxByProps = configurationService.getInteger("gui.matchedNodesMaxCount",null)
+                if( maxByProps ) {
+                    max = maxByProps
+                }else{
+                    max=Integer.parseInt(params.max)
+                }
             }else{
                 max=20
             }
