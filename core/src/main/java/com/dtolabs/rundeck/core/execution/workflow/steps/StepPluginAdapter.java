@@ -113,13 +113,9 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
             );
         }
         final String providerName = item.getType();
-        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
-                instanceConfiguration,
-                ServiceNameConstants.WorkflowStep,
-                providerName
-        );
+            final PropertyResolverFactory.Factory resolverFactory =  PropertyResolverFactory.createFrameworkProjectRuntimeResolverFactory(executionContext.getIFramework(), executionContext.getFrameworkProject(), instanceConfiguration);
         final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description,
+        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolverFactory.create(ServiceNameConstants.WorkflowStep,description), description,
                 plugin, PropertyScope.InstanceOnly);
         try {
             plugin.executeStep(stepContext, config);
