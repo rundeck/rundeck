@@ -20,7 +20,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IFrameworkServices
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.data.DataContext
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -94,6 +96,14 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
 
             StepExecutionContext context = Mock(StepExecutionContext) {
                 getFramework() >> framework
+                getIFramework() >> Mock(IFramework){
+                    getFrameworkProjectMgr() >> Mock(ProjectManager){
+                        getFrameworkProject(_) >>Mock(IRundeckProject) {
+                            getProperties() >> [:]
+                        }
+
+                    }
+                }
                 getFrameworkProject() >> PROJECT_NAME
                 getDataContextObject() >> dataContext
                 getSharedDataContext() >> sharedContext
@@ -305,6 +315,14 @@ class RemoteScriptNodeStepPluginAdapter_ExtTest extends Specification {
 
             StepExecutionContext context = Mock(StepExecutionContext) {
                 getFramework() >> framework
+                getIFramework() >> Mock(IFramework){
+                    getFrameworkProjectMgr() >> Mock(ProjectManager){
+                        getFrameworkProject(_) >>Mock(IRundeckProject) {
+                            getProperties() >> [:]
+                        }
+
+                    }
+                }
                 getFrameworkProject() >> PROJECT_NAME
                 getDataContextObject() >> dataContext
                 getSharedDataContext() >> sharedContext
