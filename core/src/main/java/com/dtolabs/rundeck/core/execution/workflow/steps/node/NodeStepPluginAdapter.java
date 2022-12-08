@@ -160,7 +160,7 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         final PropertyResolverFactory.Factory resolverFactory =  PropertyResolverFactory.createFrameworkProjectRuntimeResolverFactory(context.getIFramework(), context.getFrameworkProject(), instanceConfiguration);
 
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolverFactory.create(ServiceNameConstants.WorkflowNodeStep,description), description, plugin, PropertyScope.InstanceOnly);
+        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolverFactory.create(getServiceName(),description), description, plugin, PropertyScope.InstanceOnly);
         try {
             plugin.executeNodeStep(pluginContext, config, node);
         } catch (NodeStepException e) {
