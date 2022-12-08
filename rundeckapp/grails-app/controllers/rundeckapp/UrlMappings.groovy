@@ -221,13 +221,20 @@ class UrlMappings {
         "/api/$api_version/user/list"(controller: 'user', action: 'apiUserList')
         "/api/$api_version/user/roles"(controller: 'user', action: 'apiListRoles')
 
-        "/api/$api_version/feature/$featureName?" {
+        "/api/$api_version/feature" {
+            controller = 'api'
+            action = 'featureQueryAll'
+        }
+
+        "/api/$api_version/feature/$featureName" {
             controller = 'api'
             action = 'featureQuery'
             constraints {
                 featureName(matches: /[a-zA-Z0-9-]+/)
             }
         }
+
+
 
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 

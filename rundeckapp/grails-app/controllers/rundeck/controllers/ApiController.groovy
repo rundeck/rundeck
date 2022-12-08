@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.feature.FeatureEnabledResult
 import com.dtolabs.rundeck.app.api.tokens.CreateToken
 import com.dtolabs.rundeck.app.api.tokens.CreateTokenStringRoles
 import com.dtolabs.rundeck.app.api.tokens.ListTokens
@@ -78,7 +79,8 @@ class ApiController extends ControllerBase{
             apiTokenRemoveExpired: ['POST'],
             apiTokenGet          : ['GET'],
             apiTokenDelete       : ['DELETE'],
-            featureQuery: ['GET']
+            featureQuery         : ['GET'],
+            featureQueryAll      : ['GET']
     ]
     def info () {
         respond((Object) [
@@ -211,45 +213,49 @@ class ApiController extends ControllerBase{
 
 
 
-    @Operation(
-        method = "GET",
-        summary = "Get Rundeck System Feature Status",
-        description = "Return feature's on/off status",
-        parameters = [
-            @Parameter(
-                name='featureName',
-                in = ParameterIn.PATH,
-                description = 'Feature name without the `feature.` prefix, or blank to receive list of all system features',
-                allowEmptyValue = true,
-                required = false,
-                schema = @Schema(
-                    type='string'
-                )
-            )
-        ]
-    )
-    @ApiResponse(
-        responseCode = "200",
-        description = "Map of all system features' status if no specific one specified",
-        content = @Content(
-            mediaType = "application/json",
-            schema = @Schema(implementation = Map)
-        )
-    )
+
+
     @Tag(name = "system")
     /**
      * API endpoint to query system features' toggle status: True/False for On/Off
      *
      * The URL is `/feature/{featureName}` where featureName is the specific name of the feature without `rundeck.feature.` prefix and `enabled` surfix.
      * E.g. The configuration item name of the feature to enable runner is `rundeck.feature.runner.enabled`, to query the status of this feature
-     *      the request will be `/feature/runner`. The result of this query is an JSON object { "enabled": true/false }
+     *      the request will be `/feature/runner`. The result of this query is a JSON object { name: "$featureName", "enabled": true/false }
      *
-     * If `featureName` parameter is absent, the query will return all system features' status as an JSON object where the key is the feature's name and value is { "enabled": true/false }
      */
     @Get(
         uri= "/feature/{featureName}",
         produces = MediaType.APPLICATION_JSON
     )
+    @Operation(
+        method = "GET",
+        summary = "Get Rundeck System Feature Status",
+        description = "The result of this query is a JSON object { name: \"featureName\", \"enabled\": true/false }",
+        parameters = [
+            @Parameter(
+                    name='featureName',
+                    in = ParameterIn.PATH,
+                    description = 'Feature name without the `feature.` prefix, or blank to receive list of all system features',
+                    allowEmptyValue = true,
+                    required = false,
+                    schema = @Schema(
+                            type='string'
+                    )
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = "200",
+                description = "On/off status of the feature",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = FeatureEnabledResult)
+                )
+            )
+        ]
+    )
+    @CompileStatic
     def featureQuery(@PathVariable(name = "featureName") String featureName) {
         if (!apiService.requireApi(request, response)) {
             return
@@ -259,15 +265,61 @@ class ApiController extends ControllerBase{
             return
         }
 
-        if(featureName){
-            Map<String, Boolean> enabled = new HashMap<>()
-            enabled.put("enabled", configurationService.getBoolean("feature.${featureName}.enabled", false))
-            return respond(enabled, formats: ['json'])
-        }else{
-            return respond(configurationService.getAppConfig().feature, formats: ['json'])
-        }
+        FeatureEnabledResult result = new FeatureEnabledResult(featureName, configurationService.getBoolean("feature.${featureName}.enabled", false))
+        return respond(result, formats: ['json'])
+
     }
 
+    @Tag(name = "system")
+    /**
+     * API endpoint to query all system features' toggle status: True/False for On/Off
+     *
+     * The URL is `/feature`. The query will return all system features' status as a list of JSON objects [{ name: "featureName", "enabled": true/false }, ...]
+     */
+    @Get(
+            uri= "/feature",
+            produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+            method = "GET",
+            summary = "List all System Feature on/off Status",
+            description = "The query will return all system features' status as a list of JSON objects [{ name: \"featureName\", \"enabled\": true/false }, ...]",
+            parameters = [],
+            responses = [
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "List of features' on/off status",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(schema = @Schema(implementation = FeatureEnabledResult))
+                            )
+                    )
+            ]
+    )
+    @CompileStatic
+    def featureQueryAll() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiVersions.V42)) {
+            return
+        }
+
+        List<FeatureEnabledResult> result = new ArrayList<>()
+        Map<String, Object> map = configurationService.getAppConfig().feature.getProperties()
+
+        for(Map.Entry e : map.entrySet()) {
+            String key = e.getKey().toString()
+            Object value = e.getValue()
+            if(value != null && value.hasProperty("enabled")) {
+                result.add(new FeatureEnabledResult(key, (Boolean)value.getAt("enabled")))
+            }
+        }
+
+        return respond(result, formats: ['json'])
+
+    }
 
     /*
      * Token API endpoints
