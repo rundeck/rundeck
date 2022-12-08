@@ -18,6 +18,8 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.RundeckConfigBase
+import org.grails.web.json.JSONArray
 import org.rundeck.app.data.model.v1.AuthTokenMode
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -689,22 +691,22 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
             _ * requireApi(_, _) >> true
             _ * requireVersion(_, _, _) >> true
         }
+
+        RundeckConfigBase.RundeckFeatureConfig config = new RundeckConfigBase.RundeckFeatureConfig()
         controller.configurationService = Mock(ConfigurationService) {
             1 * getAppConfig() >> [
-                    "feature": [
-                        "featureEnabled": ["enabled": true],
-                        "featureNotEnabled": ["enabled": false]
-                    ]
+                    "feature": config
                 ]
         }
 
         when:
-        controller.featureQuery()
+        controller.featureQueryAll()
 
         then:
         response.status == 200
-        response.json["featureEnabled"].enabled == true
-        response.json["featureNotEnabled"].enabled == false
-
+        response.json.getClass() == JSONArray.class
+        response.json.length() > 0
+        response.json.getJSONObject(0).name != null
+        response.json.getJSONObject(0).enabled != null
     }
 }
