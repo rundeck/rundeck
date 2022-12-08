@@ -257,11 +257,7 @@ class ApiController extends ControllerBase{
     )
     @CompileStatic
     def featureQuery(@PathVariable(name = "featureName") String featureName) {
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-
-        if (!apiService.requireVersion(request, response, ApiVersions.V42)) {
+        if (!apiService.requireApi(request, response, ApiVersions.V42)) {
             return
         }
 
