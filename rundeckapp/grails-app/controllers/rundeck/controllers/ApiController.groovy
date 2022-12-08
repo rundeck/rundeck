@@ -231,7 +231,7 @@ class ApiController extends ControllerBase{
     @Operation(
         method = "GET",
         summary = "Get Rundeck System Feature Status",
-        description = "The result of this query is a JSON object { name: \"featureName\", \"enabled\": true/false }",
+        description = "Return whether a feature is enabled or disabled.",
         parameters = [
             @Parameter(
                     name='featureName',
@@ -283,7 +283,7 @@ class ApiController extends ControllerBase{
     @Operation(
             method = "GET",
             summary = "List all System Feature on/off Status",
-            description = "The query will return all system features' status as a list of JSON objects [{ name: \"featureName\", \"enabled\": true/false }, ...]",
+            description = "The query will return all system features' status",
             parameters = [],
             responses = [
                     @ApiResponse(
