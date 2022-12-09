@@ -419,7 +419,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         def actions = [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
-        if (response.format in ['xml', 'yaml']) {
+        if (response.format in ['xml', 'yaml', 'json']) {
             actions = [AuthConstants.ACTION_READ]
         }
         if (unauthorizedResponse(
@@ -532,7 +532,15 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
                 flush(response)
             }
+            json{
+                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.json\"")
+                response.contentType='application/json; charset=UTF-8'
 
+                response.outputStream.withWriter('UTF-8') { writer ->
+                    rundeckJobDefinitionManager.exportAs('json', [scheduledExecution], writer)
+                }
+                flush(response)
+            }
             xml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
                 response.contentType='text/xml; charset=UTF-8'
