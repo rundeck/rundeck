@@ -88,7 +88,7 @@
     <section class="form-horizontal section-separator">
         <div class="vue-ui-socket">
             <div>
-                <ui-socket section="resources-override-filter" location="top" :event-bus="eventBus" />
+                <ui-socket section="resources-override-filter" location="top" :event-bus="EventBus" />
             </div>
         </div>
     </section>
