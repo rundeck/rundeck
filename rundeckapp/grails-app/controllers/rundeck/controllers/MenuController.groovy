@@ -3041,11 +3041,22 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
+        def supportedFormats = ['all', 'xml', 'yaml']
+        if(request.api_version > ApiVersions.V41){
+            supportedFormats << 'json'
+        }
+        if (!(response.format in supportedFormats)) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_NOT_ACCEPTABLE,
+                    code  : 'api.error.item.unsupported-format',
+                    args: [response.format]
+                ]
+            )
+        }
         query.projFilter = params.project
         //test valid project
-        Framework framework = frameworkService.getRundeckFramework()
-
-
         if (!apiService.requireExists(
             response,
             frameworkService.existsFrameworkProject(params.project),
@@ -3055,21 +3066,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         //don't load scm status for api response
         def results = jobsFragment(query,JobsScmInfo.NONE)
+        def defaultFormat = request.api_version <= ApiVersions.V41 ? 'xml' : 'json'
+        def contentTypes = [
+            json: 'application/json',
+            xml : 'text/xml',
+            yaml: 'text/yaml'
+        ]
+        def format = (response.format in contentTypes.keySet()) ? response.format : defaultFormat
 
-        withFormat{
-            xml{
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('xml',results.nextScheduled, writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
-            }
-            yaml{
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('yaml', results.nextScheduled, writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/yaml",encoding:"UTF-8")
-            }
+        response.contentType = contentTypes[format] + ';charset=UTF-8'
+        response.outputStream.withWriter('UTF-8') { writer ->
+            rundeckJobDefinitionManager.exportAs(format, results.nextScheduled, writer)
         }
+        flush(response)
     }
 
     /**
