@@ -1959,6 +1959,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
         sec.featureService=mockWith(FeatureService){
             featurePresent(){name->false}
         }
+        sec.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
