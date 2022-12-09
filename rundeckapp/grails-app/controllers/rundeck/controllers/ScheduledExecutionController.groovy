@@ -486,6 +486,9 @@ class ScheduledExecutionController  extends ControllerBase{
         def model = ScheduledExecution.withNewSession {
             _prepareExecute(scheduledExecution, framework,authContext)
         }
+
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
@@ -503,6 +506,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 pluginDescriptions: pluginDescriptions,
+                jobComponents: jobComponents,
+                jobComponentValues: jobComponentValues,
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + model
         if (params.opt && (params.opt instanceof Map)) {
@@ -2699,6 +2704,23 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (params.meta instanceof Map) {
             inputOpts['meta'] = new HashMap(params.meta)
+        }
+
+        Map jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+        Map componentMetadata = [:]
+        jobComponents.each {String name, def comp ->
+            comp.inputProperties.each {
+                if(it.name && params[it.name]) {
+                    componentMetadata.put(it.name, params[it.name])
+                }
+            }
+        }
+        if(componentMetadata){
+            if(!inputOpts['meta']) {
+                inputOpts['meta'] = [:]
+            }
+
+            inputOpts['meta'].putAll(componentMetadata)
         }
 
         Date expirationStart = runAtTime != null ? executionService.parseRunAtTime(runAtTime) : null

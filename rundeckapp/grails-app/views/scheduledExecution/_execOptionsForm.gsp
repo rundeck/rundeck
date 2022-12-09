@@ -13,7 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<%@ page import="rundeck.User;" %>
+<%@ page import="rundeck.User;com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" %>
 
 
 <g:uploadForm controller="scheduledExecution" method="post" useToken="true"
@@ -77,9 +77,23 @@
         <g:render template="/common/messages"/>
     </g:elseif>
 
+    <g:render template="jobComponentProperties"
+              model="[
+                      jobComponents:jobComponents,
+                      sectionName:'nodes',
+                      jobComponentValues:jobComponentValues
+              ]"
+    />
 
     <section class="form-horizontal section-separator"
              style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
+
+        <div class="vue-ui-socket">
+            <div>
+                <ui-socket section="resources-editor" location="top" :event-bus="eventBus" />
+            </div>
+        </div>
+
         <div class="form-group">
             <label class="col-sm-2 control-label">
                 <g:message code="Node.plural"/>
@@ -437,8 +451,8 @@
 
                 /** reset focus on click, so that IE triggers onchange event*/
                 jQuery('#doReplaceFilters').on( 'click', function (evt) {
-                    this.trigger('blur');
-                    this.trigger('focus');
+                    jQuery(this).trigger('blur');
+                    jQuery(this).trigger('focus');
                 });
 
             </g:javascript>

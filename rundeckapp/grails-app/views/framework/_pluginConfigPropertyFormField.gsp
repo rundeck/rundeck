@@ -47,7 +47,7 @@
     <g:set var="hiddenIdentity" value="${prop.renderingOptions['hidden_identity']}"/>
 
     <g:hiddenField id="${fieldid}"
-                   name="${fieldname}"
+                   name="${prop.name}"
                    value="${valueText}"
                    data-hidden-field-identity="${hiddenIdentity}"
                    class="_config_prop_display_hidden"/>
