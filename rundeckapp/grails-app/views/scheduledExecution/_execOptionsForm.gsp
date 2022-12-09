@@ -90,7 +90,7 @@
 
         <div class="vue-ui-socket">
             <div>
-                <ui-socket section="resources-editor" location="top" :event-bus="eventBus" />
+                <ui-socket section="resources-override-filter" location="top" :event-bus="eventBus" />
             </div>
         </div>
 
