@@ -664,8 +664,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     def "query feature endpoint for a specific feature name"() {
         given:
         controller.apiService = Mock(ApiService) {
-            _ * requireApi(_, _) >> true
-            _ * requireVersion(_, _, _) >> true
+            1 * requireApi(_, _, 42) >> true
         }
         controller.configurationService = Mock(ConfigurationService) {
             _ * getBoolean("feature.${featureName}.enabled", false) >> enabled
