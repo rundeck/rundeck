@@ -2706,23 +2706,6 @@ class ScheduledExecutionController  extends ControllerBase{
             inputOpts['meta'] = new HashMap(params.meta)
         }
 
-        Map jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
-        Map componentMetadata = [:]
-        jobComponents.each {String name, def comp ->
-            comp.inputProperties.each {
-                if(it.name && params[it.name]) {
-                    componentMetadata.put(it.name, params[it.name])
-                }
-            }
-        }
-        if(componentMetadata){
-            if(!inputOpts['meta']) {
-                inputOpts['meta'] = [:]
-            }
-
-            inputOpts['meta'].putAll(componentMetadata)
-        }
-
         Date expirationStart = runAtTime != null ? executionService.parseRunAtTime(runAtTime) : null
 
         //handle uploaded files
