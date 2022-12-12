@@ -77,14 +77,7 @@
         <g:render template="/common/messages"/>
     </g:elseif>
 
-    <g:render template="jobComponentProperties"
-              model="[
-                      jobComponents:jobComponents,
-                      sectionName:'nodes',
-                      jobComponentValues:jobComponentValues
-              ]"
-    />
-
+    <g:embedJSON id="jobComponentProperties" data="${jobComponentValues}"/>
     <section class="form-horizontal section-separator">
         <div class="vue-ui-socket">
             <div>
@@ -589,6 +582,9 @@
         });
 
         initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
+        window._rundeck = Object.assign(window._rundeck || {}, {
+            jobComponentsProperties: loadJsonData('jobComponentProperties')
+        })
     }
     jQuery(document).ready(init);
 </script>
