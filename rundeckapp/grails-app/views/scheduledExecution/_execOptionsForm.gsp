@@ -583,7 +583,7 @@
 
         initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
         window._rundeck = Object.assign(window._rundeck || {}, {
-            jobComponentsProperties: loadJsonData('jobComponentProperties')
+            "data": {"jobComponentProperties": loadJsonData('jobComponentProperties')}
         })
     }
     jQuery(document).ready(init);
