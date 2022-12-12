@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.feature.FeatureEnabledResult
 import com.dtolabs.rundeck.app.api.tokens.CreateToken
 import com.dtolabs.rundeck.app.api.tokens.CreateTokenStringRoles
 import com.dtolabs.rundeck.app.api.tokens.ListTokens
@@ -43,9 +44,11 @@ import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
+import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
 
 import javax.servlet.http.HttpServletResponse
+import javax.validation.constraints.Pattern
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -75,7 +78,9 @@ class ApiController extends ControllerBase{
             apiTokenCreate       : ['POST'],
             apiTokenRemoveExpired: ['POST'],
             apiTokenGet          : ['GET'],
-            apiTokenDelete       : ['DELETE']
+            apiTokenDelete       : ['DELETE'],
+            featureQuery         : ['GET'],
+            featureQueryAll      : ['GET']
     ]
     def info () {
         respond((Object) [
@@ -206,62 +211,111 @@ class ApiController extends ControllerBase{
         forward(uri: servletPath.replace('/*', "/$name"))
     }
 
-    /**
-     * API endpoints
-     */
-    /**
-     * Return true if grails configuration allows given feature, or '*' features
-     * @param name
-     * @return
-     */
-    private boolean featurePresent(def name){
-        boolean featureStatus = configurationService.getBoolean("feature.incubator.${name}", false)
 
-        def splat=configurationService.getBoolean("feature.incubator.*", false)
-        return splat || featureStatus
-    }
+
+
+
+    @Tag(name = "system")
     /**
-     * Set an incubator feature toggle on or off
-     * @param name
-     * @param enable
+     * API endpoint to query system features' toggle status: True/False for On/Off
+     *
+     * The URL is `/feature/{featureName}` where featureName is the specific name of the feature without `rundeck.feature.` prefix and `enabled` surfix.
+     * E.g. The configuration item name of the feature to enable runner is `rundeck.feature.runner.enabled`, to query the status of this feature
+     *      the request will be `/feature/runner`. The result of this query is a JSON object { name: "$featureName", "enabled": true/false }
+     *
      */
-    private void toggleFeature(def name, boolean enable){
-        grailsApplication.config.feature?.incubator?.putAt(name, enable)
+    @Get(
+        uri= "/feature/{featureName}",
+        produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+        method = "GET",
+        summary = "Get Rundeck System Feature Status",
+        description = "Return whether a feature is enabled or disabled.",
+        parameters = [
+            @Parameter(
+                    name='featureName',
+                    in = ParameterIn.PATH,
+                    description = 'Feature name without the `feature.` prefix, or blank to receive list of all system features',
+                    allowEmptyValue = true,
+                    required = false,
+                    schema = @Schema(
+                            type='string'
+                    )
+            )
+        ],
+        responses = [
+            @ApiResponse(
+                responseCode = "200",
+                description = "On/off status of the feature",
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = FeatureEnabledResult)
+                )
+            )
+        ]
+    )
+    @CompileStatic
+    def featureQuery(@PathVariable(name = "featureName") String featureName) {
+        if (!apiService.requireApi(request, response, ApiVersions.V42)) {
+            return
+        }
+
+        FeatureEnabledResult result = new FeatureEnabledResult(featureName, configurationService.getBoolean("feature.${featureName}.enabled", false))
+        return respond(result, formats: ['json'])
+
     }
+
+    @Tag(name = "system")
     /**
-     * Feature toggle api endpoint for development mode
+     * API endpoint to query all system features' toggle status: True/False for On/Off
+     *
+     * The URL is `/feature`. The query will return all system features' status as a list of JSON objects [{ name: "featureName", "enabled": true/false }, ...]
      */
-    def featureToggle={
+    @Get(
+            uri= "/feature",
+            produces = MediaType.APPLICATION_JSON
+    )
+    @Operation(
+            method = "GET",
+            summary = "List all System Feature on/off Status",
+            description = "The query will return all system features' status",
+            parameters = [],
+            responses = [
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "List of features' on/off status",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(schema = @Schema(implementation = FeatureEnabledResult))
+                            )
+                    )
+            ]
+    )
+    @CompileStatic
+    def featureQueryAll() {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def respond={
-            render(contentType: 'text/plain', text: featurePresent(params.featureName) ? 'true' : 'false')
-        }
-        if(params.featureName){
-            if(request.method=='GET'){
-                respond()
-            } else if (request.method=='PUT'){
-                toggleFeature(params.featureName, request.inputStream.text=='true')
-                respond()
-            }else if(request.method=='POST'){
-                toggleFeature(params.featureName, true)
-                respond()
-            }else if(request.method=='DELETE'){
-                toggleFeature(params.featureName, false)
-                respond()
-            }
-        }else{
-            response.contentType='text/plain'
-            response.outputStream.withWriter('UTF-8') { w ->
-                grailsApplication.config.feature?.incubator?.each { k, v ->
-                    appendOutput(response, "${k}:${v in [true, 'true']}\n")
-                }
-            }
-            flush(response)
-        }
-    }
 
+        if (!apiService.requireVersion(request, response, ApiVersions.V42)) {
+            return
+        }
+
+        List<FeatureEnabledResult> result = new ArrayList<>()
+        Map<String, Object> map = configurationService.getAppConfig().feature.getProperties()
+
+        for(Map.Entry e : map.entrySet()) {
+            String key = e.getKey().toString()
+            Object value = e.getValue()
+            if(value != null && value.hasProperty("enabled")) {
+                result.add(new FeatureEnabledResult(key, (Boolean)value.getAt("enabled")))
+            }
+        }
+
+        return respond(result, formats: ['json'])
+
+    }
 
     /*
      * Token API endpoints
