@@ -702,6 +702,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
             getByIDorUUID(_)>>se
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
@@ -845,6 +846,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -906,6 +908,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -971,6 +974,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1045,6 +1049,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             //assert the empty file will be uploaded
             1 * receiveFile(_,_,_,'afile.txt', 'OPT1',_,_,_,_) >> 'aref'
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1114,6 +1119,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1201,6 +1207,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             ) >> [executionId: exec.id, id: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1271,6 +1278,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             ) >> [executionId: exec.id, id: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1356,6 +1364,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1479,6 +1488,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * _(*_)
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1708,6 +1718,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
         def command = new RunJobCommand()
         command.id = se.id.toString()
@@ -1813,6 +1824,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
 
         when:
@@ -1910,6 +1922,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
 
         when:
@@ -2011,6 +2024,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
 
         when:
@@ -2254,6 +2268,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
 
 
         when:
@@ -2330,6 +2345,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
 
         when:
@@ -2409,6 +2426,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
 
         when:
@@ -2493,6 +2512,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.orchestratorPluginService = Mock(OrchestratorPluginService)
         controller.pluginService = Mock(PluginService)
             controller.featureService = Mock(FeatureService)
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
 
         when:
@@ -2829,6 +2850,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
         given: "params for job"
         params.id = '1'
@@ -2911,6 +2934,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
         given: "params for job"
         params.id = '1'
@@ -2993,6 +3018,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
         given: "params for job"
         params.id = '1'
@@ -3072,6 +3099,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
         given: "params for job"
         params.id = '1'
@@ -3175,6 +3204,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
         given: "params for job"
         params.id = '1'
@@ -3256,6 +3287,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
         given: "params for job and request has ajax header"
         params.id = '1'
@@ -3326,6 +3359,8 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         controller.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+
 
         given: "params for job and request has ajax header"
         params.id = '1'

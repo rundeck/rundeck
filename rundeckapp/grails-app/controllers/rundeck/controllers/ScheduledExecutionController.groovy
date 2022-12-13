@@ -486,6 +486,9 @@ class ScheduledExecutionController  extends ControllerBase{
         def model = ScheduledExecution.withNewSession {
             _prepareExecute(scheduledExecution, framework,authContext)
         }
+
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
@@ -503,6 +506,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 pluginDescriptions: pluginDescriptions,
+                jobComponents: jobComponents,
+                jobComponentValues: jobComponentValues,
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + model
         if (params.opt && (params.opt instanceof Map)) {

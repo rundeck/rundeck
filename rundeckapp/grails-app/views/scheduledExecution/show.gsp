@@ -200,7 +200,7 @@ search
             </div>
         </div>
     </g:if>
-<tmpl:show scheduledExecution="${scheduledExecution}" crontab="${crontab}"/>
+<tmpl:show scheduledExecution="${scheduledExecution}" crontab="${crontab}" jobComponents="${jobComponents}" jobComponentValues="${jobComponentValues}"/>
 <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 </div>
