@@ -63,7 +63,9 @@
     </g:if>
     <g:if test="${params.meta instanceof Map}">
         <g:each in="${params.meta}" var="metaprop">
-            <g:hiddenField name="meta.${metaprop.key}" value="${metaprop.value}"/>
+            <g:if test="${metaprop.value}">
+                <g:hiddenField name="meta.${metaprop.key}" value="${metaprop.value}"/>
+            </g:if>
         </g:each>
     </g:if>
 
