@@ -65,6 +65,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.IdParameter
 import org.rundeck.core.auth.web.RdAuthorizeJob
@@ -225,7 +226,6 @@ class ScheduledExecutionController  extends ControllerBase{
             redirect(action:'index',params: [project:params.project])
         }
     }
-    def list = {redirect(action:index,params:params) }
 
     def groupTreeFragment = {
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
@@ -1624,8 +1624,7 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: edit : params: " + params)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(!scheduledExecution) {
-            flash.message = "ScheduledExecution not found with id ${params.id}"
-            return redirect(action:index, params:params)
+            throw new NotFound('Job ID', params.id)
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
@@ -1664,7 +1663,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
 
-    public def update (){
+    def update (){
         withForm{
         def changeinfo=[method:'update',change:'modify',user:session.user]
 
@@ -1672,8 +1671,7 @@ class ScheduledExecutionController  extends ControllerBase{
         transferSessionEditState(session, params,params.id)
         def found = scheduledExecutionService.getByIDorUUID( params.id )
         if(!found) {
-            flash.message = "ScheduledExecution not found with id ${params.id}"
-            return redirect(action:index, params:params)
+            throw new NotFound('Job ID', params.id)
         }
 
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,found.project)
