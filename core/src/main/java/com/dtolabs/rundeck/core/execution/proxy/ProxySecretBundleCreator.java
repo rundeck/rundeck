@@ -21,5 +21,15 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import java.util.Map;
 
 public interface ProxySecretBundleCreator {
-    SecretBundle prepareSecretBundle(ExecutionContext context, INodeEntry node);
+    default SecretBundle prepareSecretBundle(ExecutionContext context, INodeEntry node){
+        return null;
+    }
+
+    default SecretBundle prepareSecretBundleWorkflowStep(ExecutionContext context, Map<String, Object> configuration){
+        return null;
+    }
+
+    default SecretBundle prepareSecretBundleWorkflowNodeStep(ExecutionContext context, INodeEntry node, Map<String, Object> configuration){
+        return null;
+    }
 }
