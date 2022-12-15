@@ -81,6 +81,7 @@ import rundeck.services.data.ProjectDataService
 import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
+import rundeck.services.StorageService
 import spock.lang.Ignore
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
@@ -1613,6 +1614,52 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             false   | 0
     }
 
+    def "SCM disabled when an unauthorized user request status and import is enabled"(){
+        given:
+        def unauthorizedMessage = "[SCM disabled] User don't have permissions to the configuration key. Please refer to the system's SCM key owner or administrator for further actions."
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.storageService = Mock(StorageService) {
+            it.hasPath() >> false
+        }
+        def project = 'test'
+        def scmConfig = Mock(ScmPluginConfigData)
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_EXPORT,
+                                                                                          AuthConstants.ACTION_SCM_EXPORT]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_IMPORT,
+                                                                                          AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
+        2 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
+        1 * controller.storageService.hasPath(_,_) >> false
+        0 * controller.scmService.initProject(project,'export')
+        0 * controller.scmService.initProject(project,'import')
+
+        1 * controller.scmService.disablePlugin(_,_,_)
+        response.json.warning == unauthorizedMessage
+
+    }
 
     def "project Toggle SCM off"(){
         given:
