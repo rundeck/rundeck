@@ -1593,7 +1593,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                                                                                 AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
-        1 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
+        2 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
         2 * scmConfig.getEnabled() >> enabled
         1 * controller.storageService.hasPath(_,_) >> true
         (count) * controller.scmService.getJobsPluginMeta(project, false)
