@@ -81,6 +81,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     JobListLinkHandlerRegistry jobListLinkHandlerRegistry
     AuthContextEvaluatorCacheManager authContextEvaluatorCacheManager
     FeatureService featureService
+    StorageService storageService
 
     def configurationService
     ScmService scmService
@@ -3226,12 +3227,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
-                        pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
-                        if (pluginData.scmImportEnabled) {
-                            def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, false)
-                            pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
-                            pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
-                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
+                        def userHasPathAccessToSshKey = storageService.hasPath(authContext, scmService.loadScmConfig(params.project, 'import')?.config?.sshPrivateKeyPath)
+                        if( !userHasPathAccessToSshKey ){
+                            def unauthorizedMessage = "[SCM disabled] User don't have permissions to the configuration key. Please refer to the system's SCM key owner or administrator for further actions."
+                            scmService.disablePlugin('import', params.project, scmService.loadScmConfig(params.project, 'import').type)
+                            pluginData.warning = unauthorizedMessage
+                            log.error(unauthorizedMessage)
+                        }else{
+                            pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
+                            if (pluginData.scmImportEnabled) {
+                                def jobsPluginMeta = scmService.getJobsPluginMeta(params.project, false)
+                                pluginData.scmImportJobStatus = scmService.importStatusForJobs(params.project, authContext, result.nextScheduled,false, jobsPluginMeta)
+                                pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
+                                pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project, pluginData.scmImportStatus)
+                            }
                         }
                         results.putAll(pluginData)
                     }

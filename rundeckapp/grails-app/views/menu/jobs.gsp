@@ -343,6 +343,9 @@ search
                     bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
                     bulkeditor.scmImportStatus(data.scmImportStatus);
                     bulkeditor.scmImportActions(data.scmImportActions);
+                    if( data.warning !== undefined ){
+                        showError(data.warning)
+                    }
 
                     bulkeditor.scmDone(true);
                 }
