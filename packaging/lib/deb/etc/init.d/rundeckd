@@ -39,7 +39,7 @@ start() {
 	fi
 
 	cd /var/log/rundeck
-	start-stop-daemon --start --quiet --chuid $USER:$USER \
+	start-stop-daemon --start --quiet --chuid $USER:$USER --chdir $RDECK_BASE \
                     --make-pidfile --pidfile $PIDFILE \
                     --background --startas /bin/bash -- \
                     -c "exec $DAEMON_EXEC >> $LOG 2>&1" 
