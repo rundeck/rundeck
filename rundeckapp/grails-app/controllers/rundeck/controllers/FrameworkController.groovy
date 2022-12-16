@@ -913,7 +913,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         if (!project) {
-            projectNameError = "gProject name is required"
+            projectNameError = "Project name is required"
             errors << projectNameError
         } else if (!(project =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
             projectNameError = message(code: "project.name.can.only.contain.these.characters")
