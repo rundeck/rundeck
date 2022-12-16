@@ -33,7 +33,7 @@ walk.walkSync('./src/library/components', {
 module.exports = {
   pages,
 
-  outputDir: './lib/components',
+  outputDir: './lib',
   publicPath: './',
   filenameHashing: false,
   parallel: false,
@@ -130,14 +130,16 @@ module.exports = {
      * between ts-loader and how it utilizes the TypeScript compiler in multi-entry(page)
      * builds. Or an error in either.
      * */
-    config.plugins.push({
+     config.plugins.push({
       apply: (compiler) => {
         const logger = compiler.getInfrastructureLogger('RundeckTsFixup')
         compiler.hooks.afterEmit.tap('RundeckTsFixup', (compilation) => {
-          if (fse.existsSync('./lib/src')) {
+          console.log(fse.existsSync('./lib'))
+          if (fse.existsSync('./lib')) {
             logger.error('Fixing up .d.ts location')
-            fse.copySync('./lib/src', './lib')
-            fse.removeSync('./lib/src')
+            console.log(fse.existsSync('./lib/src'))
+            // fse.copySync('./lib/src/library', './lib')
+            // fse.removeSync('./lib/src')
           }
           if (fse.existsSync('./lib/node_modules')) {
             logger.error('Removing extraneous lib/node_modules')
