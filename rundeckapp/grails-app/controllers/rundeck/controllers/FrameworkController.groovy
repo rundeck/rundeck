@@ -829,6 +829,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                             && data.config instanceof Map) {
                         String type = data.get('type')
                         Map config = data.get('config')
+                        projProps.put(
+                                "project.PluginGroup.${type}.enabled".toString(),
+                                'true'
+                        )
                         for (String confKey : config.keySet()) {
                             projProps.put(
                                     "project.plugin.PluginGroup.${type}.${confKey}".toString(),
@@ -909,7 +913,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         if (!project) {
-            projectNameError = "Project name is required"
+            projectNameError = " Project name is required"
             errors << projectNameError
         } else if (!(project =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
             projectNameError = message(code: "project.name.can.only.contain.these.characters")
