@@ -108,7 +108,6 @@ class GormStorageDataProvider implements StorageDataProvider {
             eq('name', name)
             cache(false)
         }
-        found?.refresh()
         found
     }
 
