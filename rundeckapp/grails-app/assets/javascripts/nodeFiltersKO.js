@@ -76,7 +76,7 @@ function NodeSummary(data){
         }
     };
     self.removeDefault=function(){
-        setFilter('nodes','!').success(function(data, status, jqxhr){
+        setFilter('nodes','!').then(function(data, status, jqxhr){
             self.defaultFilter(null);
         });
     };
@@ -99,7 +99,7 @@ function NodeSummary(data){
         }else{
             fname=filter.name();
         }
-        setFilter('nodes',fname).success(function(data, status, jqxhr){
+        setFilter('nodes',fname).then(function(data, status, jqxhr){
             self.defaultFilter(fname);
         });
     };

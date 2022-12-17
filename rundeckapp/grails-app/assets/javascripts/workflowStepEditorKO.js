@@ -106,7 +106,7 @@ function WorkflowEditor() {
 
         return step.editor.editFilter(step, stepfilter, newtype, validate, validatedata, function (params, data, type) {
 
-            return self.loadFilterPluginEditor(params, data, type).success(function () {
+            return self.loadFilterPluginEditor(params, data, type).then(function () {
                 jQuery('#editLogFilterPluginModal').modal('show');
             });
         });
