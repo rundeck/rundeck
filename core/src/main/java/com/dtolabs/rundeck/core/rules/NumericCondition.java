@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NumericCondition {
-    final static String DOUBLE_PATTERN = "^([0-9]+\\.?[0-9]*).*";
+    final static String DOUBLE_PATTERN = "^(-?[0-9]+\\.?[0-9]*).*";
 
     public static Float extractFloat(final String value){
         if(value == null){

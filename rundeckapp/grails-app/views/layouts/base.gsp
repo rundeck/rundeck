@@ -166,6 +166,7 @@
     <asset:javascript src="static/components/navbar.js"/>
 
     <asset:stylesheet href="static/css/components/project-picker.css"/>
+    <asset:javascript src="static/components/uisockets.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
 
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">

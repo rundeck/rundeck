@@ -5,11 +5,18 @@ import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.core.utils.PropertyLookup
@@ -136,12 +143,13 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         NodeSetImpl testNodeSetB = new NodeSetImpl()
         testNodeSetB.putNode(new NodeEntryImpl("nodea"))
 
-        def iRundeckProject = Mock(IRundeckProject){
-        }
 
         def properties = new Properties()
         properties.setProperty("fwkprop","fwkvalue")
 
+        def iRundeckProject = Mock(IRundeckProject){
+            getProperties() >> properties
+        }
         def frameworkService  = Mock(FrameworkService){
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
@@ -172,6 +180,12 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
         service.pluginService = Mock(PluginService){
             listPlugins() >> []
         }
+        service.pluginService.frameworkService = Mock(FrameworkService){
+            getRundeckFramework()>> Mock(IFramework) {
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever([:])
+            }
+        }
+
         service.jobSchedulesService = Mock(SchedulesManager){
         }
 

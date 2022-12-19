@@ -155,10 +155,10 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
-    public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final String project)
+    public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, ExecutionContext context)
             throws ExecutionServiceException
     {
-        return frameworkServices.getFileCopierForNodeAndProject(node,project);
+        return frameworkServices.getFileCopierForNodeAndProject(node, context);
     }
 
     @Override
@@ -167,10 +167,10 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
-    public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final String project)
+    public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, ExecutionContext context)
             throws ExecutionServiceException
     {
-        return frameworkServices.getNodeExecutorForNodeAndProject(node, project);
+        return frameworkServices.getNodeExecutorForNodeAndProject(node, context);
     }
 
     @Override

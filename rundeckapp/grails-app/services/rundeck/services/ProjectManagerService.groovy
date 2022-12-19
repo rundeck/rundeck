@@ -57,7 +57,6 @@ import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.grails.events.AppEvents
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
-import org.rundeck.spi.data.DataManager
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.conf.TreeBuilder
@@ -639,7 +638,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     {
         if(properties['project.description'] != null ) {
             def description = properties['project.description']
-            RdProject dbproj = projectDataProvider.findByName(projectName)
+            RdProject dbproj = projectDataProvider.findByName(project.name)
             SimpleProjectBuilder updatedProject =  SimpleProjectBuilder.with(dbproj)
             updatedProject.setDescription(description ? description : null)
             projectDataProvider.update(dbproj.getId(), updatedProject)

@@ -306,14 +306,14 @@ public class TestDefaultFileCopierUtil extends TestCase {
         }
 
         @Override
-        public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final String project)
+        public FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final ExecutionContext context)
                 throws ExecutionServiceException
         {
             return null;
         }
 
         @Override
-        public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final String project)
+        public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final ExecutionContext context)
                 throws ExecutionServiceException
         {
             return null;

@@ -201,7 +201,7 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
                     key = match.group(1)
                     value = match.group(2)
                 }
-                if (key && value) {
+                if (key) {
                     if(invalidKeyPattern){
                         def validKey = null
                         if( replaceFilteredResult ){

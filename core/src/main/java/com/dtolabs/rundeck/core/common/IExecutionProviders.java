@@ -26,20 +26,20 @@ public interface IExecutionProviders {
     /**
      * provide file copier for the node and project
      * @param node
-     * @param project
+     * @param context
      * @return
      * @throws ExecutionServiceException
      */
-    FileCopier getFileCopierForNodeAndProject(INodeEntry node, String project) throws ExecutionServiceException;
+    FileCopier getFileCopierForNodeAndProject(INodeEntry node, ExecutionContext context) throws ExecutionServiceException;
 
     /**
      * provide node executor for the node and project
      * @param node
-     * @param project
+     * @param context
      * @return
      * @throws ExecutionServiceException
      */
-    NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, String project) throws ExecutionServiceException;
+    NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, ExecutionContext context) throws ExecutionServiceException;
 
     /**
      * provide node step executor for item and project

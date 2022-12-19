@@ -33,7 +33,6 @@ import grails.gorm.transactions.Transactional
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
-import org.rundeck.spi.data.DataManager
 import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.User

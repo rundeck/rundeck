@@ -287,7 +287,7 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
@@ -311,7 +311,7 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
@@ -340,7 +340,7 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
@@ -368,7 +368,7 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
         final FileCopier copier;
         try {
-            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+            copier = getExecutionProviders().getFileCopierForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
         }
@@ -399,7 +399,7 @@ public class ExecutionServiceImpl implements ExecutionService {
         }
         final NodeExecutor nodeExecutor;
         try {
-            nodeExecutor = getExecutionProviders().getNodeExecutorForNodeAndProject(node, context.getFrameworkProject());
+            nodeExecutor = getExecutionProviders().getNodeExecutorForNodeAndProject(node, context);
         } catch (ExecutionServiceException e) {
             throw new CoreException(e);
         }

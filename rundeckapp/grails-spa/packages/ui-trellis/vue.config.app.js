@@ -6,6 +6,7 @@ module.exports = {
     'components/central':                     { entry: './src/app/components/central/main.ts'},
     'components/community-news-notification': { entry: './src/app/components/community-news-notification/main.js'},
     'components/copybox':                     { entry: './src/app/components/copybox/main.ts' },
+    'components/uisockets':                   { entry: './src/app/components/ui/main.ts'},
     'components/first-run':                   { entry: './src/app/components/first-run/main.ts' },
     'components/ko-paginator':                { entry: './src/app/components/ko-paginator/main.ts'},
     'components/motd':                        { entry: './src/app/components/motd/main.js'},
@@ -28,6 +29,7 @@ module.exports = {
     'pages/user-summary':                     {entry: './src/app/pages/menu/main.js'},
     'pages/dynamic-form':                     {entry: './src/app/pages/dynamic-form/main.js'},
     'pages/job/editor':                       {entry: './src/app/pages/job/editor/main.js'},
+    
   },
 
   outputDir: process.env.VUE_APP_OUTPUT_DIR,

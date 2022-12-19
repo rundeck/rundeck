@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService;
 import com.dtolabs.rundeck.core.plugins.PluggableService;
 
@@ -45,12 +46,12 @@ public abstract class NodeSpecifiedService<T> extends PluggableProviderRegistryS
     /**
      * @return a specific service provider that can be used for the node
      * @param node node
-     * @param project project
+     * @param context context
      *                @throws ExecutionServiceException on error
      */
-    public T getProviderForNodeAndProject(final INodeEntry node, final String project) throws
+    public T getProviderForNodeAndProject(final INodeEntry node, ExecutionContext context) throws
         ExecutionServiceException {
-        String copiername = getDefaultProviderNameForNodeAndProject(node, project);
+        String copiername = getDefaultProviderNameForNodeAndProject(node, context.getFrameworkProject());
         //look up node's attribute if it exists
         if (null != node.getAttributes() && null != node.getAttributes().get(getServiceProviderNodeAttributeForNode(
             node))) {

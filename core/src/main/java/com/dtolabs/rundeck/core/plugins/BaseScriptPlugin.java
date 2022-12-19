@@ -234,14 +234,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin i
     public SecretBundle prepareSecretBundle(
             final ExecutionContext context, final INodeEntry node
     ) {
-        DefaultSecretBundle bundle = new DefaultSecretBundle();
         Description pluginDesc = getDescription();
-
-        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
-                context.getFramework(),
-                context.getFrameworkProject(),
-                context.getDataContext()
-        );
 
         final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
                 context,
@@ -257,12 +250,37 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin i
                         PropertyScope.Instance
                 );
 
-        //expand properties
+        return generateBundle(context, config);
+    }
+
+    @Override
+    public SecretBundle prepareSecretBundleWorkflowStep(ExecutionContext context, Map<String, Object> configuration) {
+        return generateBundle(context, configuration);
+    }
+
+    @Override
+    public SecretBundle prepareSecretBundleWorkflowNodeStep(ExecutionContext context, INodeEntry node, Map<String, Object> configuration) {
+        return generateBundle(context, configuration);
+    }
+
+
+    private SecretBundle generateBundle(ExecutionContext context, Map<String, Object> configuration){
+        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+                context.getFramework(),
+                context.getFrameworkProject(),
+                context.getDataContext()
+        );
+
         Map<String, Object> expanded =
                 DataContextUtils.replaceDataReferences(
-                        config,
+                        configuration,
                         localDataContext
                 );
+
+
+        Description pluginDesc = getDescription();
+        DefaultSecretBundle bundle = new DefaultSecretBundle();
+
 
         Map<String, String> data = MapData.toStringStringMap(expanded);
         for (Property property : pluginDesc.getProperties()) {

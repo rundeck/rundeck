@@ -1,9 +1,15 @@
 <template>
   <div v-if="modelData">
     <div class="form-group">
-      <label class="col-sm-2 control-label">
-        Nodes
-      </label>
+        <div class="col-sm-2 " style="text-align: right">
+            <label class="control-label">
+                <ui-socket section="resources-editor" location="section-title">
+                {{ $t('resourcesEditor.Nodes') }}
+                </ui-socket>
+            </label>
+            <ui-socket section="resources-editor" location="section-title-help"/>
+        </div>
+
       <div class="col-sm-10 ">
         <div class="radio radio-inline">
           <input type="radio"
@@ -13,7 +19,9 @@
                  v-model="modelData.doNodedispatch"
                  id="doNodedispatchTrue"/>
           <label for="doNodedispatchTrue">
-            Dispatch to Nodes
+              <ui-socket section="resources-editor" location="node-dispatch-true-label">
+              {{ $t('resourcesEditor.Dispatch to Nodes') }}
+              </ui-socket>
           </label>
         </div>
         <div class="radio radio-inline">
@@ -24,7 +32,9 @@
                  v-model="modelData.doNodedispatch"
                  class="xnode_dispatch_radio"/>
           <label for="doNodedispatchFalse">
-            {{ $t('execute.locally') }}
+              <ui-socket section="resources-editor" location="node-dispatch-false-label">
+              {{ $t('execute.locally') }}
+              </ui-socket>
           </label>
         </div>
       </div>
@@ -332,6 +342,7 @@
 </template>
 <script lang="ts">
 import OrchestratorEditor from '../../../components/job/resources/OrchestratorEditor.vue'
+import UiSocket from '../../../components/ui/UiSocket.vue'
 import {_genUrl} from '../../../utilities/genUrl'
 import axios from 'axios'
 import InlineValidationErrors from '../../form/InlineValidationErrors.vue'
@@ -346,7 +357,7 @@ import {
   getAppLinks
 } from '../../../../library'
 
-@Component({components: {OrchestratorEditor, InlineValidationErrors, NodeFilterInput, NodeFilterResults}})
+@Component({components: {OrchestratorEditor, InlineValidationErrors, NodeFilterInput, NodeFilterResults, UiSocket}})
 export default class ResourcesEditor extends Vue {
   @Prop({required: true})
   value: any

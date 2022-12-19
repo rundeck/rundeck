@@ -1,8 +1,12 @@
+#loginpage {
+  height: 100vh;
+  width: 100vw;
+}
+
 #fourohfour,
 #loginpage {
   display: flex;
   flex-direction: column;
-  overflow: scroll;
 
   .footer {
     margin-top: auto;

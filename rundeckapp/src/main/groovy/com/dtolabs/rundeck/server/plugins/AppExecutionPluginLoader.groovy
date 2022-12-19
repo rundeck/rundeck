@@ -99,16 +99,16 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
     }
 
     @Override
-    FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final String project)
+    FileCopier getFileCopierForNodeAndProject(final INodeEntry node, final ExecutionContext context)
         throws ExecutionServiceException {
 
-        String copiername = nodeProviderName.getProviderNameForNodeAndProject(node, project, FileCopier)
+        String copiername = nodeProviderName.getProviderNameForNodeAndProject(node, context.getFrameworkProject(), FileCopier)
 
         if (FileCopierService.isRegistered(copiername)) {
-            return frameworkProviders.getFileCopierForNodeAndProject(node, project);
+            return frameworkProviders.getFileCopierForNodeAndProject(node, context);
         }
 
-        def configured = pluginService.configurePlugin(copiername, [:], project, framework, FileCopier)
+        def configured = pluginService.configurePlugin(copiername, [:], context.getFrameworkProject(), framework, FileCopier)
         if (null == configured) {
             throw new ExecutionServiceException("Could not load FileCopier provider: ${copiername}: not found")
         }
@@ -116,15 +116,15 @@ class AppExecutionPluginLoader implements IExecutionProviders, ApplicationContex
     }
 
     @Override
-    NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final String project)
+    NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final ExecutionContext context)
         throws ExecutionServiceException {
-        String provider = nodeProviderName.getProviderNameForNodeAndProject(node, project, NodeExecutor)
+        String provider = nodeProviderName.getProviderNameForNodeAndProject(node, context.getFrameworkProject(), NodeExecutor)
 
         if (NodeExecutorService.isRegistered(provider)) {
-            return frameworkProviders.getNodeExecutorForNodeAndProject(node,project);
+            return frameworkProviders.getNodeExecutorForNodeAndProject(node,context);
         }
 
-        def configured = pluginService.configurePlugin(provider, [:], project, framework, NodeExecutor)
+        def configured = pluginService.configurePlugin(provider, [:], context.getFrameworkProject(), framework, NodeExecutor)
         if (null == configured) {
             throw new ExecutionServiceException("Could not load NodeExecutor provider: ${provider}: not found")
         }

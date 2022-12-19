@@ -111,10 +111,10 @@ public class ServiceSupport implements IFrameworkServices {
     }
 
     @Override
-    public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final String project) throws
+    public FileCopier getFileCopierForNodeAndProject(INodeEntry node, final ExecutionContext context) throws
             ExecutionServiceException
     {
-        return executionProviders.getFileCopierForNodeAndProject(node, project);
+        return executionProviders.getFileCopierForNodeAndProject(node, context);
     }
 
     @Override
@@ -123,8 +123,8 @@ public class ServiceSupport implements IFrameworkServices {
     }
 
     @Override
-    public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final String project) throws ExecutionServiceException {
-        return executionProviders.getNodeExecutorForNodeAndProject(node, project);
+    public NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, final ExecutionContext context) throws ExecutionServiceException {
+        return executionProviders.getNodeExecutorForNodeAndProject(node, context);
     }
     @Override
     public NodeExecutorService getNodeExecutorService() {
