@@ -829,6 +829,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                             && data.config instanceof Map) {
                         String type = data.get('type')
                         Map config = data.get('config')
+                        projProps.put(
+                                "project.PluginGroup.${type}.enabled".toString(),
+                                'true'
+                        )
                         for (String confKey : config.keySet()) {
                             projProps.put(
                                     "project.plugin.PluginGroup.${type}.${confKey}".toString(),
