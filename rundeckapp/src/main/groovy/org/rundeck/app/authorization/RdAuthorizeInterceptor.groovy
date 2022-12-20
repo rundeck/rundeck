@@ -32,6 +32,14 @@ class RdAuthorizeInterceptor implements MethodInterceptor, ServletAttributes {
     ExceptionHandler rundeckExceptionHandler
     @Autowired
     WebDefaultParameterNamesMapper rundeckWebDefaultParameterNamesMapper
+    private static ServiceLoader<RequestMethodAuthorizer> requestMethodAuthorizerLoader;
+
+    private static ServiceLoader<RequestMethodAuthorizer> getLoader() {
+        if (null == requestMethodAuthorizerLoader) {
+            requestMethodAuthorizerLoader = ServiceLoader.load(RequestMethodAuthorizer.class);
+        }
+        return requestMethodAuthorizerLoader;
+    }
 
     protected Subject getSubject() {
         def subject = session.getAttribute('subject')
@@ -44,7 +52,7 @@ class RdAuthorizeInterceptor implements MethodInterceptor, ServletAttributes {
 
     @Override
     Object invoke(MethodInvocation invocation) throws Throwable {
-        List<TypedNamedAuthRequest> reqs = NamedAuthRequestUtil.requestsFromAnnotations(invocation.getMethod())
+        List<TypedNamedAuthRequest> reqs = getMethodAuthRequests(invocation)
         def nameResolver = paramNameMap(
             invocation.getMethod().getAnnotationsByType(IdParameter),
             rundeckWebDefaultParameterNamesMapper.getWebDefaultParameterNames()
@@ -62,6 +70,14 @@ class RdAuthorizeInterceptor implements MethodInterceptor, ServletAttributes {
         }
 
         return invocation.proceed()
+    }
+
+    private static List<TypedNamedAuthRequest> getMethodAuthRequests(MethodInvocation invocation) {
+        List<TypedNamedAuthRequest> result = new ArrayList<>()
+        for (RequestMethodAuthorizer authorizer : getLoader()) {
+            result.addAll(authorizer.requestsFromAnnotations(invocation.getMethod()))
+        }
+        return result
     }
 
 
