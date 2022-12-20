@@ -66,7 +66,7 @@
                       @click="savePlugin(plugin,index)"
                       :key="'save'"
                     >{{$t('Save')}}</a>
-                    <a class="btn btn-default btn-xs" @click="editFocus=-1">{{$t('Cancel')}}</a>
+                    <a class="btn btn-default btn-xs" @click="didCancel(plugin, index)">{{$t('Cancel')}}</a>
                   </span>
                   <span class="small text-info" v-if="plugin.modified">
                     <i class="fas fa-pen-square"></i>
@@ -277,8 +277,15 @@ export default Vue.extend({
     setFocus(focus: number) {
       this.editFocus = focus;
     },
+    didCancel(plugin: ProjectPluginConfigEntry, index: any){
+      this.editFocus=-1
+      if(this.errors.length >0){
+        this.errors=[]
+        this.removePlugin(plugin, index)
+      }
+
+    },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
-      this.$emit("saved", this.pluginConfigs);
       const type = plugin.entry.type
       this.pluginProviders.forEach((item: any, index: any)=> {
         if(item.name == type){
@@ -292,6 +299,12 @@ export default Vue.extend({
         plugin.entry.type,
         plugin.entry.config
       );
+      if(Object.keys(plugin.entry.config).length===0){
+        // let emptyValidation = {errors: {"email":"Plugin config empty"}, valid: false} as PluginValidation
+        // Vue.set(plugin, "validation", emptyValidation);
+        this.errors.push("Plugin config must be defined to save")
+        return
+      }
       if (!validation.valid) {
         Vue.set(plugin, "validation", validation);
         return;
@@ -301,6 +314,7 @@ export default Vue.extend({
       plugin.modified = true;
       this.setPluginConfigsModified();
       this.setFocus(-1);
+      this.$emit("saved", this.pluginConfigs);
     },
     removePlugin(plugin: ProjectPluginConfigEntry, index: string) {
       this.$emit("deleted", this.pluginConfigs)

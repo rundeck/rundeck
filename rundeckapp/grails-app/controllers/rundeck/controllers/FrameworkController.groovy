@@ -1422,7 +1422,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                         "project.PluginGroup.${type}.enabled".toString(),
                                         'true'
                                 )
-
                                 for (String confKey : config.keySet()) {
                                     projProps.put(
                                         "project.plugin.PluginGroup.${type}.${confKey}".toString(),
