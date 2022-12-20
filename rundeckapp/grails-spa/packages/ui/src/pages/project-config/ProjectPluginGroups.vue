@@ -339,6 +339,9 @@ export default Vue.extend({
       this.$emit("modified");
       this.notifyPluginConfigs();
     },
+    setPluginConfigsLoaded() {
+      this.$emit("loaded", this.pluginConfigs);
+    },
     pluginConfigsModified() {
       if (this.loaded) {
         this.setPluginConfigsModified();
@@ -400,6 +403,7 @@ export default Vue.extend({
     const pluginGroups = window._rundeck.data.pluginGroups as PluginConf
     this.contextConfig = pluginGroups.config
     await this.getPluginConfigs()
+    await this.setPluginConfigsLoaded()
 
   }
 });
