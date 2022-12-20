@@ -829,12 +829,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                             && data.config instanceof Map) {
                         String type = data.get('type')
                         Map config = data.get('config')
-                        if(config && config.size()!=0){
-                            projProps.put(
-                                    "project.PluginGroup.${type}.enabled".toString(),
-                                    'true'
-                            )
-                        }
+                        projProps.put(
+                                "project.PluginGroup.${type}.enabled".toString(),
+                                'true'
+                        )
                         for (String confKey : config.keySet()) {
                             projProps.put(
                                     "project.plugin.PluginGroup.${type}.${confKey}".toString(),
@@ -1420,12 +1418,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                     [[config: [type: type, props: config], type: type, index: 0]],
                                     pluginGroupDescs
                                 )
-                                if(config && config.size()!=0){
-                                    projProps.put(
-                                            "project.PluginGroup.${type}.enabled".toString(),
-                                            'true'
-                                    )
-                                }
+                                projProps.put(
+                                        "project.PluginGroup.${type}.enabled".toString(),
+                                        'true'
+                                )
 
                                 for (String confKey : config.keySet()) {
                                     projProps.put(
