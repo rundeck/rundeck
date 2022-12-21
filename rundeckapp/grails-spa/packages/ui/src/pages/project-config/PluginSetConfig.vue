@@ -96,7 +96,6 @@ export default Vue.extend({
     },
     pluginsConfigWasCancelled(pluginConfigs: ProjectPluginConfigEntry[]) {
       this.pluginConfigs=pluginConfigs
-      this.$emit("modified");
     },
     pluginsConfigWasReset() {
       this.$emit("reset");
