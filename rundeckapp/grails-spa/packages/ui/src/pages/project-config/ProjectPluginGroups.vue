@@ -295,7 +295,14 @@ export default Vue.extend({
         this.editFocus=-1
         this.errors=[]
         const found = this.pluginConfigs.indexOf(plugin);
-        this.pluginConfigs[found].entry=this.editedPlugins[plugin.entry.type].entry
+        console.log("editedplugins")
+        console.log(this.editedPlugins)
+        if(this.editedPlugins[plugin.entry.type]){
+          this.pluginConfigs[found].entry=this.editedPlugins[plugin.entry.type].entry
+        }
+        else{
+          this.removePlugin(plugin, index)
+        }
         console.log(this.pluginConfigs)
         this.$emit("cancelled", this.pluginConfigs);
       }
