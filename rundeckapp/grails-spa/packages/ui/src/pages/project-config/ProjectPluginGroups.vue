@@ -287,7 +287,7 @@ export default Vue.extend({
     },
     didCancel(plugin: ProjectPluginConfigEntry, index: any){
 
-      if(this.errors.length >0 && !this.editedPlugins[plugin.entry.type].entry){
+      if(this.errors.length >0 && !this.editedPlugins[plugin.entry.type]){
         this.errors=[]
         this.removePlugin(plugin, index)
       }
@@ -309,6 +309,9 @@ export default Vue.extend({
 
     },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
+      if(this.errors.length>0){
+        this.errors=[]
+      }
       const type = plugin.entry.type
       this.pluginProviders.forEach((item: any, index: any)=> {
         if(item.name == type){
