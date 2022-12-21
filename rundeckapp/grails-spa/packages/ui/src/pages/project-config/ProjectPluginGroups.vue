@@ -56,7 +56,7 @@
                   <span v-if="editFocus===-1">
                     <a
                       class="btn btn-default btn-xs"
-                      @click="editFocus=index"
+                      @click="editPlugin(index,plugin)"
                       :key="'edit'"
                     >{{$t('Edit')}}</a>
                   </span>
@@ -162,6 +162,9 @@ interface PluginConf {
   config: any;
   project: any;
 }
+interface EditedProjectPluginConfigEntry {
+  entry: PluginConf;
+}
 interface ProjectPluginConfigEntry {
   entry: PluginConf;
   extra: PluginConf;
@@ -188,6 +191,7 @@ export default Vue.extend({
       cancelUrl: "",
       contextConfig: [] as PluginConf[],
       pluginConfigs: [] as ProjectPluginConfigEntry[],
+      editedPlugins:{} as {[key:string]:EditedProjectPluginConfigEntry},
       pluginData:{} as {[key:string]:PluginConf},
       configOrig: [] as any[],
       rundeckContext: {} as RundeckContext,
@@ -277,11 +281,23 @@ export default Vue.extend({
     setFocus(focus: number) {
       this.editFocus = focus;
     },
+    editPlugin(index:any, plugin: ProjectPluginConfigEntry){
+      this.editFocus=index
+      this.editedPlugins[plugin.entry.type]= {entry: plugin.entry}
+    },
     didCancel(plugin: ProjectPluginConfigEntry, index: any){
-      this.editFocus=-1
-      if(this.errors.length >0){
+
+      if(this.errors.length >0 && !this.editedPlugins[plugin.entry.type].entry){
         this.errors=[]
         this.removePlugin(plugin, index)
+      }
+      else{
+        this.editFocus=-1
+        this.errors=[]
+        const found = this.pluginConfigs.indexOf(plugin);
+        this.pluginConfigs[found].entry=this.editedPlugins[plugin.entry.type].entry
+        console.log(this.pluginConfigs)
+        this.$emit("cancelled", this.pluginConfigs);
       }
 
     },
