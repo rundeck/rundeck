@@ -2381,13 +2381,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             summary[project.name]=allsummary[project.name]?:[:]
             def prj = projectService.findProjectByName(project.name)
             def description = prj?.description
-            if(!description){
-                description = project.hasProperty("project.description")?project.getProperty("project.description"):''
-                if(description && prj){
-                    def simplePrj = SimpleProjectBuilder.with(prj).setDescription(description)
-                    projectService.update(prj.getId(), simplePrj)
-                }
-            }
             summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
             summary[project.name].description= description
             def projectAuth = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject, project.name)
