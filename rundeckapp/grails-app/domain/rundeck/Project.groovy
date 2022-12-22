@@ -30,7 +30,7 @@ class Project implements RdProject {
 
     static constraints={
         name(matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
-        description(nullable:true, maxSize: 50)
+        description(nullable:true, maxSize: 255)
     }
 
     static mapping = {
