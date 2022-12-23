@@ -81,7 +81,7 @@
                   </div>
 
             </div>
-            <details :open="!group.secondary" v-else class="more-info details-reset">
+            <details :open="!group.secondary" v-if="group.name" class="more-info details-reset">
               <summary >
                 <span class="row">
                   <span class="col-sm-2 control-label h5 header-reset">
