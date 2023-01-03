@@ -740,7 +740,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
     }
-    def deleteNodeFilter={
+    def deleteNodeFilter(){
         if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
             request.error = g.message(code:'request.error.notfound.title')
             response.setStatus(HttpServletResponse.SC_NOT_FOUND)
