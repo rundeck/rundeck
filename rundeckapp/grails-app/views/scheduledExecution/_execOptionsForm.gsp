@@ -477,6 +477,11 @@
 </g:uploadForm>
 
 <script lang="text/javascript">
+
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        "data": {"jobComponentProperties": loadJsonData('jobComponentProperties')}
+    })
+
     function init() {
         var pageParams = loadJsonData('pageParams');
         jQuery('body').on('click', '.nodefilterlink', function (evt) {
@@ -584,9 +589,7 @@
         });
 
         initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
-        window._rundeck = Object.assign(window._rundeck || {}, {
-            "data": {"jobComponentProperties": loadJsonData('jobComponentProperties')}
-        })
+
     }
     jQuery(document).ready(init);
 </script>
