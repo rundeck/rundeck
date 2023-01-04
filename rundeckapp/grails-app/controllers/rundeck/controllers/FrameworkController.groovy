@@ -829,6 +829,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                             && data.config instanceof Map) {
                         String type = data.get('type')
                         Map config = data.get('config')
+                        projProps.put(
+                                "project.PluginGroup.${type}.enabled".toString(),
+                                'true'
+                        )
                         for (String confKey : config.keySet()) {
                             projProps.put(
                                     "project.plugin.PluginGroup.${type}.${confKey}".toString(),
@@ -1401,7 +1405,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 //specific props for typed pluginValues
                 removePrefixes.add("project.plugin.PluginGroup.".toString())
                 removePrefixes.add("project.PluginGroup.".toString())
-                if (params.pluginValues?.PluginGroup?.json && params.pluginValues?.PluginGroup?.json != "[]") {
+                if (params.pluginValues?.PluginGroup?.json) {
                     def groupData = JSON.parse(params.pluginValues.PluginGroup.json.toString())
                     if (groupData instanceof Collection) {
                         for (Object data : groupData) {
@@ -1415,8 +1419,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                     pluginGroupDescs
                                 )
                                 projProps.put(
-                                    "project.PluginGroup.${type}.enabled".toString(),
-                                    'true'
+                                        "project.PluginGroup.${type}.enabled".toString(),
+                                        'true'
                                 )
                                 for (String confKey : config.keySet()) {
                                     projProps.put(

@@ -6,9 +6,11 @@
     :edit-mode="true"
     :help="help"
     project=""
+    @loaded="pluginsConfigWasLoaded"
     @deleted="pluginsConfigWasDeleted"
     @saved="pluginsConfigWasSaved"
     @modified="pluginsConfigWasModified"
+    @cancelled="pluginsConfigWasCancelled"
     @reset="pluginsConfigWasReset"
     :edit-button-text="$t('Edit Plugin Groups')"
     :mode-toggle="modeToggle"
@@ -85,8 +87,15 @@ export default Vue.extend({
     pluginsConfigWasDeleted(pluginConfigs: ProjectPluginConfigEntry[]) {
       this.pluginConfigs=pluginConfigs
     },
+    pluginsConfigWasLoaded(pluginConfigs: ProjectPluginConfigEntry[]) {
+      this.$emit("loaded");
+      this.pluginConfigs=pluginConfigs
+    },
     pluginsConfigWasModified() {
       this.$emit("modified");
+    },
+    pluginsConfigWasCancelled(pluginConfigs: ProjectPluginConfigEntry[]) {
+      this.pluginConfigs=pluginConfigs
     },
     pluginsConfigWasReset() {
       this.$emit("reset");

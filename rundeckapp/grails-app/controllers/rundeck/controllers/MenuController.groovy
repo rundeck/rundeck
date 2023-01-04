@@ -2383,10 +2383,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def description = prj?.description
             if(!description){
                 description = project.hasProperty("project.description")?project.getProperty("project.description"):''
-                if(description && prj){
-                    def simplePrj = SimpleProjectBuilder.with(prj).setDescription(description)
-                    projectService.update(prj.getId(), simplePrj)
-                }
             }
             summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
             summary[project.name].description= description

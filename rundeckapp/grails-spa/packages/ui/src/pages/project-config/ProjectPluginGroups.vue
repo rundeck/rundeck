@@ -56,7 +56,7 @@
                   <span v-if="editFocus===-1">
                     <a
                       class="btn btn-default btn-xs"
-                      @click="editFocus=index"
+                      @click="editPlugin(index,plugin)"
                       :key="'edit'"
                     >{{$t('Edit')}}</a>
                   </span>
@@ -66,7 +66,7 @@
                       @click="savePlugin(plugin,index)"
                       :key="'save'"
                     >{{$t('Save')}}</a>
-                    <a class="btn btn-default btn-xs" @click="editFocus=-1">{{$t('Cancel')}}</a>
+                    <a class="btn btn-default btn-xs" @click="didCancel(plugin, index)">{{$t('Cancel')}}</a>
                   </span>
                   <span class="small text-info" v-if="plugin.modified">
                     <i class="fas fa-pen-square"></i>
@@ -162,6 +162,9 @@ interface PluginConf {
   config: any;
   project: any;
 }
+interface EditedProjectPluginConfigEntry {
+  entry: PluginConf;
+}
 interface ProjectPluginConfigEntry {
   entry: PluginConf;
   extra: PluginConf;
@@ -188,6 +191,7 @@ export default Vue.extend({
       cancelUrl: "",
       contextConfig: [] as PluginConf[],
       pluginConfigs: [] as ProjectPluginConfigEntry[],
+      editedPlugins:{} as {[key:string]:EditedProjectPluginConfigEntry},
       pluginData:{} as {[key:string]:PluginConf},
       configOrig: [] as any[],
       rundeckContext: {} as RundeckContext,
@@ -277,8 +281,37 @@ export default Vue.extend({
     setFocus(focus: number) {
       this.editFocus = focus;
     },
+    editPlugin(index:any, plugin: ProjectPluginConfigEntry){
+      this.editFocus=index
+      this.editedPlugins[plugin.entry.type]= {entry: plugin.entry}
+    },
+    didCancel(plugin: ProjectPluginConfigEntry, index: any){
+
+      if(this.errors.length >0 && !this.editedPlugins[plugin.entry.type]){
+        this.errors=[]
+        this.removePlugin(plugin, index)
+      }
+      else{
+        this.editFocus=-1
+        this.errors=[]
+        const found = this.pluginConfigs.indexOf(plugin);
+        console.log("editedplugins")
+        console.log(this.editedPlugins)
+        if(this.editedPlugins[plugin.entry.type]){
+          this.pluginConfigs[found].entry=this.editedPlugins[plugin.entry.type].entry
+        }
+        else{
+          this.removePlugin(plugin, index)
+        }
+        console.log(this.pluginConfigs)
+        this.$emit("cancelled", this.pluginConfigs);
+      }
+
+    },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
-      this.$emit("saved", this.pluginConfigs);
+      if(this.errors.length>0){
+        this.errors=[]
+      }
       const type = plugin.entry.type
       this.pluginProviders.forEach((item: any, index: any)=> {
         if(item.name == type){
@@ -292,6 +325,12 @@ export default Vue.extend({
         plugin.entry.type,
         plugin.entry.config
       );
+      if(Object.keys(plugin.entry.config).length===0){
+        // let emptyValidation = {errors: {"email":"Plugin config empty"}, valid: false} as PluginValidation
+        // Vue.set(plugin, "validation", emptyValidation);
+        this.errors.push("Plugin config must be defined to save")
+        return
+      }
       if (!validation.valid) {
         Vue.set(plugin, "validation", validation);
         return;
@@ -301,6 +340,7 @@ export default Vue.extend({
       plugin.modified = true;
       this.setPluginConfigsModified();
       this.setFocus(-1);
+      this.$emit("saved", this.pluginConfigs);
     },
     removePlugin(plugin: ProjectPluginConfigEntry, index: string) {
       this.$emit("deleted", this.pluginConfigs)
@@ -338,6 +378,9 @@ export default Vue.extend({
       this.modified = true;
       this.$emit("modified");
       this.notifyPluginConfigs();
+    },
+    setPluginConfigsLoaded() {
+      this.$emit("loaded", this.pluginConfigs);
     },
     pluginConfigsModified() {
       if (this.loaded) {
@@ -400,6 +443,7 @@ export default Vue.extend({
     const pluginGroups = window._rundeck.data.pluginGroups as PluginConf
     this.contextConfig = pluginGroups.config
     await this.getPluginConfigs()
+    await this.setPluginConfigsLoaded()
 
   }
 });
