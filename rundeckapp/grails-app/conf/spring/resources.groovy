@@ -44,7 +44,6 @@ import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
