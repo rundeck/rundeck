@@ -24,6 +24,8 @@ class RdJobController {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
     }
 
+    def editpage() {}
+
     def get() {
         response.contentType = "application/json;utf-8"
         try {

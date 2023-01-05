@@ -44,7 +44,6 @@ import com.dtolabs.rundeck.core.common.ServiceSupport
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.execution.ExecutionServiceImpl
 import com.dtolabs.rundeck.core.execution.service.NodeSpecifiedPlugins
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
@@ -54,7 +53,6 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.ProjectKeyStorageContextProvider
-import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
