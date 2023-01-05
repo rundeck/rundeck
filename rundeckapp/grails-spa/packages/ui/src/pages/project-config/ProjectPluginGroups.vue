@@ -26,7 +26,7 @@
         <div class="list-group">
           <div
             class="list-group-item"
-            v-for="(plugin,index) in pluginConfigs"
+            v-for="(plugin,index) in workingData"
             :key="'pluginStorageAccessplugin_'+index"
           >
             <plugin-config
@@ -87,7 +87,7 @@
             </plugin-config>
             <slot name="item-extra" :plugin="plugin" :editFocus="editFocus===index" :mode="mode"></slot>
           </div>
-          <div class="list-group-item" v-if="pluginConfigs.length<1 && showEmpty">
+          <div class="list-group-item" v-if="workingData.length<1 && showEmpty">
             <slot name="empty-message">
               <span  class="text-muted">
                 {{$t("No Plugin Groups Configured",serviceName)}}
@@ -152,6 +152,8 @@ import PluginConfig from "@rundeck/ui-trellis/lib/components/plugins/pluginConfi
 import pluginService from "@rundeck/ui-trellis/lib/modules/pluginService";
 import PluginValidation from "@rundeck/ui-trellis/lib/interfaces/PluginValidation";
 import {RundeckBrowser} from "@rundeck/client";
+import {cloneDeep} from "lodash"
+import _ from 'lodash';
 
 const client: RundeckBrowser = getRundeckContext().rundeckClient
 const rdBase = getRundeckContext().rdBase
@@ -191,6 +193,7 @@ export default Vue.extend({
       cancelUrl: "",
       contextConfig: [] as PluginConf[],
       pluginConfigs: [] as ProjectPluginConfigEntry[],
+      workingData: [] as ProjectPluginConfigEntry[],
       editedPlugins:{} as {[key:string]:EditedProjectPluginConfigEntry},
       pluginData:{} as {[key:string]:PluginConf},
       configOrig: [] as any[],
@@ -206,11 +209,11 @@ export default Vue.extend({
   },
   computed:{
     exportedData():any[]{
-      let data = []
+      let data = [] as any
       let inputData = this.pluginConfigs
-      for (let key in inputData) {
-        data.push({type: key, config: inputData[key].entry.config})
-      }
+      inputData.forEach((plugin, index) => {
+        data.push({type: plugin.entry.type, config: plugin.entry.config})
+      });
       return data
     }
   },
@@ -270,23 +273,24 @@ export default Vue.extend({
     },
     addPlugin(provider: string) {
       this.modalAddOpen = false;
-      this.pluginConfigs.push({
+      this.workingData.push({
         entry: { type: provider, config: {} },
         extra: { config: {} },
         create: true
       } as ProjectPluginConfigEntry);
 
-      this.setFocus(this.pluginConfigs.length - 1);
+      this.setFocus(this.workingData.length - 1);
     },
     setFocus(focus: number) {
       this.editFocus = focus;
     },
     editPlugin(index:any, plugin: ProjectPluginConfigEntry){
+      console.log("editPlugin")
       this.editFocus=index
       this.editedPlugins[plugin.entry.type]= {entry: plugin.entry}
     },
     didCancel(plugin: ProjectPluginConfigEntry, index: any){
-
+      console.log("didCancel")
       if(this.errors.length >0 && !this.editedPlugins[plugin.entry.type]){
         this.errors=[]
         this.removePlugin(plugin, index)
@@ -294,21 +298,19 @@ export default Vue.extend({
       else{
         this.editFocus=-1
         this.errors=[]
-        const found = this.pluginConfigs.indexOf(plugin);
-        console.log("editedplugins")
-        console.log(this.editedPlugins)
+        const found = this.workingData.indexOf(plugin);
         if(this.editedPlugins[plugin.entry.type]){
-          this.pluginConfigs[found].entry=this.editedPlugins[plugin.entry.type].entry
+          this.workingData[found].entry=this.editedPlugins[plugin.entry.type].entry
+          this.pluginConfigs=this.workingData
         }
         else{
           this.removePlugin(plugin, index)
         }
-        console.log(this.pluginConfigs)
-        this.$emit("cancelled", this.pluginConfigs);
       }
 
     },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
+      console.log("savePlugin")
       if(this.errors.length>0){
         this.errors=[]
       }
@@ -329,80 +331,65 @@ export default Vue.extend({
         // let emptyValidation = {errors: {"email":"Plugin config empty"}, valid: false} as PluginValidation
         // Vue.set(plugin, "validation", emptyValidation);
         this.errors.push("Plugin config must be defined to save")
-        return
+        this.workingData=this.pluginConfigs
       }
       if (!validation.valid) {
         Vue.set(plugin, "validation", validation);
         return;
       }
       Vue.delete(plugin, "validation");
+      this.pluginConfigs=this.workingData
       plugin.create = false;
       plugin.modified = true;
-      this.setPluginConfigsModified();
       this.setFocus(-1);
-      this.$emit("saved", this.pluginConfigs);
+      this.$emit("input", this.exportedData);
     },
     removePlugin(plugin: ProjectPluginConfigEntry, index: string) {
-      this.$emit("deleted", this.pluginConfigs)
+      console.log("removePlugin")
       const type = plugin.entry.type
       this.pluginProviders.forEach((item: any, index: any)=> {
         if(item.name == type){
           item.configSet=false
         }
-
       })
-      const found = this.pluginConfigs.indexOf(plugin);
-      this.pluginConfigs.splice(found, 1);
-      this.setPluginConfigsModified()
+      const found = this.workingData.indexOf(plugin);
+      this.workingData.splice(found, 1);
+      this.pluginConfigs=this.workingData
+      this.$emit("input", this.exportedData)
       this.cleanStorageAccess(plugin);
       this.setFocus(-1);
     },
 
     movePlugin(index: number, plugin: ProjectPluginConfigEntry, shift: number) {
-      const found = this.pluginConfigs.indexOf(plugin);
-      const item = this.pluginConfigs.splice(found, 1)[0];
+      console.log("movePlugin")
+      const found = this.workingData.indexOf(plugin);
+      const item = this.workingData.splice(found, 1)[0];
       const newindex = found + shift;
-      this.pluginConfigs.splice(newindex, 0, item);
-      this.setPluginConfigsModified();
+      this.workingData.splice(newindex, 0, item);
+      this.pluginConfigs=this.workingData
       this.editFocus = -1;
     },
     didSave(success: boolean) {
+      console.log("didSave")
       if (this.modeToggle) {
         this.mode = "show";
       }
     },
     async savePlugins() {
+        console.log("savePlugins")
         this.$emit("saved", this.pluginConfigs);
     },
-    setPluginConfigsModified() {
-      this.modified = true;
-      this.$emit("modified");
-      this.notifyPluginConfigs();
-    },
-    setPluginConfigsLoaded() {
-      this.$emit("loaded", this.pluginConfigs);
-    },
-    pluginConfigsModified() {
-      if (this.loaded) {
-        this.setPluginConfigsModified();
-      }
-    },
-    pluginConfigsModifiedReset() {
-      this.modified = false;
-      this.$emit("reset");
-      this.notifyPluginConfigs();
-    },
-    notifyPluginConfigs(){
-      this.$emit("plugin-configs-data",this.pluginConfigs);
-    },
     configUpdated() {
-      this.pluginConfigsModified();
+      console.log("configUpdated")
+      this.modified = true;
     },
     hasKeyStorageAccess(provider: any){
+      console.log("hasKeyStorageAccess")
       this.pluginStorageAccess.push(provider)
       this.$emit('plugin-storage-access',[provider])
     },
     cleanStorageAccess(plugin: any){
+      console.log("cleanStorageAccess")
       const pluginStorageAccess = [] as any[];
       this.pluginStorageAccess.forEach((pluginAccess:any)=>{
         if(pluginAccess !== plugin.entry.type){
@@ -434,8 +421,10 @@ export default Vue.extend({
               })
           }
         }).catch(error => console.error(error));
-        this.notifyPluginConfigs();
-      this.pluginConfigs = projectPluginConfigList
+      this.workingData = projectPluginConfigList
+      var copy = _.cloneDeep(projectPluginConfigList);
+      console.log(copy)
+      this.pluginConfigs = copy
     }
   },
   async mounted() {
@@ -443,7 +432,6 @@ export default Vue.extend({
     const pluginGroups = window._rundeck.data.pluginGroups as PluginConf
     this.contextConfig = pluginGroups.config
     await this.getPluginConfigs()
-    await this.setPluginConfigsLoaded()
 
   }
 });
