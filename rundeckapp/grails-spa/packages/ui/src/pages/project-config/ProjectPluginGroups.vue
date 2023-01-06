@@ -314,6 +314,11 @@ export default Vue.extend({
       if(this.errors.length>0){
         this.errors=[]
       }
+
+    if(Object.keys(plugin.entry.config).length===0){
+        this.removePlugin(plugin,index)
+        return
+    }
       const type = plugin.entry.type
       this.pluginProviders.forEach((item: any, index: any)=> {
         if(item.name == type){
@@ -327,12 +332,6 @@ export default Vue.extend({
         plugin.entry.type,
         plugin.entry.config
       );
-      if(Object.keys(plugin.entry.config).length===0){
-        // let emptyValidation = {errors: {"email":"Plugin config empty"}, valid: false} as PluginValidation
-        // Vue.set(plugin, "validation", emptyValidation);
-        this.errors.push("Plugin config must be defined to save")
-        this.workingData=this.pluginConfigs
-      }
       if (!validation.valid) {
         Vue.set(plugin, "validation", validation);
         return;
@@ -344,7 +343,7 @@ export default Vue.extend({
       this.setFocus(-1);
       this.$emit("input", this.exportedData);
     },
-    removePlugin(plugin: ProjectPluginConfigEntry, index: string) {
+    removePlugin(plugin: ProjectPluginConfigEntry, index: number) {
       console.log("removePlugin")
       const type = plugin.entry.type
       this.pluginProviders.forEach((item: any, index: any)=> {
