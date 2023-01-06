@@ -478,8 +478,8 @@
 
 <script lang="text/javascript">
 
-    window._rundeck = Object.assign(window._rundeck || {}, {
-        "data": {"jobComponentProperties": loadJsonData('jobComponentProperties')}
+    window._rundeck.data = Object.assign(window._rundeck.data || {}, {
+        "jobComponentProperties": loadJsonData('jobComponentProperties')
     })
 
     function init() {
