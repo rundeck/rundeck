@@ -1,4 +1,4 @@
-package rundeck.utils
+package rundeck
 
 import org.rundeck.app.data.providers.v1.UserDataProvider
 
