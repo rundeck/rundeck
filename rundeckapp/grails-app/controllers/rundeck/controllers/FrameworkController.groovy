@@ -697,6 +697,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }else{
                 filter= new NodeFilter(query.properties)
                 filter.name=params.newFilterName
+                filter.user=u
                 saveuser=true
             }
         }else if(!params.newFilterName){
