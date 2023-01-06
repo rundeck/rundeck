@@ -21,7 +21,6 @@ import groovy.transform.PackageScope
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.spi.data.DataManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.Option

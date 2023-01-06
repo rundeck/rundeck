@@ -82,7 +82,6 @@ import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.criterion.Restrictions
 import org.quartz.*
-import org.rundeck.spi.data.DataManager
 import org.rundeck.util.Sizes
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

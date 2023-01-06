@@ -53,7 +53,6 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
 import org.rundeck.core.projects.ProjectPluginListConfigurable
-import org.rundeck.spi.data.DataManager
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus

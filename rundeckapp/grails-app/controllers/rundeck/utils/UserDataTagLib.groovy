@@ -1,7 +1,6 @@
 package rundeck.utils
 
 import org.rundeck.app.data.providers.v1.UserDataProvider
-import org.rundeck.spi.data.DataManager
 
 class UserDataTagLib {
     static namespace = "user"
