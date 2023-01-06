@@ -176,6 +176,8 @@ interface ProjectPluginConfigEntry {
   modified: boolean;
   configSet: boolean
 }
+
+const array_clone = (arr: any[]): any[] => arr.map(val => Object.assign({}, val))
 export default Vue.extend({
   name: "App",
   components: {
@@ -301,7 +303,7 @@ export default Vue.extend({
         const found = this.workingData.indexOf(plugin);
         if(this.editedPlugins[plugin.entry.type]){
           this.workingData[found].entry=this.editedPlugins[plugin.entry.type].entry
-          this.pluginConfigs=this.workingData
+          this.pluginConfigs = array_clone(this.workingData)
         }
         else{
           this.removePlugin(plugin, index)
@@ -337,7 +339,7 @@ export default Vue.extend({
         return;
       }
       Vue.delete(plugin, "validation");
-      this.pluginConfigs=this.workingData
+      this.pluginConfigs = array_clone(this.workingData)
       plugin.create = false;
       plugin.modified = true;
       this.setFocus(-1);
@@ -353,7 +355,7 @@ export default Vue.extend({
       })
       const found = this.workingData.indexOf(plugin);
       this.workingData.splice(found, 1);
-      this.pluginConfigs=this.workingData
+      this.pluginConfigs = array_clone(this.workingData)
       this.$emit("input", this.exportedData)
       this.cleanStorageAccess(plugin);
       this.setFocus(-1);
@@ -365,7 +367,7 @@ export default Vue.extend({
       const item = this.workingData.splice(found, 1)[0];
       const newindex = found + shift;
       this.workingData.splice(newindex, 0, item);
-      this.pluginConfigs=this.workingData
+      this.pluginConfigs = array_clone(this.workingData)
       this.editFocus = -1;
     },
     didSave(success: boolean) {
@@ -398,32 +400,29 @@ export default Vue.extend({
 
       this.pluginStorageAccess = pluginStorageAccess;
     },
-    getPluginConfigs(){
-      const projectPluginConfigList = [] as ProjectPluginConfigEntry[]
-      pluginService
-        .getPluginProvidersForService(this.serviceName)
-        .then(data => {
-          if (data.service) {
-            this.pluginProviders = data.descriptions;
-            this.pluginLabels = data.labels;
+    async getPluginConfigs(){
+      let projectPluginConfigList = [] as ProjectPluginConfigEntry[]
+      let data = await pluginService.getPluginProvidersForService(this.serviceName)
 
-              this.contextConfig.forEach((provider2: any, index: any) => {
+      if (data.service) {
+        this.pluginProviders = data.descriptions;
+        this.pluginLabels = data.labels;
 
-                  let projectPluginConfig = {entry:provider2,create:true} as ProjectPluginConfigEntry
-                  this.loaded = true
-                  projectPluginConfigList.push(projectPluginConfig)
-                  this.pluginProviders.forEach((provider: any, index: any) => {
-                      if (provider.name === provider2.type) {
-                          this.pluginProviders[index]['configSet'] = true
-                      }
-                  })
-              })
-          }
-        }).catch(error => console.error(error));
+        this.contextConfig.forEach((provider2: any, index: any) => {
+          let projectPluginConfig = {entry:provider2,create:true} as ProjectPluginConfigEntry
+          projectPluginConfigList.push(projectPluginConfig)
+          this.pluginProviders.forEach((provider: any, index: any) => {
+            if (provider.name === provider2.type) {
+                provider['configSet'] = true
+            }
+          })
+        })
+        this.loaded = true
+      }
+
       this.workingData = projectPluginConfigList
-      var copy = _.cloneDeep(projectPluginConfigList);
-      console.log(copy)
-      this.pluginConfigs = copy
+      this.pluginConfigs = array_clone(projectPluginConfigList)
+      this.$emit('input', this.exportedData)
     }
   },
   async mounted() {
