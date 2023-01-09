@@ -287,12 +287,10 @@ export default Vue.extend({
       this.editFocus = focus;
     },
     editPlugin(index:any, plugin: ProjectPluginConfigEntry){
-      console.log("editPlugin")
       this.editFocus=index
       this.editedPlugins[plugin.entry.type]= {entry: plugin.entry}
     },
     didCancel(plugin: ProjectPluginConfigEntry, index: any){
-      console.log("didCancel")
       if(this.errors.length >0 && !this.editedPlugins[plugin.entry.type]){
         this.errors=[]
         this.removePlugin(plugin, index)
@@ -312,7 +310,7 @@ export default Vue.extend({
 
     },
     async savePlugin(plugin: ProjectPluginConfigEntry, index: number) {
-      console.log("savePlugin")
+
       if(this.errors.length>0){
         this.errors=[]
       }
@@ -346,7 +344,6 @@ export default Vue.extend({
       this.$emit("input", this.exportedData);
     },
     removePlugin(plugin: ProjectPluginConfigEntry, index: number) {
-      console.log("removePlugin")
       const type = plugin.entry.type
       this.pluginProviders.forEach((item: any, index: any)=> {
         if(item.name == type){
@@ -362,7 +359,6 @@ export default Vue.extend({
     },
 
     movePlugin(index: number, plugin: ProjectPluginConfigEntry, shift: number) {
-      console.log("movePlugin")
       const found = this.workingData.indexOf(plugin);
       const item = this.workingData.splice(found, 1)[0];
       const newindex = found + shift;
@@ -371,26 +367,21 @@ export default Vue.extend({
       this.editFocus = -1;
     },
     didSave(success: boolean) {
-      console.log("didSave")
       if (this.modeToggle) {
         this.mode = "show";
       }
     },
     async savePlugins() {
-        console.log("savePlugins")
         this.$emit("saved", this.pluginConfigs);
     },
     configUpdated() {
-      console.log("configUpdated")
       this.modified = true;
     },
     hasKeyStorageAccess(provider: any){
-      console.log("hasKeyStorageAccess")
       this.pluginStorageAccess.push(provider)
       this.$emit('plugin-storage-access',[provider])
     },
     cleanStorageAccess(plugin: any){
-      console.log("cleanStorageAccess")
       const pluginStorageAccess = [] as any[];
       this.pluginStorageAccess.forEach((pluginAccess:any)=>{
         if(pluginAccess !== plugin.entry.type){
