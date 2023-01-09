@@ -65,8 +65,6 @@ export default Vue.extend({
   },
   methods:{
     inputReceived(pluginConfigs: ProjectPluginConfigEntry[]) {
-      console.log("input received")
-      console.log(pluginConfigs)
       this.pluginConfigs=pluginConfigs
     },
   }
