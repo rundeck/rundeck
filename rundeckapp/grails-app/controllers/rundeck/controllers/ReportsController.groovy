@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.config.FeatureService
+import com.dtolabs.rundeck.core.config.Features
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.authorization.Explanation
@@ -49,6 +51,7 @@ class ReportsController extends ControllerBase{
     def reportService
     def userService
     def FrameworkService frameworkService
+    FeatureService featureService
     def scheduledExecutionService
     def MetricService metricService
     static allowedMethods = [
@@ -111,17 +114,19 @@ class ReportsController extends ControllerBase{
                 params.filterName=filterPref['events']
             }
         }
-        if(params.filterName){
-            //load a named filter and create a query from it
-            if(u){
-                ReportFilter filter = ReportFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
+        if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            if(params.filterName){
+                //load a named filter and create a query from it
+                if(u){
+                    ReportFilter filter = ReportFilter.findByNameAndUser(params.filterName,u)
+                    if(filter){
+                        def query2 = filter.createQuery()
+                        query2.setPagination(query)
+                        query=query2
+                        def props=query.properties
+                        params.putAll(props)
+                        usedFilter=params.filterName
+                    }
                 }
             }
         }
@@ -233,18 +238,19 @@ class ReportsController extends ControllerBase{
             return render(view: '/common/error', model: [beanErrors: query.errors])
         }
         def User u = userService.findOrCreateUser(session.user)
-
-        if(params.filterName){
-            //load a named filter and create a query from it
-            if(u){
-                ReportFilter filter = ReportFilter.findByNameAndUser(params.filterName,u)
-                if(filter){
-                    def query2 = filter.createQuery()
-                    query2.setPagination(query)
-                    query=query2
-                    def props=query.properties
-                    params.putAll(props)
-                    usedFilter=params.filterName
+        if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            if (params.filterName) {
+                //load a named filter and create a query from it
+                if (u) {
+                    ReportFilter filter = ReportFilter.findByNameAndUser(params.filterName, u)
+                    if (filter) {
+                        def query2 = filter.createQuery()
+                        query2.setPagination(query)
+                        query = query2
+                        def props = query.properties
+                        params.putAll(props)
+                        usedFilter = params.filterName
+                    }
                 }
             }
         }
@@ -401,7 +407,15 @@ class ReportsController extends ControllerBase{
     }
 
 
-    public def storeFilter(ReportQuery query, StoreFilterCommand storeFilterCommand) {
+    /**
+     * @deprecated legacy filter behavior
+     */
+    def storeFilter(ReportQuery query, StoreFilterCommand storeFilterCommand) {
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm{
         if(storeFilterCommand.hasErrors()){
             request.errors=storeFilterCommand.errors
@@ -443,7 +457,15 @@ class ReportsController extends ControllerBase{
         }
     }
 
+    /**
+     * @deprecated legacy filter behavior
+     */
     public def saveFilterAjax(ExecQueryFilterCommand query) {
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm {
 
             g.refreshFormTokensHeader()
@@ -523,7 +545,15 @@ class ReportsController extends ControllerBase{
         }
     }
 
+    /**
+     * @deprecated legacy filter behavior
+     */
     def listFiltersAjax(String project) {
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         if(!project){
 
             return apiService.renderErrorFormat(
@@ -544,7 +574,15 @@ class ReportsController extends ControllerBase{
     }
 
 
+    /**
+     * @deprecated legacy filter behavior
+     */
     def deleteFilter(){
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm{
             def User u = userService.findOrCreateUser(session.user)
             def filtername=params.delFilterName
@@ -563,8 +601,15 @@ class ReportsController extends ControllerBase{
             )
         }
     }
-
+    /**
+     * @deprecated legacy filter behavior
+     */
     def deleteFilterAjax(String project) {
+        if(!featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            request.error = g.message(code:'request.error.notfound.title')
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+            return renderErrorView([:])
+        }
         withForm {
             g.refreshFormTokensHeader()
 

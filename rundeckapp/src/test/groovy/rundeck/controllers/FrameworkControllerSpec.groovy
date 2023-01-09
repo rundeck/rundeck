@@ -1744,6 +1744,9 @@ project.label=A Label
             new NodeFilter(user: testUser, filter: 'tags:basdf', name: 'filter3', project: 'otherProject'),
 
         ]*.save(flush: true)
+        controller.featureService = Mock(com.dtolabs.rundeck.core.config.FeatureService) {
+            featurePresent(Features.LEGACY_USER_FILTERS) >> legacyFiltersEnabled
+        }
         when:
         controller.nodeSummaryAjax(project)
         then:
@@ -1754,10 +1757,15 @@ project.label=A Label
         }
         1 * controller.frameworkService.summarizeTags(_) >> [asdf: 1]
 
-        response.json.filters == [
-            [filter: 'tags:xyz', name: 'filter2', project: project],
-            [filter: 'abc', name: 'filter1', project: project],
-        ]
+            response.json.filters == (
+                legacyFiltersEnabled ? [
+                    [filter: 'tags:xyz', name: 'filter2', project: project],
+                    [filter: 'abc', name: 'filter1', project: project]
+                ]
+                                     : []
+            )
+        where:
+            legacyFiltersEnabled<<[true,false]
     }
 
 

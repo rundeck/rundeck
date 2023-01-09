@@ -80,6 +80,7 @@ class ScheduledExecutionController2Spec extends RundeckHibernateSpec implements 
                 grailsApplication = grailsApplication
             }
         }
+        controller.featureService=Mock(FeatureService)
     }
 
     private void assertMap(key, map, value) {

@@ -109,6 +109,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                 grailsApplication = grailsApplication
             }
         }
+        controller.featureService = Mock(FeatureService)
     }
     def "home without sidebar feature"(){
         given:

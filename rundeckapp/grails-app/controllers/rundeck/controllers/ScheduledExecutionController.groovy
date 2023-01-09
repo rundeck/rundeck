@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.http.ApacheHttpClient
 import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -1882,7 +1883,8 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             scheduledExecution.argString=params.argString
         }
-        if(params.filterName){
+
+        if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
             if (params.filterName) {
                 def User u = userService.findOrCreateUser(authContext.username)
                 //load a named filter and create a query from it
@@ -2015,14 +2017,16 @@ class ScheduledExecutionController  extends ControllerBase{
         params.nodeThreadcount= runAdhocRequest.nodeThreadcount?:1
         params.description = runAdhocRequest.description ?: ""
         params.excludeFilterUncheck = false
-        if (params.filterName) {
-            def User u = userService.findOrCreateUser(authContext.username)
-            //load a named filter and create a query from it
-            if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
-                if (filter) {
-                    def query2 = filter.createExtNodeFilters()
-                    params.put('filter',query2.asFilter())
+        if(featureService.featurePresent(Features.LEGACY_USER_FILTERS)) {
+            if (params.filterName) {
+                def User u = userService.findOrCreateUser(authContext.username)
+                //load a named filter and create a query from it
+                if (u) {
+                    NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                    if (filter) {
+                        def query2 = filter.createExtNodeFilters()
+                        params.put('filter',query2.asFilter())
+                    }
                 }
             }
         }
