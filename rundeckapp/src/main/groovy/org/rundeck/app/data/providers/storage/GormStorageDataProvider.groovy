@@ -38,13 +38,11 @@ class GormStorageDataProvider implements StorageDataProvider {
                                 pathSha: data.getPathSha(),
                                 data: data.getData())
         try {
-            Storage.withNewSession { session ->
-                if (storageDataService.save(s)) {
-                    return s.getId()
-                } else {
-                    log.warn(s.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
-                    throw new DataAccessException(s.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
-                }
+            if (storageDataService.save(s)) {
+                return s.getId()
+            } else {
+                log.warn(s.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
+                throw new DataAccessException(s.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
             }
         } catch (Exception e) {
             throw new DataAccessException("Failed to create storage: ${data.getName()}: ${e}", e)
