@@ -6,18 +6,13 @@
     :edit-mode="true"
     :help="help"
     project=""
-    @loaded="pluginsConfigWasLoaded"
-    @deleted="pluginsConfigWasDeleted"
-    @saved="pluginsConfigWasSaved"
-    @modified="pluginsConfigWasModified"
-    @cancelled="pluginsConfigWasCancelled"
-    @reset="pluginsConfigWasReset"
+    @input="inputReceived"
     :edit-button-text="$t('Edit Plugin Groups')"
     :mode-toggle="modeToggle"
   >
   </project-plugin-groups>
-    <template v-if="exportedData">
-      <input type="hidden" :value="JSON.stringify(exportedData)" :name="configPrefix+'json'"/>
+    <template v-if="this.pluginConfigs">
+      <input type="hidden" :value="JSON.stringify(this.pluginConfigs)" :name="configPrefix+'json'"/>
     </template>
   </div>
 
@@ -68,38 +63,10 @@ export default Vue.extend({
       pluginConfigs: [] as ProjectPluginConfigEntry[],
     }
   },
-  computed:{
-    exportedData():any[]{
-      let data = [] as any
-      let inputData = this.pluginConfigs
-      inputData.forEach((plugin, index) => {
-          data.push({type: plugin.entry.type, config: plugin.entry.config})
-      });
-      return data
-
-    }
-  },
   methods:{
-    pluginsConfigWasSaved(pluginConfigs: ProjectPluginConfigEntry[]) {
-      this.$emit("saved");
+    inputReceived(pluginConfigs: ProjectPluginConfigEntry[]) {
       this.pluginConfigs=pluginConfigs
     },
-    pluginsConfigWasDeleted(pluginConfigs: ProjectPluginConfigEntry[]) {
-      this.pluginConfigs=pluginConfigs
-    },
-    pluginsConfigWasLoaded(pluginConfigs: ProjectPluginConfigEntry[]) {
-      this.$emit("loaded");
-      this.pluginConfigs=pluginConfigs
-    },
-    pluginsConfigWasModified() {
-      this.$emit("modified");
-    },
-    pluginsConfigWasCancelled(pluginConfigs: ProjectPluginConfigEntry[]) {
-      this.pluginConfigs=pluginConfigs
-    },
-    pluginsConfigWasReset() {
-      this.$emit("reset");
-    }
   }
 })
 
