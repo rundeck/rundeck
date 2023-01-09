@@ -25,7 +25,6 @@ import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.data.model.v1.user.LoginStatus
 import org.rundeck.app.data.providers.GormUserDataProvider
-import org.rundeck.spi.data.DataManager
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution

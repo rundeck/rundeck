@@ -35,7 +35,6 @@ import groovy.mock.interceptor.StubFor
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.providers.GormUserDataProvider
-import org.rundeck.spi.data.DataManager
 import org.springframework.context.MessageSource
 import rundeck.services.*
 import rundeck.services.data.UserDataService

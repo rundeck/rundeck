@@ -21,7 +21,6 @@ import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.plugins.codecs.URLCodec
 import org.rundeck.app.data.providers.GormUserDataProvider
-import org.rundeck.spi.data.DataManager
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FrameworkService

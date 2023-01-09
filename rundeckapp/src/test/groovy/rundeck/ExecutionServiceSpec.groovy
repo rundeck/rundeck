@@ -59,7 +59,6 @@ import org.grails.web.json.JSONObject
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.core.auth.app.RundeckAccess
-import org.rundeck.spi.data.DataManager
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource

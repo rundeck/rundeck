@@ -22,7 +22,6 @@ import grails.testing.web.controllers.ControllerUnitTest
 import grails.web.servlet.mvc.GrailsHttpSession
 import groovy.mock.interceptor.MockFor
 import org.rundeck.app.data.providers.GormUserDataProvider
-import org.rundeck.spi.data.DataManager
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.FrameworkService

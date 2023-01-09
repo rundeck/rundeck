@@ -50,7 +50,6 @@ import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderServic
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import org.rundeck.app.data.providers.GormUserDataProvider
-import org.rundeck.spi.data.DataManager
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
 import rundeck.User

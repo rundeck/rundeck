@@ -50,7 +50,6 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.Services
-import org.rundeck.spi.data.DataManager
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
