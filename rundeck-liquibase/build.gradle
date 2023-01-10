@@ -1,0 +1,21 @@
+apply plugin: "groovy"
+apply plugin: "java-library"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.codehaus.groovy:groovy-all:${groovyVersion}"
+
+    testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
+    testImplementation 'junit:junit:4.13.2'
+}
+
+ext.description = "Rundeck project ${project.name}"
+ext.publishName = project.name
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+

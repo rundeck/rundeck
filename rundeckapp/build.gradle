@@ -77,6 +77,7 @@ dependencies {
     implementation project(':rundeck-storage:rundeck-storage-filesys')
     implementation project(':rundeck-data-model')
     implementation project(':rundeck-app-util')
+    implementation project(':rundeck-liquibase')
 
 
     /** It's important that the configuration addition follow the form 'compile project("")'
