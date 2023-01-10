@@ -281,7 +281,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -324,7 +324,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -380,7 +380,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.apiService = Mock(ApiService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',

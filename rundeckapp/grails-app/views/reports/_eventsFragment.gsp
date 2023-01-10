@@ -14,12 +14,12 @@
   - limitations under the License.
   --}%
 
-<%@ page import="org.rundeck.core.auth.AuthConstants; rundeck.User" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 <g:set var="rkey" value="${g.rkey()}" />
 
-<g:if test="${session.user && User.findByLogin(session.user)?.reportfilters}">
-    <g:set var="filterset" value="${User.findByLogin(session.user)?.reportfilters}"/>
-</g:if>
+<user:getReportFilters user="${session.user}">
+    <g:set var="filterset" value="${filters}"/>
+</user:getReportFilters>
 <g:set var="isCompact" value="${params.compact?true:false}"/>
 
 <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,filterset:filterset,update:rkey+'evtsForm',deleteActionSubmit:'deleteFilter', storeActionSubmit:'storeFilter']}"/>

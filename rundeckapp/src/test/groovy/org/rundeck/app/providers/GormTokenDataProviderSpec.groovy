@@ -30,7 +30,7 @@ class GormTokenDataProviderSpec extends Specification implements DataTest{
     def "Create and Retrieve"() {
         when:
         provider.userService = Mock(UserService){
-            findOrCreateUser(_) >>  new User(login: ownerName)
+            findOrCreateUser(_) >>  { new User(login: ownerName).save() }
         }
         SimpleTokenBuilder data =  new SimpleTokenBuilder()
                 .setToken(token)

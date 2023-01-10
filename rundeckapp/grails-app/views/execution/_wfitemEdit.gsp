@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.User; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
 <asset:javascript src="static/pages/dynamic-form.js" defer="defer"/>
 
 <%--
@@ -254,9 +254,9 @@
                         <g:set var="filtvalue" value="${item?.nodeFilter}"/>
 
                         <span class="input-group multiple-control-input-group nodefilters">
-                            <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
-                                <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
-                            </g:if>
+                            <user:getNodeFilters user="${session.user}">
+                                <g:set var="filterset" value="${filters}"/>
+                            </user:getNodeFilters>
                             <g:render template="/framework/nodeFilterInputGroup"
                                       model="[filterFieldName: 'nodeFilter',
                                               filterFieldId:'nodeFilterField'+rkey,

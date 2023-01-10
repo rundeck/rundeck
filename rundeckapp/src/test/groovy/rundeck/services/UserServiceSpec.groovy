@@ -15,7 +15,6 @@
  */
 package rundeck.services
 
-
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -24,20 +23,33 @@ import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.rundeck.app.data.model.v1.user.LoginStatus
+import org.rundeck.app.data.providers.GormUserDataProvider
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.Workflow
+import rundeck.services.data.UserDataService
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class UserServiceSpec extends Specification implements ServiceUnitTest<UserService>, DataTest {
+    UserService service
+    GormUserDataProvider provider = new GormUserDataProvider()
+
     void setupSpec() {
         mockDomain User
         mockDomain CommandExec
         mockDomain ScheduledExecution
         mockDomain Workflow
+    }
+    void setup(){
+        mockDataService(UserDataService)
+        provider.userDataService = applicationContext.getBean(UserDataService)
+
+        service = new UserService()
+        service.userDataProvider = provider
     }
     def "UpdateUserProfile"() {
         setup:
@@ -62,11 +74,11 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         setup:
         String login = "theusername"
         String sessionId = "exampleSessionId01"
-        service.configurationService = Mock(ConfigurationService) {
+        provider.configurationService = Mock(ConfigurationService) {
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> true
             1 * getString(UserService.SESSION_ID_METHOD, 'hash') >> method
         }
-        service.frameworkService = Mock(FrameworkService) {
+        provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
         }
 
@@ -88,10 +100,10 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         setup:
         String login = "theusername"
         String sessionId = "exampleSessionId01"
-        service.configurationService = Mock(ConfigurationService) {
+        provider.configurationService = Mock(ConfigurationService) {
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
         }
-        service.frameworkService = Mock(FrameworkService) {
+        provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
         }
 
@@ -110,10 +122,10 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         setup:
         String login = "user~name"
         String sessionId = "willErrSessionId"
-        service.configurationService = Mock(ConfigurationService) {
+        provider.configurationService = Mock(ConfigurationService) {
             1 * getBoolean(UserService.SESSION_ID_ENABLED, false) >> false
         }
-        service.frameworkService = Mock(FrameworkService) {
+        provider.frameworkService = Mock(FrameworkService) {
             getServerHostname() >> { "server" }
         }
         String errMsg = null
@@ -187,7 +199,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
                     project: 'AProject'
             ).save()
 
-            service.configurationService = Mock(ConfigurationService) {
+        provider.configurationService = Mock(ConfigurationService) {
                 getInteger(_, _) >> { it[1] }
             }
         when:
@@ -260,9 +272,9 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         String login = "theusername"
         service.findOrCreateUser(login)
 
-            service.configurationService = Mock(ConfigurationService) {
-                getInteger(UserService.SESSION_ABANDONDED_MINUTES, _) >> timeout
-            }
+        provider.configurationService = Mock(ConfigurationService) {
+            getInteger(GormUserDataProvider.SESSION_ABANDONED_MINUTES, _) >> timeout
+        }
         when:
         User user = User.findByLogin(login)
         !user.firstName
@@ -278,13 +290,13 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             logginStatus == expect.value
         where:
             execTime   | lastLogin                                        |logout| timeout | expect
-            null       | null                                             |null| 30      | UserService.LogginStatus.NOTLOGGED
-            null       | (new Date(System.currentTimeMillis() - 1000000)) |null| 15      | UserService.LogginStatus.ABANDONED
-            null       | (new Date() - 1)                                 |null| 30      | UserService.LogginStatus.ABANDONED
-            null       | (new Date() - 1)                                 |null| 7200    | UserService.LogginStatus.LOGGEDIN
-            null       | (new Date() - 2)                                 |(new Date() - 1)| 7200    | UserService.LogginStatus.LOGGEDOUT
-            new Date() | (new Date() - 3)                                 |null| 30      | UserService.LogginStatus.ABANDONED
-            new Date() | null                                             |null| 30      | UserService.LogginStatus.NOTLOGGED
+            null       | null                                             |null| 30      | LoginStatus.NOTLOGGED
+            null       | (new Date(System.currentTimeMillis() - 1000000)) |null| 15      | LoginStatus.ABANDONED
+            null       | (new Date() - 1)                                 |null| 30      | LoginStatus.ABANDONED
+            null       | (new Date() - 1)                                 |null| 7200    | LoginStatus.LOGGEDIN
+            null       | (new Date() - 2)                                 |(new Date() - 1)| 7200    | LoginStatus.LOGGEDOUT
+            new Date() | (new Date() - 3)                                 |null| 30      | LoginStatus.ABANDONED
+            new Date() | null                                             |null| 30      | LoginStatus.NOTLOGGED
     }
 
     @Plugin(name = "test-user-group-source",service= ServiceNameConstants.UserGroupSource)
@@ -326,7 +338,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         User u = new User(login: userToSearch, lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() +1 )
         u.save()
 
-        service.configurationService = Mock(ConfigurationService) {
+        provider.configurationService = Mock(ConfigurationService) {
             getInteger(_, _) >> { it[1] }
             getBoolean(UserService.SHOW_LOGIN_STATUS, false) >> true
         }
@@ -346,14 +358,14 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         def lastSessionId = 'exampleSessionId01'
         User u = new User(login: userToSearch, lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() -1)
         u.save()
-        User u2 = new User(login: userToSearch + '_other', lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() +1 )
-        u.save()
+        // User u2 = new User(login: userToSearch + '_other', lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() +1 )
+        // u2.save()
 
-        service.configurationService = Mock(ConfigurationService) {
+        provider.configurationService = Mock(ConfigurationService) {
             getInteger(_, _) >> { it[1] }
         }
         when:
-        def result = service.findWithFilters(true, [], 0, 100)
+        def result = service.findWithFilters(true, [:], 0, 100)
 
         then:
         result.totalRecords == 1
@@ -370,11 +382,11 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         User u2 = new User(login: userToSearch + '_other', lastSessionId: lastSessionId, lastLogin: new Date(), lastLogout: new Date() +1 )
         u2.save()
 
-        service.configurationService = Mock(ConfigurationService) {
+        provider.configurationService = Mock(ConfigurationService) {
             getInteger(_, _) >> { it[1] }
         }
         when:
-        def result = service.findWithFilters(true, [], 0, 100)
+        def result = service.findWithFilters(true, [:], 0, 100)
 
         then:
         result.totalRecords == 2
@@ -392,5 +404,41 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         then:
         result.loggedOnly == false
         result.showLoginStatus == false
+    }
+
+    def "getInfoFromUsers should get users"() {
+        given:
+        User u = new User(login: "login", firstName: "first", lastName: "last", email: "user@company.com")
+        u.save()
+        User u2 = new User(login: "test", firstName: "Steve", lastName: "Hyuga", email: "shyuga@niupi.com")
+        u2.save()
+        User u3 = new User(login: "tsubasa", firstName: "Oliver", lastName: "Atom", email: "oatom@niupi.com")
+        u3.save()
+        when:
+        def result = service.getInfoFromUsers(["login", "tsubasa"])
+        then:
+        result.size() == 2
+        result["login"]["firstname"] == "first"
+        result["login"]["lastname"] == "last"
+        result["login"]["email"] == "user@company.com"
+    }
+
+    def "countUsers should return right count"() {
+        given:
+        User u = new User(login: "login", firstName: "first", lastName: "last", email: "user@company.com", lastLogin: new Date() - 1)
+        u.save()
+        User u2 = new User(login: "test", firstName: "Steve", lastName: "Hyuga", email: "shyuga@niupi.com", lastLogin: new Date() - 1)
+        u2.save()
+        User u3 = new User(login: "tsubasa", firstName: "Oliver", lastName: "Atom", email: "oatom@niupi.com", lastLogin: new Date() - 2)
+        u3.save()
+        when:
+        def result = service.countUsers(date)
+        then:
+        result == expected
+        where:
+        date           | expected
+        new Date() - 1 | 2
+        null           | 3
+        new Date()     | 0
     }
 }

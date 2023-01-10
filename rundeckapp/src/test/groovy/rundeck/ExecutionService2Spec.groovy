@@ -34,8 +34,10 @@ import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.springframework.context.MessageSource
 import rundeck.services.*
+import rundeck.services.data.UserDataService
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -48,6 +50,10 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
     def setup(){
         service.executionValidatorService = new ExecutionValidatorService()
+
+        mockDataService(UserDataService)
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
     }
 
     /**

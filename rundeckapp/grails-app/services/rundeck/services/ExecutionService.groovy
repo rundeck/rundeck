@@ -71,6 +71,7 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
@@ -152,6 +153,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     JobLifecycleComponentService jobLifecycleComponentService
     def executionLifecyclePluginService
     AuditEventsService auditEventsService
+    UserDataProvider userDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1472,7 +1474,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             userName=execMap.user
         }
 
-        def userLogin = User.findByLogin(userName)
+        def userLogin = userDataProvider.findByLogin(userName)
         if(userLogin && userLogin.email){
             jobcontext['user.email'] = userLogin.email
         }

@@ -33,6 +33,8 @@ import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
+import org.rundeck.app.data.model.v1.user.RdUser
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
@@ -172,7 +174,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     params: [project: params.project, filter: frameworkService.frameworkNodeName]
             )
         }
-        def User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         def prefs=userService.getFilterPref(u.login)
         if(params.filterName=='.*'){
@@ -181,7 +183,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }else if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
                 if (filter) {
                     def query2 = filter.createExtNodeFilters()
                     query = query2
@@ -276,10 +278,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def usedFilter = null
         if (params.filterName) {
-            def User u = userService.findOrCreateUser(session.user)
+            RdUser u = userService.findOrCreateUser(session.user)
             //load a named filter and create a query from it
             if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
                 if (filter) {
                     def query2 = filter.createExtNodeFilters()
                     //XXX: node query doesn't use pagination, as it is not an actual DB query
@@ -503,7 +505,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     format:'json'
             ])
         }
-        def User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         def defaultFilter = null
         Map filterpref = userService.parseKeyValuePref(u.filterPref)
         if (filterpref['nodes']) {
@@ -512,7 +514,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def filters=[]
         //load a named filter and create a query from it
         if (u) {
-            def filterResults = NodeFilter.findAllByUserAndProject(u, project, [sort: 'name', order: 'desc'])
+            def filterResults = NodeFilter.findAllByUserAndProject(User.get(u.getId()), project, [sort: 'name', order: 'desc'])
             filters = filterResults.collect {
                 [name: it.name, filter: it.asFilter(), project: project]
             }
@@ -547,7 +549,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )) {
             return
         }
-        def User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         def usedFilter = null
         def usedFilterExclude = null
         if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
@@ -559,7 +561,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (params.filterName) {
             //load a named filter and create a query from it
             if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, User.get(u.getId()))
                 if (filter) {
                     def query2 = filter.createExtNodeFilters()
                     query2.excludeFilterUncheck = query.excludeFilterUncheck
@@ -571,7 +573,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         if (params.filterExcludeName) {
             if (u) {
-                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterExcludeName, u)
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterExcludeName, User.get(u.getId()))
                 if (filter) {
                     def queryExclude = filter.createExtNodeFilters()
                     query.filterExclude = queryExclude.filter
@@ -684,18 +686,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         withForm{
         g.refreshFormTokensHeader()
-        def User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         def NodeFilter filter
         def boolean saveuser=false
         if(params.newFilterName){
-            def ofilter = NodeFilter.findByNameAndUser(params.newFilterName,u)
+            def ofilter = NodeFilter.findByNameAndUser(params.newFilterName, User.get(u.getId()))
             if(ofilter){
                 ofilter.properties = query.properties
                 filter=ofilter
             }else{
                 filter= new NodeFilter(query.properties)
                 filter.name=params.newFilterName
-                u.addToNodefilters(filter)
+                filter.user=u
                 saveuser=true
             }
         }else if(!params.newFilterName){
@@ -709,10 +711,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return chain(controller:'framework',action:'nodes',params:params)
         }
         if(saveuser){
-            if(!u.save(flush:true)){
+            User user = User.get(u.getId())
+            user.addToNodefilters(filter)
+            if(!user.save(flush: true)){
 //                u.errors.allErrors.each { log.error(g.message(error:it)) }
 //                flash.error="Unable to save filter for user"
-                return renderErrorView(u.errors.allErrors.collect { g.message(error: it) }.join("\n"))
+                return renderErrorView(user.errors.allErrors.collect { g.message(error: it) }.join("\n"))
             }
         }
         if(params.isJobEdit){
@@ -729,9 +733,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
     def deleteNodeFilter={
         withForm{
-            def User u = userService.findOrCreateUser(session.user)
+            RdUser u = userService.findOrCreateUser(session.user)
             def filtername=params.delFilterName
-            final def ffilter = NodeFilter.findByNameAndUser(filtername, u)
+            final def ffilter = NodeFilter.findByNameAndUser(filtername, User.get(u.getId()))
             if(ffilter){
                 ffilter.delete(flush:true)
             }
@@ -745,8 +749,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def deleteNodeFilterAjax(String project, String filtername){
         withForm{
             g.refreshFormTokensHeader()
-            def User u = userService.findOrCreateUser(session.user)
-            final def ffilter = NodeFilter.findByNameAndUserAndProject(filtername, u, project)
+            RdUser u = userService.findOrCreateUser(session.user)
+            final def ffilter = NodeFilter.findByNameAndUserAndProject(filtername, User.get(u.getId()), project)
             if(ffilter){
                 ffilter.delete(flush:true)
             }
