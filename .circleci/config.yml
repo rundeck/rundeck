@@ -477,7 +477,7 @@ jobs:
       - aws-cli/install:
           skip-install-check: false
       - install-node:
-          version: v12.16.3
+          version: v16.18.0
       - run:
           name: Fetch Artifacts
           command: |
