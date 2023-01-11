@@ -476,8 +476,18 @@ jobs:
       - install-java
       - aws-cli/install:
           skip-install-check: false
+      - run:
+          name: Setup dependencies
+          command: |
+            sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            sudo apt-get update
+            sudo apt-get -y install dpkg
+            sudo apt-get -y install xmlstarlet google-chrome-stable
       - install-node:
-          version: v12.16.3
+          version: v16.18.0
       - run:
           name: Fetch Artifacts
           command: |
@@ -486,6 +496,7 @@ jobs:
       - run:
           name: Test
           command: |
+            nvm use v16.18.0
             source .circleci/circle-shim.sh
             bash test/ci-test-docker-selenium.sh
       - run:
