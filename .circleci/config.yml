@@ -495,10 +495,11 @@ jobs:
             pull_rundeck
       - run:
           name: Test
+          working_directory: ~/repo/test/selenium
           command: |
             nvm use v16.18.0
             source .circleci/circle-shim.sh
-            bash test/ci-test-docker-selenium.sh
+            ./bin/deck test -u http://localhost -s selenium --headless --provision -t TEST_TOKEN --image rundeck/rundeck -j="--verbose --colors"
       - run:
           name: Logs
           working_directory: ~/repo/test
