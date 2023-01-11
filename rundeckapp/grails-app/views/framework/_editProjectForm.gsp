@@ -61,9 +61,9 @@
     }
     function cleanerchkbox(el) {
         if(el.checked){
-            $('cleaner_config').show()
+            jQuery('#cleaner_config').show()
         } else {
-            $('cleaner_config').hide()
+            jQuery('#cleaner_config').hide()
         }
     }
 </script>

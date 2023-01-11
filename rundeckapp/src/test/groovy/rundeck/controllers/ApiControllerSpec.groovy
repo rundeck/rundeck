@@ -18,6 +18,8 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.config.RundeckConfigBase
+import org.grails.web.json.JSONArray
 import org.rundeck.app.data.model.v1.AuthTokenMode
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -279,7 +281,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.frameworkService = Mock(FrameworkService)
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -322,7 +324,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.frameworkService = Mock(FrameworkService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -378,7 +380,7 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.apiService = Mock(ApiService)
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
         AuthToken createdToken = new AuthToken(
-                user: new User(login: 'bob'),
+                user: new User(login: 'bob').save(),
                 token: 'abc',
                 authRoles: 'a,b',
                 uuid: '123uuid',
@@ -659,4 +661,51 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
     }
 
 
+    def "query feature endpoint for a specific feature name"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _, 42) >> true
+        }
+        controller.configurationService = Mock(ConfigurationService) {
+            _ * getBoolean("feature.${featureName}.enabled", false) >> enabled
+        }
+
+        when:
+        controller.featureQuery(featureName)
+
+        then:
+        response.status == 200
+        response.json.enabled == enabled
+
+        where:
+        featureName             | enabled
+        'aFeatureEnabled'       | true
+        'aFeatureNotEnabled'    | false
+        'aFeatureNotExists'     | false
+    }
+
+    def "query feature endpoint without a specific name"() {
+        given:
+        controller.apiService = Mock(ApiService) {
+            _ * requireApi(_, _) >> true
+            _ * requireVersion(_, _, _) >> true
+        }
+
+        RundeckConfigBase.RundeckFeatureConfig config = new RundeckConfigBase.RundeckFeatureConfig()
+        controller.configurationService = Mock(ConfigurationService) {
+            1 * getAppConfig() >> [
+                    "feature": config
+                ]
+        }
+
+        when:
+        controller.featureQueryAll()
+
+        then:
+        response.status == 200
+        response.json.getClass() == JSONArray.class
+        response.json.length() > 0
+        response.json.getJSONObject(0).name != null
+        response.json.getJSONObject(0).enabled != null
+    }
 }

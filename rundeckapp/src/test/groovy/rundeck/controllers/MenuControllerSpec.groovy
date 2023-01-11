@@ -44,6 +44,7 @@ import org.rundeck.app.auth.CoreTypedRequestAuthorizer
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -57,7 +58,7 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.app.type.AuthorizingSystem
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeSystem
-import org.rundeck.spi.data.DataManager
+
 import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
@@ -1373,10 +1374,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1386,8 +1384,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
+        1 * controller.projectService.findProjectByName('proj') >> Mock(RdProject)
         1 * iproj.hasProperty('project.description') >> true
         1 * iproj.getProperty('project.description') >> description
+        0 * controller.projectService.update(_,_)
         description == response.json.projects[0].description
     }
 

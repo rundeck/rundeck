@@ -1,19 +1,18 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authentication.Token
+import org.rundeck.app.authentication.Token
 import com.dtolabs.rundeck.core.authentication.Username
 import groovy.transform.CompileStatic
-import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
-import org.rundeck.app.data.model.v1.AuthenticationToken
-import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import groovy.transform.PackageScope
 import org.rundeck.app.access.InterceptorHelper
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.AuthenticationToken.AuthTokenType
+import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.security.core.context.SecurityContextHolder
-import rundeck.User
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.UserService
@@ -23,6 +22,7 @@ import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
 import java.util.stream.Collectors
+
 class SetUserInterceptor {
     public static final String RUNNER_RQ_ATTRIB = "runnerRq"
     @Autowired

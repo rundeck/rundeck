@@ -46,6 +46,7 @@ import org.apache.commons.codec.digest.DigestUtils
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.rundeck.app.AppConstants
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
@@ -53,7 +54,6 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.Notification
 import rundeck.ScheduledExecution
-import rundeck.User
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 
 import java.security.MessageDigest
@@ -91,6 +91,7 @@ public class NotificationService implements ApplicationContextAware{
     OrchestratorPluginService orchestratorPluginService
     def featureService
     def configurationService
+    UserDataProvider userDataProvider
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService, project,config, PropertyScope.Instance, PropertyScope.Project)
@@ -652,7 +653,7 @@ public class NotificationService implements ApplicationContextAware{
         //data context for property refs in email
         def userData = [:]
         //add user context data
-        def user = User.findByLogin(exec.user)
+        def user = userDataProvider.findByLogin(exec.user)
         if (user && user.email) {
             userData['user.email'] = user.email
         }

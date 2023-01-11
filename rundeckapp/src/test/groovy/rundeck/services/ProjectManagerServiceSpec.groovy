@@ -33,7 +33,7 @@ import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.grails.events.AppEvents
 import org.rundeck.spi.data.DataAccessException
-import org.rundeck.spi.data.DataManager
+
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -1065,7 +1065,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         def props = new Properties()
         props['abc'] = 'def'
-        props['project.description'] = 'desc_test'
+        props['project.description'] = description
 
         service.configStorageService=Stub(ConfigStorageService) {
             existsFileResource("projects/test1/etc/project.properties") >> false
@@ -1090,6 +1090,13 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         }
         service.rundeckNodeService = Mock(NodeService)
         service.projectCache = Mock(LoadingCache)
+        service.projectDataProvider=Mock(RundeckProjectDataProvider){
+            1 * findByName('test1')
+            1 * create({
+                it.description==description
+                it.name=='test1'
+            })
+        }
 
         when:
 

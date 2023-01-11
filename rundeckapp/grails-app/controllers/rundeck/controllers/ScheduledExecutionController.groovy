@@ -40,33 +40,19 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
 import org.apache.commons.collections.list.TreeList
-import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
-import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
-import org.apache.http.client.AuthCache
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.client.utils.DateUtils
-import org.apache.http.impl.auth.BasicScheme
-import org.apache.http.impl.client.BasicAuthCache
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.impl.client.HttpClients
-import org.apache.http.impl.client.StandardHttpRequestRetryHandler
-import org.apache.http.impl.cookie.DateParseException
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.rundeck.app.auth.types.AuthorizingProject
-import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
+import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.app.RundeckAccess
-import org.rundeck.core.auth.web.IdParameter
 import org.rundeck.core.auth.web.RdAuthorizeJob
 import org.rundeck.util.Toposort
 import org.slf4j.Logger
@@ -225,7 +211,6 @@ class ScheduledExecutionController  extends ControllerBase{
             redirect(action:'index',params: [project:params.project])
         }
     }
-    def list = {redirect(action:index,params:params) }
 
     def groupTreeFragment = {
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,params.project)
@@ -486,6 +471,9 @@ class ScheduledExecutionController  extends ControllerBase{
         def model = ScheduledExecution.withNewSession {
             _prepareExecute(scheduledExecution, framework,authContext)
         }
+
+        def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
+        def jobComponentValues=rundeckJobDefinitionManager.getJobDefinitionComponentValues(scheduledExecution)
         def dataMap= [
                 isScheduled: isScheduled,
                 scheduledExecution: scheduledExecution,
@@ -503,6 +491,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 pluginDescriptions: pluginDescriptions,
+                jobComponents: jobComponents,
+                jobComponentValues: jobComponentValues,
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + model
         if (params.opt && (params.opt instanceof Map)) {
@@ -1624,8 +1614,7 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: edit : params: " + params)
         def scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if(!scheduledExecution) {
-            flash.message = "ScheduledExecution not found with id ${params.id}"
-            return redirect(action:index, params:params)
+            throw new NotFound('Job ID', params.id)
         }
 
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
@@ -1664,7 +1653,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
 
-    public def update (){
+    def update (){
         withForm{
         def changeinfo=[method:'update',change:'modify',user:session.user]
 
@@ -1672,8 +1661,7 @@ class ScheduledExecutionController  extends ControllerBase{
         transferSessionEditState(session, params,params.id)
         def found = scheduledExecutionService.getByIDorUUID( params.id )
         if(!found) {
-            flash.message = "ScheduledExecution not found with id ${params.id}"
-            return redirect(action:index, params:params)
+            throw new NotFound('Job ID', params.id)
         }
 
         UserAndRolesAuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,found.project)
@@ -1881,7 +1869,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if(params.filterName){
             if (params.filterName) {
-                def User u = userService.findOrCreateUser(authContext.username)
+                def RdUser u = userService.findOrCreateUser(authContext.username)
                 //load a named filter and create a query from it
                 if (u) {
                     NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
@@ -2013,7 +2001,7 @@ class ScheduledExecutionController  extends ControllerBase{
         params.description = runAdhocRequest.description ?: ""
         params.excludeFilterUncheck = false
         if (params.filterName) {
-            def User u = userService.findOrCreateUser(authContext.username)
+            def RdUser u = userService.findOrCreateUser(authContext.username)
             //load a named filter and create a query from it
             if (u) {
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)

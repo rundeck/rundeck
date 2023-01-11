@@ -51,6 +51,7 @@ dependencies {
     console "org.grails:grails-console"
     implementation project(":core")
     implementation project(':rundeck-data-model')
+    implementation project(':rundeck-app-util')
 
     implementation "org.yaml:snakeyaml:${snakeyamlVersion}"
     compileOnly "org.grails:grails-plugin-domain-class"

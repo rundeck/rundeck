@@ -135,34 +135,11 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
                                           final NodeStepExecutionItem item,
                                           final INodeEntry node)
         throws NodeStepException {
-        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
-        Description description = getDescription();
-        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
-        if(description != null) {
-            description.getProperties().forEach(p -> {
-                if (!p.isBlankIfUnexpandable()) blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
-                else blankIfUnexMap.put(p.getName(), blankIfUnexpanded);
-            });
-        }
-        if (null != instanceConfiguration) {
-            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
-                    instanceConfiguration,
-                    ContextView.node(node.getNodename()),
-                    ContextView::nodeStep,
-                    null,
-                    context.getSharedDataContext(),
-                    false,
-                    blankIfUnexMap
-            );
-        }
-        final String providerName = item.getNodeStepType();
 
-        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
-                                                                                                  instanceConfiguration,
-                                                                                                  getServiceName(),
-                                                                                                  providerName);
+        final String providerName = item.getNodeStepType();
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
+        final Map<String, Object> config = createConfig(context, item, node);
+
         try {
             plugin.executeNodeStep(pluginContext, config, node);
         } catch (NodeStepException e) {
@@ -187,11 +164,48 @@ public class NodeStepPluginAdapter implements NodeStepExecutor, Describable, Dyn
         return new NodeStepResultImpl(node);
     }
 
-    private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
+    public Map<String, Object> createConfig( StepExecutionContext context,
+                                            NodeStepExecutionItem item,
+                                            INodeEntry node){
+        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
+        Description description = getDescription();
+        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
+        if(description != null) {
+            description.getProperties().forEach(p -> {
+                if (!p.isBlankIfUnexpandable()) blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
+                else blankIfUnexMap.put(p.getName(), blankIfUnexpanded);
+            });
+        }
+        if (null != instanceConfiguration) {
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
+                    null,
+                    context.getSharedDataContext(),
+                    false,
+                    blankIfUnexMap
+            );
+        }
+        final String providerName = item.getNodeStepType();
+
+        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
+                instanceConfiguration,
+                getServiceName(),
+                providerName);
+        return PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
+    }
+
+    public Map<String, Object> getStepConfiguration(StepExecutionItem item) {
         if (item instanceof ConfiguredStepExecutionItem) {
             return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
         } else {
             return null;
         }
     }
+
+    public NodeStepPlugin getPlugin(){
+        return this.plugin;
+    }
+
 }

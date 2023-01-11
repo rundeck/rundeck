@@ -13,7 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<%@ page import="rundeck.User;" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" %>
 
 
 <g:uploadForm controller="scheduledExecution" method="post" useToken="true"
@@ -63,7 +63,9 @@
     </g:if>
     <g:if test="${params.meta instanceof Map}">
         <g:each in="${params.meta}" var="metaprop">
-            <g:hiddenField name="meta.${metaprop.key}" value="${metaprop.value}"/>
+            <g:if test="${metaprop.value}">
+                <g:hiddenField name="meta.${metaprop.key}" value="${metaprop.value}"/>
+            </g:if>
         </g:each>
     </g:if>
 
@@ -77,9 +79,18 @@
         <g:render template="/common/messages"/>
     </g:elseif>
 
+    <g:embedJSON id="jobComponentProperties" data="${jobComponentValues}"/>
+    <section class="form-horizontal section-separator">
+        <div class="vue-ui-socket">
+            <div>
+                <ui-socket section="resources-override-filter" location="top" :event-bus="EventBus" />
+            </div>
+        </div>
+    </section>
 
     <section class="form-horizontal section-separator"
              style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
+
         <div class="form-group">
             <label class="col-sm-2 control-label">
                 <g:message code="Node.plural"/>
@@ -296,9 +307,9 @@
                     <div class="">
                         <g:set var="filtvalue" value="${nodefilter}"/>
 
-                        <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
-                            <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters.findAll { it.project == project }}"/>
-                        </g:if>
+                        <user:getNodeFilters user="${session.user}">
+                            <g:set var="filterset" value="${filters.findAll { it.project == project }}"/>
+                        </user:getNodeFilters>
 
                         <div id="nodefilterViewArea" data-ko-bind="nodeFilter" data-bind="visible: nodeFiltersVisible">
                         <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
@@ -437,8 +448,8 @@
 
                 /** reset focus on click, so that IE triggers onchange event*/
                 jQuery('#doReplaceFilters').on( 'click', function (evt) {
-                    this.trigger('blur');
-                    this.trigger('focus');
+                    jQuery(this).trigger('blur');
+                    jQuery(this).trigger('focus');
                 });
 
             </g:javascript>
@@ -466,6 +477,11 @@
 </g:uploadForm>
 
 <script lang="text/javascript">
+
+    window._rundeck.data = Object.assign(window._rundeck.data || {}, {
+        "jobComponentProperties": loadJsonData('jobComponentProperties')
+    })
+
     function init() {
         var pageParams = loadJsonData('pageParams');
         jQuery('body').on('click', '.nodefilterlink', function (evt) {
@@ -573,6 +589,7 @@
         });
 
         initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
+
     }
     jQuery(document).ready(init);
 </script>

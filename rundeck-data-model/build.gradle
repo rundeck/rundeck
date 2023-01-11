@@ -4,7 +4,6 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    api project(":rundeck-data-spi")
     api project(":rundeck-storage:rundeck-storage-api")
     api 'commons-codec:commons-codec:1.15'
     api 'commons-lang:commons-lang:2.6'

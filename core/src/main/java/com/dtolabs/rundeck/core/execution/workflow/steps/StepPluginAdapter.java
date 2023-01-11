@@ -93,34 +93,11 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
     public StepExecutionResult executeWorkflowStep(final StepExecutionContext executionContext,
                                                    final StepExecutionItem item) throws StepException
         {
-        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
-            Description description = getDescription();
-            Map<String,Boolean> blankIfUnexMap = new HashMap<>();
-            if(description != null) {
-                description.getProperties().forEach(p -> {
-                    blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
-                });
-            }
-        if (null != instanceConfiguration) {
-            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
-                    instanceConfiguration,
-                    ContextView.global(),
-                    ContextView::nodeStep,
-                    null,
-                    executionContext.getSharedDataContext(),
-                    false,
-                    blankIfUnexMap
-            );
-        }
+
         final String providerName = item.getType();
-        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
-                instanceConfiguration,
-                ServiceNameConstants.WorkflowStep,
-                providerName
-        );
         final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description,
-                plugin, PropertyScope.InstanceOnly);
+        final Map<String, Object> config = createConfig(executionContext, item);
+
         try {
             plugin.executeStep(stepContext, config);
         } catch (StepException e) {
@@ -148,6 +125,36 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
         return new StepExecutionResultImpl();
     }
 
+    public Map<String, Object> createConfig(StepExecutionContext executionContext,
+                                  StepExecutionItem item){
+        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
+        Description description = getDescription();
+        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
+        if(description != null) {
+            description.getProperties().forEach(p -> {
+                blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
+            });
+        }
+        if (null != instanceConfiguration) {
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.global(),
+                    ContextView::nodeStep,
+                    null,
+                    executionContext.getSharedDataContext(),
+                    false,
+                    blankIfUnexMap
+            );
+        }
+        final String providerName = item.getType();
+        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
+                instanceConfiguration,
+                ServiceNameConstants.WorkflowStep,
+                providerName
+        );
+        return PluginAdapterUtility.configureProperties(resolver, description,plugin, PropertyScope.InstanceOnly);
+    }
+
     private Map<String, Object> getStepConfiguration(StepExecutionItem item) {
         if (item instanceof ConfiguredStepExecutionItem) {
             return ((ConfiguredStepExecutionItem) item).getStepConfiguration();
@@ -156,4 +163,7 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
         }
     }
 
+    public StepPlugin getPlugin() {
+        return plugin;
+    }
 }

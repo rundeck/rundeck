@@ -49,31 +49,39 @@
         </span>
         <span v-for="prop in props" :key="prop.name" class="configprop">
 
-            <plugin-prop-view :prop="prop" :value="config[prop.name]"  v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop)"/>
+            <plugin-prop-view :prop="prop" :value="config[prop.name]"  v-if="(prop.type === 'Boolean' || config[prop.name]) && isPropInScope(prop) && !isPropHidden(prop)"/>
 
         </span>
       </div>
       <div v-else-if="isShowConfigForm && inputLoaded" class="col-xs-12 col-sm-12 form-horizontal">
         <div v-for="(group,gindex) in groupedProperties" :key="group.name">
-            <div v-if="!group.name">
-              <div v-for="(prop,pindex) in group.props"
-                   :key="'g_'+gindex+'/'+prop.name"
-                   :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
-                   :data-prop-name="prop.name"
-              >
-                <plugin-prop-edit v-model="inputValues[prop.name]"
-                                :prop="prop"
-                                :input-values="inputValues"
-                                :context-autocomplete="inputContextAutocomplete"
-                                @pluginPropsMounted="notifyHandleAutoComplete"
-                                :validation="validation"
-                                :rkey="'g_'+gindex+'_'+rkey"
-                                :readOnly="readOnly"
-                                :pindex="pindex"
-                                :autocompleteCallback="autocompleteCallback"/>
-              </div>
+            <div v-if="!group.name"
+                 v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
+
+                  <input type="hidden"
+                         :value="inputValues[prop.name]"
+                         :data-hidden-field-identity="prop.options['hidden_identity']"
+                         class="_config_prop_display_hidden"
+                         v-if="isPropHidden(prop)"/>
+
+                  <div :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
+                       :data-prop-name="prop.name"
+                       v-else
+                  >
+                      <plugin-prop-edit v-model="inputValues[prop.name]"
+                                        :prop="prop"
+                                        :input-values="inputValues"
+                                        :context-autocomplete="inputContextAutocomplete"
+                                        @pluginPropsMounted="notifyHandleAutoComplete"
+                                        :validation="validation"
+                                        :rkey="'g_'+gindex+'_'+rkey"
+                                        :readOnly="readOnly"
+                                        :pindex="pindex"
+                                        :autocompleteCallback="autocompleteCallback"/>
+                  </div>
+
             </div>
-            <details :open="!group.secondary" v-else class="more-info details-reset">
+            <details :open="!group.secondary" v-if="group.name" class="more-info details-reset">
               <summary >
                 <span class="row">
                   <span class="col-sm-2 control-label h5 header-reset">
@@ -83,20 +91,27 @@
                   </span>
                 </span>
               </summary>
-              <div v-for="(prop,pindex) in group.props"
-                   :key="'g_'+gindex+'/'+prop.name"
-                   :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
-                   :data-prop-name="prop.name"
-              >
-                <plugin-prop-edit v-model="inputValues[prop.name]"
-                                :prop="prop"
-                                :input-values="inputValues"
-                                :validation="validation"
-                                :readOnly="readOnly"
-                                :rkey="'g_'+gindex+'_'+rkey"
-                                :pindex="pindex"
-                                :autocompleteCallback="autocompleteCallback"
-                />
+              <div v-for="(prop,pindex) in group.props" :key="'g_'+gindex+'/'+prop.name">
+
+                  <input type="hidden"
+                         :value="inputValues[prop.name]"
+                         :data-hidden-field-identity="prop.options['hidden_identity']"
+                         class="_config_prop_display_hidden"
+                         v-if="isPropHidden(prop)"
+                  />
+                  <div :class="'form-group '+(prop.required?'required':'')+(validation &&validation.errors[prop.name]?' has-error':'')"
+                       :data-prop-name="prop.name"
+                       v-else
+                  >
+                      <plugin-prop-edit v-model="inputValues[prop.name]"
+                                        :prop="prop"
+                                        :input-values="inputValues"
+                                        :validation="validation"
+                                        :readOnly="readOnly"
+                                        :rkey="'g_'+gindex+'_'+rkey"
+                                        :pindex="pindex"
+                                        :autocompleteCallback="autocompleteCallback"/>
+                  </div>
               </div>
             </details>
         </div>
@@ -301,6 +316,9 @@ export default Vue.extend({
         }
       }
       return true
+    },
+    isPropHidden(testProp: any): boolean {
+      return testProp.options && testProp.options['displayType']==='HIDDEN'
     },
     isPropInScope(testProp: any): boolean {
       // determine if property is visible in scope

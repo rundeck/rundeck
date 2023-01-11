@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="org.rundeck.core.auth.AuthConstants;rundeck.User; grails.util.Environment" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants;grails.util.Environment" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}" />
@@ -370,9 +370,9 @@ search
         .gsp-pager .step { padding: 0 2px; }
         .gsp-pager .currentStep { padding: 0 2px; }
     </style>
-    <g:if test="${session.user && User.findByLogin(session.user)?.jobfilters}">
-        <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
-    </g:if>
+    <user:getJobFilters user="${session.user}">
+        <g:set var="filterset" value="${filters}"/>
+    </user:getJobFilters>
 
     <g:embedJSON id="jobFiltersJson" data="${[filters:filterset?filterset*.toMap():[],currentFilter:filterName]}"/>
 

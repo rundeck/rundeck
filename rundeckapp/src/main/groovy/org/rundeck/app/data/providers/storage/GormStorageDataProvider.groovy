@@ -77,8 +77,8 @@ class GormStorageDataProvider implements StorageDataProvider {
             throw new DataAccessException("Not found: storage with ID: ${id}")
         }
         try {
-            storageDataService.delete(id)
-        } catch (Exception e) {
+            storage.delete(flush:true)
+         } catch (Exception e) {
             throw new DataAccessException("Could not delete storage ${id}: ${e}", e)
         }
     }
@@ -106,6 +106,7 @@ class GormStorageDataProvider implements StorageDataProvider {
             eq('name', name)
             cache(false)
         }
+        found?.refresh()
         found
     }
 

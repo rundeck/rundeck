@@ -43,6 +43,7 @@ import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
+import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.AuthActions
@@ -180,7 +181,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def eid=executionService.lastExecutionId(query.projFilter)
         model.lastExecId=eid
 
-        User u = userService.findOrCreateUser(session.user)
+        RdUser u = userService.findOrCreateUser(session.user)
         Map filterpref=[:]
         if(u){
             filterpref= userService.parseKeyValuePref(u.filterPref)
@@ -298,7 +299,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     def jobs (ScheduledExecutionQuery query ){
 
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         if(params.size()<1 && !params.filterName && u ){
             Map filterpref = userService.parseKeyValuePref(u.filterPref)
             if(filterpref['workflows']){
@@ -482,7 +483,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         if(params.filterName){
             //load a named filter and create a query from it
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             if(u){
                 ScheduledExecutionFilter filter = ScheduledExecutionFilter.findByNameAndUser(params.filterName,u)
                 if(filter){
@@ -756,7 +757,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     params: params.subMap(['newFilterName', 'existsFilterName', 'project', 'saveFilter']))
         }
 
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def ScheduledExecutionFilter filter
         def boolean saveuser=false
         if(params.newFilterName && !params.existsFilterName){
@@ -801,7 +802,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def deleteJobfilter={
         withForm{
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def filtername=params.delFilterName
         final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
         if(ffilter){
@@ -817,7 +818,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def deleteJobFilterAjax(String project, String filtername) {
         withForm {
             g.refreshFormTokensHeader()
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
             if (ffilter) {
                 ffilter.delete(flush: true)
@@ -847,7 +848,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 ]
                 )
             }
-            def User u = userService.findOrCreateUser(session.user)
+            def RdUser u = userService.findOrCreateUser(session.user)
             def ScheduledExecutionFilter filter
             def boolean saveuser = false
             if (query.newFilterName && !query.existsFilterName) {
@@ -2383,10 +2384,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def description = prj?.description
             if(!description){
                 description = project.hasProperty("project.description")?project.getProperty("project.description"):''
-                if(description && prj){
-                    def simplePrj = SimpleProjectBuilder.with(prj).setDescription(description)
-                    projectService.update(prj.getId(), simplePrj)
-                }
             }
             summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
             summary[project.name].description= description

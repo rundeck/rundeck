@@ -130,7 +130,7 @@
 
                         <div class="tab-pane active" id="runjob">
                             <tmpl:execOptionsForm
-                                    model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized,isScheduled:isScheduled]}"
+                                    model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized,isScheduled:isScheduled, jobComponents: jobComponents, jobComponentValues: jobComponentValues]}"
                                     hideHead="${true}"
                                     hideCancel="${true}"
                                     defaultFollow="${true}"/>
