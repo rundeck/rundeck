@@ -12,7 +12,7 @@ services:
       - ./test-tokens.properties:/home/rundeck/etc/tokens.properties
 
   selenium:
-    image: rundeck/selenium@sha256:d2c31cbc93716420479cf5d999dd7e0d8a6429e1aacd36bc99d4f9711fb70a05
+    image: rundeck/selenium:230111
     tty: true
     links:
     - rundeck
