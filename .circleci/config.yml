@@ -485,11 +485,14 @@ jobs:
             pull_rundeck
       - run:
           name: Test
+          working_directory: ~/repo/test/selenium
           command: |
+            cd ../..
             source .circleci/circle-shim.sh
+            cd test/selenium
             nvm use v16.18.0
             npm run bootstrap
-            test/selenium/bin/deck test \
+            bin/deck test \
             -u http://localhost \
             -s selenium \
             --headless \
