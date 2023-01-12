@@ -472,6 +472,16 @@ jobs:
     machine:
       image: ubuntu-2004:202201-02
     steps:
+      - run:
+          name: Setup dependencies
+          command: |
+            sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            sudo apt-get update
+            sudo apt-get -y install dpkg
+            sudo apt-get -y install xmlstarlet google-chrome-stable
       - checkout
       - install-java
       - aws-cli/install:
@@ -483,6 +493,13 @@ jobs:
           command: |
             source .circleci/circle-shim.sh
             pull_rundeck
+      - run:
+          name: Alert about S3 Image Storage
+          working_directory: ~/repo
+          command: |
+              source .circleci/circle-shim.sh
+              echo -e "Image output available at:\n"
+              echo -e "http://test.rundeck.org/${S3_SELENIUM_IMAGES_BASE}\n"
       - run:
           name: Test
           working_directory: ~/repo/test/selenium
@@ -500,7 +517,18 @@ jobs:
             --image rundeck/rundeck \
             --clusterConfig ~/repo/test \
             -f selenium-docker-compose.yml \
+            --s3-upload --s3-base $S3_SELENIUM_IMAGES_BASE \
             -j="--verbose --colors"
+      - run:
+          name: Sync Selenium images to S3
+          workdir: ~/repo/test
+          command: |
+              source .circleci/circle-shim.sh
+              export DIFF_DIR=__image_snapshots__/__diff_output__
+
+              if [[ -d "${DIFF_DIR}" ]] ; then
+                  aws s3 sync $DIFF_DIR s3://test.rundeck.org/$S3_SELENIUM_IMAGES_BASE/diff
+              fi
       - run:
           name: Logs
           working_directory: ~/repo/test
