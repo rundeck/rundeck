@@ -6,7 +6,7 @@ import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.ExecutionReference
-import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
+import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
@@ -19,21 +19,13 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
 import grails.testing.services.ServiceUnitTest
-import rundeck.CommandExec
-import rundeck.Execution
 import rundeck.ScheduledExecution
-import rundeck.ScheduledExecutionStats
-import rundeck.User
-import rundeck.Workflow
 import rundeck.services.feature.FeatureService
-import rundeck.services.feature.FeatureServiceSpec
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class ExecutionLifecyclePluginServiceSpec extends Specification implements ServiceUnitTest<ExecutionLifecyclePluginService> {
+class ExecutionLifecyclComponentServiceSpec extends Specification implements ServiceUnitTest<ExecutionLifecycleComponentService> {
 
     def item = Mock(WorkflowExecutionItem)
     def featureService = Mock(FeatureService){
@@ -63,13 +55,13 @@ class ExecutionLifecyclePluginServiceSpec extends Specification implements Servi
     static class ExecutionLifecyclePluginImpl implements ExecutionLifecyclePlugin {
 
         @Override
-        public ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event)throws ExecutionLifecyclePluginException{
-            throw new ExecutionLifecyclePluginException("Test job life cycle exception")
+        public ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event)throws ExecutionLifecycleComponentException{
+            throw new ExecutionLifecycleComponentException("Test job life cycle exception")
         }
 
         @Override
-        public ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event)throws ExecutionLifecyclePluginException{
-            throw new ExecutionLifecyclePluginException("Test job life cycle exception")
+        public ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event)throws ExecutionLifecycleComponentException{
+            throw new ExecutionLifecycleComponentException("Test job life cycle exception")
         }
     }
 
@@ -89,18 +81,18 @@ class ExecutionLifecyclePluginServiceSpec extends Specification implements Servi
             }
         when:
             ExecutionLifecycleStatus result = service.handleEvent(
-                    eventType == ExecutionLifecyclePluginService.EventType.BEFORE_RUN ?
+                    eventType == ExecutionLifecycleComponentService.EventType.BEFORE_RUN ?
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
-                    [new NamedExecutionLifecyclePlugin(name: 'TestPlugin', plugin: plugin)]
+                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', plugin: plugin)]
             )
         then:
             result.isSuccessful()
         where:
             eventType                                            | _
-            ExecutionLifecyclePluginService.EventType.BEFORE_RUN | _
-            ExecutionLifecyclePluginService.EventType.AFTER_RUN  | _
+            ExecutionLifecycleComponentService.EventType.BEFORE_RUN | _
+            ExecutionLifecycleComponentService.EventType.AFTER_RUN  | _
     }
 
     @Unroll
@@ -119,18 +111,18 @@ class ExecutionLifecyclePluginServiceSpec extends Specification implements Servi
             }
         when:
             ExecutionLifecycleStatus result = service.handleEvent(
-                    eventType == ExecutionLifecyclePluginService.EventType.BEFORE_RUN ?
+                    eventType == ExecutionLifecycleComponentService.EventType.BEFORE_RUN ?
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
-                    [new NamedExecutionLifecyclePlugin(name: 'TestPlugin', plugin: plugin)]
+                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', plugin: plugin)]
             )
         then:
-            thrown(ExecutionLifecyclePluginException)
+            thrown(ExecutionLifecycleComponentException)
         where:
             eventType                                            | _
-            ExecutionLifecyclePluginService.EventType.BEFORE_RUN | _
-            ExecutionLifecyclePluginService.EventType.AFTER_RUN  | _
+            ExecutionLifecycleComponentService.EventType.BEFORE_RUN | _
+            ExecutionLifecycleComponentService.EventType.AFTER_RUN  | _
     }
 
     @Unroll
@@ -142,18 +134,18 @@ class ExecutionLifecyclePluginServiceSpec extends Specification implements Servi
             def plugin = new ExecutionLifecyclePluginImpl()
         when:
             ExecutionLifecycleStatus result = service.handleEvent(
-                    eventType == ExecutionLifecyclePluginService.EventType.BEFORE_RUN ?
+                    eventType == ExecutionLifecycleComponentService.EventType.BEFORE_RUN ?
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
-                    [new NamedExecutionLifecyclePlugin(name: 'TestPlugin', plugin: plugin)]
+                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', plugin: plugin)]
             )
         then:
-            thrown(ExecutionLifecyclePluginException)
+            thrown(ExecutionLifecycleComponentException)
         where:
             eventType                                            | _
-            ExecutionLifecyclePluginService.EventType.BEFORE_RUN | _
-            ExecutionLifecyclePluginService.EventType.AFTER_RUN  | _
+            ExecutionLifecycleComponentService.EventType.BEFORE_RUN | _
+            ExecutionLifecycleComponentService.EventType.AFTER_RUN  | _
     }
 
     def "create configured plugins with no project defaults"() {

@@ -17,39 +17,39 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference
-import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
+import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobEventResult
-import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 
 /**
- * Handles execution lifecycle event calls using multiple plugins and an execution reference, via the {@link ExecutionLifecyclePluginService}
+ * Handles execution lifecycle event calls using multiple plugins and an execution reference, via the {@link ExecutionLifecycleComponentService}
  */
-class ExecutionReferenceLifecyclePluginHandler implements ExecutionLifecyclePluginHandler {
-    ExecutionLifecyclePluginService executionLifecyclePluginService
+class ExecutionReferenceLifecycleComponentHandler implements ExecutionLifecycleComponentHandler {
+    ExecutionLifecycleComponentService executionLifecycleComponentService
     ExecutionReference executionReference
-    List<NamedExecutionLifecyclePlugin> plugins
+    List<NamedExecutionLifecycleComponent> components
 
     @Override
-    Optional<ExecutionLifecycleStatus> beforeJobStarts(final StepExecutionContext executionContext, WorkflowExecutionItem item) throws ExecutionLifecyclePluginException {
-        Optional.ofNullable executionLifecyclePluginService.handleEvent(
+    Optional<ExecutionLifecycleStatus> beforeJobStarts(final StepExecutionContext executionContext, WorkflowExecutionItem item) throws ExecutionLifecycleComponentException {
+        Optional.ofNullable executionLifecycleComponentService.handleEvent(
                 JobExecutionEventImpl.beforeRun(executionContext, executionReference, item),
-                ExecutionLifecyclePluginService.EventType.BEFORE_RUN,
-                plugins
+                ExecutionLifecycleComponentService.EventType.BEFORE_RUN,
+                components
         )
 
     }
 
     @Override
     Optional<ExecutionLifecycleStatus> afterJobEnds(final StepExecutionContext executionContext, final JobEventResult result)
-            throws ExecutionLifecyclePluginException {
-        Optional.ofNullable executionLifecyclePluginService.handleEvent(
+            throws ExecutionLifecycleComponentException {
+        Optional.ofNullable executionLifecycleComponentService.handleEvent(
                 JobExecutionEventImpl.afterRun(executionContext, executionReference, result),
-                ExecutionLifecyclePluginService.EventType.AFTER_RUN,
-                plugins
+                ExecutionLifecycleComponentService.EventType.AFTER_RUN,
+                components
         )
     }
 }

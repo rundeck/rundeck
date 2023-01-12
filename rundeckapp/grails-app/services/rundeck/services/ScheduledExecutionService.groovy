@@ -180,7 +180,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     FileUploadService fileUploadService
     JobSchedulerService jobSchedulerService
     JobLifecycleComponentService jobLifecycleComponentService
-    ExecutionLifecyclePluginService executionLifecyclePluginService
+    ExecutionLifecycleComponentService executionLifecycleComponentService
     SchedulesManager jobSchedulesService
     private def triggerComponents
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
@@ -2637,7 +2637,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @CompileStatic
     boolean validateDefinitionExecLifecyclePlugins(ScheduledExecution scheduledExecution, Map params, Map validationMap) {
         boolean failed = false
-        PluginConfigSet pluginConfigSet=executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution)
+        PluginConfigSet pluginConfigSet=executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution)
         if (pluginConfigSet && pluginConfigSet.pluginProviderConfigs?.size()>0) {
             //validate execution life cycle plugins
             Map<String,Validator.Report> pluginValidations = [:]
@@ -2908,13 +2908,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public void jobDefinitionExecLifecyclePlugins(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         PluginConfigSet configSet=null
         if(input){
-            configSet=executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(input)
+            configSet=executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(input)
         }else if (params.executionLifecyclePlugins && params.executionLifecyclePlugins instanceof Map) {
             Map plugins=(Map)params.executionLifecyclePlugins
             //define execution life cycle plugins config
             configSet = parseExecutionLifecyclePluginsParams(plugins)
         }
-        executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, configSet)
+        executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, configSet)
     }
 
 
@@ -4493,7 +4493,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.LogFilter)
         }
 
-        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
+        def executionLifecyclePlugins = executionLifecycleComponentService.listEnabledExecutionLifecyclePlugins(pluginControlService)
         def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
 
         def fprojects = frameworkService.projectNames(authContext)
