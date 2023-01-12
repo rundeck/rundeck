@@ -2,7 +2,7 @@ version: "3"
 
 services:
   rundeck:
-    image: ${RUNDECK_IMAGE:-rundeck/rundeck}
+    image: ${RUNDECK_IMAGE:-rundeck/rundeck:SNAPSHOT}
     environment:
       RUNDECK_SERVER_ADDRESS: rundeck
       RUNDECK_GRAILS_URL: http://rundeck

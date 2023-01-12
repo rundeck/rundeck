@@ -8,9 +8,12 @@ import { createWaitForRundeckReady } from '../util/RundeckAPI'
 import { ClusterFactory, IClusterManager } from '../ClusterManager'
 import { Config } from '../Config';
 
+const DEFAULT_DOCKER_COMPOSE_FILE_NAME = 'docker-compose.yml'
+
 interface Opts {
     provision: boolean
     clusterConfig?: string
+    composeFileName?: string
     image?: string
     debug: boolean
     url: string
@@ -46,6 +49,11 @@ class TestCommand {
             .option('c', {
                 alias: 'clusterConfig',
                 describe: 'Directory containing cluster configuration for test',
+                type: 'string'
+            })
+            .option('f', {
+                alias: 'composeFileName',
+                describe: 'Allows for a non-standard Docker Compose file name',
                 type: 'string'
             })
             .option('provision', {
@@ -121,10 +129,13 @@ class TestCommand {
 
         let cluster: IClusterManager | undefined
         if (opts.provision) {
-            cluster = await ClusterFactory.CreateCluster(opts.clusterConfig || config.clusterConfig, {
-                licenseFile: './license.key',
-                image: opts.image || config.baseImage
-            })
+            cluster = await ClusterFactory.CreateCluster(
+                opts.clusterConfig || config.clusterConfig,
+                {
+                    licenseFile: './license.key',
+                    image: opts.image || config.baseImage,
+                    composeFileName: opts.composeFileName || DEFAULT_DOCKER_COMPOSE_FILE_NAME
+                })
 
             await cluster.startCluster()
 

@@ -492,14 +492,14 @@ jobs:
             cd test/selenium
             nvm use v16.18.0
             npm run bootstrap
-            bin/deck test \
+            bin/deck test -s selenium \
             -u http://localhost \
-            -s selenium \
             --headless \
             --provision \
             -t TEST_TOKEN \
             --image rundeck/rundeck \
-            --clusterConfig ~/repo/test/selenium-docker-compose.yml \
+            --clusterConfig ~/repo/test \
+            -f selenium-docker-compose.yml \
             -j="--verbose --colors"
       - run:
           name: Logs
