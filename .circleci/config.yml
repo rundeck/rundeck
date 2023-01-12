@@ -487,7 +487,17 @@ jobs:
           name: Test
           command: |
             source .circleci/circle-shim.sh
-            bash test/ci-test-docker-selenium.sh
+            nvm use v16.18.0
+            npm run bootstrap
+            test/selenium/bin/deck test \
+            -u http://localhost \
+            -s selenium \
+            --headless \
+            --provision \
+            -t TEST_TOKEN \
+            --image rundeck/rundeck \
+            --clusterConfig ~/repo/test/selenium-docker-compose.yml \
+            -j="--verbose --colors"
       - run:
           name: Logs
           working_directory: ~/repo/test
