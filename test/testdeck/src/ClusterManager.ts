@@ -45,7 +45,7 @@ export class DockerClusterManager implements IClusterManager {
         if (base.protocol != 'docker:')
             throw new Error(`Protocol not supported: ${base.protocol}`)
 
-        const serviceName = base.hostname.split('_')[1]
+        const serviceName = base.hostname!.split('_')[1]
 
         await this.compose.stop(serviceName)
     }
@@ -56,7 +56,7 @@ export class DockerClusterManager implements IClusterManager {
         if (base.protocol != 'docker:')
             throw new Error(`Protocol not supported: ${base.protocol}`)
 
-        const serviceName = base.hostname.split('_')[1]
+        const serviceName = base.hostname!.split('_')[1]
 
         await this.compose.start(serviceName)
     }

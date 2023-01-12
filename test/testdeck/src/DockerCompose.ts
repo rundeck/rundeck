@@ -39,7 +39,7 @@ export class DockerCompose {
 
         const cp = CP.spawn('docker-compose', ['--compatibility', 'up', '-d', '--build'], {cwd: this.workDir, stdio: 'inherit', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)
@@ -54,7 +54,7 @@ export class DockerCompose {
 
         const cp = CP.spawn('docker-compose', ['--compatibility', 'down'], {cwd: this.workDir, stdio: 'inherit', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)
@@ -74,7 +74,7 @@ export class DockerCompose {
 
         const cp = CP.spawn('docker-compose', args, {cwd: this.workDir, stdio: 'inherit', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)
@@ -89,7 +89,7 @@ export class DockerCompose {
 
         const cp = CP.spawn('docker-compose', ['--compatibility', 'start', service], {cwd: this.workDir, stdio: 'ignore', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)
@@ -104,7 +104,7 @@ export class DockerCompose {
 
         const cp = CP.spawn('docker-compose', ['--compatibility', 'logs'], {cwd: this.workDir, stdio: 'inherit', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)

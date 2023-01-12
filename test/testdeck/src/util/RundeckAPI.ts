@@ -18,7 +18,7 @@ export async function createWaitForRundeckReady(factory: ()=>Rundeck, timeout = 
             const reqstart=Date.now()
             let resp = await factory().systemInfoGet()
             return
-        } catch  (e) {
+        } catch  (e:any) {
             if (e.statusCode === 403) {
                 unauthCount++
             }
@@ -48,9 +48,12 @@ const STATUS_FINAL = [
 export async function waitForExecutionComplete(client: Rundeck, id: number) {
     let resp: ExecutionStatusGetResponse
 
-    let curStatus = Status.Running
+    let curStatus:Status = Status.Running
     while(true) {
         resp = await client.executionStatusGet(id.toString())
+        if (!resp.status) {
+            throw new Error(`Unable to get execution status for ${id}`)
+        }
         curStatus = resp.status
 
         if (STATUS_FINAL.includes(curStatus))
@@ -65,7 +68,7 @@ export async function waitForExecutionComplete(client: Rundeck, id: number) {
 export async function runJobAndWait(client: Rundeck, id: string, options?: RundeckJobExecutionRunOptionalParams) {
     const resp = await client.jobExecutionRun(id, options)
 
-    return await waitForExecutionComplete(client, resp.id)
+    return await waitForExecutionComplete(client, resp.id!)
 }
 
 export function cookieEnrichPolicy(cookies: string[]): RequestPolicyFactory {
