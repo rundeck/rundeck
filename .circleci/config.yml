@@ -508,6 +508,7 @@ jobs:
             --provision \
             -t TEST_TOKEN \
             --clusterConfig ~/repo/test/selenium/lib/compose/single \
+            --image rundeck/rundeck \
             -j="--verbose --colors"
       - run:
           name: Logs
