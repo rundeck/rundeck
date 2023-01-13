@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
@@ -18,6 +19,7 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
+import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
 import grails.testing.services.ServiceUnitTest
 import rundeck.ScheduledExecution
@@ -53,6 +55,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
 
 
     static class ExecutionLifecyclePluginImpl implements ExecutionLifecyclePlugin {
+        String name
 
         @Override
         public ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event)throws ExecutionLifecycleComponentException{
@@ -62,6 +65,21 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
         @Override
         public ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event)throws ExecutionLifecycleComponentException{
             throw new ExecutionLifecycleComponentException("Test job life cycle exception")
+        }
+    }
+
+    static class TestExecutionLifecycleComponentImpl implements ExecutionLifecycleComponent{
+
+        String name
+
+        @Override
+        ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
+            return null
+        }
+
+        @Override
+        ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
+            return null
         }
     }
 
@@ -287,5 +305,41 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
             result.pluginProviderConfigs[0].configuration == [a: 'b']
             result.pluginProviderConfigs[1].provider == 'bProvider'
             result.pluginProviderConfigs[1].configuration == [b: 'c']
+    }
+
+    def "list enabled components and plugins"() {
+        given:
+        service.featureService = featureService
+        service.frameworkService = frameworkService
+
+        service.beanComponents = [
+                new TestExecutionLifecycleComponentImpl(name: "Comp1"),
+                new TestExecutionLifecycleComponentImpl(name: "Comp2")
+        ]
+
+        def configs = PluginConfigSet.with(
+                ServiceNameConstants.ExecutionLifecycle, [
+                SimplePluginConfiguration.builder().provider('pluginA').configuration([a: 'b']).build()
+        ]
+        )
+
+        service.pluginService = Mock(PluginService) {
+            configurePlugin(*_) >> { args ->
+                return new ConfiguredPlugin<JobLifecyclePlugin>(new ExecutionLifecyclePluginImpl(name: args[0]), [:])
+            }
+        }
+
+        when:
+        def result = service.loadConfiguredComponents(configs, "test")
+        then:
+        result.size() == 3
+        result[0].component.name=="Comp1"
+        !result[0].isPlugin()
+        result[1].component.name=="Comp2"
+        !result[1].isPlugin()
+        result[2].component.name=="pluginA"
+        result[2].isPlugin()
+
+
     }
 }
