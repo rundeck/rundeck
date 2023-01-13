@@ -15,7 +15,9 @@
  */
 package webhooks
 
-class Webhook {
+import org.rundeck.app.data.model.v1.webhook.RdWebhook
+
+class Webhook implements RdWebhook{
 
     String uuid
     String name

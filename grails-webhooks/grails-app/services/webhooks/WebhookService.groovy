@@ -24,6 +24,8 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.webhook.RdWebhook
+import org.rundeck.app.data.providers.v1.WebhookDataProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
 import org.slf4j.Logger
@@ -38,6 +40,8 @@ class WebhookService {
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
     private static final String END_MARKER = "}"
+
+    WebhookDataProvider webhookDataProvider;
 
     def rundeckPluginRegistry
     def pluginService
@@ -330,19 +334,19 @@ class WebhookService {
         return [id:hook.id, uuid:hook.uuid, name:hook.name, project: hook.project, enabled: hook.enabled, user:authToken.ownerName, creator:authToken.creator, roles: authToken.getAuthRolesSet().join(","), authToken:hook.authToken, useAuth: hook.authConfigJson != null, regenAuth: false, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
 
-    Webhook getWebhook(Long id) {
-        return Webhook.get(id)
+    RdWebhook getWebhook(Long id) {
+        return webhookDataProvider.getWebhook(id)
     }
-    Webhook getWebhookWithProject(Long id, String project) {
-        return Webhook.findByIdAndProject(id,project)
-    }
-
-    Webhook getWebhookByUuid(String uuid) {
-        return Webhook.findByUuid(uuid)
+    RdWebhook getWebhookWithProject(Long id, String project) {
+        return webhookDataProvider.getWebhookWithProject(id,project)
     }
 
-    Webhook getWebhookByToken(String token) {
-        return Webhook.findByAuthToken(token)
+    RdWebhook getWebhookByUuid(String uuid) {
+        return webhookDataProvider.getWebhookByUuid(uuid);
+    }
+
+    RdWebhook getWebhookByToken(String token) {
+        return webhookDataProvider.getWebhookByToken(token);
     }
 
     class Evt extends EventImpl {}
