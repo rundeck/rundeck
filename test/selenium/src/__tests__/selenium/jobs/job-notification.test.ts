@@ -122,6 +122,7 @@ describe('job', () => {
     it('edit job notifications', async () => {
         await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
         await ctx.driver.wait(until.urlContains('/job/edit'), 30000)
+        await sleep(3000)
 
         const notificationsTab = await jobCreatePage.notificationsTab()
         await notificationsTab.click()
