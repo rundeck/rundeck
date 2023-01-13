@@ -4,6 +4,7 @@ import readline from 'readline'
 
 interface IConfig {
     env?: {[k:string]: string}
+    composeFileName: string
 }
 
 export class DockerCompose {
@@ -13,7 +14,7 @@ export class DockerCompose {
     async containers(): Promise<String[]> {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['ps'], {cwd: this.workDir, env})
+        const cp = CP.spawn('docker-compose', ['-f', this.config.composeFileName, 'ps'], {cwd: this.workDir, env})
 
         const stdout = (async () => {
             let output = [] as String[]
@@ -37,9 +38,9 @@ export class DockerCompose {
     async up(service?: string) {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['--compatibility', 'up', '-d', '--build'], {cwd: this.workDir, stdio: 'inherit', env})
+        const cp = CP.spawn('docker-compose', ['--compatibility', '-f', this.config.composeFileName, 'up', '-d', '--build'], {cwd: this.workDir, stdio: 'inherit', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)
@@ -52,9 +53,9 @@ export class DockerCompose {
     async down(service?: string) {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['--compatibility', 'down'], {cwd: this.workDir, stdio: 'inherit', env})
+        const cp = CP.spawn('docker-compose', ['--compatibility', '-f', this.config.composeFileName, 'down'], {cwd: this.workDir, stdio: 'inherit', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)
@@ -67,14 +68,14 @@ export class DockerCompose {
     async stop(service?: string): Promise<void> {
         const env = {...process.env, ...this.config.env || {}}
 
-        const args = ['stop']
+        const args = ['-f', this.config.composeFileName, 'stop']
 
         if (service)
             args.push(service)
 
         const cp = CP.spawn('docker-compose', args, {cwd: this.workDir, stdio: 'inherit', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)
@@ -87,9 +88,9 @@ export class DockerCompose {
     async start(service: string): Promise<void> {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['--compatibility', 'start', service], {cwd: this.workDir, stdio: 'ignore', env})
+        const cp = CP.spawn('docker-compose', ['--compatibility', '-f', this.config.composeFileName, 'start', service], {cwd: this.workDir, stdio: 'ignore', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)
@@ -102,9 +103,9 @@ export class DockerCompose {
     async logs(service?: string): Promise<void> {
         const env = {...process.env, ...this.config.env || {}}
 
-        const cp = CP.spawn('docker-compose', ['--compatibility', 'logs'], {cwd: this.workDir, stdio: 'inherit', env})
+        const cp = CP.spawn('docker-compose', ['--compatibility','-f', this.config.composeFileName, 'logs'], {cwd: this.workDir, stdio: 'inherit', env})
 
-        await new Promise((res, rej) => {
+        await new Promise<void>((res, rej) => {
             cp.on('exit', (code, sig) => {
                 if (sig || code != 0)
                     rej(code)

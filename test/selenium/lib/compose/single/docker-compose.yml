@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+    rundeck:
+        build:
+          context: ../cluster/
+          args:
+            RUNDECK_IMAGE: ${RUNDECK_IMAGE:-rundeck/rundeck:SNAPSHOT}
+        environment:
+            RUNDECK_GRAILS_URL: http://localhost:4440
+            RUNDECK_SERVER_FORWARDED: 'true'
+            RUNDECK_TOKENS_FILE: /home/rundeck/etc/tokens.properties
+        volumes:
+          - logs:/home/rundeck/var/logs
+          - ../cluster/test-tokens.properties:/home/rundeck/etc/tokens.properties
+        ports:
+          - "4440:4440"
+
+volumes:
+    logs:
