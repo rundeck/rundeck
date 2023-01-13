@@ -212,7 +212,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
                 //TODO: could not load plugin, or config was invalid
                 return
             }
-            configured << new NamedExecutionLifecycleComponent(plugin: (ExecutionLifecyclePlugin) configuredPlugin.instance, name: type)
+            configured << new NamedExecutionLifecycleComponent(component: (ExecutionLifecyclePlugin) configuredPlugin.instance, name: type)
         }
         configured
     }

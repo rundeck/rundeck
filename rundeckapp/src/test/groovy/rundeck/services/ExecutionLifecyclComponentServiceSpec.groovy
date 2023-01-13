@@ -85,7 +85,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
-                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', plugin: plugin)]
+                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', component: plugin)]
             )
         then:
             result.isSuccessful()
@@ -115,7 +115,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
-                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', plugin: plugin)]
+                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', component: plugin)]
             )
         then:
             thrown(ExecutionLifecycleComponentException)
@@ -138,7 +138,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
-                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', plugin: plugin)]
+                    [new NamedExecutionLifecycleComponent(name: 'TestPlugin', component: plugin)]
             )
         then:
             thrown(ExecutionLifecycleComponentException)
