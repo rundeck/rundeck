@@ -15,8 +15,9 @@ import {Component, Prop, Watch} from 'vue-property-decorator'
 
 import {
     getRundeckContext,
-} from '@rundeck/ui-trellis'
-import {UIItem, UIWatcher} from '@rundeck/ui-trellis/lib/stores/UIStore'
+} from '../../rundeckService'
+import {UIItem, UIWatcher} from '../../stores/UIStore'
+// import {UIItem, UIWatcher} from '@rundeck/ui-trellis/lib/stores/UIStore'
 
 const rootStore = getRundeckContext().rootStore
 
@@ -25,6 +26,7 @@ export default class UiSocket extends Vue {
     @Prop({required: true}) readonly section!: string
     @Prop({required: true}) readonly location!: string
     @Prop({required: false}) readonly eventBus!: Vue
+    @Prop({required: false}) readonly data!: any
 
     items: UIItem[] = []
 

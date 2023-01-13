@@ -1,6 +1,6 @@
 import Vue from 'vue'
 
-import UiSocket from './UiSocket.vue'
+import UiSocket from '@rundeck/ui-trellis/lib/components/utils/UiSocket.vue'
 import {getRundeckContext} from '@rundeck/ui-trellis'
 
 const rootStore = getRundeckContext().rootStore
