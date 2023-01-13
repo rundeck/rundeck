@@ -514,9 +514,8 @@ jobs:
             --headless \
             --provision \
             -t TEST_TOKEN \
-            --image rundeck/rundeck:SNAPSHOT \
-            --clusterConfig ~/repo/test \
-            -f selenium-docker-compose.yml \
+            --clusterConfig ~/repo/test/selenium/lib/compose/single \
+            --image rundeck/rundeck \
             --s3-upload --s3-base $S3_SELENIUM_IMAGES_BASE \
             -j="--verbose --colors"
       - run:
@@ -534,7 +533,7 @@ jobs:
           working_directory: ~/repo/test
           when: always
           command: |
-            docker-compose -f selenium-docker-compose.yml logs rundeck
+            docker-compose -p testdeck -f ./selenium/lib/compose/single/docker-compose.yml logs
       - store_artifacts:
           path: test/selenium/test_out/images
           destination: images
