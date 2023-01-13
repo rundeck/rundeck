@@ -494,13 +494,6 @@ jobs:
             source .circleci/circle-shim.sh
             pull_rundeck
       - run:
-          name: Alert about S3 Image Storage
-          working_directory: ~/repo
-          command: |
-              source .circleci/circle-shim.sh
-              echo -e "Image output available at:\n"
-              echo -e "http://test.rundeck.org/${S3_SELENIUM_IMAGES_BASE}\n"
-      - run:
           name: Test
           working_directory: ~/repo/test/selenium
           command: |
@@ -515,19 +508,7 @@ jobs:
             --provision \
             -t TEST_TOKEN \
             --clusterConfig ~/repo/test/selenium/lib/compose/single \
-            --image rundeck/rundeck \
-            --s3-upload --s3-base $S3_SELENIUM_IMAGES_BASE \
             -j="--verbose --colors"
-      - run:
-          name: Sync Selenium images to S3
-          workdir: ~/repo/test
-          command: |
-              source .circleci/circle-shim.sh
-              export DIFF_DIR=__image_snapshots__/__diff_output__
-
-              if [[ -d "${DIFF_DIR}" ]] ; then
-                  aws s3 sync $DIFF_DIR s3://test.rundeck.org/$S3_SELENIUM_IMAGES_BASE/diff
-              fi
       - run:
           name: Logs
           working_directory: ~/repo/test
