@@ -6,37 +6,15 @@ services:
           context: ../cluster/
           args:
             RUNDECK_IMAGE: ${RUNDECK_IMAGE:-rundeck/rundeck:SNAPSHOT}
-        links:
-          - mysql
         environment:
             RUNDECK_GRAILS_URL: http://localhost:4440
             RUNDECK_SERVER_FORWARDED: 'true'
-            RUNDECK_DATABASE_DRIVER: org.mariadb.jdbc.Driver
-            RUNDECK_DATABASE_USERNAME: rundeck
-            RUNDECK_DATABASE_PASSWORD: rundeck
-            RUNDECK_DATABASE_URL: jdbc:mariadb://mysql/rundeck?autoReconnect=true&useSSL=false
             RUNDECK_TOKENS_FILE: /home/rundeck/etc/tokens.properties
         volumes:
           - logs:/home/rundeck/var/logs
           - ../cluster/test-tokens.properties:/home/rundeck/etc/tokens.properties
-        expose:
-          - 4440
         ports:
-          - 4440:4440
-    mysql:
-        image: mysql:5.7
-        ports:
-          - 3306:3306
-        expose:
-          - 3306
-        environment:
-          - MYSQL_ROOT_PASSWORD=root
-          - MYSQL_DATABASE=rundeck
-          - MYSQL_USER=rundeck
-          - MYSQL_PASSWORD=rundeck
-        volumes:
-          - dbdata:/var/lib/mysql
+          - "4440:4440"
 
 volumes:
-    dbdata:
     logs:
