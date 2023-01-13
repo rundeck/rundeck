@@ -510,11 +510,11 @@ jobs:
             nvm use v16.18.0
             npm run bootstrap
             bin/deck test -s selenium \
-            -u http://localhost \
+            -u http://localhost:4440 \
             --headless \
             --provision \
             -t TEST_TOKEN \
-            --image rundeck/rundeck \
+            --image rundeck/rundeck:SNAPSHOT \
             --clusterConfig ~/repo/test \
             -f selenium-docker-compose.yml \
             --s3-upload --s3-base $S3_SELENIUM_IMAGES_BASE \

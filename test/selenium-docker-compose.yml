@@ -4,8 +4,8 @@ services:
   rundeck:
     image: ${RUNDECK_IMAGE:-rundeck/rundeck:SNAPSHOT}
     environment:
-      RUNDECK_SERVER_ADDRESS: rundeck
-      RUNDECK_GRAILS_URL: http://rundeck
+      RUNDECK_SERVER_ADDRESS: http://localhost
+      RUNDECK_GRAILS_URL: http://localhost
       RUNDECK_TOKENS_FILE: /home/rundeck/etc/tokens.properties
     expose:
       - 4440
@@ -13,6 +13,6 @@ services:
       - "80:4440"
     volumes:
       - ./test-tokens.properties:/home/rundeck/etc/tokens.properties
-  
+
 volumes:
   node_modules:
