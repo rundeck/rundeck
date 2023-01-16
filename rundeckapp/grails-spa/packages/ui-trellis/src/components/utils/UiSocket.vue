@@ -4,7 +4,7 @@
         <template v-for="i in items">
             <template v-if="i.text">{{ i.text }}</template>
             <span v-else-if="i.html" v-html="i.html"></span>
-            <component :is="i.widget" v-else-if="i.widget"/>
+            <component :is="i.widget" v-else-if="i.widget" :data="data"/>
         </template>
     </span>
 </template>

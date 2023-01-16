@@ -18,7 +18,7 @@
                 'execution-log__content--html': $options.entry.logHtml
             }]"
         >
-            <ui-socket section="execution-log-line" location="badges"/>
+            <ui-socket section="execution-log-line" location="badges" :data="$options.entry"/>
             <span v-if="displayNodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/><span :pseudo-content="$options.entry.node" /></span>
             <span v-if="$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="$options.entry.logHtml"/>
             <span v-if="!$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}">{{$options.entry.log}}</span
