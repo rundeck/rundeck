@@ -152,6 +152,7 @@ export class LogBuilder {
     // TODO: Remove seemingly failed attempt to reduce mem footprint due to Vue reactivity
     // The entry can probably be passed through as a prop again
     (<any>vue).$options.entry = {
+      meta: newEntry.meta,
       log: newEntry.log,
       logHtml: (<any>newEntry).loghtml,
       time: newEntry.time,

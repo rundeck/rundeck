@@ -200,6 +200,7 @@ export class ExecutionOutputEntry {
     stepctx?: string
     node?: string
     lineNumber!: number
+    meta!: object
 
     renderedStep?: RenderedStepList
 
@@ -209,6 +210,13 @@ export class ExecutionOutputEntry {
 
     static FromApiResponse(executionOutput: ExecutionOutput, resp: ApiExecutionOutputEntry, line: number, workflow: JobWorkflow) {
         const entry = new ExecutionOutputEntry(executionOutput)
+        const meta: {[key: string]: any} = {}
+
+        Object.getOwnPropertyNames(resp).forEach(keyname => {
+            // Copy all received properties as meta to get also metadata added by plugins.
+            meta[keyname] = resp[keyname as keyof ApiExecutionOutputEntry]
+        })
+        
         entry.time = resp.time!
         entry.absoluteTime = resp.absoluteTime!
         entry.log = resp.log
@@ -219,7 +227,7 @@ export class ExecutionOutputEntry {
         entry.node = resp.node
         entry.lineNumber = line
         entry.renderedStep = entry.stepctx ? workflow.renderStepsFromContextPath(entry.stepctx) : undefined
-
+        entry.meta = meta
         return entry
     }
 }
