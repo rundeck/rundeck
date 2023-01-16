@@ -424,6 +424,7 @@ public class RundeckConfigBase {
         Csrf csrf;
         Ldap ldap;
         HttpHeaders headers;
+        HttpFirewall httpFirewall;
         InterceptorHelperConfig interceptor;
         Oauth oauth;
 
@@ -490,6 +491,18 @@ public class RundeckConfigBase {
             Boolean enabled;
             Map<String,Object> provider; //very complex structure
         }
+
+        /**
+         * Configuration for HttpFirewall which is a spring security feature to counter HTTP related attacks.
+         */
+        @Data
+        public static class HttpFirewall {
+            // A flag let system admin turn on/off this HttpFirewall feature
+            Boolean enabled;
+            // A comma separated list of host names. E.g. "localhost, example.com, 127.0.0.1, 192.168.0.1"
+            String allowedHostnames;
+        }
+
         @Data
         public static class Oauth {
             Okta okta;

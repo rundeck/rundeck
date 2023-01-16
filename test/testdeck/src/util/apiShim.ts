@@ -35,7 +35,7 @@ export function ShimApiTests(pattern: RegExp) {
     CreateTestContext({projects: ['test']})
 
     beforeAll(async () => {
-        const out = CP.execSync(`RDECK_URL=${envOpts.TESTDECK_RUNDECK_URL} bash ./rundecklogin.sh - admin admin`, {cwd: '../api'})
+        const out = CP.execSync(`RDECK_URL=${envOpts.TESTDECK_RUNDECK_URL} SHELL=/bin/bash bash ./rundecklogin.sh - admin admin`, {cwd: '../api'})
     })
 
     let tests = FS.readdirSync('../api')
@@ -51,10 +51,10 @@ export function ShimApiTests(pattern: RegExp) {
  
         it(t, () => {
             try {
-                const out = CP.execSync(`RDECK_URL=${envOpts.TESTDECK_RUNDECK_URL} bash ./${t} -`, {cwd: '../api'})
-            } catch (e) {
+                const out = CP.execSync(`RDECK_URL=${envOpts.TESTDECK_RUNDECK_URL} SHELL=/bin/bash bash ./${t} -`, {cwd: '../api'})
+            } catch (e:any) {
                 const ex = e as Error
-                ex.message = `${e.stdout.toString()}\n${e.message}`
+                ex.message = `${e.stdout.toString()}\n${ex.message}`
                 throw e
             }
         })
