@@ -31,8 +31,8 @@
 <g:if test="${rpt?.jcJobId}">
     <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(rpt.jcJobId)}"/>
 </g:if>
-<g:if test="${rpt?.jcExecId}">
-    <g:set var="execution" value="${Execution.get(rpt.jcExecId)}"/>
+<g:if test="${rpt?.executionId}">
+    <g:set var="execution" value="${Execution.get(rpt.executionId)}"/>
     <g:set var="status" value="${execution.executionState}"/>
 </g:if>
 <div class="" >
@@ -55,9 +55,9 @@
 
 
     <span >
-        <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
+        <g:link controller="execution" action="show" id="${rpt.executionId}" class="_defaultAction"
                 params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
-                title="View execution output" absolute="true">#<g:enc>${rpt.jcExecId}</g:enc></g:link>
+                title="View execution output" absolute="true">#<g:enc>${rpt.executionId}</g:enc></g:link>
         <g:if test="${rpt?.jcJobId}">
             <g:set var="foundJob" value="${ScheduledExecution.getByIdOrUUID(rpt.jcJobId)}"/>
             <g:if test="${foundJob}">
