@@ -1,15 +1,41 @@
+import com.rundeck.liquibase.UniqueConstraintPrecondition
+
 databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-29", failOnError:"false", dbms:"mysql,mssql,postgresql,mariadb") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "auth_token", "UC_AUTH_TOKENTOKEN_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "token", constraintName: "UC_AUTH_TOKENTOKEN_COL", tableName: "auth_token")
     }
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-30", failOnError:"false", dbms:"mysql,mssql,postgresql,mariadb") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "log_file_storage_request", "UC_LOG_FILE_STORAGE_REQUESTEXECUTION_ID_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "execution_id", constraintName: "UC_LOG_FILE_STORAGE_REQUESTEXECUTION_ID_COL", tableName: "log_file_storage_request")
     }
 
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-31", failOnError:"false", dbms:"mysql,mssql,postgresql,mariadb") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "project", "UC_PROJECTNAME_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "name", constraintName: "UC_PROJECTNAME_COL", tableName: "project")
     }
 //////////////////////////////////////// Oracle Specific ///////////////////////////////////////////////////////////////
@@ -25,11 +51,27 @@ databaseChangeLog = {
     }
 
     changeSet(author: "rundeckuser (generated)", id: "1613961122706-30", failOnError:"false", dbms: "oracle") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "auth_token", "UC_AUTH_TOKENTOKEN_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "token", constraintName: "UC_AUTH_TOKENTOKEN_COL", forIndexName: "IDX_TOKEN", tableName: "auth_token")
     }
 
 
     changeSet(author: "rundeckuser (generated)", id: "1613961122706-31", failOnError:"false", dbms: "oracle") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "log_file_storage_request", "UC_LOG_FILE_STORAGE_REQUESTEXECUTION_ID_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "execution_id", constraintName: "UC_LOG_FILE_STORAGE_REQUESTEXECUTION_ID_COL", tableName: "log_file_storage_request")
     }
 
@@ -45,18 +87,50 @@ databaseChangeLog = {
     }
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "1613961122706-33", dbms: "oracle") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "project", "UC_PROJECTNAME_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "name", constraintName: "UC_PROJECTNAME_COL", forIndexName: "PROJECT_IDX_NAME", tableName: "project")
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-32") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "report_filter", "UC_REPORT_FILTERNAME_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "name", constraintName: "UC_REPORT_FILTERNAME_COL", tableName: "report_filter")
     }
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-33") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "scheduled_execution", "UC_SCHEDULED_EXECUTIONUUID_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "uuid", constraintName: "UC_SCHEDULED_EXECUTIONUUID_COL", tableName: "scheduled_execution")
     }
 
     changeSet(author: "rundeckuser (generated)", failOnError:"false", id: "3.4.0-34") {
+        preConditions(onFail: 'MARK_RAN') {
+            grailsPrecondition {
+                check {
+                    def ran = UniqueConstraintPrecondition.exists(database?.databaseProductName, sql, "storage", "UC_STORAGEPATH_SHA_COL")
+                    if(ran) fail('unique constraint precondition is not satisfied')
+                }
+            }
+        }
         addUniqueConstraint(columnNames: "path_sha", constraintName: "UC_STORAGEPATH_SHA_COL", tableName: "storage")
     }
 
