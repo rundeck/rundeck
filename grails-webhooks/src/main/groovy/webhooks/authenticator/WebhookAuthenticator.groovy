@@ -1,8 +1,8 @@
 package webhooks.authenticator
 
-import webhooks.Webhook
+import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import javax.servlet.http.HttpServletRequest
 
 interface WebhookAuthenticator {
-    boolean authenticate(Webhook webhook, HttpServletRequest request)
+    boolean authenticate(RdWebhook webhook, HttpServletRequest request)
 }

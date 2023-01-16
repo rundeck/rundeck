@@ -46,4 +46,5 @@ class Webhook implements RdWebhook{
         if(authtoken.contains("#")) return authtoken.substring(0,authtoken.indexOf("#"))
         return authtoken
     }
+
 }

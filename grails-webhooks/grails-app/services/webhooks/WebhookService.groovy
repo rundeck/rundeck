@@ -137,15 +137,15 @@ class WebhookService {
     }
 
     def listWebhooksByProject(String project) {
-        Webhook.findAllByProject(project).collect {
+        webhookDataProvider.findAllByProject(project).collect {
             getWebhookWithAuthAsMap(it)
         }
     }
 
-    def saveHook(UserAndRolesAuthContext authContext,def hookData) {
-        Webhook hook
+    def saveHook(UserAndRolesAuthContext authContext, def hookData) {
+        RdWebhook hook
         if(hookData.id) {
-            hook = Webhook.get(hookData.id)
+            hook = webhookDataProvider.get(hookData.id)
             if (!hook) return [err: "Webhook not found"]
             if(hookData.roles && !hookData.importData) {
                 try {
@@ -155,15 +155,15 @@ class WebhookService {
                 }
             }
         } else {
-            int countByNameInProject = Webhook.countByNameAndProject(hookData.name,hookData.project)
+            int countByNameInProject = webhookDataProvider.countByNameAndProject(hookData.name,hookData.project)
             if(countByNameInProject > 0) return [err: "A Webhook by that name already exists in this project"]
             String checkUser = hookData.user ?: authContext.username
             if (!hookData.importData && !userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
-            hook = new Webhook()
+            hook = webhookDataProvider.buildWebhook()
             hook.uuid = UUID.randomUUID().toString()
         }
         hook.uuid = hookData.uuid ?: hook.uuid
-        def whsFound = Webhook.findAllByNameAndProjectAndUuidNotEqual(hookData.name, hookData.project, hook.uuid)
+        def whsFound = webhookDataProvider.findAllByNameAndProjectAndUuidNotEqual(hookData.name, hookData.project, hook.uuid)
         if( whsFound.size() > 0) {
             return [err: " A Webhook by that name already exists in this project"]
         }
@@ -238,10 +238,10 @@ class WebhookService {
         }
     }
 
-    boolean importIsAllowed(Webhook hook, Map hookData) {
+    boolean importIsAllowed(RdWebhook hook, Map hookData) {
         if(hook.authToken == hookData.authToken) return true
         if(!hook.authToken
-            && Webhook.countByAuthToken(hookData.authToken) == 0
+            && webhookDataProvider.countByAuthToken(hookData.authToken) == 0
             && !rundeckAuthTokenManagerService.getTokenWithType(
             hookData.authToken,
             AuthenticationToken.AuthTokenType.WEBHOOK
@@ -270,16 +270,16 @@ class WebhookService {
     }
 
     def deleteWebhooksForProject(String project) {
-        Webhook.findAllByProject(project).each { webhook ->
+        webhookDataProvider.findAllByProject(project).each { webhook ->
             delete(webhook)
         }
     }
 
-    def delete(Webhook hook) {
+    def delete(RdWebhook hook) {
         String authToken = hook.authToken
         String name = hook.name
         try {
-            hook.delete()
+            webhookDataProvider.delete(hook.id)
             rundeckAuthTokenManagerService.deleteByTokenWithType(authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             return [msg: "Deleted ${name} webhook"]
         } catch(Exception ex) {
@@ -290,7 +290,7 @@ class WebhookService {
 
     def importWebhook(UserAndRolesAuthContext authContext, Map hook, boolean regenAuthTokens) {
 
-        Webhook existing = Webhook.findByUuidAndProject(hook.uuid, hook.project)
+        RdWebhook existing = webhookDataProvider.findByUuidAndProject(hook.uuid, hook.project)
         if(existing) hook.id = existing.id
         hook.importData = true
 
@@ -315,18 +315,18 @@ class WebhookService {
     }
 
     def getWebhookWithAuth(String id) {
-        Webhook hook = Webhook.get(id.toLong())
+        RdWebhook hook = webhookDataProvider.get(id.toLong())
         getWebhookWithAuthAsMap(hook)
     }
     def getWebhookForProjectWithAuth(String id, String project) {
-        Webhook hook = getWebhookWithProject(id.toLong(), project)
+        RdWebhook hook = getWebhookWithProject(id.toLong(), project)
         if(!hook){
             return null
         }
         getWebhookWithAuthAsMap(hook)
     }
 
-    private Map getWebhookWithAuthAsMap(Webhook hook) {
+    private Map getWebhookWithAuthAsMap(RdWebhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getTokenWithType(
             hook.authToken,
             AuthenticationToken.AuthTokenType.WEBHOOK
