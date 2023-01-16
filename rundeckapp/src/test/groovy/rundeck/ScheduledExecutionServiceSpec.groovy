@@ -26,8 +26,11 @@ import grails.testing.gorm.DataTest
 //import grails.test.GrailsUnitTestCase
 
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.ImportedJob
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecycleComponentService
+import rundeck.services.OldJob
 import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
 
@@ -74,6 +77,32 @@ public class ScheduledExecutionServiceSpec extends Specification implements Data
         def result = service.runBeforeSave(scheduledExecution, authContext)
         then:
         assertEquals result, [success: false, scheduledExecution: scheduledExecution, error: "message from life cycle plugin"]
+    }
+
+    void "Job gets persisted if the scheduling is changed"(){
+        when:
+        def scheduledExecution = new ScheduledExecution(id: 1, jobName:'testScheduling',groupPath:'group1', project:'test', dayOfWeek: "1")
+        scheduledExecution.save()
+        ImportedJob<ScheduledExecution> importedJob =  new RundeckJobDefinitionManager.ImportedJobDefinition(job: scheduledExecution, associations:  null)
+        importedJob.job.dayOfWeek = "2"
+        FrameworkService frameworkService = Mock(FrameworkService){
+            it.isClusterModeEnabled() >> false
+        }
+        OldJob mockedOldJob = Mock(OldJob){
+            it.wasRenamed(_) >> false
+            it.schedulingWasChanged(_) >> true
+        }
+        ScheduledExecutionService service = Mock(ScheduledExecutionService){
+            it.validateJobDefinition(_) >> false
+            it.runBeforeSave(_,_) >> [success: true]
+            it.saveComponents(_,_) >> [success: true]
+            it.rundeckJobDefinitionManager.waspersisted(_,_) >> true
+        }
+        def authContext = Mock(UserAndRolesAuthContext)
+        service._dosaveupdated([:],importedJob,mockedOldJob,authContext,[method: "update", user: "admin", change: "modify"],false)
+
+        then:
+        ScheduledExecution.findById(scheduledExecution.id).dayOfWeek == "2"
     }
 
     void testGetNodes(){

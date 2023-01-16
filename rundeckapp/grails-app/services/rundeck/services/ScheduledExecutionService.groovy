@@ -3352,6 +3352,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def modify = true
         boolean schedulingWasChanged = oldjob.schedulingWasChanged(scheduledExecution)
+        if( schedulingWasChanged ){
+            scheduledExecution.markDirty()
+        }
         if(frameworkService.isClusterModeEnabled()){
             if (schedulingWasChanged) {
                 JobReferenceImpl jobReference = scheduledExecution.asReference()
