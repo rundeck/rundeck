@@ -1,5 +1,6 @@
 package org.rundeck.app.data.model.v1.job;
 
+import org.rundeck.app.data.model.v1.job.component.JobComponentData;
 import org.rundeck.app.data.model.v1.job.config.LogConfig;
 import org.rundeck.app.data.model.v1.job.config.NodeConfig;
 import org.rundeck.app.data.model.v1.job.notification.NotificationData;
@@ -45,4 +46,5 @@ public interface JobData {
     ScheduleData getSchedule();
     OrchestratorData getOrchestrator();
 
+    Map<String, JobComponentData> getComponents();
 }

@@ -1,11 +1,11 @@
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import org.rundeck.app.data.exception.DataValidationException
+import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import rundeck.data.job.RdJob
 import org.rundeck.app.data.validation.ValidationResponse
 import org.springframework.context.MessageSource
@@ -32,7 +32,9 @@ class RdJobController {
             def uuid = UUID.fromString(params.id)
             render mapper.writeValueAsString(rdJobService.getJobByUuid(uuid.toString()))
             return
-        } catch(IllegalArgumentException ignored) {}
+        } catch(IllegalArgumentException ignored) {
+            println "oops"
+        }
 
         render mapper.writeValueAsString(rdJobService.getJobById(params.id.toLong()))
     }

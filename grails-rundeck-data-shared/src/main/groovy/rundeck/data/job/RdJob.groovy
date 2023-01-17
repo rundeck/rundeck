@@ -1,16 +1,21 @@
 package rundeck.data.job
 
 import com.dtolabs.rundeck.core.common.FrameworkResource
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
+import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import grails.util.Holders
 import grails.validation.Validateable
+import org.rundeck.app.components.jobs.JobDefinitionComponent
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.component.JobComponentData
 import rundeck.data.constants.NotificationConstants
 import rundeck.data.validation.validators.ValidatorUtils
 import rundeck.data.validation.validators.execlifecycle.ExecutionLifecyclePluginValidator
 import rundeck.data.validation.validators.jobargs.JobArgStringValidator
+import rundeck.data.validation.validators.jobcomponent.JobComponentValidator
 import rundeck.data.validation.validators.joboptions.JobOptionDataValidator
 import rundeck.data.validation.validators.notification.EmailNotificationValidator
 import rundeck.data.validation.validators.notification.PluginNotificationValidator
@@ -57,6 +62,7 @@ class RdJob implements JobData, Validateable {
     RdSchedule schedule;
     RdOrchestrator orchestrator;
     Map<String, Object> pluginConfigMap;
+    Map<String, RdJobComponentData> components = [:]
 
     static constraints = {
         importFrom SharedProjectNameConstraints
@@ -125,6 +131,12 @@ class RdJob implements JobData, Validateable {
                 new ExecutionLifecyclePluginValidator(Holders.grailsApplication.mainContext.getBean(FrameworkServiceCapabilities)).validate(obj, errors)
             }
         })
+    }
+
+    boolean hasSecureOptions() {
+        return !optionSet ? false : optionSet?.any {
+            it.secureInput || it.secureExposed
+        }
     }
 
 }

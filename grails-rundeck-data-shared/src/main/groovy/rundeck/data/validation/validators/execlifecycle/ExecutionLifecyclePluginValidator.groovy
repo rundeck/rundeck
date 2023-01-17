@@ -1,8 +1,8 @@
 package rundeck.data.validation.validators.execlifecycle
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.JobData
 import org.springframework.validation.Errors
 import org.springframework.validation.Validator

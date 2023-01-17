@@ -4192,7 +4192,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
         def jobEventStatus
         try {
-            jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution, jobPersistEvent)
+            jobEventStatus = jobLifecycleComponentService?.beforeJobSave(scheduledExecution.project, jobPersistEvent)
         } catch (JobLifecycleComponentException exception) {
             log.debug("JobLifecycle error: " + exception.message, exception)
             log.warn("JobLifecycle error: " + exception.message)

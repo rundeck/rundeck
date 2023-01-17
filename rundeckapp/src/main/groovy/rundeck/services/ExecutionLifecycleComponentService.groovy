@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
@@ -37,7 +38,7 @@ import rundeck.services.feature.FeatureService
  */
 @CompileStatic
 @Slf4j
-class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ApplicationContextAware  {
+class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ExecutionLifecycleJobDataAdapter, ApplicationContextAware  {
 
     @Autowired
     ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService

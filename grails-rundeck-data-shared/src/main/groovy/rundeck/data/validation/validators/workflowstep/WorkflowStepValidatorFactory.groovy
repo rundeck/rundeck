@@ -1,9 +1,9 @@
 package rundeck.data.validation.validators.workflowstep
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.StepPlugin
 import grails.util.Holders
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import rundeck.data.constants.WorkflowStepConstants
 import rundeck.data.job.RdWorkflowStep
 import org.rundeck.app.data.providers.v1.job.JobDataProvider

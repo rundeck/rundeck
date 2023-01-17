@@ -1,15 +1,18 @@
-package com.dtolabs.rundeck.core.common;
+package org.rundeck.app.core;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.common.IFramework;
+import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.config.FeatureService;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory;
 import com.dtolabs.rundeck.core.jobs.IExecutionLifecyclePluginService;
-import com.dtolabs.rundeck.core.options.JobOptionUrlExpander;
 import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever;
 import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory;
+import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter;
+import org.rundeck.app.job.option.JobOptionUrlExpander;
 
 import javax.servlet.http.HttpSession;
 import java.util.Collection;
@@ -28,7 +31,7 @@ public interface FrameworkServiceCapabilities {
     JobOptionUrlExpander getJobOptionUrlExpander();
     RemoteJsonOptionRetriever getRemoteJsonOptionRetriever();
     WorkflowExecutionItemFactory getWorkflowExecutionItemFactory();
-    IExecutionLifecyclePluginService getExecutionLifecyclePluginService();
+    ExecutionLifecycleJobDataAdapter getExecutionLifecyclePluginService();
 
 
     Map validateDescription(Description description, String prefix, Map params);

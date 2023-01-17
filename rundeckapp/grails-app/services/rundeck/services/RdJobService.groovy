@@ -16,11 +16,14 @@ class RdJobService {
     }
 
     JobData saveJob(JobData job) {
+        //run before save processes
         return jobDataProvider.save(job)
     }
 
     void delete(String id) {
+        //run before delete processes
         if(id.length() == 36) jobDataProvider.deleteByUuid(id)
         else jobDataProvider.delete(id.toLong())
+        //run after delete processes
     }
 }

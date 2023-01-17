@@ -1,11 +1,11 @@
 package rundeck.data.job
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import grails.util.Holders
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import grails.validation.Validateable
 import org.springframework.validation.Errors

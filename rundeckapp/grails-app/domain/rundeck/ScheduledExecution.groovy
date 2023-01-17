@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
+import org.rundeck.app.data.model.v1.job.component.JobComponentData
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.job.RdSchedule
@@ -115,7 +116,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
                          'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap']
+                         'pluginConfigMap', 'components']
 
     static constraints = {
         importFrom SharedProjectNameConstraints
@@ -664,7 +665,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     // various utility methods to the process crontab entry data
     def String generateCrontabExression() {
-        return [seconds?seconds:'0',minute,hour,dayOfMonth.toUpperCase(),month.toUpperCase(),dayOfMonth=='?'?dayOfWeek.toUpperCase():'?',year?year:'*'].join(" ")
+        return [seconds?seconds:'0',minute,hour,dayOfMonth?.toUpperCase(),month?.toUpperCase(),dayOfMonth=='?'?dayOfWeek?.toUpperCase():'?',year?year:'*'].join(" ")
     }
 
     /**
@@ -931,6 +932,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
   def Map timeAndDateAsBooleanMap() {
       def result = [ : ]
+      if(!scheduled) return result
       if (!this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
           def map = parseRangeForList(this.month,monthsofyearlist,"month")
           result.putAll(map)
@@ -1204,6 +1206,10 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     Set<NotificationData> getNotificationSet() {
         return notifications
+    }
+
+    Map<String, JobComponentData> getComponents() {
+        //TODO: hydrate job component data
     }
 
     RdLogConfig getLogConfig() {
