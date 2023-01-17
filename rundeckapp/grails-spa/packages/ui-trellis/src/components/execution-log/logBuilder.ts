@@ -165,8 +165,6 @@ export class LogBuilder {
       nodeBadge: renderNodeBadge,
       selected,
     }
-    console.log("LOGENTRY: ", logEntry)
-    console.log("VUEENTRY: ", vue.$options.entry)
     vue.$mount(span)
 
     const elem = vue.$el as HTMLElement
