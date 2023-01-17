@@ -14,7 +14,7 @@ import javax.transaction.Transactional;
 @GrailsCompileStatic
 @Slf4j
 @Transactional
-public class GormWebhookDataProvider implements WebhookDataProvider {
+class GormWebhookDataProvider implements WebhookDataProvider {
 
     @Autowired
     WebhookDataService webhookDataService
@@ -52,6 +52,11 @@ public class GormWebhookDataProvider implements WebhookDataProvider {
     @Override
     Webhook findByUuidAndProject(String uuid, String project) {
         return Webhook.findByUuidAndProject(uuid, project);
+    }
+
+    @Override
+    Webhook findByName(String name) {
+        return Webhook.findByName(name);
     }
 
     @Override
