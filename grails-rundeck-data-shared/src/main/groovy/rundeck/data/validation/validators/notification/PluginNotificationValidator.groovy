@@ -1,6 +1,5 @@
 package rundeck.data.validation.validators.notification
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants

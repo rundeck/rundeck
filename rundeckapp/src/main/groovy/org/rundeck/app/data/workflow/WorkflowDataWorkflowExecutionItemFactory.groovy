@@ -2,7 +2,6 @@ package org.rundeck.app.data.workflow
 
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
 import com.dtolabs.rundeck.core.utils.OptsUtil

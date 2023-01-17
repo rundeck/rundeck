@@ -19,6 +19,7 @@ import rundeck.data.constants.NotificationConstants
 import rundeck.data.validation.validators.ValidatorUtils
 import rundeck.data.validation.validators.execlifecycle.ExecutionLifecyclePluginValidator
 import rundeck.data.validation.validators.jobargs.JobArgStringValidator
+import rundeck.data.validation.validators.jobcomponent.JobComponentValidator
 import rundeck.data.validation.validators.joboptions.JobOptionDataValidator
 import rundeck.data.validation.validators.notification.EmailNotificationValidator
 import rundeck.data.validation.validators.notification.PluginNotificationValidator
@@ -64,6 +65,7 @@ class RdJob implements JobData, Validateable {
     RdSchedule schedule
     RdOrchestrator orchestrator
     Map<String, Object> pluginConfigMap = [:]
+
     Map<String, RdJobComponentData> components = [:]
 
     static nestedvalidator = { val, obj, errors ->

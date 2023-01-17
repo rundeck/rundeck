@@ -1,6 +1,5 @@
 package rundeck.data.validation.validators.plugin
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import org.rundeck.app.core.FrameworkServiceCapabilities

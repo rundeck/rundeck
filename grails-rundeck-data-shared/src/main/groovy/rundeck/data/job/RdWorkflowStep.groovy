@@ -1,6 +1,5 @@
 package rundeck.data.job
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties

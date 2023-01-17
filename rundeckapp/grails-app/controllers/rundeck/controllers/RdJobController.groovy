@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import groovy.transform.CompileStatic
 import org.rundeck.app.data.exception.DataValidationException
+import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import rundeck.data.job.RdJob
 import org.rundeck.app.data.validation.ValidationResponse
 import org.springframework.context.MessageSource
