@@ -425,20 +425,20 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
     def "countUsers should return right count"() {
         given:
-        User u = new User(login: "login", firstName: "first", lastName: "last", email: "user@company.com", lastLogin: new Date() - 1)
+        User u = new User(login: "login", firstName: "first", lastName: "last", email: "user@company.com", lastLogin: baseDate)
         u.save()
-        User u2 = new User(login: "test", firstName: "Steve", lastName: "Hyuga", email: "shyuga@niupi.com", lastLogin: new Date() - 1)
+        User u2 = new User(login: "test", firstName: "Steve", lastName: "Hyuga", email: "shyuga@niupi.com", lastLogin: baseDate - 1)
         u2.save()
-        User u3 = new User(login: "tsubasa", firstName: "Oliver", lastName: "Atom", email: "oatom@niupi.com", lastLogin: new Date() - 2)
+        User u3 = new User(login: "tsubasa", firstName: "Oliver", lastName: "Atom", email: "oatom@niupi.com", lastLogin: baseDate - 2)
         u3.save()
         when:
         def result = service.countUsers(date)
         then:
         result == expected
         where:
-        date           | expected
-        new Date() - 1 | 2
-        null           | 3
-        new Date()     | 0
+        baseDate   | date         | expected
+        new Date() | baseDate - 2 | 2
+        new Date() | null         | 3
+        new Date() | baseDate     | 0
     }
 }
