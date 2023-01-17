@@ -134,37 +134,35 @@ export class LogBuilder {
 
     this.currChunk!.append(span)
 
-    const renderNodeBadge = (lastEntry == undefined || logEntry.node != lastEntry.node)
-
     const label = this.entryStepLabel(newEntry)
     const stepType = this.entryStepType(newEntry)
     const path = this.entryPath(newEntry)
 
-    const vue = new EntryFlex({propsData: {
-      selected,
-      timestamps: this.opts.time.visible,
-      gutter: this.opts.gutter.visible,
-      command: this.opts.command.visible,
-      nodeBadge: this.opts.nodeIcon,
-      lineWrap: this.opts.content.lineWrap,
-    }});
+    const vue = new EntryFlex({
+      propsData: {
+        selected: selected,
+        timestamps: this.opts.time.visible,
+        command: this.opts.command.visible,
+        gutter: this.opts.gutter.visible,
+        nodeBadge: this.opts.nodeIcon,
+        lineWrap: this.opts.content.lineWrap,
+        prevEntry: this.lastEntry,
+        logEntry: {
+          meta: newEntry.meta,
+          log: newEntry.log,
+          logHtml: newEntry.logHtml,
+          time: newEntry.time,
+          level: newEntry.level,
+          stepLabel: label,
+          path,
+          stepType,
+          lineNumber: newEntry.id,
+          node: newEntry.node,
+          selected,
+        }
+      }
+    });
 
-    // TODO: Remove seemingly failed attempt to reduce mem footprint due to Vue reactivity
-    // The entry can probably be passed through as a prop again
-    (<any>vue).$options.entry = {
-      meta: newEntry.meta,
-      log: newEntry.log,
-      logHtml: (<any>newEntry).loghtml,
-      time: newEntry.time,
-      level: newEntry.level,
-      stepLabel: label,
-      path,
-      stepType,
-      lineNumber: newEntry.id,
-      node: newEntry.node,
-      nodeBadge: renderNodeBadge,
-      selected,
-    }
     vue.$mount(span)
 
     const elem = vue.$el as HTMLElement

@@ -497,7 +497,7 @@ export default class LogViewer extends Vue {
     private handleNewLine(entries: Array<any>) {
       for (const vue of entries) {
         // @ts-ignore
-        const selected = vue.$options.entry.lineNumber == this.jumpToLine
+        const selected = vue.logEntry.lineNumber == this.jumpToLine
         vue.$on('line-select', this.handleLineSelect)
         if (selected) {
           this.selected = vue
