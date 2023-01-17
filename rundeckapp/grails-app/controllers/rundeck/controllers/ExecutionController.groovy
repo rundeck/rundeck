@@ -912,7 +912,7 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        params.stateOutput=false
+        params.stateOutput?=false
 
         if (request.api_version < ApiVersions.V21) {
             params.remove('compacted')
