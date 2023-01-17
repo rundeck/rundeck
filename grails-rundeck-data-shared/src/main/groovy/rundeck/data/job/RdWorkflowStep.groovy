@@ -1,11 +1,11 @@
 package rundeck.data.job
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import grails.util.Holders
 import grails.validation.Validateable
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import rundeck.data.validation.shared.SharedWorkflowStepConstraints
 import rundeck.data.validation.validators.workflowstep.WorkflowStepValidatorFactory

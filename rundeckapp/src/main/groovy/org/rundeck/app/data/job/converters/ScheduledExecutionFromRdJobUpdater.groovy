@@ -2,6 +2,8 @@ package org.rundeck.app.data.job.converters
 
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.fasterxml.jackson.databind.ObjectMapper
+import grails.util.Holders
+import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
@@ -26,7 +28,7 @@ class ScheduledExecutionFromRdJobUpdater {
 
     static void update(ScheduledExecution se, RdJob job) {
         se.uuid = job.uuid
-        if(!(se.id && se.uuid)) se.uuid = UUID.randomUUID().toString()
+        if(!se.id && !se.uuid) se.uuid = UUID.randomUUID().toString()
         se.jobName = job.jobName
         se.description = job.description
         se.project = job.project

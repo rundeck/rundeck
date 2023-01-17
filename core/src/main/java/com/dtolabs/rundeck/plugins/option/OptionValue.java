@@ -15,9 +15,7 @@
  */
 package com.dtolabs.rundeck.plugins.option;
 
-import org.rundeck.app.data.model.v1.job.option.OptionValueData;
-
-public interface OptionValue extends OptionValueData {
+public interface OptionValue {
     String getName();
     String getValue();
 }

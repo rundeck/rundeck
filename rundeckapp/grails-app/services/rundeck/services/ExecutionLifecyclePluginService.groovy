@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
 import groovy.transform.CompileStatic
 import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
 import rundeck.ScheduledExecution
 
 /**
@@ -29,7 +30,7 @@ import rundeck.ScheduledExecution
  * Date: 5/07/19
  * Time: 10:32 AM
  */
-class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginService {
+class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginService, ExecutionLifecycleJobDataAdapter {
 
     PluginService pluginService
     ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService

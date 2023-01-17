@@ -122,9 +122,9 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobLifecycleStatus beforeJobExecution(ScheduledExecution job, JobPreExecutionEvent event)
+    JobLifecycleStatus beforeJobExecution(String projectName, JobPreExecutionEvent event)
             throws JobLifecycleComponentException {
-        def components = loadProjectComponents(job.project)
+        def components = loadProjectComponents(projectName)
         handleEvent(event, EventType.PRE_EXECUTION, components)
     }
 
@@ -134,8 +134,8 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobLifecycleStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) throws JobLifecycleComponentException {
-        def plugins = loadProjectComponents(job.project)
+    JobLifecycleStatus beforeJobSave(String projectName, JobPersistEvent event) throws JobLifecycleComponentException {
+        def plugins = loadProjectComponents(projectName)
         handleEvent(event, EventType.BEFORE_SAVE, plugins)
     }
 

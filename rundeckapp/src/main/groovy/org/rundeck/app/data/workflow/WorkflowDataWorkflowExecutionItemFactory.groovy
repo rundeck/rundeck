@@ -2,7 +2,6 @@ package org.rundeck.app.data.workflow
 
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -10,6 +9,7 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
+import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import rundeck.data.constants.WorkflowStepConstants
 
 class WorkflowDataWorkflowExecutionItemFactory implements WorkflowExecutionItemFactory {

@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.core.options;
+package org.rundeck.app.job.option;
 
 import org.rundeck.app.data.model.v1.job.JobData;
 import org.rundeck.app.data.model.v1.job.option.OptionData;

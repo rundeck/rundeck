@@ -48,6 +48,7 @@ dependencies {
     implementation 'org.quartz-scheduler:quartz:2.3.2'
     implementation project(":core")
     implementation project(':rundeck-data-model')
+    implementation project(':rundeck-app-util')
     profile "org.grails.profiles:web-plugin"
     runtimeOnly "com.bertramlabs.plugins:asset-pipeline-grails:$assetPluginVersion"
     testImplementation "io.micronaut:micronaut-inject-groovy"

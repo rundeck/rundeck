@@ -22,9 +22,14 @@ import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.events.LogJobChangeEvent
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import rundeck.services.scm.ProjectJobChangeListener
 
 class JobEventsService {
+    static Logger jobChangeLogger = LoggerFactory.getLogger("com.dtolabs.rundeck.data.jobs.changes")
     def List<JobChangeListener> listeners = []
     RundeckJobDefinitionManager rundeckJobDefinitionManager
 
@@ -67,6 +72,44 @@ class JobEventsService {
         }
         listeners?.each { listener ->
             listener.jobChangeEvent(e, serializer)
+        }
+    }
+
+    @Subscriber('log.job.change.event')
+    def logJobChange(LogJobChangeEvent e) {
+        println "got a log job change event"
+        def data = e.changeinfo
+        data.keySet().each {k ->
+            def v = data[k]
+            if (v instanceof Date) {
+                //TODO: reformat date
+                MDC.put(k, v.toString())
+                MDC.put("${k}Time", v.time.toString())
+            } else if (v instanceof String) {
+                MDC.put(k, v ? v : "-")
+            } else {
+                final string = v.toString()
+                MDC.put(k, string ? string : "-")
+            }
+        }
+        ['id', 'jobName', 'groupPath', 'project'].each {k ->
+            final var = e.jobData[k]
+            MDC.put(k, var ? var.toString() : '-')
+        }
+        if (e.jobData.uuid) {
+            MDC.put('id', e.jobData.uuid)
+        }
+        final msg = data.user + " " + data.change.toUpperCase() + " [" + (e.jobData.uuid ?: e.jobData.id) + "] " + e.jobData.project + " \"" + (e.jobData.groupPath ? e.jobData.groupPath : '') + "/" + e.jobData.jobName + "\" (" + data.method + ")"
+        jobChangeLogger.info(msg)
+        data.keySet().each {k ->
+            if (data[k] instanceof Date) {
+                //reformat date
+                MDC.remove(k + 'Time')
+            }
+            MDC.remove(k)
+        }
+        ['id', 'jobName', 'groupPath', 'project'].each {k ->
+            MDC.remove(k)
         }
     }
 }

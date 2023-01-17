@@ -1,9 +1,9 @@
 package org.rundeck.app.data.options
 
-import com.dtolabs.rundeck.core.options.JobOptionUrlExpander
 import com.dtolabs.rundeck.core.user.BaseUserProfile
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.option.OptionData
+import org.rundeck.app.job.option.JobOptionUrlExpander
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 

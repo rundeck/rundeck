@@ -4235,7 +4235,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodes,
             props.extraMetadataMap)
         try {
-            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
+            return jobLifecycleComponentService.beforeJobExecution(scheduledExecution.project, event)
         } catch (JobLifecycleComponentException jpe) {
             throw new ExecutionServiceValidationException(jpe.message, optparams, null)
         }

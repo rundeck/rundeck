@@ -2,7 +2,6 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet;
-import org.rundeck.app.data.model.v1.job.JobData;
 
 public interface IExecutionLifecyclePluginService {
     /**
@@ -15,10 +14,4 @@ public interface IExecutionLifecyclePluginService {
      */
     ExecutionLifecyclePluginHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference);
 
-    /**
-     * Read the config set for the job
-     * @param job
-     * @return PluginConfigSet for the ExecutionLifecyclePlugin service for the job, or null if not defined or not enabled
-     */
-    PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(JobData job);
 }

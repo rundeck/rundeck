@@ -28,9 +28,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
 import com.dtolabs.rundeck.core.jobs.IExecutionLifecyclePluginService
-import com.dtolabs.rundeck.core.options.JobOptionUrlExpander
 import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -48,6 +46,10 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextProcessor
+import org.rundeck.app.core.FrameworkServiceCapabilities
+import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
+import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
+import org.rundeck.app.job.option.JobOptionUrlExpander
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
@@ -636,7 +638,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
 
 
 
-    def getFrameworkNodeName() {
+    String getFrameworkNodeName() {
         return rundeckFramework.getFrameworkNodeName()
     }
 
@@ -1361,7 +1363,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         ]
     }
 
-    IExecutionLifecyclePluginService getExecutionLifecyclePluginService() {
+    ExecutionLifecycleJobDataAdapter getExecutionLifecyclePluginService() {
         return executionService.executionLifecyclePluginService
     }
 

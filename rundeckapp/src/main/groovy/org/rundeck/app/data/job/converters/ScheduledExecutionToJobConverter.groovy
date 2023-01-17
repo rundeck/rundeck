@@ -3,7 +3,11 @@ package org.rundeck.app.data.job.converters
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
+import grails.util.Holders
 import groovy.transform.TypeCheckingMode
+import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.components.jobs.JobDefinitionComponent
+import org.rundeck.app.job.component.JobComponentDataImportExport
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdNotification
 import rundeck.data.job.RdOption
@@ -23,8 +27,6 @@ import rundeck.WorkflowStep
 
 @GrailsCompileStatic
 class ScheduledExecutionToJobConverter {
-
-    static ObjectMapper mapper = new ObjectMapper()
 
     static JobData convert(ScheduledExecution se) {
         if(!se) return null
@@ -56,44 +58,23 @@ class ScheduledExecutionToJobConverter {
         job.optionSet = convertJobOptionSet(se)
         job.notificationSet = convertNotificationSet(se)
         job.workflow = convertWorkflow(se.workflow)
-        job.schedule = se.schedule
+        if(se.scheduled) job.schedule = se.schedule
         job.orchestrator = convertOrchestrator(se.orchestrator)
         job.pluginConfigMap = se.getPluginConfigMap()
-
+        addJobComponents(job)
         return job
     }
 
-//    static RdLogConfig convertLogConfig(ScheduledExecution se) {
-//        new RdLogConfig(loglevel: se.loglevel,
-//                logOutputThreshold: se.logOutputThreshold,
-//                logOutputThresholdAction: se.logOutputThresholdAction,
-//                logOutputThresholdStatus: se.logOutputThresholdStatus
-//        )
-//    }
-
-//    static RdNodeConfig convertNodeConfig(ScheduledExecution se) {
-//        new RdNodeConfig(
-//                nodeInclude : se.nodeInclude,
-//                nodeExclude : se.nodeExclude,
-//                nodeIncludeName : se.nodeIncludeName,
-//                nodeExcludeName : se.nodeExcludeName,
-//                nodeIncludeTags : se.nodeIncludeTags,
-//                nodeExcludeTags : se.nodeExcludeTags,
-//                nodeIncludeOsName : se.nodeIncludeOsName,
-//                nodeExcludeOsName : se.nodeExcludeOsName,
-//                nodeIncludeOsFamily : se.nodeIncludeOsFamily,
-//                nodeExcludeOsFamily : se.nodeExcludeOsFamily,
-//                nodeIncludeOsArch : se.nodeIncludeOsArch,
-//                nodeExcludeOsArch : se.nodeExcludeOsArch,
-//                nodeIncludeOsVersion : se.nodeIncludeOsVersion,
-//                nodeExcludeOsVersion : se.nodeExcludeOsVersion,
-//                nodeExcludePrecedence : se.nodeExcludePrecedence,
-//                successOnEmptyNodeFilter: se.successOnEmptyNodeFilter,
-//                filter: se.filter,
-//                filterExclude: se.filterExclude,
-//                excludeFilterUncheck: se.excludeFilterUncheck
-//        )
-//    }
+    static addJobComponents(RdJob job) {
+        RundeckJobDefinitionManager componentManager = Holders.applicationContext.getBean(RundeckJobDefinitionManager)
+        componentManager.jobDefinitionComponents.each { String cmp, JobDefinitionComponent componentDef ->
+            if(!(componentDef instanceof JobComponentDataImportExport)) {
+                println "skipping : " + cmp
+                return
+            }
+            ((JobComponentDataImportExport)componentDef).exportToJobData(job)
+        }
+    }
 
     static RdOrchestrator convertOrchestrator(Orchestrator o) {
         if(!o) return null
@@ -103,19 +84,6 @@ class ScheduledExecutionToJobConverter {
         orchestrator.configuration = o.configuration
         return orchestrator
     }
-
-//    static RdSchedule convertSchedule(ScheduledExecution se) {
-//        RdSchedule schedule = new RdSchedule()
-//        schedule.year = se.year
-//        schedule.month = se.month
-//        schedule.dayOfWeek = se.dayOfWeek
-//        schedule.dayOfMonth = se.dayOfMonth
-//        schedule.hour = se.hour
-//        schedule.minute = se.minute
-//        schedule.seconds = se.seconds
-//        schedule.crontabString = se.crontabString
-//        return schedule
-//    }
 
     static RdWorkflow convertWorkflow(Workflow w) {
         def wkf = new RdWorkflow()
