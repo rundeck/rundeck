@@ -1,12 +1,16 @@
 <template>
     <span class="copyright">
-        © Copyright 2021 PagerDuty, Inc. All rights reserved.
+        {{ copyright }}
     </span>
 </template>
 
 <script>
 export default {
-    
+    data () {
+        return {
+            copyright: BUILD_COPYRIGHT
+        }
+    }
 }
 </script>
 
