@@ -912,7 +912,7 @@ setTimeout(function(){
         if (!apiService.requireApi(request, response)) {
             return
         }
-        params.stateOutput?=false
+        params.stateOutput=false
 
         if (request.api_version < ApiVersions.V21) {
             params.remove('compacted')
@@ -975,7 +975,7 @@ setTimeout(function(){
                         time: timeFmt.format(it.time),
                         absolute_time: g.w3cDateValue([date: it.time]),
                         log: it.mesg?.replaceAll(/\r?\n$/, ''),
-                ]+it.subMap(['level','user','command','stepctx','node']))
+                ]+it.subMap(['level','user','command','stepctx','node','runnerId']))
                 datamap.remove('mesg')
                 if (it.loghtml) {
                     datamap.loghtml = it.loghtml
@@ -1069,7 +1069,7 @@ setTimeout(function(){
                         time: timeFmt.format(it.time),
                         absolute_time: g.w3cDateValue([date: it.time]),
                         log: it.mesg?.replaceAll(/\r?\n$/, ''),
-                ]+it.subMap(['level','user','command','stepctx','node']))
+                ]+it.subMap(['level','user','command','stepctx','node','runnerId']))
             datamap.remove('mesg')
             if (it.loghtml) {
                 datamap.loghtml = it.loghtml
