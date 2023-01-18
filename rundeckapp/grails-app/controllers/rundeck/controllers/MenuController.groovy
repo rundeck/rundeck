@@ -3041,7 +3041,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
         }
-        def supportedFormats = ['all', 'xml', 'yaml']
+        def supportedFormats = ['all', 'xml', 'yaml', 'html']
         if(request.api_version > ApiVersions.V41){
             supportedFormats << 'json'
         }
