@@ -20,8 +20,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import groovy.util.logging.Slf4j
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -35,10 +34,8 @@ import rundeck.services.feature.FeatureService
  * Time: 10:32 AM
  */
 @CompileStatic
+@Slf4j
 class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ApplicationContextAware  {
-
-    public static Logger log = LoggerFactory.getLogger(ExecutionLifecycleComponentService.class.name)
-
 
     @Autowired
     ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService

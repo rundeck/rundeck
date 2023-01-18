@@ -140,6 +140,7 @@ import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.ExecutionLifecycleComponentService
 import rundeck.services.ExecutionValidatorService
+import rundeck.services.JobLifecycleComponentService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
@@ -461,6 +462,12 @@ beans={
      * the Execution life cycle component service
      */
     executionLifecycleComponentService(ExecutionLifecycleComponentService)
+
+
+    /**
+     * the Execution life cycle component service
+     */
+    jobLifecycleComponentService(JobLifecycleComponentService)
 
     /**
      * the Notification plugin provider service

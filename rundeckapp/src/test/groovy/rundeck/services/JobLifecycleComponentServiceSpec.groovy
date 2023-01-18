@@ -1,6 +1,5 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
@@ -12,11 +11,10 @@ import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
-import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 
-class JobLifecycleComponentServiceSpec extends Specification implements ServiceUnitTest<JobLifecycleComponentService> {
+class JobLifecycleComponentServiceSpec extends Specification{
 
     class JobLifecycleStatusImplTest implements JobLifecycleStatus{
 
@@ -43,6 +41,8 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "get project default job plugin types"() {
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
+
         def project = Mock(IRundeckProject) {
             getProjectProperties() >> [
                     (JobLifecycleComponentService.CONF_PROJECT_ENABLED + 'typeA'): 'true',
@@ -59,6 +59,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "merge options with new values"(){
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
         SortedSet<JobOption> initial = new TreeSet<JobOption>()
         initial.add(JobOptionImpl.fromOptionMap([name: "oldTestOption"]))
         JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
@@ -76,6 +77,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "merge options with new values, with no replace"(){
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
         SortedSet<JobOption> initial = new TreeSet<JobOption>()
         initial.add(JobOptionImpl.fromOptionMap([name: "oldTestOption"]))
         JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
@@ -93,6 +95,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "merge option values, modifing value" (){
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
         Map<String, String> optionsValues = ["firstKey":"firstValue"]
         JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
 
@@ -107,6 +110,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "merge option values, adding value" (){
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
         Map<String, String> optionsValues = ["firstKey":"firstValue"]
         JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
         jobEventStatus.newOptionValues << ["thirdKey":"new third value"]
@@ -122,6 +126,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "merge option values, without new values" (){
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
         Map<String, String> optionsValues = ["firstKey":"firstValue"]
         JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
         jobEventStatus.newOptionValues << ["thirdKey":"new third value"]
@@ -139,6 +144,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "handleEvent no plugins PRE_EXECUTION"() {
         given:
+            JobLifecycleComponentService service = new JobLifecycleComponentService()
             def evt = Mock(JobPreExecutionEvent)
             def plugins = []
         when:
@@ -152,6 +158,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "handleEvent no plugins BEFORE_SAVE"() {
         given:
+            JobLifecycleComponentService service = new JobLifecycleComponentService()
             def evt = Mock(JobPersistEvent)
             def plugins = []
         when:
@@ -165,6 +172,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "handleEvent plugin exception BEFORE_SAVE"() {
         given:
+            JobLifecycleComponentService service = new JobLifecycleComponentService()
             def evt = Mock(JobPersistEvent)
             def plugins = [new NamedJobLifecycleComponent(
                     name: 'test', component: Mock(JobLifecycleComponent) {
@@ -185,6 +193,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
     
     def "handleEvent plugin exception PRE_EXECUTION"() {
         given:
+            JobLifecycleComponentService service = new JobLifecycleComponentService()
             def evt = Mock(JobPreExecutionEvent)
             def plugins = [new NamedJobLifecycleComponent(
                     name: 'test', component: Mock(JobLifecycleComponent) {
@@ -206,6 +215,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "merge execution metadata replacing values"() {
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
 
         def status = JobLifecycleStatusImpl.builder()
             .useNewMetadata(newMeta != null && !newMeta.isEmpty())
@@ -236,6 +246,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "lifecycle component loading"() {
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
         def project = Stub(IRundeckProject) {
             getProjectProperties() >> {
                 Map<String,String> map = new LinkedHashMap()
@@ -281,6 +292,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "lifecycle component loading with plugins only"() {
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
         def project = Stub(IRundeckProject) {
             getProjectProperties() >> {
                 Map<String,String> map = new LinkedHashMap()
@@ -319,6 +331,7 @@ class JobLifecycleComponentServiceSpec extends Specification implements ServiceU
 
     def "lifecycle component loading with internal components only"() {
         given:
+        JobLifecycleComponentService service = new JobLifecycleComponentService()
         def project = Stub(IRundeckProject) {
             getProjectProperties() >> [:]
         }
