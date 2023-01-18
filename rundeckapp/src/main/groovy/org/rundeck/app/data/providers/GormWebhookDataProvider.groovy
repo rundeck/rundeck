@@ -3,9 +3,12 @@ package org.rundeck.app.data.providers
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import groovy.util.logging.Slf4j
-import org.rundeck.app.data.model.v1.webhook.RdWebhook;
+import org.rundeck.app.data.model.v1.webhook.RdWebhook
+import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
+import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse;
 import org.rundeck.app.data.providers.v1.WebhookDataProvider
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.validation.Errors
 import rundeck.services.data.WebhookDataService
 import webhooks.Webhook
 
@@ -84,4 +87,32 @@ class GormWebhookDataProvider implements WebhookDataProvider {
         webhookDataService.delete(id);
     }
 
+    @Override
+    SaveWebhookResponse saveWebhook(SaveWebhookRequest saveWebhookRequest) {
+        Webhook hook = new Webhook(uuid: saveWebhookRequest.uuid, name: saveWebhookRequest.name,
+                project: saveWebhookRequest.project, authToken: saveWebhookRequest.authToken,
+                authConfigJson: saveWebhookRequest.authConfigJson, eventPlugin: saveWebhookRequest.eventPlugin,
+                pluginConfigurationJson: saveWebhookRequest.pluginConfigurationJson,
+                enabled: saveWebhookRequest.enabled);
+
+        Boolean isUpdated = hook.save(flush: true)
+        Errors errors = hook.errors
+        return new SaveWebhookResponse(webhook: hook, isSaved: isUpdated, errors: errors);
+    }
+
+    @Override
+    SaveWebhookResponse updateWebhook(SaveWebhookRequest saveWebhookRequest) {
+        Webhook hook = getWebhook(saveWebhookRequest.id)
+        hook.setUuid(saveWebhookRequest.uuid)
+        hook.setName(saveWebhookRequest.name)
+        hook.setProject(saveWebhookRequest.project)
+        hook.setAuthToken(saveWebhookRequest.authToken)
+        hook.setAuthConfigJson(saveWebhookRequest.authConfigJson)
+        hook.setEventPlugin(saveWebhookRequest.eventPlugin)
+        hook.setPluginConfigurationJson(saveWebhookRequest.pluginConfigurationJson)
+        hook.setEnabled(saveWebhookRequest.enabled)
+        Boolean isUpdated = hook.save(flush: true)
+        Errors errors = hook.errors
+        return new SaveWebhookResponse(webhook: hook, isSaved: isUpdated, errors: errors);
+    }
 }

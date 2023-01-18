@@ -19,12 +19,15 @@ import com.dtolabs.rundeck.plugins.webhook.DefaultWebhookResponder
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.apache.commons.lang.RandomStringUtils
 import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.app.data.model.v1.webhook.RdWebhook
+import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
+import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse
 import org.rundeck.app.data.providers.v1.WebhookDataProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.SimpleServiceProvider
@@ -144,103 +147,103 @@ class WebhookService {
 
     def saveHook(UserAndRolesAuthContext authContext, def hookData) {
         RdWebhook hook
-        if(hookData.id) {
-            hook = webhookDataProvider.get(hookData.id)
+        SaveWebhookRequest saveWebhookRequest = mapperSaveRequest(hookData)
+        boolean shouldUpdate = false
+        if(saveWebhookRequest.id) {
+            hook = webhookDataProvider.get(saveWebhookRequest.id)
             if (!hook) return [err: "Webhook not found"]
-            if(hookData.roles && !hookData.importData) {
+            if(saveWebhookRequest.roles && !hookData.importData) {
                 try {
                     rundeckAuthTokenManagerService.updateAuthRoles(authContext, hook.authToken,rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles))
+                    shouldUpdate = true
+                    validateNulls(hook, saveWebhookRequest)
                 } catch (Exception e) {
                     return [err: "Failed to update Auth Token roles: "+e.message]
                 }
             }
         } else {
-            int countByNameInProject = webhookDataProvider.countByNameAndProject(hookData.name,hookData.project)
+            int countByNameInProject = webhookDataProvider.countByNameAndProject(saveWebhookRequest.name, saveWebhookRequest.project)
             if(countByNameInProject > 0) return [err: "A Webhook by that name already exists in this project"]
             String checkUser = hookData.user ?: authContext.username
             if (!hookData.importData && !userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
-            hook = webhookDataProvider.buildWebhook()
-            hook.setUuid(UUID.randomUUID().toString())
+            saveWebhookRequest.setUuid(UUID.randomUUID().toString())
         }
-        hookData.uuid ? hook.setUuid(hookData.uuid) : hook.setUuid(hook.uuid)
-        def whsFound = webhookDataProvider.findAllByNameAndProjectAndUuidNotEqual(hookData.name, hookData.project, hook.uuid)
+        def whsFound = webhookDataProvider.findAllByNameAndProjectAndUuidNotEqual(saveWebhookRequest.name, saveWebhookRequest.project, saveWebhookRequest.uuid)
         if( whsFound.size() > 0) {
             return [err: " A Webhook by that name already exists in this project"]
         }
-        hookData.name ? hook.setName(hookData.name): hook.name
-        hookData.project ? hook.setProject(hookData.project): hook.project
         String generatedSecureString = null
         if(hookData.useAuth == true && hookData.regenAuth == true) {
             generatedSecureString = RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-            hook.setAuthConfigJson(mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256())))
+            saveWebhookRequest.setAuthConfigJson(mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256())))
         } else if(hookData.useAuth == false) {
-            hook.setAuthConfigJson(hook.authConfigJson)
+            saveWebhookRequest.setAuthConfigJson(null)
         }
 
-        if(hookData.enabled != null) hook.setEnabled(hookData.enabled)
-        if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}){
-            hook.discard()
-            return [err:"Plugin does not exist: " + hookData.eventPlugin]
+        if(hookData.enabled != null) saveWebhookRequest.setEnabled(hookData.enabled)
+        if(saveWebhookRequest.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == saveWebhookRequest.eventPlugin}){
+            return [err:"Plugin does not exist: " + saveWebhookRequest.eventPlugin]
         }
-        hookData.eventPlugin ? hook.setEventPlugin(hookData.eventPlugin): hook.setEventPlugin(hook.eventPlugin)
 
         Map pluginConfig = [:]
         if(hookData.config) pluginConfig = hookData.config instanceof String ? mapper.readValue(hookData.config, HashMap) : hookData.config
 
-        def (ValidatedPlugin vPlugin, boolean isCustom) = validatePluginConfig(hook.eventPlugin,pluginConfig)
+        def (ValidatedPlugin vPlugin, boolean isCustom) = validatePluginConfig(saveWebhookRequest.eventPlugin, pluginConfig)
         if(!vPlugin.valid) {
             def errMsg = isCustom ?
                     "Validation errors: " + vPlugin.report.errors:
                     "Invalid plugin configuration: " + vPlugin.report.errors.collect { k, v -> "$k : $v" }.join("\n")
-            hook.discard()
 
             return [err: errMsg, errors: vPlugin.report.errors]
         }
 
-        hook.setPluginConfigurationJson(mapper.writeValueAsString(pluginConfig))
+        saveWebhookRequest.setPluginConfigurationJson(mapper.writeValueAsString(pluginConfig))
         Set<String> roles = hookData.roles ? rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles) : authContext.roles
-        if((!hook.id || !hook.authToken) && !hookData.shouldImportToken){
+        if((!saveWebhookRequest.id || !saveWebhookRequest.authToken) && !hookData.shouldImportToken){
             //create token
             String checkUser = hookData.user ?: authContext.username
             try {
                 def at=apiService.generateUserToken(authContext, null, checkUser, roles, false,
                                                             AuthenticationToken.AuthTokenType.WEBHOOK)
-                hook.setAuthToken(at.token)
+                saveWebhookRequest.setAuthToken(at.token)
             } catch (Exception e) {
-                hook.discard()
                 return [err: "Failed to create associated Auth Token: "+e.message]
             }
         }
         if(hookData.shouldImportToken) {
-            if(!importIsAllowed(hook,hookData)){
+            if(!importIsAllowed(saveWebhookRequest.authToken, hookData)){
                 throw new Exception("Cannot import webhook: imported auth token does not exist or was changed")
             }
             try {
                 rundeckAuthTokenManagerService.importWebhookToken(authContext, hookData.authToken, hookData.user, roles)
             } catch (Exception e) {
-                hook.discard()
                 return [err: "Failed importing Webhook Token: "+e.message]
             }
-            hook.authToken = hookData.authToken
+            saveWebhookRequest.authToken = hookData.authToken
+        }
+        SaveWebhookResponse saveWebhookResponse
+        if(shouldUpdate){
+            saveWebhookResponse = webhookDataProvider.updateWebhook(saveWebhookRequest)
+        }else{
+            saveWebhookResponse = webhookDataProvider.saveWebhook(saveWebhookRequest)
         }
 
-        if(hook.validate()) {
-            hook.save(failOnError:true, flush:true)
+        if(saveWebhookResponse.isSaved) {
             def responsePayload = [msg: "Saved webhook"]
             if(generatedSecureString) responsePayload.generatedSecurityString = generatedSecureString
             return responsePayload
         } else {
-            if(!hook.id && hook.authToken){
+            if(!saveWebhookResponse.webhook.id && saveWebhookRequest.authToken){
                 //delete the created token
-                rundeckAuthTokenManagerService.deleteByTokenWithType(hook.authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
+                rundeckAuthTokenManagerService.deleteByTokenWithType(saveWebhookResponse.webhook.authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             }
-            return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
+            return [err: saveWebhookResponse.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
         }
     }
 
-    boolean importIsAllowed(RdWebhook hook, Map hookData) {
-        if(hook.authToken == hookData.authToken) return true
-        if(!hook.authToken
+    boolean importIsAllowed(String token, Map hookData) {
+        if(token == hookData.authToken) return true
+        if(!token
             && webhookDataProvider.countByAuthToken(hookData.authToken) == 0
             && !rundeckAuthTokenManagerService.getTokenWithType(
             hookData.authToken,
@@ -251,6 +254,19 @@ class WebhookService {
         return false
     }
 
+    void validateNulls(RdWebhook hook, SaveWebhookRequest saveWebhookRequest) {
+        if(saveWebhookRequest.uuid == null && hook.uuid != null) saveWebhookRequest.setUuid(hook.uuid)
+        if(saveWebhookRequest.name == null && hook.name != null) saveWebhookRequest.setName(hook.name)
+        if(saveWebhookRequest.project == null && hook.project != null) saveWebhookRequest.setProject(hook.project)
+        if(saveWebhookRequest.eventPlugin == null && hook.eventPlugin != null) saveWebhookRequest.setEventPlugin(hook.eventPlugin)
+        if(hook.authToken != null) saveWebhookRequest.setAuthToken(hook.authToken)
+    }
+
+    SaveWebhookRequest mapperSaveRequest(def hookData) {
+        ObjectMapper requestMapper = new ObjectMapper();
+        requestMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+        return requestMapper.convertValue(hookData, SaveWebhookRequest.class);
+    }
 
     @PackageScope
     Tuple2<ValidatedPlugin, Boolean> validatePluginConfig(String webhookPlugin, Map pluginConfig) {

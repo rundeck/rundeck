@@ -448,7 +448,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         given:
         service.rundeckAuthTokenManagerService=Mock(AuthTokenManager)
         when:
-        boolean res = service.importIsAllowed(hook,hookData)
+        boolean res = service.importIsAllowed(hook.authToken,hookData)
 
         then:
         res == expected
@@ -467,7 +467,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
 
         Webhook hook = new Webhook(name:"new")
         def hookData = [authToken:"12345"]
-        boolean res = service.importIsAllowed(hook,hookData)
+        boolean res = service.importIsAllowed(hook.authToken,hookData)
 
         then:
         !res
@@ -481,7 +481,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def hookData = [authToken:"12345"]
         when:
 
-        boolean res = service.importIsAllowed(hook,hookData)
+        boolean res = service.importIsAllowed(hook.authToken,hookData)
 
         then:
         !res
