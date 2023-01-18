@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
+import org.apache.commons.lang.RandomStringUtils
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.acl.ACLFileManager
@@ -2273,5 +2274,41 @@ project.label=A Label
         then:
             view=='/framework/editProjectNodeSourceFile'
             model.saveError=='expected error'
+    }
+
+    def "save a very large node source file, get error"() {
+        setup:
+        def source = Mock(WriteableModelSource)
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * getWriteableResourceModelSources() >> [
+                            Mock(IProjectNodes.WriteableProjectNodes) {
+                                getWriteableSource() >> source
+                                getIndex() >> 1
+                                getType() >> 'monkey'
+                            }
+                    ]
+                }
+            }
+            0 * _(*_)
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
+        controller.pluginService=Mock(PluginService)
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        def fileText = RandomStringUtils.random(6500000)
+        def fileSize = new ByteArrayInputStream(fileText.getBytes("UTF-8")).count
+        def flashError = 'Nodes exceed the maximum capacity of subscribed nodes. Max: 65472, Input: ' + fileSize
+        params.fileText = fileText
+        when:
+        setupFormTokens(params)
+        controller.saveProjectNodeSourceFile()
+        then:
+        flash.error == flashError
     }
 }
