@@ -160,29 +160,29 @@ class WebhookService {
             String checkUser = hookData.user ?: authContext.username
             if (!hookData.importData && !userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
             hook = webhookDataProvider.buildWebhook()
-            hook.uuid = UUID.randomUUID().toString()
+            hook.setUuid(UUID.randomUUID().toString())
         }
-        hook.uuid = hookData.uuid ?: hook.uuid
+        hookData.uuid ? hook.setUuid(hookData.uuid) : hook.setUuid(hook.uuid)
         def whsFound = webhookDataProvider.findAllByNameAndProjectAndUuidNotEqual(hookData.name, hookData.project, hook.uuid)
         if( whsFound.size() > 0) {
             return [err: " A Webhook by that name already exists in this project"]
         }
-        hook.name = hookData.name ?: hook.name
-        hook.project = hookData.project ?: hook.project
+        hookData.name ? hook.setName(hookData.name): hook.name
+        hookData.project ? hook.setProject(hookData.project): hook.project
         String generatedSecureString = null
         if(hookData.useAuth == true && hookData.regenAuth == true) {
             generatedSecureString = RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-            hook.authConfigJson = mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256()))
+            hook.setAuthConfigJson(mapper.writeValueAsString(new AuthorizationHeaderAuthenticator.Config(secret:generatedSecureString.sha256())))
         } else if(hookData.useAuth == false) {
-            hook.authConfigJson = null
+            hook.setAuthConfigJson(hook.authConfigJson)
         }
 
-        if(hookData.enabled != null) hook.enabled = hookData.enabled
+        if(hookData.enabled != null) hook.setEnabled(hookData.enabled)
         if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}){
             hook.discard()
             return [err:"Plugin does not exist: " + hookData.eventPlugin]
         }
-        hook.eventPlugin = hookData.eventPlugin ?: hook.eventPlugin
+        hookData.eventPlugin ? hook.setEventPlugin(hookData.eventPlugin): hook.setEventPlugin(hook.eventPlugin)
 
         Map pluginConfig = [:]
         if(hookData.config) pluginConfig = hookData.config instanceof String ? mapper.readValue(hookData.config, HashMap) : hookData.config
@@ -197,7 +197,7 @@ class WebhookService {
             return [err: errMsg, errors: vPlugin.report.errors]
         }
 
-        hook.pluginConfigurationJson = mapper.writeValueAsString(pluginConfig)
+        hook.setPluginConfigurationJson(mapper.writeValueAsString(pluginConfig))
         Set<String> roles = hookData.roles ? rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles) : authContext.roles
         if((!hook.id || !hook.authToken) && !hookData.shouldImportToken){
             //create token
@@ -205,7 +205,7 @@ class WebhookService {
             try {
                 def at=apiService.generateUserToken(authContext, null, checkUser, roles, false,
                                                             AuthenticationToken.AuthTokenType.WEBHOOK)
-                hook.authToken = at.token
+                hook.setAuthToken(at.token)
             } catch (Exception e) {
                 hook.discard()
                 return [err: "Failed to create associated Auth Token: "+e.message]
