@@ -1,6 +1,5 @@
 package rundeck.services
 
-
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
@@ -18,11 +17,16 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
-import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.ScheduledExecution
+import rundeck.services.feature.FeatureService
 
 /**
  * Provides capability to execute certain task based on a job execution event
@@ -30,15 +34,38 @@ import rundeck.ScheduledExecution
  * Date: 5/07/19
  * Time: 10:32 AM
  */
-class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService {
+@CompileStatic
+class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ApplicationContextAware  {
 
-    PluginService pluginService
+    public static Logger log = LoggerFactory.getLogger(ExecutionLifecycleComponentService.class.name)
+
+
+    @Autowired
     ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService
-    FrameworkService frameworkService
-    def featureService
 
-    @Autowired(required = false)
+    @Autowired
+    FrameworkService frameworkService
+
+    @Autowired
+    FeatureService featureService
+
+    @Autowired
     List<ExecutionLifecycleComponent> beanComponents
+
+    //using lazy loader
+    PluginService pluginService
+
+    ApplicationContext applicationContext
+
+
+    //lazy load the pluginService
+    private PluginService getPluginService() throws Exception {
+        if (null == pluginService) {
+            pluginService = applicationContext.getBean('pluginService', PluginService)
+        }
+        return pluginService
+    }
+
 
     enum EventType{
         BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun')
@@ -72,7 +99,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         if (!components) {
             return null
         }
-        def errors = [:]
+        Map<String, Exception> errors = [:]
         def results = [:]
         Exception firstErr
         ExecutionLifecycleStatus prevResult = null
@@ -121,6 +148,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
 
     }
 
+    @CompileDynamic
     ExecutionLifecycleStatus handleEventForPlugin(
             EventType eventType,
             NamedExecutionLifecycleComponent plugin,
@@ -201,7 +229,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
 
         configurations?.pluginProviderConfigs?.each { PluginProviderConfiguration pluginConfig ->
             String type = pluginConfig.provider
-            def configuredPlugin = pluginService.configurePlugin(
+            def configuredPlugin = getPluginService().configurePlugin(
                     type,
                     pluginConfig.configuration,
                     project,
@@ -250,7 +278,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
             return null
         }
 
-        return pluginService.listPlugins(ExecutionLifecyclePlugin).findAll { k, v ->
+        return getPluginService().listPlugins(ExecutionLifecyclePlugin).findAll { k, v ->
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.ExecutionLifecycle)
         }
     }
@@ -260,6 +288,7 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @param job
      * @return PluginConfigSet for the ExecutionLifecyclePlugin service for the job, or null if not defined or not enabled
      */
+    @CompileDynamic
     PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(ScheduledExecution job) {
         if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null

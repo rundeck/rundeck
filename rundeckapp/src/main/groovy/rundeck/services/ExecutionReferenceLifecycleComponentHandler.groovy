@@ -24,10 +24,12 @@ import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobEventResult
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
+import groovy.transform.CompileStatic
 
 /**
  * Handles execution lifecycle event calls using multiple plugins and an execution reference, via the {@link ExecutionLifecycleComponentService}
  */
+@CompileStatic
 class ExecutionReferenceLifecycleComponentHandler implements ExecutionLifecycleComponentHandler {
     ExecutionLifecycleComponentService executionLifecycleComponentService
     ExecutionReference executionReference

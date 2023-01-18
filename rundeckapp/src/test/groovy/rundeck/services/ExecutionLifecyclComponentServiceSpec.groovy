@@ -22,13 +22,14 @@ import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
 import grails.testing.services.ServiceUnitTest
+import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.grails.testing.GrailsUnitTest
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class ExecutionLifecyclComponentServiceSpec extends Specification implements ServiceUnitTest<ExecutionLifecycleComponentService> {
-
+class ExecutionLifecyclComponentServiceSpec extends Specification {
     def item = Mock(WorkflowExecutionItem)
     def featureService = Mock(FeatureService){
         featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false) >> true
@@ -86,6 +87,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
     @Unroll
     def "custom plugin successful answer via plugin list"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             service.executionLifecyclePluginProviderService = executionLifecyclePluginProviderService
             service.frameworkService = frameworkService
             service.featureService = featureService
@@ -116,6 +118,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
     @Unroll
     def "custom plugin unsuccessful answer via plugin list event #eventType"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             service.executionLifecyclePluginProviderService = executionLifecyclePluginProviderService
             service.frameworkService = frameworkService
             service.featureService = featureService
@@ -146,6 +149,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
     @Unroll
     def "custom plugin exception thrown via plugin list event #eventType"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             service.executionLifecyclePluginProviderService = executionLifecyclePluginProviderService
             service.frameworkService = frameworkService
             service.featureService = featureService
@@ -168,6 +172,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
 
     def "create configured plugins with no project defaults"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             def configs = PluginConfigSet.with(
                     ServiceNameConstants.ExecutionLifecycle, [
                     SimplePluginConfiguration.builder().provider('typeA').configuration([a: 'b']).build()
@@ -195,6 +200,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
 
     def "list enabled plugins"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             service.featureService = featureService
             def controlService = Mock(PluginControlService) {
                 isDisabledPlugin('typeA', ServiceNameConstants.ExecutionLifecycle) >> true
@@ -216,6 +222,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
 
     def "merge job before run execution event"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             def ctx1 = Mock(StepExecutionContext) {
                 getFrameworkProject() >> 'ATest'
                 getLoglevel() >> 2
@@ -246,6 +253,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
 
     def "set exec lifecycle plugin config"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             ScheduledExecution job = ScheduledExecution.
                     fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
             def configSet =
@@ -262,6 +270,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
 
     def "set exec lifecycle multi plugin config"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             ScheduledExecution job = ScheduledExecution.
                     fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
             def configSet =
@@ -278,6 +287,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
     }
     def "set exec lifecycle multi plugin config null"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             ScheduledExecution job = ScheduledExecution.
                     fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
             def configSet =null
@@ -290,6 +300,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
 
     def "get exec lifecycle multi plugin config"() {
         given:
+            ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
             ScheduledExecution job = ScheduledExecution.
                     fromMap([jobName: 'test', project: 'aProject', sequence: [commands: [[exec: 'echo test']]]])
             job.pluginConfigMap = [ExecutionLifecycle: [aProvider: [a: 'b'], bProvider: [b: 'c']]]
@@ -309,6 +320,7 @@ class ExecutionLifecyclComponentServiceSpec extends Specification implements Ser
 
     def "list enabled components and plugins"() {
         given:
+        ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
         service.featureService = featureService
         service.frameworkService = frameworkService
 

@@ -138,6 +138,7 @@ import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.ExecutionLifecycleComponentService
 import rundeck.services.ExecutionValidatorService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
@@ -455,6 +456,11 @@ beans={
     executionLifecyclePluginProviderService(ExecutionLifecyclePluginProviderService){
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
     }
+
+    /**
+     * the Execution life cycle component service
+     */
+    executionLifecycleComponentService(ExecutionLifecycleComponentService)
 
     /**
      * the Notification plugin provider service
