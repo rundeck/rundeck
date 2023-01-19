@@ -1,7 +1,6 @@
 import Vue from 'vue'
 
 import EntryFlex from './logEntryFlex.vue'
-import {IRenderedEntry} from '../../utilities/ExecutionLogConsumer'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 import { IObservableArray, autorun } from 'mobx'
 
@@ -41,7 +40,12 @@ export class LogBuilder {
   private lastEntry?: {id: number} & ExecutionOutputEntry
   private count: number = 0
 
-  constructor(readonly executionOutput: ExecutionOutput,readonly rootElem: HTMLElement, opts: IBuilderOpts) {
+  constructor(
+      readonly executionOutput: ExecutionOutput,
+      readonly rootElem: HTMLElement,
+      readonly eventBus: Vue,
+      opts: IBuilderOpts) {
+    
     this.opts = Object.assign(LogBuilder.DefaultOpts(), opts)
 
     const {node, stepCtx} = this.opts
@@ -140,6 +144,7 @@ export class LogBuilder {
 
     const vue = new EntryFlex({
       propsData: {
+        eventBus: this.eventBus,
         selected: selected,
         timestamps: this.opts.time.visible,
         command: this.opts.command.visible,

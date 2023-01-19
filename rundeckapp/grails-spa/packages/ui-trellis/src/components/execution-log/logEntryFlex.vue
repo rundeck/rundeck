@@ -18,7 +18,7 @@
                 'execution-log__content--html': logEntry.logHtml
             }]"
         >
-            <ui-socket section="execution-log-line" location="badges" v-bind:socket-data="{
+            <ui-socket section="execution-log-line" location="badges" :event-bus="eventBus" :socket-data="{
               prevEntry: this.prevEntry,
               logEntry: this.logEntry
             }"/>
@@ -31,11 +31,13 @@
 
 <script lang="ts">
 import Vue, {PropType} from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
+import {Component, Prop} from 'vue-property-decorator'
 import UiSocket from '../utils/UiSocket.vue'
 
 @Component({components: {UiSocket}})
 export default class Flex extends Vue {
+    @Prop({required: false})
+    readonly eventBus!: Vue
   
     @Prop({default: false})
     selected!: boolean
@@ -72,6 +74,7 @@ export default class Flex extends Vue {
     lineSelect() {
         this.$emit('line-select', this.logEntry.lineNumber)
     }
+
 }
 </script>
 
