@@ -92,7 +92,7 @@ export class ExecutionOutput {
 
     /** Optional method to populate information about execution output */
     async init() {
-        const resp = await this.client.executionOutputGet(this.id, {offset: '0', maxlines: 1})
+        const resp = await this.getExecutionOutput(this.id, 0, 1)
         this.execCompleted = resp.execCompleted
         this.size = resp.totalSize
     }
@@ -118,14 +118,33 @@ export class ExecutionOutput {
         return this.executionStatusProm
     }
 
+    async getExecutionOutput(executionId: string, offset: number, maxLines: number) {
+        return await this.client.apiRequest({
+            method: 'GET',
+            pathTemplate: 'api/43/execution/{id}/output',
+            pathParameters: {
+                id: executionId
+            },
+            queryParameters: {
+                offset: offset.toString(),
+                maxlines: maxLines
+            }
+        }).then(response => {
+            if (response.status != 200) {
+                throw new Error("Error calling execution log api: " + response.bodyAsText)
+            }
+            return response.parsedBody
+        })
+    }
+
     @Serial
     @actionAsync
     async getOutput(maxLines: number): Promise<ExecutionOutputEntry[]> {
         const workflow = await task(this.getJobWorkflow())
         await task(this.waitBackOff())
 
-        const res = await task(this.client.executionOutputGet(this.id, {offset: this.offset.toString(), maxlines: maxLines}))
-
+        const res = await this.getExecutionOutput(this.id, this.offset, maxLines)
+        
         this.offset = parseInt(res.offset)
         this.size = res.totalSize
         this.completed = res.completed && res.execCompleted
@@ -200,6 +219,7 @@ export class ExecutionOutputEntry {
     stepctx?: string
     node?: string
     lineNumber!: number
+    meta!: object
 
     renderedStep?: RenderedStepList
 
@@ -207,19 +227,19 @@ export class ExecutionOutputEntry {
         this.executionOutput = executionOutput
     }
 
-    static FromApiResponse(executionOutput: ExecutionOutput, resp: ApiExecutionOutputEntry, line: number, workflow: JobWorkflow) {
+    static FromApiResponse(executionOutput: ExecutionOutput, resp: any, line: number, workflow: JobWorkflow) {
         const entry = new ExecutionOutputEntry(executionOutput)
+       
         entry.time = resp.time!
         entry.absoluteTime = resp.absoluteTime!
         entry.log = resp.log
         entry.level = resp.level
-        // @ts-ignore
-        entry.loghtml = resp.loghtml
+        entry.logHtml = resp.loghtml
         entry.stepctx = resp.stepctx
         entry.node = resp.node
         entry.lineNumber = line
         entry.renderedStep = entry.stepctx ? workflow.renderStepsFromContextPath(entry.stepctx) : undefined
-
+        entry.meta = resp.metadata
         return entry
     }
 }
