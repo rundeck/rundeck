@@ -20,10 +20,13 @@ import grails.events.annotation.Subscriber
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.projects.ProjectConfigurable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 
@@ -35,7 +38,7 @@ import rundeck.services.feature.FeatureService
  */
 @CompileStatic
 @Slf4j
-class JobLifecycleComponentService implements ProjectConfigurable {
+class JobLifecycleComponentService implements ProjectConfigurable, ApplicationContextAware {
     private static final Logger LOG = LoggerFactory.getLogger(JobLifecycleComponentService)
 
     @Autowired
@@ -55,15 +58,19 @@ class JobLifecycleComponentService implements ProjectConfigurable {
     Map<String, String> configProperties
     List<Property> projectConfigProperties
 
-    @Autowired(required = false)
-    List<JobLifecycleComponent> beanComponents
+    Map<String, JobLifecycleComponent> beanComponents
+
+    ApplicationContext applicationContext
 
     @Subscriber('rundeck.bootstrap')
     void init() throws Exception {
+
+        beanComponents = applicationContext.getBeansOfType(JobLifecycleComponent)
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("Initializing " + JobLifecycleComponentService.getSimpleName())
             beanComponents?.each {
-                LOG.debug("Loaded JobLifecycleComponent Bean: ${it.toString()}")
+                LOG.debug("Loaded JobLifecycleComponent Bean: ${it.getKey()}")
             }
         }
     }
@@ -156,10 +163,10 @@ class JobLifecycleComponentService implements ProjectConfigurable {
     List<NamedJobLifecycleComponent> loadProjectComponents(String project) {
         List compList = []
         if (beanComponents) {
-            compList.addAll(beanComponents.collect {
+            compList.addAll(beanComponents.collect { name, component->
                 new NamedJobLifecycleComponent(
-                    component: it,
-                    name: it.class.canonicalName)
+                    component: component,
+                    name: component.class.canonicalName)
             })
         }
         compList.addAll(loadProjectConfiguredPlugins(project))

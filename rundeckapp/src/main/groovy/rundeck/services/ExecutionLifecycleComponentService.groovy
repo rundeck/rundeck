@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
+import grails.events.annotation.Subscriber
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
@@ -46,14 +47,19 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
     @Autowired
     FeatureService featureService
 
-    @Autowired
-    List<ExecutionLifecycleComponent> beanComponents
+    Map<String, ExecutionLifecycleComponent> beanComponents
 
     //using lazy loader
     PluginService pluginService
 
     ApplicationContext applicationContext
 
+
+    @Subscriber('rundeck.bootstrap')
+    void init() throws Exception {
+        beanComponents = applicationContext.getBeansOfType(ExecutionLifecycleComponent)
+    }
+    
 
     //lazy load the pluginService
     private PluginService getPluginService() throws Exception {
@@ -245,10 +251,10 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
     List<NamedExecutionLifecycleComponent> loadConfiguredComponents(PluginConfigSet configurations, String project) {
         List compList = []
         if(beanComponents){
-            List namedComponents = beanComponents.collect {
+            List<NamedExecutionLifecycleComponent> namedComponents = beanComponents.collect {name, component->
                 new NamedExecutionLifecycleComponent(
-                        component: it,
-                        name: it.class.canonicalName)
+                        component: component,
+                        name: component.class.canonicalName)
             }
 
             namedComponents.forEach {component->
