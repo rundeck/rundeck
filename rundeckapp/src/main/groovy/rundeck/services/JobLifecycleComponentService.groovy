@@ -20,7 +20,6 @@ import grails.events.annotation.Subscriber
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.core.projects.ProjectConfigurable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

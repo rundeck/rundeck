@@ -269,8 +269,8 @@ class JobLifecycleComponentServiceSpec extends Specification{
         }
 
         service.beanComponents = [
-            new JLCompTestImpl(name: "Comp1"),
-            new JLCompTestImpl(name: "Comp2")
+            "Comp1": new JLCompTestImpl(name: "Comp1"),
+            "Comp2":new JLCompTestImpl(name: "Comp2")
         ]
 
         when:
@@ -343,8 +343,8 @@ class JobLifecycleComponentServiceSpec extends Specification{
         }
 
         service.beanComponents = [
-            new JLCompTestImpl(name: "Comp1"),
-            new JLCompTestImpl(name: "Comp2")
+            "Comp1":new JLCompTestImpl(name: "Comp1"),
+            "Comp2":new JLCompTestImpl(name: "Comp2")
         ]
 
         when:

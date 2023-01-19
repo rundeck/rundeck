@@ -21,9 +21,6 @@ import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
-import grails.testing.services.ServiceUnitTest
-import org.grails.spring.beans.factory.InstanceFactoryBean
-import org.grails.testing.GrailsUnitTest
 import rundeck.ScheduledExecution
 import rundeck.services.feature.FeatureService
 import spock.lang.Specification
@@ -325,8 +322,8 @@ class ExecutionLifecyclComponentServiceSpec extends Specification {
         service.frameworkService = frameworkService
 
         service.beanComponents = [
-                new TestExecutionLifecycleComponentImpl(name: "Comp1"),
-                new TestExecutionLifecycleComponentImpl(name: "Comp2")
+                "Comp1":new TestExecutionLifecycleComponentImpl(name: "Comp1"),
+                "Comp2":new TestExecutionLifecycleComponentImpl(name: "Comp2")
         ]
 
         def configs = PluginConfigSet.with(
