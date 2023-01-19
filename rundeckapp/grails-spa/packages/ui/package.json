@@ -27,7 +27,7 @@
     "core-js": "^3.6.4",
     "fuse.js": "^3.4.4",
     "lodash": "^4.17.15",
-    "markdown-it": "^10.0.0",
+    "markdown-it": "^12.0.0",
     "markdown-it-vue": "^1.0.11",
     "mobx": "^5.15.4",
     "mobx-utils": "^5.6.1",
