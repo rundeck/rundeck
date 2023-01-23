@@ -591,8 +591,10 @@ search
 
                                   <li data-bind="attr: {id: 'tab_link_'+id }">
                                       <a href="#"
-                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }">
-                                          <span data-bind="text: title"></span>
+                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }" class="vue-ui-socket" event="vue-ui-socket-node-added">
+                                          <ui-socket data-bind="attr: {section:'job-exec-page-' + id}" location="nodes-tab-title" :event-bus="EventBus">
+                                              <span data-bind="text: title"></span>
+                                          </ui-socket>
                                           <!-- ko if: $root.activeTab()===id -->
                                           <i class="fas fa-check" style="margin-left:1em"></i>
                                           <!-- /ko -->
@@ -1095,6 +1097,20 @@ search
     window._rundeck.data = Object.assign(window._rundeck.data || {}, {
         "execution": loadJsonData('execDataJSON')
     })
+
+    const observer = new MutationObserver(function(mutations_list) {
+        mutations_list.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(added_node) {
+                if(added_node.className == 'wfnodestate' && added_node.getElementsByClassName('vue-ui-socket')?.length > 0) {
+                    var eventKOProcessed = new Event('vue-ui-socket-node-added');
+                    window.dispatchEvent(eventKOProcessed)
+                    observer.disconnect();
+                }
+            });
+        });
+    });
+
+    observer.observe(document.querySelector("#nodeflowstate"), { subtree: true, childList: true });
 
     function init() {
         var execInfo=loadJsonData('execInfoJSON');
