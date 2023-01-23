@@ -106,6 +106,8 @@ import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
+import org.rundeck.app.data.providers.GormBaseReportDataProvider
+import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
@@ -863,5 +865,7 @@ beans={
     tokenDataProvider(GormTokenDataProvider)
     projectDataProvider(GormProjectDataProvider)
     userDataProvider(GormUserDataProvider)
+    baseReportDataProvider(GormBaseReportDataProvider)
+    execReportDataProvider(GormExecReportDataProvider)
 
 }

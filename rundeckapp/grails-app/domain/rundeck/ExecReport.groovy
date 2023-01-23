@@ -17,9 +17,10 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.rundeck.app.data.model.v1.report.RdExecReport
 
 
-class ExecReport extends BaseReport{
+class ExecReport extends BaseReport implements RdExecReport{
 
     String ctxCommand
     String ctxController

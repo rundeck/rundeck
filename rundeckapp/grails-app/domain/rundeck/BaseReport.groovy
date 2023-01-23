@@ -17,8 +17,9 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import org.rundeck.app.data.model.v1.report.RdBaseReport
 
-class BaseReport {
+class BaseReport implements RdBaseReport {
 
     String node
     String title
