@@ -56,6 +56,7 @@
       <asset:javascript src="execution/show.js"/>
 
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
+      <g:embedJSON id="execDataJSON" data="${execution.toMap()}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
                             project: params.project ?: request.project]}"/>
@@ -1090,6 +1091,11 @@ search
     }
 
     var activity;
+
+    window._rundeck.data = Object.assign(window._rundeck.data || {}, {
+        "execution": loadJsonData('execDataJSON')
+    })
+
     function init() {
         var execInfo=loadJsonData('execInfoJSON');
         var workflowData=loadJsonData('workflowDataJSON');

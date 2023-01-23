@@ -897,7 +897,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.multiWorkflow=multiworkflow;
     self.errorMessage=ko.observable();
     self.statusMessage=ko.observable();
-    self.stateLoaded=ko.observable(false);
+    self.stateLoaded=ko.observable(true);
     self.pendingNodeSteps=ko.observable({});
     self.nodes=ko.observableArray([ ]).extend({ rateLimit: 500 });
     self.selectedNodes=ko.observableArray([ ]);
