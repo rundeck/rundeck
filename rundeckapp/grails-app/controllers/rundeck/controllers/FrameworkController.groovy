@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import groovy.transform.CompileStatic
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.data.model.v1.user.RdUser
@@ -3510,10 +3511,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
+    @CompileStatic
     private def nodeSourceFileExceededMaxSize(ByteArrayInputStream bais){
-        def nodesMaxSize = 65472 // We can make this a property
-        if( bais.count > nodesMaxSize ){
-            return [result: "Nodes exceed the maximum capacity of subscribed nodes. Max: ${nodesMaxSize}, Input: ${bais.count}"]
+        def nodesMaxSize = 65472
+        if( bais.available() > nodesMaxSize ){
+            return [result: "Nodes exceed the maximum capacity of subscribed nodes. Max: ${nodesMaxSize}, Input: ${bais.available()}"]
         }else{
             return null
         }
