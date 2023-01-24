@@ -81,7 +81,7 @@
           </div>
 
           <div class="col-sm-3">
-              <div class="vue-ui-socket" event="vue-ui-socket-node-added">
+              <div class="vue-ui-socket" vue-socket-on="vue-ui-socket-node-added">
                   <div>
                       <ui-socket section="job-runner-execution" location="top" :event-bus="EventBus" />
                   </div>

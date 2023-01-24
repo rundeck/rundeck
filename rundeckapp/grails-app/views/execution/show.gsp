@@ -591,10 +591,8 @@ search
 
                                   <li data-bind="attr: {id: 'tab_link_'+id }">
                                       <a href="#"
-                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }" class="vue-ui-socket" event="vue-ui-socket-node-added">
-                                          <ui-socket data-bind="attr: {section:'job-exec-page-' + id}" location="nodes-tab-title" :event-bus="EventBus">
-                                              <span data-bind="text: title"></span>
-                                          </ui-socket>
+                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }">
+                                          <span data-bind="text: title"></span>
                                           <!-- ko if: $root.activeTab()===id -->
                                           <i class="fas fa-check" style="margin-left:1em"></i>
                                           <!-- /ko -->
@@ -1108,8 +1106,7 @@ search
                 }
             });
         });
-    });
-
+    })
     observer.observe(document.querySelector("#nodeflowstate"), { subtree: true, childList: true });
 
     function init() {
