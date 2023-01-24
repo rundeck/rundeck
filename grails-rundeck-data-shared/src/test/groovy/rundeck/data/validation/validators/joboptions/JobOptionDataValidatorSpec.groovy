@@ -1,6 +1,6 @@
 package rundeck.data.validation.validators.joboptions
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdOption
 import rundeck.data.job.RdSchedule

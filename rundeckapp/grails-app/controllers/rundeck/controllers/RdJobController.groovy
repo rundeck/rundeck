@@ -2,22 +2,20 @@ package rundeck.controllers
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
 import org.rundeck.app.data.exception.DataValidationException
-import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import rundeck.data.job.RdJob
 import org.rundeck.app.data.validation.ValidationResponse
 import org.springframework.context.MessageSource
-import rundeck.ScheduledExecution
-import rundeck.services.ExecutionUtilService
+import rundeck.data.job.query.RdJobQueryInput
 import rundeck.services.RdJobService
 
-class RdJobController {
+import javax.persistence.EntityNotFoundException
+
+class RdJobController extends ControllerBase {
 
     MessageSource messageSource
     RdJobService rdJobService
-    WorkflowExecutionItemFactory workflowExecutionItemFactory
     ObjectMapper mapper = new ObjectMapper()
 
     RdJobController() {
@@ -32,9 +30,7 @@ class RdJobController {
             def uuid = UUID.fromString(params.id)
             render mapper.writeValueAsString(rdJobService.getJobByUuid(uuid.toString()))
             return
-        } catch(IllegalArgumentException ignored) {
-            println "oops"
-        }
+        } catch(IllegalArgumentException ignored) {}
 
         render mapper.writeValueAsString(rdJobService.getJobById(params.id.toLong()))
     }
@@ -57,18 +53,17 @@ class RdJobController {
 
     def delete() {
         response.contentType = "application/json;utf-8"
-        rdJobService.delete(params.id)
-        render mapper.writeValueAsString(["msg":"deleted"])
+        try {
+            render mapper.writeValueAsString(rdJobService.delete(params.id))
+        } catch(EntityNotFoundException ex) {
+            response.status = 404
+            render mapper.writeValueAsString(["err":ex.message])
+        }
     }
 
-    ExecutionUtilService executionUtilService
-
-    def compare() {
-        def rdjob = rdJobService.getJobByUuid(params.id)
-        def se = ScheduledExecution.findByUuid(params.id)
-        def newwei = workflowExecutionItemFactory.createExecutionItemForWorkflow(rdjob.workflow)
-        def oldwei = executionUtilService.createExecutionItemForWorkflow(se.workflow)
+    def list(RdJobQueryInput qry) {
         response.contentType = "application/json;utf-8"
-        render mapper.writeValueAsString([newwei: newwei, oldwei: oldwei])
+        qry.inputParamMap = params
+        render mapper.writeValueAsString(rdJobService.listJobs(qry))
     }
 }

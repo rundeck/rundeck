@@ -3520,7 +3520,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         then:
         results.success
-        1 * service.jobLifecycleComponentService.beforeJobSave(se,_)>>lfresult
+        1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_)>>lfresult
 
         where:
         inparams                                        | lfresult
@@ -3546,7 +3546,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         !results.success
         se.errors.hasErrors()
         se.errors.hasGlobalErrors()
-        1 * service.jobLifecycleComponentService.beforeJobSave(se,_) >> {
+        1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_) >> {
             throw new JobLifecycleComponentException('an error')
         }
 
@@ -4039,7 +4039,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             se.errors.hasErrors()
             se.errors.hasGlobalErrors()
             se.errors.globalErrors.any{it.code=='scheduledExecution.plugin.error.message'}
-            1 * service.jobLifecycleComponentService.beforeJobSave(se,_) >> {
+            1 * service.jobLifecycleComponentService.beforeJobSave(se.project,_) >> {
                 throw new JobLifecycleComponentException('an error')
             }
 

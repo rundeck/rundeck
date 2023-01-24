@@ -47,6 +47,8 @@ class UrlMappings {
             action = [GET: 'get', POST: 'save', DELETE: 'delete']
         }
 
+        "/api/$api_version/rdjobs"(controller: 'rdJob', action: "list")
+
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete']
         }

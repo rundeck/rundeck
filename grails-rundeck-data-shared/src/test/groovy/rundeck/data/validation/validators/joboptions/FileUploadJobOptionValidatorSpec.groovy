@@ -1,12 +1,12 @@
 package rundeck.data.validation.validators.joboptions
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.config.FeatureService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import rundeck.data.job.RdOption
 import spock.lang.Specification
 

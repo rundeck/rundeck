@@ -51,7 +51,7 @@ class UserService {
     }
 
     String getUserEmail(String login) {
-        return User.findByLogin(login)?.email
+        return userDataProvider.findByLogin(login)?.email
     }
 
     def registerLogin(String login, String sessionId){
@@ -233,7 +233,7 @@ class UserService {
     }
 
     UserInfo getCurrentUserInfo() {
-        User user = User.findByLogin(session.user)
+        RdUser user = userDataProvider.findByLogin(session.user)
         if(!user) return null
         return new UserInfo(username: user.login, email: user.email, firstname: user.firstName, lastname: user.lastName)
     }

@@ -1,6 +1,5 @@
 package rundeck.data.validation.validators.execlifecycle
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.jobs.IExecutionLifecyclePluginService
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
@@ -9,6 +8,8 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import org.rundeck.app.core.FrameworkServiceCapabilities
+import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
 import rundeck.data.job.RdJob
 import spock.lang.Specification
 
@@ -16,7 +17,7 @@ class ExecutionLifecyclePluginValidatorSpec extends Specification {
     def "is validate when null config"() {
         when:
         def fwkSvc = Mock(FrameworkServiceCapabilities) {
-            getExecutionLifecyclePluginService() >> Mock(IExecutionLifecyclePluginService) {
+            getExecutionLifecyclePluginService() >> Mock(ExecutionLifecycleJobDataAdapter) {
                 getExecutionLifecyclePluginConfigSetForJob(_) >> null
             }
         }
@@ -33,7 +34,7 @@ class ExecutionLifecyclePluginValidatorSpec extends Specification {
         when:
         def execLifecycleCfg = ["notfound-plugin":[:]]
         def fwkSvc = Mock(FrameworkServiceCapabilities) {
-            getExecutionLifecyclePluginService() >> Mock(IExecutionLifecyclePluginService) {
+            getExecutionLifecyclePluginService() >> Mock(ExecutionLifecycleJobDataAdapter) {
                 getExecutionLifecyclePluginConfigSetForJob(_) >> PluginConfigSet.with(ServiceNameConstants.ExecutionLifecycle, [SimplePluginConfiguration.builder().provider("notfound-plugin").configuration(execLifecycleCfg).build()])
             }
             getPluginService() >> Mock(PluginServiceCapabilities) {
@@ -59,7 +60,7 @@ class ExecutionLifecyclePluginValidatorSpec extends Specification {
         when:
         def execLifecycleCfg = ["notfound-plugin":[:]]
         def fwkSvc = Mock(FrameworkServiceCapabilities) {
-            getExecutionLifecyclePluginService() >> Mock(IExecutionLifecyclePluginService) {
+            getExecutionLifecyclePluginService() >> Mock(ExecutionLifecycleJobDataAdapter) {
                 getExecutionLifecyclePluginConfigSetForJob(_) >> PluginConfigSet.with(ServiceNameConstants.ExecutionLifecycle, [SimplePluginConfiguration.builder().provider("notfound-plugin").configuration(execLifecycleCfg).build()])
             }
 

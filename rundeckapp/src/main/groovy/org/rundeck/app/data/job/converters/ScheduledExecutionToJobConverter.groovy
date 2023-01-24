@@ -1,10 +1,10 @@
 package org.rundeck.app.data.job.converters
 
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.util.Holders
 import groovy.transform.TypeCheckingMode
+import groovy.util.logging.Log4j2
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.job.component.JobComponentDataImportExport
@@ -26,6 +26,7 @@ import rundeck.Workflow
 import rundeck.WorkflowStep
 
 @GrailsCompileStatic
+@Log4j2
 class ScheduledExecutionToJobConverter {
 
     static JobData convert(ScheduledExecution se) {
@@ -67,9 +68,9 @@ class ScheduledExecutionToJobConverter {
 
     static addJobComponents(RdJob job) {
         RundeckJobDefinitionManager componentManager = Holders.applicationContext.getBean(RundeckJobDefinitionManager)
-        componentManager.jobDefinitionComponents.each { String cmp, JobDefinitionComponent componentDef ->
+        componentManager.jobDefinitionComponents?.each { String cmp, JobDefinitionComponent componentDef ->
             if(!(componentDef instanceof JobComponentDataImportExport)) {
-                println "skipping : " + cmp
+                log.warn("Job component {} cannot be exported to the job data because no exporter is defined", cmp)
                 return
             }
             ((JobComponentDataImportExport)componentDef).exportToJobData(job)

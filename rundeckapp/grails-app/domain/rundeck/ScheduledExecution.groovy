@@ -931,7 +931,6 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
   def Map timeAndDateAsBooleanMap() {
       def result = [ : ]
-      if(!scheduled) return result
       if (!this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
           def map = parseRangeForList(this.month,monthsofyearlist,"month")
           result.putAll(map)

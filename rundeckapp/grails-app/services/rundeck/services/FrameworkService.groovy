@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfig
 import com.dtolabs.rundeck.app.support.ExecutionCleanerConfigImpl
 import com.dtolabs.rundeck.app.support.ExecutionQuery
@@ -35,6 +36,7 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.config.PluginGroup
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
@@ -47,6 +49,7 @@ import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.core.FrameworkServiceCapabilities
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import org.rundeck.app.job.execlifecycle.ExecutionLifecycleJobDataAdapter
 import org.rundeck.app.job.option.JobOptionUrlExpander
@@ -616,7 +619,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
      * @param selector
      * @param project
      */
-    def INodeSet filterNodeSet( NodesSelector selector, String project) {
+    INodeSet filterNodeSet( NodesSelector selector, String project) {
         return metricService.timer(this.class.name,'filterNodeSet').time((Callable<INodeSet>) {
             def unfiltered = rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getNodeSet();
             if(0==unfiltered.getNodeNames().size()) {

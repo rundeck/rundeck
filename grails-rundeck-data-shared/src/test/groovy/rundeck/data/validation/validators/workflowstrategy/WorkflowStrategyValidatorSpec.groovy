@@ -1,9 +1,7 @@
 package rundeck.data.validation.validators.workflowstrategy
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemFactory
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
@@ -11,6 +9,8 @@ import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import org.rundeck.app.core.FrameworkServiceCapabilities
+import org.rundeck.app.execution.workflow.WorkflowExecutionItemFactory
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdWorkflow
 import rundeck.data.job.RdWorkflowStep
