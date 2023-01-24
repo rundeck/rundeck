@@ -1,14 +1,9 @@
 package org.rundeck.app.data.providers
 
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.INodeSet
-import com.dtolabs.rundeck.core.common.NodesSelector
-import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobOption
-import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -23,6 +18,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.exception.DataValidationException
 import org.rundeck.app.data.job.schedule.DefaultJobDataChangeDetector
+import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
 import org.rundeck.app.events.LogJobChangeEvent
 import org.rundeck.app.job.component.JobComponentDataImportExport
@@ -37,7 +33,6 @@ import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.ScheduledExecution
 import rundeck.data.job.RdOption
-import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecycleComponentService
 import rundeck.services.JobReferenceImpl
@@ -48,10 +43,12 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.audit.JobUpdateAuditEvent
 import rundeck.services.data.ScheduledExecutionDataService
 
+import javax.persistence.EntityNotFoundException
+
 @GrailsCompileStatic
 @Transactional
 @Log4j2
-class GormJobDataProvider implements JobDataProvider {
+class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvider {
 
     @Autowired
     ScheduledExecutionDataService scheduledExecutionDataService
@@ -140,36 +137,24 @@ class GormJobDataProvider implements JobDataProvider {
     }
 
     @Override
-    void delete(Serializable id) throws DataAccessException {
-        ScheduledExecution se = ScheduledExecution.get(id)
-        se?.delete()
+    DeletionResult delete(Serializable id) throws DataAccessException {
+        _deleteJob(ScheduledExecution.get(id))
     }
 
     @Override
-    void deleteByUuid(String uuid) throws DataAccessException {
-        ScheduledExecution.findByUuid(uuid)?.delete()
+    DeletionResult deleteByUuid(String uuid) throws DataAccessException {
+        _deleteJob(ScheduledExecution.findByUuid(uuid))
+    }
+
+    @CompileStatic(TypeCheckingMode.SKIP)
+    DeletionResult _deleteJob(ScheduledExecution se) {
+        if(!se) throw new EntityNotFoundException("Job not found")
+        def authCtx = frameworkService.userAuthContext(getSession())
+        return scheduledExecutionService.deleteScheduledExecution(se,false,authCtx,authCtx.username)
     }
 
     void runComponentBeforeSave(String username, RdJob rdJob) {
-        NodesSelector nodeselector
-        if (rdJob.nodeConfig.doNodedispatch) {
-            //set nodeset for the context if doNodedispatch parameter is true
-            def filterExclude =  BaseNodeFilters.asExcludeMap(rdJob.nodeConfig)
-            String filter = BaseNodeFilters.asFilter([include:BaseNodeFilters.asIncludeMap(rdJob.nodeConfig),
-                exclude:filterExclude])
-
-            NodeSet nodeset = ExecutionService.filtersAsNodeSet([
-                    filter:filter,
-                    filterExclude: filterExclude,
-                    nodeExcludePrecedence:rdJob.nodeConfig.nodeExcludePrecedence,
-                    nodeThreadcount: rdJob.nodeConfig.nodeThreadcount,
-                    nodeKeepgoing: rdJob.nodeConfig.nodeKeepgoing
-            ])
-            nodeselector=nodeset
-        } else{
-            nodeselector = SelectorUtils.singleNode(frameworkService.frameworkNodeName)
-        }
-        INodeSet nodeSet = frameworkService.filterNodeSet(nodeselector, rdJob.project)
+        INodeSet nodeSet = scheduledExecutionService.getNodes(rdJob,null)
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
                 rdJob.jobName,
                 rdJob.project,
@@ -199,11 +184,10 @@ class GormJobDataProvider implements JobDataProvider {
     }
 
     ImportedJob<ScheduledExecution> validateComponents(ScheduledExecution se, RdJob rdJob) {
-        //validate job components
         def associations = [:] as Map<String, Object>
         rundeckJobDefinitionManager.jobDefinitionComponents.each{ k, val ->
             if(!(val instanceof JobComponentDataImportExport)) {
-                println "skipping : " + k
+                log.warn("Job component {} cannot be imported to the job data because no importer is defined", k)
                 return
             }
             JobComponentDataImportExport importer = (JobComponentDataImportExport)val
@@ -306,7 +290,9 @@ class GormJobDataProvider implements JobDataProvider {
     }
 
     SortedSet<JobOption> convertToJobOptions(SortedSet<RdOption> rdOptions) {
-        new TreeSet<JobOption>(rdOptions.collect {opt ->
+        def opts = new TreeSet<JobOption>()
+        if(!rdOptions) return opts
+        opts.addAll(rdOptions.collect {opt ->
             JobOptionImpl.builder()
             .name(opt.name)
             .description(opt.description)
@@ -335,6 +321,7 @@ class GormJobDataProvider implements JobDataProvider {
             .valuesList(opt.valuesList)
             .build()
         })
+        opts
     }
 
     static ObjectMapper mapper = new ObjectMapper()

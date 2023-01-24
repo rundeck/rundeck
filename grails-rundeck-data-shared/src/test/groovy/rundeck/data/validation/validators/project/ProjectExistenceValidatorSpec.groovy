@@ -1,6 +1,6 @@
 package rundeck.data.validation.validators.project
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import rundeck.data.job.RdJob
 import spock.lang.Specification
 

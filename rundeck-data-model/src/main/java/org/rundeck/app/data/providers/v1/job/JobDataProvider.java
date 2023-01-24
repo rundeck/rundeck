@@ -1,11 +1,15 @@
 package org.rundeck.app.data.providers.v1.job;
 
+import org.rundeck.app.data.model.v1.DeletionResult;
 import org.rundeck.app.data.model.v1.job.JobData;
+import org.rundeck.app.data.model.v1.page.Page;
 import org.rundeck.spi.data.DataAccessException;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
-public interface JobDataProvider {
+public interface JobDataProvider extends JobQueryProvider {
     /**
      * Retrieves a Job based on the id provided.
      *
@@ -56,7 +60,7 @@ public interface JobDataProvider {
      * @param id Job id
      * @throws DataAccessException on error
      */
-    void delete(final Serializable id) throws DataAccessException;
+    DeletionResult delete(final Serializable id) throws DataAccessException;
 
     /**
      * Removes a Job
@@ -64,5 +68,5 @@ public interface JobDataProvider {
      * @param uuid Job uuid
      * @throws DataAccessException on error
      */
-    void deleteByUuid(final String uuid) throws DataAccessException;
+    DeletionResult deleteByUuid(final String uuid) throws DataAccessException;
 }

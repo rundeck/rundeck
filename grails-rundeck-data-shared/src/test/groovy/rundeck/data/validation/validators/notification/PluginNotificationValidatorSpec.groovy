@@ -1,6 +1,5 @@
 package rundeck.data.validation.validators.notification
 
-import com.dtolabs.rundeck.core.common.FrameworkServiceCapabilities
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -9,6 +8,7 @@ import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import org.rundeck.app.core.FrameworkServiceCapabilities
 import rundeck.data.job.RdNotification
 import spock.lang.Specification
 

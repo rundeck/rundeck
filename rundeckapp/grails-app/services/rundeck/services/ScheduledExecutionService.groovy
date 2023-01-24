@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.ResourceTypes
@@ -45,6 +46,7 @@ import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
+import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
@@ -189,12 +191,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
-<<<<<<< HEAD
     UserDataProvider userDataProvider
-=======
     JobDataProvider jobDataProvider
     UserService userService
->>>>>>> e995f7150 (Update models and converters for Rundeck jobs.)
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -959,7 +958,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    static class DeleteJobResult{
+    static class DeleteJobResult implements DeletionResult {
+        String dataType = "Job"
+        String id
         boolean success
         String error
     }
@@ -1047,7 +1048,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        return new DeleteJobResult(success:success,error:errmsg)
+        return new DeleteJobResult(id:scheduledExecution.id,success:success,error:errmsg)
     }
     /**
      * Attempt to delete a job given an id
@@ -4284,19 +4285,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * @return INodeSet
      */
-    def getNodes(scheduledExecution, filter, authContext = null, Set<String> actions = null){
+    INodeSet getNodes(JobData job, filter, authContext = null, Set<String> actions = null){
 
         NodesSelector nodeselector
-        if (scheduledExecution.doNodedispatch) {
+        if (job.nodeConfig.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            filter = filter? filter : scheduledExecution.asFilter()
-            def filterExclude = scheduledExecution.asExcludeFilter()
+            filter = filter? filter : BaseNodeFilters.asFilter(job)
             NodeSet nodeset = ExecutionService.filtersAsNodeSet([
                     filter:filter,
-                    filterExclude: filterExclude,
-                    nodeExcludePrecedence:scheduledExecution.nodeExcludePrecedence,
-                    nodeThreadcount: scheduledExecution.nodeThreadcount,
-                    nodeKeepgoing: scheduledExecution.nodeKeepgoing
+                    filterExclude: job.nodeConfig.filterExclude,
+                    nodeExcludePrecedence:job.nodeConfig.nodeExcludePrecedence,
+                    nodeThreadcount: job.nodeConfig.nodeThreadcount,
+                    nodeKeepgoing: job.nodeConfig.nodeKeepgoing
             ])
             nodeselector=nodeset
         } else if(frameworkService != null){
@@ -4308,12 +4308,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if(authContext){
             return rundeckAuthContextProcessor.filterAuthorizedNodes(
-                    scheduledExecution.project,
+                    job.project,
                     actions,
-                    frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
+                    frameworkService.filterNodeSet(nodeselector, job.project),
                     authContext)
         }else{
-            return frameworkService.filterNodeSet(nodeselector, scheduledExecution.project)
+            return frameworkService.filterNodeSet(nodeselector,job.project)
         }
     }
 
