@@ -16,19 +16,26 @@ export interface IClusterManager {
 interface IConfig {
     licenseFile: string
     image: string
+    composeFileName?: string
 }
+
+const DEFAULT_DOCKER_COMPOSE_FILE_NAME = 'docker-compose.yml'
 
 export class DockerClusterManager implements IClusterManager {
     compose: DockerCompose
 
     constructor(readonly dir: string, config: IConfig) {
-        this.compose = new DockerCompose(dir, {
-            env: {
-                RUNDECK_LICENSE_FILE: Path.resolve(config.licenseFile),
-                RUNDECK_IMAGE: config.image,
-                COMPOSE_PROJECT_NAME: 'testdeck'
+        this.compose = new DockerCompose(
+            dir,
+     {
+                env: {
+                    RUNDECK_LICENSE_FILE: Path.resolve(config.licenseFile),
+                    RUNDECK_IMAGE: config.image,
+                    COMPOSE_PROJECT_NAME: 'testdeck'
+                },
+                composeFileName: config.composeFileName || DEFAULT_DOCKER_COMPOSE_FILE_NAME
             }
-        })
+        )
     }
 
     async startCluster() {
@@ -45,7 +52,7 @@ export class DockerClusterManager implements IClusterManager {
         if (base.protocol != 'docker:')
             throw new Error(`Protocol not supported: ${base.protocol}`)
 
-        const serviceName = base.hostname.split('_')[1]
+        const serviceName = base.hostname!.split('_')[1]
 
         await this.compose.stop(serviceName)
     }
@@ -56,7 +63,7 @@ export class DockerClusterManager implements IClusterManager {
         if (base.protocol != 'docker:')
             throw new Error(`Protocol not supported: ${base.protocol}`)
 
-        const serviceName = base.hostname.split('_')[1]
+        const serviceName = base.hostname!.split('_')[1]
 
         await this.compose.start(serviceName)
     }

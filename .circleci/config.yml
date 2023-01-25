@@ -472,12 +472,22 @@ jobs:
     machine:
       image: ubuntu-2004:202201-02
     steps:
+      - run:
+          name: Setup dependencies
+          command: |
+            sudo curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+            echo "deb http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            sudo apt-get update
+            sudo apt-get -y install dpkg
+            sudo apt-get -y install xmlstarlet google-chrome-stable
       - checkout
       - install-java
       - aws-cli/install:
           skip-install-check: false
       - install-node:
-          version: v12.16.3
+          version: v16.18.0
       - run:
           name: Fetch Artifacts
           command: |
@@ -485,15 +495,27 @@ jobs:
             pull_rundeck
       - run:
           name: Test
+          working_directory: ~/repo/test/selenium
           command: |
+            cd ../..
             source .circleci/circle-shim.sh
-            bash test/ci-test-docker-selenium.sh
+            cd test/selenium
+            nvm use v16.18.0
+            npm run bootstrap
+            bin/deck test -s selenium \
+            -u http://localhost:4440 \
+            --headless \
+            --provision \
+            -t TEST_TOKEN \
+            --clusterConfig ~/repo/test/selenium/lib/compose/single \
+            --image rundeck/rundeck \
+            -j="--verbose --colors"
       - run:
           name: Logs
           working_directory: ~/repo/test
           when: always
           command: |
-            docker-compose -f selenium-docker-compose.yml logs rundeck
+            docker-compose -p testdeck -f ./selenium/lib/compose/single/docker-compose.yml logs
       - store_artifacts:
           path: test/selenium/test_out/images
           destination: images
