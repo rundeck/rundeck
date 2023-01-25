@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.server.plugins
 
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.server.plugins.builder.ScriptPluginBuilder
 import org.springframework.scripting.groovy.GroovyObjectCustomizer
 
@@ -36,11 +37,16 @@ class PluginCustomizer implements GroovyObjectCustomizer {
                     clos.delegate = builder
                     clos.resolveStrategy = Closure.DELEGATE_FIRST
                     clos.call()
-                    pluginRegistry[goo.class.name] = goo.class.name
+                    String svcName = findServiceName(clazz)
+                    pluginRegistry[svcName + ':' + goo.class.name] = goo.class.name
                     return builder
                 }
                 return goo;
             }
         }
+    }
+
+    private static String findServiceName(Class type) {
+        return ServiceTypes.pluginTypesMap.find { it.value == type }?.key
     }
 }
