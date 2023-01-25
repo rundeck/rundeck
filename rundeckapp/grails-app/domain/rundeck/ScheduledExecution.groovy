@@ -25,7 +25,9 @@ import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
+import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
+import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.job.RdSchedule
@@ -1275,6 +1277,19 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
             groupPath: groupPath,
             project: project,
             serverUUID: serverNodeUUID
+        )
+    }
+
+    JobDataSummary toJobDataSummary() {
+        new RdJobDataSummary(
+                id: id,
+                uuid: uuid,
+                jobName: jobName,
+                groupPath: groupPath,
+                project: project,
+                scheduled: scheduled,
+                scheduleEnabled: scheduleEnabled,
+                executionEnabled: executionEnabled
         )
     }
 }

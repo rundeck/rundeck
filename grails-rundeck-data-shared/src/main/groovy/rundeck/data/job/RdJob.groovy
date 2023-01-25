@@ -10,12 +10,10 @@ import grails.validation.Validateable
 import org.rundeck.app.components.jobs.JobDefinitionComponent
 import org.rundeck.app.core.FrameworkServiceCapabilities
 import org.rundeck.app.data.model.v1.job.JobData
-import org.rundeck.app.data.model.v1.job.component.JobComponentData
 import rundeck.data.constants.NotificationConstants
 import rundeck.data.validation.validators.ValidatorUtils
 import rundeck.data.validation.validators.execlifecycle.ExecutionLifecyclePluginValidator
 import rundeck.data.validation.validators.jobargs.JobArgStringValidator
-import rundeck.data.validation.validators.jobcomponent.JobComponentValidator
 import rundeck.data.validation.validators.joboptions.JobOptionDataValidator
 import rundeck.data.validation.validators.notification.EmailNotificationValidator
 import rundeck.data.validation.validators.notification.PluginNotificationValidator

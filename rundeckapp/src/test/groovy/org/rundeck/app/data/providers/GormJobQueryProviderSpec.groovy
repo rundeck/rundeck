@@ -11,6 +11,7 @@ import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.data.job.query.RdJobQueryInput
+import rundeck.services.JobSchedulesService
 import spock.lang.Specification
 
 class GormJobQueryProviderSpec extends Specification implements DataTest {
@@ -27,6 +28,9 @@ class GormJobQueryProviderSpec extends Specification implements DataTest {
     def "QueryJobs"() {
         given:
         provider.applicationContext = applicationContext
+        provider.jobSchedulesService = Mock(JobSchedulesService) {
+            expectedRowCount * isScheduled(_) >> true
+        }
         ScheduledExecution job1 = new ScheduledExecution(jobName: "one", project:"test1",workflow: new Workflow(commands:[new CommandExec(adhocLocalString: "echo hello")]))
         job1.save()
         ScheduledExecution job2 = new ScheduledExecution(jobName: "two",groupPath: "two", project:"test1",workflow: new Workflow(commands:[new CommandExec(adhocLocalString: "echo hello")]))

@@ -36,6 +36,11 @@ public interface JobData {
     Date getDateCreated();
     Date getLastUpdated();
     String getServerNodeUUID();
+
+    /**
+     * Configuration for plugins that are attached to this job, such as execution lifecycle plugins
+     * @return
+     */
     Map<String, Object> getPluginConfigMap();
 
     LogConfig getLogConfig();
@@ -46,5 +51,9 @@ public interface JobData {
     ScheduleData getSchedule();
     OrchestratorData getOrchestrator();
 
+    /**
+     * Configuration for job components attached to this job
+     * @return
+     */
     Map<String, JobComponentData> getComponents();
 }
