@@ -8,6 +8,7 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.data.RdPageable
 import org.rundeck.app.data.job.converters.ScheduledExecutionToJobConverter
 import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.page.Page
 import org.rundeck.app.data.model.v1.page.Pageable
 import org.rundeck.app.data.model.v1.query.JobQueryInputData
@@ -16,15 +17,18 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import rundeck.ScheduledExecution
 import rundeck.data.job.query.JobQueryConstants
+import rundeck.services.JobSchedulesService
 
 @CompileStatic
 class GormJobQueryProvider implements JobQueryProvider {
     @Autowired
     ApplicationContext applicationContext
+    @Autowired
+    JobSchedulesService jobSchedulesService
 
     @Override
     @CompileStatic(TypeCheckingMode.SKIP)
-    Page<JobData> queryJobs(JobQueryInputData jobQueryInput) {
+    Page<JobDataSummary> queryJobs(JobQueryInputData jobQueryInput) {
         JobQueryInputData query = jobQueryInput
 
         Integer queryMax=query.max
@@ -55,7 +59,11 @@ class GormJobQueryProvider implements JobQueryProvider {
             applyJobComponentCriteria(query, delegate)
             applySort(query, delegate)
         }
-        def schedlist = scheduled.collect { ScheduledExecutionToJobConverter.convert(it) }
+        def schedlist = scheduled.collect { se ->
+            def summary = se.toJobDataSummary()
+            summary.scheduled = jobSchedulesService.isScheduled(se.uuid)
+            summary
+        }
         def total = schedlist.size()
         if(queryMax && queryMax>0) {
             //count full result set
@@ -177,6 +185,10 @@ class GormJobQueryProvider implements JobQueryProvider {
 
         }
         return idlist
+    }
+
+    def JobDataSummary toSummary(ScheduledExecution se) {
+
     }
 
 
