@@ -119,7 +119,7 @@ export class ExecutionOutput {
     }
 
     async getExecutionOutput(executionId: string, offset: number, maxLines: number) {
-        return await this.client.apiRequest({
+        return this.client.apiRequest({
             method: 'GET',
             pathTemplate: 'api/43/execution/{id}/output',
             pathParameters: {

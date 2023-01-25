@@ -4,7 +4,7 @@ import EntryFlex from './logEntryFlex.vue'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 import { IObservableArray, autorun } from 'mobx'
 
-interface IBuilderOpts {
+export interface IBuilderOpts {
   node?: string,
   stepCtx?: string,
   nodeIcon?: boolean
@@ -146,11 +146,7 @@ export class LogBuilder {
       propsData: {
         eventBus: this.eventBus,
         selected: selected,
-        timestamps: this.opts.time.visible,
-        command: this.opts.command.visible,
-        gutter: this.opts.gutter.visible,
-        nodeBadge: this.opts.nodeIcon,
-        lineWrap: this.opts.content.lineWrap,
+        config: this.opts,
         prevEntry: this.lastEntry,
         logEntry: {
           meta: newEntry.meta,

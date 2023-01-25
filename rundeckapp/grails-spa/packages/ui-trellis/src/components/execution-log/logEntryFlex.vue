@@ -33,6 +33,7 @@
 import Vue, {PropType} from 'vue'
 import {Component, Prop} from 'vue-property-decorator'
 import UiSocket from '../utils/UiSocket.vue'
+import {IBuilderOpts} from "./logBuilder"
 
 @Component({components: {UiSocket}})
 export default class Flex extends Vue {
@@ -42,20 +43,8 @@ export default class Flex extends Vue {
     @Prop({default: false})
     selected!: boolean
 
-    @Prop({default: false})
-    timestamps!: boolean
-
-    @Prop({default: true})
-    command!: boolean
-
-    @Prop({default: true})
-    gutter!: boolean
-
-    @Prop({default: true})
-    nodeBadge!: boolean
-
-    @Prop({default: true})
-    lineWrap!: boolean
+    @Prop({required: true})
+    config!: IBuilderOpts
 
     @Prop({required: false, default: undefined})
     prevEntry!: any
@@ -63,12 +52,32 @@ export default class Flex extends Vue {
     @Prop({required: true})
     logEntry!: any
 
+    get timestamps() {
+      return (this.config.time?.visible) ? this.config.time.visible : false
+    }
+  
+    get command() {
+      return (this.config.command?.visible) ? this.config.command.visible : false
+    }
+  
+    get gutter() {
+      return (this.config.gutter?.visible) ? this.config.gutter.visible : false
+    }
+  
+    get nodeBadge() {
+      return (this.config.nodeIcon) ? this.config.nodeIcon : false
+    }
+  
+    get lineWrap() {
+      return (this.config.content?.lineWrap) ? this.config.content.lineWrap : false
+    }
+  
     get displayNodeBadge() {
-        return this.nodeBadge && (this.prevEntry == undefined || this.logEntry.node != this.prevEntry.node)
+        return this.config.nodeIcon && (this.prevEntry == undefined || this.logEntry.node != this.prevEntry.node)
     }
 
     get displayGutter() {
-        return this.gutter && (this.timestamps || this.command)
+        return this.config.gutter?.visible && (this.config.time?.visible || this.config.command?.visible)
     }
 
     lineSelect() {

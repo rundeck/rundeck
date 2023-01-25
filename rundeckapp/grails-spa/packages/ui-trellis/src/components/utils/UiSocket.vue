@@ -17,7 +17,7 @@ import {
     getRundeckContext,
 } from '../../rundeckService'
 import {UIItem, UIWatcher} from '../../stores/UIStore'
-// import {UIItem, UIWatcher} from '@rundeck/ui-trellis/lib/stores/UIStore'
+
 
 const rootStore = getRundeckContext().rootStore
 
