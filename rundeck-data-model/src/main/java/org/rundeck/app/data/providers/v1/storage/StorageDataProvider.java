@@ -32,7 +32,7 @@ public interface StorageDataProvider extends DataProvider {
      * @return id of the created RundeckStorage
      * @throws DataAccessException on error
      */
-    Long create(final RundeckStorage data, Map<String, String> metadata) throws DataAccessException;
+    Long create(final RundeckStorage data) throws DataAccessException;
 
     /**
      * Updates a RundeckStorage with the supplied attributes

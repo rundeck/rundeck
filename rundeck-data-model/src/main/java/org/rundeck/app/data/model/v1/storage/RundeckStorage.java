@@ -23,7 +23,7 @@ import java.util.*;
 public interface RundeckStorage {
     Serializable getId();
     String getNamespace();
-    Map getStorageMeta();
+    Map<String,String> getStorageMeta();
     byte[] getData();
     Date getLastUpdated();
     Date getDateCreated();

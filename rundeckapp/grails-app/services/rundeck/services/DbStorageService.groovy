@@ -250,14 +250,14 @@ class DbStorageService implements NamespacedStorage{
                 SimpleStorageBuilder storageBuilder = SimpleStorageBuilder.with(storage)
                 storageBuilder.setNamespace( namespace ? namespace : null)
                 storageBuilder.setPath(path)
-
+                storageBuilder.setStorageMeta(content.meta)
                 storageBuilder.setData( data)
                 try {
                     if (id) {
                         storageDataProvider.update(id, storageBuilder, content.meta)
 
                     } else {
-                        id = storageDataProvider.create(storageBuilder, content.meta)
+                        id = storageDataProvider.create(storageBuilder)
                     }
                     saved = storageDataProvider.getData(id)
                 } catch (DataAccessException e) {

@@ -31,7 +31,7 @@ class GormStorageDataProvider implements StorageDataProvider {
     }
 
     @Override
-    Long create(RundeckStorage data, Map<String, String> metadata) throws DataAccessException {
+    Long create(RundeckStorage data) throws DataAccessException {
 
         def parent = PathUtil.parentPath(data.getPath())
         String dir = parent?parent.path:''
@@ -40,7 +40,7 @@ class GormStorageDataProvider implements StorageDataProvider {
                                 name: name,
                                 dir: dir,
                                 data: data.getData())
-        s.setStorageMeta(metadata)
+        s.setStorageMeta(data.getStorageMeta())
         try {
             if (storageDataService.save(s)) {
                 return s.getId()
@@ -62,8 +62,8 @@ class GormStorageDataProvider implements StorageDataProvider {
         if (!storage) {
             throw new DataAccessException("Not found: storage with ID: ${id}")
         }
-        Map<String, String> newdata = storage.storageMeta?:[:]
-        storage.storageMeta = newdata + metadata
+        Map<String, String> existingMeta = storage.storageMeta?:[:]
+        storage.storageMeta = existingMeta + metadata
 
         storage.namespace = data.getNamespace()
         storage.name = name

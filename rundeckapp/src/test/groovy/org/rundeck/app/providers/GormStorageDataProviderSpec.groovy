@@ -41,12 +41,18 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         SimpleStorageBuilder data = SimpleStorageBuilder.builder()
                                     .data('abc'.bytes)
                                     .path(path)
+                                    .storageMeta([abc: 'xyz'])
                                     .build()
-        provider.create(data,[abc: 'xyz'])
-
+        def storageId = provider.create(data)
+        def newStorage = provider.getData(storageId)
         then:
         provider.findResource(null, null,'xyz') == null
         provider.findResource(null,'xyz','abc') != null
+        newStorage.dir == 'xyz'
+        newStorage.name == 'abc'
+        newStorage.namespace == null
+        newStorage.data == 'abc'.bytes
+        newStorage.getStorageMeta() == [abc: 'xyz']
     }
 
     def "Update"() {
@@ -56,18 +62,27 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
         SimpleStorageBuilder data =  SimpleStorageBuilder.builder()
                                         .data('abc'.bytes)
                                         .path(path)
+                                        .storageMeta([abc: 'xyz'])
                                         .build()
 
-        Long storageId = provider.create(data, [abc: 'xyz'] )
+        Long storageId = provider.create(data)
 
-        def storageName = provider.getData(storageId).path.name
-        data.setPath(PathUtil.asPath("updated"))
-        provider.update(storageId, data, [def: 'abc'])
+        def oldStorageName = provider.getData(storageId).path.name
+        SimpleStorageBuilder updateData =  SimpleStorageBuilder.builder()
+                .data('def'.bytes)
+                .path(PathUtil.asPath("updated"))
+                .namespace("changed")
+                .build()
+        provider.update(storageId, updateData, [def: 'abc'])
         def storage1 = provider.getData(storageId)
 
         then:
-        storageName == 'abc'
+        oldStorageName == 'abc'
         storage1.path.name == 'updated'
+        storage1.dir == ''
+        storage1.namespace == 'changed'
+        storage1.data == 'def'.bytes
+        storage1.getStorageMeta() == [abc: 'xyz', def: 'abc']
     }
     def "DeleteResource ok"() {
         when:

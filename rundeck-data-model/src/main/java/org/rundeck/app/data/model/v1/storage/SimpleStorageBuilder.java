@@ -14,7 +14,6 @@ public class SimpleStorageBuilder implements RundeckStorage {
   private Serializable id;
   private String namespace;
   private Map storageMeta;
-  private String pathSha;
   private byte[] data;
   private Date dateCreated;
   private Date lastUpdated;
