@@ -2060,9 +2060,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         def bais = new ByteArrayInputStream(params.fileText.toString().getBytes("UTF-8"))
-        def fileValidationResult = nodeSourceFileExceededMaxSize(bais)
-        if( fileValidationResult?.result ){
-            flash.error = fileValidationResult?.result
+        def fileSizeValidation = nodeSourceFileExceededMaxSize(bais)
+        if( !fileSizeValidation.result ){
+            flash.error = fileSizeValidation.message
             return redirect(
                     controller: 'framework',
                     action: 'projectNodeSources',
@@ -3515,9 +3515,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     private def nodeSourceFileExceededMaxSize(ByteArrayInputStream bais){
         def nodesMaxSize = 65472
         if( bais.available() > nodesMaxSize ){
-            return [result: "Nodes exceed the maximum capacity of subscribed nodes. Max: ${nodesMaxSize}, Input: ${bais.available()}"]
+            return [result: false, message: "Nodes exceed the maximum capacity of subscribed nodes. Max: ${nodesMaxSize}, Input: ${bais.available()}"]
         }else{
-            return null
+            return [result: true, message: null]
         }
     }
 }
