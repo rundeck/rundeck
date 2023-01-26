@@ -60,7 +60,14 @@
       <div class="col-sm-3">
           <strong><g:message code="execution.show.mode.column.node" /></strong>
       </div>
-      <div class="col-sm-2 col-sm-offset-5">
+      <div class="col-sm-3">
+          <div class="vue-ui-socket">
+              <div>
+                  <ui-socket section="job-runner-execution-column" location="section-title-column" :event-bus="EventBus"/>
+              </div>
+          </div>
+      </div>
+      <div class="col-sm-2 col-sm-offset-2">
           <strong><g:message code="start.time" /></strong>
       </div>
       <div class="col-sm-2">
