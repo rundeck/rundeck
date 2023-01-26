@@ -48,8 +48,8 @@ public class Option implements Comparable{
     static final String DEFAULT_DELIMITER =','
 
     ScheduledExecution scheduledExecution
-        String name
-        Integer sortIndex
+    String name
+    Integer sortIndex
     String description
     String defaultValue
     String defaultStoragePath
