@@ -144,7 +144,6 @@ class ScheduledExecutionController  extends ControllerBase{
     def StorageService storageService
     OptionValuesService optionValuesService
     FeatureService featureService
-    ExecutionLifecyclePluginService executionLifecyclePluginService
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     ConfigurationService configurationService

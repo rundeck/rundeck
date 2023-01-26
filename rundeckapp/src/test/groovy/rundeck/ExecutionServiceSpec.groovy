@@ -3286,7 +3286,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         }
 
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
 
 
@@ -3403,7 +3403,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         }
 
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
         def origContext = Mock(StepExecutionContext){
             getDataContext()>>datacontext
@@ -4803,7 +4803,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     nodeSet
                 }
             }
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
 
 
@@ -5073,7 +5073,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     nodeSet
                 }
             }
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
 
         def origContext = Mock(StepExecutionContext){
@@ -5189,7 +5189,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     nodeSet
                 }
             }
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
         service.notificationService = Mock(NotificationService)
         def framework = Mock(Framework)
@@ -5574,7 +5574,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                     nodeSet
                 }
             }
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
 
 
         def origContext = Mock(StepExecutionContext){
@@ -5723,7 +5723,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 }
             }
 
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.workflowService = Mock(WorkflowService)
         service.notificationService = Mock(NotificationService)
         service.reportService = Mock(ReportService){

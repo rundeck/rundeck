@@ -35,7 +35,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
     def setup(){
         service = new ExecutionService()
         service.executionValidatorService = new ExecutionValidatorService()
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
     }
 

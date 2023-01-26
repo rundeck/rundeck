@@ -1,15 +1,15 @@
 package rundeck.services
 
-
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionReference
-import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
+import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
-import com.dtolabs.rundeck.core.jobs.IExecutionLifecyclePluginService
-import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler
+import com.dtolabs.rundeck.core.jobs.IExecutionLifecycleComponentService
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
@@ -17,10 +17,16 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
-
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
+import grails.events.annotation.Subscriber
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.ScheduledExecution
+import rundeck.services.feature.FeatureService
 
 /**
  * Provides capability to execute certain task based on a job execution event
@@ -28,12 +34,41 @@ import rundeck.ScheduledExecution
  * Date: 5/07/19
  * Time: 10:32 AM
  */
-class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginService {
+@CompileStatic
+@Slf4j
+class ExecutionLifecycleComponentService implements IExecutionLifecycleComponentService, ApplicationContextAware  {
 
-    PluginService pluginService
+    @Autowired
     ExecutionLifecyclePluginProviderService executionLifecyclePluginProviderService
+
+    @Autowired
     FrameworkService frameworkService
-    def featureService
+
+    @Autowired
+    FeatureService featureService
+
+    Map<String, ExecutionLifecycleComponent> beanComponents
+
+    //using lazy loader
+    PluginService pluginService
+
+    ApplicationContext applicationContext
+
+
+    @Subscriber('rundeck.bootstrap')
+    void init() throws Exception {
+        beanComponents = applicationContext.getBeansOfType(ExecutionLifecycleComponent)
+    }
+    
+
+    //lazy load the pluginService
+    private PluginService getPluginService() throws Exception {
+        if (null == pluginService) {
+            pluginService = applicationContext.getBean('pluginService', PluginService)
+        }
+        return pluginService
+    }
+
 
     enum EventType{
         BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun')
@@ -63,35 +98,35 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @param eventType type of event
      * @return ExecutionLifecycleStatus response from plugin implementation
      */
-    ExecutionLifecycleStatus handleEvent(def event, EventType eventType, List<NamedExecutionLifecyclePlugin> plugins) throws ExecutionLifecyclePluginException{
-        if (!plugins) {
+    ExecutionLifecycleStatus handleEvent(def event, EventType eventType, List<NamedExecutionLifecycleComponent> components) throws ExecutionLifecycleComponentException{
+        if (!components) {
             return null
         }
-        def errors = [:]
+        Map<String, Exception> errors = [:]
         def results = [:]
         Exception firstErr
         ExecutionLifecycleStatus prevResult = null
         def prevEvent = event
         boolean success = true
-        for (NamedExecutionLifecyclePlugin plugin : plugins) {
+        for (NamedExecutionLifecycleComponent component : components) {
             try {
 
                 def curEvent = mergeEvent(prevResult, prevEvent)
-                ExecutionLifecycleStatus result = handleEventForPlugin(eventType, plugin, curEvent)
+                ExecutionLifecycleStatus result = handleEventForPlugin(eventType, component, curEvent)
                 if (result != null && !result.successful) {
                     success = false
-                    log.info("Result from plugin is false an exception will be thrown")
+                    log.info("Result from component is false an exception will be thrown")
                     if (result.getErrorMessage() != null && !result.getErrorMessage().trim().isEmpty()) {
-                        throw new ExecutionLifecyclePluginException(result.getErrorMessage())
+                        throw new ExecutionLifecycleComponentException(result.getErrorMessage())
                     } else {
-                        throw new ExecutionLifecyclePluginException(
-                                "Response from $plugin.name is false, but no description was provided by the plugin"
+                        throw new ExecutionLifecycleComponentException(
+                                "Response from $component.name is false, but no description was provided by the component"
                         )
                     }
 
                 }
                 if (result != null && result.isUseNewValues()) {
-                    results[plugin.name] = result
+                    results[component.name] = result
                     prevResult = result
                 }
                 prevEvent = curEvent
@@ -100,7 +135,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
                 if (!firstErr) {
                     firstErr = e
                 }
-                errors[plugin.name] = e
+                errors[component.name] = e
             }
         }
         if (errors) {
@@ -116,9 +151,10 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
 
     }
 
+    @CompileDynamic
     ExecutionLifecycleStatus handleEventForPlugin(
             EventType eventType,
-            NamedExecutionLifecyclePlugin plugin,
+            NamedExecutionLifecycleComponent plugin,
             event
     ) {
         switch (eventType) {
@@ -191,12 +227,12 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @param project
      * @return
      */
-    List<NamedExecutionLifecyclePlugin> createConfiguredPlugins(PluginConfigSet configurations, String project) {
-        List<NamedExecutionLifecyclePlugin> configured = []
+    List<NamedExecutionLifecycleComponent> createConfiguredPlugins(PluginConfigSet configurations, String project) {
+        List<NamedExecutionLifecycleComponent> configured = []
 
         configurations?.pluginProviderConfigs?.each { PluginProviderConfiguration pluginConfig ->
             String type = pluginConfig.provider
-            def configuredPlugin = pluginService.configurePlugin(
+            def configuredPlugin = getPluginService().configurePlugin(
                     type,
                     pluginConfig.configuration,
                     project,
@@ -207,9 +243,29 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
                 //TODO: could not load plugin, or config was invalid
                 return
             }
-            configured << new NamedExecutionLifecyclePlugin(plugin: (ExecutionLifecyclePlugin) configuredPlugin.instance, name: type)
+            configured << new NamedExecutionLifecycleComponent(component: (ExecutionLifecyclePlugin) configuredPlugin.instance, name: type)
         }
         configured
+    }
+
+    List<NamedExecutionLifecycleComponent> loadConfiguredComponents(PluginConfigSet configurations, String project) {
+        List compList = []
+        if(beanComponents){
+            List<NamedExecutionLifecycleComponent> namedComponents = beanComponents.collect {name, component->
+                new NamedExecutionLifecycleComponent(
+                        component: component,
+                        name: component.class.canonicalName)
+            }
+
+            namedComponents.forEach {component->
+                if(!component.isPlugin()){
+                    compList.add(component)
+                }
+            }
+        }
+
+        compList.addAll(createConfiguredPlugins(configurations, project))
+        compList
     }
 
 
@@ -225,7 +281,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
             return null
         }
 
-        return pluginService.listPlugins(ExecutionLifecyclePlugin).findAll { k, v ->
+        return getPluginService().listPlugins(ExecutionLifecyclePlugin).findAll { k, v ->
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.ExecutionLifecycle)
         }
     }
@@ -235,6 +291,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @param job
      * @return PluginConfigSet for the ExecutionLifecyclePlugin service for the job, or null if not defined or not enabled
      */
+    @CompileDynamic
     PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(ScheduledExecution job) {
         if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
@@ -272,26 +329,30 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @param executionReference reference
      * @return execution event handler
      */
-    ExecutionLifecyclePluginHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference) {
+    ExecutionLifecycleComponentHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference) {
         if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }
         if (!configurations) {
             return null
         }
-        def plugins = createConfiguredPlugins(configurations, executionReference.project)
-        new ExecutionReferenceLifecyclePluginHandler(
+        def components = loadConfiguredComponents(configurations, executionReference.project)
+        new ExecutionReferenceLifecycleComponentHandler(
                 executionReference: executionReference,
-                executionLifecyclePluginService: this,
-                plugins: plugins
+                executionLifecycleComponentService: this,
+                components: components
         )
     }
 }
 
 @CompileStatic
-class NamedExecutionLifecyclePlugin implements ExecutionLifecyclePlugin {
-    @Delegate ExecutionLifecyclePlugin plugin
+class NamedExecutionLifecycleComponent implements ExecutionLifecycleComponent {
+    @Delegate ExecutionLifecycleComponent component
     String name
+    boolean isPlugin() {
+        return component instanceof ExecutionLifecyclePlugin
+    }
+
 }
 
 @CompileStatic

@@ -8,7 +8,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
  * @author rnavarro
  * @version $Revision$
  */
-public class ExecutionLifecyclePluginException extends Exception {
+public class ExecutionLifecyclePluginException extends ExecutionLifecycleComponentException {
 
     public ExecutionLifecyclePluginException() {
         super();
