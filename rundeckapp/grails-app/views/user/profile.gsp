@@ -71,9 +71,7 @@
   <input id="loginName" name="loginName" type="hidden" value="${user.login}">
   <div class="row">
       <div class="col-xs-12">
-        <div class="card">
-          <g:render template="/common/messages"/>
-        </div>
+        <g:render template="/common/messages"/>
       </div>
       <div class="col-sm-12">
           <div class="card">
