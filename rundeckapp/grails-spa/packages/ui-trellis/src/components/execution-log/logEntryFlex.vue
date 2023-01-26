@@ -6,65 +6,84 @@
             }"
         >
             <span class="gutter line-number">
-                <span class="execution-log_gutter-entry" :pseudo-content="timestamps ? $options.entry.time : ''" />
-                <!-- {{timestamps ? $options.entry.time : ''}} -->
-                <i v-if="command" class="rdicon icon-small" v-bind:class="[$options.entry.stepType]"></i>
-                <span class="execution-log_gutter-entry" :pseudo-content="command ? $options.entry.stepLabel : ''" />
-                <!-- {{command ? $options.entry.stepLabel : ''}} -->
+                <span class="execution-log_gutter-entry" :pseudo-content="timestamps ? logEntry.time : ''" />
+                <!-- {{timestamps ? logEntry.time : ''}} -->
+                <i v-if="command" class="rdicon icon-small" v-bind:class="[logEntry.stepType]"></i>
+                <span class="execution-log_gutter-entry" :pseudo-content="command ? logEntry.stepLabel : ''" />
+                <!-- {{command ? logEntry.stepLabel : ''}} -->
             </span>
         </div>
-        <div class="execution-log__content" v-bind:class="[`execution-log__content--level-${$options.entry.level.toLowerCase()}`,
+        <div class="execution-log__content" v-bind:class="[`execution-log__content--level-${logEntry.level.toLowerCase()}`,
             {
-                'execution-log__content--html': $options.entry.logHtml
+                'execution-log__content--html': logEntry.logHtml
             }]"
         >
-            <span v-if="displayNodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/><span :pseudo-content="$options.entry.node" /></span>
-            <span v-if="$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="$options.entry.logHtml"/>
-            <span v-if="!$options.entry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}">{{$options.entry.log}}</span
+            <ui-socket section="execution-log-line" location="badges" :event-bus="eventBus" :socket-data="{
+              prevEntry: this.prevEntry,
+              logEntry: this.logEntry
+            }"/>
+            <span v-if="displayNodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/><span :pseudo-content="logEntry.node" /></span>
+            <span v-if="logEntry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}" v-html="logEntry.logHtml"/>
+            <span v-if="!logEntry.logHtml" class="execution-log__content-text" v-bind:class="{'execution-log__content-text--overflow': !lineWrap}">{{logEntry.log}}</span
         ></div
     ></div>
 </template>
 
 <script lang="ts">
 import Vue, {PropType} from 'vue'
-import { Component, Prop } from 'vue-property-decorator'
-import { ComponentOptions } from 'vue/types/umd'
+import {Component, Prop} from 'vue-property-decorator'
+import UiSocket from '../utils/UiSocket.vue'
+import {IBuilderOpts} from "./logBuilder"
 
-@Component
+@Component({components: {UiSocket}})
 export default class Flex extends Vue {
+    @Prop({required: false})
+    readonly eventBus!: Vue
+  
     @Prop({default: false})
     selected!: boolean
 
-    @Prop({default: false})
-    timestamps!: boolean
+    @Prop({required: true})
+    config!: IBuilderOpts
 
-    @Prop({default: true})
-    command!: boolean
+    @Prop({required: false, default: undefined})
+    prevEntry!: any
 
-    @Prop({default: true})
-    gutter!: boolean
+    @Prop({required: true})
+    logEntry!: any
 
-    @Prop({default: true})
-    nodeBadge!: boolean
-
-    @Prop({default: true})
-    lineWrap!: boolean
-
+    get timestamps() {
+      return (this.config.time?.visible) ? this.config.time.visible : false
+    }
+  
+    get command() {
+      return (this.config.command?.visible) ? this.config.command.visible : false
+    }
+  
+    get gutter() {
+      return (this.config.gutter?.visible) ? this.config.gutter.visible : false
+    }
+  
+    get nodeBadge() {
+      return (this.config.nodeIcon) ? this.config.nodeIcon : false
+    }
+  
+    get lineWrap() {
+      return (this.config.content?.lineWrap) ? this.config.content.lineWrap : false
+    }
+  
     get displayNodeBadge() {
-        return this.$options.entry.nodeBadge && this.nodeBadge
+        return this.config.nodeIcon && (this.prevEntry == undefined || this.logEntry.node != this.prevEntry.node)
     }
 
     get displayGutter() {
-        return this.gutter && (this.timestamps || this.command)
-    }
-
-    $options!: ComponentOptions<Vue> & {
-        entry: any
+        return this.config.gutter?.visible && (this.config.time?.visible || this.config.command?.visible)
     }
 
     lineSelect() {
-        this.$emit('line-select', this.$options.entry.lineNumber)
+        this.$emit('line-select', this.logEntry.lineNumber)
     }
+
 }
 </script>
 

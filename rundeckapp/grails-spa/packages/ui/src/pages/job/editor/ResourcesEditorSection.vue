@@ -8,7 +8,7 @@
 
 <script>
 import ResourcesEditor from '../../../components/job/resources/ResourcesEditor.vue'
-import UiSocket from '../../../components/ui/UiSocket.vue'
+import UiSocket from '@rundeck/ui-trellis/lib/components/utils/UiSocket.vue'
 import JsonEmbed from './JsonEmbed.vue'
 
 import {

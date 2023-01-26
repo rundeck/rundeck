@@ -342,7 +342,7 @@
 </template>
 <script lang="ts">
 import OrchestratorEditor from '@/components/job/resources/OrchestratorEditor.vue'
-import UiSocket from '@/components/ui/UiSocket.vue'
+import UiSocket from '@rundeck/ui-trellis/lib/components/utils/UiSocket.vue'
 import {_genUrl} from '@/utilities/genUrl'
 import axios from 'axios'
 import InlineValidationErrors from '../../form/InlineValidationErrors.vue'
