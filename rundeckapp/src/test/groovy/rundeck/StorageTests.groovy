@@ -17,6 +17,7 @@
 package rundeck
 
 import org.junit.Test
+import org.rundeck.storage.api.PathUtil
 
 import static org.junit.Assert.assertEquals
 
@@ -27,9 +28,9 @@ class StorageTests {
 
     @Test
     void testGetPath() {
-        assertEquals('abc',new Storage(dir:'',name: 'abc').path)
-        assertEquals('xyz/abc',new Storage(dir:'xyz',name: 'abc').path)
-        assertEquals('xyz/elf/abc',new Storage(dir:'xyz/elf',name: 'abc').path)
+        assertEquals(PathUtil.asPath('abc'),new Storage(dir:'',name: 'abc').path)
+        assertEquals(PathUtil.asPath('xyz/abc'),new Storage(dir:'xyz',name: 'abc').path)
+        assertEquals(PathUtil.asPath('xyz/elf/abc'),new Storage(dir:'xyz/elf',name: 'abc').path)
     }
 
     @Test

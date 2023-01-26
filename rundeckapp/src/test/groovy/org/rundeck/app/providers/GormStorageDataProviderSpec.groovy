@@ -1,30 +1,14 @@
 package org.rundeck.app.providers
 
 import grails.testing.gorm.DataTest
-import org.rundeck.app.data.model.v1.project.SimpleProjectBuilder
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.model.v1.storage.SimpleStorageBuilder
-import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
-import org.rundeck.spi.data.DataAccessException
+import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
-import rundeck.Project
 import rundeck.Storage
-import rundeck.services.data.ProjectDataService
 import rundeck.services.data.StorageDataService
 import spock.lang.Specification
-import spock.lang.Unroll
-
-import static org.junit.Assert.assertEquals
-import static org.junit.Assert.assertFalse
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNotNull
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertNull
-import static org.junit.Assert.assertTrue
-import static org.junit.Assert.assertTrue
 
 class GormStorageDataProviderSpec extends Specification implements DataTest{
     GormStorageDataProvider provider = new GormStorageDataProvider()
@@ -43,10 +27,9 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
 
         when:
         RundeckStorage res = provider.getData(storage1.id)
-
         then:
-        res.getName() == 'abc'
-        res.getDir() ==  'def'
+        res.path.name == 'abc'
+        PathUtil.parentPath(res.getPath()).path ==  'def'
         res.getNamespace() == 'other'
         res.getData() == 'abc1'.bytes
     }
@@ -54,12 +37,12 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
     def "Create"() {
 
         when:
-        SimpleStorageBuilder data =  new SimpleStorageBuilder()
-                .setData('abc'.bytes)
-                .setDir("xyz")
-                .setName('abc')
-                .setJsonData(RundeckStorage.storageMetaAsString([abc: 'xyz']))
-        provider.create(data)
+        Path path = PathUtil.asPath("xyz/abc")
+        SimpleStorageBuilder data = SimpleStorageBuilder.builder()
+                                    .data('abc'.bytes)
+                                    .path(path)
+                                    .build()
+        provider.create(data,[abc: 'xyz'])
 
         then:
         provider.findResource(null, null,'xyz') == null
@@ -69,22 +52,22 @@ class GormStorageDataProviderSpec extends Specification implements DataTest{
     def "Update"() {
 
         when:
-        SimpleStorageBuilder data =  new SimpleStorageBuilder()
-                .setData('abc'.bytes)
-                .setDir("xyz")
-                .setName('abc')
-                .setJsonData(RundeckStorage.storageMetaAsString([abc: 'xyz']))
+        Path path = PathUtil.asPath("xyz/abc")
+        SimpleStorageBuilder data =  SimpleStorageBuilder.builder()
+                                        .data('abc'.bytes)
+                                        .path(path)
+                                        .build()
 
-        Long storageId = provider.create(data)
+        Long storageId = provider.create(data, [abc: 'xyz'] )
 
-        def storageName = provider.getData(storageId).getName()
-        data.setName("updated")
-        provider.update(storageId, data)
+        def storageName = provider.getData(storageId).path.name
+        data.setPath(PathUtil.asPath("updated"))
+        provider.update(storageId, data, [def: 'abc'])
         def storage1 = provider.getData(storageId)
 
         then:
         storageName == 'abc'
-        storage1.name == 'updated'
+        storage1.path.name == 'updated'
     }
     def "DeleteResource ok"() {
         when:

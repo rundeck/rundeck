@@ -15,10 +15,7 @@
  */
 package org.rundeck.app.data.model.v1.storage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.StringUtils;
-import org.rundeck.app.data.utils.Utils;
+import org.rundeck.storage.api.Path;
 
 import java.io.Serializable;
 import java.util.*;
@@ -26,46 +23,9 @@ import java.util.*;
 public interface RundeckStorage {
     Serializable getId();
     String getNamespace();
-    String getDir();
-    String getName();
-    String getJsonData();
-    String getPathSha();
+    Map getStorageMeta();
     byte[] getData();
     Date getLastUpdated();
     Date getDateCreated();
-
-    static String setupSha(RundeckStorage storage) {
-        return Utils.encodeAsSHA256((!StringUtils.isBlank(storage.getNamespace()) ? storage.getNamespace(): "") + ':' +
-                    getPath(storage.getDir(), storage.getName()));
-    }
-
-    static String getPath(String directory, String name) {
-        return (!StringUtils.isBlank(directory) ? (directory+'/') : "" )+name;
-    }
-
-    static String storageMetaAsString(Map obj) throws JsonProcessingException {
-        //serialize json and store into field
-        String jsonData = null;
-        if (null != obj) {
-            final ObjectMapper mapper = new ObjectMapper();
-            jsonData = mapper.writeValueAsString(obj);
-        }
-
-        return jsonData;
-    }
-
-    static Map storageMetaAsMap(String jsonData) throws JsonProcessingException{
-        //de-serialize the json
-        if (null != jsonData) {
-            final ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(jsonData, Map.class);
-        } else {
-            return null;
-        }
-
-    }
-
-
-
-
+    Path getPath();
 }

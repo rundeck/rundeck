@@ -54,8 +54,8 @@ class DbStorageService implements NamespacedStorage{
     @CompileStatic
     protected static Resource<ResourceMeta> loadResource(RundeckStorage storage1) {
 
-        new ResourceBase(PathUtil.asPath(RundeckStorage.getPath(storage1.getDir(), storage1.getName())),
-                StorageUtil.withStream(lazyData(storage1), RundeckStorage.storageMetaAsMap(storage1.getJsonData())), false)
+        new ResourceBase(storage1.getPath(),
+                StorageUtil.withStream(lazyData(storage1), storage1.getStorageMeta()), false)
 
     }
 
@@ -82,13 +82,12 @@ class DbStorageService implements NamespacedStorage{
     }
     @Override
     boolean hasPath(String ns,Path path) {
-        def dir,name
-        (dir,name)=splitPath(path)
+
         if(PathUtil.isRoot(path)){
             return true
         }
 
-        storageDataProvider.hasPath(ns, path, name, dir)
+        storageDataProvider.hasPath(ns, path)
     }
 
     boolean hasPath(String ns,String path) {
@@ -171,8 +170,10 @@ class DbStorageService implements NamespacedStorage{
         def foundset=new HashSet<String>()
         def pathkey= path.path ? (path.path + '/') : ''
         storageDataProvider.listDirectory(ns, path).collect {
-            def m= it.dir =~ "^(${Pattern.quote(pathkey)}[^/]+)/?.*"
-            if (it.dir == path.path) {
+            def parent = PathUtil.parentPath(it.path)
+            String dir = parent ? parent.path: ''
+            def m= dir =~ "^(${Pattern.quote(pathkey)}[^/]+)/?.*"
+            if (dir == path.path) {
                 return loadResource(it)
             } else if (m.matches() && !foundset.contains(m[0][1])) {
                 foundset<<m[0][1]
@@ -191,7 +192,9 @@ class DbStorageService implements NamespacedStorage{
         def foundset = new HashSet<String>()
         def pathkey = path.path ? (path.path + '/') : ''
         storageDataProvider.listDirectorySubdirs(ns, path).collect {
-            def m = it.dir =~ "^(${Pattern.quote(pathkey)}[^/]+)/?.*"
+            def parent = PathUtil.parentPath(it.path)
+            String dir = parent ? parent.path: ''
+            def m = dir =~ "^(${Pattern.quote(pathkey)}[^/]+)/?.*"
             if (m.matches() && !foundset.contains(m[0][1])) {
                 foundset << m[0][1]
                 return loadDir(PathUtil.asPath(m[0][1]))
@@ -242,28 +245,23 @@ class DbStorageService implements NamespacedStorage{
                 if (id) {
                     storage = storageDataProvider.getData(id)
                 } else {
-                    storage = new SimpleStorageBuilder()
+                    storage = SimpleStorageBuilder.builder().build()
                 }
                 SimpleStorageBuilder storageBuilder = SimpleStorageBuilder.with(storage)
                 storageBuilder.setNamespace( namespace ? namespace : null)
-                def path1 = PathUtil.asPath(path.path)
-                def parent = PathUtil.parentPath(path1)
-                storageBuilder.setDir(parent?parent.path:'')
-                storageBuilder.setName(path1.name)
+                storageBuilder.setPath(path)
 
-                Map<String, String> newdata = RundeckStorage.storageMetaAsMap(storageBuilder.getJsonData()) ?:[:]
-                storageBuilder.setJsonData(RundeckStorage.storageMetaAsString( newdata + content.meta))
                 storageBuilder.setData( data)
                 try {
                     if (id) {
-                        storageDataProvider.update(id, storageBuilder)
+                        storageDataProvider.update(id, storageBuilder, content.meta)
 
                     } else {
-                        id = storageDataProvider.create(storageBuilder)
+                        id = storageDataProvider.create(storageBuilder, content.meta)
                     }
                     saved = storageDataProvider.getData(id)
                 } catch (DataAccessException e) {
-                    throw new StorageException("Failed to save content at path ${RundeckStorage.getPath(storageBuilder.getDir(), storageBuilder.getName())}: validation error: " +
+                    throw new StorageException("Failed to save content at path ${storageBuilder.path.getPath()}: validation error: " +
                             e.getMessage(),
                             StorageException.Event.valueOf(event.toUpperCase()),
                             path)

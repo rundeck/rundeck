@@ -19,6 +19,7 @@ package rundeck
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.app.data.model.v1.storage.RundeckStorage
+import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
 
 import static grails.gorm.hibernate.mapping.MappingBuilder.orm
@@ -50,7 +51,7 @@ class Storage implements RundeckStorage{
 
     private void setupSha() {
         dir = dir ?: ''
-        pathSha = ((namespace ?: '') + ':' + getPath()).encodeAsSHA1()
+        pathSha = ((namespace ?: '') + ':' + getPath().path).encodeAsSHA1()
     }
     def beforeInsert() {
         setupSha()
@@ -78,8 +79,9 @@ class Storage implements RundeckStorage{
     //ignore fake property 'storageMeta' and 'path' and do not store it
     static transients = ['storageMeta','path']
 
-    public String getPath() {
-        return (dir?(dir+'/'):'')+name
+    @Override
+    public Path getPath() {
+        return PathUtil.asPath((dir?(dir+'/'):'')+name)
     }
     public void setPath(String path){
         def path1 = PathUtil.asPath(path)

@@ -7,6 +7,7 @@ import org.rundeck.app.data.model.v1.storage.RundeckStorage
 import org.rundeck.app.data.providers.v1.storage.StorageDataProvider
 import org.rundeck.spi.data.DataAccessException
 import org.rundeck.storage.api.Path
+import org.rundeck.storage.api.PathUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
 import rundeck.Storage
@@ -30,13 +31,16 @@ class GormStorageDataProvider implements StorageDataProvider {
     }
 
     @Override
-    Long create(RundeckStorage data) throws DataAccessException {
+    Long create(RundeckStorage data, Map<String, String> metadata) throws DataAccessException {
+
+        def parent = PathUtil.parentPath(data.getPath())
+        String dir = parent?parent.path:''
+        String name = data.getPath().name
         Storage s = new Storage(namespace: data.getNamespace(),
-                                name: data.getName(),
-                                dir: data.getDir(),
-                                jsonData: data.getJsonData(),
-                                pathSha: data.getPathSha(),
+                                name: name,
+                                dir: dir,
                                 data: data.getData())
+        s.setStorageMeta(metadata)
         try {
             if (storageDataService.save(s)) {
                 return s.getId()
@@ -45,21 +49,25 @@ class GormStorageDataProvider implements StorageDataProvider {
                 throw new DataAccessException(s.errors.allErrors.collect { messageSource.getMessage(it, null) }.join(","))
             }
         } catch (Exception e) {
-            throw new DataAccessException("Failed to create storage: ${data.getName()}: ${e}", e)
+            throw new DataAccessException("Failed to create storage: ${name}: ${e}", e)
         }
     }
 
     @Override
-    void update(final Serializable id, final RundeckStorage data) throws DataAccessException {
-        RundeckStorage storage = storageDataService.get(id)
+    void update(final Serializable id, final RundeckStorage data, Map<String, String> metadata) throws DataAccessException {
+        Storage storage = storageDataService.get(id)
+        def parent = PathUtil.parentPath(data.getPath())
+        String dir = parent?parent.path:''
+        String name = data.getPath().name
         if (!storage) {
             throw new DataAccessException("Not found: storage with ID: ${id}")
         }
+        Map<String, String> newdata = storage.storageMeta?:[:]
+        storage.storageMeta = newdata + metadata
+
         storage.namespace = data.getNamespace()
-        storage.name = data.getName()
-        storage.dir = data.getDir()
-        storage.jsonData = data.getJsonData()
-        storage.pathSha = data.getPathSha()
+        storage.name = name
+        storage.dir = dir
         storage.data= data.getData()
         storage.lastUpdated = new Date()
 
@@ -112,7 +120,11 @@ class GormStorageDataProvider implements StorageDataProvider {
 
     @Override
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
-    boolean hasPath(String ns, Path path, String name, String dir) {
+    boolean hasPath(String ns, Path path) {
+        def parent = PathUtil.parentPath(path)
+        String dir = parent?parent.path:''
+        String name = path.name
+
         def c = Storage.createCriteria()
         c.get {
             if (ns) {
@@ -191,5 +203,6 @@ class GormStorageDataProvider implements StorageDataProvider {
             order("name", "desc")
         }
     }
+
 
 }

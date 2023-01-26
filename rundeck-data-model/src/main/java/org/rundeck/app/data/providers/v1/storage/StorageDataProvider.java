@@ -9,6 +9,7 @@ import org.rundeck.storage.api.Path;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * TokenDataProvider defines a base set of AuthenticationToken datastore methods.
@@ -31,16 +32,17 @@ public interface StorageDataProvider extends DataProvider {
      * @return id of the created RundeckStorage
      * @throws DataAccessException on error
      */
-    Long create(final RundeckStorage data) throws DataAccessException;
+    Long create(final RundeckStorage data, Map<String, String> metadata) throws DataAccessException;
 
     /**
      * Updates a RundeckStorage with the supplied attributes
      *
+     * @param metadata RundeckStorage metadata
      * @param data RundeckStorage attributes
      * @param id id
      * @throws DataAccessException on error
      */
-    void update(final Serializable id, final RundeckStorage data) throws DataAccessException;
+    void update(final Serializable id, final RundeckStorage data, Map<String, String> metadata) throws DataAccessException;
 
     /**
      * Removes a RundeckStorage
@@ -78,7 +80,7 @@ public interface StorageDataProvider extends DataProvider {
      * @param dir
      * @return true if a RundeckStorage exists, otherwise false
      */
-    boolean hasPath(final String ns, final Path path, final String name, final String dir);
+    boolean hasPath(final String ns, final Path path);
 
     /**
      * Checks if a Rundeck Storage exists in a given directory path
