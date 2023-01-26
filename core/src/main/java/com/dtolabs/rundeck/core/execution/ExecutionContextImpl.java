@@ -247,6 +247,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
                     ctx.singleNodeContext = original1.getSingleNodeContext();
                 }
+                if(original instanceof StepExecutionContext){
+                    StepExecutionContext original1 = (StepExecutionContext) original;
+                    ctx.stepContext = original1.getStepContext();
+                }
                 ctx.pluginControlService =
                     PluginControlServiceImpl.forProject(original.getFramework(), original.getFrameworkProject());
                 ctx.componentList = new ArrayList<>();

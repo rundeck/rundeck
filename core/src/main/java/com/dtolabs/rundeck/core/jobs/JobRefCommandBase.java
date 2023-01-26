@@ -21,7 +21,7 @@
 * Created: 3/23/11 1:57 PM
 * 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.HasFailureHandler;
