@@ -24,9 +24,10 @@ import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
 import grails.gorm.transactions.Transactional
 import org.rundeck.app.authorization.AppAuthContextEvaluator
+import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse
+import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.transaction.TransactionDefinition
-import rundeck.ExecReport
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 
@@ -38,6 +39,7 @@ class ReportService  {
     def grailsApplication
     AppAuthContextEvaluator rundeckAuthContextEvaluator
     ConfigurationService configurationService
+    ExecReportDataProvider execReportDataProvider
 
     static final String GRANTED_VIEW_HISTORY_JOBS = "granted_view_history_jobs"
     static final String DENIED_VIEW_HISTORY_JOBS = "rejected_view_history_jobs"
@@ -77,11 +79,11 @@ class ReportService  {
             fields.message="[no message]"
         }
         fields.actionType= fields.status
-        def rep = new ExecReport(fields)
+        SaveReportResponse saveReportResponse = execReportDataProvider.saveFromMapFields(fields)
 
         //TODO: authorize event creation?
 
-        if (rep && !rep.save(flush: true)) {
+        if (saveReportResponse.report && !saveReportResponse.isSaved) {
 //            System.err.println("error saving report: ${fields}")
 //            rep.errors.allErrors.each {
 //                System.err.println(it)
@@ -225,11 +227,8 @@ class ReportService  {
      */
     def countExecutionReports(ExecQuery query) {
 
-        def total = ExecReport.createCriteria().count {
+        def total = execReportDataProvider.countExecutionReports(query.toMap())
 
-            applyExecutionCriteria(query, delegate)
-
-        }
         return total
     }
 
@@ -458,25 +457,8 @@ class ReportService  {
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
-        def runlist=ExecReport.createCriteria().list {
+        def runlist = execReportDataProvider.getRunList(query.toMap(), filters, isJobs, se)
 
-            if (query?.max) {
-                maxResults(query?.max.toInteger())
-            } else {
-                maxResults(configurationService.getInteger("pagination.default.max",20))
-            }
-            if (query?.offset) {
-                firstResult(query.offset.toInteger())
-            }
-
-            applyExecutionCriteria(query, delegate,isJobs, se)
-
-            if (query && query.sortBy && filters[query.sortBy]) {
-                order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
-            } else {
-                order("dateCompleted", 'desc')
-            }
-        }
         def executions=[]
         def lastDate = -1
         runlist.each{
@@ -487,11 +469,8 @@ class ReportService  {
         }
         def minLevel = configurationService.getString("min.isolation.level","")
         def isolationLevel = (minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
-        def total = ExecReport.withTransaction([isolationLevel: isolationLevel]) {
-            ExecReport.createCriteria().count {
-                applyExecutionCriteria(query, delegate, isJobs, se)
-            }
-        }
+        def total = execReportDataProvider.countExecutionReportsWithTransaction(query.toMap(), isJobs, se, isolationLevel)
+
         filters.putAll(specialfilters)
 
         return [
@@ -506,19 +485,7 @@ class ReportService  {
      * Find any report status strings that are incorrect and fix them
      */
     def fixReportStatusStrings(){
-        int count=0
-        ExecReport.findAllByStatus("succeeded").each{
-            it.status='succeed'
-            it.actionType='succeed'
-            it.save()
-            count++
-        }
-        ExecReport.findAllByStatus("failed").each{
-            it.status='fail'
-            it.actionType='fail'
-            it.save()
-            count++
-        }
+        int count = execReportDataProvider.countAndSaveByStatus()
         if(count){
             log.info("Corrected ${count} report status strings")
         }

@@ -1,6 +1,6 @@
 package org.rundeck.app.data.model.v1.report;
 
-public interface RdExecReport {
+public interface RdExecReport extends RdBaseReport{
     String getCtxCommand();
     String getCtxController();
     Long getExecutionId();

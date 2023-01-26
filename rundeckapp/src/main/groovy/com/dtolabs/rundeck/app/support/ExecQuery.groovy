@@ -78,4 +78,26 @@ class ExecQuery extends ReportQuery implements Validateable{
         ])
 
     }
+
+    def Map toMap() {
+        def map = [:]
+        map.controllerFilter = controllerFilter
+        map.cmdFilter = cmdFilter
+        map.groupPathFilter = groupPathFilter
+        map.groupPathExactFilter = groupPathExactFilter
+        map.execIdFilter = execIdFilter
+        map.execProjects = execProjects
+        map
+    }
+
+    static Map fromMap(Map map) {
+        ExecQuery execQuery = new ExecQuery()
+        execQuery.controllerFilter = map.controllerFilter
+        execQuery.cmdFilter = map.cmdFilter
+        execQuery.groupPathFilter = map.groupPathFilter
+        execQuery.groupPathExactFilter = map.groupPathExactFilter
+        execQuery.execIdFilter = map.execIdFilter
+        execQuery.execProjects = map.execProjects
+        execQuery
+    }
 }

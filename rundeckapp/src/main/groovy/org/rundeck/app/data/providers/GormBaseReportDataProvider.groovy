@@ -1,8 +1,11 @@
 package org.rundeck.app.data.providers
 
+
 import org.rundeck.app.data.model.v1.report.RdBaseReport
 import org.rundeck.app.data.providers.v1.BaseReportDataProvider
+import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
+import rundeck.ExecReport
 
 class GormBaseReportDataProvider implements BaseReportDataProvider {
     @Override
@@ -24,4 +27,25 @@ class GormBaseReportDataProvider implements BaseReportDataProvider {
     void deleteByCtxProject(String projectName) {
         BaseReport.deleteByCtxProject(projectName)
     }
+
+    @Override
+    Map toMap(RdBaseReport rdBaseReport) {
+        BaseReport baseReport = rdBaseReport as BaseReport
+        return baseReport.toMap()
+
+    }
+
+    @Override
+    void deleteWithTransaction(String projectName) {
+        BaseReport.withTransaction { TransactionStatus status ->
+            try {
+                BaseReport.deleteByCtxProject(projectName)
+                ExecReport.deleteByCtxProject(projectName)
+            } catch (Exception e){
+                status.setRollbackOnly()
+                throw e
+            }
+        }
+    }
+
 }

@@ -71,6 +71,7 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.access.NotFound
 import org.rundeck.core.auth.access.UnauthorizedAccess
@@ -154,6 +155,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def executionLifecyclePluginService
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
+    ExecReportDataProvider execReportDataProvider
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1899,9 +1901,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 re.delete()
             }
                 //delete all reports
-            ExecReport.findAllByExecutionId(e.id).each { rpt ->
-                rpt.delete()
-            }
+            execReportDataProvider.deleteAllByExecutionId(e.id)
 
             List<File> files = []
             def execs = []
@@ -4270,8 +4270,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.workflow.save()
         missed.status = 'missed'
         missed.save()
-        ExecReport execReport = ExecReport.fromExec(missed)
-        execReport.save()
+
+        execReportDataProvider.fromExecWithScheduledAndSave(missed.toMap(), scheduledExecution.toMap())
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.

@@ -6,9 +6,9 @@ import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
 import org.quartz.UnableToInterruptJobException
+import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.services.*
@@ -17,6 +17,8 @@ import rundeck.services.jobs.ResolvedAuthJobService
 class ExecutionsCleanUp implements InterruptableJob {
     static Logger logger = LoggerFactory.getLogger(ExecutionsCleanUp)
     boolean wasInterrupted
+
+    ExecReportDataProvider execReportDataProvider
 
     void interrupt() throws UnableToInterruptJobException {
         wasInterrupted = true
@@ -91,9 +93,7 @@ class ExecutionsCleanUp implements InterruptableJob {
                 re.delete()
             }
             //delete all reports
-            ExecReport.findAllByExecutionId(e.id).each { rpt ->
-                rpt.delete()
-            }
+            execReportDataProvider.deleteAllByExecutionId(e.id)
 
             def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
 
