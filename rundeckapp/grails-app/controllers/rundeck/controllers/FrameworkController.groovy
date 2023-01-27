@@ -54,6 +54,7 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
 import org.rundeck.core.projects.ProjectPluginListConfigurable
+import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus
@@ -2060,23 +2061,24 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         def bais = new ByteArrayInputStream(params.fileText.toString().getBytes("UTF-8"))
-        def fileSizeValidation = nodeSourceFileExceededMaxSize(bais)
-        if( !fileSizeValidation.result ){
-            flash.error = fileSizeValidation.message
-            return redirect(
-                    controller: 'framework',
-                    action: 'projectNodeSources',
-                    params: [project: project]
-            )
-        }
         long size = -1
         def error = null
         try {
             size = source.writeableSource.writeData(bais)
-        } catch (ResourceModelSourceException | IOException exc) {
+        } catch (Exception | ResourceModelSourceException | IOException exc) {
             log.error('Error Saving nodes file content', exc)
             exc.printStackTrace()
             error = exc
+            if( exc instanceof StorageException ){
+                def message = 'Cannot save node\'s definition, the file exceeds database maximum capacity.'
+                flash.error = message
+                log.error("${message}, ${exc.toString()}")
+                return redirect(
+                        controller: 'framework',
+                        action: 'projectNodeSources',
+                        params: [project: project]
+                )
+            }
         }
         if (!error) {
             flash.message = "Saved nodes content: $size bytes"
@@ -3509,16 +3511,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             ])
         }
         render(status: HttpServletResponse.SC_NO_CONTENT)
-    }
-
-    @CompileStatic
-    private def nodeSourceFileExceededMaxSize(ByteArrayInputStream bais){
-        def nodesMaxSize = 65472
-        if( bais.available() > nodesMaxSize ){
-            return [result: false, message: "Nodes exceed the maximum capacity of subscribed nodes. Max: ${nodesMaxSize}, Input: ${bais.available()}"]
-        }else{
-            return [result: true, message: null]
-        }
     }
 }
 
