@@ -62,6 +62,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     void setup(){
         mockDataService(WebhookDataService)
         webhookProvider.webhookDataService = applicationContext.getBean(WebhookDataService)
+        webhookProvider.messageSource = Mock(MessageSource)
         service = new WebhookService()
         service.webhookDataProvider = webhookProvider
     }
@@ -277,7 +278,6 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
             getRoles() >> { ["webhook","test"] }
         }
         service.apiService = Mock(MockApiService)
-        service.messageSource = Mock(MessageSource)
         service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
             parseAuthRoles(_) >> { ["webhook","test"] }
         }

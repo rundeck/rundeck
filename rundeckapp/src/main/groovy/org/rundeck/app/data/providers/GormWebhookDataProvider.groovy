@@ -51,11 +51,6 @@ class GormWebhookDataProvider implements WebhookDataProvider {
     }
 
     @Override
-    Webhook buildWebhook() {
-        return new Webhook();
-    }
-
-    @Override
     Webhook findByUuidAndProject(String uuid, String project) {
         return Webhook.findByUuidAndProject(uuid, project);
     }
