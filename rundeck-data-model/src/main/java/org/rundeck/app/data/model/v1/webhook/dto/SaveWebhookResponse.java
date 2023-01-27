@@ -11,5 +11,5 @@ import org.rundeck.app.data.model.v1.webhook.RdWebhook;
 public class SaveWebhookResponse {
     RdWebhook webhook;
     boolean isSaved;
-    Object errors;
+    String errors;
 }

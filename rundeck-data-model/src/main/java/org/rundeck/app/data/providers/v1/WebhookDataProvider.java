@@ -31,7 +31,7 @@ public interface WebhookDataProvider extends DataProvider {
      * @param saveWebhookRequest of the webhook to be created
      * @return A SaveWebhookResponse with the result of the webhook creation
      */
-    SaveWebhookResponse saveWebhook(SaveWebhookRequest saveWebhookRequest);
+    SaveWebhookResponse createWebhook(SaveWebhookRequest saveWebhookRequest);
     /**
      * Retrieves SaveWebhookResponse with the result of the webhook update
      *

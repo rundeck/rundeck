@@ -51,7 +51,6 @@ class WebhookService {
     def frameworkService
     def rundeckAuthorizedServicesProvider
     def apiService
-    def messageSource
     def userService
     def rundeckAuthTokenManagerService
     def storageService
@@ -225,7 +224,7 @@ class WebhookService {
         if(shouldUpdate){
             saveWebhookResponse = webhookDataProvider.updateWebhook(saveWebhookRequest)
         }else{
-            saveWebhookResponse = webhookDataProvider.saveWebhook(saveWebhookRequest)
+            saveWebhookResponse = webhookDataProvider.createWebhook(saveWebhookRequest)
         }
 
         if(saveWebhookResponse.isSaved) {
@@ -237,7 +236,7 @@ class WebhookService {
                 //delete the created token
                 rundeckAuthTokenManagerService.deleteByTokenWithType(saveWebhookResponse.webhook.authToken, AuthenticationToken.AuthTokenType.WEBHOOK)
             }
-            return [err: saveWebhookResponse.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
+            return [err: saveWebhookResponse.errors]
         }
     }
 

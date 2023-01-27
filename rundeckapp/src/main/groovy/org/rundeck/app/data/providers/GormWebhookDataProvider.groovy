@@ -8,6 +8,7 @@ import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse;
 import org.rundeck.app.data.providers.v1.WebhookDataProvider
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.MessageSource
 import org.springframework.validation.Errors
 import rundeck.services.data.WebhookDataService
 import webhooks.Webhook
@@ -21,6 +22,8 @@ class GormWebhookDataProvider implements WebhookDataProvider {
 
     @Autowired
     WebhookDataService webhookDataService
+    @Autowired
+    MessageSource messageSource
 
     @Override
     RdWebhook get(Long id){
@@ -88,7 +91,7 @@ class GormWebhookDataProvider implements WebhookDataProvider {
     }
 
     @Override
-    SaveWebhookResponse saveWebhook(SaveWebhookRequest saveWebhookRequest) {
+    SaveWebhookResponse createWebhook(SaveWebhookRequest saveWebhookRequest) {
         Webhook hook = new Webhook(uuid: saveWebhookRequest.uuid, name: saveWebhookRequest.name,
                 project: saveWebhookRequest.project, authToken: saveWebhookRequest.authToken,
                 authConfigJson: saveWebhookRequest.authConfigJson, eventPlugin: saveWebhookRequest.eventPlugin,
@@ -96,7 +99,7 @@ class GormWebhookDataProvider implements WebhookDataProvider {
                 enabled: saveWebhookRequest.enabled);
 
         Boolean isUpdated = hook.save(flush: true)
-        Errors errors = hook.errors
+        String errors = hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
         return new SaveWebhookResponse(webhook: hook, isSaved: isUpdated, errors: errors);
     }
 
@@ -112,7 +115,7 @@ class GormWebhookDataProvider implements WebhookDataProvider {
         hook.setPluginConfigurationJson(saveWebhookRequest.pluginConfigurationJson)
         hook.setEnabled(saveWebhookRequest.enabled)
         Boolean isUpdated = hook.save(flush: true)
-        Errors errors = hook.errors
+        String errors = hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
         return new SaveWebhookResponse(webhook: hook, isSaved: isUpdated, errors: errors);
     }
 }
