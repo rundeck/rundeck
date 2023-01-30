@@ -2266,7 +2266,7 @@ project.label=A Label
 
         then:
             view=='/framework/saveProjectNodeSourceFile.gsp'
-            flash.errors == "Error saving nodes file content."
+            flash.error == "Error saving nodes file content."
     }
 
     def "save a large node source file, get an error"() {
@@ -2310,7 +2310,7 @@ project.label=A Label
 
         then:
         view=='/framework/saveProjectNodeSourceFile.gsp'
-        flash.errors == "Error saving nodes file content."
+        flash.error == "Error saving nodes file content."
     }
 
 }

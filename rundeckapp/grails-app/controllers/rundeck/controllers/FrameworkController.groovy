@@ -2068,7 +2068,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             log.error(message)
             exc.printStackTrace()
             error = exc
-            flash.errors = message
+            flash.error = message
             return redirect(
                     controller: 'framework',
                     action: 'projectNodeSources',
