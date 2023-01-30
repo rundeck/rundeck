@@ -5045,6 +5045,27 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             job.notifications.find{it.toMap()== job2.notifications[0].toMap()}!=null
             job.notifications.find{it.toMap()== job2.notifications[1].toMap()}!=null
     }
+
+    def "job definition notifications from input job should remove notifications"() {
+
+        given:"a base job with notifications"
+        setupDoUpdate()
+        def baseJob = new ScheduledExecution(createJobParams(notifications:[
+                new Notification(type:'email',content:'blah',eventTrigger: 'onsuccess'),
+                new Notification(type:'aplugin',content:'{}',eventTrigger: 'onfailure')
+        ])).save()
+        def jobEmptyNotifications = new ScheduledExecution(createJobParams(notifications:[]))
+        def params = [:]
+        def auth = Mock(UserAndRolesAuthContext)
+
+        when:"uploading the same job without any notifications"
+        service.jobDefinitionBasic(baseJob, jobEmptyNotifications, params, auth)
+        def notifications = Notification.findAllByScheduledExecution(baseJob)
+
+        then:"base job should not have any notifications"
+        notifications.size()==0
+    }
+
     def "job definition notifications from old params"() {
         given:
             def job = new ScheduledExecution(notifications:[])

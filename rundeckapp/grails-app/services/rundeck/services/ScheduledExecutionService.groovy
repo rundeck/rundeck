@@ -3054,6 +3054,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    /**
+     *Remove and delete all existing notifications from a scheduledExecution
+     * @param scheduledExecution
+     */
+    public void deleteExistingNotification(ScheduledExecution scheduledExecution) {
+        if (scheduledExecution.notifications) {
+            def todelete = []
+            scheduledExecution.notifications.each {
+                todelete << it
+            }
+            todelete.each {
+                scheduledExecution.removeFromNotifications(it)
+                it.delete()
+            }
+        }
+    }
+
     @CompileStatic
     public boolean validateDefinitionArgStringDatestamp(ScheduledExecution scheduledExecution) {
         if (scheduledExecution.argString) {
@@ -3227,6 +3244,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }else{
             deleteExistingOptions(scheduledExecution)
+            deleteExistingNotification(scheduledExecution)
             final Collection foundprops = input.properties.keySet().findAll {
                 it != 'lastUpdated' &&
                 it != 'dateCreated' &&
