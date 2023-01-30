@@ -2277,14 +2277,18 @@ project.label=A Label
 
     def "save a very large node source file, get error"() {
         setup:
-        def source = Mock(WriteableModelSource){
-            1 * it.writeData(_) >> {
-                throw new Exception("Kaboom!")
+        def source = Mock(WriteableModelSource) {
+            1 * writeData(_) >> {
+                throw new IOException("expected error")
             }
-            1 * getSyntaxMimeType() >> 'application/json'
+            2 * getSyntaxMimeType() >> 'application/json'
+            1 * getSourceDescription()>>'x'
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
+            1 * getRundeckFramework()>>Mock(IFramework){
+                1 * getResourceModelSourceService()
+            }
             1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
                 1 * getProjectNodes() >> Mock(IProjectNodes) {
                     1 * getWriteableResourceModelSources() >> [
@@ -2298,22 +2302,26 @@ project.label=A Label
             }
             0 * _(*_)
         }
+
         controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             1 * authorizeProjectConfigure(_, 'test') >> true
             1 * getAuthContextForSubject(_)
         }
-        controller.pluginService=Mock(PluginService)
+        controller.pluginService=Mock(PluginService){
+            1 * getPluginDescriptor('monkey',_)
+        }
+
         params.project = "test"
         params.index = "1"
         request.method = 'POST'
-        params.fileText = 'File'
-        def flashError = 'Error saving nodes file content: java.lang.Exception: Kaboom!'
-
+        params.fileText = 'some text'
         when:
+
         setupFormTokens(params)
-        controller.saveProjectNodeSourceFile()
+        def result = controller.saveProjectNodeSourceFile()
+
         then:
-        view=='/framework/saveProjectNodeSourceFile.gsp'
-        flash.error == flashError
+        view=='/framework/editProjectNodeSourceFile'
+        flash.error == "Error saving nodes file content."
     }
 }

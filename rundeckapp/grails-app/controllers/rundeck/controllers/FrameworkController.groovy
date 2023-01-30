@@ -2064,16 +2064,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         try {
             size = source.writeableSource.writeData(bais)
         } catch (Exception | ResourceModelSourceException | IOException exc) {
-            def message = "Error saving nodes file content: ${exc.cause.toString()}"
+            def message = "Error saving nodes file content."
             log.error(message)
             exc.printStackTrace()
             error = exc
             flash.error = message
-            return redirect(
-                    controller: 'framework',
-                    action: 'projectNodeSources',
-                    params: [project: project]
-            )
         }
         if (!error) {
             flash.message = "Saved nodes content: $size bytes"
