@@ -2278,7 +2278,13 @@ project.label=A Label
 
     def "save a very large node source file, get error"() {
         setup:
-        def source = Mock(WriteableModelSource)
+        def source = Mock(WriteableModelSource){
+            1 * it.writeData(_) >> {
+                throw new Exception("Kaboom!")
+            }
+            1 * getSyntaxMimeType() >> 'application/json'
+            0 * _(*_)
+        }
         controller.frameworkService = Mock(FrameworkService) {
             1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
                 1 * getProjectNodes() >> Mock(IProjectNodes) {
@@ -2301,14 +2307,14 @@ project.label=A Label
         params.project = "test"
         params.index = "1"
         request.method = 'POST'
-        def fileText = RandomStringUtils.random(6500000)
-        def fileSize = new ByteArrayInputStream(fileText.getBytes("UTF-8")).count
-        def flashError = 'Nodes exceed the maximum capacity of subscribed nodes. Max: 65472, Input: ' + fileSize
-        params.fileText = fileText
+        params.fileText = 'File'
+        def flashError = 'Error saving nodes file content: java.lang.Exception: Kaboom!'
+
         when:
         setupFormTokens(params)
         controller.saveProjectNodeSourceFile()
         then:
+        view=='/framework/saveProjectNodeSourceFile.gsp'
         flash.error == flashError
     }
 }

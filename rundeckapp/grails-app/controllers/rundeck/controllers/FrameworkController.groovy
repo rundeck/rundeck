@@ -2066,19 +2066,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         try {
             size = source.writeableSource.writeData(bais)
         } catch (Exception | ResourceModelSourceException | IOException exc) {
-            log.error('Error Saving nodes file content', exc)
+            def message = "Error saving nodes file content: ${exc.cause.toString()}"
+            log.error(message)
             exc.printStackTrace()
             error = exc
-            if( exc instanceof StorageException ){
-                def message = 'Cannot save node\'s definition, the file exceeds database maximum capacity.'
-                flash.error = message
-                log.error("${message}, ${exc.toString()}")
-                return redirect(
-                        controller: 'framework',
-                        action: 'projectNodeSources',
-                        params: [project: project]
-                )
-            }
+            flash.error = message
+            return redirect(
+                    controller: 'framework',
+                    action: 'projectNodeSources',
+                    params: [project: project]
+            )
         }
         if (!error) {
             flash.message = "Saved nodes content: $size bytes"
