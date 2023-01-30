@@ -44,6 +44,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
+import org.rundeck.storage.api.StorageException
 import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
@@ -2231,14 +2232,10 @@ project.label=A Label
                 1 * writeData(_) >> {
                     throw new IOException("expected error")
                 }
-                2 * getSyntaxMimeType() >> 'application/json'
-                1 * getSourceDescription()>>'x'
+                1 * getSyntaxMimeType() >> 'application/json'
                 0 * _(*_)
             }
             controller.frameworkService = Mock(FrameworkService) {
-                1 * getRundeckFramework()>>Mock(IFramework){
-                    1 * getResourceModelSourceService()
-                }
                 1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
                     1 * getProjectNodes() >> Mock(IProjectNodes) {
                         1 * getWriteableResourceModelSources() >> [
@@ -2257,9 +2254,6 @@ project.label=A Label
                 1 * authorizeProjectConfigure(_, 'test') >> true
                 1 * getAuthContextForSubject(_)
             }
-            controller.pluginService=Mock(PluginService){
-                1 * getPluginDescriptor('monkey',_)
-            }
 
             params.project = "test"
             params.index = "1"
@@ -2271,24 +2265,21 @@ project.label=A Label
             def result = controller.saveProjectNodeSourceFile()
 
         then:
-            view=='/framework/editProjectNodeSourceFile'
-            model.saveError=='expected error'
+            view=='/framework/saveProjectNodeSourceFile.gsp'
+            flash.errors == "Error saving nodes file content."
     }
 
-    def "save a very large node source file, get error"() {
+    def "save a large node source file, get an error"() {
+
         setup:
         def source = Mock(WriteableModelSource) {
             1 * writeData(_) >> {
-                throw new IOException("expected error")
+                throw new StorageException()
             }
-            2 * getSyntaxMimeType() >> 'application/json'
-            1 * getSourceDescription()>>'x'
+            1 * getSyntaxMimeType() >> 'application/json'
             0 * _(*_)
         }
         controller.frameworkService = Mock(FrameworkService) {
-            1 * getRundeckFramework()>>Mock(IFramework){
-                1 * getResourceModelSourceService()
-            }
             1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
                 1 * getProjectNodes() >> Mock(IProjectNodes) {
                     1 * getWriteableResourceModelSources() >> [
@@ -2307,9 +2298,6 @@ project.label=A Label
             1 * authorizeProjectConfigure(_, 'test') >> true
             1 * getAuthContextForSubject(_)
         }
-        controller.pluginService=Mock(PluginService){
-            1 * getPluginDescriptor('monkey',_)
-        }
 
         params.project = "test"
         params.index = "1"
@@ -2321,7 +2309,8 @@ project.label=A Label
         def result = controller.saveProjectNodeSourceFile()
 
         then:
-        view=='/framework/editProjectNodeSourceFile'
-        flash.error == "Error saving nodes file content."
+        view=='/framework/saveProjectNodeSourceFile.gsp'
+        flash.errors == "Error saving nodes file content."
     }
+
 }

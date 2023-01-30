@@ -2068,7 +2068,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             log.error(message)
             exc.printStackTrace()
             error = exc
-            flash.error = message
+            flash.errors = message
+            return redirect(
+                    controller: 'framework',
+                    action: 'projectNodeSources',
+                    params: [project: project]
+            )
         }
         if (!error) {
             flash.message = "Saved nodes content: $size bytes"
