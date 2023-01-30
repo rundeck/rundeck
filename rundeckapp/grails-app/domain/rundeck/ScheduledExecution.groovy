@@ -831,12 +831,12 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }else{
             months = params.selectedMonths?.trim() ? valueStringToIndexString(params.selectedMonths, monthsofyearlist) : parseCheckboxFieldFromParams("month", params,true, monthsofyearlist)
         }
-        this.month = months
-        this.dayOfWeek = daysOfWeek ?: '?'
-        this.dayOfMonth = daysOfMonth
-        this.seconds = params.seconds?params.seconds:"0"
-        this.year = params.year?params.year:"*"
-        this.crontabString=null
+        setMonth(months)
+        setDayOfWeek(daysOfWeek ?: '?')
+        setDayOfMonth(daysOfMonth)
+        setSeconds(params.seconds?params.seconds:"0")
+        setYear(params.year?params.year:"*")
+        setCrontabString(null)
     }
 
     String valueStringToIndexString(inputString, valuesArray) {
