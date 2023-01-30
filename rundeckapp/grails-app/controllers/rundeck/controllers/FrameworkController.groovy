@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.config.Features
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import groovy.transform.CompileStatic
 import org.rundeck.app.acl.AppACLContext
 import org.rundeck.app.acl.ContextACLManager
 import org.rundeck.app.data.model.v1.user.RdUser
@@ -54,7 +53,6 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
 import org.rundeck.core.projects.ProjectPluginListConfigurable
-import org.rundeck.storage.api.StorageException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus

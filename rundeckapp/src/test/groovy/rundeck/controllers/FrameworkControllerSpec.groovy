@@ -35,7 +35,6 @@ import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import grails.testing.gorm.DataTest
 import grails.testing.web.controllers.ControllerUnitTest
-import org.apache.commons.lang.RandomStringUtils
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.app.acl.ACLFileManager
