@@ -2076,7 +2076,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     params: [project: project]
             )
         }else{
-            flash.error = "Failed to save nodes file, please refer to logs for more info."
+            flash.error = message(code: "archive.import.importNodesSource.failed.message")
             return redirect(
                     controller: 'framework',
                     action: 'projectNodeSources',

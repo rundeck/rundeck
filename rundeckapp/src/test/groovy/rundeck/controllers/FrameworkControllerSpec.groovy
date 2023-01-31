@@ -2266,7 +2266,7 @@ project.label=A Label
 
         then:
         view=='/framework/saveProjectNodeSourceFile.gsp'
-        flash.error == "Failed to save nodes file, please refer to logs for more info."
+        flash.error == "archive.import.importNodesSource.failed.message"
     }
 
     def "save node source file, catch exception"() {
@@ -2310,7 +2310,7 @@ project.label=A Label
 
         then:
         view=='/framework/saveProjectNodeSourceFile.gsp'
-        flash.error == "Failed to save nodes file, please refer to logs for more info."
+        flash.error == "archive.import.importNodesSource.failed.message"
     }
 
 }
