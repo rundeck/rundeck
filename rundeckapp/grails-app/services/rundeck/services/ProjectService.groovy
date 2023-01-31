@@ -1717,12 +1717,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         //disable scm
         scmService.removeAllPluginConfiguration(project.name)
+        baseReportDataProvider.deleteWithTransaction(project.name)
 
         ScheduledExecution.withTransaction { TransactionStatus status ->
 
             try {
                 //delete all reports
-                baseReportDataProvider.deleteWithTransaction(project.name)
 
                 //delete all jobs with their executions
 
