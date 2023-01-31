@@ -19,10 +19,7 @@ package rundeck.quartzjobs
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
-import groovy.mock.interceptor.MockFor
 import org.grails.config.NavigableMap
-import org.junit.Assert
-import org.junit.Test
 import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
 import rundeck.ExecReport
@@ -35,6 +32,7 @@ import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.LogFileStorageService
+import rundeck.services.ReportService
 import spock.lang.Specification
 
 /**
@@ -47,6 +45,8 @@ import spock.lang.Specification
 @Integration
 @Rollback
 class ExecutionsCleanUpIntegrationSpec extends Specification{
+
+    ReportService reportService
 
     def testExecuteJobCleanerNoExecutionsToDelete(){
         given:
@@ -85,6 +85,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
 
     def testExecuteJobCleanerWithExecutionsToDelete(){
         given:
+
         String projName = 'projectTest2'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
@@ -106,7 +107,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         Execution execution = setupExecution(se, projName, execDate, execDate, frameworkService.getServerUUID())
         when:
         List execIds = job.searchExecutions(frameworkService,
-                new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+                new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize )
 
 
 
@@ -114,7 +115,7 @@ class ExecutionsCleanUpIntegrationSpec extends Specification{
         execIds.size() > 0
 
         when:
-        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService)
+        int sucessTotal = job.deleteByExecutionList(execIds, new FileUploadService(), logFileStorageService, reportService)
 
         then:
         execIds.size() == sucessTotal

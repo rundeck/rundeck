@@ -42,10 +42,14 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
+import org.rundeck.app.data.providers.GormBaseReportDataProvider
+import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
+import rundeck.services.data.BaseReportDataService
+import rundeck.services.data.ExecReportDataService
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
@@ -61,7 +65,7 @@ import static org.junit.Assert.*
  */
 class ProjectServiceSpec extends Specification implements ServiceUnitTest<ProjectService>, GrailsWebUnitTest, DataTest {
 
-    def setup() {
+    void setupSpec() {
         mockDomain Project
         mockDomain BaseReport
         mockDomain ExecReport
@@ -71,6 +75,9 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         mockDomain JobFileRecord
         mockCodec JobsXMLCodec
 
+    }
+
+    void setup() {
         def configService = Stub(ConfigurationService) {
             getString('projectService.projectExgitportCache.spec', _) >> 'refreshAfterWrite=2m'
         }
@@ -78,6 +85,15 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         defineBeans {
             configurationService(InstanceFactoryBean, configService)
         }
+
+        def providerExec = new GormExecReportDataProvider()
+        def providerBase = new GormBaseReportDataProvider()
+        mockDataService(ExecReportDataService)
+        mockDataService(BaseReportDataService)
+        providerExec.execReportDataService = applicationContext.getBean(ExecReportDataService)
+        providerBase.baseReportDataService = applicationContext.getBean(BaseReportDataService)
+        service.execReportDataProvider = providerExec
+        service.baseReportDataProvider = providerBase
     }
 
     def "loadJobFileRecord"() {
@@ -1217,6 +1233,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
             service.rundeckAuthContextEvaluator = Mock(BaseAuthContextEvaluator)
             service.loggingService = Mock(LoggingService)
             service.workflowService = Mock(WorkflowService)
+
+
+
+        
             service.executionUtilService=Mock(ExecutionUtilService){
                 1 * exportExecutionXml(_, _, _)>>{
                     it[1].write('test\n')

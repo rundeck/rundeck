@@ -457,7 +457,8 @@ class ReportService  {
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
-        def runlist = execReportDataProvider.getRunList(query.toMap(), filters, isJobs, se)
+        def seId = se?.id?: null
+        def runlist = execReportDataProvider.getRunList(query.toMap(), filters, isJobs, seId)
 
         def executions=[]
         def lastDate = -1
@@ -469,7 +470,7 @@ class ReportService  {
         }
         def minLevel = configurationService.getString("min.isolation.level","")
         def isolationLevel = (minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
-        def total = execReportDataProvider.countExecutionReportsWithTransaction(query.toMap(), isJobs, se, isolationLevel)
+        def total = execReportDataProvider.countExecutionReportsWithTransaction(query.toMap(), isJobs, seId, isolationLevel)
 
         filters.putAll(specialfilters)
 
@@ -551,6 +552,9 @@ class ReportService  {
         return rundeckAuthContextEvaluator.authorizeProjectResources(authContext,resHS, constraints, project)
     }
 
+    def deleteByExecutionId(Long id){
+        execReportDataProvider.deleteAllByExecutionId(id)
+    }
     private boolean isOracleDatasource(){
         def dataSource = applicationContext.getBean('dataSource', DataSource)
         def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName

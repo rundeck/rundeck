@@ -12,9 +12,12 @@ import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
-import rundeck.services.ConfigurationService;
+import rundeck.services.ConfigurationService
+import rundeck.services.data.ExecReportDataService;
 
 class GormExecReportDataProvider implements ExecReportDataProvider {
+    @Autowired
+    ExecReportDataService execReportDataService
     @Autowired
     ConfigurationService configurationService
 
@@ -31,8 +34,9 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    RdExecReport fromExecWithScheduledAndSave(Map executionMap, Map scheduledExecutionMap) {
+    RdExecReport fromExecWithScheduledAndSave(Map executionMap, Map scheduledExecutionMap, Long seId) {
         ScheduledExecution scheduledExecution = ScheduledExecution.fromMap(scheduledExecutionMap)
+        scheduledExecution.id = seId
         Execution execution = Execution.fromMap(executionMap, scheduledExecution)
         ExecReport execReport = ExecReport.fromExec(execution)
         execReport.save()
@@ -52,16 +56,14 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     SaveReportResponse saveFromMap(Map execReportMap) {
         ExecReport execReport = ExecReport.fromMap(execReportMap)
         boolean isUpdated = execReport.save(flush: true)
-        Errors errors = execReport.errors
-        return new SaveReportResponse(report: execReport, isSaved: isUpdated, errors: errors)
+        return new SaveReportResponse(report: execReport, isSaved: isUpdated)
     }
 
     @Override
     SaveReportResponse saveFromMapFields(Map execReportFields) {
         ExecReport execReport = new ExecReport(execReportFields)
         boolean isUpdated = execReport.save(flush: true)
-        Errors errors = execReport.errors
-        return new SaveReportResponse(report: execReport, isSaved: isUpdated, errors: errors)
+        return new SaveReportResponse(report: execReport, isSaved: isUpdated)
     }
 
     @Override
@@ -91,12 +93,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    int countExecutionReportsWithTransaction(Map execQueryMap, boolean isJobs, Map scheduledExecutionMap, Integer isolationLevel) {
-        ExecQuery execQuery = ExecQuery.fromMap(execQueryMap)
-        ScheduledExecution scheduledExecution = ScheduledExecution.fromMap(scheduledExecutionMap)
+    int countExecutionReportsWithTransaction(Map query, boolean isJobs, Long scheduledExecutionId, Integer isolationLevel) {
         return ExecReport.withTransaction([isolationLevel: isolationLevel]) {
             ExecReport.createCriteria().count {
-                applyExecutionCriteria(execQuery, delegate, isJobs, scheduledExecution)
+                applyExecutionCriteria(query, delegate, isJobs, scheduledExecutionId)
             }
         }
     }
@@ -121,9 +121,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    Collection<String> getRunList(Map execQueryMap, Map filters, boolean isJobs, Map scheduledExecutionMap) {
-        ExecQuery query = ExecQuery.fromMap(execQueryMap)
-        ScheduledExecution scheduledExecution = ScheduledExecution.fromMap(scheduledExecutionMap)
+    Collection<String> getRunList(Map query, Map filters, boolean isJobs, Long scheduledExecutionId) {
          return ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -134,7 +132,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
             if (query?.offset) {
                 firstResult(query.offset.toInteger())
             }
-            applyExecutionCriteria(query, delegate,isJobs, scheduledExecution)
+            applyExecutionCriteria(query, delegate,isJobs, scheduledExecutionId)
 
             if (query && query.sortBy && filters[query.sortBy]) {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
@@ -156,7 +154,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         }
     }
 
-    def applyExecutionCriteria(ExecQuery query, delegate, boolean isJobs=true, ScheduledExecution se=null){
+    def applyExecutionCriteria(Map query, delegate, boolean isJobs=true, Long seId=null){
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
@@ -221,11 +219,11 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
                     }
                 }
 
-                if (query.execProjects && se) {
+                if (query.execProjects && seId) {
                     or {
                         exists(new DetachedCriteria(ReferencedExecution, "re").build {
                             projections { property 're.execution.id' }
-                            eq('re.scheduledExecution.id', se.id)
+                            eq('re.scheduledExecution.id', seId)
                             eqProperty('re.execution.id', 'this.executionId')
                             List execProjectsPartitioned = Lists.partition(query.execProjects, 1000)
                             or{
@@ -234,7 +232,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
                                 }
                             }
                         })
-                        eq('jcJobId', String.valueOf(se.id))
+                        eq('jcJobId', String.valueOf(seId))
                         and{
                             jobfilters.each { key, val ->
                                 if (query["${key}Filter"] == 'null') {

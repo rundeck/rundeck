@@ -289,7 +289,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             map.uuid=uuid
             map.id=uuid
         }else if (id) {
-            map.id = id
+            map.id=id
         }
         map.description=description
         map.loglevel=loglevel

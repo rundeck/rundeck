@@ -17,7 +17,6 @@
 package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import grails.test.mixin.Mock
 import grails.testing.gorm.DataTest
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
@@ -28,6 +27,7 @@ import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.LogFileStorageService
+import rundeck.services.ReportService
 import spock.lang.Specification
 
 /**
@@ -38,6 +38,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
     def groupPath = 'elf'
     def projectName = 'projectTest'
     def jobUuid = '123'
+
     def setup(){
         mockDomains(Execution, ScheduledExecution, ReferencedExecution, ExecReport,Workflow,CommandExec)
     }
@@ -74,6 +75,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def fileUploadService = Mock(FileUploadService)
         def logFileStorageService = Mock(LogFileStorageService)
         def jobSchedulerService = Mock(JobSchedulerService)
+        def reportService = Mock(ReportService)
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -82,7 +84,8 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 frameworkService : frameworkService,
                 fileUploadService: fileUploadService,
                 logFileStorageService: logFileStorageService,
-                jobSchedulerService: jobSchedulerService
+                jobSchedulerService: jobSchedulerService,
+                reportService: reportService
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -142,6 +145,7 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
         def fileUploadService = Mock(FileUploadService)
         def logFileStorageService = Mock(LogFileStorageService)
         def jobSchedulerService = Mock(JobSchedulerService)
+        def reportService = Mock(ReportService)
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -150,7 +154,8 @@ class ExecutionsCleanUpSpec extends Specification implements DataTest{
                 frameworkService : frameworkService,
                 fileUploadService: fileUploadService,
                 logFileStorageService: logFileStorageService,
-                jobSchedulerService: jobSchedulerService
+                jobSchedulerService: jobSchedulerService,
+                reportService: reportService
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()

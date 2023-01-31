@@ -29,6 +29,7 @@ import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
@@ -63,6 +64,7 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
 import rundeck.services.*
+import rundeck.services.data.ExecReportDataService
 import rundeck.services.data.UserDataService
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
@@ -91,8 +93,12 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.fileUploadService=Mock(FileUploadService)
 
         mockDataService(UserDataService)
+        mockDataService(ExecReportDataService)
         GormUserDataProvider provider = new GormUserDataProvider()
+        GormExecReportDataProvider providerExec = new GormExecReportDataProvider()
         service.userDataProvider = provider
+        service.execReportDataProvider = providerExec
+
     }
 
     private Map createJobParams(Map overrides = [:]) {

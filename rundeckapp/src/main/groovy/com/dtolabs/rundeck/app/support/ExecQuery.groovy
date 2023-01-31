@@ -78,15 +78,17 @@ class ExecQuery extends ReportQuery implements Validateable{
         ])
 
     }
-
+    public static final ArrayList<String> exportProps = ReportQuery.exportProps +[
+             'controllerFilter',
+             'cmdFilter',
+             'groupPathFilter',
+             'groupPathExactFilter',
+             'execIdFilter',
+             'execProjects'
+    ]
     def Map toMap() {
-        def map = [:]
-        map.controllerFilter = controllerFilter
-        map.cmdFilter = cmdFilter
-        map.groupPathFilter = groupPathFilter
-        map.groupPathExactFilter = groupPathExactFilter
-        map.execIdFilter = execIdFilter
-        map.execProjects = execProjects
+
+        def map = this.properties.subMap(exportProps)
         map
     }
 

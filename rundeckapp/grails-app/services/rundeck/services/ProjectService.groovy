@@ -248,13 +248,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 object.dateCompleted = new Date()
             }
             return object
-//            def report
-//            try {
-//                report = ExecReport.fromMap(object)
-//            } catch (Throwable e) {
-//                throw new ProjectServiceException("Unable to create Report: " + e.getMessage(), e)
-//            }
-//            return report
         } else {
             throw new ProjectServiceException("Unexpected data type for Report: " + object.class.name)
         }
@@ -1331,6 +1324,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     @CompileStatic
     public Map<String, ProjectComponent> getProjectComponents() {
+        def some = null
         def types = componentBeanProvider.getBeans()
         Map<String, ProjectComponent> values = [:]
         types.each { k, v ->

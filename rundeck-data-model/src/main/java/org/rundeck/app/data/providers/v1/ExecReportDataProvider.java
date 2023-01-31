@@ -10,7 +10,7 @@ import java.util.Map;
 public interface ExecReportDataProvider extends DataProvider{
     RdExecReport get(Long id);
     RdExecReport fromExecWithScheduled(Map executionMap, Map scheduledExecutionMap);
-    RdExecReport fromExecWithScheduledAndSave(Map executionMap, Map scheduledExecutionMap);
+    RdExecReport fromExecWithScheduledAndSave(Map executionMap, Map scheduledExecutionMap, Long seId);
     SaveReportResponse fromExecWithId(Long id);
     SaveReportResponse saveFromMap(Map execReportMap);
     SaveReportResponse saveFromMapFields(Map execReportFields);
@@ -19,9 +19,9 @@ public interface ExecReportDataProvider extends DataProvider{
     List<RdExecReport> findAllByCtxProjectAndExecutionIdInList(String projectName, List<Long> execIds);
     int countByCtxProject(String projectName);
     int countExecutionReports(Map execQueryMap);
-    int countExecutionReportsWithTransaction(Map execQueryMap, boolean isJobs, Map scheduledExecutionMap, Integer isolationLevel);
+    int countExecutionReportsWithTransaction(Map execQueryMap, boolean isJobs, Long scheduledExecutionId, Integer isolationLevel);
     int countAndSaveByStatus();
-    Collection<String> getRunList(Map execQueryMap, Map filters, boolean isJobs, Map scheduledExecutionMap);
+    Collection<String> getRunList(Map execQueryMap, Map filters, boolean isJobs, Long scheduledExecutionId);
     void deleteByCtxProject(String projectName);
     void deleteAllByExecutionId(Long executionId);
 }
