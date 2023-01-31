@@ -2066,7 +2066,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } catch (Exception exc) {
 
             log.error('Error Saving nodes file content', exc)
-            exc.printStackTrace()
             error = exc
         }
         if (!error) {
