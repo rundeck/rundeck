@@ -2228,48 +2228,48 @@ project.label=A Label
     def "save node source file, catch IOException"() {
 
         setup:
-            def source = Mock(WriteableModelSource) {
-                1 * writeData(_) >> {
-                    throw new IOException("expected error")
-                }
-                1 * getSyntaxMimeType() >> 'application/json'
-                0 * _(*_)
+        def source = Mock(WriteableModelSource) {
+            1 * writeData(_) >> {
+                throw new IOException("expected error")
             }
-            controller.frameworkService = Mock(FrameworkService) {
-                1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
-                    1 * getProjectNodes() >> Mock(IProjectNodes) {
-                        1 * getWriteableResourceModelSources() >> [
+            1 * getSyntaxMimeType() >> 'application/json'
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * getWriteableResourceModelSources() >> [
                             Mock(IProjectNodes.WriteableProjectNodes) {
                                 getWriteableSource() >> source
                                 getIndex() >> 1
                                 getType() >> 'monkey'
                             }
-                        ]
-                    }
+                    ]
                 }
-                0 * _(*_)
             }
+            0 * _(*_)
+        }
 
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeProjectConfigure(_, 'test') >> true
-                1 * getAuthContextForSubject(_)
-            }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
 
-            params.project = "test"
-            params.index = "1"
-            request.method = 'POST'
-            params.fileText = 'some text'
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        params.fileText = 'some text'
         when:
 
-            setupFormTokens(params)
-            def result = controller.saveProjectNodeSourceFile()
+        setupFormTokens(params)
+        def result = controller.saveProjectNodeSourceFile()
 
         then:
-            view=='/framework/saveProjectNodeSourceFile.gsp'
-            flash.error == "Error saving nodes file content."
+        view=='/framework/saveProjectNodeSourceFile.gsp'
+        flash.error == "Failed to save nodes file, please refer to logs for more info."
     }
 
-    def "save a large node source file, get an error"() {
+    def "save node source file, catch exception"() {
 
         setup:
         def source = Mock(WriteableModelSource) {
@@ -2310,7 +2310,7 @@ project.label=A Label
 
         then:
         view=='/framework/saveProjectNodeSourceFile.gsp'
-        flash.error == "Error saving nodes file content."
+        flash.error == "Failed to save nodes file, please refer to logs for more info."
     }
 
 }
