@@ -15,30 +15,35 @@
  */
 package org.rundeck.web.infosec
 
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.context.SecurityContextImpl
 import spock.lang.Specification
 
-
 class ContainerRoleSourceSpec extends Specification {
+
     def "GetUserRoles"() {
         setup:
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "***",
-                                                                                           userRoles)
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "***", userRoles)
         SecurityContextHolder.setContext(new SecurityContextImpl(auth))
 
         when:
-        def roles = new ContainerRoleSource().getUserRoles(user, null)
+        def container = new ContainerRoleSource()
+        container.setDelimiter(',')
+        container.setEnabled(true)
+        def roles = container.getUserRoles(user, null)
 
         then:
         roles == expected
 
         where:
-        user | userRoles | expected
+        user    | userRoles                                                                 | expected
         "admin" | [new SimpleGrantedAuthority("admin"), new SimpleGrantedAuthority("user")] | ["admin", "user"]
-        "admin" | null | []
+        "admin" | [new SimpleGrantedAuthority("admin")]                                     | ["admin"]
+        "admin" | [new SimpleGrantedAuthority("admin,user")]                                | ["admin", "user"]
+        "admin" | null                                                                      | []
 
     }
 }
