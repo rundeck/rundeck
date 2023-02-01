@@ -51,19 +51,18 @@ class JobYAMLFormat implements JobFormat {
             throw new JobDefinitionException("Yaml: Expected list of Maps")
         }
         data.each { jobMap ->
-            Map notifTriggers = jobMap['notification']
+            Map notifTriggers = jobMap['notification'] as Map
             if(notifTriggers) {
                 (notifTriggers as Map).keySet().each { trigger ->
                     def notifsMap = notifTriggers[trigger]
 
                     if (notifsMap instanceof Map) {
                         def notifList = []
-
+                        Map notifToAdd = [:]
                         notifsMap.each {
-                            Map notifToAdd = [:]
                             notifToAdd.put(it.key, it.value)
-                            notifList.add(notifToAdd)
                         }
+                        notifList.add(notifToAdd)
                         notifTriggers[trigger] = notifList
                     }
                 }
