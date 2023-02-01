@@ -70,7 +70,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private UserAndRolesAuthContext authContext;
     private String nodeRankAttribute;
     private boolean nodeRankOrderAscending = true;
-    private int stepNumber = 1;
+    private int stepNumber = 0;
     private List<Integer> stepContext;
     private StorageTree storageTree;
     private JobService jobService;
