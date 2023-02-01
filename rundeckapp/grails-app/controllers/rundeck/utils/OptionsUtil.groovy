@@ -1,12 +1,12 @@
 package rundeck.utils
 
 import grails.util.Holders
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.Option
 import rundeck.ScheduledExecution
-import rundeck.User
 import rundeck.services.FrameworkService
 
 import javax.servlet.http.HttpSession
@@ -38,7 +38,7 @@ class OptionsUtil {
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    protected static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:],boolean isHttp=true, String username=null) {
+    protected static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution, UserDataProvider userDataProvider,selectedoptsmap=[:],boolean isHttp=true, String username=null) {
         def invalid = []
         def frameworkService = getFrameworkServiceInstance()
         def rundeckProps=[
@@ -48,19 +48,11 @@ class OptionsUtil {
         if(!isHttp) {
             rundeckProps.basedir= frameworkService.getRundeckBase()
         }
-        String userEmail = ""
         if(!username){
             def se = getHttpSessionInstance()
             username = se?.user?: "anonymous"
         }
-        if(username) {
-            User.withNewSession {
-                def userLogin = User.findByLogin(username)
-                if (userLogin && userLogin.email) {
-                    userEmail = userLogin.email
-                }
-            }
-        }
+        String userEmail = userDataProvider.getEmailWithNewSession(username)
 
         def extraJobProps=[
                 'user.name': (username?: "anonymous"),

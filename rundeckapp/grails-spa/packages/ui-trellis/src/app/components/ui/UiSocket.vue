@@ -4,7 +4,7 @@
         <template v-for="i in items">
             <template v-if="i.text">{{ i.text }}</template>
             <span v-else-if="i.html" v-html="i.html"></span>
-            <component :is="i.widget" v-else-if="i.widget"/>
+            <component v-else-if="i.widget" :is="i.widget" :event-bus="eventBus" :item-data="socketData"/>
         </template>
     </span>
 </template>
@@ -25,6 +25,7 @@ export default class UiSocket extends Vue {
     @Prop({required: true}) readonly section!: string
     @Prop({required: true}) readonly location!: string
     @Prop({required: false}) readonly eventBus!: Vue
+    @Prop({required: false}) readonly socketData!: any
 
     items: UIItem[] = []
 
@@ -39,7 +40,6 @@ export default class UiSocket extends Vue {
     }
 
     uiwatcher: UIWatcher|null=null
-
 
     mounted() {
         this.loadItems()

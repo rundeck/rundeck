@@ -44,6 +44,7 @@ import org.rundeck.app.auth.CoreTypedRequestAuthorizer
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.AppAuthorizer
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.project.RdProject
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.gui.JobListLinkHandler
 import org.rundeck.core.auth.AuthConstants
@@ -81,6 +82,7 @@ import rundeck.services.data.ProjectDataService
 import rundeck.services.feature.FeatureService
 import rundeck.services.scm.ScmPluginConfig
 import rundeck.services.scm.ScmPluginConfigData
+import rundeck.services.StorageService
 import spock.lang.Ignore
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
@@ -1373,10 +1375,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
-        controller.projectService = Mock(ProjectService){
-            projectDataProvider >>  new GormProjectDataProvider()
-
-        }
+        controller.projectService = Mock(ProjectService)
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -1386,8 +1385,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubject(_)
         1 * controller.frameworkService.projectNames(_) >> []
         1 * controller.frameworkService.projects(_) >> projects
+        1 * controller.projectService.findProjectByName('proj') >> Mock(RdProject)
         1 * iproj.hasProperty('project.description') >> true
         1 * iproj.getProperty('project.description') >> description
+        0 * controller.projectService.update(_,_)
         description == response.json.projects[0].description
     }
 
@@ -1567,6 +1568,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         controller.aclFileManagerService = Mock(AclFileManagerService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
+        controller.storageService = Mock(StorageService)
         def project = 'test'
         def scmConfig = Mock(ScmPluginConfigData)
 
@@ -1591,8 +1593,9 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                                                                                 AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
-        1 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
+        2 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
         1 * scmConfig.getEnabled() >> enabled
+        1 * controller.storageService.hasPath(_,_) >> true
         (count) * controller.scmService.getJobsPluginMeta(project, false)
         (count) * controller.scmService.importStatusForJobs(project,_, _, _, _)
         (count) * controller.scmService.importPluginStatus(_,project)
@@ -1611,6 +1614,52 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
             false   | 0
     }
 
+    def "SCM disabled when an unauthorized user request status and import is enabled"(){
+        given:
+        def unauthorizedMessage = "[SCM disabled] User don't have permissions to the configuration key. Please refer to the system's SCM key owner or administrator for further actions."
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.storageService = Mock(StorageService) {
+            it.hasPath() >> false
+        }
+        def project = 'test'
+        def scmConfig = Mock(ScmPluginConfigData)
+
+        when:
+        request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
+        params.project = project
+        controller.listExport()
+
+        then:
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_EXPORT,
+                                                                                          AuthConstants.ACTION_SCM_EXPORT]) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_APP_ADMIN,
+                                                                                          AuthConstants.ACTION_IMPORT,
+                                                                                          AuthConstants.ACTION_SCM_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> false
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> true
+        2 * controller.scmService.loadScmConfig(project,'import') >> scmConfig
+        1 * controller.storageService.hasPath(_,_) >> false
+        0 * controller.scmService.initProject(project,'export')
+        0 * controller.scmService.initProject(project,'import')
+
+        1 * controller.scmService.disablePlugin(_,_,_)
+        response.json.warning == unauthorizedMessage
+
+    }
 
     def "project Toggle SCM off"(){
         given:

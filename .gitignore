@@ -3,6 +3,7 @@
 !.github
 !.gitignore
 !.circleci
+!.nvmrc
 *~
 *.swp
 *.iws

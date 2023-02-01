@@ -37,6 +37,9 @@ else
     export RUNDECK_MAIN_BUILD=false
 fi
 
+# Location for storage of Selenium Images
+export S3_SELENIUM_IMAGES_BASE="projects/rundeck/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/selenium-images/"
+
 # Location of CI resources such as private keys
 export S3_CI_RESOURCES="s3://rundeck-ci-resources/shared/resources"
 

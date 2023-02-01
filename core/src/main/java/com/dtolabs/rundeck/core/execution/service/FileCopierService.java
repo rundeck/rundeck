@@ -84,7 +84,7 @@ public class FileCopierService
         return PRESET_PROVIDERS.containsKey(name);
     }
     @Override
-    protected String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
+    public String getDefaultProviderNameForNodeAndProject(INodeEntry node, String project) {
         return getProviderNameForNode(
                 framework.isLocalNode(node),
                 framework.getProjectManager().loadProjectConfig(project)
@@ -114,7 +114,7 @@ public class FileCopierService
     }
 
     @Override
-    protected String getServiceProviderNodeAttributeForNode(INodeEntry node) {
+    public String getServiceProviderNodeAttributeForNode(INodeEntry node) {
         return getNodeAttributeForProvider(framework.isLocalNode(node));
     }
 

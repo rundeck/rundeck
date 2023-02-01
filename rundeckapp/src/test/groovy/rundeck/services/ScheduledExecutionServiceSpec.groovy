@@ -38,6 +38,7 @@ import org.rundeck.app.components.jobs.JobQuery
 import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.core.auth.AuthConstants
@@ -51,6 +52,7 @@ import rundeck.Orchestrator
 import org.slf4j.Logger
 import rundeck.ScheduledExecutionStats
 import rundeck.User
+import rundeck.services.data.UserDataService
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -88,6 +90,7 @@ import spock.lang.Unroll
  * Created by greg on 6/24/15.
  */
 class ScheduledExecutionServiceSpec extends Specification implements ServiceUnitTest<ScheduledExecutionService>, DataTest {
+    GormUserDataProvider provider = new GormUserDataProvider()
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
 
@@ -132,7 +135,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{
                 RundeckJobDefinitionManager.importedJob(it[0],[:])
@@ -769,13 +772,13 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         then:
             1 * service.pluginService.validatePluginConfig('aType', ExecutionLifecyclePlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:true)
             1 * service.pluginService.validatePluginConfig('bType', ExecutionLifecyclePlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
                 PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
                         SimplePluginConfiguration.builder().provider('aType').configuration([a:'b']).build(),
                         SimplePluginConfiguration.builder().provider('bType').configuration([b:'c']).build(),
                 ]
             }
-            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+            1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
             !results.failed
 
     }
@@ -807,13 +810,13 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         then:
             1 * service.pluginService.validatePluginConfig('aType',ExecutionLifecyclePlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:false,report:Validator.errorReport('a','wrong'))
             1 * service.pluginService.validatePluginConfig('bType',ExecutionLifecyclePlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)>>{
                 PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, [
                         SimplePluginConfiguration.builder().provider('aType').configuration([a:'b']).build(),
                         SimplePluginConfiguration.builder().provider('bType').configuration([b:'c']).build(),
                 ]
             }
-            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+            1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
             results.failed
             results.scheduledExecution.errors.hasFieldErrors('pluginConfig')
     }
@@ -1408,7 +1411,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.quartzScheduler = Mock(Scheduler)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
             validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid:true, validations:[:])
@@ -1466,7 +1469,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             }
         }
         service.quartzScheduler = Mock(Scheduler)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{
                 RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations?:[:])
@@ -2120,7 +2123,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager = Mock(RundeckJobDefinitionManager){
             updateJob(_,_,_)>>{ RundeckJobDefinitionManager.importedJob(it[0],it[1]?.associations)}
             validateImportedJob(_)>>new RundeckJobDefinitionManager.ReportSet(valid: true,validations:[:])
@@ -2398,8 +2401,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
         1 * service.frameworkService.getFrameworkNodeName()
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,['update'],'AProject')>>true
-        2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
-        1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+        2 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)
+        1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
         1 * service.rundeckJobDefinitionManager.persistComponents(_,_)
         1 * service.rundeckJobDefinitionManager.waspersisted(_,_)
         0 * _
@@ -2441,8 +2444,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                                     build()
                     ]
             )
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> pluginConfigSet
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> pluginConfigSet
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> pluginConfigSet
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) >> pluginConfigSet
             1 * service.frameworkService.getFrameworkNodeName()
             1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_,_,['update'],_)>>true
             0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
@@ -2462,7 +2465,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
             1 * service.pluginService.validatePluginConfig('aPlugin', ExecutionLifecyclePlugin, 'AProject', [some: 'config']) >>
             new ValidatedPlugin(valid: true)
-            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
+            1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_, _)
 
     }
 
@@ -2485,9 +2488,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                                     build()
                     ]
             )
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> configSet
-            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
-            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) >> configSet
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(newJob.job) >> configSet
+            1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_, _)
+            1 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) >> configSet
             0 * service.frameworkService.getFrameworkNodeName()
             0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
             0 * service.rundeckJobDefinitionManager.persistComponents(_,_)>>true
@@ -2537,8 +2540,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         0 * service.frameworkService.validateDescription(*_)
         0 * service.jobLifecycleComponentService.beforeJobSave(_,_)
         0 * service.frameworkService.getFrameworkNodeName()
-        2 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
-        1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+        2 * service.executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(_)
+        1 * service.executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(_,_)
 
         0 * service.rundeckJobDefinitionManager.persistComponents(newJob,_)
         service.jobSchedulesService = Mock(SchedulesManager){
@@ -5042,6 +5045,27 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             job.notifications.find{it.toMap()== job2.notifications[0].toMap()}!=null
             job.notifications.find{it.toMap()== job2.notifications[1].toMap()}!=null
     }
+
+    def "job definition notifications from input job should remove notifications"() {
+
+        given:"a base job with notifications"
+        setupDoUpdate()
+        def baseJob = new ScheduledExecution(createJobParams(notifications:[
+                new Notification(type:'email',content:'blah',eventTrigger: 'onsuccess'),
+                new Notification(type:'aplugin',content:'{}',eventTrigger: 'onfailure')
+        ])).save()
+        def jobEmptyNotifications = new ScheduledExecution(createJobParams(notifications:[]))
+        def params = [:]
+        def auth = Mock(UserAndRolesAuthContext)
+
+        when:"uploading the same job without any notifications"
+        service.jobDefinitionBasic(baseJob, jobEmptyNotifications, params, auth)
+        def notifications = Notification.findAllByScheduledExecution(baseJob)
+
+        then:"base job should not have any notifications"
+        notifications.size()==0
+    }
+
     def "job definition notifications from old params"() {
         given:
             def job = new ScheduledExecution(notifications:[])
@@ -5538,7 +5562,7 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             service.notificationService = Mock(NotificationService){
             }
             service.orchestratorPluginService=Mock(OrchestratorPluginService)
-            service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+            service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
             service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
             service.configurationService=Mock(ConfigurationService)
 
@@ -5564,6 +5588,8 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             }
             service.configurationService = Mock(ConfigurationService)
             service.frameworkService = fwkservice
+            GormUserDataProvider provider = new GormUserDataProvider()
+            service.userDataProvider = provider
 
 
         when:"the connection values are set directly on the URL"
@@ -5617,6 +5643,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         service.configurationService = Mock(ConfigurationService)
         service.frameworkService = fwkservice
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
+
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',
@@ -5673,6 +5702,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         service.configurationService = Mock(ConfigurationService)
         service.frameworkService = fwkservice
+        GormUserDataProvider provider = new GormUserDataProvider()
+        service.userDataProvider = provider
+
         def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
         se.addToOptions(new Option(
                 name:'test',

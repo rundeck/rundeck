@@ -45,6 +45,7 @@ import org.rundeck.app.components.jobs.JobQueryInput
 import org.rundeck.app.components.schedule.TriggerBuilderHelper
 import org.rundeck.app.components.schedule.TriggersExtender
 import org.rundeck.app.components.jobs.UnsupportedFormatException
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -179,12 +180,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     FileUploadService fileUploadService
     JobSchedulerService jobSchedulerService
     JobLifecycleComponentService jobLifecycleComponentService
-    ExecutionLifecyclePluginService executionLifecyclePluginService
+    ExecutionLifecycleComponentService executionLifecycleComponentService
     SchedulesManager jobSchedulesService
     private def triggerComponents
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
+    UserDataProvider userDataProvider
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -2635,7 +2637,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @CompileStatic
     boolean validateDefinitionExecLifecyclePlugins(ScheduledExecution scheduledExecution, Map params, Map validationMap) {
         boolean failed = false
-        PluginConfigSet pluginConfigSet=executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution)
+        PluginConfigSet pluginConfigSet=executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution)
         if (pluginConfigSet && pluginConfigSet.pluginProviderConfigs?.size()>0) {
             //validate execution life cycle plugins
             Map<String,Validator.Report> pluginValidations = [:]
@@ -2707,7 +2709,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         boolean failed = false
 
         scheduledExecution.options?.each { Option origopt ->
-            EditOptsController._validateOption(origopt, null, scheduledExecution.scheduled)
+            EditOptsController._validateOption(origopt, userDataProvider, null, scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(origopt)
 
             if (origopt.errors.hasErrors() || !origopt.validate(deepValidate: false)) {
@@ -2906,13 +2908,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public void jobDefinitionExecLifecyclePlugins(ScheduledExecution scheduledExecution, ScheduledExecution input,Map params, UserAndRoles userAndRoles) {
         PluginConfigSet configSet=null
         if(input){
-            configSet=executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(input)
+            configSet=executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(input)
         }else if (params.executionLifecyclePlugins && params.executionLifecyclePlugins instanceof Map) {
             Map plugins=(Map)params.executionLifecyclePlugins
             //define execution life cycle plugins config
             configSet = parseExecutionLifecyclePluginsParams(plugins)
         }
-        executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, configSet)
+        executionLifecycleComponentService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, configSet)
     }
 
 
@@ -3049,6 +3051,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 it.delete()
             }
             scheduledExecution.options = null
+        }
+    }
+
+    /**
+     *Remove and delete all existing notifications from a scheduledExecution
+     * @param scheduledExecution
+     */
+    public void deleteExistingNotification(ScheduledExecution scheduledExecution) {
+        if (scheduledExecution.notifications) {
+            def todelete = []
+            scheduledExecution.notifications.each {
+                todelete << it
+            }
+            todelete.each {
+                scheduledExecution.removeFromNotifications(it)
+                it.delete()
+            }
         }
     }
 
@@ -3225,6 +3244,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }else{
             deleteExistingOptions(scheduledExecution)
+            deleteExistingNotification(scheduledExecution)
             final Collection foundprops = input.properties.keySet().findAll {
                 it != 'lastUpdated' &&
                 it != 'dateCreated' &&
@@ -3869,7 +3889,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //load expand variables in URL source
         Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
         def realUrl = opt.realValuesUrl.toExternalForm()
-        String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
+        String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, userDataProvider, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
         String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
         def remoteResult = [:]
         def result = null
@@ -4216,7 +4236,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def optfailed = false
         def optNames = [:]
         rundeckOptions?.each {Option opt ->
-            EditOptsController._validateOption(opt, null,scheduledExecution.scheduled)
+            EditOptsController._validateOption(opt, userDataProvider, null,scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(opt)
             if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
                 opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")
@@ -4491,7 +4511,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             !pluginControlService?.isDisabledPlugin(k,ServiceNameConstants.LogFilter)
         }
 
-        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
+        def executionLifecyclePlugins = executionLifecycleComponentService.listEnabledExecutionLifecyclePlugins(pluginControlService)
         def jobComponents = rundeckJobDefinitionManager.getJobDefinitionComponents()
 
         def fprojects = frameworkService.projectNames(authContext)

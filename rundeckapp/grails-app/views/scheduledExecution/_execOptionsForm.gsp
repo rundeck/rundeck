@@ -13,7 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<%@ page import="rundeck.User;com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" %>
 
 
 <g:uploadForm controller="scheduledExecution" method="post" useToken="true"
@@ -307,9 +307,9 @@
                     <div class="">
                         <g:set var="filtvalue" value="${nodefilter}"/>
 
-                        <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
-                            <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters.findAll { it.project == project }}"/>
-                        </g:if>
+                        <user:getNodeFilters user="${session.user}">
+                            <g:set var="filterset" value="${filters.findAll { it.project == project }}"/>
+                        </user:getNodeFilters>
 
                         <div id="nodefilterViewArea" data-ko-bind="nodeFilter" data-bind="visible: nodeFiltersVisible">
                         <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
@@ -477,6 +477,11 @@
 </g:uploadForm>
 
 <script lang="text/javascript">
+
+    window._rundeck.data = Object.assign(window._rundeck.data || {}, {
+        "jobComponentProperties": loadJsonData('jobComponentProperties')
+    })
+
     function init() {
         var pageParams = loadJsonData('pageParams');
         jQuery('body').on('click', '.nodefilterlink', function (evt) {
@@ -584,9 +589,7 @@
         });
 
         initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
-        window._rundeck = Object.assign(window._rundeck || {}, {
-            "data": {"jobComponentProperties": loadJsonData('jobComponentProperties')}
-        })
+
     }
     jQuery(document).ready(init);
 </script>

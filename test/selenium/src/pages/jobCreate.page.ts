@@ -293,7 +293,7 @@ export class JobCreatePage extends Page {
     }
 
     async notificationsTab(){
-        return await this.ctx.driver.findElement(Elems.notificationsTab)
+        return this.ctx.driver.findElement(Elems.notificationsTab)
     }
     async vueNotificationEditSections() {
         return this.ctx.driver.findElements(Elems.vueNotificationEditSection)

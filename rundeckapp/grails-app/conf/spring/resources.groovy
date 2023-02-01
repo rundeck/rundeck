@@ -108,6 +108,8 @@ import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.storage.GormStorageDataProvider
+import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -137,7 +139,9 @@ import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.ExecutionLifecycleComponentService
 import rundeck.services.ExecutionValidatorService
+import rundeck.services.JobLifecycleComponentService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
@@ -454,6 +458,17 @@ beans={
     executionLifecyclePluginProviderService(ExecutionLifecyclePluginProviderService){
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
     }
+
+    /**
+     * the Execution life cycle component service
+     */
+    executionLifecycleComponentService(ExecutionLifecycleComponentService)
+
+
+    /**
+     * the Execution life cycle component service
+     */
+    jobLifecycleComponentService(JobLifecycleComponentService)
 
     /**
      * the Notification plugin provider service
@@ -861,5 +876,6 @@ beans={
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
     projectDataProvider(GormProjectDataProvider)
-
+    storageDataProvider(GormStorageDataProvider)
+    userDataProvider(GormUserDataProvider)
 }

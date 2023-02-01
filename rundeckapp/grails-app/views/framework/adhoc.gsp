@@ -14,7 +14,7 @@
   limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment; rundeck.User; org.rundeck.core.auth.AuthConstants" %>
+<%@ page import="grails.util.Environment; org.rundeck.core.auth.AuthConstants" %>
 <html>
 <head>
     <g:set var="ukey" value="${g.rkey()}" />
@@ -113,9 +113,9 @@ search
   <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
-<g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
-  <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
-</g:if>
+<user:getNodeFilters user="${session.user}">
+  <g:set var="filterset" value="${filters}"/>
+</user:getNodeFilters>
 
 <div class="content">
 <div id="layoutBody">

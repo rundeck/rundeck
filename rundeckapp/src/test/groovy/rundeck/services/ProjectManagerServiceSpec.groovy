@@ -1065,7 +1065,7 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
 
         def props = new Properties()
         props['abc'] = 'def'
-        props['project.description'] = 'desc_test'
+        props['project.description'] = description
 
         service.configStorageService=Stub(ConfigStorageService) {
             existsFileResource("projects/test1/etc/project.properties") >> false
@@ -1090,6 +1090,13 @@ class ProjectManagerServiceSpec extends Specification implements ServiceUnitTest
         }
         service.rundeckNodeService = Mock(NodeService)
         service.projectCache = Mock(LoadingCache)
+        service.projectDataProvider=Mock(RundeckProjectDataProvider){
+            1 * findByName('test1')
+            1 * create({
+                it.description==description
+                it.name=='test1'
+            })
+        }
 
         when:
 

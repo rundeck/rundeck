@@ -17,21 +17,23 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
-
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.rundeck.app.data.RdPageable
+import org.rundeck.app.data.model.v1.AuthenticationToken
+import org.rundeck.app.data.model.v1.user.LoginStatus
+import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.TokenDataProvider
+import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.util.Sizes
 import rundeck.Execution
-import rundeck.User
+import rundeck.commandObjects.RdUserCommandObject
 import rundeck.services.UserService
-import org.rundeck.app.data.model.v1.*
 
 import javax.servlet.http.HttpServletResponse
 
@@ -44,6 +46,7 @@ class UserController extends ControllerBase{
     GrailsApplication grailsApplication
     def configurationService
     TokenDataProvider tokenDataProvider
+    UserDataProvider userDataProvider
 
     static allowedMethods = [
             addFilterPref      : 'POST',
@@ -104,7 +107,7 @@ class UserController extends ControllerBase{
         access = RundeckAccess.General.AUTH_APP_ADMIN
     )
     def list(){
-        [users:User.listOrderByLogin()]
+        [users:userDataProvider.listAllOrderByLogin()]
     }
 
     def profile() {
@@ -120,16 +123,17 @@ class UserController extends ControllerBase{
         boolean tokenAdmin = authorizingAppType.isAuthorized(RundeckAccess.General.APP_ADMIN)
         def authContext = authorizingAppType.authContext
 
-        def User u = User.findByLogin(params.login)
-        if (!u && params.login == session.user) {
+        def userExists = userService.validateUserExists(params.login)
+        if (!userExists && params.login == session.user) {
             //redirect to profile edit page, so user can setup their profile
             flash.message = "Please fill out your profile"
             return redirect(action: 'register')
         }
-        if (notFoundResponse(u, 'User', params['login'])) {
+        if (notFoundResponse(userExists, 'User', params['login'])) {
             return
         }
 
+        RdUser u = userService.findOrCreateUser(params.login)
         def tokenTotal = tokenAdmin ? tokenDataProvider.countTokensByType(AuthenticationToken.AuthTokenType.USER) :
                 tokenDataProvider.countTokensByCreatorAndType(u.login, AuthenticationToken.AuthTokenType.USER)
 
@@ -167,7 +171,7 @@ class UserController extends ControllerBase{
         ]
     }
     def create={
-        render(view:'register',model:[user:new User(),newuser:true])
+        render(view:'register',model:[user: userDataProvider.buildUser(),newuser:true])
     }
     def register(){
         UserAndRolesAuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
@@ -186,16 +190,16 @@ class UserController extends ControllerBase{
                 return
             }
         }
-        def User u = User.findByLogin(user)
-        if(u){
+        def userExists = userDataProvider.validateUserExists(user)
+        if(userExists){
            return redirect(action:'edit')
         }
-        u = new User(login:user)
+        def u = userDataProvider.buildUser(login: user)
 
         def model=[user: u,newRegistration:true]
         return model
     }
-    public def store(User user){
+    public def store(RdUserCommandObject user){
         withForm{
         if(user.hasErrors()){
             flash.errors=user.errors
@@ -214,18 +218,18 @@ class UserController extends ControllerBase{
             return
         }
 
-        def User u = User.findByLogin(user.login)
-        if(u){
+        def userExists = userDataProvider.validateUserExists(user.login)
+        if(userExists){
             request.errorCode = 'api.error.item.alreadyexists'
             request.errorArgs = ['User profile', user.login]
             return renderErrorView([:])
         }
-        u = new User(user.properties.subMap(['login','firstName','lastName','email']))
+        def createdUser = userDataProvider.createUserWithProfile(user.login, user.lastName, user.firstName, user.email)
 
-        if(!u.save(flush:true)){
+        if(!createdUser.isSaved){
             flash.error = "Error updating user"
-            flash.errors = user.errors
-            return render(view:'edit',model:[user:u])
+            flash.errors = createdUser.errors
+            return render(view:'edit',model:[user:createdUser.user])
         }
         flash.message="User profile updated: ${user.login}"
         return redirect(action:'profile',params:[login: user.login])
@@ -241,8 +245,8 @@ class UserController extends ControllerBase{
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
         UserAndRolesAuthContext auth = rundeckAuthContextProcessor.getAuthContextForSubject(session.subject)
-        def user = params.username?:auth.username
-        if(user!=auth.username){
+        def username = params.username?:auth.username
+        if(username!=auth.username){
             //requiere admin privileges
             if(!rundeckAuthContextProcessor.authorizeApplicationResourceAny(
                     auth,
@@ -265,9 +269,9 @@ class UserController extends ControllerBase{
                 return
             }
         }
-        User u = User.findByLogin(user)
-        if(!u){
-            def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',user]]
+        def userExists = userService.validateUserExists(username)
+        if(!userExists){
+            def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',username]]
             withFormat {
                 xml {
                     return apiService.renderErrorXml(response, errorMap)
@@ -281,6 +285,7 @@ class UserController extends ControllerBase{
             }
             return
         }
+        RdUser u = userDataProvider.findByLogin(username)
         if (request.method == 'POST'){
             def config
             def succeed = apiService.parseJsonXmlWith(request, response, [
@@ -297,18 +302,12 @@ class UserController extends ControllerBase{
             if(!succeed){
                 return
             }
-            if(config.email){
-                u.email=config.email
-            }
-            if(config.firstName){
-                u.firstName=config.firstName
-            }
-            if(config.lastName){
-                u.lastName=config.lastName
-            }
-
-            if(!u.save(flush:true)){
-                def errorMsg= u.errors.allErrors.collect { g.message(error:it) }.join(";")
+            String lastName = (config.containsKey("lastName")) ? config.lastName : u.lastName
+            String firstName = (config.containsKey("firstName")) ? config.firstName : u.firstName
+            String email = (config.containsKey("email")) ? config.email : u.email
+            def updateResponse = userDataProvider.updateUserProfile(username, lastName, firstName, email)
+            if(!updateResponse.isSaved){
+                def errorMsg= updateResponse.errors.allErrors.collect { g.message(error:it) }.join(";")
                 return apiService.renderErrorFormat(response,[
                         status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                         message:errorMsg,
@@ -399,7 +398,7 @@ class UserController extends ControllerBase{
         def users = []
         if(request.api_version >= ApiVersions.V27){
             def userList = [:]
-            User.listOrderByLogin().each {
+            userDataProvider.listAllOrderByLogin().each {
                 def obj = [:]
                 obj.login = it.login
                 obj.firstName = it.firstName
@@ -413,11 +412,11 @@ class UserController extends ControllerBase{
                 }
                 def tokenList = tokenDataProvider.findAllByUser(it.id.toString())
                 obj.tokens = tokenList?.size()
-                userList.put(it.login,obj)
+                userList.put(it.login, obj)
             }
             userList.each{k,v -> users<<v}
         }else{
-            users = User.findAll()
+            users = userDataProvider.findAll()
         }
 
 
@@ -520,7 +519,7 @@ class UserController extends ControllerBase{
                 obj.lastSessionId = it.lastSessionId
             }
             obj.loggedInTime = it.lastLogin
-            if (result.showLoginStatus && loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LOGGEDIN.value)) {
+            if (result.showLoginStatus && loggedOnly && obj.loggedStatus.equals(LoginStatus.LOGGEDIN.value)) {
                 userList.add(obj)
             } else {
                 userList.add(obj)
@@ -565,7 +564,7 @@ class UserController extends ControllerBase{
         )
     }
 
-    public def update (User user) {
+    public def update (RdUserCommandObject user) {
         withForm{
         if (user.hasErrors()) {
             flash.errors = user.errors
@@ -581,16 +580,16 @@ class UserController extends ControllerBase{
         ), AuthConstants.ACTION_ADMIN,'User',params.login)){
             return
         }
-        def User u = User.findByLogin(params.login)
+        RdUser u = userDataProvider.findByLogin(params.login)
         if(notFoundResponse(u,'User',params.login)){
             return
         }
 
-        bindData(u,params.subMap(['firstName','lastName','email']))
+        def updateResponse = userDataProvider.updateUserProfile(params.login, params.lastName, params.firstName, params.email)
 
-        if(!u.save(flush:true)){
+        if(!updateResponse.isSaved){
             request.error = "Error updating user"
-            request.errors = u.errors
+            request.errors = updateResponse.errors
             return render(view:'edit',model:[user:u])
         }
         flash.message="User profile updated: ${params.login}"
@@ -833,7 +832,7 @@ class UserController extends ControllerBase{
 
         return redirect(controller: 'user', action: 'profile', params: redirParams)
     }
-    def clearApiToken(User user) {
+    def clearApiToken(RdUserCommandObject user) {
         boolean valid = false
         withForm {
             valid = true
@@ -881,8 +880,8 @@ class UserController extends ControllerBase{
             result = [result: false, error: error]
         } else {
 
-            def User u = userService.findOrCreateUser(login)
-            if (!u) {
+            def userExists = userService.validateUserExists(login)
+            if (!userExists) {
                 def error = "Couldn't find user: ${login}"
                 log.error error
                 result=[result: false, error: error]
@@ -936,7 +935,7 @@ class UserController extends ControllerBase{
 
     }
     def setDashboardPref={
-        def User u = userService.findOrCreateUser(session.user)
+        def RdUser u = userService.findOrCreateUser(session.user)
         def list=params.dpref.split(",").collect{Integer.parseInt(it)}
         (1..4).each{
             if(!list.contains(it)){
