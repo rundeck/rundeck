@@ -9,7 +9,7 @@ public class JobReferenceItem extends JobRefCommandBase {
     private final String jobIdentifier;
     private final String[] args;
     private final boolean nodeStep;
-    private final StepExecutionItem handler;
+    private final StepExecutionItem failureHandler;
     private final boolean keepgoingOnSuccess;
     private final Boolean nodeKeepgoing;
     private final String nodeFilter;
@@ -25,6 +25,30 @@ public class JobReferenceItem extends JobRefCommandBase {
     private final Boolean ignoreNotifications;
     private final Boolean childNodes;
 
+    @Override
+    public Boolean isFailOnDisable() {
+        return getFailOnDisable();
+    }
+
+    @Override
+    public Boolean isImportOptions() {
+        return getImportOptions();
+    }
+
+    @Override
+    public Boolean isUseName() {
+        return getUseName();
+    }
+
+    @Override
+    public Boolean isIgnoreNotifications() {
+        return getIgnoreNotifications();
+    }
+
+    @Override
+    public Boolean isChildNodes() {
+        return getChildNodes();
+    }
 
     @Override
     public String toString() {
