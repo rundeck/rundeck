@@ -1,3 +1,5 @@
+import liquibase.statement.core.UpdateStatement
+
 databaseChangeLog = {
 
     changeSet(author: "rundeckuser (generated)", id: "3.4.0-4") {
@@ -142,6 +144,39 @@ databaseChangeLog = {
         grailsChange {
             change {
                 sql.execute("ALTER TABLE execution RENAME COLUMN \"filter\" TO FILTER;")
+            }
+            rollback {
+            }
+        }
+    }
+    changeSet(author: "rundeckdev", id: "4.11.0-add-uuid-and-job-uuid") {
+        preConditions(onFail: "MARK_RAN") {
+            not {
+                columnExists(tableName: "execution", columnName: 'uuid')
+                columnExists(tableName: "execution", columnName: 'job_uuid')
+            }
+        }
+        addColumn(tableName: "execution") {
+            column(name: 'job_uuid', type: '${varchar255.type}')
+            column(name: 'uuid', type: '${varchar255.type}')
+        }
+        sql("update execution ex set job_uuid = (select uuid from scheduled_execution where id = ex.scheduled_execution_id)")
+    }
+    changeSet(author: "rundeckuser (generated)", failOnError:"true", id: "all-executions-have-uuids") {
+        preConditions(onFail: 'MARK_RAN') {
+            columnExists(tableName: "execution", columnName: 'uuid')
+        }
+        grailsChange {
+            change {
+                def updates = []
+                sql.eachRow("select id from execution") {
+
+                    updates.add(new UpdateStatement(null,null,"execution")
+                            .addNewColumnValue("uuid",UUID.randomUUID().toString())
+                            .setWhereClause("id = '${it.id}'"))
+                }
+
+                sqlStatements(updates)
             }
             rollback {
             }

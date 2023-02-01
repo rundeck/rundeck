@@ -12,8 +12,8 @@ import grails.events.bus.EventBus
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.ScheduledExecution
+import rundeck.data.job.JobRevReferenceImpl
 import rundeck.services.FrameworkService
-import rundeck.services.JobRevReferenceImpl
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import spock.lang.Specification

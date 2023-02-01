@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 
 class ScheduledExecutionStats {
     String content
+    String jobUuid
 
     long _version = 0
 
-    static belongsTo=[se:ScheduledExecution]
+    //static belongsTo=[se:ScheduledExecution]
     static transients = ['contentMap']
 
     static mapping = {

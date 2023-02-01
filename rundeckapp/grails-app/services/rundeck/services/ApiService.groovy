@@ -35,7 +35,7 @@ import org.rundeck.app.data.model.v1.SimpleTokenBuilder
 import org.rundeck.app.data.providers.v1.TokenDataProvider
 import org.rundeck.app.web.WebUtilService
 import org.rundeck.core.auth.AuthConstants
-import org.rundeck.util.Sizes
+import rundeck.data.util.Sizes
 import rundeck.Execution
 
 import javax.servlet.http.HttpServletRequest

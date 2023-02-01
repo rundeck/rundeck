@@ -24,6 +24,8 @@ import org.rundeck.app.events.LogJobChangeEvent
 import org.rundeck.app.job.component.JobComponentDataImportExport
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.context.request.RequestContextHolder
+import rundeck.data.job.JobReferenceImpl
+import rundeck.data.job.JobRevReferenceImpl
 import rundeck.data.job.RdJob
 import org.rundeck.app.data.job.converters.ScheduledExecutionFromRdJobUpdater
 import org.rundeck.app.data.job.converters.ScheduledExecutionToJobConverter
@@ -35,8 +37,6 @@ import rundeck.ScheduledExecution
 import rundeck.data.job.RdOption
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecycleComponentService
-import rundeck.services.JobReferenceImpl
-import rundeck.services.JobRevReferenceImpl
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
 import rundeck.services.ScheduledExecutionService
@@ -69,18 +69,22 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
 
     @Override
     JobData get(Serializable id) {
-        ScheduledExecution se = scheduledExecutionDataService.get(id)
-        return se ? ScheduledExecutionToJobConverter.convert(se) : null
+        return scheduledExecutionDataService.get(id)
     }
 
     @Override
     JobData findByUuid(String uuid) {
-        return ScheduledExecutionToJobConverter.convert(scheduledExecutionDataService.findByUuid(uuid))
+        return scheduledExecutionDataService.findByUuid(uuid)
     }
 
     @Override
     boolean existsByUuid(String uuid) {
         return scheduledExecutionDataService.countByUuid(uuid) == 1
+    }
+
+    @Override
+    JobData findByProjectAndJobNameAndGroupPath(String project, String jobName, String groupPath) {
+        return ScheduledExecution.findByProjectAndJobNameAndGroupPath(project, jobName, groupPath)
     }
 
     @Override
@@ -117,7 +121,7 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
         rescheduleJob(saved, jobChangeData)
         publishJobUpdateAuditEvent(se, isnew)
         publishLogJobChangeEvent(saved, logEvent)
-        return ScheduledExecutionToJobConverter.convert(saved)
+        return saved
     }
 
     @Publisher('log.job.change.event')

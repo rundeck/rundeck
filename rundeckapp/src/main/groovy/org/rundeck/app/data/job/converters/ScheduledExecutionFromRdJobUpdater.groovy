@@ -3,6 +3,7 @@ package org.rundeck.app.data.job.converters
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.util.Holders
+import org.apache.tools.ant.taskdefs.condition.Or
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdLogConfig
@@ -89,8 +90,13 @@ class ScheduledExecutionFromRdJobUpdater {
     static void updateOrchestrator(ScheduledExecution se, RdOrchestrator rdo) {
         if(!se.orchestrator && !rdo) return
         if(!se.orchestrator) se.orchestrator = new Orchestrator()
-        se.orchestrator.type = rdo.type
-        se.orchestrator.content = mapper.writeValueAsString(rdo.configuration)
+        updateOrchestrator(se.orchestrator, rdo)
+    }
+
+    static Orchestrator updateOrchestrator(Orchestrator orchestrator, RdOrchestrator rdo) {
+        orchestrator.type = rdo.type
+        orchestrator.content = mapper.writeValueAsString(rdo.configuration)
+        orchestrator
     }
 
     static void updateJobOptions(ScheduledExecution se, SortedSet<RdOption> rdopts) {
@@ -188,16 +194,17 @@ class ScheduledExecutionFromRdJobUpdater {
         se.crontabString = schedule?.crontabString
     }
 
-    static void updateWorkflow(ScheduledExecution se, RdWorkflow rdw) {
+    static Workflow updateWorkflow(ScheduledExecution se, RdWorkflow rdw) {
         if(!se.workflow) se.workflow = new Workflow()
-        Workflow wkf = se.workflow
+        updateWorkflow(se.workflow, rdw)
+    }
+    static Workflow updateWorkflow(Workflow wkf, RdWorkflow rdw) {
         wkf.threadcount = rdw.threadcount
         wkf.keepgoing = rdw.keepgoing
         wkf.strategy = rdw.strategy
         wkf.pluginConfigMap = rdw.pluginConfigMap
         def existingStepIds = rdw.steps.collect { it.id } - null
         wkf.commands.findAll { cmd -> !existingStepIds.contains(cmd.id)}.each {
-            println "deleting workflow step: ${it.id}"
             wkf.removeFromCommands(it)
             it.delete()
         }
@@ -206,7 +213,6 @@ class ScheduledExecutionFromRdJobUpdater {
             if(!wfstep) {
                 wfstep = createWorkflowStep(rdstep)
                 wkf.addToCommands(wfstep)
-                println "created step of type: ${wfstep.getClass().getSimpleName()}"
             }
             updateWorkflowStep(wfstep, rdstep)
             wfstep.save(failOnError:true)

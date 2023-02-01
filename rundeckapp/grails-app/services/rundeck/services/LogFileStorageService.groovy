@@ -100,6 +100,7 @@ class LogFileStorageService
     def metricService
     def configurationService
     def jobStateService
+    ExecutionService executionService
 
     /**
      * Queue of log storage requests ids, for incomplet requests being resumed
@@ -1097,8 +1098,8 @@ class LogFileStorageService
             boolean partial = false
     )
     {
-        if (execution.scheduledExecution) {
-            return "${execution.project}/job/${execution.scheduledExecution.extid}/logs/${execution.id}." + extension +
+        if (execution.jobUuid) {
+            return "${execution.project}/job/${execution.jobUuid}/logs/${execution.id}." + extension +
                     (partial ? '.part' : '')
         } else {
             return "${execution.project}/run/logs/${execution.id}." + extension +
@@ -1185,7 +1186,7 @@ class LogFileStorageService
             boolean checkPartial = false
     )
     {
-        def useStoredPath = execution.scheduledExecution == null
+        def useStoredPath = execution.jobUuid == null
         File file = getFileForExecutionFiletype(execution, filetype, useStoredPath, false)
         def key = logFileRetrievalKey(execution,filetype)
         def keyPartial = logFileRetrievalKey(execution, filetype, true)
@@ -1398,7 +1399,7 @@ class LogFileStorageService
      * @param resolver @return
      */
     private ExecutionFileStoragePlugin getConfiguredPluginForExecution(Execution execution, PropertyResolverFactory.Factory factory) {
-        def jobcontext = ExecutionService.exportContextForExecution(execution,grailsLinkGenerator)
+        def jobcontext = executionService.exportContextForExecution(execution,grailsLinkGenerator)
         def plugin = getConfiguredPlugin(jobcontext, factory)
         plugin
     }
@@ -1500,7 +1501,7 @@ class LogFileStorageService
         def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
                 frameworkService.getServerUUID()
         def isRunning = e.dateCompleted == null && e.dateStarted != null
-        def useStoredPath = e.scheduledExecution == null
+        def useStoredPath = e.jobUuid == null
 
         if (isRunning) {
             //execution is running
@@ -1628,7 +1629,7 @@ class LogFileStorageService
             CompletableFuture<RetrieveFileResult> listener
     )
     {
-        def useStoredPath = execution.scheduledExecution == null
+        def useStoredPath = execution.jobUuid == null
         def key=logFileRetrievalKey(execution,filetype)
         def file = getFileForExecutionFiletype(execution, filetype, useStoredPath, false)
         Map newstate = [state  : ExecutionFileState.PENDING_LOCAL, file: file, filetype: filetype,

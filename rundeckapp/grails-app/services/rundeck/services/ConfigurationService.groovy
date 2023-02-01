@@ -17,7 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.config.RundeckConfigBase
-import org.rundeck.util.Sizes
+import rundeck.data.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 
 import java.util.concurrent.TimeUnit

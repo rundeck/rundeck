@@ -64,6 +64,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
+import rundeck.data.util.JobDataUtil
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -263,7 +264,7 @@ class ScheduledExecutionController  extends ControllerBase{
     @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     @GrailsCompileStatic
     def actionMenuFragment(){
-        ScheduledExecution scheduledExecution = authorizingJob.resource
+        def scheduledExecution = authorizingJob.resource
         String project = scheduledExecution.project
         AuthorizingProject authorizingProject = authorizingProject(project)
 
@@ -278,7 +279,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if(scmService.projectHasConfiguredExportPlugin(project)) {
                 model.scmExportEnabled = true
                 model.scmExportStatus = scmService.exportStatusForJobs(project, authorizingProject.authContext, [scheduledExecution])
-                model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(scheduledExecution.extid)
+                model.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(project)?.get(JobDataUtil.getExtId(scheduledExecution))
             }
         }
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_IMPORT)) {
@@ -3098,7 +3099,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         String jobid = params.id
 
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
 
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
@@ -3179,7 +3180,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (jobLoglevel) {
             inputOpts["loglevel"] = jobLoglevel
         }
-        if (!scheduledExecution.hasNodesSelectedByDefault()){
+        if (!JobDataUtil.hasNodesSelectedByDefault(scheduledExecution)){
             inputOpts['_replaceNodeFilters']='true'
         }
 

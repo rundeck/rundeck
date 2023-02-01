@@ -51,7 +51,7 @@ import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeApplicationType
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.RdAuthorizeSystem
-import org.rundeck.util.Sizes
+import rundeck.data.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
@@ -2948,7 +2948,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
 
-        def list = jobSchedulesService.getAllScheduled(uuid)
+        def list = jobSchedulesService.getAllScheduled(uuid,null)
         //filter authorized jobs
         Map<String, UserAndRolesAuthContext> projectAuths = [:]
         def authForProject = { String project ->

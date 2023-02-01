@@ -20,7 +20,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import grails.testing.services.ServiceUnitTest
-import rundeck.services.JobReferenceImpl
+import rundeck.data.job.JobReferenceImpl
 import rundeck.services.execution.ExecutionReferenceImpl
 import spock.lang.Specification
 

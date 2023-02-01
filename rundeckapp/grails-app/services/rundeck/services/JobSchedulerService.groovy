@@ -21,6 +21,7 @@ import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 import org.quartz.TriggerKey
 import org.quartz.impl.matchers.GroupMatcher
+import org.rundeck.app.data.model.v1.job.JobData
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
@@ -109,6 +110,8 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     @Autowired
     ScheduledExecutionService scheduledExecutionService
+    @Autowired
+    RdJobService rdJobService
 
     static String TRIGGER_GROUP_PENDING = 'pending'
 
@@ -276,8 +279,8 @@ class QuartzJobScheduleManagerService implements JobScheduleManager, Initializin
 
     private rescheduleExecutionIfPending(Execution execution) {
         log.debug("Rescheduling pending execution $execution.id")
-
-        def ident = scheduledExecutionService.getJobIdent(execution.scheduledExecution, execution)
+        JobData jobData = rdJobService.getJobByUuid(execution.jobUuid)
+        def ident = scheduledExecutionService.getJobIdent(jobData, execution)
 
         reschedulePendingJob(ident.jobname, ident.groupname)
     }

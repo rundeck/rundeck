@@ -17,9 +17,9 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.jobs.JobRevReference
-import com.dtolabs.rundeck.plugins.scm.JobImportReference
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
+import rundeck.data.job.JobReferenceImpl
 
 /**
  * Created by greg on 9/14/15.

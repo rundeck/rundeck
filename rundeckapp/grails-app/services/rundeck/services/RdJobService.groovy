@@ -1,13 +1,39 @@
 package rundeck.services
 
+import org.rundeck.app.data.job.converters.ScheduledExecutionToJobConverter
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import rundeck.ScheduledExecution
+import rundeck.data.job.RdJob
 
 class RdJobService {
 
     JobDataProvider jobDataProvider
+
+    JobData getJobByIdOrUuid(Serializable id) {
+        def found = null
+        if (id instanceof Long) {
+            return getJobById(id)
+        } else if (id instanceof String) {
+            //attempt to parse as long id
+            try {
+                def idlong = Long.parseLong(id)
+                found = getJobById(idlong)
+            } catch (NumberFormatException e) {
+            }
+            if (!found) {
+                found = getJobByUuid(id)
+            }
+        }
+        return found
+    }
+
+    RdJob convertToRdJob(JobData job) {
+        if(job instanceof ScheduledExecution) return ScheduledExecutionToJobConverter.convert(job)
+        return job
+    }
 
     JobData getJobById(Long id) {
         return jobDataProvider.get(id)
@@ -15,6 +41,10 @@ class RdJobService {
 
     JobData getJobByUuid(String uuid) {
         return jobDataProvider.findByUuid(uuid)
+    }
+
+    boolean existsByUuid(String uuid) {
+        return jobDataProvider.existsByUuid(uuid)
     }
 
     JobData saveJob(JobData job) {

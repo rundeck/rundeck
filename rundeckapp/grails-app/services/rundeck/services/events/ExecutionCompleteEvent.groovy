@@ -16,6 +16,7 @@
 
 package rundeck.services.events
 
+import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.Execution
 import rundeck.ScheduledExecution
 
@@ -25,7 +26,7 @@ import rundeck.ScheduledExecution
 class ExecutionCompleteEvent {
     String state
     Execution execution
-    ScheduledExecution job
+    JobData job
     Map nodeStatus
     Map context
 

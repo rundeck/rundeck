@@ -4,8 +4,10 @@ import com.dtolabs.rundeck.core.execution.ExecutionValidator
 import com.dtolabs.rundeck.core.execution.JobValidationReference
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import grails.events.annotation.Subscriber
+import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.data.util.JobDataUtil
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -89,9 +91,9 @@ class ExecutionValidatorService implements ExecutionValidator {
   /**
    * Builds a new job validation reference implementation.
    */
-  public static JobValidationReference buildJobReference(final ScheduledExecution se) {
+  public static JobValidationReference buildJobReference(final JobData se) {
     return new JobValidationReferenceImpl(
-        id: se.extid,
+        id: JobDataUtil.getExtId(se),
         databaseId: se.id,
         uuid: se.uuid,
         project: se.project,
@@ -106,7 +108,7 @@ class ExecutionValidatorService implements ExecutionValidator {
   }
 
   static class JobValidationReferenceImpl implements JobValidationReference {
-    Long databaseId
+    Serializable databaseId
     String uuid
     Boolean multipleExecutions
     Integer maxMultipleExecutions

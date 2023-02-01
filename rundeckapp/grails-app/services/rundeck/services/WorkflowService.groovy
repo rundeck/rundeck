@@ -66,6 +66,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     def ConfigurationService configurationService
     static transactional = false
     def stateMapping = new StateMapping()
+    RdJobService rdJobService
     /**
      * Cache of loaded execution state data after executions complete
      */
@@ -182,14 +183,11 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
 
                 JobExec jexec = (JobExec) step
                 def searchProject = jexec.jobProject? jexec.jobProject: project
-                def schedlist = ScheduledExecution.findAllScheduledExecutions(jexec.jobGroup, jexec.jobName, searchProject)
-                if (!schedlist || 1 != schedlist.size()) {
+                def job = rdJobService.jobDataProvider.findByProjectAndJobNameAndGroupPath(searchProject, jexec.jobName, jexec.jobGroup)
+                if (!job) {
                     //skip
                     return
                 }
-                def id = schedlist[0].id
-
-                ScheduledExecution se = ScheduledExecution.get(id)
 
                 //generate a workflow context
                 StepExecutionContext newContext=null

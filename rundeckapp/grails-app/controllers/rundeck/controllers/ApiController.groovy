@@ -43,7 +43,7 @@ import org.rundeck.app.data.model.v1.AuthenticationToken
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.app.RundeckAccess
 import org.rundeck.core.auth.web.RdAuthorizeSystem
-import org.rundeck.util.Sizes
+import rundeck.data.util.Sizes
 import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
 

@@ -26,13 +26,13 @@ class RdJobController extends ControllerBase {
 
     def get() {
         response.contentType = "application/json;utf-8"
-        try {
-            def uuid = UUID.fromString(params.id)
-            render mapper.writeValueAsString(rdJobService.getJobByUuid(uuid.toString()))
-            return
-        } catch(IllegalArgumentException ignored) {}
+        def job = rdJobService.convertToRdJob(rdJobService.getJobByIdOrUuid(params.id))
+        if(job) {
+            render mapper.writeValueAsString(job)
+        } else {
+            response.status = 404
+        }
 
-        render mapper.writeValueAsString(rdJobService.getJobById(params.id.toLong()))
     }
 
     def save() {
@@ -40,7 +40,7 @@ class RdJobController extends ControllerBase {
 
         try {
             RdJob job = mapper.readValue(request.inputStream, RdJob)
-            render mapper.writeValueAsString(rdJobService.saveJob(job))
+            render mapper.writeValueAsString(rdJobService.convertToRdJob(rdJobService.saveJob(job)))
         } catch(InvalidFormatException ife) {
             response.status = 400
             render mapper.writeValueAsString([error: ife.message])

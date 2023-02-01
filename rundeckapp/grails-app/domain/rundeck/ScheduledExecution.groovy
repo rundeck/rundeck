@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
 import org.rundeck.app.data.model.v1.job.JobDataSummary
 import org.rundeck.app.data.model.v1.job.component.JobComponentData
+import rundeck.data.job.JobReferenceImpl
 import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
@@ -33,13 +34,12 @@ import rundeck.data.job.RdSchedule
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
-import org.rundeck.util.Sizes
+import rundeck.data.util.JobDataUtil
 import rundeck.data.validation.shared.SharedJobConstraints
 import rundeck.data.validation.shared.SharedJobScheduleConstraints
 import rundeck.data.validation.shared.SharedLogConfigConstraints
 import rundeck.data.validation.shared.SharedNodeConfigConstraints
 import rundeck.data.validation.shared.SharedProjectNameConstraints
-import rundeck.services.JobReferenceImpl
 
 import java.util.stream.Collectors
 
@@ -760,7 +760,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @return
      */
     public long getTimeoutDuration(){
-        timeout? Sizes.parseTimeDuration(timeout):-1
+        JobDataUtil.getTimeoutDuration(this)
     }
 
     /**
@@ -933,7 +933,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
   def Map timeAndDateAsBooleanMap() {
       def result = [ : ]
-      if (!this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
+      if (this.month && !this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
           def map = parseRangeForList(this.month,monthsofyearlist,"month")
           result.putAll(map)
 //          this.month.split(",").each {
@@ -947,7 +947,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 //              }
 //          }
       }
-      if (!this.dayOfWeek.equals("*") && !crontabSpecialValue(this.dayOfWeek.replaceAll(/-/,''))) {
+      if (this.dayOfWeek && !this.dayOfWeek.equals("*") && !crontabSpecialValue(this.dayOfWeek.replaceAll(/-/,''))) {
           def map = parseRangeForList(this.dayOfWeek,daysofweeklist,"dayOfWeek")
           result.putAll(map)
 //          this.dayOfWeek.split(",").each {
@@ -1153,13 +1153,13 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
         if(this.id) {
             def queryArgs = lock ? [lock: true]  : [:]
 
-            stats = ScheduledExecutionStats.findBySe(this, queryArgs)
+            stats = ScheduledExecutionStats.findByJobUuid(this.uuid, queryArgs)
             if (!stats) {
                 def content = [execCount   : this.execCount,
                                totalTime   : this.totalTime,
                                refExecCount: this.refExecCount]
 
-                stats = new ScheduledExecutionStats(se: this, contentMap: content).save()
+                stats = new ScheduledExecutionStats(jobUuid: this.uuid, contentMap: content).save()
             }
         }
         stats
@@ -1270,13 +1270,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @return reference interface for this job
      */
     JobReference asReference() {
-        new JobReferenceImpl(
-            id: extid,
-            jobName: jobName,
-            groupPath: groupPath,
-            project: project,
-            serverUUID: serverNodeUUID
-        )
+        JobDataUtil.asJobReference(this)
     }
 
     JobDataSummary toJobDataSummary() {
