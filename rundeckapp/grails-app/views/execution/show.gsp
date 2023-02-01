@@ -56,6 +56,7 @@
       <asset:javascript src="execution/show.js"/>
 
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
+      <g:embedJSON id="execDataJSON" data="${execution.toMap()}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
                             project: params.project ?: request.project]}"/>
@@ -1090,6 +1091,24 @@ search
     }
 
     var activity;
+
+    window._rundeck.data = Object.assign(window._rundeck.data || {}, {
+        "execution": loadJsonData('execDataJSON')
+    })
+
+    const observer = new MutationObserver(function(mutations_list) {
+        mutations_list.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(added_node) {
+                if(added_node.className == 'wfnodestate' && added_node.getElementsByClassName('vue-ui-socket')?.length > 0) {
+                    var eventKOProcessed = new Event('vue-ui-socket-node-added');
+                    window.dispatchEvent(eventKOProcessed)
+                    observer.disconnect();
+                }
+            });
+        });
+    })
+    observer.observe(document.querySelector("#nodeflowstate"), { subtree: true, childList: true });
+
     function init() {
         var execInfo=loadJsonData('execInfoJSON');
         var workflowData=loadJsonData('workflowDataJSON');
