@@ -27,7 +27,7 @@ class ExecutionsCleanUp implements InterruptableJob {
 
     void execute(JobExecutionContext context) throws JobExecutionException {
         StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace()
-        logger.info(stackTraceElements.className)
+        logger.info(stackTraceElements.className.join(" "))
         JobSchedulerService jobSchedulerService = fetchJobSchedulerService(context.jobDetail.jobDataMap)
         FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
         ReportService reportService = fetchReportService(context.jobDetail.jobDataMap)
