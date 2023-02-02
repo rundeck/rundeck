@@ -1611,7 +1611,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         if(origContext){
             //start a sub context
-            builder.pushContextStep(0)
+            builder.pushContextStep(1)
         }
         return builder.build()
     }
