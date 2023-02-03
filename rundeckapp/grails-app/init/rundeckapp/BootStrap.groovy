@@ -492,7 +492,6 @@ class BootStrap {
             if(canApplyServerUpdates) {
                 applyWorkflowConfigFix()
                 ensureTypeOnAuthToken()
-                ensureWebhookUuids()
             }
 
         }
@@ -542,13 +541,6 @@ class BootStrap {
             log.warn("Unable to ensure all auth tokens have a type. Please run the following sql statement manually on your Rundeck database: ")
             log.warn("UPDATE auth_token SET type = 'USER' WHERE type = ''")
             log.error("Update execution error: ",ex)
-        }
-    }
-
-    def ensureWebhookUuids() {
-        Webhook.findByUuidIsNull().each { hook ->
-            hook.uuid = UUID.randomUUID().toString()
-            hook.save()
         }
     }
 
