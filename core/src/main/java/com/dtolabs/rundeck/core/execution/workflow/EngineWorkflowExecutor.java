@@ -161,7 +161,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
     }
 
-    private static interface LogOut {
+    static interface LogOut {
         void log(String message);
     }
 
@@ -500,7 +500,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return strategyForWorkflow;
     }
 
-    private static Set<StepOperation> buildOperations(
+    protected static Set<StepOperation> buildOperations(
             final EngineWorkflowExecutor engineWorkflowExecutor,
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
