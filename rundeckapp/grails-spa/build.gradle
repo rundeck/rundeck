@@ -56,7 +56,7 @@ tasks.register("runNpmBuild", NpmTask) {
     outputs.cacheIf { true }
 
     def npmCommand = System.env.CI ?
-      'ci:app:build' :
+      'ci:app:build --debug' :
       'dev:app:build'
 
     args = ['run', npmCommand]
