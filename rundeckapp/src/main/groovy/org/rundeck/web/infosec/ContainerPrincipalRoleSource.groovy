@@ -20,11 +20,13 @@ import org.springframework.security.authentication.AbstractAuthenticationToken
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
+import java.util.regex.Pattern
 
 /**
  * Return a list of roles by introspecting the userPrincipal object
  */
 class ContainerPrincipalRoleSource implements AuthorizationRoleSource {
+    String delimiter
     boolean enabled
     @Override
     Collection<String> getUserRoles(final String username, final HttpServletRequest request) {
@@ -60,7 +62,8 @@ class ContainerPrincipalRoleSource implements AuthorizationRoleSource {
             }
         } else if(principal instanceof AbstractAuthenticationToken) {
             principal.authorities.each {
-                roles << it.authority
+                roles.addAll((it.authority).split(" *${Pattern.quote(delimiter)} *")
+                        .collect{it.trim()} as List<String>)
             }
         }
         roles

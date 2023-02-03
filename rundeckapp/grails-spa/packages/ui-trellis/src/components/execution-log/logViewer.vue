@@ -49,6 +49,8 @@
           <input type="checkbox" v-model="settings.stats" id="logview_stats">
           <label for="logview_stats">Display Stats</label>
         </div>
+        <ui-socket section="execution-log-viewer" location="settings"
+                   :event-bus="eventBus"/>
       </form>
     </rd-drawer>
     <div 
@@ -96,19 +98,15 @@
 import {CancellationTokenSource, CancellationToken} from 'prex'
 
 import {ExecutionLog, EnrichedExecutionOutput} from '../../utilities/ExecutionLogConsumer'
-import { Component, Prop, Watch, Vue, Inject } from 'vue-property-decorator'
+import {Component, Prop, Watch, Vue, Inject} from 'vue-property-decorator'
 import { ComponentOptions } from 'vue'
-import Entry from './logEntry.vue'
-import EntryFlex from './logEntryFlex.vue'
-import { ExecutionOutputGetResponse } from '@rundeck/client/dist/lib/models'
-
 import {LogBuilder} from './logBuilder'
-import VueRouter from 'vue-router'
-
 import { RootStore } from '../../stores/RootStore'
 import RdDrawer from '../containers/drawer/Drawer.vue'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 import { Observer } from 'mobx-vue'
+import UiSocket from "../utils/UiSocket.vue";
+import {getRundeckContext} from "../../rundeckService";
 
 const CONFIG_STORAGE_KEY='execution-viewer'
 
@@ -126,6 +124,7 @@ interface IEventViewerSettings {
 @Observer
 @Component({
   components: {
+    UiSocket,
     'rd-drawer': RdDrawer,
   }
 })
@@ -171,7 +170,7 @@ export default class LogViewer extends Vue {
 
     @Inject()
     private readonly rootStore!: RootStore
-
+  
     themes = [
       {label: 'Rundeck Theme', value: 'rundeck'},
       {label: 'Light', value: 'light'},
@@ -197,6 +196,8 @@ export default class LogViewer extends Vue {
       nodeBadge: true,
       lineWrap: true
     }
+    
+    eventBus!: Vue
 
     @Watch('settings', {deep: true})
     private handleUserConfigChange(newVal: any, oldVal: any) {
@@ -277,7 +278,7 @@ export default class LogViewer extends Vue {
     $options!: ComponentOptions<Vue> & {
       vues: any[]
     }
-
+  
     get settingsChange() {
       return Object.assign({}, this.settings)
     }
@@ -304,6 +305,7 @@ export default class LogViewer extends Vue {
     get showProgress(): boolean {
       return (!this.completed || !this.execCompleted)
     }
+    
 
     @Watch('logSize')
     checkForOversize(val: number, oldVal: number) {
@@ -327,6 +329,8 @@ export default class LogViewer extends Vue {
     }
 
     created() {
+      /* Get event bus*/
+      this.eventBus = getRundeckContext().eventBus
       /** Load here so theme does not change afer visible */
       this.loadConfig()
     }
@@ -339,7 +343,7 @@ export default class LogViewer extends Vue {
 
         this.viewer = this.rootStore.executionOutputStore.createOrGet(this.executionId.toString())
 
-        this.logBuilder = new LogBuilder(this.viewer, log, {
+        this.logBuilder = new LogBuilder(this.viewer, log, this.eventBus,{
           node: this.node,
           stepCtx: this.stepCtx,
           nodeIcon: this.settings.nodeBadge,
@@ -497,7 +501,7 @@ export default class LogViewer extends Vue {
     private handleNewLine(entries: Array<any>) {
       for (const vue of entries) {
         // @ts-ignore
-        const selected = vue.$options.entry.lineNumber == this.jumpToLine
+        const selected = vue.logEntry.lineNumber == this.jumpToLine
         vue.$on('line-select', this.handleLineSelect)
         if (selected) {
           this.selected = vue

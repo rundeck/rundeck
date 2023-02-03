@@ -82,6 +82,31 @@ class ScheduledExecutionSpec extends Specification implements DataTest
             notification.content == '{"urls":"url1","httpMethod":"POST"}'
     }
 
+    def "should return a user role list given comma separated roles or json list"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: "TestName",
+                project: "TestFrameworkProject",
+                argString: "-test",
+                description: "whatever",
+                userRoleList: givenUserRolesString
+        )
+
+        when:
+        List userRolesList = se.getUserRoles()
+
+        then:
+        userRolesList == expectedUserRoleList
+
+        where:
+        givenUserRolesString            | expectedUserRoleList
+        ""                              | []
+        "role1,role2"                   | ["role1","role2"]
+        "123 role1,321 role2"           | ["123 role1","321 role2"]
+        "[\"role1\",\"role2\"]"         | ["role1","role2"]
+        "[\"123 role1\",\"321 role2\"]" | ["123 role1","321 role2"]
+    }
+
     void testGenerateJobScheduledName() {
         when:
         def ScheduledExecution se = new ScheduledExecution()

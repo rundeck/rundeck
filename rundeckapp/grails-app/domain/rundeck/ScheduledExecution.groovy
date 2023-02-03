@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.core.JsonProcessingException
 import org.rundeck.util.Sizes
 import rundeck.services.JobReferenceImpl
 
@@ -668,7 +669,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             //check if the string is a valid JSON
             try {
                 return asJsonList(userRoleList)
-            } catch(JsonParseException ex) {
+            } catch(JsonParseException | JsonProcessingException ex) {
                 return Arrays.asList(userRoleList.split(/,/))
             }
 
@@ -831,12 +832,12 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
         }else{
             months = params.selectedMonths?.trim() ? valueStringToIndexString(params.selectedMonths, monthsofyearlist) : parseCheckboxFieldFromParams("month", params,true, monthsofyearlist)
         }
-        this.month = months
-        this.dayOfWeek = daysOfWeek ?: '?'
-        this.dayOfMonth = daysOfMonth
-        this.seconds = params.seconds?params.seconds:"0"
-        this.year = params.year?params.year:"*"
-        this.crontabString=null
+        setMonth(months)
+        setDayOfWeek(daysOfWeek ?: '?')
+        setDayOfMonth(daysOfMonth)
+        setSeconds(params.seconds?params.seconds:"0")
+        setYear(params.year?params.year:"*")
+        setCrontabString(null)
     }
 
     String valueStringToIndexString(inputString, valuesArray) {

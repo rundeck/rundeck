@@ -88,7 +88,7 @@
 </content>
 <div class="content">
 <div id="layoutBody">
-  <div class="conntainer-fluid">
+  <div class="container-fluid">
     <div class="row">
         <div class="col-xs-12">
             <g:render template="/common/messages"/>

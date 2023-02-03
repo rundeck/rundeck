@@ -24,8 +24,8 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.execution.workflow.*;
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler;
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus;
-import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import com.dtolabs.rundeck.plugins.jobs.JobEventResultImpl;
@@ -44,21 +44,21 @@ public class WorkflowExecutionServiceThread
     private StepExecutionContext context;
     private WorkflowExecutionResult result;
     private LoggingManager loggingManager;
-    private ExecutionLifecyclePluginHandler executionLifecyclePluginHandler;
+    private ExecutionLifecycleComponentHandler executionLifecycleComponentHandler;
 
     public WorkflowExecutionServiceThread(
             WorkflowExecutionService eservice,
             WorkflowExecutionItem eitem,
             StepExecutionContext econtext,
             LoggingManager loggingManager,
-            ExecutionLifecyclePluginHandler executionLifecyclePluginHandler
+            ExecutionLifecycleComponentHandler executionLifecycleComponentHandler
     )
     {
         this.weservice = eservice;
         this.weitem = eitem;
         this.context = econtext;
         this.loggingManager = loggingManager;
-        this.executionLifecyclePluginHandler = executionLifecyclePluginHandler;
+        this.executionLifecycleComponentHandler = executionLifecycleComponentHandler;
     }
 
     public void run() {
@@ -83,10 +83,10 @@ public class WorkflowExecutionServiceThread
     public WorkflowExecutionResult runWorkflow() {
         try {
             StepExecutionContext executionContext = context;
-            if (executionLifecyclePluginHandler != null) {
+            if (executionLifecycleComponentHandler != null) {
                 //TODO: check success and stop execution
                 StepExecutionContext newExecutionContext =
-                        executionLifecyclePluginHandler.beforeJobStarts(context, weitem)
+                        executionLifecycleComponentHandler.beforeJobStarts(context, weitem)
                                                        .map(ExecutionLifecycleStatus::getExecutionContext)
                                                        .orElse(null);
                 executionContext = newExecutionContext != null? newExecutionContext: executionContext;
@@ -98,10 +98,10 @@ public class WorkflowExecutionServiceThread
                 thrown = getResult().getException();
             }
 
-            if (null != executionLifecyclePluginHandler) {
+            if (null != executionLifecycleComponentHandler) {
                 try {
-                    executionLifecyclePluginHandler.afterJobEnds(executionContext, new JobEventResultImpl(getResult(), isAborted()));
-                } catch (ExecutionLifecyclePluginException err) {
+                    executionLifecycleComponentHandler.afterJobEnds(executionContext, new JobEventResultImpl(getResult(), isAborted()));
+                } catch (ExecutionLifecycleComponentException err) {
                     err.printStackTrace(System.err);
                 }
             }

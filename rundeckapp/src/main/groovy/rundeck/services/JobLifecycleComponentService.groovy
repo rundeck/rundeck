@@ -17,13 +17,17 @@ import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.JobLifecyclePluginProviderService
 import grails.events.annotation.Subscriber
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import groovy.util.logging.Slf4j
 import org.rundeck.core.projects.ProjectConfigurable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Service
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 import rundeck.ScheduledExecution
+import rundeck.services.feature.FeatureService
 
 /**
  * Provides capability to execute certain based on an event
@@ -31,39 +35,50 @@ import rundeck.ScheduledExecution
  * Date: 8/23/19
  * Time: 10:37 AM
  */
-@Service
-class JobLifecycleComponentService implements ProjectConfigurable {
+@CompileStatic
+@Slf4j
+class JobLifecycleComponentService implements ProjectConfigurable, ApplicationContextAware {
     private static final Logger LOG = LoggerFactory.getLogger(JobLifecycleComponentService)
 
+    @Autowired
     PluginService pluginService
+
+    @Autowired
     FrameworkService frameworkService
-    def featureService
+
+    @Autowired
+    FeatureService featureService
+
+    @Autowired
     JobLifecyclePluginProviderService jobLifecyclePluginProviderService
     public static final String CONF_PROJECT_ENABLED = 'project.enable.jobLifecyclePlugin.'
 
     Map<String, String> configPropertiesMapping
     Map<String, String> configProperties
     List<Property> projectConfigProperties
-    
-    @Autowired(required = false)
-    List<JobLifecycleComponent> beanComponents
 
+    Map<String, JobLifecycleComponent> beanComponents
+
+    ApplicationContext applicationContext
 
     @Subscriber('rundeck.bootstrap')
     void init() throws Exception {
+
+        beanComponents = applicationContext.getBeansOfType(JobLifecycleComponent)
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("Initializing " + JobLifecycleComponentService.getSimpleName())
             beanComponents?.each {
-                LOG.debug("Loaded JobLifecycleComponent Bean: ${it.toString()}")
+                LOG.debug("Loaded JobLifecycleComponent Bean: ${it.getKey()}")
             }
         }
     }
-
 
     /**
      *
      * It loads the plugin properties to be shown under the project configuration
      */
+    @CompileDynamic
     def loadProperties(){
         List<Property> projectConfigProperties = []
         Map<String, String> configPropertiesMapping = [:]
@@ -147,10 +162,10 @@ class JobLifecycleComponentService implements ProjectConfigurable {
     List<NamedJobLifecycleComponent> loadProjectComponents(String project) {
         List compList = []
         if (beanComponents) {
-            compList.addAll(beanComponents.collect {
+            compList.addAll(beanComponents.collect { name, component->
                 new NamedJobLifecycleComponent(
-                    component: it,
-                    name: it.class.canonicalName)
+                    component: component,
+                    name: component.class.canonicalName)
             })
         }
         compList.addAll(loadProjectConfiguredPlugins(project))
@@ -288,6 +303,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
         }
     }
 
+    @CompileDynamic
     static JobLifecycleStatus handleEventForPlugin(
         EventType eventType,
         NamedJobLifecycleComponent plugin,
@@ -344,6 +360,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
      * @param jobEventStatus result of event
      * @return merged set, or null
      */
+    @CompileDynamic
     static TreeSet<JobOption> mergePersistOptions(SortedSet<JobOption> initial, JobLifecycleStatus jobEventStatus) {
         SortedSet<JobOption> options = initial ? new TreeSet<JobOption>(initial) : null
 
@@ -367,7 +384,7 @@ class JobLifecycleComponentService implements ProjectConfigurable {
             it.key.startsWith(CONF_PROJECT_ENABLED) && it.value == 'true'
         }.collect {
             it.key.substring(CONF_PROJECT_ENABLED.length())
-        }
+        }.toSet()
     }
 
     enum EventType {

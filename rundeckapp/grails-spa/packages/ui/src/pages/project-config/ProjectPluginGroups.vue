@@ -97,8 +97,8 @@
         </div>
         <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
           <btn type="primary" @click="modalAddOpen=true">
-            {{serviceName}}
             <i class="fas fa-plus"></i>
+            {{"Plugin Config"}}
           </btn>
 
           <modal
