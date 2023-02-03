@@ -4,7 +4,7 @@ on:
     types:
       - closed
       - labeled
-
+#To trigger a backport on branch release/4.10.x, add a label `backport release/4.10.x`
 jobs:
   backport:
     name: Backport
