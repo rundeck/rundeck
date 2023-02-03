@@ -60,7 +60,14 @@
       <div class="col-sm-3">
           <strong><g:message code="execution.show.mode.column.node" /></strong>
       </div>
-      <div class="col-sm-2 col-sm-offset-5">
+      <div class="col-sm-3">
+          <div class="vue-ui-socket">
+              <div>
+                  <ui-socket section="job-runner-execution-column" location="section-title-column" :event-bus="EventBus"/>
+              </div>
+          </div>
+      </div>
+      <div class="col-sm-2 col-sm-offset-2">
           <strong><g:message code="start.time" /></strong>
       </div>
       <div class="col-sm-2">
@@ -80,14 +87,22 @@
               </div>
           </div>
 
-          <div class="col-sm-3 " data-bind-action="stepoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
+          <div class="col-sm-3">
+              <div class="vue-ui-socket" vue-socket-on="vue-ui-socket-node-added">
+                  <div>
+                      <ui-socket section="job-runner-execution" location="top" :event-bus="EventBus" />
+                  </div>
+              </div>
+          </div>
+
+          <div class="col-sm-2 " data-bind-action="stepoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
                   <span class="execstate " data-bind="attr: {'data-execstate': summaryState } ">
                       <span data-bind="text: summary"></span>
                       <i class="fas fa-circle-notch fa-spin text-muted" data-bind="visible: summaryState()==='RUNNING'" style="display:none"></i>
                   </span>
           </div>
 
-          <div class="col-sm-4 ">
+          <div class="col-sm-2 ">
               <div data-bind="with: currentStep(), visible: !expanded()">
                   <span class="stepident "
                         data-bind="attr: { 'data-execstate': executionState }">

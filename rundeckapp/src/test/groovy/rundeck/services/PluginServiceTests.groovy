@@ -470,32 +470,4 @@ class PluginServiceTests extends Specification {
         assertEquals(test, service.validatePlugin("blah",new testProvider(),null,null))
         assertTrue(testReg.validateWithResolverCalled)
     }
-    void testListPlugins(){
-        mockLogging(PluginService)
-        def service = new PluginService()
-        def TestRegistry testReg = new TestRegistry()
-        service.rundeckPluginRegistry = testReg
-        def test = ['a': new DescribedPlugin(null,null,'a'), 'b': new DescribedPlugin(null,null,'b')]
-        testReg.pluginDescriptorMap= test
-        assertFalse(testReg.listPluginDescriptorsCalled)
-        def result = service.listPlugins(String,new testProvider("test service"))
-        assertTrue(testReg.listPluginDescriptorsCalled)
-        assertEquals('a', result['a'].name)
-        assertEquals('b', result['b'].name)
-    }
-    void testListPluginsCullName(){
-        mockLogging(PluginService)
-        def service = new PluginService()
-        def TestRegistry testReg = new TestRegistry()
-        service.rundeckPluginRegistry = testReg
-        def test = ['a': new DescribedPlugin(null,null, 'alphaTestService',new File("alphaTestService.groovy")),
-                'b': new DescribedPlugin(null,null, 'bTestService',new File("bTestService.groovy"))]
-        testReg.pluginDescriptorMap= test
-        assertFalse(testReg.listPluginDescriptorsCalled)
-        def result = service.listPlugins(String,new testProvider("TestService"))
-        assertTrue(testReg.listPluginDescriptorsCalled)
-        assertEquals('alpha', result['a'].name)
-        assertEquals('b', result['b'].name)
-
-    }
 }

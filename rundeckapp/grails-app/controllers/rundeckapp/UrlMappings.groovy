@@ -323,6 +323,7 @@ class UrlMappings {
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
         "/helplink/name"(controller:'helplink',action:'helplinkName')
+        "/workflowgraph/show"(controller:'WorkflowGraph',action:'WorkflowGraph')
 
         "404"(controller:"error",action:"notFound")
         "405"(controller:"error",action:"notAllowed")

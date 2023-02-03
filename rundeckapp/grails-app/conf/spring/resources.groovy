@@ -108,6 +108,7 @@ import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
+import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.services.EnhancedNodeService
@@ -139,7 +140,9 @@ import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.interceptors.DefaultInterceptorHelper
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.ExecutionLifecycleComponentService
 import rundeck.services.ExecutionValidatorService
+import rundeck.services.JobLifecycleComponentService
 import rundeck.services.LocalJobSchedulesManager
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManagerService
@@ -458,6 +461,17 @@ beans={
     }
 
     /**
+     * the Execution life cycle component service
+     */
+    executionLifecycleComponentService(ExecutionLifecycleComponentService)
+
+
+    /**
+     * the Execution life cycle component service
+     */
+    jobLifecycleComponentService(JobLifecycleComponentService)
+
+    /**
      * the Notification plugin provider service
      */
     notificationPluginProviderService(NotificationPluginProviderService){
@@ -545,14 +559,16 @@ beans={
 
     containerPrincipalRoleSource(ContainerPrincipalRoleSource){
         enabled=grailsApplication.config.getProperty("rundeck.security.authorization.containerPrincipal.enabled", Boolean.class, false)
+        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class, ',')
     }
     containerRoleSource(ContainerRoleSource){
         enabled=grailsApplication.config.getProperty("rundeck.security.authorization.container.enabled", Boolean.class, false)
+        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class, ',')
     }
     preauthenticatedAttributeRoleSource(PreauthenticatedAttributeRoleSource){
         enabled=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.enabled", Boolean.class,false)
         attributeName=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.attributeName", String.class)
-        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class)
+        delimiter=grailsApplication.config.getProperty("rundeck.security.authorization.preauthenticated.delimiter", String.class, ',')
     }
 
     def storageDir= new File(varDir, 'storage')
@@ -863,6 +879,7 @@ beans={
     //provider implementations
     tokenDataProvider(GormTokenDataProvider)
     projectDataProvider(GormProjectDataProvider)
+    storageDataProvider(GormStorageDataProvider)
     userDataProvider(GormUserDataProvider)
     webhookDataProvider(GormWebhookDataProvider)
 

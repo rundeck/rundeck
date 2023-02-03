@@ -1,11 +1,10 @@
 import Vue from 'vue'
 
 import EntryFlex from './logEntryFlex.vue'
-import {IRenderedEntry} from '../../utilities/ExecutionLogConsumer'
 import { ExecutionOutput, ExecutionOutputEntry } from '../../stores/ExecutionOutput'
 import { IObservableArray, autorun } from 'mobx'
 
-interface IBuilderOpts {
+export interface IBuilderOpts {
   node?: string,
   stepCtx?: string,
   nodeIcon?: boolean
@@ -41,7 +40,12 @@ export class LogBuilder {
   private lastEntry?: {id: number} & ExecutionOutputEntry
   private count: number = 0
 
-  constructor(readonly executionOutput: ExecutionOutput,readonly rootElem: HTMLElement, opts: IBuilderOpts) {
+  constructor(
+      readonly executionOutput: ExecutionOutput,
+      readonly rootElem: HTMLElement,
+      readonly eventBus: Vue,
+      opts: IBuilderOpts) {
+    
     this.opts = Object.assign(LogBuilder.DefaultOpts(), opts)
 
     const {node, stepCtx} = this.opts
@@ -134,36 +138,32 @@ export class LogBuilder {
 
     this.currChunk!.append(span)
 
-    const renderNodeBadge = (lastEntry == undefined || logEntry.node != lastEntry.node)
-
     const label = this.entryStepLabel(newEntry)
     const stepType = this.entryStepType(newEntry)
     const path = this.entryPath(newEntry)
 
-    const vue = new EntryFlex({propsData: {
-      selected,
-      timestamps: this.opts.time.visible,
-      gutter: this.opts.gutter.visible,
-      command: this.opts.command.visible,
-      nodeBadge: this.opts.nodeIcon,
-      lineWrap: this.opts.content.lineWrap,
-    }});
+    const vue = new EntryFlex({
+      propsData: {
+        eventBus: this.eventBus,
+        selected: selected,
+        config: this.opts,
+        prevEntry: this.lastEntry,
+        logEntry: {
+          meta: newEntry.meta,
+          log: newEntry.log,
+          logHtml: newEntry.logHtml,
+          time: newEntry.time,
+          level: newEntry.level,
+          stepLabel: label,
+          path,
+          stepType,
+          lineNumber: newEntry.id,
+          node: newEntry.node,
+          selected,
+        }
+      }
+    });
 
-    // TODO: Remove seemingly failed attempt to reduce mem footprint due to Vue reactivity
-    // The entry can probably be passed through as a prop again
-    (<any>vue).$options.entry = {
-      log: newEntry.log,
-      logHtml: (<any>newEntry).loghtml,
-      time: newEntry.time,
-      level: newEntry.level,
-      stepLabel: label,
-      path,
-      stepType,
-      lineNumber: newEntry.id,
-      node: newEntry.node,
-      nodeBadge: renderNodeBadge,
-      selected,
-    }
     vue.$mount(span)
 
     const elem = vue.$el as HTMLElement

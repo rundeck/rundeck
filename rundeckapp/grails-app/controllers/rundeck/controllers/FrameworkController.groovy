@@ -2063,13 +2063,20 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def error = null
         try {
             size = source.writeableSource.writeData(bais)
-        } catch (ResourceModelSourceException | IOException exc) {
+        } catch (Exception exc) {
+
             log.error('Error Saving nodes file content', exc)
-            exc.printStackTrace()
             error = exc
         }
         if (!error) {
             flash.message = "Saved nodes content: $size bytes"
+            return redirect(
+                    controller: 'framework',
+                    action: 'projectNodeSources',
+                    params: [project: project]
+            )
+        }else{
+            flash.error = message(code: "archive.import.importNodesSource.failed.message")
             return redirect(
                     controller: 'framework',
                     action: 'projectNodeSources',

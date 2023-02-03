@@ -44,6 +44,7 @@ import org.rundeck.app.authorization.AppAuthContextEvaluator
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.projects.ProjectConfigurable
+import org.rundeck.storage.api.StorageException
 import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
@@ -2227,51 +2228,89 @@ project.label=A Label
     def "save node source file, catch IOException"() {
 
         setup:
-            def source = Mock(WriteableModelSource) {
-                1 * writeData(_) >> {
-                    throw new IOException("expected error")
-                }
-                2 * getSyntaxMimeType() >> 'application/json'
-                1 * getSourceDescription()>>'x'
-                0 * _(*_)
+        def source = Mock(WriteableModelSource) {
+            1 * writeData(_) >> {
+                throw new IOException("expected error")
             }
-            controller.frameworkService = Mock(FrameworkService) {
-                1 * getRundeckFramework()>>Mock(IFramework){
-                    1 * getResourceModelSourceService()
-                }
-                1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
-                    1 * getProjectNodes() >> Mock(IProjectNodes) {
-                        1 * getWriteableResourceModelSources() >> [
+            1 * getSyntaxMimeType() >> 'application/json'
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * getWriteableResourceModelSources() >> [
                             Mock(IProjectNodes.WriteableProjectNodes) {
                                 getWriteableSource() >> source
                                 getIndex() >> 1
                                 getType() >> 'monkey'
                             }
-                        ]
-                    }
+                    ]
                 }
-                0 * _(*_)
             }
+            0 * _(*_)
+        }
 
-            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
-                1 * authorizeProjectConfigure(_, 'test') >> true
-                1 * getAuthContextForSubject(_)
-            }
-            controller.pluginService=Mock(PluginService){
-                1 * getPluginDescriptor('monkey',_)
-            }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
 
-            params.project = "test"
-            params.index = "1"
-            request.method = 'POST'
-            params.fileText = 'some text'
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        params.fileText = 'some text'
         when:
 
-            setupFormTokens(params)
-            def result = controller.saveProjectNodeSourceFile()
+        setupFormTokens(params)
+        def result = controller.saveProjectNodeSourceFile()
 
         then:
-            view=='/framework/editProjectNodeSourceFile'
-            model.saveError=='expected error'
+        view=='/framework/saveProjectNodeSourceFile.gsp'
+        flash.error == "archive.import.importNodesSource.failed.message"
     }
+
+    def "save node source file, catch exception"() {
+
+        setup:
+        def source = Mock(WriteableModelSource) {
+            1 * writeData(_) >> {
+                throw new StorageException()
+            }
+            1 * getSyntaxMimeType() >> 'application/json'
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkProject('test') >> Mock(IRundeckProject) {
+                1 * getProjectNodes() >> Mock(IProjectNodes) {
+                    1 * getWriteableResourceModelSources() >> [
+                            Mock(IProjectNodes.WriteableProjectNodes) {
+                                getWriteableSource() >> source
+                                getIndex() >> 1
+                                getType() >> 'monkey'
+                            }
+                    ]
+                }
+            }
+            0 * _(*_)
+        }
+
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeProjectConfigure(_, 'test') >> true
+            1 * getAuthContextForSubject(_)
+        }
+
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        params.fileText = 'some text'
+        when:
+
+        setupFormTokens(params)
+        def result = controller.saveProjectNodeSourceFile()
+
+        then:
+        view=='/framework/saveProjectNodeSourceFile.gsp'
+        flash.error == "archive.import.importNodesSource.failed.message"
+    }
+
 }

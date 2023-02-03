@@ -11,11 +11,6 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
-import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService
-import com.dtolabs.rundeck.core.plugins.PluginRegistry
-import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.schedule.SchedulesManager
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
@@ -24,7 +19,6 @@ import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.spring.BeanBuilder
 import grails.testing.mixin.integration.Integration
 import grails.gorm.transactions.*
-import okhttp3.Request
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.spi.AuthorizedServicesProvider
@@ -195,7 +189,7 @@ class ScheduledExecutionServiceJobIntegrationSpec extends Specification {
 
         service.notificationService = notificationService
         service.orchestratorPluginService=Mock(OrchestratorPluginService)
-        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
         service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
             authorizeProjectJobAll(_, _, ['update'], _) >> true

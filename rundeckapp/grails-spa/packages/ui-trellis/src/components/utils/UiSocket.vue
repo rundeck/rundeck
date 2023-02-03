@@ -4,7 +4,7 @@
         <template v-for="i in items">
             <template v-if="i.text">{{ i.text }}</template>
             <span v-else-if="i.html" v-html="i.html"></span>
-            <component :is="i.widget" v-else-if="i.widget"/>
+            <component v-else-if="i.widget" :is="i.widget" :event-bus="eventBus" :item-data="socketData"/>
         </template>
     </span>
 </template>
@@ -15,8 +15,9 @@ import {Component, Prop, Watch} from 'vue-property-decorator'
 
 import {
     getRundeckContext,
-} from '@rundeck/ui-trellis'
-import {UIItem, UIWatcher} from '@rundeck/ui-trellis/lib/stores/UIStore'
+} from '../../rundeckService'
+import {UIItem, UIWatcher} from '../../stores/UIStore'
+
 
 const rootStore = getRundeckContext().rootStore
 
@@ -25,6 +26,7 @@ export default class UiSocket extends Vue {
     @Prop({required: true}) readonly section!: string
     @Prop({required: true}) readonly location!: string
     @Prop({required: false}) readonly eventBus!: Vue
+    @Prop({required: false}) readonly socketData!: any
 
     items: UIItem[] = []
 
@@ -39,7 +41,6 @@ export default class UiSocket extends Vue {
     }
 
     uiwatcher: UIWatcher|null=null
-
 
     mounted() {
         this.loadItems()

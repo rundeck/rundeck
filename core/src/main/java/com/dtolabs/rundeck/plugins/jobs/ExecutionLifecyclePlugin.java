@@ -1,6 +1,8 @@
 package com.dtolabs.rundeck.plugins.jobs;
 
+import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException;
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException;
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponent;
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus;
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
 
@@ -11,7 +13,7 @@ import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
  * Date: 9/04/19
  * Time: 01:32 PM
  */
-public interface ExecutionLifecyclePlugin {
+public interface ExecutionLifecyclePlugin extends ExecutionLifecycleComponent {
 
     /**
      * It triggers before the job starts

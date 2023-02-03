@@ -1133,7 +1133,7 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
             }
         }
 
-        service.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
+        service.executionLifecycleComponentService = mockWith(ExecutionLifecycleComponentService){
 
         }
 

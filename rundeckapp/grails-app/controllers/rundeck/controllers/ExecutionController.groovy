@@ -975,7 +975,7 @@ setTimeout(function(){
                         time: timeFmt.format(it.time),
                         absolute_time: g.w3cDateValue([date: it.time]),
                         log: it.mesg?.replaceAll(/\r?\n$/, ''),
-                ]+it.subMap(['level','user','command','stepctx','node']))
+                ]+it.subMap(['level','user','command','stepctx','node','metadata']))
                 datamap.remove('mesg')
                 if (it.loghtml) {
                     datamap.loghtml = it.loghtml
@@ -1069,7 +1069,7 @@ setTimeout(function(){
                         time: timeFmt.format(it.time),
                         absolute_time: g.w3cDateValue([date: it.time]),
                         log: it.mesg?.replaceAll(/\r?\n$/, ''),
-                ]+it.subMap(['level','user','command','stepctx','node']))
+                ]+it.subMap(['level','user','command','stepctx','node','metadata']))
             datamap.remove('mesg')
             if (it.loghtml) {
                 datamap.loghtml = it.loghtml
@@ -1421,6 +1421,12 @@ setTimeout(function(){
             }
             log.debug("read stream event: ${data}")
             def logdata= (data.metadata ?: [:]) + [mesg: data.message, time: data.datetime, level: data.loglevel.toString(),type:data.eventType]
+            
+            // Since V43 we add metadata field to log entries.
+            if (request.api_version >= ApiVersions.V43) {
+                logdata.metadata = data.metadata
+            }
+            
             entry<<logdata
             if (!(0 == max || entry.size() < max)){
                 break
