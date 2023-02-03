@@ -6,7 +6,6 @@ import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
 import org.quartz.UnableToInterruptJobException
-import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.Execution
@@ -18,16 +17,12 @@ class ExecutionsCleanUp implements InterruptableJob {
     static Logger logger = LoggerFactory.getLogger(ExecutionsCleanUp)
     boolean wasInterrupted
 
-    ExecReportDataProvider execReportDataProvider
-
     void interrupt() throws UnableToInterruptJobException {
         wasInterrupted = true
     }
 
 
     void execute(JobExecutionContext context) throws JobExecutionException {
-        StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace()
-        logger.info(stackTraceElements.className.join(" "))
         JobSchedulerService jobSchedulerService = fetchJobSchedulerService(context.jobDetail.jobDataMap)
         FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
         ReportService reportService = fetchReportService(context.jobDetail.jobDataMap)
