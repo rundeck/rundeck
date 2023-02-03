@@ -72,6 +72,7 @@
     "@vue/test-utils": "^1.0.3",
     "concurrently": "^7.0.0",
     "copy-webpack-plugin": "^5.1.2",
+    "cssnano": "^5.1.14",
     "cssnano-preset-default": "^5.2.13",
     "eslint-import-resolver-typescript": "^3.5.2",
     "eslint-plugin-import": "^2.26.0",
