@@ -88,6 +88,7 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
     FeatureService featureService
     ExecutorService executorService
     AppAuthContextProcessor rundeckAuthContextProcessor
+    ReportService reportService
 
     String getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath
@@ -372,7 +373,8 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService {
                                 logFileStorageService : logFileStorageService,
                                 fileUploadService     : fileUploadService,
                                 frameworkService      : this,
-                                jobSchedulerService   : jobSchedulerService
+                                jobSchedulerService   : jobSchedulerService,
+                                reportService         : reportService
                         ])
             }
         }
