@@ -21,7 +21,7 @@
 * Created: 3/23/11 1:56 PM
 * 
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.BaseExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
