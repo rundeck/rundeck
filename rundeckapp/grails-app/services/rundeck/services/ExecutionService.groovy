@@ -152,7 +152,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def pluginService
     def executorService
     JobLifecycleComponentService jobLifecycleComponentService
-    def executionLifecyclePluginService
+    def executionLifecycleComponentService
     AuditEventsService auditEventsService
     UserDataProvider userDataProvider
     ExecReportDataProvider execReportDataProvider
@@ -1215,9 +1215,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
             def executionLifecyclePluginConfigs = scheduledExecution ?
-                                   executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
+                                   executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
                                    null
-            def executionLifecyclePluginExecHandler = executionLifecyclePluginService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
+            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
@@ -3812,9 +3812,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def shouldCheckTimeout = timeoutms > 0
 
             def executionLifecyclePluginConfigs = se ?
-                                   executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) :
+                                   executionLifecycleComponentService.getExecutionLifecyclePluginConfigSetForJob(se) :
                                    null
-            def executionLifecyclePluginExecHandler = executionLifecyclePluginService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
+            def executionLifecyclePluginExecHandler = executionLifecycleComponentService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,

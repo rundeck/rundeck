@@ -22,11 +22,13 @@ import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.services.FrameworkService
 
 import javax.servlet.http.HttpServletRequest
+import java.util.regex.Pattern
 
 /**
  * Returns list of known roles that user is in via {@link HttpServletRequest#isUserInRole(java.lang.String)}
  */
 class ContainerRoleSource implements AuthorizationRoleSource {
+    String delimiter
     boolean enabled
 
     @Override
@@ -36,7 +38,8 @@ class ContainerRoleSource implements AuthorizationRoleSource {
         def roles=new ArrayList<String>()
 
         authorities?.each {GrantedAuthority grantedAuthority ->
-            roles.add(grantedAuthority.authority)
+            roles.addAll((grantedAuthority.authority).split(" *${Pattern.quote(delimiter)} *")
+                    .collect{it.trim()} as List<String>)
         }
 
         roles

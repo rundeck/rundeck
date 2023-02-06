@@ -4,11 +4,20 @@ import { VueConstructor } from 'vue'
 export class UIStore {
   @observable items: Array<UIItem> = []
   @observable watchers: Array<UIWatcher> = []
+  @observable uiMessages: Array<UiMessage> = []
 
   notifyWatchers() {
     this.watchers.forEach((w) => {
       w.callback(this.itemsForLocation(w.section, w.location))
     })
+  }
+
+  addUiMessages(uiMessages: Array<UiMessage>){
+    uiMessages.forEach(i => this.uiMessages.push(i))
+  }
+
+  getUiMessages():Array<UiMessage>{
+    return this.uiMessages
   }
 
   itemsForLocation(section: string, location: string): Array<UIItem> {
@@ -47,4 +56,8 @@ export interface UIItem {
   widget?: VueConstructor
   html?: string
   text?: string
+}
+
+export interface UiMessage {
+  [key: string]: string
 }

@@ -195,7 +195,7 @@
                 filterNameInput.val("")
                 nodeFilter.nodeSummary().reload()
             }
-        }).success(_createAjaxReceiveTokensHandler('ajaxSaveFilterTokens'));
+        }).done(_createAjaxReceiveTokensHandler('ajaxSaveFilterTokens'));
 
     }
     //]>
