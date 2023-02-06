@@ -215,7 +215,7 @@ export default class LogViewer extends Vue {
         }
       }
 
-      this.logBuilder.updateProp({
+      this.logBuilder.updateProps({
         node: this.node,
         stepCtx: this.stepCtx,
         nodeIcon: this.settings.nodeBadge,
