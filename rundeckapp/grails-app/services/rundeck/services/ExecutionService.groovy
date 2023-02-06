@@ -4271,7 +4271,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         missed.status = 'missed'
         missed.save()
 
-        execReportDataProvider.fromExecWithScheduledAndSave(missed.toMap(), scheduledExecution.toMap(), scheduledExecution.id)
+        execReportDataProvider.fromExecWithScheduledAndSave(missed.id)
 
         if(scheduledExecution.notifications) {
             AuthContext authContext = rundeckAuthContextProcessor.

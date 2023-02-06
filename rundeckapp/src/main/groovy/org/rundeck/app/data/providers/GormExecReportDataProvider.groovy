@@ -34,10 +34,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    RdExecReport fromExecWithScheduledAndSave(Map executionMap, Map scheduledExecutionMap, Long seId) {
-        ScheduledExecution scheduledExecution = ScheduledExecution.fromMap(scheduledExecutionMap)
-        scheduledExecution.id = seId
-        Execution execution = Execution.fromMap(executionMap, scheduledExecution)
+    RdExecReport fromExecWithScheduledAndSave(Long executionId) {
+        Execution execution = Execution.findById(executionId)
         ExecReport execReport = ExecReport.fromExec(execution)
         execReport.save()
         return execReport

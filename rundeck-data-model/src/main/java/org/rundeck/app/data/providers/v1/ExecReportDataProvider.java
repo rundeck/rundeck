@@ -10,7 +10,7 @@ import java.util.Map;
 public interface ExecReportDataProvider extends DataProvider{
     RdExecReport get(Long id);
     RdExecReport fromExecWithScheduled(Map executionMap, Map scheduledExecutionMap);
-    RdExecReport fromExecWithScheduledAndSave(Map executionMap, Map scheduledExecutionMap, Long seId);
+    RdExecReport fromExecWithScheduledAndSave(Long executionId);
     SaveReportResponse fromExecWithId(Long id);
     SaveReportResponse saveFromMap(Map execReportMap);
     SaveReportResponse saveFromMapFields(Map execReportFields);
