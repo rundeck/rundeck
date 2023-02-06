@@ -1680,15 +1680,16 @@ project.label=A Label
         then:
         response.status==302
         request.errors == null
+
         1 * fwkService.validateProjectConfigurableInput(_,_,_)>>[props:[:]]
         1 * fwkService.getRundeckFramework() >> rdframework
         1 * fwkService.createFrameworkProject(
                 _,
-                { it.subMap(expected.keySet())==expected }) >> [project, null]
+                { it.subMap(expected.keySet())==expected && it.getProperty("project.plugin.PluginGroup.aplugin.a") == null}) >> [project, null]
 
         where:
-         json                                      |expected
-         '[{"type":"aplugin","config":{"a":null}}]'|[:]
+         json                                                  |expected
+         '[{"type":"aplugin","config":{"a":null, "b":"good"}}]'|['project.PluginGroup.aplugin.enabled':'true',"project.plugin.PluginGroup.aplugin.b":"good"]
     }
 
     def "create project description name starting with space"(){
