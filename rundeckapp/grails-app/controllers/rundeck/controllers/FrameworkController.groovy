@@ -1419,12 +1419,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                         'true'
                                 )
                                 for (String confKey : config.keySet()) {
-                                    if(config.get(confKey) != null){
-                                        projProps.put(
-                                                "project.plugin.PluginGroup.${type}.${confKey}".toString(),
-                                                config.get(confKey).toString()
-                                        )
-                                    }
+                                    projProps.put(
+                                            "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                            config.get(confKey).toString()
+                                    )
 
                                 }
                             }
