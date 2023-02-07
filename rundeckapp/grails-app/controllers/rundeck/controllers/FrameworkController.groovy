@@ -1424,7 +1424,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                                 "project.plugin.PluginGroup.${type}.${confKey}".toString(),
                                                 config.get(confKey).toString()
                                         )
-                                    }git
+                                    }
 
                                 }
                             }
