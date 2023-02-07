@@ -103,8 +103,9 @@ export class LogBuilder {
     }
   }
 
-  updateProp(opts: IBuilderOpts) {
+  updateProps(opts: IBuilderOpts) {
     this.opts = Object.assign(LogBuilder.DefaultOpts(), opts)
+    this.eventBus.$emit("execution-log-settings-changed", this.opts)
   }
 
   addLines(entries: Array<ExecutionOutputEntry>) {
