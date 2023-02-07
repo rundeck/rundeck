@@ -79,7 +79,7 @@ class ReportService  {
             fields.message="[no message]"
         }
         fields.actionType= fields.status
-        SaveReportResponse saveReportResponse = execReportDataProvider.saveFromMapFields(fields)
+        SaveReportResponse saveReportResponse = execReportDataProvider.saveFromMap(fields)
 
         //TODO: authorize event creation?
 
