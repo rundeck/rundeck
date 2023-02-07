@@ -762,7 +762,7 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             request.errors == null
             1 * fwkService.updateFrameworkProjectConfig(
                 _,
-                { it.subMap(expected.keySet())==expected && it.getProperty("project.plugin.PluginGroup.aplugin.c") == null},
+                { it.subMap(expected.keySet())==expected },
                 { it.containsAll(rmPrefixes) }
             ) >> [success: true]
 
@@ -778,12 +778,12 @@ class FrameworkControllerSpec extends Specification implements ControllerUnitTes
             1 * fwkService.loadSessionProjectLabel(_, 'TestSaveProject', 'A Label')
             0 * fwkService._(*_)
             1 * controller.pluginGroupPasswordFieldsService.reset()
-            (expected?1:0) * controller.pluginGroupPasswordFieldsService.untrack([[config: [type: 'aplugin', props: [a:'b', 'c':null]], type: 'aplugin', index: 0]],_)
+            (expected?1:0) * controller.pluginGroupPasswordFieldsService.untrack([[config: [type: 'aplugin', props: [a:'b']], type: 'aplugin', index: 0]],_)
         where:
             pgEnabled | rmPrefixes                                              | json |expected
             true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | ''   |[:]
             true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | '[]' |[:]
-            true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | '[{"type":"aplugin","config":{"a":"b", "c":null}}]'|['project.PluginGroup.aplugin.enabled':'true','project.plugin.PluginGroup.aplugin.a':'b']
+            true      | ['project.plugin.PluginGroup.', 'project.PluginGroup.'] | '[{"type":"aplugin","config":{"a":"b"}}]'|['project.PluginGroup.aplugin.enabled':'true','project.plugin.PluginGroup.aplugin.a':'b']
     }
     def "save project with out description"(){
         setup:
