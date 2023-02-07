@@ -2,6 +2,7 @@ on:
   pull_request_target:
     types: ["labeled", "closed"]
 
+#to backport to branch named release/4.10.x add the label auto-backport-to-release/4.10.x
 jobs:
   backport:
     name: Backport PR
