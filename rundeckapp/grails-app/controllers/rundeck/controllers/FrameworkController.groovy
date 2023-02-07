@@ -838,10 +838,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                 'true'
                         )
                         for (String confKey : config.keySet()) {
-                            projProps.put(
-                                    "project.plugin.PluginGroup.${type}.${confKey}".toString(),
-                                    config.get(confKey).toString()
-                            )
+                            if(config.get(confKey) != null) {
+                                projProps.put(
+                                        "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                        config.get(confKey).toString()
+                                )
+                            }
                         }
                     }
                 }
@@ -1006,17 +1008,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def (descriptions, nodeexecdescriptions, filecopydescs) = frameworkService.listDescriptions()
 
-        List<Description> pluginGroupDescs = frameworkService.listPluginGroupDescriptions()
         List<Map<String, Object>> pluginGroupConfig = []
-        pluginGroupDescs.each {
-            List<Property> propList = it.getProperties()
-            Map<String, String> mapping = new HashMap<>();
-            for(Property item : propList){
-                mapping.put(item.getName(), null);
-            }
-
-            pluginGroupConfig.add(["type": it.name, "config":mapping])
-        }
         //get grails services that declare project configurations
         Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput('extraConfig.', [:])
 
@@ -1428,9 +1420,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                 )
                                 for (String confKey : config.keySet()) {
                                     projProps.put(
-                                        "project.plugin.PluginGroup.${type}.${confKey}".toString(),
-                                        config.get(confKey).toString()
+                                            "project.plugin.PluginGroup.${type}.${confKey}".toString(),
+                                            config.get(confKey).toString()
                                     )
+
                                 }
                             }
                         }

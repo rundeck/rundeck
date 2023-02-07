@@ -1646,6 +1646,52 @@ project.label=A Label
 
     }
 
+    def "create project plugin groups don't save null"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        controller.metricService = Mock(MetricService)
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
+
+            1 * getAuthContextForSubject(_) >> null
+        }
+        def fwkService = Mock(FrameworkService)
+        controller.frameworkService = fwkService
+        def project = Mock(Project){
+            getName() >> "TestSaveProject"
+        }
+        def projectManager = Mock(ProjectManager){
+            existsFrameworkProject( )>>false
+        }
+        def rdframework=Mock(Framework){
+            1 * getFrameworkProjectMgr()>>projectManager
+        }
+
+        params.newproject = "TestSaveProject"
+        if(json){
+            params['pluginValues.PluginGroup.json']=json
+        }
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+
+        1 * fwkService.validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+        1 * fwkService.getRundeckFramework() >> rdframework
+        1 * fwkService.createFrameworkProject(
+                _,
+                { it.subMap(expected.keySet())==expected && it.getProperty("project.plugin.PluginGroup.aplugin.a") == null}) >> [project, null]
+
+        where:
+         json                                                  |expected
+         '[{"type":"aplugin","config":{"a":null, "b":"good"}}]'|['project.PluginGroup.aplugin.enabled':'true',"project.plugin.PluginGroup.aplugin.b":"good"]
+    }
+
     def "create project description name starting with space"(){
         setup:
         controller.featureService = Mock(FeatureService)
