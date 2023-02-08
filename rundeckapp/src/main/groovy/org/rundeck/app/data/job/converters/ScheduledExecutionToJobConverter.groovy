@@ -11,6 +11,7 @@ import org.rundeck.app.job.component.JobComponentDataImportExport
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdNotification
 import rundeck.data.job.RdOption
+import rundeck.data.job.RdOptionValue
 import rundeck.data.job.RdOrchestrator
 import rundeck.data.job.RdWorkflow
 import rundeck.data.job.RdWorkflowStep
@@ -32,7 +33,6 @@ class ScheduledExecutionToJobConverter {
     static JobData convert(ScheduledExecution se) {
         if(!se) return null
         RdJob job = new RdJob()
-        job.id = se.id
         job.uuid = se.uuid
         job.jobName = se.jobName
         job.description = se.description
@@ -80,7 +80,6 @@ class ScheduledExecutionToJobConverter {
     static RdOrchestrator convertOrchestrator(Orchestrator o) {
         if(!o) return null
         RdOrchestrator orchestrator = new RdOrchestrator()
-        orchestrator.id = o.id
         orchestrator.type = o.type
         orchestrator.configuration = o.configuration
         return orchestrator
@@ -88,7 +87,6 @@ class ScheduledExecutionToJobConverter {
 
     static RdWorkflow convertWorkflow(Workflow w) {
         def wkf = new RdWorkflow()
-        wkf.id = w.id
         wkf.threadcount = w.threadcount
         wkf.keepgoing = w.keepgoing
         wkf.strategy = w.strategy
@@ -100,7 +98,6 @@ class ScheduledExecutionToJobConverter {
     static RdWorkflowStep convertWorkflowStep(WorkflowStep wstep) {
         if(!wstep) return null
         def rds = new RdWorkflowStep()
-        rds.id = wstep.id
         rds.description = wstep.description
         rds.keepgoingOnSuccess = wstep.keepgoingOnSuccess
         rds.pluginConfig = wstep.pluginConfig
@@ -146,7 +143,6 @@ class ScheduledExecutionToJobConverter {
 
     static RdNotification convertNotification(Notification rdn) {
         RdNotification n = new RdNotification()
-        n.id = rdn.id
         n.type = rdn.type
         n.configuration = rdn.configuration
         n.eventTrigger = rdn.eventTrigger
@@ -157,7 +153,6 @@ class ScheduledExecutionToJobConverter {
     @GrailsCompileStatic(TypeCheckingMode.SKIP)
     static RdOption convertRdOption(Option opt) {
         RdOption o = new RdOption()
-        o.id = opt.id
         o.sortIndex = opt.sortIndex
         o.name = opt.name
         o.description = opt.description
@@ -180,7 +175,7 @@ class ScheduledExecutionToJobConverter {
         o.configMap = opt.configMap
         o.multivalueAllSelected = opt.multivalueAllSelected
         o.optionValuesPluginType = opt.optionValuesPluginType
-        o.valuesFromPlugin = opt.valuesFromPlugin?.collect { oval -> new RdOption.RdOptionValue(name: oval.name, value: oval.value)}
+        o.valuesFromPlugin = opt.valuesFromPlugin?.collect { oval -> new RdOptionValue(name: oval.name, value: oval.value)}
         o.hidden = opt.hidden
         o.sortValues = opt.sortValues
         o.optionValues = opt.optionValues ? new ArrayList(opt.optionValues) : null

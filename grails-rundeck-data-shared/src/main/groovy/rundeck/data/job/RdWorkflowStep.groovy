@@ -12,7 +12,6 @@ import rundeck.data.validation.validators.workflowstep.WorkflowStepValidatorFact
 
 @JsonIgnoreProperties(["errors"])
 class RdWorkflowStep implements WorkflowStepData, PluginProviderConfiguration, Validateable {
-    Long id
     RdWorkflowStep errorHandler;
     Boolean keepgoingOnSuccess;
     String description;
@@ -23,7 +22,6 @@ class RdWorkflowStep implements WorkflowStepData, PluginProviderConfiguration, V
 
     static constraints = {
         importFrom SharedWorkflowStepConstraints
-        id(nullable: true)
         errorHandler(nullable: true, validator: { val, obj, errors ->
             if(!val) return
             if(obj.nodeStep && !val.nodeStep) {

@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.InvalidFormatException
+import groovy.transform.CompileStatic
 import org.rundeck.app.data.exception.DataValidationException
 import rundeck.data.job.RdJob
 import org.rundeck.app.data.validation.ValidationResponse
@@ -26,15 +27,16 @@ class RdJobController extends ControllerBase {
 
     def get() {
         response.contentType = "application/json;utf-8"
-        try {
-            def uuid = UUID.fromString(params.id)
-            render mapper.writeValueAsString(rdJobService.getJobByUuid(uuid.toString()))
-            return
-        } catch(IllegalArgumentException ignored) {}
+        def job = rdJobService.getJobByIdOrUuid(params.id)
+        if(job) {
+            render mapper.writeValueAsString(job)
+        } else {
+            response.status = 404
+        }
 
-        render mapper.writeValueAsString(rdJobService.getJobById(params.id.toLong()))
     }
 
+    @CompileStatic
     def save() {
         response.contentType = "application/json;utf-8"
 
@@ -61,7 +63,7 @@ class RdJobController extends ControllerBase {
         }
     }
 
-    def list(RdJobQueryInput qry) {
+    def query(RdJobQueryInput qry) {
         response.contentType = "application/json;utf-8"
         qry.inputParamMap = params
         render mapper.writeValueAsString(rdJobService.listJobs(qry))

@@ -7,9 +7,9 @@ import rundeck.data.validation.shared.SharedLogConfigConstraints
 
 @JsonIgnoreProperties(["errors"])
 class RdLogConfig implements LogConfig, Validateable {
-    String loglevel="WARN"
+    String loglevel="INFO"
     String logOutputThreshold
-    String logOutputThresholdAction
+    String logOutputThresholdAction="halt"
     String logOutputThresholdStatus
 
     static constraints = {

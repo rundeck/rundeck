@@ -934,7 +934,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
   def Map timeAndDateAsBooleanMap() {
       def result = [ : ]
-      if (!this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
+      if (this.month && !this.month.equals("*") && !crontabSpecialValue(this.month.replaceAll(/-/,''))) {
           def map = parseRangeForList(this.month,monthsofyearlist,"month")
           result.putAll(map)
 //          this.month.split(",").each {
@@ -948,7 +948,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 //              }
 //          }
       }
-      if (!this.dayOfWeek.equals("*") && !crontabSpecialValue(this.dayOfWeek.replaceAll(/-/,''))) {
+      if (this.dayOfWeek && !this.dayOfWeek.equals("*") && !crontabSpecialValue(this.dayOfWeek.replaceAll(/-/,''))) {
           def map = parseRangeForList(this.dayOfWeek,daysofweeklist,"dayOfWeek")
           result.putAll(map)
 //          this.dayOfWeek.split(",").each {
@@ -1282,7 +1282,6 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
 
     JobDataSummary toJobDataSummary() {
         new RdJobDataSummary(
-                id: id,
                 uuid: uuid,
                 jobName: jobName,
                 groupPath: groupPath,

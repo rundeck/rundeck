@@ -15,7 +15,6 @@ import rundeck.data.validation.validators.workflowstep.WorkflowStepValidatorFact
 
 @JsonIgnoreProperties(["errors"])
 class RdWorkflow implements WorkflowData, Validateable {
-    Long id
     Integer threadcount=1;
     Boolean keepgoing=false;
     List<RdWorkflowStep> steps;
@@ -23,7 +22,6 @@ class RdWorkflow implements WorkflowData, Validateable {
     Map<String,Object> pluginConfigMap;
 
     static constraints = {
-        id(nullable: true)
         strategy(nullable:false, maxSize: 256)
         steps(validator: { List<RdWorkflowStep> val, RdWorkflow obj, Errors errors ->
             if(!val) {

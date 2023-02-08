@@ -27,26 +27,25 @@ import rundeck.data.validation.shared.SharedProjectNameConstraints
 
 @JsonIgnoreProperties(["errors"])
 class RdJob implements JobData, Validateable {
-    Long id;
-    String uuid;
-    String jobName;
-    String description;
-    String project;
-    String argString;
-    String user;
-    String timeout;
-    String retry;
-    String retryDelay;
-    String groupPath;
-    List<String> userRoles;
-    Boolean scheduled;
-    Boolean scheduleEnabled;
-    Boolean executionEnabled;
-    Boolean multipleExecutions;
-    String notifyAvgDurationThreshold;
-    String timeZone;
-    String defaultTab;
-    String maxMultipleExecutions;
+    String uuid
+    String jobName
+    String description
+    String project
+    String argString
+    String user
+    String timeout
+    String retry
+    String retryDelay
+    String groupPath
+    List<String> userRoles = []
+    Boolean scheduled = false
+    Boolean scheduleEnabled = true
+    Boolean executionEnabled = true
+    Boolean multipleExecutions = false
+    String notifyAvgDurationThreshold
+    String timeZone
+    String defaultTab
+    String maxMultipleExecutions
     Date dateCreated
     Date lastUpdated
 
@@ -54,19 +53,18 @@ class RdJob implements JobData, Validateable {
 
     RdLogConfig logConfig = new RdLogConfig()
     RdNodeConfig nodeConfig = new RdNodeConfig()
-    SortedSet<RdOption> optionSet;
-    Set<RdNotification> notificationSet;
-    RdWorkflow workflow;
-    RdSchedule schedule;
-    RdOrchestrator orchestrator;
-    Map<String, Object> pluginConfigMap;
+    SortedSet<RdOption> optionSet
+    Set<RdNotification> notificationSet
+    RdWorkflow workflow
+    RdSchedule schedule
+    RdOrchestrator orchestrator
+    Map<String, Object> pluginConfigMap = [:]
     Map<String, RdJobComponentData> components = [:]
 
     static constraints = {
         importFrom SharedProjectNameConstraints
         importFrom SharedJobConstraints
 
-        id(nullable: true)
         dateCreated(nullable: true)
         lastUpdated(nullable: true)
         //For some reason this causes a problem in the SharedJobConstraints so it's included here

@@ -36,11 +36,18 @@ class UrlNotificationValidator implements Validator {
                 validCount++
             }
         }
-        if(urls.isBlank()){
+        if(!urls || urls.isBlank()){
             errors.rejectValue(
                     "configuration",
                     'scheduledExecution.notifications.url.blank.message',
-                    'Webhook URL cannot be blank'
+                    "Webhook URL cannot be blank. Please supply a 'urls' config parameter"
+            )
+        }
+        if(!urlsConfiguration.method) {
+            errors.rejectValue(
+                    "configuration",
+                    'scheduledExecution.notifications.httpMethod.blank.message',
+                    "Webhook method cannot be blank. Please supply an 'httpMethod' config parameter"
             )
         }
     }

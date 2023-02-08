@@ -7,7 +7,6 @@ import rundeck.data.validation.shared.SharedNotificationConstraints
 
 @JsonIgnoreProperties(["errors"])
 class RdNotification implements NotificationData, Validateable {
-    Long id
     String eventTrigger;
     String type;
     String format;
@@ -15,6 +14,5 @@ class RdNotification implements NotificationData, Validateable {
 
     static constraints = {
         importFrom(SharedNotificationConstraints)
-        id(nullable: true)
     }
 }

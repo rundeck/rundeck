@@ -10,37 +10,35 @@ import rundeck.data.validation.shared.SharedJobOptionConstraints
 
 @JsonIgnoreProperties(["errors"])
 class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validateable {
-    Long id;
-    String name;
-    Integer sortIndex;
-    String description;
-    String defaultValue;
-    String defaultStoragePath;
-    Boolean enforced;
-    Boolean required;
-    Boolean isDate;
-    String dateFormat;
-    String label;
-    URL realValuesUrl;
-    String regex;
-    String valuesList;
-    String valuesListDelimiter;
-    Boolean multivalued;
-    String delimiter;
-    Boolean secureInput;
-    Boolean secureExposed;
-    String optionType;
-    Map<String,Object> configMap;
-    Boolean multivalueAllSelected;
-    String optionValuesPluginType;
-    List<RdOptionValue> valuesFromPlugin;
-    Boolean hidden;
-    Boolean sortValues;
-    List<String> optionValues;
+    String name
+    Integer sortIndex
+    String description
+    String defaultValue
+    String defaultStoragePath
+    Boolean enforced = false
+    Boolean required = false
+    Boolean isDate = false
+    String dateFormat
+    String label
+    URL realValuesUrl
+    String regex
+    String valuesList
+    String valuesListDelimiter
+    Boolean multivalued = false
+    String delimiter
+    Boolean secureInput = false
+    Boolean secureExposed = false
+    String optionType
+    Map<String,Object> configMap
+    Boolean multivalueAllSelected = false
+    String optionValuesPluginType
+    List<RdOptionValue> valuesFromPlugin
+    Boolean hidden = false
+    Boolean sortValues = false
+    List<String> optionValues
 
     static constraints={
         importFrom(SharedJobOptionConstraints)
-        id(nullable: true)
         realValuesUrl(nullable: true)
     }
 
@@ -84,11 +82,6 @@ class RdOption implements JobOption, OptionData, Comparable<OptionData>, Validat
         } else {
             return sortIndex != null ? -1 : 1;
         }
-    }
-
-    static class RdOptionValue implements OptionValueData {
-        String name;
-        String value;
     }
 
     static ObjectMapper mapper = new ObjectMapper()

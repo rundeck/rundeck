@@ -13,7 +13,6 @@ import java.io.Serializable;
 import java.util.*;
 
 public interface JobData {
-    Serializable getId();
     String getUuid();
     String getJobName();
     String getDescription();

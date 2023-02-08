@@ -5,12 +5,12 @@ import org.grails.datastore.mapping.query.api.BuildableCriteria
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobQuery
-import org.rundeck.app.data.RdSortOrder
 import org.springframework.context.ApplicationContext
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.data.job.query.RdJobQueryInput
+import rundeck.data.paging.RdSortOrder
 import rundeck.services.JobSchedulesService
 import spock.lang.Specification
 

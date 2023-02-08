@@ -6,12 +6,10 @@ import org.rundeck.app.data.model.v1.job.orchestrator.OrchestratorData
 
 @JsonIgnoreProperties(["errors"])
 class RdOrchestrator implements OrchestratorData, Validateable {
-    Long id
     String type
     Map<String,Object> configuration
 
     static constraints = {
         type(nullable:false,blank:false)
-        id(nullable: true)
     }
 }

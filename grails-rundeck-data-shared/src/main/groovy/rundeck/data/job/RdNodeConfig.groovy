@@ -26,14 +26,14 @@ class RdNodeConfig implements NodeConfig, Validateable {
     String filter
     String filterExclude
     Boolean excludeFilterUncheck = false
-    Boolean nodesSelectedByDefault = true;
-    Boolean nodeKeepgoing=false;
-    Boolean doNodedispatch=false;
-    String  nodeRankAttribute;
-    Boolean nodeRankOrderAscending=true;
-    Boolean nodeFilterEditable = false;
-    Integer nodeThreadcount=1;
-    String  nodeThreadcountDynamic;
+    Boolean nodesSelectedByDefault = true
+    Boolean nodeKeepgoing=false
+    Boolean doNodedispatch=false
+    String  nodeRankAttribute
+    Boolean nodeRankOrderAscending=true
+    Boolean nodeFilterEditable = false
+    Integer nodeThreadcount=1
+    String  nodeThreadcountDynamic
 
     static constraints = {
         importFrom(SharedNodeConfigConstraints)

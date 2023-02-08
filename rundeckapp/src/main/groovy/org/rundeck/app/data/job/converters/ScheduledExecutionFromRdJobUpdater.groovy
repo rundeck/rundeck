@@ -2,13 +2,16 @@ package org.rundeck.app.data.job.converters
 
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.fasterxml.jackson.databind.ObjectMapper
+import grails.compiler.GrailsCompileStatic
 import grails.util.Holders
+import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
 import rundeck.data.job.RdNotification
 import rundeck.data.job.RdOption
+import rundeck.data.job.RdOptionValue
 import rundeck.data.job.RdOrchestrator
 import rundeck.data.job.RdSchedule
 import rundeck.data.job.RdWorkflow
@@ -23,6 +26,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
 
+@GrailsCompileStatic
 class ScheduledExecutionFromRdJobUpdater {
     static ObjectMapper mapper = new ObjectMapper()
 
@@ -38,7 +42,7 @@ class ScheduledExecutionFromRdJobUpdater {
         se.retry = job.retry
         se.retryDelay = job.retryDelay
         se.groupPath = job.groupPath
-        se.userRoles = job.userRoles
+        if(job.userRoles) se.setUserRoles(job.userRoles)
         se.scheduled = job.scheduled
         se.scheduleEnabled = job.scheduleEnabled
         se.executionEnabled = job.executionEnabled
@@ -63,17 +67,16 @@ class ScheduledExecutionFromRdJobUpdater {
     }
 
     static updateNotifications(ScheduledExecution se, RdJob job) {
-        def rdnIds = job.notificationSet.collect {it.id } - null
-        se.notifications.findAll { !rdnIds.contains(it.id)}.each {
-            se.removeFromNotifications(it)
-            it.delete()
+        //remove all notifications
+        for(int i = 0; i < se.notifications?.size(); i++) {
+            def notif = se.notifications[i]
+            se.removeFromNotifications(notif)
+            notif.delete()
         }
-        job.notificationSet.each { rdn ->
-            def n = se.notifications.find { it.id == rdn.id }
-            if(!n) {
-                n = new Notification()
-                se.addToNotifications(n)
-            }
+        //add new notifications
+        job.notificationSet?.each { rdn ->
+            def n = new Notification()
+            se.addToNotifications(n)
             updateNotification(n, rdn)
             n.save(failOnError: true)
         }
@@ -94,18 +97,17 @@ class ScheduledExecutionFromRdJobUpdater {
     }
 
     static void updateJobOptions(ScheduledExecution se, SortedSet<RdOption> rdopts) {
-        def rdOptIds = rdopts.collect { it.id } - null
-        se.options.findAll { opt -> !rdOptIds.contains(opt.id)}.each {
-            se.removeFromOptions(it)
-            it.delete()
-        } //remove options that are not in updated list
+        //remove old options
+        for(int i = 0; i < se.options?.size(); i++) {
+            def opt = se.options[i]
+            se.removeFromOptions(opt)
+            opt.delete()
+        }
+        if(!rdopts) return
+        //add options
         rdopts.each { rdopt ->
-            def opt = se.options.find { it.id == rdopt.id }
-            if(!opt) {
-                opt = new Option()
-                se.addToOptions(opt)
-                println "created option"
-            }
+            def opt = new Option()
+            se.addToOptions(opt)
             updateJobOption(opt, rdopt)
             opt.save(failOnError:true)
         }
@@ -134,7 +136,7 @@ class ScheduledExecutionFromRdJobUpdater {
         opt.configMap = rdo.configMap
         opt.multivalueAllSelected = rdo.multivalueAllSelected
         opt.optionValuesPluginType = rdo.optionValuesPluginType
-        opt.valuesFromPlugin = rdo.valuesFromPlugin?.collect { oval -> new StringOptionValue(name: oval.name, value: oval.value)}
+        opt.valuesFromPlugin = rdo.valuesFromPlugin?.collect { oval -> new RdOptionValue(name: oval.name, value: oval.value) as OptionValue}
         opt.hidden = rdo.hidden
         opt.sortValues = rdo.sortValues
         opt.optionValues = rdo.optionValues ? new ArrayList(rdo.optionValues) : null
@@ -189,25 +191,21 @@ class ScheduledExecutionFromRdJobUpdater {
     }
 
     static void updateWorkflow(ScheduledExecution se, RdWorkflow rdw) {
-        if(!se.workflow) se.workflow = new Workflow()
+        if(!se.workflow) se.workflow = new Workflow(commands: [])
         Workflow wkf = se.workflow
         wkf.threadcount = rdw.threadcount
         wkf.keepgoing = rdw.keepgoing
         wkf.strategy = rdw.strategy
         wkf.pluginConfigMap = rdw.pluginConfigMap
-        def existingStepIds = rdw.steps.collect { it.id } - null
-        wkf.commands.findAll { cmd -> !existingStepIds.contains(cmd.id)}.each {
-            println "deleting workflow step: ${it.id}"
-            wkf.removeFromCommands(it)
-            it.delete()
+        //remove all previous steps
+        for(int x = 0; x < wkf.commands.size(); x++) {
+            def cmd = wkf.commands[x]
+            wkf.removeFromCommands(cmd)
+            cmd.delete()
         }
         rdw.steps.each { rdstep ->
-            def wfstep = wkf.commands.find { it.id == rdstep.id }
-            if(!wfstep) {
-                wfstep = createWorkflowStep(rdstep)
-                wkf.addToCommands(wfstep)
-                println "created step of type: ${wfstep.getClass().getSimpleName()}"
-            }
+            def wfstep = createWorkflowStep(rdstep)
+            wkf.addToCommands(wfstep)
             updateWorkflowStep(wfstep, rdstep)
             wfstep.save(failOnError:true)
         }
@@ -224,22 +222,15 @@ class ScheduledExecutionFromRdJobUpdater {
     static void updateWorkflowStep(WorkflowStep step, RdWorkflowStep rdstep) {
         if(step instanceof JobExec) {
             def jstep = (JobExec)step
-            jstep.id = rdstep.id
             JobExec.updateFromMap(jstep, rdstep.configuration)
         } else if(step instanceof CommandExec) {
             def cstep = (CommandExec)step
-            cstep.id = rdstep.id
             CommandExec.updateFromMap(cstep, rdstep.configuration)
         } else if(step instanceof PluginStep) {
             def pstep = (PluginStep)step
-            pstep.id = rdstep.id
             PluginStep.updateFromMap(pstep, rdstep.configuration)
             pstep.type = rdstep.pluginType
         }
     }
 
-    static class StringOptionValue implements OptionValue {
-        String name
-        String value
-    }
 }
