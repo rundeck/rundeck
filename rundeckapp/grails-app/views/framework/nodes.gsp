@@ -25,9 +25,6 @@
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <title><g:message code="gui.menu.Nodes"/> - <g:enc>${projectLabel}</g:enc></title>
     <asset:javascript src="framework/nodes.js"/>
-    <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
-        <asset:javascript src="nodeFiltersKOTest.js"/>
-    </g:if>
     <g:embedJSON id="filterParamsJSON"
                  data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
     <g:embedJSON id="pageParams"
