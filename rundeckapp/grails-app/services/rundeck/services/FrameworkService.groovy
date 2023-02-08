@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
-import com.dtolabs.rundeck.core.jobs.IExecutionLifecyclePluginService
 import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -44,6 +43,7 @@ import com.dtolabs.rundeck.server.AuthContextEvaluatorCacheManager
 import grails.compiler.GrailsCompileStatic
 import grails.core.GrailsApplication
 import grails.events.bus.EventBus
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.grails.plugins.metricsweb.MetricService
@@ -1366,8 +1366,9 @@ class FrameworkService implements ApplicationContextAware, ClusterInfoService, F
         ]
     }
 
+    @CompileDynamic
     ExecutionLifecycleJobDataAdapter getExecutionLifecyclePluginService() {
-        return executionService.executionLifecyclePluginService
+        return executionService.executionLifecycleComponentService
     }
 
     public <T> PluggableProviderService<T> getStorageProviderPluginService() {

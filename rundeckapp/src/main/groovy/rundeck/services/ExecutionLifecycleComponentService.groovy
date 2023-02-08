@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.IExecutionLifecycleComponentService
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
+import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
@@ -351,6 +352,14 @@ class NamedExecutionLifecycleComponent implements ExecutionLifecycleComponent {
     String name
     boolean isPlugin() {
         return component instanceof ExecutionLifecyclePlugin
+    }
+
+    ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
+        component.beforeJobStarts(event)
+    }
+
+    ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event) throws ExecutionLifecycleComponentException {
+        component.afterJobEnds(event)
     }
 
 }

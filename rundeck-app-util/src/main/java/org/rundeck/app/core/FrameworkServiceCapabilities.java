@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.config.FeatureService;
-import com.dtolabs.rundeck.core.jobs.IExecutionLifecyclePluginService;
 import com.dtolabs.rundeck.core.options.RemoteJsonOptionRetriever;
 import com.dtolabs.rundeck.core.plugins.PluginServiceCapabilities;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
