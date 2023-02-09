@@ -72,7 +72,7 @@ class GormStorageDataProvider implements StorageDataProvider {
         storage.lastUpdated = new Date()
 
          try {
-             storageDataService.save(storage)
+             storage.save(flush: true)
         } catch (Exception e) {
             throw new DataAccessException("Error: could not update project ${id}: ${e}", e)
         }
