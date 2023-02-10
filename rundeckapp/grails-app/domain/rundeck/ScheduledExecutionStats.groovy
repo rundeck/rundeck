@@ -10,7 +10,6 @@ class ScheduledExecutionStats implements RdJobStats {
 
     long _version = 0
 
-//    static belongsTo=[se:ScheduledExecution]
     static transients = ['contentMap']
 
     static mapping = {

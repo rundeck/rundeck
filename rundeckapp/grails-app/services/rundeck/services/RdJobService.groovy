@@ -1,10 +1,14 @@
 package rundeck.services
 
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.rundeck.app.data.job.converters.ScheduledExecutionToJobConverter
 import org.rundeck.app.data.model.v1.DeletionResult
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.query.JobQueryInputData
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import rundeck.ScheduledExecution
+import rundeck.data.job.RdJob
 
 @CompileStatic
 class RdJobService {
@@ -29,12 +33,22 @@ class RdJobService {
         return found
     }
 
+    @CompileDynamic
+    RdJob convertToRdJob(JobData job) {
+        if(job instanceof ScheduledExecution) return ScheduledExecutionToJobConverter.convert(job)
+        return job
+    }
+
     JobData getJobById(Long id) {
         return jobDataProvider.get(id)
     }
 
     JobData getJobByUuid(String uuid) {
         return jobDataProvider.findByUuid(uuid)
+    }
+
+    boolean existsByUuid(String uuid) {
+        return jobDataProvider.existsByUuid(uuid)
     }
 
     JobData saveJob(JobData job) {

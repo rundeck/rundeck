@@ -36,11 +36,14 @@ import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec
 import rundeck.PluginStep
+import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
 import rundeck.Workflow
 import rundeck.WorkflowStep
 import rundeck.codecs.JobsXMLCodec
@@ -61,6 +64,7 @@ class ExecutionUtilService {
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
     RundeckJobDefinitionManager rundeckJobDefinitionManager
+    RdJobService rdJobService
 
     @CompileStatic
     def finishExecution(ExecutionService.AsyncStarted execMap) {
@@ -431,4 +435,14 @@ class ExecutionUtilService {
 
         return [result: thread.result, interrupt: interrupt]
     }
+
+    long getAverageDuration(String jobuuid) {
+        def stats = ScheduledExecutionStats.findByJobUuid(jobuuid)
+        def statsContent= stats?.getContentMap()
+        if (statsContent && statsContent.totalTime && statsContent.execCount) {
+            return Math.floor(statsContent.totalTime / statsContent.execCount)
+        }
+        return 0;
+    }
+
 }

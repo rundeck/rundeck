@@ -108,6 +108,11 @@ import rundeck.controllers.EditOptsController
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.job.JobReferenceImpl
+import rundeck.data.job.JobRevReferenceImpl
+import rundeck.data.job.query.RdJobQueryInput
+import rundeck.data.util.Sizes
+import rundeck.data.util.JobDataUtil
 import rundeck.data.validation.validators.AnyDomainEmailValidator
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.quartzjobs.ExecutionJob
@@ -202,8 +207,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     def OrchestratorPluginService orchestratorPluginService
     ConfigurationService configurationService
-    JobDataProvider jobDataProvider
     UserDataProvider userDataProvider
+    RdJobService rdJobService
     UserService userService
 
     @Override
@@ -224,9 +229,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @Override
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
 
-    JobData saveJob(JobData job) {
-        jobDataProvider.save(job)
-    }
     /**
      * Return project config for node cache delay
      * @param project
@@ -1366,14 +1368,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return didCancel
     }
 
-    Map<String, String> getJobIdent(ScheduledExecution se, Execution e){
+    Map<String, String> getJobIdent(JobData se, Execution e){
         Map<String, String> ident
 
         if (!se) {
             ident = [jobname:"TEMP:"+e.user +":"+e.id, groupname:e.user+":run"]
         } else if (se.scheduled && e.executionType == "scheduled" && !e.retryAttempt) {
             // For jobs which have fixed schedules
-            ident = [jobname:se.generateJobScheduledName(),groupname:se.generateJobGroupName()]
+            ident = [jobname:JobDataUtil.generateJobScheduledName(se),groupname:JobDataUtil.generateJobGroupName(se)]
         } else {
             ident = [jobname:"TEMP:"+e.user +":"+se.id+":"+e.id, groupname:e.user+":run:"+se.id]
         }
@@ -1393,7 +1395,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return the execution id
      */
     def long scheduleTempJob(
-            ScheduledExecution se,
+            JobData se,
             String user,
             AuthContext authContext,
             Execution e,
@@ -1488,14 +1490,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     @NotTransactional
-    Map createJobDetailMap(ScheduledExecution se) {
+    Map createJobDetailMap(JobData se) {
         Map data = [:]
         data.put("project", se.project)
         data.put("scheduledExecutionId", se.uuid)
         data.put("rdeck.base", frameworkService.getRundeckBase())
 
         if(se.scheduled){
-            data.put("userRoles", se.userRoleList)
+            data.put("userRoles", se.userRoles)
             if(frameworkService.isClusterModeEnabled()){
                 data.put("serverUUID", frameworkService.getServerUUID())
             }
@@ -1586,8 +1588,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param anid
      * @return ScheduledExecution found or null
      */
-    def ScheduledExecution getByIDorUUID(anid){
-        ScheduledExecution.getByIdOrUUID(anid)
+    JobData getByIDorUUID(anid){
+        rdJobService.getJobByIdOrUuid(anid)
     }
 
     /**
@@ -2330,7 +2332,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             Map changeinfo = [:],
             boolean validateJobref = false
     ) {
-        def ScheduledExecution scheduledExecution = getByIDorUUID(id)
+        def scheduledExecution = (ScheduledExecution)getByIDorUUID(id)
         if (!scheduledExecution) {
             return [success: false, error:"No Job found with ID: ${id}"]
         }

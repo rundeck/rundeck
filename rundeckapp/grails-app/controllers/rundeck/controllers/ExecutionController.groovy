@@ -71,7 +71,7 @@ import org.rundeck.core.auth.web.RdAuthorizeAdhoc
 import org.rundeck.core.auth.web.RdAuthorizeExecution
 import org.rundeck.core.auth.web.RdAuthorizeProject
 import org.rundeck.core.auth.web.RdAuthorizeSystem
-import org.rundeck.util.Sizes
+import rundeck.data.util.Sizes
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution

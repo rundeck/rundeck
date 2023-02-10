@@ -23,9 +23,11 @@ import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.common.IFrameworkNodes
 import com.dtolabs.rundeck.core.common.INodeSet
 import grails.compiler.GrailsCompileStatic
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.core.auth.AuthConstants
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.data.util.JobDataUtil
 
 import java.util.function.Function
 
@@ -220,8 +222,8 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
      * @return
      */
     @Override
-    def Map<String,String> authResourceForJob(ScheduledExecution se) {
-        return authResourceForJob(se.jobName, se.groupPath, se.extid)
+    def Map<String,String> authResourceForJob(JobData se) {
+        return authResourceForJob(se.jobName, se.groupPath, JobDataUtil.getExtId(se))
     }
 
     /**
@@ -309,7 +311,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
     @Override
     boolean authorizeProjectJobAny(
         AuthContext authContext,
-        ScheduledExecution job,
+        JobData job,
         Collection<String> actions,
         String project
     ) {
@@ -328,7 +330,7 @@ class BaseAuthContextEvaluator implements AppAuthContextEvaluator {
     @Override
     boolean authorizeProjectJobAll(
         AuthContext authContext,
-        ScheduledExecution job,
+        JobData job,
         Collection<String> actions,
         String project
     ) {

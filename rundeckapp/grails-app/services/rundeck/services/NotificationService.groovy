@@ -626,7 +626,7 @@ public class NotificationService implements ApplicationContextAware{
                 href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                         params: [project: e.project]),
                 status: e.executionState,
-                summary: executionService.summarizeJob(e.scheduledExecution, e)
+                summary: executionService.summarizeJob(e)
             ]
         },paging,delegate)
     }
@@ -640,7 +640,7 @@ public class NotificationService implements ApplicationContextAware{
                     href: grailsLinkGenerator.link(controller: 'execution', action: 'show', id: e.id, absolute: true,
                                                    params: [project: e.project]),
                     status: e.executionState,
-                    summary: executionService.summarizeJob(e.scheduledExecution, e)
+                    summary: executionService.summarizeJob(e)
             ]
         },paging,delegate)
     }

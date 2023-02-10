@@ -28,6 +28,8 @@ public interface JobDataProvider extends JobQueryProvider {
      */
     JobData findByUuid(String uuid);
 
+    JobData findByProjectAndJobNameAndGroupPath(String project, String jobName, String groupPath);
+
     /**
      * Checks if the job exists in the database
      *

@@ -5,9 +5,9 @@ import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.common.INodeSet
 import groovy.transform.CompileStatic
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.app.data.model.v1.job.JobData
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.Execution
-import rundeck.ScheduledExecution
 
 import java.util.function.Function
 
@@ -145,7 +145,7 @@ class TimedAuthContextEvaluator implements AppAuthContextEvaluator {
     }
 
     @Override
-    Map<String,String> authResourceForJob(final ScheduledExecution se) {
+    Map<String,String> authResourceForJob(final JobData se) {
         return rundeckAuthContextEvaluator.authResourceForJob(se)
     }
 
@@ -188,7 +188,7 @@ class TimedAuthContextEvaluator implements AppAuthContextEvaluator {
     @Override
     boolean authorizeProjectJobAny(
         final AuthContext authContext,
-        final ScheduledExecution job,
+        final JobData job,
         final Collection<String> actions,
         final String project
     ) {
@@ -198,7 +198,7 @@ class TimedAuthContextEvaluator implements AppAuthContextEvaluator {
     @Override
     boolean authorizeProjectJobAll(
         final AuthContext authContext,
-        final ScheduledExecution job,
+        final JobData job,
         final Collection<String> actions,
         final String project
     ) {

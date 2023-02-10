@@ -35,12 +35,11 @@ import rundeck.data.job.RdSchedule
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.notification.NotificationData
 import org.rundeck.app.data.model.v1.job.option.OptionData
-import org.rundeck.util.Sizes
+import rundeck.data.util.JobDataUtil
 import rundeck.data.validation.shared.SharedJobConstraints
 import rundeck.data.validation.shared.SharedLogConfigConstraints
 import rundeck.data.validation.shared.SharedNodeConfigConstraints
 import rundeck.data.validation.shared.SharedProjectNameConstraints
-import rundeck.services.JobReferenceImpl
 
 import java.util.stream.Collectors
 
@@ -761,7 +760,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @return
      */
     public long getTimeoutDuration(){
-        timeout? Sizes.parseTimeDuration(timeout):-1
+        JobDataUtil.getTimeoutDuration(this)
     }
 
     /**
@@ -1218,13 +1217,7 @@ class ScheduledExecution extends ExecutionContext implements JobData, EmbeddedJs
      * @return reference interface for this job
      */
     JobReference asReference() {
-        new JobReferenceImpl(
-            id: extid,
-            jobName: jobName,
-            groupPath: groupPath,
-            project: project,
-            serverUUID: serverNodeUUID
-        )
+        JobDataUtil.asJobReference(this)
     }
 
     JobDataSummary toJobDataSummary() {

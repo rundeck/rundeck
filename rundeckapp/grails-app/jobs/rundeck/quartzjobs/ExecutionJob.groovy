@@ -33,9 +33,13 @@ import groovy.transform.CompileStatic
 import org.quartz.InterruptableJob
 import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
-import org.rundeck.util.Sizes
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
+import rundeck.data.util.JobDataUtil
+import rundeck.data.util.Sizes
 import rundeck.services.*
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
@@ -189,7 +193,7 @@ class ExecutionJob implements InterruptableJob {
     static class RunContext{
         boolean temp
         long executionId
-        ScheduledExecution scheduledExecution
+        JobData scheduledExecution
         String scheduledExecutionId
         ExecutionService executionService
         ExecutionUtilService executionUtilService
@@ -239,7 +243,7 @@ class ExecutionJob implements InterruptableJob {
         initMap.frameworkService = frameworkService
         initMap.framework = frameworkService.rundeckFramework
         if (initMap.scheduledExecution?.timeout){
-            initMap.timeout = initMap.scheduledExecution.timeoutDuration
+            initMap.timeout = JobDataUtil.getTimeoutDuration(initMap.scheduledExecution)
         }
 
         if(initMap.temp){
@@ -290,22 +294,23 @@ class ExecutionJob implements InterruptableJob {
         }else{
             //a scheduled job that was triggered
             def serverUUID = jobDataMap.get("serverUUID")
+            String extid = JobDataUtil.getExtId(initMap.scheduledExecution)
             if (serverUUID != null && jobDataMap.get("bySchedule")) {
                 //verify scheduled job should be run on this node in cluster mode
                 if (serverUUID!=initMap.scheduledExecution.serverNodeUUID){
                     if(!initMap.jobSchedulesService.isScheduled(initMap.scheduledExecution.uuid)){
-                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} schedule has been stopped by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
-                    }else if(!initMap.scheduledExecution.shouldScheduleExecution()){
-                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} schedule/execution has been disabled by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                        initMap.jobShouldNotRun="Job ${extid} schedule has been stopped by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    }else if(!JobDataUtil.shouldScheduleExecution(initMap.scheduledExecution)){
+                        initMap.jobShouldNotRun="Job ${extid} schedule/execution has been disabled by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
                     }else{
-                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                        initMap.jobShouldNotRun="Job ${extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
                     }
                     context.getScheduler().deleteJob(context.jobDetail.key)
                     return initMap
                 }else{
                     //verify run on this node but scheduled disabled
                     if(!initMap.jobSchedulesService.shouldScheduleExecution(initMap.scheduledExecution.uuid)){
-                        initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this server (${serverUUID})."
+                        initMap.jobShouldNotRun = "Job ${extid} schedule has been disabled, removing schedule on this server (${serverUUID})."
                         context.getScheduler().deleteJob(context.jobDetail.key)
                         return initMap
                     }
@@ -320,7 +325,7 @@ class ExecutionJob implements InterruptableJob {
             def isProjectEnabled = !frameworkService.isFrameworkProjectDisabled(project)
 
             if(!(isProjectExecutionEnabled && isProjectScheduledEnabled && isProjectEnabled)){
-                initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this project (${initMap.scheduledExecution.project})."
+                initMap.jobShouldNotRun = "Job ${extid} schedule has been disabled, removing schedule on this project (${initMap.scheduledExecution.project})."
                 context.getScheduler().deleteJob(context.jobDetail.key)
                 return initMap
             }
@@ -357,14 +362,7 @@ class ExecutionJob implements InterruptableJob {
         def success = true
         ExecutionService.AsyncStarted execmap
         try {
-            execmap = runContext.executionService.executeAsyncBegin(
-                runContext.framework,
-                runContext.authContext,
-                runContext.execution,
-                runContext.scheduledExecution,
-                runContext.secureOpts,
-                runContext.secureOptsExposed
-            )
+            execmap = runContext.executionService.executeAsyncBegin(runContext)
 
         } catch (Exception e) {
             log.error("Execution ${runContext.execution.id} failed to start: " + e.getMessage(), e)
@@ -384,8 +382,8 @@ class ExecutionJob implements InterruptableJob {
         def ThresholdValue threshold = execmap.threshold
         long jobAverageDuration=0
         if(runContext.scheduledExecution){
-            ScheduledExecution.withTransaction {
-                jobAverageDuration = runContext.executionService.getAverageDuration(runContext.scheduledExecutionId)?:0
+            ScheduledExecutionStats.withTransaction {
+                jobAverageDuration = runContext.executionUtilService.getAverageDuration(runContext.scheduledExecutionId)?:0
             }
         }
 
@@ -563,7 +561,7 @@ class ExecutionJob implements InterruptableJob {
         if(wasThreshold && execmap?.threshold?.action==LoggingThreshold.ACTION_HALT){
             //use custom status or fail
             success=false
-            statusString = initMap.scheduledExecution?.logOutputThresholdStatus?:'failed'
+            statusString = initMap.scheduledExecution?.logConfig?.logOutputThresholdStatus?:'failed'
         }
         //save Execution state
         def dateCompleted = new Timestamp(System.currentTimeMillis())
@@ -644,11 +642,12 @@ class ExecutionJob implements InterruptableJob {
         return execution
     }
 
-
-    def ScheduledExecution fetchScheduledExecution(JobDataMap jobDataMap) {
+    @CompileStatic
+    def JobData fetchScheduledExecution(JobDataMap jobDataMap) {
         String seid = requireEntry(jobDataMap, "scheduledExecutionId", String)
         def se=null
-        se = ScheduledExecution.findByUuid(seid)
+        def jobDataProvider = grailsApplication.mainContext.getBean("jobDataProvider", JobDataProvider)
+        se = jobDataProvider.findByUuid(seid)
         if(se && se instanceof ScheduledExecution){
             se.refreshOptions() //force fetch options and option values before return object
         }

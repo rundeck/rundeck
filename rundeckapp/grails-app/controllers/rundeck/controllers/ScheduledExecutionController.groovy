@@ -76,8 +76,6 @@ import org.rundeck.app.components.jobs.ImportedJob
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
-import org.rundeck.app.data.job.RdJob
-import org.rundeck.app.data.job.ScheduledExecutionToJobConverter
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.core.auth.AuthConstants
 import org.rundeck.core.auth.access.NotFound
@@ -96,6 +94,7 @@ import rundeck.*
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import rundeck.data.util.JobDataUtil
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -239,7 +238,7 @@ class ScheduledExecutionController  extends ControllerBase{
     @RdAuthorizeJob(RundeckAccess.Job.AUTH_APP_READ_OR_VIEW)
     @GrailsCompileStatic
     def actionMenuFragment(){
-        ScheduledExecution scheduledExecution = authorizingJob.resource
+        def scheduledExecution = authorizingJob.resource
         String project = scheduledExecution.project
         AuthorizingProject authorizingProject = authorizingProject(project)
 
@@ -4060,7 +4059,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         }
         String jobid = params.id
 
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+        def scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
 
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
             return
@@ -4141,7 +4140,7 @@ This is a ISO-8601 date and time stamp with timezone, with optional milliseconds
         if (jobLoglevel) {
             inputOpts["loglevel"] = jobLoglevel
         }
-        if (!scheduledExecution.hasNodesSelectedByDefault()){
+        if (!JobDataUtil.hasNodesSelectedByDefault(scheduledExecution)){
             inputOpts['_replaceNodeFilters']='true'
         }
 

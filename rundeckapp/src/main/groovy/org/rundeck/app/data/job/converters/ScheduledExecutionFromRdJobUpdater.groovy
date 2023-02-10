@@ -92,8 +92,13 @@ class ScheduledExecutionFromRdJobUpdater {
     static void updateOrchestrator(ScheduledExecution se, RdOrchestrator rdo) {
         if(!se.orchestrator && !rdo) return
         if(!se.orchestrator) se.orchestrator = new Orchestrator()
-        se.orchestrator.type = rdo.type
-        se.orchestrator.content = mapper.writeValueAsString(rdo.configuration)
+        updateOrchestrator(se.orchestrator, rdo)
+    }
+
+    static Orchestrator updateOrchestrator(Orchestrator orchestrator, RdOrchestrator rdo) {
+        orchestrator.type = rdo.type
+        orchestrator.content = mapper.writeValueAsString(rdo.configuration)
+        orchestrator
     }
 
     static void updateJobOptions(ScheduledExecution se, SortedSet<RdOption> rdopts) {
@@ -190,9 +195,12 @@ class ScheduledExecutionFromRdJobUpdater {
         se.crontabString = schedule?.crontabString
     }
 
-    static void updateWorkflow(ScheduledExecution se, RdWorkflow rdw) {
+    static Workflow updateWorkflow(ScheduledExecution se, RdWorkflow rdw) {
         if(!se.workflow) se.workflow = new Workflow(commands: [])
-        Workflow wkf = se.workflow
+        updateWorkflow(se.workflow, rdw)
+    }
+
+    static Workflow updateWorkflow(Workflow wkf, RdWorkflow rdw) {
         wkf.threadcount = rdw.threadcount
         wkf.keepgoing = rdw.keepgoing
         wkf.strategy = rdw.strategy

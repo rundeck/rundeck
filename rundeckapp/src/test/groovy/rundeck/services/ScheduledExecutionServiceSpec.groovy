@@ -60,6 +60,8 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.job.JobReferenceImpl
+import rundeck.services.data.UserDataService
 import spock.lang.Specification
 
 import static org.junit.Assert.*
@@ -1137,6 +1139,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                                 ))
         def importedJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> newjob
+        }
 
         when:
         def results = service._doupdateJob(se.id,importedJob, mockAuth())
@@ -1549,6 +1554,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             getMessage(_, _) >> { it[0].toString() }
         }
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -1587,6 +1595,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             getMessage(_, _) >> { it[0].toString() }
         }
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> newjob
+        }
 
         when:
         def results = service._doupdateJob(se.id, importedJob, mockAuth())
@@ -1617,6 +1628,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             getMessage(_, _) >> { it[0].toString() }
         }
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
 
@@ -1637,6 +1651,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def newjob=new ScheduledExecution(createJobParams(scheduled:true,crontabString:crontabString))
         service.jobSchedulesService = Mock(SchedulesManager)
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
 
@@ -1666,6 +1683,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def se = new ScheduledExecution(createJobParams()).save()
             def params = [id: se.id, scheduled: true, crontabString: crontabString, useCrontabString: 'true']
             service.jobSchedulesService = Mock(SchedulesManager)
+            service.rdJobService = Mock(RdJobService) {
+                getJobByIdOrUuid(_) >> se
+            }
         when:
             def results = service._doupdate(params, mockAuth())
 
@@ -1704,6 +1724,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.fileUploadService = Mock(FileUploadService)
         newjob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newjob, associations: [:])
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
 
@@ -1721,6 +1744,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams(orig)).save()
         service.fileUploadService = Mock(FileUploadService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -1749,6 +1775,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupDoUpdate()
         setupSchedulerService(false)
         def se = new ScheduledExecution(createJobParams(orig)).save()
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -1800,6 +1829,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> newJob.job.scheduled
+        }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
         }
 
 
@@ -1855,7 +1887,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         newJob.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'milk@store.com'))
 
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
-
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
 
         when:
@@ -1885,6 +1919,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = new ScheduledExecution(createJobParams()).save();
         se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONSUCCESS_TRIGGER_NAME, type: 'email', content: 'c@example.com,d@example.com'))
         se.addToNotifications(new Notification(eventTrigger: NotificationConstants.ONFAILURE_TRIGGER_NAME, type: 'email', content: 'monkey@example.com'))
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdate([id:se.id.toString()]+params, mockAuth())
@@ -1934,6 +1971,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def params = baseJobParams() + [
             jobNotificationsJson:json
         ]
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdate([id:se.id.toString()]+params, mockAuth())
 
@@ -1961,6 +2001,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
         ])).save()
         service.fileUploadService = Mock(FileUploadService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         def params = baseJobParams()+input
         when:
@@ -2009,6 +2052,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.fileUploadService = Mock(FileUploadService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdate([id:se.id.toString()]+params, mockAuth())
 
@@ -2043,6 +2089,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         ))
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         service.fileUploadService = Mock(FileUploadService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -2079,6 +2128,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 nodeThreadcount: null
         ))
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
 
 
@@ -2114,7 +2166,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             shouldScheduleExecution(_) >> se.scheduled
         }
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
-
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
 
         when:
@@ -2149,6 +2203,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         se.save()
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> se.scheduled
+        }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
         }
 
         def projectMock = Mock(IRundeckProject) {
@@ -2240,6 +2297,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> se.scheduled
         }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdate([id: se.id.toString()], mockAuth())
 
@@ -2296,6 +2356,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         )
         )
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
 
         when:
@@ -2333,6 +2396,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def uuid=setupDoUpdate(enabled)
         def se = new ScheduledExecution(createJobParams()).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -2357,6 +2423,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams()).save()
         def passparams = [id: se.id.toString()] + inparams
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdate(passparams, mockAuth())
 
@@ -2392,6 +2461,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = new ScheduledExecution(createJobParams()).save()
         def passparams = [id: se.id.toString()] + inparams
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdate(passparams, mockAuth())
 
@@ -2440,6 +2512,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                         ]
                 )
         )
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         service.jobSchedulesService = Mock(SchedulesManager){
             1 * isScheduled(_)
             1 * shouldScheduleExecution(_)
@@ -2486,7 +2561,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             setupDoUpdateJob()
             def se = new ScheduledExecution(createJobParams()).save()
             def newJob = new ScheduledExecution(createJobParams())
-            newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
+                newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
+            service.rdJobService = Mock(RdJobService) {
+                getJobByIdOrUuid(_) >> se
+            }
             def pluginService = service.pluginService
             1 * pluginService.getPluginDescriptor('node-first', _)
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
@@ -2531,6 +2609,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             def se = new ScheduledExecution(createJobParams()).save()
             def newJob = new ScheduledExecution(createJobParams())
             newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
+            service.rdJobService = Mock(RdJobService) {
+                getJobByIdOrUuid(_) >> se
+            }
             def pluginService = service.pluginService
             1 * pluginService.getPluginDescriptor('node-first', _)
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
@@ -2583,7 +2664,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                 )
         )
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
-
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         def pluginService = service.pluginService
 
         1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null, null)
@@ -2640,7 +2723,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         setupSchedulerService()
         def uuid=setupDoUpdate(enabled)
         def se = new ScheduledExecution(createJobParams()).save()
-
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         def newJob = new ScheduledExecution(createJobParams(inparams))
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
@@ -2780,6 +2865,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         upload = new RundeckJobDefinitionManager.ImportedJobDefinition(job:upload, associations: [:])
 
         service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> upload.job
+        }
         when:
         def result = service.loadImportedJobs([upload], option,'remove', [:],  mockAuth())
 
@@ -2817,6 +2905,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.rundeckJobDefinitionManager.validateImportedJob(upload)>>true
         service.jobSchedulesService=Mock(JobSchedulesService){
             1 * shouldScheduleExecution(_)>>true
+        }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> upload.job
         }
         when:
         def result = service.loadImportedJobs([upload], option,'remove', [:],  mockAuth())
@@ -2859,6 +2950,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         ]
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> upload.scheduled
+        }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> upload
         }
 
         when:
@@ -2920,6 +3014,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
             def  uuid=UUID.randomUUID().toString()
             def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',scheduled:false)+[uuid:uuid]).save()
+            service.rdJobService = Mock(RdJobService) {
+                getJobByIdOrUuid(_) >> orig
+            }
             def upload = new ScheduledExecution(
                     createJobParams(jobName:'job1',groupPath:'path1',project:'AProject',uuid:uuid,scheduled:false)
             )
@@ -3096,6 +3193,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> se.scheduled
         }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def params = baseJobParams()+[
 
@@ -3242,6 +3342,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
                                        timeZone: timezone]
         def se = new ScheduledExecution(createJobParams()).save()
         service.fileUploadService = Mock(FileUploadService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + params, mockAuth())
@@ -3492,7 +3595,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             shouldScheduleExecution(_) >> se.scheduled
         }
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
-
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
 
         when:
@@ -3520,6 +3625,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         newJob = new RundeckJobDefinitionManager.ImportedJobDefinition(job:newJob, associations: [:])
         service.fileUploadService = Mock(FileUploadService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
@@ -3566,6 +3674,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -3605,6 +3716,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
         service.jobSchedulerService = Mock(JobSchedulerService)
         service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -3631,6 +3745,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
 
@@ -3944,6 +4061,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
         1 * service.jobSchedulesService.shouldScheduleExecution(_) >> false
         1 * service.jobSchedulesService.isScheduled(_) >> true
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         given: "modify job to disable execution or schedule"
             def job = new ScheduledExecution(createJobParams(jobparams))
@@ -4012,6 +4132,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         1 * service.rundeckAuthContextProcessor.authorizeProjectJobAny(_, _, ['update'], 'AProject') >> true
         1 * service.jobSchedulesService.shouldScheduleExecution(_) >> true
         1 * service.jobSchedulesService.isScheduled(_) >> true
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
 
         given: "modify job without modifying scheduling params"
             def job = new ScheduledExecution(createJobParams([scheduled:false,description:'a new description']))
@@ -4074,6 +4197,10 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         }
         service.jobSchedulesService=Mock(SchedulesManager)
         service.jobSchedulerService=Mock(JobSchedulerService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
+
         service.executionServiceBean=Mock(ExecutionService){
             _* getExecutionsAreActive()>>true
         }
@@ -4123,6 +4250,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobLifecycleComponentService=Mock(JobLifecycleComponentService)
 
         service.jobSchedulesService = Mock(SchedulesManager)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
 
@@ -4165,6 +4295,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> se.scheduled
+        }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
         }
 
         when:
@@ -4214,6 +4347,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> upload.scheduled
         }
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> orig
+        }
 
         when:
         def result = service.loadJobs([upload], 'update', null, [method: 'scm-import'], mockAuth())
@@ -4233,6 +4369,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
 
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> orig
+        }
         service.jobSchedulesService = Mock(JobSchedulesService){
             shouldScheduleExecution(_) >> upload.scheduled
         }
@@ -4282,6 +4421,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds'])).save()
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> orig
+        }
 
         when:
         def result = service.deleteScheduledExecutionById(upload.id, mockAuth(), false, 'user', 'scm-import')
@@ -4303,6 +4445,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         def uuid = UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams([description: 'milk duds'])).save()
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> orig
+        }
 
         when:
         def result = service.deleteScheduledExecutionById(upload.id, mockAuth(), false, 'user', 'non-scm')
@@ -4426,6 +4571,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
             shouldScheduleExecution(_) >> se.scheduled
         }
         service.jobSchedulerService=Mock(JobSchedulerService)
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> se
+        }
         and:
         service.jobChangeLogger = jobChangeLogger
         def expectedLog = user+" MODIFY [${se.id}] AProject \"some/where/blue\" (update)"
@@ -5449,6 +5597,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         )
         job.setUuid("testUUID")
         job.save()
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> job
+        }
 
         def params = baseJobParams()
         params.workflow.globalLogFilters = [
@@ -5479,6 +5630,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
         job.setUuid("testUUID")
         job.workflow.pluginConfig = '{"LogFilter":[{"type":"abc","config":{"a":"b"}}]}'
         job.save()
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> job
+        }
 
         def params = baseJobParams()
         params.workflow.globalLogFilters = [
@@ -5512,6 +5666,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         def params = baseJobParams()
         params.workflow.globalLogFilters = [:]
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> job
+        }
 
         when:
         service.jobDefinitionGlobalLogFilters(job, null, params, null)
@@ -5548,6 +5705,9 @@ class ScheduledExecutionServiceSpec extends Specification implements ServiceUnit
 
         def params = baseJobParams()
         params.workflow.globalLogFilters = [:]
+        service.rdJobService = Mock(RdJobService) {
+            getJobByIdOrUuid(_) >> job
+        }
 
         when:
         service.jobDefinitionGlobalLogFilters(job, job2, params, null)
