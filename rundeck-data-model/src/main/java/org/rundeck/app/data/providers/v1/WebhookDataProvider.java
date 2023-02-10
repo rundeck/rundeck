@@ -7,7 +7,6 @@ import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse;
 import java.util.List;
 
 public interface WebhookDataProvider extends DataProvider {
-    RdWebhook get(Long id);
     RdWebhook getWebhook(Long id);
     RdWebhook getWebhookByToken(String token);
     RdWebhook getWebhookWithProject(Long id, String project);

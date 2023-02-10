@@ -1,15 +1,12 @@
 package org.rundeck.app.data.providers
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import groovy.util.logging.Slf4j
-import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookRequest
 import org.rundeck.app.data.model.v1.webhook.dto.SaveWebhookResponse;
 import org.rundeck.app.data.providers.v1.WebhookDataProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.MessageSource
-import org.springframework.validation.Errors
 import rundeck.services.data.WebhookDataService
 import webhooks.Webhook
 
@@ -25,10 +22,6 @@ class GormWebhookDataProvider implements WebhookDataProvider {
     @Autowired
     MessageSource messageSource
 
-    @Override
-    RdWebhook get(Long id){
-        return Webhook.get(id);
-    }
 
     @Override
     Webhook getWebhookByToken (String token) {

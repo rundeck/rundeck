@@ -149,7 +149,7 @@ class WebhookService {
         SaveWebhookRequest saveWebhookRequest = mapperSaveRequest(hookData)
         boolean shouldUpdate = false
         if(saveWebhookRequest.id) {
-            hook = webhookDataProvider.get(saveWebhookRequest.id)
+            hook = webhookDataProvider.getWebhook(saveWebhookRequest.id)
             if (!hook) return [err: "Webhook not found"]
             if(saveWebhookRequest.roles && !hookData.importData) {
                 try {
@@ -330,7 +330,7 @@ class WebhookService {
     }
 
     def getWebhookWithAuth(String id) {
-        RdWebhook hook = webhookDataProvider.get(id.toLong())
+        RdWebhook hook = webhookDataProvider.getWebhook(id.toLong())
         getWebhookWithAuthAsMap(hook)
     }
     def getWebhookForProjectWithAuth(String id, String project) {
