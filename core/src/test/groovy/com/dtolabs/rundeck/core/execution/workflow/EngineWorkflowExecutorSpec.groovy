@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.rules.Condition
 import com.dtolabs.rundeck.core.rules.RuleEngine
 import com.dtolabs.rundeck.core.rules.Rules
 import com.dtolabs.rundeck.core.rules.StateObj
+import com.dtolabs.rundeck.core.rules.States
 import com.dtolabs.rundeck.core.rules.WorkflowEngineBuilder
 import com.dtolabs.rundeck.core.rules.WorkflowSystem
 import com.dtolabs.rundeck.core.rules.Workflows
@@ -161,6 +162,46 @@ class EngineWorkflowExecutorSpec extends Specification {
         null != result
         result.success
 
+    }
+
+    def "build operations"() {
+        given:
+            def engine = new EngineWorkflowExecutor(framework)
+
+            def state = States.mutable()
+        when:
+            def result = EngineWorkflowExecutor.buildOperations(
+                engine,
+                Mock(StepExecutionContext){
+                    getStepNumber() >> 1
+                },
+                Mock(WorkflowExecutionItem),
+                Mock(IWorkflow){
+                    _ * getCommands()>>[
+                        Mock(StepExecutionItem),
+                        Mock(StepExecutionItem)
+                    ]
+                },
+                Mock(WorkflowExecutionListener),
+                Mock(RuleEngine){
+                    2 * addRule(_)
+                },
+                state,
+                Mock(WorkflowStrategyProfile){
+                    1 * getInitialStateForStep(1,_,true)>>States.state([:])
+                    1 * getStartConditionsForStep(_,1,true)>>[].toSet()
+                    1 * getSkipConditionsForStep(_,1,true)>>[].toSet()
+                    1 * getInitialStateForStep(2,_,false)>>States.state([:])
+                    1 * getStartConditionsForStep(_,2,false)>>[].toSet()
+                    1 * getSkipConditionsForStep(_,2,false)>>[].toSet()
+                },
+                Mock(EngineWorkflowExecutor.LogOut)
+            )
+        then:
+            result.size() == 2
+            result.every {
+                it.stepNum > 0
+            }
     }
 
     def "basic success on empty node filter"() {
@@ -760,14 +801,15 @@ class EngineWorkflowExecutorSpec extends Specification {
         def nodeSet = Mock(INodeSet){
             getNodes() >> Arrays.asList(new NodeEntryImpl("set1node1"))
         }
-        def context = ExecutionContextImpl.builder().
-                executionListener(logger).
-                workflowExecutionListener(new NoopWorkflowExecutionListener()).
-                frameworkProject(PROJECT_NAME).
-                stepNumber(1)
-                .nodes(nodeSet).
-                framework(framework).
-                build()
+        def context = ExecutionContextImpl.builder().with {
+            executionListener(logger)
+            workflowExecutionListener(new NoopWorkflowExecutionListener())
+            frameworkProject(PROJECT_NAME)
+            stepNumber(1)
+            nodes(nodeSet)
+            framework(framework)
+            build()
+        }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
                 getCommands() >> [

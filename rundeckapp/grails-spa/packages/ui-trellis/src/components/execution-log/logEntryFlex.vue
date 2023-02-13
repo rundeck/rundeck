@@ -84,6 +84,14 @@ export default class Flex extends Vue {
         this.$emit('line-select', this.logEntry.lineNumber)
     }
 
+    beforeMount() {
+      this.eventBus.$on("execution-log-settings-changed", this.handleSettingsChanged)
+    }
+
+    private handleSettingsChanged(newSettings: any) {
+      Object.assign(this.config, newSettings);
+    }
+
 }
 </script>
 

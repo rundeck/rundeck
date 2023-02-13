@@ -24,6 +24,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobRefCommand
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

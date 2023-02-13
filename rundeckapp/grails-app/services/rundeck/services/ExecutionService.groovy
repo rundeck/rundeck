@@ -51,8 +51,8 @@ import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
-import com.dtolabs.rundeck.execution.JobExecutionItem
-import com.dtolabs.rundeck.execution.JobRefCommand
+import com.dtolabs.rundeck.core.jobs.JobExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
@@ -4237,7 +4237,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
             return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
         } catch (JobLifecycleComponentException jpe) {
-            throw new ExecutionServiceValidationException(jpe.message, optparams, null)
+            throw new ExecutionServiceException(jpe.message, 'error')
         }
     }
 

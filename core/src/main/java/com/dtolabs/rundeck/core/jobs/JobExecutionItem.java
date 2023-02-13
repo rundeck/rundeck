@@ -21,7 +21,7 @@
 * Created: Mar 22, 2010 4:28:34 PM
 * $Id$
 */
-package com.dtolabs.rundeck.execution;
+package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
