@@ -110,6 +110,7 @@ import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -880,4 +881,6 @@ beans={
     projectDataProvider(GormProjectDataProvider)
     storageDataProvider(GormStorageDataProvider)
     userDataProvider(GormUserDataProvider)
+    webhookDataProvider(GormWebhookDataProvider)
+
 }
