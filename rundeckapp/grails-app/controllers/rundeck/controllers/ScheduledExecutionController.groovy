@@ -39,6 +39,14 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.commons.collections.list.TreeList
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
@@ -71,6 +79,7 @@ import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
+@Controller()
 class ScheduledExecutionController  extends ControllerBase{
     static Logger logger = LoggerFactory.getLogger(ScheduledExecutionController)
 
@@ -2969,6 +2978,31 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
+
+    @Get(uri = "/project/{project}/jobs/import", produces = [MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML])
+    @Operation(
+        method = "POST",
+        summary = "Import Job definitions",
+        description = "Import a set of job definitions in a supported format",
+        responses = [
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition import result (json)",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition import result (xml)",
+                content = @Content(
+                    mediaType = MediaType.TEXT_XML
+                )
+            )
+        ]
+    )
+    @Tag(name = "jobs")
     /**
      * API: /api/14/project/NAME/jobs/import
      */
@@ -3061,6 +3095,39 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
+
+    @Get(uri = "/job/{id}", produces = [MediaType.APPLICATION_JSON, MediaType.TEXT_XML, 'text/yaml'])
+    @Operation(
+        method = "GET",
+        summary = "Get Job Definition",
+        description = "Export the Job definition for the job, in one of the supported formats.",
+        responses = [
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition (json)",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition (xml)",
+                content = @Content(
+                    mediaType = MediaType.TEXT_XML
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition (yaml)",
+                content = @Content(
+                    mediaType = 'text/yaml'
+                )
+            )
+        ]
+    )
+    @Tag(name = "jobs")
 
     /**
      * API: export job definition: /job/{id}, version 1
