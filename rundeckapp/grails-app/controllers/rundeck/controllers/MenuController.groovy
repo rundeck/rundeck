@@ -3042,7 +3042,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     code: 'api.error.parameter.required', args: ['project']])
         }
         def supportedFormats = ['all', 'xml', 'yaml', 'html']
-        if(request.api_version > ApiVersions.V41){
+        if(request.api_version > ApiVersions.V42){
             supportedFormats << 'json'
         }
         if (!(response.format in supportedFormats)) {
@@ -3066,7 +3066,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         //don't load scm status for api response
         def results = jobsFragment(query,JobsScmInfo.NONE)
-        def defaultFormat = request.api_version <= ApiVersions.V41 ? 'xml' : 'json'
+        def defaultFormat = request.api_version <= ApiVersions.V42 ? 'xml' : 'json'
         def contentTypes = [
             json: 'application/json',
             xml : 'text/xml',

@@ -2927,7 +2927,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         format | contentType        | apivers
         'xml'  | 'text/xml'         | 14
         'yaml' | 'text/yaml'        | 14
-        'json' | 'application/json' | 42
+        'json' | 'application/json' | 43
     }
     @Unroll
     def "api export jobs with unspecified format"() {
@@ -2984,11 +2984,11 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.status == 200
         response.text=="format: $format"
         response.contentType=="$contentType;charset=UTF-8"
-        where:"default format depends on api version, >41 uses json, <42 uses xml"
+        where:"default format depends on api version, >42 uses json, <43 uses xml"
         format | contentType        | apivers
         'xml'  | 'text/xml'         | 14
-        'xml'  | 'text/xml'         | 41
-        'json' | 'application/json' | 42
+        'xml'  | 'text/xml'         | 42
+        'json' | 'application/json' | 43
     }
 
     @Unroll
