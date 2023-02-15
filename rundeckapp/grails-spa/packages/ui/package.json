@@ -58,7 +58,7 @@
     "@vue/cli-plugin-babel": "^4.5.8",
     "@vue/cli-plugin-typescript": "^4.5.8",
     "@vue/cli-service": "^4.5.8",
-    "autoprefixer": "^7.1.2",
+    "autoprefixer": "^9.0.0",
     "babel-loader": "8.1.0",
     "chalk": "^2.0.1",
     "file-loader": "^1.1.4",
