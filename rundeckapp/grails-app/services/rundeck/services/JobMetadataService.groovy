@@ -18,11 +18,14 @@ package rundeck.services
 
 import grails.events.annotation.Subscriber
 import grails.gorm.transactions.Transactional
+import org.rundeck.app.data.providers.v1.PluginMetaDataProvider
 import rundeck.PluginMeta
 import rundeck.ScheduledExecution
 
 @Transactional
 class JobMetadataService {
+
+    PluginMetaDataProvider pluginMetaDataProvider
 
     /**
      * Load scm metadata for the job
@@ -39,7 +42,7 @@ class JobMetadataService {
      * @return map of metadata set by import plugin
      */
     List<PluginMeta> getJobsPluginMeta(final String project, final String type) {
-        def found = PluginMeta.findAllByProjectAndKeyLike(project, "%/${type}")
+        def found = pluginMetaDataProvider.findAllByProjectAndKeyLike(project, "%/${type}")
         return found
     }
 
@@ -52,7 +55,7 @@ class JobMetadataService {
     Map getJobPluginMeta(final String project, final String id, final String type) {
         def key = id + '/' + type
         try {
-            def found = PluginMeta.findByProjectAndKey(project, key)
+            def found = pluginMetaDataProvider.findByProjectAndKey(project, key)
             if (found) {
                 return found.pluginData
             }
@@ -77,10 +80,7 @@ class JobMetadataService {
      */
     def removeJobPluginMeta(final String project, final String id, final String type) {
         def key = id + '/' + type
-        def found = PluginMeta.findByProjectAndKey(project, key)
-        if (found) {
-            found.delete(flush: true)
-        }
+        pluginMetaDataProvider.deleteByProjectAndKey(project, key)
     }
 
     /**
@@ -88,7 +88,7 @@ class JobMetadataService {
      * @param project project
      */
     def removeProjectPluginMeta(final String project, final String type) {
-        PluginMeta.executeUpdate('delete PluginMeta where project=:project and data_key like :data_key' , [project: project, data_key: "%/${type}"], [flush: true])
+        pluginMetaDataProvider.deleteByProjectAndDataKey(project, type)
     }
 
     /**
@@ -97,10 +97,7 @@ class JobMetadataService {
      * @param id jobid
      */
     def removeJobPluginMetaAll(final String project, final String id) {
-        def found = PluginMeta.findAllByProjectAndKeyLike(project, id + '/%')
-        if (found) {
-            found*.delete(flush: true)
-        }
+        pluginMetaDataProvider.deleteAllByProjectAndKeyLike(project, id + '/%')
     }
 
     /**
@@ -109,7 +106,7 @@ class JobMetadataService {
      */
     @Subscriber('projectWasDeleted')
     def removeAllPluginMetaForProject(final String project) {
-        PluginMeta.executeUpdate('delete PluginMeta where project=:project', [project: project], [flush: true])
+        pluginMetaDataProvider.deleteAllByProject(project);
     }
 
     /**
@@ -127,13 +124,6 @@ class JobMetadataService {
      */
     def setJobPluginMeta(final String project, final String id, final String type, final Map metadata) {
         def key = id + '/' + type
-        def found = PluginMeta.findByProjectAndKey(project, key)
-        if (!found) {
-            found = new PluginMeta()
-            found.project = project
-            found.key = key
-        }
-        found.setPluginData(metadata)
-        found.save(flush: true)
+        pluginMetaDataProvider.setJobPluginMeta(project, id, key, metadata)
     }
 }
