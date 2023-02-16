@@ -210,6 +210,7 @@ export default Vue.extend({
       rdBase: "",
       cancelUrl: "",
       pluginConfigs: [] as ProjectPluginConfigEntry[],
+      removedPluginConfigs: [] as ProjectPluginConfigEntry[],
       configOrig: [] as any[],
       rundeckContext: {} as RundeckContext,
       modalAddOpen: false,
@@ -278,6 +279,7 @@ export default Vue.extend({
       };
     },
     addPlugin(provider: string) {
+      console.log("ProjectPluginConfig adding plugin....")
       this.modalAddOpen = false;
       this.pluginConfigs.push({
         entry: { type: provider, config: {} },
@@ -313,6 +315,8 @@ export default Vue.extend({
       if (!plugin.create) {
         this.setPluginConfigsModified();
       }
+      if (plugin.create === undefined)
+        this.removedPluginConfigs.push(plugin);
 
       this.cleanStorageAccess(plugin);
       this.setFocus(-1);
@@ -333,11 +337,17 @@ export default Vue.extend({
     },
     async savePlugins() {
       try {
+        console.log(":::::::::::::::::::::::::::::::")
+        console.log(this.pluginConfigs)
+        console.log(":::::::::::::::::::::::::::::::")
+        console.log(this.removedPluginConfigs)
+        console.log(":::::::::::::REMOVED::::::::::::::::")
         const result = await this.saveProjectPluginConfig(
           this.project,
           this.configPrefix,
           this.serviceName,
-          this.pluginConfigs
+          this.pluginConfigs,
+          this.removedPluginConfigs
         );
         if (result.success) {
           this.didSave(true);
@@ -385,9 +395,9 @@ export default Vue.extend({
       project: string,
       configPrefix: string,
       serviceName: string,
-      data: ProjectPluginConfigEntry[]
+      data: ProjectPluginConfigEntry[],
+      removedData: ProjectPluginConfigEntry[]
     ) {
-      const serializedData = data.map(this.serializeConfigEntry);
 
       const resp = await this.rundeckContext.rundeckClient.sendRequest({
         pathTemplate: `/framework/saveProjectPluginsAjax`,
@@ -398,7 +408,10 @@ export default Vue.extend({
           configPrefix: this.configPrefix,
           serviceName: this.serviceName
         },
-        body: { plugins: serializedData }
+        body: {
+          plugins: data.map(this.serializeConfigEntry),
+          removedPlugins: removedData.map(this.serializeConfigEntry)
+        }
       });
 
       if (resp && resp.status >= 200 && resp.status < 300) {
@@ -446,6 +459,7 @@ export default Vue.extend({
     },
     pluginConfigsModifiedReset() {
       this.modified = false;
+      this.removedPluginConfigs = []
       this.$emit("reset");
       this.notifyPluginConfigs();
     },

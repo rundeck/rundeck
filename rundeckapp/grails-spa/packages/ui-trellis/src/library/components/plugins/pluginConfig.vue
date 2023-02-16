@@ -276,13 +276,28 @@ export default Vue.extend({
     },
     loadPluginData(data: any) {
       this.props = data.props
-      if(data.dynamicProps) {
-        this.props.forEach((prop: any) => {
-          if (data.dynamicProps[prop.name]) {
-            prop.allowed = data.dynamicProps[prop.name]
+      console.log(":::::::::::::::LOADING PLUGIN DATA::::::::")
+      console.log(`Is create mode: ${this.isCreateMode}, MODE: ${this.mode}`)
+
+      this.props.forEach((prop: any) => {
+        //console.log(prop)
+        if (data.dynamicProps && data.dynamicProps[prop.name]) {
+          prop.allowed = data.dynamicProps[prop.name]
+        }
+        if(prop.type === 'AutogenInstanceId'){
+          if(this.isCreateMode && prop.defaultValue === '') {
+            prop.defaultValue = Math.random().toString(36).slice(2)
+          } else if (!this.isCreateMode) {
+            prop.defaultValue = ''
           }
-        })
-      }
+          prop.staticTextDefaultValue = prop.defaultValue
+        }
+
+        if(prop.type === 'AutogenInstanceId')
+          console.log(`DEFAULT: ${prop.defaultValue}`)
+      })
+      console.log(":::::::::::::::END LOADING PLUGIN DATA::::::::")
+
       this.detail = data
       this.prepareInputs()
 
@@ -291,11 +306,18 @@ export default Vue.extend({
         this.notifyHasKeyStorageAccess();
       }
     },
+
     async loadProvider(provider: any) {
       try{
         const data:any = await getServiceProviderDescription(this.serviceName, provider)
         if (data.props) {
+          console.log(":::::::::::::loading provider:::::::::::::::::")
+          console.log(this.serviceName)
+          console.log(provider)
+          console.log(data.props)
+          console.log("---------------------------------------------------")
           this.loadPluginData(data)
+          console.log(":::::::::::::END loading provider:::::::::::::::::")
         }
       }catch(e){
         let message = 'Unknown Error'
