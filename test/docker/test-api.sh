@@ -36,7 +36,7 @@ echo "up completed, running tests..."
 set +e
 
 docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 \
-	bash scripts/run_api_tests.sh api_test
+	bash scripts/run_api_tests.sh api_test ${TEST_NAME:-}
 
 EC=$?
 echo "run_tests.sh finished with: $EC"
