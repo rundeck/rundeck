@@ -2927,7 +2927,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         format | contentType        | apivers
         'xml'  | 'text/xml'         | 14
         'yaml' | 'text/yaml'        | 14
-        'json' | 'application/json' | 43
+        'json' | 'application/json' | 44
     }
     @Unroll
     def "api export jobs with unspecified format"() {
@@ -2984,11 +2984,10 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         response.status == 200
         response.text=="format: $format"
         response.contentType=="$contentType;charset=UTF-8"
-        where:"default format depends on api version, >42 uses json, <43 uses xml"
+        where:"default format is xml"
         format | contentType        | apivers
         'xml'  | 'text/xml'         | 14
-        'xml'  | 'text/xml'         | 42
-        'json' | 'application/json' | 43
+        'xml'  | 'text/xml'         | 44
     }
 
     @Unroll
@@ -3046,7 +3045,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
         'zxml' |  14
         'asdf' |  14
         'json' |  14
-        'json' |  41
+        'json' |  43
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
