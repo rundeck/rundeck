@@ -3019,7 +3019,7 @@ class ScheduledExecutionController  extends ControllerBase{
         String fileformat = params.format ?:params.fileformat ?: 'xml'
         def parseresult
         def supportedFormats = ['xml', 'yaml']
-        if (request.api_version > ApiVersions.V42) {
+        if (request.api_version > ApiVersions.V43) {
             supportedFormats<<'json'
         }
         if(request.format in supportedFormats){
@@ -3138,7 +3138,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         log.debug("ScheduledExecutionController: /api/job GET : params: " + params)
         def supportedFormats = ['all', 'xml', 'yaml']
-        if(request.api_version > ApiVersions.V42){
+        if(request.api_version > ApiVersions.V43){
             supportedFormats << 'json'
         }
         if (!(response.format in supportedFormats)) {

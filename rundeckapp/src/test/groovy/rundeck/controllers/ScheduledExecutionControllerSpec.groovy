@@ -3631,7 +3631,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             'application/yaml' | 'yaml' | null       | null       | 'true'         | 14
             'application/yaml' | 'yaml' | null       | 'remove'   | null           | 14
             'application/yaml' | 'yaml' | 'update'   | null       | null           | 14
-            'application/json' | 'json' | null       | null       | null           | 43
+            'application/json' | 'json' | null       | null       | null           | 44
     }
     @Unroll
     def "api jobs import xmlBatch text format #format fileformat #fformat"() {
@@ -3778,9 +3778,9 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             format | apiVers | expectedFormat | expectedType
             'xml'  | 14      | 'xml'          | 'text/xml'
             'yaml' | 14      | 'yaml'         | 'text/yaml'
-            'json' | 43      | 'json'         | 'application/json'
-            'all'  | 42      | 'xml'          | 'text/xml'
+            'json' | 44      | 'json'         | 'application/json'
             'all'  | 43      | 'xml'          | 'text/xml'
+            'all'  | 44      | 'xml'          | 'text/xml'
     }
     def "api job export unsupported format"(){
         given:
