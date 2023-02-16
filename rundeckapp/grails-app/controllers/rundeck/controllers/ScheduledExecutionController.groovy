@@ -3161,7 +3161,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
 
-        def defaultFormat = request.api_version <= ApiVersions.V42 ? 'xml' : 'json'
+        def defaultFormat = 'xml'//TODO: set default to json after 5.0
         def contentTypes = [
             json: 'application/json',
             xml : 'text/xml',

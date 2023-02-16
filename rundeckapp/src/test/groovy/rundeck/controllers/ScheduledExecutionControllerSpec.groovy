@@ -3780,7 +3780,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             'yaml' | 14      | 'yaml'         | 'text/yaml'
             'json' | 43      | 'json'         | 'application/json'
             'all'  | 42      | 'xml'          | 'text/xml'
-            'all'  | 43      | 'json'         | 'application/json'
+            'all'  | 43      | 'xml'          | 'text/xml'
     }
     def "api job export unsupported format"(){
         given:
