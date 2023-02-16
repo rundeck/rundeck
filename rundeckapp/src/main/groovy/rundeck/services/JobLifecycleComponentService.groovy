@@ -165,7 +165,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
             compList.addAll(beanComponents.collect { name, component->
                 new NamedJobLifecycleComponent(
                     component: component,
-                    name: component.class.canonicalName)
+                    name: component.class.simpleName)
             })
         }
         compList.addAll(loadProjectConfiguredPlugins(project))
@@ -240,12 +240,14 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
         }
         
         if (!success || errors) {
-            LOG.warn("Errors processing Job Component Event [${eventType}]. See debug log for details.")
-            errors.each { name, e ->
-                LOG.debug("    For component [${name}]: " + e.getMessage(), e)
+            LOG.warn("Errors processing Job Component Event [${eventType}]:")
+            errors.each { name, e -> 
+                LOG.warn(" -- For component [${name}]: " + e.getMessage())
+                LOG.debug(" -- For component [${name}]: " + e.getMessage(), e)
             }
-            throw new JobLifecycleComponentException("Aborting event handling due to (${errors.size()}) errors: " + errors.collect { name, e ->
-                "{Component: [${name}] Message: [${e.message}]}"
+            
+            throw new JobLifecycleComponentException("Error: " + errors.collect { name, e ->
+                "{[${name}]: ${e.message}}"
             }.join(", "))
         }
 

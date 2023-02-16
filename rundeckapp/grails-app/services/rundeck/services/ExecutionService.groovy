@@ -4237,7 +4237,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
             return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
         } catch (JobLifecycleComponentException jpe) {
-            throw new ExecutionServiceValidationException(jpe.message, optparams, null)
+            throw new ExecutionServiceException(jpe.message, 'error')
         }
     }
 
