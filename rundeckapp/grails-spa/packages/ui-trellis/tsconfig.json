@@ -1,28 +1,26 @@
 {
   "compilerOptions": {
-      "outDir": "lib",
+    "target": "esnext",
       "baseUrl": ".",
       "sourceMap": true,
       "strict": true,
       "moduleResolution": "node",
-      "target": "esnext",
       "experimentalDecorators": true,
       "skipLibCheck": true,
       "esModuleInterop": true,
       "declaration": true,
       "jsx": "preserve",
-      "allowSyntheticDefaultImports": true,
-      "types": [
-          "webpack-env",
-          "jest"
-      ],
-      "paths": {
-          "react": [".sink.d.ts"]
-      }
+      "allowSyntheticDefaultImports": true
    },
+    "paths": {
+      "@": [
+        "./src"
+      ]
+    },
    "include": [
-         "./src/**/*",
-//         "tests/**/*.ts",
-//         "tests/**/*.tsx"
+      "main.ts"
+        // "./src/library/**/*",
+        // "tests/**/*.ts",
+        // "tests/**/*.tsx"
    ]
 }

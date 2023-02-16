@@ -38,31 +38,31 @@ task noop() {
 }
 
 tasks.register("runNpmBuild", NpmTask) {
-    dependsOn configurations.uiTrellis
+    // dependsOn configurations.uiTrellis
 
-    inputs.files(configurations.uiTrellis.allArtifacts)
-    inputs.file 'packages/ui-trellis/build/package/rundeck-ui-trellis.tgz'
-    inputs.file 'packages/ui/package.json'
-    inputs.file 'packages/ui/package-lock.json'
-    inputs.file 'packages/ui/babel.config.js'
-    inputs.file 'packages/ui/vue.config.js'
-    inputs.file 'packages/ui/tsconfig.json'
-    inputs.file 'packages/ui/.env.development'
-    inputs.file 'packages/ui/.env.production'
+    // inputs.files(configurations.uiTrellis.allArtifacts)
+    // inputs.file 'packages/ui-trellis/build/package/rundeck-ui-trellis.tgz'
+    inputs.file 'packages/ui-trellis/package.json'
+    inputs.file 'packages/ui-trellis/package-lock.json'
+    inputs.file 'packages/ui-trellis/babel.config.js'
+    inputs.file 'packages/ui-trellis/vue.config.app.js'
+    inputs.file 'packages/ui-trellis/tsconfig.json'
+    inputs.file 'packages/ui-trellis/.env.development'
+    inputs.file 'packages/ui-trellis/.env.production'
 
-    inputs.dir 'packages/ui/src'
+    inputs.dir 'packages/ui-trellis/src/app'
 
     outputs.dir(file("$spaBuildDir"))
     outputs.cacheIf { true }
 
     def npmCommand = System.env.CI ?
-      'ci:build' :
-      'dev:build'
+      'ci:app:build' :
+      'dev:app:build'
 
     args = ['run', npmCommand]
 
     execOverrides {
-      it.workingDir = './packages/ui'
+      it.workingDir = './packages/ui-trellis/src/app'
     }
 }
 
