@@ -216,7 +216,7 @@ Path can include variable references
             defaultValue = 'xml',
             required = true
     )
-    @SelectValues(values = ['xml', 'yaml'])
+    @SelectValues(values = ['xml', 'yaml', 'json'])
     @RenderingOption(
             key = StringRenderingConstants.GROUP_NAME,
             value = "Job Source Files"

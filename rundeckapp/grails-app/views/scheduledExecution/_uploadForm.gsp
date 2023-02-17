@@ -186,7 +186,11 @@
               <div class="radio">
                 <g:radio name="fileformat" value="yaml"  checked="${params.fileformat?params.fileformat=='yaml':false}" id="fileformat_yaml"/>
                 <label class="radio-inline" for="fileformat_yaml">YAML format</label>
-              </div>              
+              </div>
+              <div class="radio">
+                <g:radio name="fileformat" value="json"  checked="${params.fileformat?params.fileformat=='json':false}" id="fileformat_json"/>
+                <label class="radio-inline" for="fileformat_json">JSON format</label>
+              </div>
             </div>
             <div class="form-group">
               <div class="control-label text-form-label">

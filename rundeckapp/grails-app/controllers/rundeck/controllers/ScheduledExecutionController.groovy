@@ -39,6 +39,14 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import grails.compiler.GrailsCompileStatic
 import grails.converters.JSON
+import io.micronaut.http.MediaType
+import io.micronaut.http.annotation.Controller
+import io.micronaut.http.annotation.Get
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.commons.collections.list.TreeList
 import org.apache.http.HttpResponse
 import org.apache.http.auth.UsernamePasswordCredentials
@@ -71,6 +79,7 @@ import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
+@Controller()
 class ScheduledExecutionController  extends ControllerBase{
     static Logger logger = LoggerFactory.getLogger(ScheduledExecutionController)
 
@@ -419,7 +428,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         def actions = [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
-        if (response.format in ['xml', 'yaml']) {
+        if (response.format in ['xml', 'yaml', 'json']) {
             actions = [AuthConstants.ACTION_READ]
         }
         if (unauthorizedResponse(
@@ -532,7 +541,15 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
                 flush(response)
             }
+            json{
+                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.json\"")
+                response.contentType='application/json; charset=UTF-8'
 
+                response.outputStream.withWriter('UTF-8') { writer ->
+                    rundeckJobDefinitionManager.exportAs('json', [scheduledExecution], writer)
+                }
+                flush(response)
+            }
             xml{
                 response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
                 response.contentType='text/xml; charset=UTF-8'
@@ -2961,6 +2978,31 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
+
+    @Get(uri = "/project/{project}/jobs/import", produces = [MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML])
+    @Operation(
+        method = "POST",
+        summary = "Import Job definitions",
+        description = "Import a set of job definitions in a supported format",
+        responses = [
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition import result (json)",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition import result (xml)",
+                content = @Content(
+                    mediaType = MediaType.TEXT_XML
+                )
+            )
+        ]
+    )
+    @Tag(name = "jobs")
     /**
      * API: /api/14/project/NAME/jobs/import
      */
@@ -2974,16 +3016,25 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         log.debug("ScheduledExecutionController: upload " + params)
-        def fileformat = params.format ?:params.fileformat ?: 'xml'
+        String fileformat = params.format ?:params.fileformat ?: 'xml'
         def parseresult
-        if(request.format=='xml'){
-            //xml input
-            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), 'xml')
-        }else if(request.format=='yaml'){
-            //yaml input
-            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), 'yaml')
+        def supportedFormats = ['xml', 'yaml']
+        if (request.api_version > ApiVersions.V43) {
+            supportedFormats<<'json'
+        }
+        if(request.format in supportedFormats){
+            parseresult = scheduledExecutionService.parseUploadedFile(request.getInputStream(), request.format)
         }else if (!apiService.requireParameters(params,response,['xmlBatch'])) {
             return
+        }else if(!(fileformat in supportedFormats)){
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.jobs.import.format.unsupported',
+                    args  : [fileformat]
+                ]
+            )
         }else if (request.format=='multipartForm' && request instanceof MultipartHttpServletRequest) {
             if (!request.fileNames.toList().contains('xmlBatch')) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -3045,6 +3096,39 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    @Get(uri = "/job/{id}", produces = [MediaType.APPLICATION_JSON, MediaType.TEXT_XML, 'text/yaml'])
+    @Operation(
+        method = "GET",
+        summary = "Get Job Definition",
+        description = "Export the Job definition for the job, in one of the supported formats.",
+        responses = [
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition (json)",
+                content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition (xml)",
+                content = @Content(
+                    mediaType = MediaType.TEXT_XML
+                )
+            ),
+
+            @ApiResponse(
+                responseCode = "200",
+                description = "Job definition (yaml)",
+                content = @Content(
+                    mediaType = 'text/yaml'
+                )
+            )
+        ]
+    )
+    @Tag(name = "jobs")
+
     /**
      * API: export job definition: /job/{id}, version 1
      */
@@ -3053,34 +3137,46 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         log.debug("ScheduledExecutionController: /api/job GET : params: " + params)
+        def supportedFormats = ['all', 'xml', 'yaml']
+        if(request.api_version > ApiVersions.V43){
+            supportedFormats << 'json'
+        }
+        if (!(response.format in supportedFormats)) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args: [response.format]
+                ]
+            )
+        }
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (!apiService.requireExists(response, scheduledExecution,['Job ID',params.id])) {
             return
         }
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!rundeckAuthContextProcessor.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_READ], scheduledExecution.project)) {
-            return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_FORBIDDEN,
+            return apiService.renderErrorFormat(response,[status:HttpServletResponse.SC_FORBIDDEN,
                     code:'api.error.item.unauthorized',args:['Read','Job ID',params.id]])
         }
-        if(!(response.format in ['all','xml','yaml'])){
-            return apiService.renderErrorXml(response,[status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                                                       code:'api.error.item.unsupported-format',args:[response.format]])
+
+        def defaultFormat = 'xml'//TODO: set default to json after 5.0
+        def contentTypes = [
+            json: 'application/json',
+            xml : 'text/xml',
+            yaml: 'text/yaml'
+        ]
+        def format = defaultFormat
+        if (response.format != 'all') {
+            format = response.format
         }
-        withFormat{
-            xml{
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('xml',[scheduledExecution], writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
-            }
-            yaml{
-                def writer = new StringWriter()
-                rundeckJobDefinitionManager.exportAs('yaml',[scheduledExecution], writer)
-                writer.flush()
-                render(text:writer.toString(),contentType:"text/yaml",encoding:"UTF-8")
-            }
+
+        response.contentType = contentTypes[format] + ';charset=UTF-8'
+        response.outputStream.withWriter('UTF-8') { writer ->
+            rundeckJobDefinitionManager.exportAs(format, [scheduledExecution], writer)
         }
+        flush(response)
     }
     /**
      * API: Run a job immediately: /job/{id}/run, version 1

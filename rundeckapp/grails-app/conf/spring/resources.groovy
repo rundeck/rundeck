@@ -103,6 +103,7 @@ import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizingP
 import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizingProvider
 import org.rundeck.app.authorization.domain.system.AppSystemAuthorizingProvider
 import org.rundeck.app.cluster.ClusterInfo
+import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
@@ -537,6 +538,9 @@ beans={
     rundeckJobXmlFormat(JobXMLFormat)
     rundeckJobYamlFormat(JobYAMLFormat) {
         trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
+    }
+    rundeckJobJsonFormat(JobJSONFormat) {
+        trimSpacesFromLines = application.config.getProperty('rundeck.job.export.json.trimSpaces', Boolean)
     }
 
     scmExportPluginProviderService(ScmExportPluginProviderService) {
