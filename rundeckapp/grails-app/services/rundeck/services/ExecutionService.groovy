@@ -46,6 +46,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -1412,6 +1413,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_MISSED = "missed"
     public static String EXECUTION_QUEUED = "queued"
 
+    public static String BEFORE_EXECUTION_CHECK_FAILURE = "before-execution-check-failure"
+
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
     public static String ABORT_FAILED = "failed"
@@ -2197,6 +2200,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
 
+            if(e.status?.startsWith(BEFORE_EXECUTION_CHECK_FAILURE)) {
+                throw new ExecutionServiceException(e.status)
+            }
+
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
                     scheduledExecution,
@@ -2290,12 +2297,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!allowedOptions['executionType']){
                 allowedOptions['executionType'] = 'user-scheduled'
             }
-            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
+
+            Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
 
             // Update execution
             e.dateStarted       = startTime
             e.status            = "scheduled"
             e.save()
+
+            if(e.status?.startsWith(BEFORE_EXECUTION_CHECK_FAILURE)) {
+                throw new ExecutionServiceException(e.status)
+            }
 
             def nextRun = scheduledExecutionService.scheduleAdHocJob(
                     scheduledExecution,
@@ -2443,7 +2455,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         /* 
         Process job lifecycle before execution event 
         */
-        
+
         def beforeExecutionResult = checkBeforeJobExecution(se, baseOptParams, props, authContext)
 
         // Process metadata updates
@@ -2517,6 +2529,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         execution.scheduledExecution=se
+
+        if(!beforeExecutionResult.isSuccessful()) {
+            execution.status = "${ExecutionService.BEFORE_EXECUTION_CHECK_FAILURE}: ${beforeExecutionResult.errorMessage}"
+        }
+
         if (workflow && !workflow.save(flush:true)) {
             execution.workflow.errors.allErrors.each { log.error(it.toString()) }
             log.error("unable to save execution workflow")
@@ -2528,6 +2545,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             log.error("unable to create execution: " + msg)
             throw new ExecutionServiceException("unable to create execution: "+msg)
         }
+
         return execution
     }
 
@@ -2545,7 +2563,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @throws ExecutionServiceException
      */
     @Publisher
-    def Execution createExecution(
+    Execution createExecution(
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,
             String runAsUser,
@@ -2566,7 +2584,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
-        
+
         // Publish audit event for new job run.
         if(auditEventsService) {
             auditEventsService.eventBuilder()
@@ -4220,7 +4238,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext Authentication Context
      * @return JobLifecycleStatus object with process result.
      */
-    def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
+    JobLifecycleStatus checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
 
         INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext, new HashSet<String>([AuthConstants.ACTION_READ, AuthConstants.ACTION_RUN]))
         def nodeFilter = props.filter ? props.filter : scheduledExecution.asFilter()
@@ -4234,11 +4252,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeFilter,
             nodes,
             props.extraMetadataMap)
+
         try {
             return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
-        } catch (JobLifecycleComponentException jpe) {
-            throw new ExecutionServiceException(jpe.message, 'error')
+        } catch(JobLifecycleComponentException e) {
+            log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
+            def jobEventStatus = new JobEventStatusImpl(
+                    successful: false,
+                    optionsValues: event.optionsValues,
+                    errorMessage: e.getMessage()
+            )
+            JobLifecycleComponentService.mergeEvent(jobEventStatus, event)
+            return jobEventStatus
         }
+
     }
 
     def getEffectiveSuccessNodeList(Execution e){

@@ -424,4 +424,10 @@ class JobEventStatusImpl implements JobLifecycleStatus {
     SortedSet<JobOption> options
     boolean useNewMetadata
     Map newExecutionMetadata
+    String errorMessage
+
+    @Override
+    public String getErrorMessage() {
+        return this.errorMessage
+    }
 }
