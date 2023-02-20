@@ -698,29 +698,4 @@ export class JobCreatePage extends Page {
         await formField.clear()
         return formField.sendKeys(text)
     }
-
-    async findEditJobLink(name){
-        const jobsList = await this.ctx.driver.findElement(By.css('#job_group_tree > div > div > div'))
-        const jobs =    await jobsList.findElements(By.tagName('div'))
-        let jobSelected
-
-        for(let t = 0; t < jobs.length; t++){
-            const job = jobs[t]
-            const childs =  await job.findElements(By.xpath('./child::a'))
-            // iterate child nodes
-            for(let k = 0; k < childs.length; k++){
-                const jobLink = childs[k]
-                const jobLinkName = await jobLink.getText()
-                if(jobLinkName == name){
-                    jobSelected = jobLink
-                    break
-                }
-            }
-        }
-
-        return jobSelected
-
-    }
-
-
 }

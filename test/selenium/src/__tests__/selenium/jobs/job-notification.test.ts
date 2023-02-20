@@ -124,10 +124,40 @@ describe('job', () => {
 
 
     it('edit job notifications', async () => {
-        await jobCreatePage.getJobHomePage()
 
-        const jobSelected = await jobCreatePage.findEditJobLink('a job with notifications')
-        await jobSelected.click()
+        await jobCreatePage.get()
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+        const jobName=await jobCreatePage.jobNameInput()
+        await jobName.sendKeys('edit job with notifications')
+
+        // add workflow step
+        const wfTab=await jobCreatePage.tabWorkflow()
+        await wfTab.click()
+        const addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+
+        // click add Command step, and wait until input fields are loaded
+        await addWfStepCommand.click()
+        await jobCreatePage.waitWfStepCommandRemoteText()
+
+
+        const wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+        await wfStepCommandRemoteText.sendKeys('echo selenium test')
+
+        const wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
+
+        // click step Save button and wait for the step content to display
+        const wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
+        await wfStep0SaveButton.click()
+        await jobCreatePage.waitWfstep0vis()
+
+        // wait until edit form section for step is removed from dom
+        await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
+
+        let save = await jobCreatePage.saveButton()
+        await save.click()
+
+        await sleep(1500)
+
         const jobUUID= await jobShowPage.jobUuidText()
 
         await jobCreatePage.getEditPage(jobUUID)
@@ -156,8 +186,7 @@ describe('job', () => {
             await notifySuccessRecipients.sendKeys(newEmail)
         } else {
             // vue ui
-
-            const vueAddSuccessbutton = await jobCreatePage.vueEditNotificationbutton()
+            const vueAddSuccessbutton = await jobCreatePage.vueAddSuccessbutton()
             await vueAddSuccessbutton.click()
 
             const vueEditNotificationModal = await jobCreatePage.vueEditNotificationModal()
@@ -184,7 +213,7 @@ describe('job', () => {
             await jobCreatePage.vueEditNotificationModalHidden()
         }
         // save the job
-        const save = await jobCreatePage.editSaveButton()
+        save = await jobCreatePage.editSaveButton()
         await save.click()
 
         await ctx.driver.wait(until.urlContains('/job/show'), 15000)
