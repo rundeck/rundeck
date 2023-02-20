@@ -63,6 +63,7 @@ export const Elems = {
     notifyOnsuccessEmail: By.css('#notifyOnsuccessEmail'),
     vueNotificationEditSection: By.css('#job-editor-notifications-vue'),
     vueAddSuccessButton: By.css('#job-notifications-onstart > .list-group-item:first-child > button'),
+    vueEditNotification: By.css('#job-notifications-onstart > div.list-group-item.flex-container.flex-justify-start > button'),
     vueEditNotificationModal: By.css('#job-notifications-edit-modal'),
     vueEditNotificationModalSaveBtn: By.css('#job-notifications-edit-modal-btn-save'),
     vueEditNotificationModalCancelBtn: By.css('#job-notifications-edit-modal-btn-cancel'),
@@ -144,9 +145,18 @@ export class JobCreatePage extends Page {
         this.projectName = project
         this.path = `/project/${project}/job/create`
     }
+    jobHomePath(){
+        return `/project/${this.projectName}/jobs`
+    }
     editPagePath(jobId: string){
         return `/project/${this.projectName}/job/edit/${jobId}`
     }
+
+    async getJobHomePage() {
+        const {driver} = this.ctx
+        await driver.get(this.ctx.urlFor(this.jobHomePath()))
+    }
+
     async getEditPage(jobId: string) {
         const {driver} = this.ctx
         await driver.get(this.ctx.urlFor(this.editPagePath(jobId)))
@@ -240,6 +250,9 @@ export class JobCreatePage extends Page {
     }
     async vueAddSuccessbutton(){
         return this.ctx.driver.wait(until.elementLocated(Elems.vueAddSuccessButton), 15000)
+    }
+    async vueEditNotificationbutton(){
+        return this.ctx.driver.wait(until.elementLocated(Elems.vueEditNotification), 15000)
     }
 
     async vueEditNotificationModal() {
@@ -684,6 +697,29 @@ export class JobCreatePage extends Page {
         expect(formField).toBeDefined()
         await formField.clear()
         return formField.sendKeys(text)
+    }
+
+    async findEditJobLink(name){
+        const jobsList = await this.ctx.driver.findElement(By.css('#job_group_tree > div > div > div'))
+        const jobs =    await jobsList.findElements(By.tagName('div'))
+        let jobSelected
+
+        for(let t = 0; t < jobs.length; t++){
+            const job = jobs[t]
+            const childs =  await job.findElements(By.xpath('./child::a'))
+            // iterate child nodes
+            for(let k = 0; k < childs.length; k++){
+                const jobLink = childs[k]
+                const jobLinkName = await jobLink.getText()
+                if(jobLinkName == name){
+                    jobSelected = jobLink
+                    break
+                }
+            }
+        }
+
+        return jobSelected
+
     }
 
 
