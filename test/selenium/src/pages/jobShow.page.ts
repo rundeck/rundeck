@@ -7,7 +7,7 @@ export const Elems = {
   jobGroup : By.css('div.jobInfoSection a.text-secondary'),
   jobTitleLink: By.css('#jobInfo_ > span > a.job-header-link'),
   jobTags: By.css('ul#tagsList > li.tag-pill-li'),
-  jobUuidText: By.css('#subtitlebar.job-page > div > div > section > small.uuid'),
+  jobUuidText: By.css('#subtitlebar > div > div.subtitle-head-item.flex-item-auto > section > div > div'),
   jobDescription: By.css('#subtitlebar.job-page > div > div > div.jobInfoSection > section > span.h5'),
   optionInput: By.css('#8f95c8d5_seleniumOption1'),
   jobDefinition  : By.css('a[href="#job-definition-modal"]'),
