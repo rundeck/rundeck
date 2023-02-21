@@ -342,8 +342,7 @@ class ExecutionJob implements InterruptableJob {
             if(triggerData){
                 inputMap.argString = triggerData
             }
-            Execution exec = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.authContext, null, inputMap)
-            initMap.execution = exec
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.authContext, null, inputMap)
             if(initMap.execution.status?.startsWith(ExecutionService.BEFORE_EXECUTION_CHECK_FAILURE)) {
                 initMap.jobShouldNotRun = "${initMap.execution.status}"
             }
