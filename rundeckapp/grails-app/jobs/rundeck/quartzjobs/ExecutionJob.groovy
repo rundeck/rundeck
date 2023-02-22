@@ -415,6 +415,7 @@ class ExecutionJob implements InterruptableJob {
             def duration = System.currentTimeMillis() - startTime
             if(!avgNotificationSent && jobAverageDurationFinal>0){
                 if(duration > jobAverageDurationFinal){
+                    execmap.execution.timedOut=true
                     runContext.executionService.avgDurationExceeded(
                             execmap.scheduledExecution.id,
                             [

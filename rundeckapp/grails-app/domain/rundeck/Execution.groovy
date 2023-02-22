@@ -241,7 +241,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
         return cancelled ? ExecutionService.EXECUTION_ABORTED :
             (null == dateCompleted && status == ExecutionService.EXECUTION_QUEUED) ? ExecutionService.EXECUTION_QUEUED :
                 null != dateStarted && dateStarted.getTime() > System.currentTimeMillis() ? ExecutionService.EXECUTION_SCHEDULED :
-                    null == dateCompleted ? ExecutionService.EXECUTION_RUNNING :
+                    (null == dateCompleted && !timedOut) ? ExecutionService.EXECUTION_RUNNING :
                         (status in ['true', 'succeeded']) ? ExecutionService.EXECUTION_SUCCEEDED :
                             cancelled ? ExecutionService.EXECUTION_ABORTED :
                                 willRetry ? ExecutionService.EXECUTION_FAILED_WITH_RETRY :
