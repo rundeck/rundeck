@@ -40,7 +40,19 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
      * @return
      */
     def boolean featurePresent(String name) {
-        featurePresent(name, false)
+        //check if the feature.${name}.defaultEnabled is set
+        boolean defaultEnabledValue = defaultFeatureEnabled(name)
+
+        featurePresent(name, defaultEnabledValue)
+    }
+
+    /**
+     * Return true if grails configuration allows given feature
+     * @param name
+     * @return
+     */
+    def boolean defaultFeatureEnabled(String name){
+        configurationService.getBoolean("feature.${name}.defaultEnabled", false)
     }
 
     /**

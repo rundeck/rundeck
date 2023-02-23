@@ -46,6 +46,7 @@ import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
+import rundeck.services.feature.FeatureService
 
 import javax.servlet.http.HttpServletResponse
 import javax.validation.constraints.Pattern
@@ -71,6 +72,7 @@ class ApiController extends ControllerBase{
     def frameworkService
     ConfigurationService configurationService
     LinkGenerator grailsLinkGenerator
+    FeatureService featureService
 
     static allowedMethods = [
             info                 : ['GET'],
@@ -260,7 +262,7 @@ class ApiController extends ControllerBase{
             return
         }
 
-        FeatureEnabledResult result = new FeatureEnabledResult(featureName, configurationService.getBoolean("feature.${featureName}.enabled", false))
+        FeatureEnabledResult result = new FeatureEnabledResult(featureName, featureService.featurePresent(featureName))
         return respond(result, formats: ['json'])
 
     }
