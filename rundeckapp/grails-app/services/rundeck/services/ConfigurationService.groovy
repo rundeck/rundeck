@@ -168,7 +168,6 @@ class ConfigurationService implements InitializingBean {
             }
             return val
         } catch(Exception ex) {
-            log.warn("Could not get value for property: ${property}")
         }
         return null
     }
