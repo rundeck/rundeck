@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.jobs.JobEvent
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
@@ -265,6 +266,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
         if (jobEvent instanceof JobPreExecutionEvent) {
             return new JobEventStatusImpl(
                 successful: success,
+                eventType: jobEvent.getClass(),
                 useNewValues: useNewOptionValues,
                 optionsValues: jobEvent.optionsValues,
                 useNewMetadata: useNewExecutionMetadata,
@@ -273,6 +275,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
         } else if (jobEvent instanceof JobPersistEvent) {
             return new JobEventStatusImpl(
                 successful: success,
+                eventType: jobEvent.getClass(),
                 options: jobEvent.options,
                 useNewValues: useNewOptionValues
             )
@@ -426,8 +429,17 @@ class JobEventStatusImpl implements JobLifecycleStatus {
     Map newExecutionMetadata
     String errorMessage
 
+    Class<? extends JobEvent> eventType
+
+    @Override
+    Class<? extends JobEvent> getJobEventType() {
+        return this.eventType
+    }
+
+
     @Override
     public String getErrorMessage() {
         return this.errorMessage
     }
+
 }

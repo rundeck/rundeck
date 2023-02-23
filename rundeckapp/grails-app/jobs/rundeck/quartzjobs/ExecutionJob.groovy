@@ -128,38 +128,37 @@ class ExecutionJob implements InterruptableJob {
                 log.error("Unable to start Job execution: ${es.message ?: 'no message'}", es)
                 throw es
             }
-        } catch(Throwable t){
+        }catch(Throwable t){
             markStartExecutionFailure(context)
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
         }
         executionId = initMap.executionId ?: initMap.execution?.id
-        RunResult result = null
-        def statusString=null
-
-        if(initMap.jobShouldNotRun) {
-            statusString = initMap.jobShouldNotRun
-        } else {
-            def beforeExec = initMap.jobSchedulerService.beforeExecution(
-                    initMap.execution.asReference(),
-                    context.mergedJobDataMap,
-                    initMap.authContext
-            )
-            if (beforeExec == JobScheduleManager.BeforeExecutionBehavior.skip) {
-                return
-            }
-
-            try {
-                if(!wasInterrupted){
-                    result = executeCommand(initMap)
-                    success=result.success
-                    statusString=Execution.isCustomStatusString(result.result?.statusString)?result.result?.statusString:null
-                }
-            }catch(Throwable t){
-                log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
-            }
+        if(initMap.jobShouldNotRun){
+            log.info(initMap.jobShouldNotRun)
+            return
         }
 
+
+        def beforeExec = initMap.jobSchedulerService.beforeExecution(
+                initMap.execution.asReference(),
+                context.mergedJobDataMap,
+                initMap.authContext
+        )
+        if (beforeExec == JobScheduleManager.BeforeExecutionBehavior.skip) {
+            return
+        }
+        RunResult result = null
+        def statusString=null
+        try {
+            if(!wasInterrupted){
+                result = executeCommand(initMap)
+                success=result.success
+                statusString=Execution.isCustomStatusString(result.result?.statusString)?result.result?.statusString:null
+            }
+        }catch(Throwable t){
+            log.error("Failed execution ${initMap.execution.id} : ${t.message?t.message:'no message'}",t)
+        }
         saveState(
                 context.jobDetail.jobDataMap,
                 initMap.executionService,
@@ -343,9 +342,6 @@ class ExecutionJob implements InterruptableJob {
                 inputMap.argString = triggerData
             }
             initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution, initMap.authContext, null, inputMap)
-            if(initMap.execution.status?.startsWith(ExecutionService.BEFORE_EXECUTION_CHECK_FAILURE)) {
-                initMap.jobShouldNotRun = "${initMap.execution.status}"
-            }
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")

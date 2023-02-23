@@ -47,6 +47,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -1060,8 +1061,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             metricService.markMeter(this.class.name,'executionAdhocStartMeter')
         }
         try{
-            def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
+            def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
             loghandler.openStream()
+
+            // Before execute the job, check if there is any pre execution check error. If there is some error throw a JobLifecycleComponentException
+            // This will let the loghandler save the error message into the execution log file.
+            String preExecutionCheckError = execution.getExtraMetadataMap().get(JobPreExecutionEvent.getName())
+            if(preExecutionCheckError) {
+                throw new JobLifecycleComponentException("Pre Job Execution Check Failure: ${preExecutionCheckError}")
+            }
 
             //manages workflow step+node context data
             ContextManager contextmanager = new ContextManager()
@@ -2200,8 +2208,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
 
-            if(e.status?.startsWith(BEFORE_EXECUTION_CHECK_FAILURE)) {
-                throw new ExecutionServiceException(e.status)
+            if(e?.extraMetadataMap?.get(JobPreExecutionEvent.getName()) != null) {
+                throw new ExecutionServiceException(e.extraMetadataMap.get(JobPreExecutionEvent.getName()))
             }
 
             def timeout = 0
@@ -2300,14 +2308,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
 
+            if(e?.extraMetadataMap?.get(JobPreExecutionEvent.getName()) != null) {
+                throw new ExecutionServiceException(e.extraMetadataMap.get(JobPreExecutionEvent.getName()))
+            }
+
             // Update execution
             e.dateStarted       = startTime
             e.status            = "scheduled"
             e.save()
-
-            if(e.status?.startsWith(BEFORE_EXECUTION_CHECK_FAILURE)) {
-                throw new ExecutionServiceException(e.status)
-            }
 
             def nextRun = scheduledExecutionService.scheduleAdHocJob(
                     scheduledExecution,
@@ -2530,8 +2538,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         execution.scheduledExecution=se
 
-        if(!beforeExecutionResult.isSuccessful()) {
-            execution.status = "${ExecutionService.BEFORE_EXECUTION_CHECK_FAILURE}: ${beforeExecutionResult.errorMessage}"
+        // If there is a preExecutionCheckError, put that error into the execution's extraMetadataMap.
+        if(!beforeExecutionResult.isSuccessful() && beforeExecutionResult.isTriggeredByJobEvent(JobPreExecutionEvent)) {
+            Map<String, String> extraMeta = new HashMap<>()
+            extraMeta.put(JobPreExecutionEvent.getName(), beforeExecutionResult.getErrorMessage())
+            execution.setExtraMetadataMap(extraMeta)
         }
 
         if (workflow && !workflow.save(flush:true)) {
@@ -4259,6 +4270,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
             def jobEventStatus = new JobEventStatusImpl(
                     successful: false,
+                    eventType: event.getClass(),
                     optionsValues: event.optionsValues,
                     errorMessage: e.getMessage()
             )
