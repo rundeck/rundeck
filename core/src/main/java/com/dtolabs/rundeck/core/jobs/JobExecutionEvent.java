@@ -13,7 +13,7 @@ import java.util.Map;
  * @author rnavarro
  * @since 5/07/19
  */
-public interface JobExecutionEvent {
+public interface JobExecutionEvent extends JobEvent {
 
     /**
      *

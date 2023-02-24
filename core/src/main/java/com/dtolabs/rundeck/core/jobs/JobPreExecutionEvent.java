@@ -6,7 +6,7 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import java.util.Map;
 import java.util.SortedSet;
 
-public interface JobPreExecutionEvent {
+public interface JobPreExecutionEvent extends JobEvent {
 
     /**
      *

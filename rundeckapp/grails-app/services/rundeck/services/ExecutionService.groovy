@@ -46,6 +46,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
+import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -1059,8 +1061,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             metricService.markMeter(this.class.name,'executionAdhocStartMeter')
         }
         try{
-            def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
+            def jobcontext=exportContextForExecution(execution, grailsLinkGenerator)
             loghandler.openStream()
+
+            // Before execute the job, check if there is any pre execution check error. If there is some error throw a JobLifecycleComponentException
+            // This will let the loghandler save the error message into the execution log file.
+            String preExecutionCheckError = execution.getExtraMetadataMap().get(JobPreExecutionEvent.getName())
+            if(preExecutionCheckError) {
+                throw new JobLifecycleComponentException("Pre Job Execution Check Failure: ${preExecutionCheckError}")
+            }
 
             //manages workflow step+node context data
             ContextManager contextmanager = new ContextManager()
@@ -2197,6 +2206,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
 
+            if(e?.extraMetadataMap?.get(JobPreExecutionEvent.getName()) != null) {
+                throw new ExecutionServiceException(e.extraMetadataMap.get(JobPreExecutionEvent.getName()))
+            }
+
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
                     scheduledExecution,
@@ -2290,7 +2303,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!allowedOptions['executionType']){
                 allowedOptions['executionType'] = 'user-scheduled'
             }
-            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
+
+            Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
+
+            if(e?.extraMetadataMap?.get(JobPreExecutionEvent.getName()) != null) {
+                throw new ExecutionServiceException(e.extraMetadataMap.get(JobPreExecutionEvent.getName()))
+            }
 
             // Update execution
             e.dateStarted       = startTime
@@ -2443,7 +2461,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         /* 
         Process job lifecycle before execution event 
         */
-        
+
         def beforeExecutionResult = checkBeforeJobExecution(se, baseOptParams, props, authContext)
 
         // Process metadata updates
@@ -2517,6 +2535,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         execution.scheduledExecution=se
+
+        // If there is a preExecutionCheckError, put that error into the execution's extraMetadataMap.
+        if(!beforeExecutionResult?.isSuccessful() && beforeExecutionResult?.isTriggeredByJobEvent(JobPreExecutionEvent)) {
+            Map<String, String> extraMeta = execution.getExtraMetadataMap()
+            if(!extraMeta) extraMeta = new HashMap<>()
+            extraMeta.put(JobPreExecutionEvent.getName(), beforeExecutionResult.getErrorMessage())
+            execution.setExtraMetadataMap(extraMeta)
+        }
+
         if (workflow && !workflow.save(flush:true)) {
             execution.workflow.errors.allErrors.each { log.error(it.toString()) }
             log.error("unable to save execution workflow")
@@ -2528,6 +2555,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             log.error("unable to create execution: " + msg)
             throw new ExecutionServiceException("unable to create execution: "+msg)
         }
+
         return execution
     }
 
@@ -2545,7 +2573,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @throws ExecutionServiceException
      */
     @Publisher
-    def Execution createExecution(
+    Execution createExecution(
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,
             String runAsUser,
@@ -2566,7 +2594,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         Execution newExec = int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
-        
+
         // Publish audit event for new job run.
         if(auditEventsService) {
             auditEventsService.eventBuilder()
@@ -4220,7 +4248,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext Authentication Context
      * @return JobLifecycleStatus object with process result.
      */
-    def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
+    JobLifecycleStatus checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
 
         INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext, new HashSet<String>([AuthConstants.ACTION_READ, AuthConstants.ACTION_RUN]))
         def nodeFilter = props.filter ? props.filter : scheduledExecution.asFilter()
@@ -4234,11 +4262,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeFilter,
             nodes,
             props.extraMetadataMap)
+
         try {
             return jobLifecycleComponentService.beforeJobExecution(scheduledExecution, event)
-        } catch (JobLifecycleComponentException jpe) {
-            throw new ExecutionServiceException(jpe.message, 'error')
+        } catch(JobLifecycleComponentException e) {
+            log.warn("Suppressed. beforeJobExecution check failure: " + e.getMessage())
+            def jobEventStatus = new JobEventStatusImpl(
+                    successful: false,
+                    eventType: event.getClass(),
+                    optionsValues: event.optionsValues,
+                    errorMessage: e.getMessage()
+            )
+            JobLifecycleComponentService.mergeEvent(jobEventStatus, event)
+            return jobEventStatus
         }
+
     }
 
     def getEffectiveSuccessNodeList(Execution e){
