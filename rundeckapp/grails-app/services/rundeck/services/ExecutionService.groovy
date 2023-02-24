@@ -1421,8 +1421,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_MISSED = "missed"
     public static String EXECUTION_QUEUED = "queued"
 
-    public static String BEFORE_EXECUTION_CHECK_FAILURE = "before-execution-check-failure"
-
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
     public static String ABORT_FAILED = "failed"
@@ -2540,7 +2538,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         // If there is a preExecutionCheckError, put that error into the execution's extraMetadataMap.
         if(!beforeExecutionResult.isSuccessful() && beforeExecutionResult.isTriggeredByJobEvent(JobPreExecutionEvent)) {
-            Map<String, String> extraMeta = new HashMap<>()
+            Map<String, String> extraMeta = execution.getExtraMetadataMap()
+            if(!extraMeta) extraMeta = new HashMap<>()
             extraMeta.put(JobPreExecutionEvent.getName(), beforeExecutionResult.getErrorMessage())
             execution.setExtraMetadataMap(extraMeta)
         }
