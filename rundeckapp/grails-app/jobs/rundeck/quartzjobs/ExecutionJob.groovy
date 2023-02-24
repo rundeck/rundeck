@@ -416,7 +416,7 @@ class ExecutionJob implements InterruptableJob {
             if(!avgNotificationSent && jobAverageDurationFinal>0){
                 if(duration > jobAverageDurationFinal){
                     if(execmap.execution){
-                        execmap.execution.timedOut=true
+                        execmap.execution.status='overAverage'
                     }
                     runContext.executionService.avgDurationExceeded(
                             execmap.scheduledExecution.id,
