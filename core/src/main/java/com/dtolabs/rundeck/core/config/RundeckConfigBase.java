@@ -418,6 +418,7 @@ public class RundeckConfigBase {
         Boolean syncLdapUser;
         String requiredRole;
         String jaasRolePrefix;
+        Boolean syncOauthUser = Boolean.valueOf(false);
 
         ApiCookieAccess apiCookieAccess;
         Authorization authorization;

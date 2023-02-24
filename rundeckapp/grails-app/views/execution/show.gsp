@@ -1283,6 +1283,7 @@ search
             nodeflowvm.activeTab("nodes");
         }
         initKoBind(null, {nodeflow: nodeflowvm})
+        window.dispatchEvent(new Event('rundeck-exec-show-page-loaded'));
     }
     jQuery(init);
     </script>

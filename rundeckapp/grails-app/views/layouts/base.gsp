@@ -162,7 +162,10 @@
     %{-- Central should be loaded as soon as before any other Vue project code --}%
     <asset:javascript src="static/components/central.js"/>
     %{--  Navigation components load early too  --}%
+    <asset:stylesheet href="static/css/components/navbar.css"/>
     <asset:javascript src="static/components/navbar.js"/>
+
+    <asset:stylesheet href="static/css/components/project-picker.css"/>
     <asset:javascript src="static/components/uisockets.js"/>
     <asset:javascript src="static/components/project-picker.js"/>
 
@@ -291,7 +294,9 @@
 </script>
 
 <!-- VUE JS MODULES -->
+<asset:stylesheet href="static/css/components/motd.css"/>
 <asset:javascript src="static/components/motd.js"/>
+<asset:stylesheet href="static/css/components/version.css"/>
 <asset:javascript src="static/components/version.js"/>
 <asset:javascript src="static/components/server-identity.js"/>
 <asset:javascript src="static/components/tour.js"/>

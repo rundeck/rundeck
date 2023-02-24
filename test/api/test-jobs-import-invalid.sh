@@ -52,7 +52,7 @@ params="format=DNEformat"
 # specify the file for upload with curl, named "xmlBatch"
 ulopts="-F xmlBatch=@$DIR/temp.out"
 
-CURL_REQ_OPTS=$ulopts $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The specified format is not supported: DNEformat" || exit 2
+CURL_REQ_OPTS=$ulopts $SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "The specified format is not supported: DNEformat" 415 || exit 2
 echo "OK"
 
 ##

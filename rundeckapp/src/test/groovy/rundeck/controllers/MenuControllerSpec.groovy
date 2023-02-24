@@ -2904,6 +2904,7 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
 
         when:
         request.parameters = [id: testUUID, project: 'test']
+        request.api_version = apivers
         response.format = format
         controller.apiJobsExportv14(query)
         then:
@@ -2921,9 +2922,130 @@ class MenuControllerSpec extends RundeckHibernateSpec implements ControllerUnitT
                                                                           displayParams : [:]]
         response.status == 200
         response.text=="format: $format"
-        response.contentType=="text/$format;charset=UTF-8"
+        response.contentType=="$contentType;charset=UTF-8"
         where:
-        format << ['xml', 'yaml']
+        format | contentType        | apivers
+        'xml'  | 'text/xml'         | 14
+        'yaml' | 'text/yaml'        | 14
+        'json' | 'application/json' | 44
+    }
+    @Unroll
+    def "api export jobs with unspecified format"() {
+        given:
+        controller.configurationService = Mock(ConfigurationService)
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+        def testUUID = UUID.randomUUID().toString()
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.apiService = Mock(ApiService){
+            requireApi(_, _, _) >> true
+            requireExists(_,_,_) >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            1 * exportAs(format,[job1],_)>>{
+                it[2]<<"format: $format"
+            }
+        }
+
+
+        when: "api export with a specific requested format"
+        request.parameters = [id: testUUID, project: 'test']
+        request.api_version = apivers
+
+        controller.apiJobsExportv14(query)
+        then: "result use default format for the api version"
+        1 * controller.scheduledExecutionService.listWorkflows(_,_) >> [schedlist: [job1]]
+        1 * controller.apiService.requireApi(_, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                              action    : AuthConstants.ACTION_READ,
+                                                                                              resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        response.status == 200
+        response.text=="format: $format"
+        response.contentType=="$contentType;charset=UTF-8"
+        where:"default format is xml"
+        format | contentType        | apivers
+        'xml'  | 'text/xml'         | 14
+        'xml'  | 'text/xml'         | 44
+    }
+
+    @Unroll
+    def "api export jobs unsupported format"() {
+        given:
+        controller.configurationService = Mock(ConfigurationService)
+        controller.jobListLinkHandlerRegistry = Mock(JobListLinkHandlerRegistry) {
+            getJobListLinkHandlerForProject(_) >> new GroupedJobListLinkHandler()
+        }
+        def testUUID = UUID.randomUUID().toString()
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+        }
+        controller.apiService = Mock(ApiService){
+            requireApi(_, _, _) >> true
+            requireExists(_,_,_) >> true
+        }
+        controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        controller.aclFileManagerService = Mock(AclFileManagerService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        controller.jobSchedulesService = Mock(JobSchedulesService)
+        controller.authContextEvaluatorCacheManager = new AuthContextEvaluatorCacheManager()
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager){
+            0 * exportAs(_,_,_)
+        }
+
+
+        when:
+        request.parameters = [id: testUUID, project: 'test']
+        request.api_version = apivers
+        response.format = format
+        controller.apiJobsExportv14(query)
+        then:
+        0 * controller.scheduledExecutionService.listWorkflows(_,_)
+        1 * controller.apiService.requireApi(_, _, _) >> true
+        0 * controller.rundeckAuthContextProcessor.authResourceForJob(_)
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResource(_, _, _, _)
+        0 * controller.rundeckAuthContextProcessor.authorizeProjectResources(_, _, _, _)
+        0 * controller.scheduledExecutionService.finishquery(_, _, _)
+        1 * controller.apiService.renderErrorFormat(
+            _, {
+            it.status == HttpServletResponse.SC_NOT_ACCEPTABLE
+            it.code == 'api.error.item.unsupported-format'
+            it.args == [format]
+        }
+        )
+        where:
+        format |  apivers
+        'zxml' |  14
+        'asdf' |  14
+        'json' |  14
+        'json' |  43
     }
 
     private <T extends Annotation> T getControllerMethodAnnotation(String name, Class<T> clazz) {
