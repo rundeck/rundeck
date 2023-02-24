@@ -15,7 +15,7 @@
  */
 package com.dtolabs.rundeck.core.config;
 
-public enum Features {
+public enum Features implements FeaturesDefinition{
     ENHANCED_NODES("enhancedNodes"),
     REPOSITORY("repository"),
     WEBHOOKS("webhooks"),

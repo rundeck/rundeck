@@ -125,8 +125,8 @@ check_schedule_contents(){
     projname=$1
     xmlproj=$($XMLSTARLET esc "$projname")
 
-    runurl="${APIURL}/project/${projname}/jobs/export?format=xml"
-    params=""
+    runurl="${APIURL}/project/${projname}/jobs/export"
+    params="format=xml"
 
     # get listing
     docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"

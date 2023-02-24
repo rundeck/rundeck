@@ -771,7 +771,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         }
 
             controller.rundeckAuthContextProcessor = Mock(AppAuthContextProcessor){
-                _*authorizeProjectJobAny(_,_,['read'],_)>>true
+                _*authorizeProjectJobAny(_,_,[AuthConstants.ACTION_READ],_)>>true
                 _*filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             }
 
@@ -798,7 +798,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
         response.header('Content-Disposition') == "attachment; filename=\"test1.$format\""
         response.text=="format: $format"
         where:
-        format << ['xml', 'yaml']
+        format << ['xml', 'yaml', 'json']
 
     }
 
@@ -3609,6 +3609,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             params.dupeOption = dupeoption
             params.uuidOption = uuidoption
             params.validateJobref = validateJobref
+            request.api_version = apivers
         when:
             controller.apiJobsImportv14()
         then:
@@ -3624,12 +3625,13 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             1 * controller.apiService.renderSuccessXml(_, _, _)
             job.project == 'aproj'
         where:
-            type               | format | dupeoption | uuidoption | validateJobref
-            'application/xml'  | 'xml'  | null       | null       | null
-            'application/yaml' | 'yaml' | null       | null       | null
-            'application/yaml' | 'yaml' | null       | null       | 'true'
-            'application/yaml' | 'yaml' | null       | 'remove'   | null
-            'application/yaml' | 'yaml' | 'update'   | null       | null
+            type               | format | dupeoption | uuidoption | validateJobref | apivers
+            'application/xml'  | 'xml'  | null       | null       | null           | 14
+            'application/yaml' | 'yaml' | null       | null       | null           | 14
+            'application/yaml' | 'yaml' | null       | null       | 'true'         | 14
+            'application/yaml' | 'yaml' | null       | 'remove'   | null           | 14
+            'application/yaml' | 'yaml' | 'update'   | null       | null           | 14
+            'application/json' | 'json' | null       | null       | null           | 44
     }
     @Unroll
     def "api jobs import xmlBatch text format #format fileformat #fformat"() {
@@ -3728,6 +3730,84 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
             'yaml' |null | null       | null       | 'true'
             'yaml' |null | null       | 'remove'   | null
             'yaml' |null | 'update'   | null       | null
+    }
+    def "api job export"(){
+        given:
+            def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                nodeFilterEditable: true,
+                filter:'',
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [
+                        new CommandExec([
+                            adhocRemoteString: 'test buddy',
+                            argString: '-delay 12 -monkey cheese -particle'
+                        ])
+                    ]
+                )
+            ).save()
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(_, _) >> true
+                1 * requireExists(_, se, ['Job ID', 'testUUID']) >> true
+                0 * renderErrorFormat(*_)
+            }
+            controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+                1 * getByIDorUUID('testUUID')>>se
+            }
+            controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor){
+                1 * authorizeProjectJobAll(_, se, [AuthConstants.ACTION_READ], 'project1')>>true
+            }
+            controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+            params.id='testUUID'
+            response.format = format
+            request.api_version=apiVers
+        when:
+            def result = controller.apiJobExport()
+        then:
+            response.contentType==expectedType+';charset=UTF-8'
+            1 * controller.rundeckJobDefinitionManager.exportAs(expectedFormat,[se],_)>>{
+                it[2].write('test output')
+            }
+            response.text=='test output'
+        where:
+            format | apiVers | expectedFormat | expectedType
+            'xml'  | 14      | 'xml'          | 'text/xml'
+            'yaml' | 14      | 'yaml'         | 'text/yaml'
+            'json' | 44      | 'json'         | 'application/json'
+            'all'  | 43      | 'xml'          | 'text/xml'
+            'all'  | 44      | 'xml'          | 'text/xml'
+    }
+    def "api job export unsupported format"(){
+        given:
+            controller.apiService=Mock(ApiService){
+                1 * requireApi(_, _) >> true
+            }
+
+            controller.rundeckJobDefinitionManager=Mock(RundeckJobDefinitionManager)
+            params.id='testUUID'
+            response.format = format
+            request.api_version=apiVers
+        when:
+            controller.apiJobExport()
+        then:
+            0 * controller.rundeckJobDefinitionManager.exportAs(*_)
+            1 * controller.apiService.renderErrorFormat(_,[
+                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                code  : 'api.error.item.unsupported-format',
+                args: [expected]
+            ])
+        where:
+            format | expected | apiVers
+            'asdf' | 'asdf'   | 14
+            'asdf' | 'asdf'   | 43
+            'json' | 'json'   | 42
+            null   | 'html'   | 14
+            null   | 'html'   | 43
     }
 
     def "test broken plugin on editing"() {

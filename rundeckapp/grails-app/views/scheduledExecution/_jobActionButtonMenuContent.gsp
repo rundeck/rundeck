@@ -187,6 +187,18 @@
                     args="['YAML']"/>
         </g:link>
     </li>
+    <li>
+        <g:link controller="scheduledExecution"
+                title="${g.message(code: 'scheduledExecution.action.downloadformat.button.label', args: ['JSON'])}"
+                params="[project: scheduledExecution.project,format:'json']"
+                action="show"
+                id="${scheduledExecution.extid}">
+            <b class="glyphicon glyphicon-file"></b>
+            <g:message
+                    code="scheduledExecution.action.downloadformat.button.label"
+                    args="['JSON']"/>
+        </g:link>
+    </li>
 </g:if>
 
 <g:if test="${scmExportEnabled && scmExportStatus?.get(scheduledExecution.extid)}">

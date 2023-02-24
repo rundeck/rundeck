@@ -14,14 +14,16 @@
         "skipLibCheck": true,
         "typeRoots": [
             "webpack-env",
-            "src/types"
+            "src/library/src/types"
         ]
     },
     "include": [
-        "./src/**/*"
+        "./src/library/**/*",
+        "main.ts"
     ],
     "exclude": [
-        "./src/components/**/*",
-        "./src/stories/**/*"
+        "./src/app",
+        "./src/library/components/**/*",
+        "./src/library/stories/**/*"
     ]
 }
