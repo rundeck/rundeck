@@ -279,7 +279,6 @@ export default Vue.extend({
       };
     },
     addPlugin(provider: string) {
-      console.log("ProjectPluginConfig adding plugin....")
       this.modalAddOpen = false;
       this.pluginConfigs.push({
         entry: { type: provider, config: {} },
@@ -337,11 +336,6 @@ export default Vue.extend({
     },
     async savePlugins() {
       try {
-        console.log(":::::::::::::::::::::::::::::::")
-        console.log(this.pluginConfigs)
-        console.log(":::::::::::::::::::::::::::::::")
-        console.log(this.removedPluginConfigs)
-        console.log(":::::::::::::REMOVED::::::::::::::::")
         const result = await this.saveProjectPluginConfig(
           this.project,
           this.configPrefix,
