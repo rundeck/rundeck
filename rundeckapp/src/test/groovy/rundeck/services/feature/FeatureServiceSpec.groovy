@@ -93,4 +93,19 @@ class FeatureServiceSpec extends Specification implements ServiceUnitTest<Featur
         1 * service.configurationService.getConfig('feature.afeature.config')
 
     }
+
+    void "feature present with defaultEnabled flag"() {
+        given:
+        service.configurationService = Mock(ConfigurationService)
+
+        when:
+        def result = service.featurePresent('afeature')
+
+        then:
+        1 * service.configurationService.getBoolean('feature.enableAll', false) >> false
+        1 * service.configurationService.getBoolean('feature.afeature.defaultEnabled', false) >> true
+        1 * service.configurationService.getBoolean('feature.afeature.enabled', true) >> true
+        result
+
+    }
 }

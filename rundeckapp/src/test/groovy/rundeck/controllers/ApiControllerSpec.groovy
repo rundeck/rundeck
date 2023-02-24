@@ -45,6 +45,7 @@ import rundeck.UtilityTagLib
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -666,8 +667,8 @@ class ApiControllerSpec extends Specification implements ControllerUnitTest<ApiC
         controller.apiService = Mock(ApiService) {
             1 * requireApi(_, _, 42) >> true
         }
-        controller.configurationService = Mock(ConfigurationService) {
-            _ * getBoolean("feature.${featureName}.enabled", false) >> enabled
+        controller.featureService = Mock(FeatureService) {
+            _ * featurePresent(featureName) >> enabled
         }
 
         when:
