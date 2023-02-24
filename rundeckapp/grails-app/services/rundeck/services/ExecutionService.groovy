@@ -2537,7 +2537,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         execution.scheduledExecution=se
 
         // If there is a preExecutionCheckError, put that error into the execution's extraMetadataMap.
-        if(!beforeExecutionResult.isSuccessful() && beforeExecutionResult.isTriggeredByJobEvent(JobPreExecutionEvent)) {
+        if(!beforeExecutionResult?.isSuccessful() && beforeExecutionResult?.isTriggeredByJobEvent(JobPreExecutionEvent)) {
             Map<String, String> extraMeta = execution.getExtraMetadataMap()
             if(!extraMeta) extraMeta = new HashMap<>()
             extraMeta.put(JobPreExecutionEvent.getName(), beforeExecutionResult.getErrorMessage())
