@@ -24,11 +24,16 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 import com.dtolabs.rundeck.core.utils.Converter;
@@ -40,9 +45,7 @@ import org.rundeck.app.spi.Services;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -98,9 +101,34 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
         final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
         final Map<String, Object> config = createConfig(executionContext, item);
 
+            final HashMap<String, NodeStepResult> nodesWithFailures = new HashMap<>();
+            boolean keepgoing = executionContext.isKeepgoing();
+            INodeSet nodes = executionContext.filteredNodes();
+            final HashSet<String> nodeNames = new HashSet<>(nodes.getNodeNames());
+            FailedNodesListener failedNodesListener = executionContext.getExecutionListener().getFailedNodesListener();
+            if( null != failedNodesListener ){
+                failedNodesListener.matchedNodes(nodeNames);
+            }
         try {
+            if (nodes.getNodes().size() < 1) {
+                executionContext.getExecutionListener().log(
+                        Constants.DEBUG_LEVEL,
+                        "No nodes matched"
+                );
+            }
             plugin.executeStep(stepContext, config);
         } catch (StepException e) {
+            // Node recorder implementation
+            nodes.forEach( node -> {
+                nodesWithFailures.put(node.getNodename(),
+                        new NodeStepResultImpl(e, e.getFailureReason(), e.getMessage(), node));
+            });
+            if( nodesWithFailures.size() > 0 ){
+                // Populate the failed list of nodes
+                if( !keepgoing && null != failedNodesListener ){
+                    failedNodesListener.nodesFailed(nodesWithFailures);
+                }
+            }
             executionContext.getExecutionListener().log(
                     Constants.ERR_LEVEL,
                     e.getMessage()
@@ -112,7 +140,6 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
                     "Failed executing step plugin [" + providerName + "]: "
                     + stringWriter.toString()
             );
-
             return new StepExecutionResultImpl(e, e.getFailureReason(), e.getMessage());
         } catch (Throwable e) {
             final StringWriter stringWriter = new StringWriter();
