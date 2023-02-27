@@ -40,7 +40,6 @@ import grails.async.Promises
 import grails.compiler.GrailsCompileStatic
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
-import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
@@ -55,8 +54,7 @@ import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
 import org.rundeck.app.data.model.v1.project.RdProject
-import org.rundeck.app.data.model.v1.report.RdBaseReport
-import org.rundeck.app.data.providers.v1.BaseReportDataProvider
+import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.project.RundeckProjectDataProvider
 import org.rundeck.app.services.ExecutionFile
@@ -108,7 +106,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     ConfigurationService configurationService
     RundeckProjectDataProvider projectDataProvider
-    BaseReportDataProvider baseReportDataProvider
     ExecReportDataProvider execReportDataProvider
 
     static transactional = false
@@ -122,14 +119,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         rundeckJobDefinitionManager.exportAs('xml', [job], JobFormat.options(true, [:], stripJobRef), writer)
     }
 
-    def exportHistoryReport(ZipBuilder zip, RdBaseReport report, String name) throws ProjectServiceException {
+    def exportHistoryReport(ZipBuilder zip, RdExecReport report, String name) throws ProjectServiceException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
             sdf.format(it)
         }
         BuilderUtil builder = new BuilderUtil(converters: [(Date): dateConvert, (java.sql.Timestamp): dateConvert])
-        def map = baseReportDataProvider.toMap(report)
+        def map = execReportDataProvider.toMap(report)
         if (map.jcJobId) {
             //convert internal job ID to extid
             def se
@@ -747,7 +744,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         } else {
             def total = 0
             if (isExportExecutions) {
-                total += 3 * Execution.countByProject(projectName) + baseReportDataProvider.countByCtxProject(projectName)
+                total += 3 * Execution.countByProject(projectName) + execReportDataProvider.countByCtxProject(projectName)
             }
             if (isExportJobs) {
                 total += ScheduledExecution.countByProject(projectName)
@@ -784,7 +781,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     }
                 } else if (compName == BuiltinExportComponents.executions.name()) {
                     List<Execution> execs = []
-                    List<RdBaseReport> reports = []
+                    List<RdExecReport> reports = []
                     if (options.executionsOnly) {
                         //find execs
                         List<Long> execIds = []
@@ -799,7 +796,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         reports = execReportDataProvider.findAllByCtxProjectAndExecutionIdInList(projectName, execIds)
                     } else if (isExportExecutions) {
                         execs = Execution.findAllByProject(projectName)
-                        reports = baseReportDataProvider.findAllByCtxProject(projectName)
+                        reports = execReportDataProvider.findAllByCtxProject(projectName)
                     }
                     List<JobFileRecord> jobfilerecords = []
 
@@ -824,7 +821,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         //export history
 
                         dir('reports/') {
-                            reports.each { RdBaseReport report ->
+                            reports.each { RdExecReport report ->
                                 exportHistoryReport zip, report, "report-${report.id}.xml"
                                 listener?.inc('export', 1)
                             }
@@ -1722,7 +1719,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
             try {
                 //delete all reports
-                baseReportDataProvider.deleteWithTransaction(project.name)
+                execReportDataProvider.deleteWithTransaction(project.name)
 
                 //delete all jobs with their executions
 

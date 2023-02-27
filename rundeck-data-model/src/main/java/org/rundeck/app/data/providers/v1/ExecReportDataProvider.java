@@ -12,6 +12,7 @@ public interface ExecReportDataProvider extends DataProvider{
     RdExecReport fromExecWithScheduledAndSave(Long executionId);
     SaveReportResponse fromExecWithId(Long id);
     SaveReportResponse saveFromMap(Map execReportMap);
+    List<RdExecReport> findAllByCtxProject(String projectName);
     List<RdExecReport> findAllByStatus(String status);
     List<RdExecReport> findAllByExecutionId(Long id);
     List<RdExecReport> findAllByCtxProjectAndExecutionIdInList(String projectName, List<Long> execIds);
@@ -21,5 +22,7 @@ public interface ExecReportDataProvider extends DataProvider{
     int countAndSaveByStatus();
     Collection<String> getRunList(Map execQueryMap, Map filters, boolean isJobs, Long scheduledExecutionId);
     void deleteByCtxProject(String projectName);
+    void deleteWithTransaction(String projectName);
     void deleteAllByExecutionId(Long executionId);
+    Map toMap(RdExecReport rdExecReport);
 }

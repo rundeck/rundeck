@@ -2,16 +2,18 @@ package org.rundeck.app.data.providers
 
 import com.dtolabs.rundeck.app.support.ExecQuery
 import com.google.common.collect.Lists
-import grails.gorm.DetachedCriteria;
+import grails.gorm.DetachedCriteria
+
 import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse;
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.validation.Errors;
+import org.springframework.transaction.TransactionStatus
+import org.springframework.validation.Errors
+import rundeck.BaseReport;
 import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
-import rundeck.ScheduledExecution
 import rundeck.services.ConfigurationService
 import rundeck.services.data.ExecReportDataService;
 
@@ -48,6 +50,11 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         ExecReport execReport = ExecReport.fromMap(execReportMap)
         boolean isUpdated = execReport.save(flush: true)
         return new SaveReportResponse(report: execReport, isSaved: isUpdated)
+    }
+
+    @Override
+    List<RdExecReport> findAllByCtxProject(String projectName) {
+        return BaseReport.findAllByCtxProject(projectName)
     }
 
     @Override
@@ -132,10 +139,30 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
+    void deleteWithTransaction(String projectName) {
+        BaseReport.withTransaction { TransactionStatus status ->
+            try {
+                BaseReport.deleteByCtxProject(projectName)
+                ExecReport.deleteByCtxProject(projectName)
+            } catch (Exception e){
+                status.setRollbackOnly()
+                throw e
+            }
+        }
+    }
+
+    @Override
     void deleteAllByExecutionId(Long executionId) {
         ExecReport.findAllByExecutionId(executionId).each { rpt ->
             rpt.delete()
         }
+    }
+
+    @Override
+    Map toMap(RdExecReport rdExecReport) {
+        BaseReport baseReport = (BaseReport)rdExecReport
+        def map = baseReport.toMap()
+        return map
     }
 
     def applyExecutionCriteria(Map query, delegate, boolean isJobs=true, Long seId=null){
@@ -329,5 +356,4 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
             query.statFilter='cancel'
         }
     }
-
 }

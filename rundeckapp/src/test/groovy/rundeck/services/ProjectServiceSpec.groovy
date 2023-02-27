@@ -42,13 +42,12 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
-import org.rundeck.app.data.providers.GormBaseReportDataProvider
+
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.AuthConstants
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
-import rundeck.services.data.BaseReportDataService
 import rundeck.services.data.ExecReportDataService
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.scm.ScmPluginConfigData
@@ -87,13 +86,10 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         }
 
         def providerExec = new GormExecReportDataProvider()
-        def providerBase = new GormBaseReportDataProvider()
         mockDataService(ExecReportDataService)
-        mockDataService(BaseReportDataService)
         providerExec.execReportDataService = applicationContext.getBean(ExecReportDataService)
-        providerBase.baseReportDataService = applicationContext.getBean(BaseReportDataService)
         service.execReportDataProvider = providerExec
-        service.baseReportDataProvider = providerBase
+
     }
 
     def "loadJobFileRecord"() {

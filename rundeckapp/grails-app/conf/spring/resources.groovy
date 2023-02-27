@@ -882,7 +882,6 @@ beans={
     projectDataProvider(GormProjectDataProvider)
     storageDataProvider(GormStorageDataProvider)
     userDataProvider(GormUserDataProvider)
-    baseReportDataProvider(GormBaseReportDataProvider)
     execReportDataProvider(GormExecReportDataProvider)
 
 }
