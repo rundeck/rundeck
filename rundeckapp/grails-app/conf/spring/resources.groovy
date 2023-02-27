@@ -53,7 +53,6 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormats
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.storage.KeyStorageContextProvider
 import com.dtolabs.rundeck.core.storage.ProjectKeyStorageContextProvider
-import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.core.storage.TreeStorageManager
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.core.utils.RequestAwareLinkGenerator
@@ -106,7 +105,7 @@ import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
-import org.rundeck.app.data.providers.GormBaseReportDataProvider
+
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
