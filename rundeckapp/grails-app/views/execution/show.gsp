@@ -474,7 +474,7 @@ search
                         <section>
                             <div class="vue-ui-socket">
                                 <div>
-                                    <ui-socket section="job-runner-execution" location="top" :event-bus="EventBus" />
+                                    <ui-socket section="execution-show" location="header" :event-bus="EventBus" />
                                 </div>
                             </div>
                         </section>
