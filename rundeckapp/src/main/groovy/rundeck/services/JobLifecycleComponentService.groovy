@@ -246,9 +246,8 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
                 LOG.warn(" -- For component [${name}]: " + e.getMessage())
                 LOG.debug(" -- For component [${name}]: " + e.getMessage(), e)
             }
-            
-            throw new JobLifecycleComponentException("Error: " + errors.collect { name, e ->
-                "{[${name}]: ${e.message}}"
+            throw new JobLifecycleComponentException("Job could not start due to the following errors: " + errors.collect { name, e ->
+                "${e.message}"
             }.join(", "))
         }
 
