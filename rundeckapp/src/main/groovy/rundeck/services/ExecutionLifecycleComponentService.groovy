@@ -263,8 +263,6 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
                 }
             }
         }
-
-        compList.addAll(createConfiguredPlugins(configurations, project))
         compList
     }
 
@@ -315,10 +313,12 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
      * @param configSet config set
      */
     def setExecutionLifecyclePluginConfigSetForJob(final ScheduledExecution job, final PluginConfigSet configSet) {
-        Map<String, Map<String, Object>> data = configSet?.pluginProviderConfigs?.collectEntries {
-            [it.provider, it.configuration]
+        if(configSet){
+            Map<String, Map<String, Object>> data = configSet?.pluginProviderConfigs?.collectEntries {
+                [it.provider, it.configuration]
+            }
+            job.setPluginConfigVal(ServiceNameConstants.ExecutionLifecycle, data)
         }
-        job.setPluginConfigVal(ServiceNameConstants.ExecutionLifecycle, data)
     }
 
 
@@ -333,10 +333,10 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }
-        if (!configurations) {
-            return null
-        }
         def components = loadConfiguredComponents(configurations, executionReference.project)
+        if(configurations){
+            components.addAll(createConfiguredPlugins(configurations, executionReference.project))
+        }
         new ExecutionReferenceLifecycleComponentHandler(
                 executionReference: executionReference,
                 executionLifecycleComponentService: this,
