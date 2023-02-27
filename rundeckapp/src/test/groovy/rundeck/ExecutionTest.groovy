@@ -173,7 +173,64 @@ class ExecutionTest extends Specification implements DataTest  {
         se.status = "any string"
         then:
         assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
+        when:
+        se.status ="average-duration-exceeded"
+        then:
+        assertEquals(ExecutionService.AVERAGE_DURATION_EXCEEDED,se.executionState)
     }
+
+    void testIsCustomStatusString() {
+        given:
+        String value
+        boolean result
+
+        when:
+        value = ExecutionService.EXECUTION_TIMEDOUT
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == false
+        when:
+        value = ExecutionService.EXECUTION_FAILED_WITH_RETRY
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == false
+        when:
+        value = ExecutionService.ABORT_ABORTED
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == false
+        when:
+        value = ExecutionService.EXECUTION_SUCCEEDED
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == false
+        when:
+        value = ExecutionService.EXECUTION_FAILED
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == false
+        when:
+        value = ExecutionService.EXECUTION_QUEUED
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == false
+        when:
+        value = ExecutionService.EXECUTION_SCHEDULED
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == false
+        when:
+        value = ExecutionService.AVERAGE_DURATION_EXCEEDED
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == false
+        when:
+        value = "CUSTOM STRING"
+        result = Execution.isCustomStatusString(value)
+        then:
+        result == true
+    }
+
     void testStatusSucceededTrue() {
         when:
         Execution se = createBasicExecution()

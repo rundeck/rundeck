@@ -431,6 +431,64 @@ class NotificationServiceSpec extends Specification implements ServiceUnitTest<N
         result
     }
 
+    def "email notification average duration exceeded"() {
+        given:
+        def (job, execution) = createTestJob()
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
+                }
+        ]
+        content.execution.status = ExecutionService.AVERAGE_DURATION_EXCEEDED
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onavgduration',
+                        type: 'email',
+                        content: '{"recipients":"mail@example.com","subject":"test","attachLog":true}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+        service.mailService = Mock(MailService)
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.executionService = Mock(ExecutionService){
+            getEffectiveSuccessNodeList(_)>>[]
+        }
+        service.configurationService = Mock(ConfigurationService)
+
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
+        reader.reader = new TestReader(logs:
+                [
+                        new DefaultLogEvent(
+                                eventType: LogUtil.EVENT_TYPE_LOG,
+                                datetime: new Date(),
+                                message: "log",
+                                metadata: [:],
+                                loglevel: LogLevel.NORMAL
+                        ),
+                ]
+        )
+        service.loggingService=Mock(LoggingService)
+
+        when:
+        def result = service.triggerJobNotification('avgduration', job, content)
+
+        then:
+        1 * service.loggingService.getLogReader(_) >> reader
+        1 * service.mailService.sendMail(_)
+        result
+    }
+
     def "email notification attach unsanitized html"() {
         given:
         ExpandoMetaClass.disableGlobally()
