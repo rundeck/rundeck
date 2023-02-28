@@ -364,6 +364,6 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     private boolean isOracleDatasource(){
         def dataSource = applicationContext.getBean('dataSource', DataSource)
         def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName
-        return (databaseProductName == 'Oracle') ? true : false
+        return (databaseProductName == 'Oracle')
     }
 }
