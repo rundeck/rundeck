@@ -471,6 +471,14 @@ search
 
                         </section>
 
+                        <section>
+                            <div class="vue-ui-socket">
+                                <div>
+                                    <ui-socket section="execution-show" location="header" :event-bus="EventBus" />
+                                </div>
+                            </div>
+                        </section>
+
                     </div>
 
                     <div class="subtitle-head-item execution-aux-info flex-item-1">
