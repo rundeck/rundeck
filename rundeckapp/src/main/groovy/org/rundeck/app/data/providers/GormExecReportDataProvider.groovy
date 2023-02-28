@@ -8,6 +8,7 @@ import org.rundeck.app.data.model.v1.report.RdExecReport
 import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse;
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
 import org.springframework.transaction.TransactionStatus
 import org.springframework.validation.Errors
 import rundeck.BaseReport;
@@ -15,13 +16,17 @@ import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.services.ConfigurationService
-import rundeck.services.data.ExecReportDataService;
+import rundeck.services.data.ExecReportDataService
+
+import javax.sql.DataSource;
 
 class GormExecReportDataProvider implements ExecReportDataProvider {
     @Autowired
     ExecReportDataService execReportDataService
     @Autowired
     ConfigurationService configurationService
+    @Autowired
+    ApplicationContext applicationContext
 
     @Override
     RdExecReport get(Long id){
@@ -355,5 +360,10 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         if(fixCancel){
             query.statFilter='cancel'
         }
+    }
+    private boolean isOracleDatasource(){
+        def dataSource = applicationContext.getBean('dataSource', DataSource)
+        def databaseProductName = dataSource?.getConnection()?.metaData?.databaseProductName
+        return (databaseProductName == 'Oracle') ? true : false
     }
 }
