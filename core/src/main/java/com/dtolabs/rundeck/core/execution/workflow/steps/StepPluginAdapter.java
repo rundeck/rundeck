@@ -55,6 +55,7 @@ import java.util.*;
  */
 public class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
     public static final Convert CONVERTER = new Convert();
+    private static HashMap<String, NodeStepResult> nodesWithFailures = null;
     private StepPlugin plugin;
 
     public StepPluginAdapter(final StepPlugin plugin) {
@@ -101,7 +102,7 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
         final PluginStepContext stepContext = PluginStepContextImpl.from(executionContext);
         final Map<String, Object> config = createConfig(executionContext, item);
 
-            final HashMap<String, NodeStepResult> nodesWithFailures = new HashMap<>();
+            nodesWithFailures = new HashMap<>();
             boolean keepgoing = executionContext.isKeepgoing();
             INodeSet nodes = executionContext.filteredNodes();
             final HashSet<String> nodeNames = new HashSet<>(nodes.getNodeNames());
@@ -193,4 +194,11 @@ public class StepPluginAdapter implements StepExecutor, Describable, DynamicProp
     public StepPlugin getPlugin() {
         return plugin;
     }
+
+    public HashMap<String, NodeStepResult> getNodesWithFailuresInPluginStep(){
+        if( null != nodesWithFailures && 0 != nodesWithFailures.size() ){
+            return nodesWithFailures;
+        }
+        return null;
+    };
 }
