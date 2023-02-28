@@ -181,54 +181,25 @@ class ExecutionTest extends Specification implements DataTest  {
 
     void testIsCustomStatusString() {
         given:
-        String value
         boolean result
 
         when:
-        value = ExecutionService.EXECUTION_TIMEDOUT
-        result = Execution.isCustomStatusString(value)
+        result = Execution.isCustomStatusString(statusValue)
+
         then:
-        result == false
-        when:
-        value = ExecutionService.EXECUTION_FAILED_WITH_RETRY
-        result = Execution.isCustomStatusString(value)
-        then:
-        result == false
-        when:
-        value = ExecutionService.ABORT_ABORTED
-        result = Execution.isCustomStatusString(value)
-        then:
-        result == false
-        when:
-        value = ExecutionService.EXECUTION_SUCCEEDED
-        result = Execution.isCustomStatusString(value)
-        then:
-        result == false
-        when:
-        value = ExecutionService.EXECUTION_FAILED
-        result = Execution.isCustomStatusString(value)
-        then:
-        result == false
-        when:
-        value = ExecutionService.EXECUTION_QUEUED
-        result = Execution.isCustomStatusString(value)
-        then:
-        result == false
-        when:
-        value = ExecutionService.EXECUTION_SCHEDULED
-        result = Execution.isCustomStatusString(value)
-        then:
-        result == false
-        when:
-        value = ExecutionService.AVERAGE_DURATION_EXCEEDED
-        result = Execution.isCustomStatusString(value)
-        then:
-        result == false
-        when:
-        value = "CUSTOM STRING"
-        result = Execution.isCustomStatusString(value)
-        then:
-        result == true
+        result == isCustom
+
+        where:
+        statusValue                                     | isCustom
+        ExecutionService.EXECUTION_TIMEDOUT             | false
+        ExecutionService.EXECUTION_FAILED_WITH_RETRY    | false
+        ExecutionService.ABORT_ABORTED                  | false
+        ExecutionService.EXECUTION_SUCCEEDED            | false
+        ExecutionService.EXECUTION_FAILED               | false
+        ExecutionService.EXECUTION_QUEUED               | false
+        ExecutionService.EXECUTION_SCHEDULED            | false
+        ExecutionService.AVERAGE_DURATION_EXCEEDED      | false
+        "CUSTOM STRING"                                 | true
     }
 
     void testStatusSucceededTrue() {
