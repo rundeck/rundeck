@@ -29,6 +29,7 @@ import javax.naming.directory.Attributes
 import javax.naming.directory.BasicAttributes
 import javax.naming.directory.DirContext
 import javax.naming.directory.SearchResult
+import javax.naming.ldap.LdapContext
 import javax.security.auth.Subject
 import javax.security.auth.callback.CallbackHandler
 import javax.security.auth.login.LoginException
@@ -142,7 +143,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         'auser'  | false
     }
 
-    def "bindingLogin should set user roles"() {
+    def "bindingLogin should set user roles without pagination"() {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
         module._debug = true
         module._forceBindingLogin = true
@@ -150,6 +151,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         module._providerUrl = "notnull"
         module._forceBindingLoginUseRootContextForRoles = false
         module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
         module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
         module.callbackHandler = Mock(CallbackHandler) {
             1 * handle(_) >> { it[0][0].name = username; it[0][1].object = 'apassword' }
@@ -238,7 +240,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         }
     }
 
-    def "bindingLogin while cached"() {
+    def "bindingLogin while cached without pagination"() {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
         module._debug = true
         module._cacheDuration = Integer.MAX_VALUE
@@ -247,6 +249,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         module._providerUrl = "notnull"
         module._forceBindingLoginUseRootContextForRoles = false
         module._roleBaseDn = 'roleBaseDn'
+        module.rolePagination = false
         module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
         module.callbackHandler = Mock(CallbackHandler) {
             2 * handle(_) >> { it[0][0].name = username; it[0][1].object = password }
@@ -330,6 +333,75 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         false         | "123"         | null
         true          | "123"         | "123"
         true          | null          | null
+    }
+
+    def "bindingLogin should set user roles paged"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = 'roleBaseDn'
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.rolePagination = true
+        module.callbackHandler = Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = 'apassword' }
+        }
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> new BasicAttributes()
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                    _,
+                    JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                    [module._userObjectClass, module._userIdAttribute, username], _
+            ) >> {new EnumImpl<SearchResult>(found)}
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+        def stringRoles = ['role1', 'role2']
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(stringRoles)}
+                }
+            }
+        }]
+        def ldapContext = Mock(LdapContext){
+            1 * search(
+                    'roleBaseDn',
+                    JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                    [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
+                    _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+            0 * search(*_)
+        }
+        module.ldapContext = ldapContext
+        DirContext userDir = Mock(DirContext) {
+            0 * _(*_)
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            userDir
+        }
+        Subject testSubject = new Subject()
+        when:
+        boolean result = module.login()
+        module.currentUser.setJAASInfo(testSubject)
+
+        then:
+        result
+        null != testSubject.getPrincipals(Principal)
+        username == testSubject.getPrincipals(Principal).first().name
+        null != testSubject.getPrincipals(JAASRole)
+        2 == testSubject.getPrincipals(JAASRole).size()
+        ['role1', 'role2'] == testSubject.getPrincipals(JAASRole)*.name
+
+
+        where:
+        username | _
+        'auser'  | _
     }
 
     static class TestJettyCachingLdapLoginModule extends JettyCachingLdapLoginModule {

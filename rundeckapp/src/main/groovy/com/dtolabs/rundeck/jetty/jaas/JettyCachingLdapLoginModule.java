@@ -293,7 +293,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     /**
      * This is to allow AD roles to be paginated
      */
-    protected boolean rolePagination = false;
+    protected boolean rolePagination = true;
 
     /**
      * Maximun roles per page when pagination is enabled
@@ -471,7 +471,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         List<SearchResult> results;
         if(rolePagination){
-            results = getPaginatedRoles(dirContext, userDn, username);
+            results = getPaginatedRoles(userDn, username);
         }else{
             results = getNonPaginatedRoles(dirContext, userDn, username);
         }
@@ -524,14 +524,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     /**
      * It searches for roles with pagination
-     * @param dirContext dirContext
      * @param userDn userDn
      * @param username username
      *
      * @return List<SearchResult>
      * @throws NamingException
      */
-    private List<SearchResult> getPaginatedRoles(DirContext dirContext, String userDn, String username) throws IOException, NamingException {
+    private List<SearchResult> getPaginatedRoles(String userDn, String username) throws IOException, NamingException {
         List<SearchResult> searchResults = new ArrayList<>();
 
         int pageSize = rolesPerPage;
