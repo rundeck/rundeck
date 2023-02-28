@@ -263,8 +263,6 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
                 }
             }
         }
-
-        compList.addAll(createConfiguredPlugins(configurations, project))
         compList
     }
 
@@ -333,10 +331,10 @@ class ExecutionLifecycleComponentService implements IExecutionLifecycleComponent
         if (!featureService?.featurePresent(Features.EXECUTION_LIFECYCLE_PLUGIN, false)) {
             return null
         }
-        if (!configurations) {
-            return null
-        }
         def components = loadConfiguredComponents(configurations, executionReference.project)
+        if(configurations){
+            components.addAll(createConfiguredPlugins(configurations, executionReference.project))
+        }
         new ExecutionReferenceLifecycleComponentHandler(
                 executionReference: executionReference,
                 executionLifecycleComponentService: this,

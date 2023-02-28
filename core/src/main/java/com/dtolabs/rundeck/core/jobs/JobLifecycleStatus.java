@@ -1,10 +1,6 @@
 package com.dtolabs.rundeck.core.jobs;
 
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 
 /**
@@ -12,7 +8,21 @@ import java.util.TreeSet;
  */
 public interface JobLifecycleStatus
     extends LifecycleStatus {
-    
+
+    /**
+     * Get the Event Type that triggered this lifecycle status result.
+     * The event type is the full class name of the event.
+     * @return The Class of the event object or JobEvent by default
+     */
+    default Class<? extends JobEvent> getJobEventType() {
+        return JobEvent.class;
+    }
+
+    default boolean isTriggeredByJobEvent(Class<? extends JobEvent> eventType) {
+        Class triggerEventType = getJobEventType();
+        return triggerEventType != null && eventType != null && eventType.isAssignableFrom(triggerEventType);
+    }
+
     /**
      * @return option values to use when isUseNewValues is true
      */
@@ -38,5 +48,4 @@ public interface JobLifecycleStatus
     default Map getNewExecutionMetadata() {
         return null;
     }
-    
 }

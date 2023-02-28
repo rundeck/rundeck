@@ -50,7 +50,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
-import com.dtolabs.rundeck.execution.JobRefCommand
+import com.dtolabs.rundeck.core.jobs.JobRefCommand
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest

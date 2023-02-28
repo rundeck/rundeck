@@ -16,7 +16,7 @@
 
 package rundeck.services.feature
 
-import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.config.FeaturesDefinition
 
 /**
  * Manage feature configuration in the 'rundeck.feature.X' namespace, a
@@ -31,7 +31,7 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
      * @param feature
      * @return
      */
-    def boolean featurePresent(Features feature) {
+    def boolean featurePresent(FeaturesDefinition feature) {
         featurePresent(feature.propertyName)
     }
     /**
@@ -40,7 +40,19 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
      * @return
      */
     def boolean featurePresent(String name) {
-        featurePresent(name, false)
+        //check if the feature.${name}.defaultEnabled is set
+        boolean defaultEnabledValue = defaultFeatureEnabled(name)
+
+        featurePresent(name, defaultEnabledValue)
+    }
+
+    /**
+     * Return true if grails configuration allows given feature
+     * @param name
+     * @return
+     */
+    def boolean defaultFeatureEnabled(String name){
+        configurationService.getBoolean("feature.${name}.defaultEnabled", false)
     }
 
     /**
@@ -49,7 +61,7 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
      * @param defaultEnabled default enabled value for the feature, if unset
      * @return true if enabled
      */
-    def boolean featurePresent(Features feature, boolean defaultEnabled) {
+    def boolean featurePresent(FeaturesDefinition feature, boolean defaultEnabled) {
         featurePresent(feature.propertyName, defaultEnabled)
     }
 
@@ -68,7 +80,7 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
      * @param feature
      * @param enable
      */
-    def void toggleFeature(Features feature, boolean enable) {
+    def void toggleFeature(FeaturesDefinition feature, boolean enable) {
         configurationService.setBoolean("feature.${feature.propertyName}.enabled", enable)
     }
     /**
@@ -84,7 +96,7 @@ class FeatureService implements com.dtolabs.rundeck.core.config.FeatureService {
      * @param name
      * @param enable
      */
-    def getFeatureConfig(Features feature) {
+    def getFeatureConfig(FeaturesDefinition feature) {
         configurationService.getConfig("feature.${feature.propertyName}.config")
     }
     /**

@@ -3,19 +3,21 @@ import {CreateContext} from '@rundeck/testdeck/test/selenium'
 import {ProjectCreatePage} from 'pages/projectCreate.page'
 import {LoginPage} from 'pages/login.page'
 import {JobCreatePage} from 'pages/jobCreate.page'
-import {JobShowPage} from "pages/jobShow.page"
+import {JobShowPage} from 'pages/jobShow.page'
 import {until, By, Key} from 'selenium-webdriver'
 import '@rundeck/testdeck/test/rundeck'
-import {sleep} from "@rundeck/testdeck/async/util"
+import {sleep} from '@rundeck/testdeck/async/util'
 
 // We will initialize and cleanup in the before/after methods
-let ctx = CreateContext({projects: ['SeleniumBasic']})
+const ctx = CreateContext({projects: ['SeleniumBasic']})
 let loginPage: LoginPage
 let jobCreatePage: JobCreatePage
+let jobShowPage: JobShowPage
 
 beforeAll( async () => {
     loginPage = new LoginPage(ctx)
     jobCreatePage = new JobCreatePage(ctx, 'SeleniumBasic')
+    jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
 })
 
 beforeAll(async () => {
@@ -23,34 +25,35 @@ beforeAll(async () => {
 })
 
 describe('job', () => {
+
     it('create job with notifications', async () => {
 
         await jobCreatePage.get()
         await ctx.driver.wait(until.urlContains('/job/create'), 25000)
-        let jobName=await jobCreatePage.jobNameInput()
+        const jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys('a job with notifications')
 
-        //add workflow step
-        let wfTab=await jobCreatePage.tabWorkflow()
+        // add workflow step
+        const wfTab=await jobCreatePage.tabWorkflow()
         await wfTab.click()
-        let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+        const addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
 
-        //click add Command step, and wait until input fields are loaded
+        // click add Command step, and wait until input fields are loaded
         await addWfStepCommand.click()
         await jobCreatePage.waitWfStepCommandRemoteText()
 
 
-        let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+        const wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test')
 
-        let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
+        const wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
 
-        //click step Save button and wait for the step content to display
-        let wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
+        // click step Save button and wait for the step content to display
+        const wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
         await wfStep0SaveButton.click()
         await jobCreatePage.waitWfstep0vis()
 
-        //wait until edit form section for step is removed from dom
+        // wait until edit form section for step is removed from dom
         await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
 
         const notificationsTab = await jobCreatePage.notificationsTab()
@@ -103,33 +106,69 @@ describe('job', () => {
             await jobCreatePage.vueEditNotificationModalHidden()
         }
 
-        //save the job
-        let save = await jobCreatePage.saveButton()
+        // save the job
+        const save = await jobCreatePage.saveButton()
         await save.click()
 
         await ctx.driver.wait(until.urlContains('/job/show'), 35000)
-        let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
+
 
         await jobShowPage.waitJobDefinition()
-        let jobDefinitionModal = await jobShowPage.jobDefinition()
+        const jobDefinitionModal = await jobShowPage.jobDefinition()
         await jobDefinitionModal.click()
 
         await jobShowPage.waitDefinitionNotificationText()
-        let notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
-        expect(notificationDefinitionText).toEqual("mail to: " + newEmail)
+        const notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
+        expect(notificationDefinitionText).toEqual('mail to: ' + newEmail)
     })
 
+
     it('edit job notifications', async () => {
-        await jobCreatePage.getEditPage('b7b68386-3a52-46dc-a28b-1a4bf6ed87de')
+
+        await jobCreatePage.get()
+        await ctx.driver.wait(until.urlContains('/job/create'), 25000)
+        const jobName=await jobCreatePage.jobNameInput()
+        await jobName.sendKeys('edit job with notifications')
+
+        // add workflow step
+        const wfTab=await jobCreatePage.tabWorkflow()
+        await wfTab.click()
+        const addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+
+        // click add Command step, and wait until input fields are loaded
+        await addWfStepCommand.click()
+        await jobCreatePage.waitWfStepCommandRemoteText()
+
+
+        const wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+        await wfStepCommandRemoteText.sendKeys('echo selenium test')
+
+        const wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
+
+        // click step Save button and wait for the step content to display
+        const wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
+        await wfStep0SaveButton.click()
+        await jobCreatePage.waitWfstep0vis()
+
+        // wait until edit form section for step is removed from dom
+        await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
+
+        let save = await jobCreatePage.saveButton()
+        await save.click()
+
+        await sleep(1500)
+
+        const jobUUID= await jobShowPage.jobUuidText()
+
+        await jobCreatePage.getEditPage(jobUUID)
         await ctx.driver.wait(until.urlContains('/job/edit'), 30000)
-        await sleep(3000)
 
         const notificationsTab = await jobCreatePage.notificationsTab()
         await notificationsTab.click()
 
 
         const vueNotificationEditSections = await jobCreatePage.vueNotificationEditSections()
-        const newEmail = 'test@rundeck.com'
+        const newEmail = 'test2@rundeck.com'
         if (vueNotificationEditSections.length < 1) {
             // legacy ui
             const enableNotificationInput = await jobCreatePage.enableNotificationInput()
@@ -147,7 +186,6 @@ describe('job', () => {
             await notifySuccessRecipients.sendKeys(newEmail)
         } else {
             // vue ui
-
             const vueAddSuccessbutton = await jobCreatePage.vueAddSuccessbutton()
             await vueAddSuccessbutton.click()
 
@@ -175,76 +213,75 @@ describe('job', () => {
             await jobCreatePage.vueEditNotificationModalHidden()
         }
         // save the job
-        const save = await jobCreatePage.editSaveButton()
+        save = await jobCreatePage.editSaveButton()
         await save.click()
 
-        await ctx.driver.wait(until.urlContains('/job/show'), 35000)
-        let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
+        await ctx.driver.wait(until.urlContains('/job/show'), 15000)
 
         await jobShowPage.waitJobDefinition()
-
-        let jobDefinitionModal = await jobShowPage.jobDefinition()
+        const jobDefinitionModal = await jobShowPage.jobDefinition()
         await jobDefinitionModal.click()
 
         await jobShowPage.waitDefinitionNotificationText()
-        let notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
-        expect(notificationDefinitionText).toEqual("mail to: " + newEmail)
+        const notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
+        console.log(notificationDefinitionText)
+        expect(notificationDefinitionText).toEqual('mail to: ' + newEmail)
     })
+
 
     it('context variables job  notifications', async () => {
 
         await jobCreatePage.get()
         await ctx.driver.wait(until.urlContains('/job/create'), 25000)
-        let jobName=await jobCreatePage.jobNameInput()
+        const jobName=await jobCreatePage.jobNameInput()
         await jobName.sendKeys('a job with notifications context variables')
 
-        //add workflow step
-        let wfTab=await jobCreatePage.tabWorkflow()
+        // add workflow step
+        const wfTab=await jobCreatePage.tabWorkflow()
         await wfTab.click()
-        let addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
+        const addWfStepCommand=await jobCreatePage.addNewWfStepCommand()
 
-        //click add Command step, and wait until input fields are loaded
+        // click add Command step, and wait until input fields are loaded
         await addWfStepCommand.click()
         await jobCreatePage.waitWfStepCommandRemoteText()
 
-                //add options//
-        //1. click new option button
-        let optionNewButton = await jobCreatePage.optionNewButton()
+        // add options
+        // 1. click new option button
+        const optionNewButton = await jobCreatePage.optionNewButton()
         await optionNewButton.click()
-        //2. wait for edit form to load
+        // 2. wait for edit form to load
         await jobCreatePage.waitoption0EditForm()
 
-        let optionName='email'
-        let optionNameInput=await jobCreatePage.option0NameInput()
+        const optionName='email'
+        const optionNameInput=await jobCreatePage.option0NameInput()
         await optionNameInput.sendKeys(optionName)
 
-        let optionUsageSection=await jobCreatePage.option0UsageSession()
+        const optionUsageSection=await jobCreatePage.option0UsageSession()
         expect(optionUsageSection).toBeDefined()
 
-        //save option
-        let optionFormSaveButton = await jobCreatePage.optionFormSaveButton()
+        // save option
+        const optionFormSaveButton = await jobCreatePage.optionFormSaveButton()
         await optionFormSaveButton.click()
 
-        //wait for option to save
+        // wait for option to save
         await jobCreatePage.waitOption0li()
 
 
-        let wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
+        const wfStepCommandRemoteText=await jobCreatePage.wfStepCommandRemoteText()
         await wfStepCommandRemoteText.sendKeys('echo selenium test')
 
-        let wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
+        const wfStep0SaveButton=await jobCreatePage.wfStep0SaveButton()
 
-        //click step Save button and wait for the step content to display
-        let wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
+        // click step Save button and wait for the step content to display
+        const wfstepEditDiv=await ctx.driver.findElement(By.css('#wfli_0 div.wfitemEditForm'))
         await wfStep0SaveButton.click()
         await jobCreatePage.waitWfstep0vis()
 
-        //wait until edit form section for step is removed from dom
+        // wait until edit form section for step is removed from dom
         await ctx.driver.wait(until.stalenessOf(wfstepEditDiv), 15000)
 
         const notificationsTab = await jobCreatePage.notificationsTab()
         await notificationsTab.click()
-        
         const vueAddSuccessbutton = await jobCreatePage.vueAddSuccessbutton()
         await vueAddSuccessbutton.click()
 
@@ -260,13 +297,13 @@ describe('job', () => {
         const notificationConfig = await jobCreatePage.vueNotificationConfig()
 
         // fill remoteUrl input section
-        await jobCreatePage.vueNotificationConfigFillPropText('recipients',"${option")
+        await jobCreatePage.vueNotificationConfigFillPropText('recipients','${option')
 
         await sleep(2000)
 
         const autocomplteSuggestion = await jobCreatePage.findJobNotificationContextAutocomplete()
         const autocomplteSuggestionText = await autocomplteSuggestion.getText()
-        expect(autocomplteSuggestionText).toEqual("${option.email} - Option value")
+        expect(autocomplteSuggestionText).toEqual('${option.email} - Option value')
 
         await autocomplteSuggestion.click()
 
@@ -278,21 +315,20 @@ describe('job', () => {
         // wait until modal is hidden
         await jobCreatePage.vueEditNotificationModalHidden()
 
-        //save the job
-        let save = await jobCreatePage.saveButton()
+        // save the job
+        const save = await jobCreatePage.saveButton()
         await save.click()
 
         await ctx.driver.wait(until.urlContains('/job/show'), 35000)
-        let jobShowPage = new JobShowPage(ctx,'SeleniumBasic','')
 
         await jobShowPage.waitJobDefinition()
-        let jobDefinitionModal = await jobShowPage.jobDefinition()
+        const jobDefinitionModal = await jobShowPage.jobDefinition()
         await jobDefinitionModal.click()
 
         await jobShowPage.waitDefinitionNotificationText()
 
-        let notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
-        expect(notificationDefinitionText).toEqual("mail to: ${option.email}")
+        const notificationDefinitionText = await jobShowPage.jobDefinitionNotificationText()
+        expect(notificationDefinitionText).toEqual('mail to: ${option.email}')
 
     })
 })

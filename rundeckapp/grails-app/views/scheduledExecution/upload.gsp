@@ -33,6 +33,8 @@
                         jQuery('input[name=fileformat][value=yaml]').prop('checked', true);
                     } else if (this.files[0].name.match(/\.xml$/i)) {
                         jQuery('input[name=fileformat][value=xml]').prop('checked', true);
+                    }else if (this.files[0].name.match(/\.json$/i)) {
+                        jQuery('input[name=fileformat][value=json]').prop('checked', true);
                     }
                 }
             });

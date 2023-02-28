@@ -83,7 +83,7 @@ class Import extends Common{
         validatorClass = PathTemplateValidator
     )
     @SelectValues(
-        values = ['.*\\.xml','.*\\.yaml',],
+        values = ['.*\\.xml','.*\\.yaml','.*\\.json'],
         freeSelect = true
     )
     @RenderingOption(

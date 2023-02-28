@@ -7,8 +7,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.execution.JobExecutionItem
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.core.jobs.JobExecutionItem
 import groovy.transform.CompileStatic
 
 @CompileStatic

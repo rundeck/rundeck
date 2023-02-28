@@ -16,20 +16,15 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.execution.ServiceThreadBase
+
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
-import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
-import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
-import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
-import com.dtolabs.rundeck.execution.JobExecutionItem
-import com.dtolabs.rundeck.execution.JobRefCommand
+import com.dtolabs.rundeck.core.jobs.JobExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobRefCommand
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec

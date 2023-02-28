@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionLifecycleComponentException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponent
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleComponentHandler
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
@@ -338,16 +339,47 @@ class ExecutionLifecyclComponentServiceSpec extends Specification {
             }
         }
 
+        def executionReference = Mock(ExecutionReference){
+            getProject()>>"test"
+        }
+
         when:
-        def result = service.loadConfiguredComponents(configs, "test")
+        ExecutionReferenceLifecycleComponentHandler result = service.getExecutionHandler(configs, executionReference)
         then:
-        result.size() == 3
-        result[0].component.name=="Comp1"
-        !result[0].isPlugin()
-        result[1].component.name=="Comp2"
-        !result[1].isPlugin()
-        result[2].component.name=="pluginA"
-        result[2].isPlugin()
+        result.components.size() == 3
+        result.components[0].component.name=="Comp1"
+        !result.components[0].isPlugin()
+        result.components[1].component.name=="Comp2"
+        !result.components[1].isPlugin()
+        result.components[2].component.name=="pluginA"
+        result.components[2].isPlugin()
+
+
+    }
+
+    def "get components for a imported job"() {
+        given:
+        ExecutionLifecycleComponentService service = new ExecutionLifecycleComponentService()
+        service.featureService = featureService
+        service.frameworkService = frameworkService
+
+        service.beanComponents = [
+                "Comp1":new TestExecutionLifecycleComponentImpl(name: "Comp1"),
+                "Comp2":new TestExecutionLifecycleComponentImpl(name: "Comp2")
+        ]
+
+        def configs = PluginConfigSet.with(
+                ServiceNameConstants.ExecutionLifecycle, []
+        )
+
+        def ref = Mock(ExecutionReference)
+
+        when:
+        ExecutionReferenceLifecycleComponentHandler result = service.getExecutionHandler(configs, ref)
+        then:
+        result.components.size() == 2
+
+
 
 
     }

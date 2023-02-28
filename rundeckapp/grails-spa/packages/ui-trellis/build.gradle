@@ -71,8 +71,7 @@ node{
 def sourceDirs = [
         '.storybook',
         'lib',
-        'src',
-        'theme'
+        'src'
 ]
 def sourceFiles = ['package.json', 'README.md']
 def sources = sourceDirs + sourceFiles
@@ -80,7 +79,7 @@ def sources = sourceDirs + sourceFiles
 def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
     it.inputs.file 'package.json'
     it.inputs.file 'package-lock.json'
-    it.inputs.file 'vue.config.js'
+    it.inputs.file 'vue.config.library.js'
     it.inputs.file 'tsconfig.json'
 
     it.inputs.dir 'src'
@@ -89,8 +88,8 @@ def runNpmBuild = tasks.register('runNpmBuild', NpmTask) {
     it.outputs.cacheIf { false }
 
     def npmCommand = System.env.CI ?
-      'ci:build' :
-      'dev:build'
+      'ci:library:build' :
+      'dev:library:build'
 
     args = ['run', npmCommand]
 }

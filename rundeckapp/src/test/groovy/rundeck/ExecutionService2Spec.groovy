@@ -2182,6 +2182,8 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
 
         def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],null,null,null,null,null,null, false,false,true,false);
 
+        expect:
+        newCtxt.stepNumber==1
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
         assertEquals(1,newCtxt.threadCount)
@@ -2203,10 +2205,6 @@ class ExecutionService2Spec extends Specification implements ServiceUnitTest<Exe
                       'name':'blue',
                       'group':'some/where'
                      ].sort().toString(), newCtxt.dataContext['job'].sort().toString())
-
-        expect:
-        // asserts validate above
-        1 == 1
 
     }
     void testcreateJobReferenceContext_overrideNodefilter(){

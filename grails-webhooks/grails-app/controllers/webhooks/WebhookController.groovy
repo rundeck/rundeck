@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.converters.JSON
 import groovy.transform.PackageScope
+import org.rundeck.app.data.model.v1.webhook.RdWebhook
 import org.rundeck.core.auth.AuthConstants
 import webhooks.authenticator.AuthorizationHeaderAuthenticator
 
@@ -56,7 +57,7 @@ class WebhookController {
                                                            code: 'api.error.parameter.required', args: ['project']])
 
         }
-        Webhook webhook = webhookService.getWebhook(params.id.toLong())
+        RdWebhook webhook = webhookService.getWebhook(params.id.toLong())
         if(!webhook) {
             sendJsonError("Webhook not found")
             return
@@ -130,7 +131,7 @@ class WebhookController {
     }
 
     def post() {
-        Webhook hook = webhookService.getWebhookByToken(Webhook.cleanAuthToken(params.authtoken))
+        RdWebhook hook = webhookService.getWebhookByToken(Webhook.cleanAuthToken(params.authtoken))
 
         if(!hook) {
             sendJsonError("Webhook not found")
@@ -194,7 +195,7 @@ class WebhookController {
     }
 
     @PackageScope
-    boolean authorizeWebhook(Webhook hook, HttpServletRequest request) {
+    boolean authorizeWebhook(RdWebhook hook, HttpServletRequest request) {
         return new AuthorizationHeaderAuthenticator().authenticate(hook, request)
 
     }

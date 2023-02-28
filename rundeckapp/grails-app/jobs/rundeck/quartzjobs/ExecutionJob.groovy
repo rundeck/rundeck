@@ -115,7 +115,7 @@ class ExecutionJob implements InterruptableJob {
     }
 
     void execute_internal(JobExecutionContext context) {
-        def boolean success=false
+        boolean success=false
         RunContext initMap
         try{
             initMap= initialize(context,context.jobDetail.jobDataMap)
@@ -141,9 +141,9 @@ class ExecutionJob implements InterruptableJob {
 
 
         def beforeExec = initMap.jobSchedulerService.beforeExecution(
-            initMap.execution.asReference(),
-            context.mergedJobDataMap,
-            initMap.authContext
+                initMap.execution.asReference(),
+                context.mergedJobDataMap,
+                initMap.authContext
         )
         if (beforeExec == JobScheduleManager.BeforeExecutionBehavior.skip) {
             return

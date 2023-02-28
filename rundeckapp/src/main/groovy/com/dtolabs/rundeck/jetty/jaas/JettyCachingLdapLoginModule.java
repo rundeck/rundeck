@@ -34,6 +34,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.*;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.FailedLoginException;
@@ -249,6 +250,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
     protected DirContext _rootContext;
 
+    protected LdapContext ldapContext;
+
     protected boolean _reportStatistics;
 
     /**
@@ -286,6 +289,16 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     protected static long loginAttempts;
     private static ConcurrentHashMap<String, List<String>> roleMemberOfMap;
     private static long roleMemberOfMapExpires = 0;
+
+    /**
+     * This is to allow AD roles to be paginated
+     */
+    protected boolean rolePagination = false;
+
+    /**
+     * Maximun roles per page when pagination is enabled
+     */
+    protected int rolesPerPage = 100;
 
     /**
      * get the available information about the user
@@ -392,7 +405,6 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
-
         try {
             Object[] filterArguments = { _userObjectClass, _userIdAttribute, username };
             NamingEnumeration results = _rootContext.search(_userBaseDn, OBJECT_CLASS_FILTER, filterArguments, ctls);
@@ -439,15 +451,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      */
     @SuppressWarnings("unchecked")
     protected List getUserRoles(DirContext dirContext, String username) throws LoginException,
-            NamingException {
+            NamingException, IOException {
         String userDn = _userRdnAttribute + "=" + username + "," + _userBaseDn;
-
         return getUserRolesByDn(dirContext, userDn, username);
     }
 
     @SuppressWarnings("unchecked")
     private List getUserRolesByDn(DirContext dirContext, String userDn, String username) throws LoginException,
-            NamingException {
+            NamingException, IOException {
         List<String> roleList = new ArrayList<String>();
 
         if (dirContext == null || _roleBaseDn == null || (_roleMemberAttribute == null
@@ -458,52 +469,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             return roleList;
         }
 
-        String[] attrIDs = { _roleNameAttribute };
-        SearchControls ctls = new SearchControls();
-        ctls.setReturningAttributes(attrIDs);
-        ctls.setDerefLinkFlag(true);
-        ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-
-        String filter = OBJECT_CLASS_FILTER;
-        final NamingEnumeration results;
-
-        if(null!=_roleUsernameMemberAttribute){
-            Object[] filterArguments = { _roleObjectClass, _roleUsernameMemberAttribute, username };
-            results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
+        List<SearchResult> results;
+        if(rolePagination){
+            results = getPaginatedRoles(dirContext, userDn, username);
         }else{
-            Object[] filterArguments = { _roleObjectClass, _roleMemberAttribute, userDn };
-            results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
+            results = getNonPaginatedRoles(dirContext, userDn, username);
         }
-
-
-        while (results.hasMoreElements()) {
-            SearchResult result = (SearchResult) results.nextElement();
-
-            Attributes attributes = result.getAttributes();
-
-            if (attributes == null) {
-                continue;
-            }
-
-            Attribute roleAttribute = attributes.get(_roleNameAttribute);
-
-            if (roleAttribute == null) {
-                continue;
-            }
-
-            NamingEnumeration roles = roleAttribute.getAll();
-            while (roles.hasMore()) {
-                if (_rolePrefix != null && !"".equalsIgnoreCase(_rolePrefix)) {
-                    String role = (String) roles.next();
-                    roleList.add(role.replace(_rolePrefix, ""));
-                } else {
-                    roleList.add((String) roles.next());
-                }
-            }
-        }
-
+        roleList = getRoleList(results);
         addSupplementalRoles(roleList);
-
         if(_nestedGroups) {
             roleList = getNestedRoles(dirContext, roleList);
         }
@@ -514,6 +487,118 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             debug("JettyCachingLdapLoginModule: User '" + username + "' has roles: " + roleList);
         }
 
+        return roleList;
+    }
+
+
+    /**
+     * It searches for roles without pagination
+     * @param dirContext dirContext
+     * @param userDn userDn
+     * @param username username
+     *
+     * @return List<SearchResult>
+     * @throws NamingException
+     */
+    private List<SearchResult> getNonPaginatedRoles(DirContext dirContext, String userDn, String username) throws NamingException {
+        List<SearchResult> searchResults = new ArrayList<>();
+        String[] attrIDs = { _roleNameAttribute };
+        SearchControls ctls = new SearchControls();
+        ctls.setReturningAttributes(attrIDs);
+        ctls.setDerefLinkFlag(true);
+        ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        String filter = OBJECT_CLASS_FILTER;
+        NamingEnumeration<SearchResult> results = null;
+        if(null !=_roleUsernameMemberAttribute){
+            Object[] filterArguments = { _roleObjectClass, _roleUsernameMemberAttribute, username };
+            results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
+        }else{
+            Object[] filterArguments = { _roleObjectClass, _roleMemberAttribute, userDn };
+            results = dirContext.search(_roleBaseDn, filter, filterArguments, ctls);
+        }
+        while (results != null && results.hasMoreElements()) {
+            searchResults.add(results.nextElement());
+        }
+        return searchResults;
+    }
+
+    /**
+     * It searches for roles with pagination
+     * @param dirContext dirContext
+     * @param userDn userDn
+     * @param username username
+     *
+     * @return List<SearchResult>
+     * @throws NamingException
+     */
+    private List<SearchResult> getPaginatedRoles(DirContext dirContext, String userDn, String username) throws IOException, NamingException {
+        List<SearchResult> searchResults = new ArrayList<>();
+
+        int pageSize = rolesPerPage;
+        byte[] cookie = null;
+        ldapContext.setRequestControls(new Control[]{
+                new PagedResultsControl(pageSize, Control.CRITICAL) });
+        do {
+            String filter = OBJECT_CLASS_FILTER;
+
+            Object[] filterArguments = null;
+            if(null !=_roleUsernameMemberAttribute){
+                filterArguments = new Object[]{_roleObjectClass, _roleUsernameMemberAttribute, username};
+            }else{
+                filterArguments = new Object[]{_roleObjectClass, _roleMemberAttribute, userDn};
+            }
+
+            SearchControls searchControls = new SearchControls();
+            searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            NamingEnumeration results = ldapContext.search(
+                    _roleBaseDn,
+                    filter,
+                    filterArguments,
+                    searchControls);
+
+            // Iterate over a batch of search results
+            while (results != null && results.hasMoreElements()) {
+                searchResults.add((SearchResult)results.nextElement());
+            }
+            // Examine the paged results control response
+            Control[] controls = ldapContext.getResponseControls();
+            if (controls != null) {
+                for (int i = 0; i < controls.length; i++) {
+                    if (controls[i] instanceof PagedResultsResponseControl) {
+                        PagedResultsResponseControl prrc =
+                                (PagedResultsResponseControl)controls[i];
+                        cookie = prrc.getCookie();
+                    }
+                }
+            }
+            ldapContext.setRequestControls(new Control[]{
+                    new PagedResultsControl(pageSize, cookie, Control.CRITICAL) });
+        } while (cookie != null);
+
+        return searchResults;
+    }
+
+    private List<String> getRoleList(List<SearchResult> results) throws NamingException {
+        List<String> roleList = new ArrayList<String>();
+        for (SearchResult searchResult : results) {
+            Attributes attributes = searchResult.getAttributes();
+            if (attributes == null) {
+                continue;
+            }
+            Attribute roleAttribute = attributes.get(_roleNameAttribute);
+            if (roleAttribute == null) {
+                continue;
+            }
+            NamingEnumeration roles = roleAttribute.getAll();
+            while (roles.hasMore()) {
+                if (_rolePrefix != null && !"".equalsIgnoreCase(_rolePrefix)) {
+                    String role = (String) roles.next();
+                    roleList.add(role.replace(_rolePrefix, ""));
+                } else {
+                    roleList.add((String) roles.next());
+                }
+            }
+        }
         return roleList;
     }
 
@@ -843,7 +928,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             dirContext = _rootContext;
             debug("Using _rootContext for role lookup.");
         }
-        List roles = getUserRolesByDn(dirContext, userDn, username);
+        List roles = null;
+        try {
+            roles = getUserRolesByDn(dirContext, userDn, username);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         UserInfo userInfo = new UserInfo(username, new Password(password.toString()), roles);
         if (_cacheDuration > 0) {
@@ -914,6 +1004,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         try {
             _rootContext = new InitialDirContext(getEnvironment());
+            if(rolePagination){
+                ldapContext = new InitialLdapContext(_rootContext.getEnvironment(), null);
+            }
         } catch (NamingException ex) {
             LOG.error("Naming error",ex);
             throw new IllegalStateException("Unable to establish root context: "+ex.getMessage());
@@ -988,6 +1081,11 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         _reportStatistics = Boolean.parseBoolean(String.valueOf(getOption(options, "reportStatistics", Boolean
                 .toString(_reportStatistics))));
+
+        rolePagination = Boolean.parseBoolean(String.valueOf(getOption(options, "rolePagination", Boolean
+                .toString(rolePagination))));
+
+        rolesPerPage = Integer.valueOf(getOption(options, "rolesPerPage", String.valueOf(rolesPerPage)));
 
         Object supplementalRoles = options.get("supplementalRoles");
         if (null != supplementalRoles) {

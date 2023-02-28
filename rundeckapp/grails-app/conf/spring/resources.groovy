@@ -102,6 +102,7 @@ import org.rundeck.app.authorization.domain.projectAcl.AppProjectAclAuthorizingP
 import org.rundeck.app.authorization.domain.projectType.AppProjectTypeAuthorizingProvider
 import org.rundeck.app.authorization.domain.system.AppSystemAuthorizingProvider
 import org.rundeck.app.cluster.ClusterInfo
+import org.rundeck.app.components.JobJSONFormat
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.JobXMLFormat
 import org.rundeck.app.components.JobYAMLFormat
@@ -111,6 +112,7 @@ import org.rundeck.app.data.providers.GormProjectDataProvider
 import org.rundeck.app.data.providers.GormTokenDataProvider
 import org.rundeck.app.data.providers.storage.GormStorageDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
+import org.rundeck.app.data.providers.GormWebhookDataProvider
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.core.auth.app.RundeckAccess
@@ -538,6 +540,9 @@ beans={
     rundeckJobYamlFormat(JobYAMLFormat) {
         trimSpacesFromLines = application.config.getProperty('rundeck.job.export.yaml.trimSpaces', Boolean)
     }
+    rundeckJobJsonFormat(JobJSONFormat) {
+        trimSpacesFromLines = application.config.getProperty('rundeck.job.export.json.trimSpaces', Boolean)
+    }
 
     scmExportPluginProviderService(ScmExportPluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
@@ -882,5 +887,6 @@ beans={
     storageDataProvider(GormStorageDataProvider)
     userDataProvider(GormUserDataProvider)
     execReportDataProvider(GormExecReportDataProvider)
+    webhookDataProvider(GormWebhookDataProvider)
 
 }

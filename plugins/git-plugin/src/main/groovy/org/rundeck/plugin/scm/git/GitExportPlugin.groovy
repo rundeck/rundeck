@@ -111,8 +111,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
         format = config.format ?: 'xml'
 
-        if (!(format in ['xml', 'yaml'])) {
-            throw new IllegalArgumentException("format cannot be ${format}, must be one of: xml,yaml")
+        if (!(format in ['xml', 'yaml', 'json'])) {
+            throw new IllegalArgumentException("format cannot be ${format}, must be one of: xml,yaml,json")
         }
 
         branch = config.branch

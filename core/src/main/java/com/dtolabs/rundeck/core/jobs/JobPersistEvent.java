@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 
 import java.util.SortedSet;
 
-public interface JobPersistEvent {
+public interface JobPersistEvent extends JobEvent {
 
     /**
      *

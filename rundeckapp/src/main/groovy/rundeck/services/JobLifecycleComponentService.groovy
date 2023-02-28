@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.config.Features
+import com.dtolabs.rundeck.core.jobs.JobEvent
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponent
 import com.dtolabs.rundeck.core.jobs.JobLifecycleComponentException
 import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
@@ -165,7 +166,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
             compList.addAll(beanComponents.collect { name, component->
                 new NamedJobLifecycleComponent(
                     component: component,
-                    name: component.class.canonicalName)
+                    name: component.class.simpleName)
             })
         }
         compList.addAll(loadProjectConfiguredPlugins(project))
@@ -240,12 +241,13 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
         }
         
         if (!success || errors) {
-            LOG.warn("Errors processing Job Component Event [${eventType}]. See debug log for details.")
-            errors.each { name, e ->
-                LOG.debug("    For component [${name}]: " + e.getMessage(), e)
+            LOG.warn("Errors processing Job Component Event [${eventType}]:")
+            errors.each { name, e -> 
+                LOG.warn(" -- For component [${name}]: " + e.getMessage())
+                LOG.debug(" -- For component [${name}]: " + e.getMessage(), e)
             }
-            throw new JobLifecycleComponentException("Aborting event handling due to (${errors.size()}) errors: " + errors.collect { name, e ->
-                "{Component: [${name}] Message: [${e.message}]}"
+            throw new JobLifecycleComponentException("Job could not start due to the following errors: " + errors.collect { name, e ->
+                "${e.message}"
             }.join(", "))
         }
 
@@ -263,6 +265,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
         if (jobEvent instanceof JobPreExecutionEvent) {
             return new JobEventStatusImpl(
                 successful: success,
+                eventType: jobEvent.getClass(),
                 useNewValues: useNewOptionValues,
                 optionsValues: jobEvent.optionsValues,
                 useNewMetadata: useNewExecutionMetadata,
@@ -271,6 +274,7 @@ class JobLifecycleComponentService implements ProjectConfigurable, ApplicationCo
         } else if (jobEvent instanceof JobPersistEvent) {
             return new JobEventStatusImpl(
                 successful: success,
+                eventType: jobEvent.getClass(),
                 options: jobEvent.options,
                 useNewValues: useNewOptionValues
             )
@@ -422,4 +426,19 @@ class JobEventStatusImpl implements JobLifecycleStatus {
     SortedSet<JobOption> options
     boolean useNewMetadata
     Map newExecutionMetadata
+    String errorMessage
+
+    Class<? extends JobEvent> eventType
+
+    @Override
+    Class<? extends JobEvent> getJobEventType() {
+        return this.eventType
+    }
+
+
+    @Override
+    public String getErrorMessage() {
+        return this.errorMessage
+    }
+
 }

@@ -46,6 +46,7 @@ import org.rundeck.core.auth.web.RdAuthorizeSystem
 import org.rundeck.util.Sizes
 import org.springframework.web.bind.annotation.PathVariable
 import rundeck.services.ConfigurationService
+import rundeck.services.feature.FeatureService
 
 import javax.servlet.http.HttpServletResponse
 import javax.validation.constraints.Pattern
@@ -71,6 +72,7 @@ class ApiController extends ControllerBase{
     def frameworkService
     ConfigurationService configurationService
     LinkGenerator grailsLinkGenerator
+    FeatureService featureService
 
     static allowedMethods = [
             info                 : ['GET'],
@@ -143,7 +145,6 @@ class ApiController extends ControllerBase{
                 in = ParameterIn.PATH,
                 description = 'Metric name, or blank to receive list of metrics',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type='string',
                     allowableValues=['metrics', 'ping', 'threads', 'healthcheck']
@@ -261,7 +262,7 @@ class ApiController extends ControllerBase{
             return
         }
 
-        FeatureEnabledResult result = new FeatureEnabledResult(featureName, configurationService.getBoolean("feature.${featureName}.enabled", false))
+        FeatureEnabledResult result = new FeatureEnabledResult(featureName, featureService.featurePresent(featureName))
         return respond(result, formats: ['json'])
 
     }
@@ -457,7 +458,6 @@ class ApiController extends ControllerBase{
                 in = ParameterIn.PATH,
                 description = 'username',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type='string'
                 )
@@ -542,7 +542,6 @@ Since: v11
                 in = ParameterIn.PATH,
                 description = 'username',
                 allowEmptyValue = true,
-                required = false,
                 schema = @Schema(
                     type = 'string'
                 )

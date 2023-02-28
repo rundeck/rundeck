@@ -15,7 +15,9 @@
  */
 package webhooks
 
-class Webhook {
+import org.rundeck.app.data.model.v1.webhook.RdWebhook
+
+class Webhook implements RdWebhook{
 
     String uuid
     String name
@@ -44,4 +46,5 @@ class Webhook {
         if(authtoken.contains("#")) return authtoken.substring(0,authtoken.indexOf("#"))
         return authtoken
     }
+
 }

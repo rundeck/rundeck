@@ -4,7 +4,7 @@ SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
 cd $SRC_DIR
 URL=${1:-"http://localhost:4440"}
-
+FAIL_FAST=${FAIL_FAST:-0}
 die() {
    echo "$*" 1>&2
    exit 2
@@ -30,10 +30,16 @@ test_ok(){
 test_fail(){
     echo -e "${TEST_FAIL} $1"
 }
+fail_fast(){
+  if [ "${FAIL_FAST}" == "1" ] ; then
+    exit 2;
+  fi
+}
 
 run_test(){
   i=$1
   tname=$(basename $i)
+  [ "$FAIL_FAST" != "0" ] && [ $myexit -ne 0 ] && return
   $SHELL ${i} ${URL} &>$DIR/${tname}.output
   if [ $? != 0 ] ; then
       if [ -f $DIR/curl.out ] ; then
@@ -55,11 +61,13 @@ myexit=0
 
 for i in ./unauthorized-test*.sh  ; do
     tname=$(basename $i)
+    [ "$FAIL_FAST" != "0" ] && [ $myexit -ne 0 ] && return
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
         let myexit=2
         test_fail "${i}"
         echo "${i}: ${TEST_FAIL}" >> $DIR/testall.output
+        cat $DIR/${tname}.output 1>&2
         cat $DIR/${tname}.output >> $DIR/testall.output
     else
         test_ok "${i}"
@@ -70,8 +78,6 @@ done
 #perform login
 rm $DIR/cookies
 $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" || die "Login: ${TEST_FAIL}"
-
-echo dir is "$(pwd)"
 
 set +e
 if [ -n "$TEST_NAME" ] ; then
@@ -86,7 +92,10 @@ else
 fi
 
 if [ $myexit -ne 0 ] ; then
-    cat $DIR/*.output
+    for of in "$DIR"/*.output ; do
+      echo "$of:"
+      cat "$of"
+    done
 fi
 
 exit $myexit
