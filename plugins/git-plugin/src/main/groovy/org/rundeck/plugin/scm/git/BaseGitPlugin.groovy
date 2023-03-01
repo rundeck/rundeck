@@ -583,6 +583,8 @@ class BaseGitPlugin {
             }
             git = agit
             repo = arepo
+            arepo.close()
+            agit.close()
         } else {
             performClone(base, url, context, integration)
         }

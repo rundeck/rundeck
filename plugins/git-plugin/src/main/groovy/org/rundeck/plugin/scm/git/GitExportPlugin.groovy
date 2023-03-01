@@ -143,6 +143,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     void cleanup() {
+        repo?.close()
         git?.close()
         git?.getRepository()?.close()
     }
@@ -150,6 +151,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     void totalClean(){
         git?.getRepository()?.close()
+        git?.close()
         File base = new File(config.dir)
         try {
             FileUtils.delete(base, FileUtils.RECURSIVE)
