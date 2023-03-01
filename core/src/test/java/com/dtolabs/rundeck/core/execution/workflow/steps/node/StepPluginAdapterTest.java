@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
+import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import org.apache.tools.ant.BuildListener;
@@ -22,6 +23,8 @@ import static com.dtolabs.rundeck.core.execution.workflow.TestBaseWorkflowStrate
 public class StepPluginAdapterTest extends AbstractBaseTest {
 
     Framework testFramework;
+    IRundeckProject testProject;
+    private final String FRAMEWORK_PROJECT = this.getClass().getName();
 
     public StepPluginAdapterTest(java.lang.String name) {
         super(name);
@@ -33,7 +36,20 @@ public class StepPluginAdapterTest extends AbstractBaseTest {
 
 
     public void setUp(){
+        super.setUp();
         testFramework = createTestFramework();
+        testProject = testFramework.getFrameworkProjectMgr().createFrameworkProject(FRAMEWORK_PROJECT);
+        generateProjectResourcesFile(
+                new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"),
+                testProject
+        );
+    }
+
+    protected void tearDown() throws Exception {
+        super.tearDown();
+
+        File projectDirectory = new File(getFrameworkProjectsBase(), TEST_PROJECT);
+        FileUtils.deleteDir(projectDirectory);
     }
 
     static class testListener implements ExecutionListenerOverride {
@@ -124,7 +140,7 @@ public class StepPluginAdapterTest extends AbstractBaseTest {
         set1.putNode(node1);
 
         return  new ExecutionContextImpl.Builder()
-                .frameworkProject(TEST_PROJECT)
+                .frameworkProject(FRAMEWORK_PROJECT)
                 .user("user1")
                 .nodeSelector(SelectorUtils.nodeList(failedNodeList))
                 .executionListener(new testListener())
