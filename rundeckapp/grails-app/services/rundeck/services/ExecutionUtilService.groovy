@@ -36,8 +36,10 @@ import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.job.converters.ScheduledExecutionToJobConverter
 import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.workflow.WorkflowDataWorkflowExecutionItemFactory
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.JobExec
@@ -183,6 +185,16 @@ class ExecutionUtilService {
         impl.setPluginConfig(workflow.pluginConfigMap)
         final WorkflowExecutionItemImpl item = new WorkflowExecutionItemImpl(impl)
         return item
+    }
+
+    /**
+     * Create an WorkflowExecutionItem instance for the given Workflow,
+     * suitable for the ExecutionService layer
+     */
+    public WorkflowExecutionItem createExecutionItemForWorkflow(WorkflowData workflow, String parentProject=null) {
+        def sourceWorkflow = workflow
+        if(sourceWorkflow instanceof Workflow) sourceWorkflow = ScheduledExecutionToJobConverter.convertWorkflow(sourceWorkflow)
+        new WorkflowDataWorkflowExecutionItemFactory().createExecutionItemForWorkflow(sourceWorkflow, parentProject)
     }
 
 

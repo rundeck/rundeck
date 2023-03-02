@@ -11,9 +11,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.compiler.GrailsCompileStatic
 import grails.events.annotation.Publisher
 import grails.gorm.transactions.Transactional
+import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import groovy.util.logging.Log4j2
+import org.grails.datastore.mapping.query.api.Criteria
+import org.hibernate.criterion.CriteriaSpecification
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
@@ -26,6 +29,7 @@ import org.rundeck.app.job.component.JobComponentDataImportExport
 import org.rundeck.app.jobs.options.JobOptionConfigPluginAttributes
 import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.context.request.RequestContextHolder
+import rundeck.Execution
 import rundeck.data.job.JobReferenceImpl
 import rundeck.data.job.JobRevReferenceImpl
 import rundeck.data.job.RdJob
@@ -37,6 +41,7 @@ import org.rundeck.spi.data.DataAccessException
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.ScheduledExecution
 import rundeck.data.job.RdOption
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.JobLifecycleComponentService
 import rundeck.services.JobSchedulerService
@@ -286,6 +291,96 @@ class GormJobDataProvider extends GormJobQueryProvider implements JobDataProvide
             rdJob.errors.rejectValue('jobName', 'ScheduledExecution.jobName.unauthorized', [authAction, rdJob.jobName].toArray(), 'Unauthorized action: {0} for value: {1}')
             rdJob.errors.rejectValue('groupPath', 'ScheduledExecution.groupPath.unauthorized', [ authAction, rdJob.groupPath].toArray(), 'Unauthorized action: {0} for value: {1}')
             return
+        }
+    }
+
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    List<JobData> getScheduledJobsToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter, List<String> jobids, boolean ignoreInnerScheduled) {
+        return ScheduledExecution.createCriteria().listDistinct {
+            or {
+                and {
+                    if (!ignoreInnerScheduled) {
+                        eq('scheduled', true)
+                    }
+                    if (!selectAll) {
+                        if (fromServerUUID) {
+                            eq('serverNodeUUID', fromServerUUID)
+                        } else {
+                            isNull('serverNodeUUID')
+                        }
+                    } else {
+                        or {
+                            isNull('serverNodeUUID')
+                            ne('serverNodeUUID', toServerUUID)
+                        }
+                    }
+                    if (jobids) {
+                        'in'('uuid', jobids)
+                    }
+                }
+                exists(Execution.where {
+                    setAlias('exec')
+                    eqProperty('jobUuid', 'this.uuid')
+                    eq('status', ExecutionService.EXECUTION_SCHEDULED)
+                    isNull('dateCompleted')
+                    gt('dateStarted', new Date())
+                    if(projectFilter){
+                        eq('project',projectFilter)
+                    }
+                    if (!selectAll) {
+                        if (fromServerUUID) {
+                            eq('serverNodeUUID', fromServerUUID)
+                        } else {
+                            isNull('serverNodeUUID')
+                        }
+                    } else {
+                        or {
+                            isNull('serverNodeUUID')
+                            ne('serverNodeUUID', toServerUUID)
+                        }
+                    }
+                    projections {
+                        property('id')
+                    }
+                })
+            }
+
+            if (projectFilter) {
+                eq('project', projectFilter)
+            }
+        }
+    }
+
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    List<JobData> getJobsWithAdhocScheduledExecutionsToClaim(String toServerUUID, String fromServerUUID, boolean selectAll, String projectFilter) {
+        return ScheduledExecution.createCriteria().listDistinct {
+            applyAdhocScheduledExecutionsCriteria(delegate, selectAll, fromServerUUID, toServerUUID, projectFilter)
+        }
+    }
+
+    @CompileStatic(TypeCheckingMode.SKIP)
+    void applyAdhocScheduledExecutionsCriteria(Criteria delegate, boolean selectAll, String fromServerUUID, String toServerUUID, String project){
+        delegate.executions(CriteriaSpecification.LEFT_JOIN) {
+            eq('status', ExecutionService.EXECUTION_SCHEDULED)
+            isNull('dateCompleted')
+            gt('dateStarted', new Date())
+            if(project){
+                eq('project',project)
+            }
+            if (!selectAll) {
+                if (fromServerUUID) {
+                    eq('serverNodeUUID', fromServerUUID)
+                } else {
+                    isNull('serverNodeUUID')
+                }
+            } else {
+                or {
+                    isNull('serverNodeUUID')
+                    ne('serverNodeUUID', toServerUUID)
+                }
+            }
         }
     }
 

@@ -29,6 +29,8 @@ import grails.gorm.DetachedCriteria
 import groovy.json.JsonOutput
 import org.grails.datastore.mapping.query.api.BuildableCriteria
 import org.rundeck.app.data.model.v1.execution.ExecutionData
+import org.rundeck.app.data.model.v1.job.JobData
+import rundeck.data.util.JobDataUtil
 import rundeck.services.ExecutionService
 import rundeck.services.execution.ExecutionReferenceImpl
 
@@ -79,6 +81,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         status(nullable:true)
         outputfilepath(nullable:true)
         scheduledExecution(nullable:true)
+        jobUuid(nullable:true)
         loglevel(nullable:true)
         nodeInclude(nullable:true)
         nodeExclude(nullable:true)
@@ -480,6 +483,12 @@ class Execution extends ExecutionContext implements EmbeddedJsonData, ExecutionD
         exec
     }
 
+    ExecutionReference asReferenceWithJobData(JobData jobData) {
+        def ref = asReference()
+        ref.job = JobDataUtil.asJobReference(jobData)
+        return ref
+
+    }
     ExecutionReference asReference(Closure<String> genTargetNodes = null) {
         JobReference jobRef = null
         String adhocCommand = null

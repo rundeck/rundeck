@@ -15,6 +15,14 @@ class RdJobService {
 
     JobDataProvider jobDataProvider
 
+    /**
+     * @deprecated This method allows the lookup of ScheduledExecution by either the internal id or the uuid of the
+     * job. This behavior was introduced when uuids were added to mark jobs. Now ALL jobs should have uuids, so
+     * use the getJobByUuid method explicitly and do not rely on this behavior
+     * @param id
+     * @return
+     */
+    @Deprecated
     JobData getJobByIdOrUuid(Serializable id) {
         JobData found = null
         if (id instanceof Long) {

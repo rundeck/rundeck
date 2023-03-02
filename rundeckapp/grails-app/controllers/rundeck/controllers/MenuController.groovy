@@ -655,7 +655,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def finishq=scheduledExecutionService.finishquery(query,params,qres)
 
         def allScheduled = schedlist.findAll { jobSchedulesService.isScheduled(it.uuid) }
-        def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled)
+        def nextExecutions=scheduledExecutionService.nextExecutionTimes(allScheduled.collect{it.uuid})
         def nextOneTimeScheduledExecutions = query.runJobLaterFilter ? scheduledExecutionService.nextOneTimeScheduledExecutions(schedlist) : null
 
         def clusterMap=scheduledExecutionService.clusterScheduledJobs(allScheduled)
@@ -2257,13 +2257,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             summary[project]=[name: project, execCount: 0, failedCount: 0,userSummary: [], userCount: 0]
         }
         long proj2=System.currentTimeMillis()
-        def projects2 = projectNames?Execution.createCriteria().list {
-            gt('dateStarted', today)
-            projections {
-                groupProperty('project')
-                count()
-            }
-        }:[]
+        def ecount = executionService.countExecutionsByProjectGreaterThanDate(today)
+        def projects2 = projectNames?ecount:[]
         projects2 = projects2.findAll{projectNames.contains(it[0])}
         proj2=System.currentTimeMillis()-proj2
         def execCount= 0 //Execution.countByDateStartedGreaterThan( today)
@@ -2277,14 +2272,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
         def totalFailedCount= 0
-        def failedExecs = projectNames? Execution.createCriteria().list {
-            gt('dateStarted', today)
-            inList('status', ['false', 'failed'])
-            projections {
-                groupProperty('project')
-                count()
-            }
-        }:[]
+        def efcount = executionService.countFailedExecutionsByProjectGreaterThanDate(today)
+        def failedExecs = projectNames? efcount:[]
         failedExecs = failedExecs.findAll{projectNames.contains(it[0])}
         failedExecs.each{val->
             if(val.size()==2){
@@ -2296,13 +2285,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         long proj3=System.currentTimeMillis()
-        def users2 = projectNames?Execution.createCriteria().list {
-            gt('dateStarted', today)
-            projections {
-                distinct('user')
-                property('project')
-            }
-        }:[]
+        def eucount = executionService.countExecutionsByUserAndProjectGreaterThanDate(today)
+        def users2 = projectNames?eucount:[]
         users2=users2.findAll {projectNames.contains(it[1])}
         proj3=System.currentTimeMillis()-proj3
         def users = new HashSet<String>()
@@ -2905,7 +2889,7 @@ Since: V18''',
             extra.averageDuration = averageDuration
         }
         if(jobSchedulesService.shouldScheduleExecution(scheduledExecution.uuid)){
-            extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
+            extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution.uuid)
         }
         respond(
 

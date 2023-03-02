@@ -73,6 +73,7 @@ import org.rundeck.app.api.model.ApiErrorResponse
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.ImportedJob
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.app.data.model.v1.user.RdUser
 import org.rundeck.app.data.providers.v1.execution.ReferencedExecutionDataProvider
 import org.rundeck.app.data.providers.v1.job.JobDataProvider
@@ -94,6 +95,7 @@ import rundeck.*
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import rundeck.data.exceptions.ExecutionServiceExecutionException
 import rundeck.data.util.JobDataUtil
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
@@ -246,7 +248,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 scheduledExecution  : scheduledExecution,
                 hideJobDelete       : params.hideJobDelete,
                 jobDeleteSingle     : params.jobDeleteSingle,
-                isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution)
+                isScheduled         : scheduledExecutionService.isScheduled(scheduledExecution.uuid)
         ]
 
         if (authorizingProject.isAuthorized(RundeckAccess.Project.APP_SCM_EXPORT)) {
@@ -290,7 +292,7 @@ class ScheduledExecutionController  extends ControllerBase{
             orchestratorPlugins = orchestratorPluginService.getOrchestratorPlugins()
         }
         def nextExecution = null
-        def isScheduled = scheduledExecutionService.isScheduled(scheduledExecution)
+        def isScheduled = scheduledExecutionService.isScheduled(scheduledExecution.uuid)
         if (keys.contains('nextExecution') || !keys) {
             nextExecution = isScheduled ? scheduledExecutionService.nextExecutionTime(
                     scheduledExecution
@@ -425,7 +427,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def remoteClusterNodeUUID=null
-        def isScheduled = scheduledExecutionService.isScheduled(scheduledExecution)
+        def isScheduled = scheduledExecutionService.isScheduled(scheduledExecution.uuid)
         if (isScheduled && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
@@ -455,7 +457,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 params: params,
                 total: total,
                 reftotal: reftotal,
-                nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution.uuid),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
@@ -578,11 +580,11 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def dataMap= [
                 scheduledExecution: scheduledExecution,
-                isScheduled: scheduledExecutionService.isScheduled(scheduledExecution),
+                isScheduled: scheduledExecutionService.isScheduled(scheduledExecution.uuid),
                 crontab: crontab,
                 params: params,
                 total: total,
-                nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution.uuid),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
@@ -2634,7 +2636,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
-        def isauth = scheduledExecutionService.userAuthorizedForAdhoc(params.request,scheduledExecution,authContext)
+        def isauth = scheduledExecutionService.userAuthorizedForAdhoc(scheduledExecution.project,authContext)
         if (!isauth){
             def msg=g.message(code:'unauthorized.job.run.user',args:[params.user])
             return [success:false,error:'unauthorized',message:msg]
@@ -2663,7 +2665,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
         def Execution e
         try {
             e = executionService.createExecutionAndPrep(scheduledExecution, authContext, params)
-        } catch (ExecutionServiceException exc) {
+        } catch (ExecutionServiceExecutionException exc) {
             return [success:false,error:'failed',message:exc.getMessage()]
         }
 
@@ -2776,7 +2778,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
                             jobs          : jobs,
                             errjobs       : errjobs,
                             skipjobs      : skipjobs,
-                            nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { scheduledExecutionService.isScheduled(it) }),
+                            nextExecutions: scheduledExecutionService.nextExecutionTimes(jobs.grep { scheduledExecutionService.isScheduled(it.uuid) }),
                             messages      : msgs,
                             didupload     : true
                     ]
@@ -3082,7 +3084,7 @@ Authorization required: `delete` on project resource type `job`, and `delete` on
             return
         }
         def model = _prepareExecute(scheduledExecution, framework,authContext)
-        model.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
+        model.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution.uuid)
         if(params.dovalidate){
             model.jobexecOptionErrors=session.jobexecOptionErrors
             model.selectedoptsmap=session.selectedoptsmap
@@ -4949,7 +4951,7 @@ Authorization required: `delete` for the job.''',
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
         }
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+        JobData scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
 
         if (scheduledExecution?.project && frameworkService.isFrameworkProjectDisabled(scheduledExecution.project)) {
             return apiService.renderErrorFormat(response, [
@@ -4971,7 +4973,7 @@ Authorization required: `delete` for the job.''',
                     code: 'api.error.item.unauthorized', args: ['Delete Execution', 'Project',
                     scheduledExecution.project]])
         }
-        def result = scheduledExecutionService.deleteJobExecutions(scheduledExecution, authContext, session.user)
+        def result = scheduledExecutionService.deleteJobExecutions(scheduledExecution.uuid, authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
     @Post(uri='/project/{project}/run/command')
@@ -6029,6 +6031,10 @@ Since: v14''',
         }
     }
 
+    def schexQuery() {
+        def results = scheduledExecutionService.rewrittenSchedJobsToClaim(null,null, true, null, [], false)
+        render results as JSON
+    }
 }
 
 class JobXMLException extends Exception{

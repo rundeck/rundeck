@@ -1,12 +1,13 @@
 package rundeck.utils
 
 import grails.util.Holders
+import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.option.OptionData
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.Option
-import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
 
 import javax.servlet.http.HttpSession
@@ -38,7 +39,7 @@ class OptionsUtil {
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    protected static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution, UserDataProvider userDataProvider,selectedoptsmap=[:],boolean isHttp=true, String username=null) {
+    protected static String expandUrl(Option opt, String url, JobData jobData, UserDataProvider userDataProvider, selectedoptsmap=[:], boolean isHttp=true, String username=null) {
         def invalid = []
         def frameworkService = getFrameworkServiceInstance()
         def rundeckProps=[
@@ -59,11 +60,11 @@ class OptionsUtil {
                 'user.email': userEmail
         ]
         extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
-        Map globals=frameworkService.getProjectGlobals(scheduledExecution.project)
+        Map globals=frameworkService.getProjectGlobals(jobData.project)
 
         def replacement= { Object[] group ->
-            if (group[2] == 'job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
-                scheduledExecution.properties.get(jobprops[group[3]]).toString()
+            if (group[2] == 'job' && jobprops[group[3]] && jobData.properties.containsKey(jobprops[group[3]])) {
+                jobData.properties.get(jobprops[group[3]]).toString()
             } else if (group[2] == 'job' && null != extraJobProps[group[3]]) {
                 def value = extraJobProps[group[3]]
                 value.toString()
@@ -79,7 +80,7 @@ class OptionsUtil {
                 def optname = group[3].substring(0, group[3].length() - '.value'.length())
                 def value = selectedoptsmap && selectedoptsmap instanceof Map ? selectedoptsmap[optname] : null
                 //find option with name
-                def Option expopt = scheduledExecution.options.find { it.name == optname }
+                OptionData expopt = jobData.optionSet.find { it.name == optname }
                 if (value && expopt?.multivalued && (value instanceof Collection || value instanceof String[])) {
                     value = value.join(expopt.delimiter)
                 }

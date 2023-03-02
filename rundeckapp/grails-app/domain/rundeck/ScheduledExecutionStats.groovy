@@ -18,6 +18,15 @@ class ScheduledExecutionStats implements RdJobStats {
         content type: 'text'
     }
 
+    static ScheduledExecutionStats getOrCreate(String jobUuid) {
+        def stats = ScheduledExecutionStats.findByJobUuid(jobUuid)
+        if(!stats) {
+            stats = new ScheduledExecutionStats(jobUuid: jobUuid, contentMap: [execCount: 0, totalTime: -1, refExecCount: 0])
+            stats.save()
+        }
+        return stats
+    }
+
     public Map getContentMap() {
         if (null != content) {
             final ObjectMapper objMapper = new ObjectMapper()

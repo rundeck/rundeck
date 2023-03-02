@@ -166,11 +166,7 @@ class ReportsController extends ControllerBase{
         }
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
-                ScheduledExecution sched = !params.jobIdFilter.toString().isNumber() ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
-                def list = []
-                if(sched!= null) {
-                    list = referencedExecutionDataProvider.executionProjectList(sched.uuid)
-                }
+                def list = referencedExecutionDataProvider.executionProjectList(params.jobIdFilter)
                 def allowedProjects = []
                 list.each { project ->
                     if(project != params.project){

@@ -6,6 +6,7 @@ import grails.compiler.GrailsCompileStatic
 import grails.util.Holders
 import groovy.transform.CompileStatic
 import org.rundeck.app.components.RundeckJobDefinitionManager
+import org.rundeck.app.data.model.v1.job.orchestrator.OrchestratorData
 import rundeck.data.job.RdJob
 import rundeck.data.job.RdLogConfig
 import rundeck.data.job.RdNodeConfig
@@ -95,7 +96,7 @@ class ScheduledExecutionFromRdJobUpdater {
         updateOrchestrator(se.orchestrator, rdo)
     }
 
-    static Orchestrator updateOrchestrator(Orchestrator orchestrator, RdOrchestrator rdo) {
+    static Orchestrator updateOrchestrator(Orchestrator orchestrator, OrchestratorData rdo) {
         orchestrator.type = rdo.type
         orchestrator.content = mapper.writeValueAsString(rdo.configuration)
         orchestrator
@@ -205,8 +206,9 @@ class ScheduledExecutionFromRdJobUpdater {
         wkf.keepgoing = rdw.keepgoing
         wkf.strategy = rdw.strategy
         wkf.pluginConfigMap = rdw.pluginConfigMap
+        int stepCount = wkf?.commands?.size() ?: 0
         //remove all previous steps
-        for(int x = 0; x < wkf.commands.size(); x++) {
+        for(int x = 0; x < stepCount; x++) {
             def cmd = wkf.commands[x]
             wkf.removeFromCommands(cmd)
             cmd.delete()

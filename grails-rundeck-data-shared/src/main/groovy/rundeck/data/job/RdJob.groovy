@@ -16,6 +16,7 @@ import grails.validation.Validateable
 import org.rundeck.app.data.model.v1.job.JobData
 
 import rundeck.data.constants.NotificationConstants
+import rundeck.data.util.JobDataUtil
 import rundeck.data.validation.validators.ValidatorUtils
 import rundeck.data.validation.validators.execlifecycle.ExecutionLifecyclePluginValidator
 import rundeck.data.validation.validators.jobargs.JobArgStringValidator
@@ -153,4 +154,15 @@ class RdJob implements JobData, Validateable {
         }
     }
 
+    String generateJobScheduledName() {
+        return JobDataUtil.generateJobScheduledName(this)
+    }
+
+    String generateJobGroupName() {
+        return JobDataUtil.generateJobGroupName(this)
+    }
+
+    String generateCrontabExression() {
+        return JobDataUtil.generateCrontabExpression(this)
+    }
 }

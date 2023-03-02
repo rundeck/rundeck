@@ -6,12 +6,17 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import grails.core.GrailsApplication
 import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
 import org.quartz.JobExecutionContext
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.springframework.context.ApplicationContext
 import rundeck.*
+import rundeck.data.job.RdJob
+import rundeck.data.job.RdLogConfig
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
@@ -24,6 +29,16 @@ import spock.lang.Unroll
 @Integration
 @Rollback
 class ExecutionJobIntegrationSpec extends Specification {
+    def mockGrailsApp
+    JobDataProvider mockJobDataProvider
+    def setup() {
+        mockJobDataProvider = Mock(JobDataProvider)
+        mockGrailsApp = Mock(GrailsApplication) {
+            getMainContext() >> Mock(ApplicationContext) {
+                getBean("jobDataProvider", JobDataProvider) >> mockJobDataProvider
+            }
+        }
+    }
     /**
      * executeAsyncBegin succeeds,finish succeeds, thread fails
      */
@@ -52,7 +67,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                     )
             )
         then:
-            1 * mockes.executeAsyncBegin(_, _, execution, _, _, _) >> testExecmap
+            1 * mockes.executeAsyncBegin(_) >> testExecmap
             1 * mockeus.finishExecution(testExecmap)
             !result.success
             testExecmap == result.execmap
@@ -128,7 +143,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             stb.successful = true
             def threshold = new testThreshold()
             def testExecmap = new ExecutionService.AsyncStarted(thread: stb, threshold: threshold)
-            1 * mockes.executeAsyncBegin(_, _, execution, _, _, _,) >> testExecmap
+            1 * mockes.executeAsyncBegin(_) >> testExecmap
 
             1 * mockeus.finishExecution(testExecmap)
         when:
@@ -262,7 +277,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             stb.result = new TestWFEResult(success: true)
             def testExecmap = new ExecutionService.AsyncStarted(thread: stb, scheduledExecution: se)
 
-            1 * es.executeAsyncBegin(_, _, execution, _, _, _,) >> {
+            1 * es.executeAsyncBegin(_) >> {
                 stb.start()
                 testExecmap
             }
@@ -287,6 +302,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             execution!=null
             result.success
             testExecmap == result.execmap
+            1 * eus.getAverageDuration(_) >> 1
             1 * es.avgDurationExceeded(_, _)
     }
 
@@ -317,7 +333,7 @@ class ExecutionJobIntegrationSpec extends Specification {
 
 
             job.wasThreshold = true
-            def initMap = new ExecutionJob.RunContext([scheduledExecution: [logOutputThresholdStatus: 'custom']])
+            def initMap = new ExecutionJob.RunContext([scheduledExecution: new RdJob(logConfig: new RdLogConfig(logOutputThresholdStatus: 'custom'))])
 
         when:
             job.saveState(null, mockes, execution, true, false, false, true, null, null, initMap, execMap)
@@ -418,6 +434,8 @@ class ExecutionJobIntegrationSpec extends Specification {
         given:
             ExecutionJob job = new ExecutionJob()
             def contextMock = new JobDataMap([scheduledExecutionId: '1'])
+            job.grailsApplication = mockGrailsApp
+            mockJobDataProvider.findByUuid("1") >> null
 
         when:
 
@@ -483,12 +501,14 @@ class ExecutionJobIntegrationSpec extends Specification {
                 jobSchedulerService: jobSchedulerServiceMock,
                 authContextProvider: authProvider
             )
+            job.grailsApplication = mockGrailsApp
+            mockJobDataProvider.findByUuid(se.uuid) >> se
         when:
             def result = job.initialize(null, contextMock)
 
         then:
         result.scheduledExecutionId == se.uuid
-        result.scheduledExecution.id == se.id
+        result.scheduledExecution.uuid == se.uuid
         result.executionService == mockes
         result.executionUtilService == mockeus
         result.secureOptsExposed == [test: 'input']
@@ -502,7 +522,10 @@ class ExecutionJobIntegrationSpec extends Specification {
             FrameworkService fs = Mock(FrameworkService)
             ScheduledExecution se = setupJob()
             ExecutionJob job = new ExecutionJob()
+            job.grailsApplication = mockGrailsApp
             def mockes = Mock(ExecutionService)
+            job.grailsApplication = mockGrailsApp
+            mockJobDataProvider.findByUuid(se.uuid) >> se
 
             def contextMock = new JobDataMap(
                     frameworkService: fs,
@@ -523,12 +546,9 @@ class ExecutionJobIntegrationSpec extends Specification {
             FrameworkService fs = Mock(FrameworkService)
             ScheduledExecution se = setupJob()
             ExecutionJob job = new ExecutionJob()
-
-            def contextMock = new JobDataMap(
-                    frameworkService: fs,
-                    scheduledExecutionId: se.uuid
-            )
-
+            job.grailsApplication = mockGrailsApp
+            def contextMock = new JobDataMap(frameworkService: fs, scheduledExecutionId: se.uuid)
+            mockJobDataProvider.findByUuid(se.uuid) >> se
         when:
             job.initialize(null, contextMock)
         then:
@@ -576,10 +596,13 @@ class ExecutionJobIntegrationSpec extends Specification {
                 authContext: mockAuth,
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
+                grailsApplication: mockGrailsApp,
                 authContextProvider: authProvider,
                 secureOpts: [:],
                 secureOptsExposed: [:],
                 )
+            job.grailsApplication = mockGrailsApp
+            mockJobDataProvider.findByUuid(se.uuid) >> se
         when:
             def result = job.initialize(null, contextMock)
         then:
@@ -666,7 +689,9 @@ class ExecutionJobIntegrationSpec extends Specification {
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
                 authContextProvider: authProvider,
+                grailsApplication: mockGrailsApp
             )
+            mockJobDataProvider.findByUuid(se.uuid) >> se
             def qjobContext = Mock(JobExecutionContext){
                 getJobDetail()>>Mock(JobDetail){
                     getJobDataMap()>>contextMock
@@ -730,7 +755,9 @@ class ExecutionJobIntegrationSpec extends Specification {
                 jobSchedulesService: jobSchedulesServiceMock,
                 jobSchedulerService: jobSchedulerServiceMock,
                 authContextProvider: authProvider,
+                grailsApplication: mockGrailsApp
             )
+            mockJobDataProvider.findByUuid(se.uuid) >> se
             def qjobContext = Mock(JobExecutionContext){
                 getJobDetail()>>Mock(JobDetail){
                     getJobDataMap()>>contextMock
@@ -765,7 +792,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             def testExecmap = new ExecutionService.AsyncStarted(
                 [thread: stb, threshold: threshold, scheduledExecution: se]
             )
-            1 * mockes.executeAsyncBegin(_, _, _, _, _, _) >> {
+            1 * mockes.executeAsyncBegin(_) >> {
                 stb.start()
                 testExecmap
             }
@@ -1004,7 +1031,7 @@ class ExecutionJobIntegrationSpec extends Specification {
             user: 'bob',
             dateStarted: startDate,
             dateCompleted: finishDate,
-            scheduledExecution: se,
+            jobUuid: se?.uuid,
             workflow: new Workflow(
                 keepgoing: true,
                 commands: [new CommandExec(
@@ -1012,7 +1039,7 @@ class ExecutionJobIntegrationSpec extends Specification {
                 )]
             )
         )
-        se?.addToExecutions(e)
+        //se?.addToExecutions(e)
         e.save(
             flush: true,
             failOnError: true

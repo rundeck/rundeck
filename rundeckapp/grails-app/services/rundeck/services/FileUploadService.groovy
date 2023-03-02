@@ -299,8 +299,8 @@ class FileUploadService {
         JobFileRecord.findAllByExecution(e).each this.&deleteRecord
     }
 
-    def deleteRecordsForScheduledExecution(ScheduledExecution job) {
-        JobFileRecord.findAllByJobId(job.extid).each this.&deleteRecord
+    def deleteRecordsForScheduledExecution(JobData job) {
+        JobFileRecord.findAllByJobId(job.uuid).each this.&deleteRecord
     }
 
     def deleteRecordsForProject(String project) {

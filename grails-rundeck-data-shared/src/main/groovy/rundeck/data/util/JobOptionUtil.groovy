@@ -1,6 +1,7 @@
 package rundeck.data.util
 
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import org.rundeck.app.data.model.v1.job.option.OptionData
 
 class JobOptionUtil {
     /**
@@ -63,5 +64,9 @@ class JobOptionUtil {
             }
         }
         return result
+    }
+
+    static boolean isFileType(OptionData optionData) {
+        return optionData.optionType == 'file'
     }
 }

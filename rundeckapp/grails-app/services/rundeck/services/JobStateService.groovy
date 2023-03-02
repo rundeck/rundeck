@@ -57,7 +57,7 @@ class JobStateService implements AuthorizingJobService {
             throw new JobNotFound("Not found", uuid, project)
         }
         checkJobView(auth, job, uuid, project)
-        return job.asReference()
+        return JobDataUtil.asJobReference(job)
     }
 
     public void checkJobView(AuthContext auth, JobData job, String uuid, String project) {
@@ -104,15 +104,15 @@ class JobStateService implements AuthorizingJobService {
 
     @Override
     JobState getJobState(AuthContext auth, JobReference jobReference) throws JobNotFound {
-        def job = ScheduledExecution.getByIdOrUUID(jobReference.id)
+        def job =  rdJobService.getJobByIdOrUuid(jobReference.id)
         if (null == job) {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
         checkJobView(auth, job, jobReference.id, jobReference.project)
 
-        List<Execution> running = Execution.findAllByScheduledExecutionAndDateCompletedIsNull(job)
-        List<Execution> lastExec = Execution.findAllByScheduledExecutionAndDateCompletedIsNotNull(
-                job,
+        List<Execution> running = Execution.findAllByJobUuidAndDateCompletedIsNull(job.uuid)
+        List<Execution> lastExec = Execution.findAllByJobUuidAndDateCompletedIsNotNull(
+                job.uuid,
                 [order: 'desc', sort: 'dateCompleted', max: 1]
         )
         def previousState = null
@@ -323,7 +323,7 @@ class JobStateService implements AuthorizingJobService {
 
         inputOpts['executionType'] = 'user'
 
-        def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
+        def se =  rdJobService.getJobByIdOrUuid(jobReference.id)
         if (!se || !rundeckAuthContextEvaluator.authorizeProjectJobAny(
             auth,
             se,
@@ -337,7 +337,7 @@ class JobStateService implements AuthorizingJobService {
         }
         def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
         if (result && result.success && result.execution) {
-            return result.execution.asReference()
+            return result.execution.asReferenceWithJobData(se)
         }
         throw new JobExecutionError(
             result?.message ?: result?.error ?: "Unknown: ${result}",

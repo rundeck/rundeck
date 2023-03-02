@@ -14,6 +14,7 @@ import org.rundeck.app.data.providers.v1.job.JobQueryProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import rundeck.ScheduledExecution
+import rundeck.data.job.RdJobDataSummary
 import rundeck.data.job.query.JobQueryConstants
 import rundeck.data.paging.RdPageable
 import rundeck.services.JobSchedulesService
@@ -24,6 +25,63 @@ class GormJobQueryProvider implements JobQueryProvider {
     ApplicationContext applicationContext
     @Autowired
     JobSchedulesService jobSchedulesService
+
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    Page<JobData> getAllScheduledJobs(String project, String serverUUID, Pageable pageable) {
+        def results = ScheduledExecution.scheduledJobs()
+        if (serverUUID) {
+            results = results.withServerUUID(serverUUID)
+        }
+        if(project) {
+            results = results.withProject(project)
+        }
+        def recs = results.list()
+        new GormPage<JobData>(results: recs, total: recs.size())
+    }
+
+    private static final int UUID       = 0
+    private static final int JOB_NAME   = 1
+    private static final int GRP_PATH   = 2
+    private static final int DESC       = 3
+    private static final int SCHED_EN   = 4
+    private static final int EXEC_EN    = 5
+    private static final int SCHEDULED  = 6
+
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    Page<JobDataSummary> listJobsByProject(String project, Pageable pageable) {
+        GormPage<JobDataSummary> page = new GormPage<>();
+        page.results = ScheduledExecution.createCriteria().list {
+            maxResults(pageable.max)
+            firstResult(pageable.offset)
+            order("jobName", "asc")
+            eq("project", project)
+            projections {
+                property "uuid"
+                property "jobName"
+                property "groupPath"
+                property "description"
+                property "scheduleEnabled"
+                property "executionEnabled"
+                property "scheduled"
+            }
+        }.collect { job ->
+            return new RdJobDataSummary(
+                    uuid: job[UUID],
+                    jobName: job[JOB_NAME],
+                    groupPath: job[GRP_PATH],
+                    project: project,
+                    description: job[DESC],
+                    scheduled: job[SCHEDULED],
+                    scheduleEnabled: job[SCHED_EN],
+                    executionEnabled: job[EXEC_EN]
+            )
+        }
+        page.setPageable(pageable)
+        page.setTotal(ScheduledExecution.countByProject(project))
+        return page
+    }
 
     @Override
     @CompileStatic(TypeCheckingMode.SKIP)
@@ -185,7 +243,6 @@ class GormJobQueryProvider implements JobQueryProvider {
         }
         return idlist
     }
-
 
     static class GormPage<T> implements Page<T> {
         List<T> results = []

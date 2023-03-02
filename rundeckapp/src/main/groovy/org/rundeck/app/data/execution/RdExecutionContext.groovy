@@ -2,12 +2,16 @@ package org.rundeck.app.data.execution
 
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import org.rundeck.app.data.model.v1.job.JobData
+import org.rundeck.app.data.model.v1.job.orchestrator.OrchestratorData
 
 class RdExecutionContext extends ExecutionContext {
 
+    OrchestratorData orchestrator
+    String jobUuid
     static RdExecutionContext fromJobData(JobData job) {
         RdExecutionContext ctx = new RdExecutionContext()
         //execution context
+        ctx.jobUuid = job.uuid
         ctx.project = job.project
         ctx.argString = job.argString
         ctx.user = job.user
@@ -41,6 +45,7 @@ class RdExecutionContext extends ExecutionContext {
         ctx.filter = job.nodeConfig?.filter
         ctx.filterExclude = job.nodeConfig?.filterExclude
         ctx.excludeFilterUncheck = job.nodeConfig?.excludeFilterUncheck
+        ctx.orchestrator = job.orchestrator
         ctx
     }
 }

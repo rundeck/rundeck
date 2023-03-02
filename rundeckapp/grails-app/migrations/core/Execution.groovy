@@ -162,7 +162,7 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "rundeckdev", id: "4.11.0-add-uuid-and-job-uuid") {
+    changeSet(author: "rundeckdev", id: "4.x-add-uuid-and-job-uuid") {
         preConditions(onFail: "MARK_RAN") {
             not {
                 columnExists(tableName: "execution", columnName: 'uuid')
@@ -172,6 +172,13 @@ databaseChangeLog = {
         addColumn(tableName: "execution") {
             column(name: 'job_uuid', type: '${varchar255.type}')
             column(name: 'uuid', type: '${varchar255.type}')
+        }
+
+    }
+    changeSet(author: "rundeckdev", id: "4.x-populate-job-uuid") {
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "execution")
+            tableExists(tableName: "scheduled_execution")
         }
         sql("update execution ex set job_uuid = (select uuid from scheduled_execution where id = ex.scheduled_execution_id)")
     }

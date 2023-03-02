@@ -273,7 +273,7 @@ class ExecutionController extends ControllerBase{
                 workflowTree          : workflowTree,
                 filesize              : filesize,
                 nextExecution         : e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(
-                        e.scheduledExecution
+                        e.jobUuid
                 ) : null,
                 enext                 : enext,
                 eprev                 : eprev,

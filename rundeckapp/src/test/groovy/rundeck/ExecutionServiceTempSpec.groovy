@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.testing.gorm.DataTest
+import rundeck.data.exceptions.ExecutionServiceExecutionException
+import rundeck.data.execution.ExecutionOptionProcessor
 import rundeck.services.*
 import spock.lang.Specification
 
@@ -37,6 +39,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         service.executionValidatorService = new ExecutionValidatorService()
         service.executionLifecycleComponentService = Mock(ExecutionLifecycleComponentService)
         service.jobLifecycleComponentService = Mock(JobLifecycleComponentService)
+        service.executionOptionProcessor = new ExecutionOptionProcessor()
     }
 
     def "loadSecureOptionStorageDefaults replace job vars"() {
@@ -198,14 +201,14 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         )
         job.save()
         def exec = new Execution(
-                scheduledExecution: job,
+                jobUuid: job.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'userB',
                 project: 'AProject'
         ).save()
         def exec2 = new Execution(
-                scheduledExecution: job,
+                jobUuid: job.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'user',
@@ -217,11 +220,12 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
         }
+        service.executionOptionProcessor.parseJobOptionInput(_,_,_) >> [:]
         when:
         Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12', executionType: 'user'])
 
         then:
-        ExecutionServiceException e = thrown()
+        ExecutionServiceExecutionException e = thrown()
         e.code == 'conflict'
         e.message ==~ /.*Limit of running executions has been reached.*/
 
@@ -237,6 +241,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
 
         given:
         ScheduledExecution job = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -254,14 +259,14 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         )
         job.save()
         def exec = new Execution(
-                scheduledExecution: job,
+                jobUuid: job.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'userB',
                 project: 'AProject'
         ).save()
         def exec2 = new Execution(
-                scheduledExecution: job,
+                jobUuid: job.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'user',
@@ -276,6 +281,7 @@ class ExecutionServiceTempSpec extends Specification implements DataTest {
         service.scheduledExecutionService = Mock(ScheduledExecutionService){
             getNodes(_,_) >> null
         }
+        service.executionOptionProcessor.parseJobOptionInput(_,_,_) >> [:]
         when:
         Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12', executionType: 'user'])
 

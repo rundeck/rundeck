@@ -71,9 +71,7 @@ class ExecutionValidatorService implements ExecutionValidator {
             count()
           }
           isNull('dateCompleted')
-          scheduledExecution {
-            eq('id', jobReference.databaseId)
-          }
+          eq('jobUuid', jobReference.id)
           isNotNull('dateStarted')
           if (withRetry) {
             ne('id', prevRetryId)
@@ -94,7 +92,6 @@ class ExecutionValidatorService implements ExecutionValidator {
   public static JobValidationReference buildJobReference(final JobData se) {
     return new JobValidationReferenceImpl(
         id: JobDataUtil.getExtId(se),
-        databaseId: se.id,
         uuid: se.uuid,
         project: se.project,
         jobName: se.jobName,

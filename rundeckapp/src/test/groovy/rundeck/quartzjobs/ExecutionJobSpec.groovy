@@ -23,15 +23,21 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import grails.core.GrailsApplication
 import grails.testing.gorm.DataTest
 import org.quartz.*
 import org.rundeck.app.data.providers.GormJobStatsDataProvider
+import org.rundeck.app.data.providers.GormJobDataProvider
+import org.rundeck.app.data.providers.v1.job.JobDataProvider
+import org.rundeck.utils.UUIDPropertyValidator
+import org.springframework.context.ApplicationContext
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.JobSchedulerService
 import rundeck.services.JobSchedulesService
+import rundeck.services.data.ScheduledExecutionDataService
 import spock.lang.Specification
 
 import java.sql.Timestamp
@@ -44,9 +50,21 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     def setupSpec() { mockDomains ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats }
 
+    def mockGrailsApp
+    JobDataProvider mockJobDataProvider
+
+    def setup() {
+        mockJobDataProvider = Mock(JobDataProvider)
+        mockGrailsApp = Mock(GrailsApplication) {
+            getMainContext() >> Mock(ApplicationContext) {
+                getBean("jobDataProvider", JobDataProvider) >> mockJobDataProvider
+            }
+        }
+    }
+
     def "execute missing job"() {
         given:
-        def datamap = new JobDataMap([scheduledExecutionId: '123'])
+        def datamap = new JobDataMap([scheduledExecutionId: '123',grailsApplication: mockGrailsApp])
         ExecutionJob job = new ExecutionJob()
         def context = Mock(JobExecutionContext) {
             getJobDetail() >> Mock(JobDetail) {
@@ -82,7 +100,8 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 jobSchedulerService: jobSchedulerService,
                 jobSchedulesService: jobSchedulesService,
                 authContext:Mock(UserAndRolesAuthContext),
-                authContextProvider:authContextProvider
+                authContextProvider:authContextProvider,
+                grailsApplication: mockGrailsApp
             ])
             ExecutionJob job = new ExecutionJob()
             def context = Mock(JobExecutionContext) {
@@ -90,6 +109,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
                     getJobDataMap() >> datamap
                 }
             }
+            mockJobDataProvider.findByUuid(se.uuid) >> se
 
         when:
             job.execute(context)
@@ -118,7 +138,8 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 jobSchedulerService: jobSchedulerService,
                 jobSchedulesService: jobSchedulesService,
                 authContext:Mock(UserAndRolesAuthContext),
-                authContextProvider:authContextProvider
+                authContextProvider:authContextProvider,
+                grailsApplication: mockGrailsApp
             ])
             ExecutionJob job = new ExecutionJob()
             def context = Mock(JobExecutionContext) {
@@ -129,6 +150,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             1 * es.executeAsyncBegin(*_)>>{
                 throw new Exception("failed to start execution")
             }
+            mockJobDataProvider.findByUuid(se.uuid) >> se
 
         when:
             job.execute(context)
@@ -142,7 +164,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
 
     public Execution createExecution(ScheduledExecution se) {
         new Execution(
-            scheduledExecution: se,
+            jobUuid: se.uuid,
             dateStarted: new Date(),
             dateCompleted: null,
             project: se.project,
@@ -190,12 +212,13 @@ class ExecutionJobSpec extends Specification implements DataTest {
             getServerUUID() >> serverUUID
         }
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUUID,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
                 description: 'a job',
                 argString: '-a b -c d',
-                serverNodeUUID: jobUUID,
+                serverNodeUUID: serverUUID,
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec(
@@ -204,12 +227,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true,
-                uuid: jobUUID
+                scheduleEnabled: true
         )
         se.save(flush:true)
         Execution e = new Execution(
-                scheduledExecution: se,
+                jobUuid: se.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 project: se.project,
@@ -233,8 +255,10 @@ class ExecutionJobSpec extends Specification implements DataTest {
                         jobSchedulesService : jobSchedulesService,
                         jobSchedulerService : jobSchedulerService,
                         authContextProvider : authContextProvider,
+                        grailsApplication: mockGrailsApp
                 ]
         )
+        mockJobDataProvider.findByUuid(se.uuid) >> se
         ExecutionJob job = new ExecutionJob()
         def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
 
@@ -268,12 +292,13 @@ class ExecutionJobSpec extends Specification implements DataTest {
             getServerUUID() >> serverUUID
         }
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUUID,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
                 description: 'a job',
                 argString: '-a b -c d',
-                serverNodeUUID: jobUUID,
+                serverNodeUUID: serverUUID,
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec(
@@ -282,8 +307,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: false,
                 executionEnabled: true,
-                scheduleEnabled: true,
-                uuid: jobUUID
+                scheduleEnabled: true
         )
         se.save(flush:true)
         AuthContextProvider authContextProvider = Mock(AuthContextProvider)
@@ -299,8 +323,10 @@ class ExecutionJobSpec extends Specification implements DataTest {
                         jobSchedulesService : jobSchedulesService,
                         jobSchedulerService : jobSchedulerService,
                         authContextProvider : authContextProvider,
+                        grailsApplication: mockGrailsApp
                 ]
         )
+        mockJobDataProvider.findByUuid(se.uuid) >> se
         ExecutionJob job = new ExecutionJob()
         def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
 
@@ -334,6 +360,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             getServerUUID() >> serverUUID
         }
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUUID,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
@@ -348,8 +375,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: isScheduled,
                 executionEnabled: isExecEnabled,
-                scheduleEnabled: isScheduleEnabled,
-                uuid: jobUUID
+                scheduleEnabled: isScheduleEnabled
         )
         se.save(flush:true)
             AuthContextProvider authContextProvider = Mock(AuthContextProvider)
@@ -364,9 +390,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
                         serverUUID          : serverUUID,
                         jobSchedulesService : jobSchedulesService,
                         jobSchedulerService : jobSchedulerService,
-                        authContextProvider : authContextProvider
+                        authContextProvider : authContextProvider,
+                        grailsApplication: mockGrailsApp
                 ]
         )
+        mockJobDataProvider.findByUuid(se.uuid) >> se
         ExecutionJob job = new ExecutionJob()
         def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
 
@@ -413,12 +441,13 @@ class ExecutionJobSpec extends Specification implements DataTest {
             getAuthContextForUserAndRolesAndProject(_, _, _) >> Mock(UserAndRolesAuthContext)
         }
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUUID,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
                 description: 'a job',
                 argString: '-a b -c d',
-                serverNodeUUID: jobUUID,
+                serverNodeUUID: serverUUID,
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec(
@@ -427,12 +456,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true,
-                uuid: jobUUID
-        )
-        se.save(flush: true)
-        Execution e = new Execution(
-                scheduledExecution: se,
+                scheduleEnabled: true
+            )
+            se.save(flush:true)
+            Execution e = new Execution(
+                jobUuid: se.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 project: se.project,
@@ -444,19 +472,21 @@ class ExecutionJobSpec extends Specification implements DataTest {
         ).save(flush: true)
         def datamap = new JobDataMap(
                 [
-                        project             : se.project,
-                        scheduledExecutionId: se.uuid,
-                        executionService    : es,
-                        executionUtilService: eus,
-                        frameworkService    : fs,
-                        bySchedule          : true,
-                        jobSchedulesService : jobSchedulesService,
-                        jobSchedulerService : jobSchedulerService,
-                        authContextProvider : authContextProvider,
+                    project             : se.project,
+                    scheduledExecutionId: se.uuid,
+                    executionService    : es,
+                    executionUtilService: eus,
+                    frameworkService    : fs,
+                    bySchedule          : true,
+                    jobSchedulesService : jobSchedulesService,
+                    jobSchedulerService : jobSchedulerService,
+                    authContextProvider : authContextProvider,
+                    grailsApplication: mockGrailsApp
                 ]
-        )
-        ExecutionJob job = new ExecutionJob()
-        def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
+            )
+            mockJobDataProvider.findByUuid(se.uuid) >> se
+            ExecutionJob job = new ExecutionJob()
+            def ajobKey = JobKey.jobKey('jobname', 'jobgroup')
 
         def quartzScheduler = Mock(Scheduler)
         def trigger = Mock(Trigger)
@@ -466,11 +496,9 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 getKey() >> ajobKey
             }
 
-            getScheduler() >> quartzScheduler
-            getTrigger() >> trigger
+            1 * es.executeAsyncBegin(_) >>
+                    new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
         }
-        1 * es.executeAsyncBegin(_, _, e, se, _, _) >>
-                new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
         given: "trigger has scheduleArgs"
         1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']
 
@@ -700,7 +728,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         se.save(flush:true)
 
         Execution e = new Execution(
-                scheduledExecution: se,
+                jobUuid: se.uuid,
                 dateStarted: new Date(),
                 dateCompleted: null,
                 project: se.project,
@@ -714,7 +742,9 @@ class ExecutionJobSpec extends Specification implements DataTest {
         def secureOption = [:]
         def secureOptsExposed = [:]
         def datacontext = [option:[env:true]]
-        def eus = Mock(ExecutionUtilService)
+        def eus = Mock(ExecutionUtilService) {
+            getAverageDuration(se.uuid) >> 1
+        }
         def auth = Mock(UserAndRolesAuthContext)
         def framework = Mock(Framework)
 
@@ -742,7 +772,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
         ]
 
         def es = Mock(ExecutionService){
-            1 * executeAsyncBegin(framework, auth, e, se, secureOption, secureOptsExposed) >> {
+            1 * executeAsyncBegin(_) >> {
                 testThread.start()
                 execmap
             }
@@ -761,6 +791,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             framework:framework,
             authContext: auth,
             scheduledExecution: se,
+            scheduledExecutionId: se.uuid,
             timeout: 0,
             secureOpts: secureOption,
             secureOptsExposed:secureOptsExposed
@@ -794,12 +825,13 @@ class ExecutionJobSpec extends Specification implements DataTest {
             getAuthContextForUserAndRolesAndProject(_, _, _)>>Mock(UserAndRolesAuthContext)
         }
         ScheduledExecution se = new ScheduledExecution(
+                uuid: jobUUID,
                 jobName: 'blue',
                 project: 'AProject',
                 groupPath: 'some/where',
                 description: 'a job',
                 argString: '-a b -c d',
-                serverNodeUUID: jobUUID,
+                serverNodeUUID: serverUUID,
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec(
@@ -808,12 +840,11 @@ class ExecutionJobSpec extends Specification implements DataTest {
                 ),
                 scheduled: true,
                 executionEnabled: true,
-                scheduleEnabled: true,
-                uuid: jobUUID
+                scheduleEnabled: true
         )
         se.save(flush:true)
         Execution e = new Execution(
-                scheduledExecution: se,
+                jobUuid: se.uuid,
                 dateStarted: new Timestamp(new Date().time),
                 dateCompleted: new Timestamp(new Date().time),
                 project: se.project,
@@ -834,8 +865,10 @@ class ExecutionJobSpec extends Specification implements DataTest {
                         jobSchedulesService : jobSchedulesService,
                         jobSchedulerService : jobSchedulerService,
                         authContextProvider : authContextProvider,
+                        grailsApplication: mockGrailsApp
                 ]
         )
+        mockJobDataProvider.findByUuid(jobUUID ) >> se
         ExecutionJob job = new ExecutionJob()
         def aJobKey = JobKey.jobKey('jobname', 'jobgroup')
 
@@ -850,7 +883,7 @@ class ExecutionJobSpec extends Specification implements DataTest {
             getScheduler() >> quartzScheduler
             getTrigger() >> trigger
         }
-        1 * es.executeAsyncBegin(_, _, e, se, _, _) >>
+        1 * es.executeAsyncBegin(_) >>
                 new ExecutionService.AsyncStarted(thread: new WorkflowExecutionServiceThread(null, null, null, null, null))
         given: "trigger has scheduleArgs"
         1 * trigger.getJobDataMap() >> [scheduleArgs: '-opt1 test1']

@@ -220,17 +220,6 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
             assert project=="testproj"
         }
 
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
-        }
-        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
-            ''
-        }
-        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
-            ''
-        }
-//        pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
-//                frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
         service.logFileStorageService = lfmock.proxyInstance()
         service.pluginService=pmock.proxyInstance()
         service.frameworkService=fmock.proxyInstance()
@@ -246,6 +235,9 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
             null
         }
         service.configurationService=csmock.proxyInstance()
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
+        }
 
         def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"])
         assertNotNull(execwriter)
@@ -324,18 +316,12 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
             assert project=="testproj"
         }
 
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
-        }
-        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
-            ''
-        }
-        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
-            ''
-        }
         service.logFileStorageService = lfmock.proxyInstance()
         service.pluginService=pmock.proxyInstance()
         service.frameworkService=fmock.proxyInstance()
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
+        }
 
         def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"])
         assertNotNull(execwriter)
@@ -391,8 +377,8 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         }
         service.configurationService=csmock.proxyInstance()
 
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
         }
 
         def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"])
@@ -441,8 +427,8 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         }
         service.configurationService=csmock.proxyInstance()
 
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
         }
         def t = new LoggingThreshold()
         t.type=LoggingThreshold.TOTAL_FILE_SIZE
@@ -487,8 +473,8 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         }
         service.configurationService=csmock.proxyInstance()
 
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
         }
 
         def t = new LoggingThreshold()
@@ -540,8 +526,8 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         service.configurationService=csmock.proxyInstance()
 
 
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
         }
 
         def t = new LoggingThreshold()
@@ -637,8 +623,8 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         }
         service.configurationService=csmock.proxyInstance()
 
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
         }
         def reader = service.getLogReader(e)
         then:
@@ -680,14 +666,8 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
             assert project == "testproj"
         }
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
-        }
-        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
-            ''
-        }
-        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
-            ''
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
         }
 
         service.logFileStorageService=lfsvcmock.proxyInstance()
@@ -734,14 +714,8 @@ class LoggingServiceTests  extends Specification implements ServiceUnitTest<Logg
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
             assert project == "testproj"
         }
-        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
-            [:]
-        }
-        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
-            ''
-        }
-        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
-            ''
+        service.executionService = Mock(ExecutionService) {
+            exportContextForExecution(_,_) >> [:]
         }
 
         service.logFileStorageService=lfsvcmock.proxyInstance()

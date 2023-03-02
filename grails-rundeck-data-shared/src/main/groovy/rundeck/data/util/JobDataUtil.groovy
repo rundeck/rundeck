@@ -1,25 +1,37 @@
 package rundeck.data.util
 
-import com.dtolabs.rundeck.core.jobs.JobReference;
+import com.dtolabs.rundeck.core.jobs.JobReference
+import org.quartz.JobKey;
 import org.rundeck.app.data.model.v1.job.JobData
 import rundeck.data.job.JobReferenceImpl;
 
 class JobDataUtil {
 
     static String getExtId(JobData jobData) {
-        return jobData?.getUuid()?:jobData?.getId()?.toString()
+        return jobData?.getUuid()
     }
 
     static String generateFullName(JobData job) {
-        return [job.groupPath?:'',job.jobName].join("/")
+        return generateFullName(job.groupPath, job.jobName)
+    }
+
+    static String generateFullName(String group, String jobname) {
+        return [group?:'',jobname].join("/")
     }
 
     static String generateJobScheduledName(JobData job) {
-        return [job.id,job.jobName].join(":")
+        if(!job) return null
+        return [job.uuid,job.jobName].join(":")
     }
 
     static String generateJobGroupName(JobData job) {
+        if(!job) return null
         return [job.project, job.jobName,job.groupPath?job.groupPath: ''].join(":")
+    }
+
+    static JobKey createJobKeyFromJob(JobData job) {
+        if(!job) return null
+        return JobKey.jobKey(JobDataUtil.generateJobScheduledName(job), JobDataUtil.generateJobGroupName(job))
     }
 
     static JobReference asJobReference(JobData job) {
@@ -54,5 +66,9 @@ class JobDataUtil {
         return !job.optionsSet ? false : job.optionSet?.any {
             it.secureInput || it.secureExposed
         }
+    }
+
+    static String generateCrontabExpression(JobData jobData) {
+        return [jobData.schedule?.seconds?:'0',jobData.schedule?.minute?:'0',jobData.schedule?.hour?:'0',jobData.schedule?.dayOfMonth?.toUpperCase()?:'?',jobData.schedule?.month?.toUpperCase() ?:'*',!jobData.schedule?.dayOfMonth||jobData.schedule?.dayOfMonth=='?'?(jobData.schedule?.dayOfWeek?.toUpperCase()?:'*'):'?',jobData.schedule?.year?:'*'].join(" ")
     }
 }

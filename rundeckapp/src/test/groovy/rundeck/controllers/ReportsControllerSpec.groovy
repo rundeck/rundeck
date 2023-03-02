@@ -27,6 +27,7 @@ import org.rundeck.app.data.providers.GormReferencedExecutionDataProvider
 import rundeck.*
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
 import spock.lang.Unroll
 import testhelper.RundeckHibernateSpec
@@ -154,6 +155,9 @@ class ReportsControllerSpec extends RundeckHibernateSpec implements ControllerUn
 
         )
         e1.save()
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> job
+        }
 
         ReferencedExecution refexec = new ReferencedExecution(status: 'running',jobUuid: job.uuid, execution: e1)
         refexec.save()

@@ -37,6 +37,9 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import grails.converters.JSON
 import grails.util.Environment
+import org.rundeck.app.data.job.converters.ScheduledExecutionFromRdJobUpdater
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowData
+import org.rundeck.app.data.model.v1.job.workflow.WorkflowStepData
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -48,6 +51,7 @@ import org.rundeck.app.services.ExecutionFile
 
 import org.rundeck.app.services.ExecutionFileProducer
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
+import rundeck.data.exceptions.ExecutionServiceValidationException
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
@@ -150,7 +154,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * @param secureOptions
      * @return
      */
-    def MutableWorkflowState createStateForWorkflow(ExecutionContext execContext, Workflow wf, String project,
+    def MutableWorkflowState createStateForWorkflow(ExecutionContext execContext, WorkflowData wf, String project,
                                                     IFramework framework,
                                                     UserAndRolesAuthContext authContext,
                                                     Map jobcontext,
@@ -173,11 +177,11 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * @param secureOptions
      * @return
      */
-    def MutableWorkflowStateImpl createStateForWorkflow( Workflow wf, String project, String frameworkNodeName,
-                                                    StepExecutionContext parent, Map secureOptions, StepIdentifier parentId=null) {
+    def MutableWorkflowStateImpl createStateForWorkflow(WorkflowData wf, String project, String frameworkNodeName,
+                                                        StepExecutionContext parent, Map secureOptions, StepIdentifier parentId=null) {
 
         Map<Integer, MutableWorkflowStepStateImpl> substeps = [:]
-        wf.commands.eachWithIndex { WorkflowStep step, int ndx ->
+        wf.steps.eachWithIndex { WorkflowStepData step, int ndx ->
             def stepId= StateUtils.stepIdentifierAppend(parentId, StateUtils.stepIdentifier(ndx + 1))
             if (step instanceof JobExec) {
 
@@ -194,7 +198,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                 try {
                     def jobArgs = OptsUtil.burst(jexec.argString ?: '')
                     newContext = executionService.createJobReferenceContext(
-                            se,
+                            job,
                             null,
                             parent,
                             jobArgs,
@@ -215,13 +219,13 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                 }
 
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId,
-                        createStateForWorkflow(se.workflow, project,frameworkNodeName,newContext,secureOptions))
+                        createStateForWorkflow(job.workflow, project,frameworkNodeName,newContext,secureOptions))
             } else {
                 substeps[ndx] = new MutableWorkflowStepStateImpl(stepId)
             }
             substeps[ndx].nodeStep = !!step.nodeStep
         }
-        return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, wf.commands.size(),
+        return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, wf.steps.size(),
                 substeps, parentId,frameworkNodeName)
     }
 

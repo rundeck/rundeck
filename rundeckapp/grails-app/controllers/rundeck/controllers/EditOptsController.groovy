@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.http.HttpClient
 import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.jayway.jsonpath.JsonPath
 import org.apache.http.HttpResponse
+import org.rundeck.app.data.model.v1.job.JobData
 import org.rundeck.util.HttpClientCreator
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
+import rundeck.services.RdJobService
 import rundeck.utils.OptionsUtil
 
 import java.util.regex.Pattern
@@ -50,6 +52,7 @@ class EditOptsController extends ControllerBase{
     def optionValuesService
     def userService
     def scheduledExecutionService
+    RdJobService rdJobService
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -78,7 +81,7 @@ class EditOptsController extends ControllerBase{
         if(!id){
             return true
         }
-        ScheduledExecution scheduledExecution = ScheduledExecution.getByIdOrUUID( id )
+        JobData scheduledExecution = rdJobService.getJobByIdOrUuid( id )
         if (notFoundResponse(scheduledExecution, 'Job', id)) {
             return false
         }
@@ -705,10 +708,9 @@ class EditOptsController extends ControllerBase{
             if(opt.realValuesUrl){
                 try{
                     def realUrl = opt.realValuesUrl.toExternalForm()
-                    ScheduledExecution se = opt.scheduledExecution
-                    if(!se){
-                        se = scheduledExecution
-                    }
+
+                    JobData se = opt.scheduledExecution ?: scheduledExecution
+
                     def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, udp, [:], realUrl.matches(/(?i)^https?:.*$/))
                     def remoteResult=ScheduledExecutionController.getRemoteJSON({->new ApacheHttpClient()}, urlExpanded,configRemoteUrl,  10, 0, 5)
                     if(remoteResult){

@@ -56,7 +56,7 @@ class WorkflowStrategyValidatorSpec extends Specification {
             }
             existsFrameworkProject(_) >> true
             getWorkflowExecutionItemFactory() >> Mock(WorkflowExecutionItemFactory) {
-                createExecutionItemForWorkflow(_) >> Mock(WorkflowExecutionItem)
+                createExecutionItemForWorkflow(_,_) >> Mock(WorkflowExecutionItem)
             }
             getFrameworkPropertyResolverWithProps(_,_) >> Mock(PropertyResolver)
             getPluginService() >> Mock(PluginServiceCapabilities) {

@@ -30,6 +30,7 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.RdJobService
 import rundeck.services.optionvalues.OptionValuesService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -156,6 +157,9 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             setupFormTokens(session)
             request.method = 'POST'
             controller.frameworkService = Mock(FrameworkService)
+            controller.rdJobService = Mock(RdJobService) {
+                getJobByIdOrUuid(_) >> job
+            }
 
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
@@ -713,7 +717,9 @@ class EditOptsControllerSpec extends Specification implements ControllerUnitTest
             ScheduledExecution job = createJob()
             params.scheduledExecutionId = job.id.toString()
             controller.frameworkService = Mock(FrameworkService)
-
+            controller.rdJobService = Mock(RdJobService) {
+                getJobByIdOrUuid(_) >> job
+            }
 
             controller.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
             setupFormTokens(session)

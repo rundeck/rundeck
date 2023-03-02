@@ -203,7 +203,7 @@ class GormJobDataProviderSpec extends Specification implements DataTest {
 
         where:
         expectedJobName | renamed  | oldjob      | newjob
-        "1:oldjob"      | true     | "oldjob"    | "newjob"
+        "uuid:oldjob"      | true     | "oldjob"    | "newjob"
         null            | false    | "job1"      | "job1"
 
     }

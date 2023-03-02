@@ -19,6 +19,7 @@ import org.springframework.context.MessageSource
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.data.exceptions.ExecutionServiceValidationException
+import rundeck.data.storage.AuthorizedKeyStorageTreeProvider
 import rundeck.data.util.JobDataUtil
 import rundeck.data.util.JobOptionUtil
 
@@ -32,6 +33,8 @@ class ExecutionOptionProcessor {
     RemoteOptionValueLoader remoteOptionValueLoader
     JobFileRecordValidator jobFileRecordValidator
     StorageAccessChecks storageAccessChecks
+    AuthorizedKeyStorageTreeProvider storageService
+
 
     /**
      * It replaces values coming from optionsValues into secured options and secured exposed options
@@ -147,7 +150,7 @@ class ExecutionOptionProcessor {
      * @param scheduledExec
      * @return a Map of String to String, does not produce multiple values for multivalued options
      */
-    protected HashMap parseJobOptionInput(Map props, JobData job, UserAndRolesAuthContext authContext = null) {
+    HashMap parseJobOptionInput(Map props, JobData job, UserAndRolesAuthContext authContext = null) {
         def optparams = JobOptionUtil.filterOptParams(props)
         if (!optparams && props.argString) {
             optparams = JobOptionUtil.parseOptsFromString(props.argString)
@@ -161,7 +164,7 @@ class ExecutionOptionProcessor {
      * evaluate the options and return a map of the values of any secure options, using defaults for required options if
      * they are not present, and selecting between exposed/hidden secure values
      */
-    def Map selectSecureOptionInput(JobData jobData, Map params, Boolean exposed=false) throws ExecutionServiceException {
+    Map selectSecureOptionInput(JobData jobData, Map params, Boolean exposed=false) throws ExecutionServiceException {
         def results=[:]
         def optparams
         if (params?.argString) {
@@ -186,7 +189,7 @@ class ExecutionOptionProcessor {
     /**
      * Return a map containing all params that are not secure option parameters
      */
-    def Map removeSecureOptionEntries(JobData jobData, Map params) throws ExecutionServiceException {
+    Map removeSecureOptionEntries(JobData jobData, Map params) throws ExecutionServiceException {
         def results=new HashMap(params)
         final options = jobData.optionSet
         if (options) {
@@ -204,7 +207,7 @@ class ExecutionOptionProcessor {
      * is taken from remote URL, have a selected value as default, and have null value in the input properties,
      * then append the selected by default option value to the argString
      */
-    def Map addRemoteOptionSelected(JobData jobData, Map optparams, UserAndRolesAuthContext authContext = null) throws ExecutionServiceException {
+    Map addRemoteOptionSelected(JobData jobData, Map optparams, UserAndRolesAuthContext authContext = null) throws ExecutionServiceException {
         def newmap = new HashMap(optparams)
 
         final options = jobData.optionSet
@@ -232,7 +235,7 @@ class ExecutionOptionProcessor {
      * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
      * defaultValue, and have null value in the input properties, then append the default option value to the argString
      */
-    def Map addOptionDefaults(JobData jobData, Map optparams) throws ExecutionServiceException {
+    Map addOptionDefaults(JobData jobData, Map optparams) throws ExecutionServiceException {
         def newmap = new HashMap(optparams)
 
         final options = jobData.optionSet
@@ -253,7 +256,7 @@ class ExecutionOptionProcessor {
     /**
      * Add only the options that exists on the child job
      */
-    def Map<String,String> addImportedOptions(JobData jobData, Map optparams, StepExecutionContext executionContext) throws ExecutionServiceException {
+    Map<String,String> addImportedOptions(JobData jobData, Map optparams, StepExecutionContext executionContext) throws ExecutionServiceException {
         def newMap = new HashMap()
         executionContext.dataContext.option.each {dcopt ->
             if(jobData.optionSet.find { opt -> opt.name == dcopt.key}){
@@ -270,7 +273,7 @@ class ExecutionOptionProcessor {
      * any options don't match.
      * @deprecated unused? cull
      */
-    def boolean validateInputOptionValues(JobData jobData, Map props) throws ExecutionServiceException{
+    boolean validateInputOptionValues(JobData jobData, Map props) throws ExecutionServiceException{
         def optparams = JobOptionUtil.filterOptParams(props)
         if(!optparams && props.argString){
             optparams = parseJobOptsFromString(jobData,props.argString)
@@ -285,7 +288,7 @@ class ExecutionOptionProcessor {
      * @param optparams Map of String to String
      * @param authContext auth for reading storage defaults
      */
-    def boolean validateOptionValues(
+    boolean validateOptionValues(
             JobData jobData,
             Map optparams,
             AuthContext authContext = null,
@@ -312,7 +315,7 @@ class ExecutionOptionProcessor {
                     return
                 }
 
-                if (opt.typeFile && optparams[opt.name]) {
+                if (JobOptionUtil.isFileType(opt) && optparams[opt.name]) {
                     def validate = jobFileRecordValidator.validateFileRefForJobOption(
                             optparams[opt.name],
                             JobDataUtil.getExtId(jobData),
@@ -435,7 +438,7 @@ class ExecutionOptionProcessor {
      * @return map of option name to value, where value is a String or a List of Strings
      */
     Map parseJobOptsFromString(JobData jobData, String argString){
-        def optparams = JobDataUtil.parseOptsFromString(argString)
+        def optparams = JobOptionUtil.parseOptsFromString(argString)
         if(optparams){
             //look for multi-valued options and try to split on delimiters
             jobData.optionSet.each{OptionData opt->

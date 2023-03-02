@@ -57,6 +57,8 @@ import rundeck.codecs.URIComponentCodec
 import org.rundeck.app.jobs.options.ApiTokenReporter
 import org.rundeck.app.jobs.options.JobOptionConfigRemoteUrl
 import org.rundeck.app.jobs.options.RemoteUrlAuthenticationType
+import rundeck.data.job.RdJob
+import rundeck.data.job.RdNodeConfig
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
@@ -375,7 +377,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
 
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>new RdJob()
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
@@ -414,7 +416,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
 
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[nodesSelectedByDefault:nodesSelectedByDefault]
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>new RdJob(nodeConfig: new RdNodeConfig(nodesSelectedByDefault: nodesSelectedByDefault))
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
@@ -455,7 +457,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
 
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> new RdJob()
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
@@ -487,7 +489,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
 
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> new RdJob()
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
@@ -520,7 +522,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
 
         1 * controller.apiService.requireApi(_, _) >> true
-        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> new RdJob()
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_, _)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
@@ -556,7 +558,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
 
 
         1 * controller.apiService.requireApi(_,_)>>true
-        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>new RdJob()
         1 * controller.rundeckAuthContextProcessor.getAuthContextForSubjectAndProject(_,_)
         1 * controller.rundeckAuthContextProcessor.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
@@ -1959,6 +1961,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 )
         ).save()
         def seb = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'test2',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -1985,11 +1988,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: seb
+                jobUuid: seb.uuid
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(jobUuid: jobuuid,execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: se.uuid,execution: exec).save()
         }
 
 
@@ -2064,6 +2067,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 )
         ).save()
         def seb = new ScheduledExecution(
+                uuid: UUID.randomUUID().toString(),
                 jobName: 'test2',
                 project: 'project1',
                 groupPath: 'testgroup',
@@ -2090,11 +2094,11 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: seb
+                jobUuid: seb.uuid
         ).save()
 
         if(expected){
-            def re = new ReferencedExecution(jobUuid: "uuid",execution: exec).save()
+            def re = new ReferencedExecution(jobUuid: se.uuid,execution: exec).save()
         }
 
 
@@ -2657,7 +2661,7 @@ class ScheduledExecutionControllerSpec extends RundeckHibernateSpec implements C
                         jobs:[job]
                 ]
                 1 * issueJobChangeEvents(_)
-                1 * isScheduled(job)>>true
+                1 * isScheduled(job.uuid)>>true
                 1 * nextExecutionTimes([job])>>[(job.id):new Date()]
                 0 * _(*_)
             }

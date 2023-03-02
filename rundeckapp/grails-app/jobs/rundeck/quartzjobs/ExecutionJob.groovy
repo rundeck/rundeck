@@ -38,6 +38,7 @@ import org.rundeck.app.data.providers.v1.job.JobDataProvider
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
+import rundeck.data.exceptions.ExecutionServiceExecutionException
 import rundeck.data.util.JobDataUtil
 import rundeck.data.util.Sizes
 import rundeck.services.*
@@ -123,7 +124,7 @@ class ExecutionJob implements InterruptableJob {
         RunContext initMap
         try{
             initMap= initialize(context,context.jobDetail.jobDataMap)
-        } catch (ExecutionServiceException es) {
+        } catch (ExecutionServiceExecutionException es) {
             markStartExecutionFailure(context)
             if (es.code == 'conflict') {
                 log.error("Unable to start Job execution: ${es.message ?: 'no message'}")

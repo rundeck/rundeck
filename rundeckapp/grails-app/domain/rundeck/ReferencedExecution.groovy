@@ -29,15 +29,16 @@ class ReferencedExecution implements RdReferencedExecution{
     static List<JobDataSummary> parentJobSummaries(String jobUuid, int max = 0){
         return createCriteria().list(max: (max!=0)?max:null) {
             createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
-            isNotNull( 'e.scheduledExecution')
+            isNotNull( 'e.jobUuid')
             eq("jobUuid", jobUuid)
             projections {
-                distinct('e.scheduledExecution')
+                distinct('e.jobUuid')
             }
         }*.toJobDataSummary()
     }
 
     static List<String> executionProjectList(String jobUuid, int max = 0){
+        if(!jobUuid) return []
         return createCriteria().list(max: (max!=0)?max:null) {
             createAlias('execution', 'e', JoinType.LEFT_OUTER_JOIN)
             eq("jobUuid", jobUuid)
