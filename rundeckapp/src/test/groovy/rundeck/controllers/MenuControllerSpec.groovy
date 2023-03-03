@@ -2240,9 +2240,9 @@ class MenuControllerSpec extends Specification implements ControllerUnitTest<Men
                                                                           paginateParams: [:],
                                                                           displayParams : [:]]
         1 * controller.jobSchedulesService.isScheduled(testUUID) >> true
-        1 * controller.scheduledExecutionService.nextExecutionTimes([job1.uuid]) >> [(job1.uuid):new Date()]
+        1 * controller.scheduledExecutionService.nextExecutionTimes([job1]) >> [(job1.id):new Date()]
         model.nextExecutions!=null
-        model.nextExecutions[job1.uuid]!=null
+        model.nextExecutions[job1.id]!=null
     }
 
 

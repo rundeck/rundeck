@@ -235,10 +235,10 @@ class ExecutionController extends ControllerBase{
         def enext,eprev
         def result= Execution.withCriteria {
             gt('dateStarted', e.dateStarted)
-            if (e.scheduledExecution) {
-                eq('scheduledExecution',e.scheduledExecution)
+            if (e.jobUuid) {
+                eq('jobUuid',e.jobUuid)
             }else{
-                isNull('scheduledExecution')
+                isNull('jobUuid')
             }
             eq('project',e.project)
             maxResults(1)
@@ -247,10 +247,10 @@ class ExecutionController extends ControllerBase{
         enext=result?result[0]:null
         result = Execution.withCriteria {
             lt('dateStarted', e.dateStarted)
-            if (e.scheduledExecution) {
-                eq('scheduledExecution', e.scheduledExecution)
+            if (e.jobUuid) {
+                eq('jobUuid', e.jobUuid)
             }else{
-                isNull('scheduledExecution')
+                isNull('jobUuid')
             }
             eq('project', e.project)
             maxResults(1)
@@ -265,14 +265,15 @@ class ExecutionController extends ControllerBase{
 
         String max = getGrailsApplication().config.getProperty("rundeck.logviewer.trimOutput", String)
         Long trimOutput = Sizes.parseFileSize(max)
+        ScheduledExecution se = e.jobUuid ? ScheduledExecution.findByUuid(e.jobUuid) : null
 
         return loadExecutionViewPlugins() + [
-                scheduledExecution    : e.scheduledExecution ?: null,
-                isScheduled           : e.scheduledExecution ? scheduledExecutionService.isScheduled(e.scheduledExecution) : false,
+                scheduledExecution    : se ?: null,
+                isScheduled           : e.jobUuid ? scheduledExecutionService.isScheduled(e.jobUuid) : false,
                 execution             : e,
                 workflowTree          : workflowTree,
                 filesize              : filesize,
-                nextExecution         : e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(
+                nextExecution         : se?.scheduled ? scheduledExecutionService.nextExecutionTime(
                         e.jobUuid
                 ) : null,
                 enext                 : enext,

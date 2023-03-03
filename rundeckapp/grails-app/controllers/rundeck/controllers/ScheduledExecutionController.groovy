@@ -295,7 +295,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def isScheduled = scheduledExecutionService.isScheduled(scheduledExecution.uuid)
         if (keys.contains('nextExecution') || !keys) {
             nextExecution = isScheduled ? scheduledExecutionService.nextExecutionTime(
-                    scheduledExecution
+                    scheduledExecution.uuid
             ) : null
         }
         [scheduledExecution   : scheduledExecution,

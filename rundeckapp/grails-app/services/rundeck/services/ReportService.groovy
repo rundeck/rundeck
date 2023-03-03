@@ -423,7 +423,7 @@ class ReportService  {
         if(query?.jobIdFilter) {
             se = rdJobService.getJobByIdOrUuid(query.jobIdFilter)
             if(se) {
-                query.jobIdFilter = se.uuid
+                query.jobIdFilter = se.id
             }
         }
 
