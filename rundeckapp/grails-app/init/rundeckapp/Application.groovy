@@ -61,8 +61,11 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     static String[] startArgs = []
     static void main(String[] args) {
         Application.startArgs = args
+        println "  !!!!!  PREBOOTSTRAP !!!!"
         runPrebootstrap()
+        println "  !!!!!  ABOUT TO START GRAILS !!!!"
         ctx = GrailsApp.run(Application, args)
+        println "  !!!!!  GRAILS CONTEXT STARTED !!!!"
         if(rundeckConfig.isMigrate()) {
             println "\nMigrations complete"
             System.exit(0)
