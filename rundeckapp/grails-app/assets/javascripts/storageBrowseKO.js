@@ -404,7 +404,6 @@ function StorageBrowser(baseUrl, rootPath) {
                 self.loadPath(self.path());
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                console.log(`This is the message ${JSON.stringify(errorThrown)}`)
                 self.loading(false);
                 if (jqXHR.status == 404) {
                     self.pathNotFound(val);
