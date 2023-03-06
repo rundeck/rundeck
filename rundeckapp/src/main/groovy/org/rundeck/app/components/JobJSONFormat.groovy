@@ -1,5 +1,6 @@
 package org.rundeck.app.components
 
+import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -43,6 +44,7 @@ class JobJSONFormat implements JobFormat {
     void encode(final List<Map> list, final Options options, final Writer writer) {
 
         final ObjectMapper mapper = new ObjectMapper()
+        mapper.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
         mapper.enable(SerializationFeature.INDENT_OUTPUT)
         mapper.writeValue(writer, list.collect { JobYAMLFormat.canonicalMap(JobYAMLFormat.performMapping(options,it), trimSpacesFromLines) })
     }
