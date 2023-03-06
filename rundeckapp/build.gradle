@@ -33,6 +33,10 @@ apply plugin:"org.grails.grails-gsp"
 apply plugin: "maven-publish"
 apply plugin: "signing"
 
+allprojects {
+    ext["liquibase.version"] = liquibaseVersion
+}
+
 configurations {
     agent
     war{}
@@ -171,7 +175,7 @@ dependencies {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
     implementation "org.grails.plugins:database-migration:${dbMigrationPluginVersion}"
-    implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+    //implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: "${httpClientVersion}"
     profile ("org.grails.profiles:web"){
         exclude(group:"org.grails.profiles",module:"web")
@@ -199,6 +203,7 @@ dependencies {
     // Database drivers
     runtimeOnly 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
+    //runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.7.8'
     runtimeOnly 'org.postgresql:postgresql:42.3.3'
     runtimeOnly 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
