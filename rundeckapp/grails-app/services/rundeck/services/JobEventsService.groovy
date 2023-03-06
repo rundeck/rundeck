@@ -77,7 +77,6 @@ class JobEventsService {
 
     @Subscriber('log.job.change.event')
     def logJobChange(LogJobChangeEvent e) {
-        println "got a log job change event"
         def data = e.changeinfo
         data.keySet().each {k ->
             def v = data[k]
@@ -99,7 +98,7 @@ class JobEventsService {
         if (e.jobData.uuid) {
             MDC.put('id', e.jobData.uuid)
         }
-        final msg = data.user + " " + data.change.toUpperCase() + " [" + (e.jobData.uuid ?: e.jobData.id) + "] " + e.jobData.project + " \"" + (e.jobData.groupPath ? e.jobData.groupPath : '') + "/" + e.jobData.jobName + "\" (" + data.method + ")"
+        final msg = data.user + " " + data.change.toUpperCase() + " [" + e.jobData.uuid + "] " + e.jobData.project + " \"" + (e.jobData.groupPath ? e.jobData.groupPath : '') + "/" + e.jobData.jobName + "\" (" + data.method + ")"
         jobChangeLogger.info(msg)
         data.keySet().each {k ->
             if (data[k] instanceof Date) {

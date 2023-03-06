@@ -16,11 +16,11 @@ public interface NodeConfig {
     String getNodeExcludeOsArch();
     String getNodeIncludeOsVersion();
     String getNodeExcludeOsVersion();
-    Boolean getNodeExcludePrecedence(); //y
-    Boolean getSuccessOnEmptyNodeFilter(); //y
-    Boolean getExcludeFilterUncheck(); //y
-    String  getFilter(); //y
-    String  getFilterExclude(); //y
+    Boolean getNodeExcludePrecedence();
+    Boolean getSuccessOnEmptyNodeFilter();
+    Boolean getExcludeFilterUncheck();
+    String  getFilter();
+    String  getFilterExclude();
     Boolean getNodesSelectedByDefault();
     Boolean getNodeKeepgoing();
     Boolean getDoNodedispatch();

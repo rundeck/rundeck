@@ -1,7 +1,5 @@
 package org.rundeck.app.data.model.v1.job;
 
-import java.io.Serializable;
-
 public interface JobDataSummary {
     String getUuid();
     String getJobName();
