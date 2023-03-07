@@ -29,6 +29,7 @@ import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.authorization.domain.execution.AuthorizingExecution
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.data.providers.GormUserDataProvider
 import org.rundeck.core.auth.AuthConstants
@@ -482,7 +483,24 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def params = [:]
         service.reportService = Stub(ReportService) {
             reportExecutionResult(_) >> { args ->
-                params = args[0]
+                SaveReportRequest saveReportRequest = args[0]
+                params = [
+                        'executionId': saveReportRequest.executionId,
+                        'jcJobId': saveReportRequest.jcJobId,
+                        'reportId': saveReportRequest.reportId,
+                        'adhocExecution': saveReportRequest.adhocExecution,
+                        'ctxProject': saveReportRequest.ctxProject,
+                        'author': saveReportRequest.author,
+                        'title': saveReportRequest.title,
+                        'status': saveReportRequest.status,
+                        'node': saveReportRequest.node,
+                        'message': saveReportRequest.message,
+                        'dateStarted': saveReportRequest.dateStarted,
+                        'dateCompleted': saveReportRequest.dateCompleted,
+                        'succeededNodeList': saveReportRequest.succeededNodeList,
+                        'failedNodeList': saveReportRequest.failedNodeList,
+                        'filterApplied': saveReportRequest.filterApplied,
+                ]
             }
         }
         when:

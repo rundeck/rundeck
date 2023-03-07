@@ -73,6 +73,7 @@ import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.auth.types.AuthorizingProject
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.rundeck.app.data.providers.v1.UserDataProvider
 import org.rundeck.core.auth.access.NotFound
@@ -898,7 +899,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
                         abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null){
 
-        def reportMap=[:]
+        SaveReportRequest saveReportRequest = new SaveReportRequest()
         def internalLog = LoggerFactory.getLogger("ExecutionService")
         if(null==project || null==user  ){
             //invalid
@@ -907,40 +908,40 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         if(execId){
-            reportMap.executionId=execId
+            saveReportRequest.executionId=execId
         }
         if(startDate){
-            reportMap.dateStarted=startDate
+            saveReportRequest.dateStarted=startDate
         }
         if(jobExecId){
-            reportMap.jcJobId=jobExecId
+            saveReportRequest.jcJobId=jobExecId
         }
         if(jobName){
-            reportMap.reportId=jobName
-            reportMap.adhocExecution = false
+            saveReportRequest.reportId=jobName
+            saveReportRequest.adhocExecution = false
         }else{
-            reportMap.reportId='adhoc'
-            reportMap.adhocExecution = true
+            saveReportRequest.reportId='adhoc'
+            saveReportRequest.adhocExecution = true
         }
 
         if(succeededNodeList){
-            reportMap.succeededNodeList = succeededNodeList
+            saveReportRequest.succeededNodeList = succeededNodeList
         }
         if(failedNodeList){
-            reportMap.failedNodeList = failedNodeList
+            saveReportRequest.failedNodeList = failedNodeList
         }
         if(filter){
-            reportMap.filterApplied = filter
+            saveReportRequest.filterApplied = filter
         }
-        reportMap.ctxProject=project
+        saveReportRequest.ctxProject=project
 
         if(iscancelled && abortedby){
-            reportMap.abortedByUser=abortedby
+            saveReportRequest.abortedByUser=abortedby
         }else if(iscancelled){
-            reportMap.abortedByUser=user
+            saveReportRequest.abortedByUser=user
         }
-        reportMap.author=user
-        reportMap.title= jobSummary?jobSummary:"Rundeck Job Execution"
+        saveReportRequest.author=user
+        saveReportRequest.title= jobSummary?jobSummary:"Rundeck Job Execution"
 
         def statusMap =[
                 true:'succeed',
@@ -951,13 +952,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 (EXECUTION_FAILED):'fail',
                 false:'fail',
         ]
-        reportMap.status= statusMap[statusString]?:'other'
-        reportMap.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
+        saveReportRequest.status= statusMap[statusString]?:'other'
+        saveReportRequest.node= null!=nodesummary?nodesummary: frameworkService.getFrameworkNodeName()
 
-        reportMap.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
+        saveReportRequest.message=(statusString? "Job status ${statusString}" : issuccess?'Job completed successfully':iscancelled?('Job killed by: '+(abortedby?:user)):
             willretry?'Job Failed (will retry)':istimedout?'Job timed out':'Job failed')
-        reportMap.dateCompleted=new Date()
-        def result=reportService.reportExecutionResult(reportMap)
+        saveReportRequest.dateCompleted=new Date()
+        def result=reportService.reportExecutionResult(saveReportRequest)
         if(result.error){
             log.error("Failed to create report: "+result.report.errors.allErrors.collect{it.toString()}).join("; ")
         }

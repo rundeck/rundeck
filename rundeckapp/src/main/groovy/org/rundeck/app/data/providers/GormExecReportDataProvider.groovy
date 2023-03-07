@@ -1,14 +1,16 @@
 package org.rundeck.app.data.providers
 
-import com.dtolabs.rundeck.app.support.ExecQuery
 import com.google.common.collect.Lists
 import grails.gorm.DetachedCriteria
-
+import org.rundeck.app.data.model.v1.query.RdExecQuery
 import org.rundeck.app.data.model.v1.report.RdExecReport
+import org.rundeck.app.data.model.v1.report.dto.ReportFilter
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.model.v1.report.dto.SaveReportResponse;
 import org.rundeck.app.data.providers.v1.ExecReportDataProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
+import org.springframework.context.MessageSource
 import org.springframework.transaction.TransactionStatus
 import org.springframework.validation.Errors
 import rundeck.BaseReport;
@@ -27,6 +29,8 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     ConfigurationService configurationService
     @Autowired
     ApplicationContext applicationContext
+    @Autowired
+    MessageSource messageSource
 
     @Override
     RdExecReport get(Long id){
@@ -51,10 +55,30 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    SaveReportResponse saveFromMap(Map execReportMap) {
-        ExecReport execReport = ExecReport.fromMap(execReportMap)
+    SaveReportResponse saveReport(SaveReportRequest saveReportRequest) {
+        ExecReport execReport = new ExecReport()
+        execReport.executionId = saveReportRequest.executionId
+        execReport.jcJobId = saveReportRequest.jcJobId
+        execReport.adhocExecution = saveReportRequest.adhocExecution
+        execReport.adhocScript = saveReportRequest.adhocScript
+        execReport.abortedByUser = saveReportRequest.abortedByUser
+        execReport.succeededNodeList = saveReportRequest.succeededNodeList
+        execReport.failedNodeList = saveReportRequest.failedNodeList
+        execReport.filterApplied = saveReportRequest.filterApplied
+        execReport.node = saveReportRequest.node
+        execReport.title = saveReportRequest.title
+        execReport.status = saveReportRequest.status
+        execReport.actionType = saveReportRequest.actionType
+        execReport.ctxProject = saveReportRequest.ctxProject
+        execReport.reportId = saveReportRequest.reportId
+        execReport.tags = saveReportRequest.tags
+        execReport.author = saveReportRequest.author
+        execReport.message = saveReportRequest.message
+        execReport.dateStarted = saveReportRequest.dateStarted
+        execReport.dateCompleted = saveReportRequest.dateCompleted
         boolean isUpdated = execReport.save(flush: true)
-        return new SaveReportResponse(report: execReport, isSaved: isUpdated)
+        String errors = execReport.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
+        return new SaveReportResponse(report: execReport, isSaved: isUpdated, errors: errors)
     }
 
     @Override
@@ -81,15 +105,14 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    int countExecutionReports(Map execQueryMap) {
-        ExecQuery execQuery = ExecQuery.fromMap(execQueryMap)
+    int countExecutionReports(RdExecQuery execQuery) {
         return ExecReport.createCriteria().count {
             applyExecutionCriteria(execQuery, delegate)
         }
     }
 
     @Override
-    int countExecutionReportsWithTransaction(Map query, boolean isJobs, Long scheduledExecutionId, Integer isolationLevel) {
+    int countExecutionReportsWithTransaction(RdExecQuery query, boolean isJobs, Long scheduledExecutionId, Integer isolationLevel) {
         return ExecReport.withTransaction([isolationLevel: isolationLevel]) {
             ExecReport.createCriteria().count {
                 applyExecutionCriteria(query, delegate, isJobs, scheduledExecutionId)
@@ -117,7 +140,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
     }
 
     @Override
-    Collection<String> getRunList(Map query, Map filters, boolean isJobs, Long scheduledExecutionId) {
+    Collection<String> getRunList(RdExecQuery query, ReportFilter filters, boolean isJobs, Long scheduledExecutionId) {
          return ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -130,7 +153,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
             }
             applyExecutionCriteria(query, delegate,isJobs, scheduledExecutionId)
 
-            if (query && query.sortBy && filters[query.sortBy]) {
+            if (query && query.sortBy && filters.hasProperty(query.sortBy) && filters[query.sortBy]) {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
             } else {
                 order("dateCompleted", 'desc')
@@ -163,14 +186,7 @@ class GormExecReportDataProvider implements ExecReportDataProvider {
         }
     }
 
-    @Override
-    Map toMap(RdExecReport rdExecReport) {
-        BaseReport baseReport = (BaseReport)rdExecReport
-        def map = baseReport.toMap()
-        return map
-    }
-
-    def applyExecutionCriteria(Map query, delegate, boolean isJobs=true, Long seId=null){
+    def applyExecutionCriteria(RdExecQuery query, delegate, boolean isJobs=true, Long seId=null){
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',

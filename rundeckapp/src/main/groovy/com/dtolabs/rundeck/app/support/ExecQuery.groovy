@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.support
 
 import grails.validation.Validateable
+import org.rundeck.app.data.model.v1.query.RdExecQuery
 
 /*
  * ExecQuery.java
@@ -25,7 +26,7 @@ import grails.validation.Validateable
  * Created: Feb 29, 2008 3:17:13 PM
  * $Id$
  */
-class ExecQuery extends ReportQuery implements Validateable{
+class ExecQuery extends ReportQuery implements Validateable, RdExecQuery{
     String controllerFilter
     String cmdFilter
     String groupPathFilter

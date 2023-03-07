@@ -42,7 +42,7 @@ import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
-
+import org.rundeck.app.data.model.v1.report.dto.SaveReportRequest
 import org.rundeck.app.data.providers.GormExecReportDataProvider
 import org.rundeck.app.services.ExecutionFile
 import org.rundeck.core.auth.AuthConstants
@@ -2411,7 +2411,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def oldUuid= 'test-job-uuid'
 
         when:
-        def ExecReport result = service.loadHistoryReport(rptxml,[(123):456],[(oldUuid):se],'test')
+        def SaveReportRequest result = service.loadHistoryReport(rptxml,[(123):456],[(oldUuid):se],'test')
         then:
         result!=null
         def expected = [
@@ -2492,7 +2492,7 @@ class ProjectServiceSpec extends Specification implements ServiceUnitTest<Projec
         def str = outwriter.toString()
 
         when:
-        def ExecReport result = service.loadHistoryReport(str,[(123):123],null,'test')
+        def SaveReportRequest result = service.loadHistoryReport(str,[(123):123],null,'test')
         then:
         assertNotNull result
         def keys = [

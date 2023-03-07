@@ -11,4 +11,5 @@ import org.rundeck.app.data.model.v1.report.RdExecReport;
 public class SaveReportResponse {
     RdExecReport report;
     boolean isSaved;
+    String errors;
 }
