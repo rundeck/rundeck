@@ -726,7 +726,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null !== deadNodes && deadNodes.size() > 0) {
             def deadNodesUUIDs = new ArrayList<String>()
             deadNodes.forEach { node -> {
-                deadNodesUUIDs << node.sender as String
+                deadNodesUUIDs.push(node.sender as String)
             }}
             if( deadNodesUUIDs.size() > 0 ){
                 // Once we have the UUID list from the dead nodes, we use it to clean executions
