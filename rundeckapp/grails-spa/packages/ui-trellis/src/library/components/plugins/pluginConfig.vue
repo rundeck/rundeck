@@ -135,13 +135,16 @@ import PluginInfo from './PluginInfo.vue'
 import PluginValidation from '../../interfaces/PluginValidation'
 import PluginPropView from './pluginPropView.vue'
 import PluginPropEdit from './pluginPropEdit.vue'
-import {cleanConfigInput,convertArrayInput} from '../../modules/InputUtils'
+import {Component, Prop, Watch} from 'vue-property-decorator'
+import {cleanConfigInput, convertArrayInput} from '../../modules/InputUtils'
 
 import {diff} from 'deep-object-diff'
 
-import {getPluginProvidersForService,
-  getServiceProviderDescription,
-  validatePluginConfig} from '../../modules/pluginService'
+import {
+    getPluginProvidersForService,
+    getServiceProviderDescription,
+    validatePluginConfig
+} from '../../modules/pluginService'
 
 interface PropGroup{
   name?:string
@@ -149,64 +152,78 @@ interface PropGroup{
   props:any[],
 }
 
-export default Vue.extend({
-  name: 'PluginConfig',
-  components: {
-    Expandable,
-    AceEditor,
-    PluginInfo,
-    PluginPropView,
-    PluginPropEdit
-  },
-  props: [
-    'serviceName',
-    'provider',
-    'config',
-    'mode',
-    'showTitle',
-    'showIcon',
-    'showDescription',
-    'value',
-    'savedProps',
-    'pluginConfig',
-    'validation',
-    'readOnly',
-    'validationWarningText',
-    'scope',
-    'defaultScope',
-    'contextAutocomplete',
-    'autocompleteCallback'
-  ],
-  data () {
-    return {
-      props: [] as any[],
-      detail: {},
-      error: null as any|null,
-      isReadOnly: this.readOnly!== null ? this.readOnly : false,
-      propsComputedSelectorData: {},
-      inputShowTitle: this.showTitle !== null ? this.showTitle : true,
-      inputShowIcon: this.showIcon !== null ? this.showIcon : true,
-      inputShowDescription: this.showDescription !== null ? this.showDescription : true,
-      inputValues: {} as any,
-      inputSaved: {} as any,
-      inputSavedProps: (typeof this.savedProps !== 'undefined') ? this.savedProps : ['type'],
-      rkey: 'r_' + Math.floor(Math.random() * Math.floor(1024)).toString(16) + '_',
-      groupExpand:{} as {[name:string]:boolean},
-      inputLoaded: false,
-      inputContextAutocomplete: this.contextAutocomplete !== null ? this.contextAutocomplete : false
+@Component({
+    components: {
+        Expandable,
+        AceEditor,
+        PluginInfo,
+        PluginPropView,
+        PluginPropEdit
     }
-  },
-  methods: {
-    setVal(target: any, prop: any, val: any) {
-      Vue.set(target, prop, val)
-    },
-    prepareInputs () {
-      if (!this.isShowConfigForm) {
-        return
-      }
-      this.inputLoaded=false
+})
+export default class PluginConfig extends Vue {
+    @Prop({required: false, default: ''})
+    serviceName!: string
+    @Prop({required: false, default: ''})
+    provider!: string
+    @Prop({required: false, default: ()=>{}})
+    config!: any
+    @Prop({required: false, default: ''})
+    mode!: string
+    @Prop({required: false, default: false})
+    showTitle!: boolean
+    @Prop({required: false, default: false})
+    showIcon!: boolean
+    @Prop({required: false, default: false})
+    showDescription!: boolean
+    @Prop({required: false, default: ()=>{}})
+    value!: any
+    @Prop({required: false, default: ()=>{}})
+    savedProps!: string
+    @Prop({required: false, default: ''})
+    pluginConfig!: string
+    @Prop({required: false, default: ()=>{}})
+    validation!: any
+    @Prop({required: false, default: false})
+    readOnly!: boolean
+    @Prop({required: false, default: ''})
+    validationWarningText!: string
+    @Prop({required: false, default: ''})
+    scope!: string
+    @Prop({required: false, default: ''})
+    defaultScope!: string
+    @Prop({required: false, default: null})
+    contextAutocomplete!: any
+    @Prop({required: false, default: null})
+    autocompleteCallback!: any
 
-      if (typeof this.inputSavedProps !== 'undefined' && this.inputSavedProps.length > 0) {
+    props = [] as any[]
+    detail = {}
+    error = null as any | null
+    isReadOnly = this.readOnly !== null ? this.readOnly : false
+    propsComputedSelectorData = {}
+    inputShowTitle = this.showTitle !== null ? this.showTitle : true
+    inputShowIcon = this.showIcon !== null ? this.showIcon : true
+    inputShowDescription = this.showDescription !== null ? this.showDescription : true
+    inputValues = {} as any
+    inputSaved = {} as any
+    inputSavedProps = (typeof this.savedProps !== 'undefined') ? this.savedProps : ['type']
+    rkey = 'r_' + Math.floor(Math.random() * Math.floor(1024)).toString(16) + '_'
+    groupExpand = {} as { [name: string]: boolean }
+    inputLoaded = false
+    inputContextAutocomplete = this.contextAutocomplete !== null ? this.contextAutocomplete : false
+
+    setVal(target: any, prop: any, val: any) {
+        Vue.set(target, prop, val)
+    }
+
+    async prepareInputs() {
+        if (!this.isShowConfigForm) {
+            return
+        }
+        this.inputLoaded = false
+
+        if (typeof this.inputSavedProps !== 'undefined' && this.inputSavedProps.length > 0) {
         for (const i of this.inputSavedProps) {
           if (typeof this.inputSaved[i] === 'undefined') {
             this.inputSaved[i] = this.value[i]
@@ -219,7 +236,10 @@ export default Vue.extend({
       const modeCreate = this.isCreateMode
 
       // set up defaults and convert Options to array
-      this.props.forEach((prop: any) => {
+
+      for (let ndx =0;ndx<this.props.length;ndx++) {
+        let prop:any = this.props[ndx]
+
         if (config[prop.name]) {
           Vue.set(this.inputValues, prop.name, config[prop.name])
         }
@@ -244,9 +264,9 @@ export default Vue.extend({
           this.groupExpand[gname] = (!prop.options['grouping'] || this.groupExpand[gname]|| this.inputValues[prop.name]) ? true : false
         }
         this.computeSelectionAccessor(prop)
-      })
+      }
       this.inputLoaded=true
-    },
+    }
     exportInputs(){
       const values: { [index: string]: any } = {}
       //convert true boolean to 'true'
@@ -263,7 +283,7 @@ export default Vue.extend({
         }
       })
       return values
-    },
+    }
     computeSelectionAccessor(prop: any) {
       if (prop.options && prop.options['selectionAccessor'] === 'PLUGIN_TYPE') {
         const serviceName = prop.options['selectionAdditional']
@@ -273,36 +293,43 @@ export default Vue.extend({
           }))
         })
       }
-    },
-    loadPluginData(data: any) {
-      this.props = data.props
-      if(data.dynamicProps) {
-        this.props.forEach((prop: any) => {
-          if (data.dynamicProps[prop.name]) {
-            prop.allowed = data.dynamicProps[prop.name]
-          }
-        })
-      }
-      this.detail = data
-      this.prepareInputs()
+    }
+    async loadPluginData(data: any) {
+        this.props = data.props
+        if (data.dynamicProps) {
+            this.props.forEach((prop: any) => {
+                if (data.dynamicProps[prop.name]) {
+                    prop.allowed = data.dynamicProps[prop.name]
+                }
+            })
+        }
+        if (data.dynamicDefaults) {
+            this.props.forEach((prop: any) => {
+                if (data.dynamicDefaults[prop.name]) {
+                    prop.defaultValue = data.dynamicDefaults[prop.name]
+                }
+            })
+        }
+        this.detail = data
+        await this.prepareInputs()
 
-      let storageAccess = this.hasKeyStorageAccess();
-      if(storageAccess){
-        this.notifyHasKeyStorageAccess();
-      }
-    },
+        let storageAccess = this.hasKeyStorageAccess()
+        if (storageAccess) {
+            this.notifyHasKeyStorageAccess()
+        }
+    }
     async loadProvider(provider: any) {
       try{
         const data:any = await getServiceProviderDescription(this.serviceName, provider)
         if (data.props) {
-          this.loadPluginData(data)
+          await this.loadPluginData(data)
         }
       }catch(e){
         let message = 'Unknown Error'
         if (e instanceof Error) message = e.message
         this.error=message
       }
-    },
+    }
     isPropVisible(testProp: any): boolean {
       // determine if property is visible based on required prop value
       const requiredProp = testProp.options && testProp.options['requiredProperty']
@@ -316,10 +343,10 @@ export default Vue.extend({
         }
       }
       return true
-    },
+    }
     isPropHidden(testProp: any): boolean {
       return testProp.options && testProp.options['displayType']==='HIDDEN'
-    },
+    }
     isPropInScope(testProp: any): boolean {
       // determine if property is visible in scope
       const testScope = testProp.scope || this.defaultScope
@@ -336,14 +363,14 @@ export default Vue.extend({
       }
 
       return false
-    },
+    }
     isGroupedProp(testProp: any): boolean {
       // determine if property is visible based on required prop value
       const grouping = testProp.options && testProp.options['grouping']
       const groupName = testProp.options && testProp.options['groupName']
 
       return grouping || groupName
-    },
+    }
     hasKeyStorageAccess(): boolean {
       let storageAccess = false;
       this.props.forEach((prop: any, index)=>{
@@ -352,124 +379,130 @@ export default Vue.extend({
         }
       });
       return storageAccess;
-    },
+    }
     notifyHasKeyStorageAccess(){
       this.$emit("hasKeyStorageAccess", this.provider)
-    },
-    notifyHandleAutoComplete(){
-      this.$emit("handleAutocomplete")
-    },
-    loadForMode(){
-      if (this.serviceName && this.provider) {
-        this.loadProvider(this.provider)
-      } else if (this.isShowConfigForm && this.serviceName && this.value && this.value.type) {
-        this.loadProvider(this.value.type)
-      } else if (this.pluginConfig) {
-        this.loadPluginData(this.pluginConfig)
-      }
-    },
-  },
-  watch: {
-    inputValues: {
-      handler (newValue, oldValue) {
-        if (this.isShowConfigForm) {
-          this.$emit('input', Object.assign({}, this.inputSaved, {config: this.exportedValues}))
-        }
-      },
-      deep: true
-    },
-    computedConfig: {
-      handler(newValue, oldValue) {
-        if (Object.keys(diff(newValue, oldValue)).length > 0)
-          this.$emit('change')
-      },
-      deep: true
-    },
-    mode:{
-      handler(newValue,oldValue){
-        this.loadForMode()
-      }
     }
-  },
-  computed: {
-    isEditMode(): boolean {
-      return this.mode === 'edit'
-    },
-    isCreateMode(): boolean {
-      return this.mode === 'create'
-    },
-    isShowConfigForm (): boolean {
-      return this.isEditMode || this.isCreateMode
-    },
-    isShowMode(): boolean {
-      return this.mode === 'show'
-    },
-    isTitleMode(): boolean {
-      return this.mode === 'title'
-    },
-    visibility (): { [name: string]: boolean } {
-      const visibility: { [name: string]: boolean } = {}
-      this.props.forEach((prop: any) => {
-        visibility[prop.name] = this.isPropVisible(prop) && this.isPropInScope(prop)
-        if (!visibility[prop.name]) {
-          Vue.delete(visibility, prop.name)
-        }
-      })
-      return visibility
-    },
-    visibleProps(): any[] {
-      const visibility=this.visibility
-      return this.props.filter((prop)=>{
-        return visibility[prop.name]
-      })
-    },
-    hasGroups(): boolean{
-      return this.props.find((prop)=>{
-        return this.isGroupedProp(prop)
-      }) ? true : false
-    },
-    groupedProperties(): PropGroup[]{
-      const unnamed:PropGroup ={props:[],secondary:false}
-      const groups:PropGroup[] =[unnamed]
-      const named : {[name:string]: PropGroup} = {}
+    notifyHandleAutoComplete(){
+        this.$emit('handleAutocomplete')
+    }
 
-       this.props.forEach(prop => {
-         const name=prop.options && prop.options['groupName']
-         const secondary = prop.options && prop.options['grouping']
-         const inScope = this.isPropInScope(prop)
-         if(!inScope) {
-           return
+    async loadForMode() {
+        if (this.serviceName && this.provider) {
+            await  this.loadProvider(this.provider)
+        } else if (this.isShowConfigForm && this.serviceName && this.value && this.value.type) {
+            await this.loadProvider(this.value.type)
+        } else if (this.pluginConfig) {
+           await this.loadPluginData(this.pluginConfig)
+        }
+    }
+
+    @Watch('inputValues', {deep: true})
+    inputValuesChanged() {
+        if (this.isShowConfigForm) {
+            this.$emit('input', Object.assign({}, this.inputSaved, {config: this.exportedValues}))
+        }
+    }
+
+    @Watch('computedConfig', {deep: true})
+    computedConfigChanged(newValue:any, oldValue:any) {
+        if (Object.keys(diff(newValue, oldValue)).length > 0)
+            this.$emit('change')
+    }
+
+    @Watch('mode')
+    async modeChanged() {
+        await this.loadForMode()
+    }
+
+    get isEditMode(): boolean {
+        return this.mode === 'edit'
+    }
+
+    get isCreateMode(): boolean {
+        return this.mode === 'create'
+    }
+
+    get isShowConfigForm(): boolean {
+        return this.isEditMode || this.isCreateMode
+    }
+
+    get isShowMode(): boolean {
+        return this.mode === 'show'
+    }
+
+    get isTitleMode(): boolean {
+        return this.mode === 'title'
+    }
+
+    get visibility(): { [name: string]: boolean } {
+        const visibility: { [name: string]: boolean } = {}
+        this.props.forEach((prop: any) => {
+            visibility[prop.name] = this.isPropVisible(prop) && this.isPropInScope(prop)
+            if (!visibility[prop.name]) {
+                Vue.delete(visibility, prop.name)
+            }
+        })
+        return visibility
+    }
+
+    get visibleProps(): any[] {
+        const visibility = this.visibility
+        return this.props.filter((prop) => {
+            return visibility[prop.name]
+        })
+    }
+
+    get hasGroups(): boolean {
+        return this.props.find((prop) => {
+            return this.isGroupedProp(prop)
+        }) ? true : false
+    }
+
+    get groupedProperties(): PropGroup[] {
+        const unnamed: PropGroup = {props: [], secondary: false}
+        const groups: PropGroup[] = [unnamed]
+        const named: { [name: string]: PropGroup } = {}
+
+        this.props.forEach(prop => {
+            const name = prop.options && prop.options['groupName']
+            const secondary = prop.options && prop.options['grouping']
+            const inScope = this.isPropInScope(prop)
+            if (!inScope) {
+                return
          }else if(!name && !secondary){
             unnamed.props.push(prop)
          }else{
            let gname=name||'-'
 
-           if(!named[gname]){
-             named[gname]={props:[prop],secondary:secondary,name:gname}
-             groups.push(named[gname])
-           }else{
-            named[gname].props.push(prop)
-            named[gname].secondary=named[gname].secondary||secondary
-           }
-         }
-      })
-      return groups
-    },
-    exportedValues(): any{
-      return convertArrayInput(cleanConfigInput(this.exportInputs()))
-    },
-    computedConfig(): any {
-        if(this.value){
+                if (!named[gname]) {
+                    named[gname] = {props: [prop], secondary: secondary, name: gname}
+                    groups.push(named[gname])
+                } else {
+                    named[gname].props.push(prop)
+                    named[gname].secondary = named[gname].secondary || secondary
+                }
+            }
+        })
+        return groups
+    }
+
+    get exportedValues(): any {
+        return convertArrayInput(cleanConfigInput(this.exportInputs()))
+    }
+
+    get computedConfig(): any {
+        if (this.value) {
             return Object.assign({}, this.value.config || {})
-        }else{
+        } else {
             return null
         }
     }
-  },
-  beforeMount () {
-    this.loadForMode()
-  }
-})
+
+    async beforeMount() {
+        await this.loadForMode()
+    }
+}
 </script>
 <style lang="scss" scoped>
 .header-reset{

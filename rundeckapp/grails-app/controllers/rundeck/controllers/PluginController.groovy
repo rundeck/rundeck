@@ -1,21 +1,19 @@
 package rundeck.controllers
 
+
 import com.dtolabs.rundeck.app.api.plugins.ApiPluginListProvider
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.config.Features
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import org.rundeck.app.authorization.AppAuthContextProcessor
-import org.rundeck.app.spi.AuthorizedServicesProvider
-import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import grails.converters.JSON
 import groovy.transform.CompileStatic
-import org.springframework.web.multipart.MultipartFile
+import org.rundeck.app.spi.AuthorizedServicesProvider
+import org.rundeck.core.auth.AuthConstants
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.servlet.support.RequestContextUtils
-import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginApiService
 import rundeck.services.PluginService
@@ -284,6 +282,11 @@ class PluginController extends ControllerBase {
                 getDynamicProperties(frameworkService.rundeckFramework, service, pluginName, params.project, services)
             if (dynamicProps) {
                 terseDesc.dynamicProps = dynamicProps
+            }
+            def dynamicDefaults = pluginService.
+                getDynamicDefaults(frameworkService.rundeckFramework, service, pluginName, params.project, services)
+            if (dynamicDefaults) {
+                terseDesc.dynamicDefaults = dynamicDefaults
             }
         }
 

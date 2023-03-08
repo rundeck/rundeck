@@ -57,6 +57,7 @@ public class RundeckConfigBase {
     RundeckNotificationConfig notification;
     RundeckApiConfig api;
     ScmLoader scmLoader;
+    ScmConfig scm;
     RundeckHealthIndicatorConfig health;
     RundeckJobsConfig jobs;
 
@@ -685,6 +686,16 @@ public class RundeckConfigBase {
     @Data
     public static class RundeckNotificationConfig {
         Long threadTimeOut;
+    }
+
+    @Data
+    public static class ScmConfig {
+        ScmStartup startup;
+    }
+
+    @Data
+    public static class ScmStartup{
+        boolean initDeferred;
     }
 
     @Data
