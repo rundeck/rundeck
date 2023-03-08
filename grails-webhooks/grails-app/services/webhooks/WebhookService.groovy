@@ -210,7 +210,7 @@ class WebhookService {
             }
         }
         if(hookData.shouldImportToken) {
-            if(!importIsAllowed(saveWebhookRequest.authToken, hookData)){
+            if(!importIsAllowed(hook?.authToken, hookData)){
                 throw new Exception("Cannot import webhook: imported auth token does not exist or was changed")
             }
             try {
