@@ -451,7 +451,6 @@
                                  placeholder="${message(code:"form.option.valuesURL.placeholder")}"
                                  id="vurl_${rkey}"
                     />
-
                     <div class="help-block">
                         <g:message code="form.option.valuesUrl.description" />
                         <a href="${g.helpLinkUrl(path: '/manual/job-options.html#option-model-provider')}"
@@ -459,6 +458,88 @@
                             <i class="glyphicon glyphicon-question-sign"></i>
                             <g:message code="rundeck.user.guide.option.model.provider" />
                         </a>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label class="control-label"><g:message code="form.option.valuesType.url.authType.label" /></label>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="">
+                                <g:select
+                                        data-bind="value: remoteUrlAuthenticationType"
+                                        name="remoteUrlAuthenticationType"
+                                        class="form-control "
+                                        value=""
+                                        optionKey="key"
+                                        optionValue="value"
+                                        from="${[
+                                                [key:'',value:message(code:'form.option.optionType.text.label')],
+                                                [key:'file',value:message(code:'form.option.optionType.file.label')],
+                                        ]
+                                        }"
+                                        id="vurl_auth_type_${rkey}">
+                                </g:select>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-8">
+
+                            <div class="">
+                                <div class="col-md-3">
+                                    <label class="control-label"><g:message code="form.option.valuesType.url.authentication.username.label" /></label>
+                                </div>
+                                <div class="col-md-8 input-group">
+                                    <g:textField type="text"
+                                                 class=" form-control"
+                                                 name="remoteUrlUsername"
+                                                 data-bind="value: remoteUrlUsername"
+                                                 size="30"
+                                                 id="vurl_auth_username_${rkey}"
+                                    />
+                                </div>
+
+                            </div>
+                            <div class="">
+                                <div class="col-md-3">
+                                    <label class="control-label"><g:message code="form.option.valuesType.url.authentication.password.label" /></label>
+                                </div>
+                                <div class="col-md-8 input-group">
+                                    <span class="input-group-addon has_tooltip" title="${message(code:"form.option.defaultStoragePath.description")}">
+                                        <g:icon name="lock"/>
+                                    </span>
+
+                                    <input type="text"
+                                           class="form-control"
+                                           id="vurl_auth_password_${rkey}"
+                                           name="remoteUrlPassword"
+                                           value=""
+                                           size="20"
+                                           placeholder=""
+                                    />
+
+                                    <span class="input-group-btn">
+                                        <g:set var="storageRoot" value="keys"/>
+                                        <g:set var="storageFilter" value="Rundeck-data-type=password"/>
+                                        <a class="btn btn-default obs-select-storage-path"
+                                           data-toggle="modal"
+                                           href="#storagebrowse"
+                                           data-storage-root="${enc(attr:storageRoot)}"
+                                           data-storage-filter="${enc(attr:storageFilter)}"
+                                           data-field="#vurl_auth_password_${rkey}"
+                                        >
+                                            <g:message code="select" /> <g:icon name="folder-open"/>
+                                        </a>
+                                    </span>
+
+
+                                </div>
+                            </div>
+
+                        </div>
+
                     </div>
                 </div>
 
