@@ -715,7 +715,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
        return model
    }
 
-
+    /**
+     * Called from HeartbeatService to clean cluster dead member's executions
+     * @param list of inactive nodes in the cluster
+     * @void clean non-completed jobs
+     * */
+    Consumer<List<Map<String, Object>>> cleanExecutionsOnDeadClusterMembers = (inactiveNodes) -> {
+        // First we get the list of inactive nodes (from heartbeat service) to extract the UUID's
+        def deadNodes = inactiveNodes as ArrayList
+        if (null !== deadNodes && deadNodes.size() > 0) {
+            def deadNodesUUIDs = new ArrayList<String>()
+            deadNodes.forEach { node -> {
+                deadNodesUUIDs << node.sender as String
+            }}
+            if( deadNodesUUIDs.size() > 0 ){
+                // Once we have the UUID list from the dead nodes, we use it to clean executions
+                deadNodesUUIDs.forEach { UUID -> {
+                    def status = configurationService.getString(
+                            'executionService.startup.cleanupStatus',
+                            'incomplete'
+                    ) as String
+                    cleanupRunningJobsAsync(UUID, status, new Date())
+                }}
+            }else{
+                return
+            }
+        }else{
+            return
+        }
+    }
 
     /**
      * Set the result status to FAIL for any Executions that are not complete,

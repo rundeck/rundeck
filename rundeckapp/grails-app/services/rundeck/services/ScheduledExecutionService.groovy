@@ -124,6 +124,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def JobScheduleManager rundeckJobScheduleManager
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     AuditEventsService auditEventsService
+    ExecutionService executionService
 
     public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
@@ -205,6 +206,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     @Override
     Map<String, String> getPropertiesMapping() { ConfigPropertiesMapping }
+
+    def cleanExecutionsOnDeadClusterMembers(List<Map<String, Object>> inactiveMembers){
+        return executionService.cleanExecutionsOnDeadClusterMembers.accept(inactiveMembers)
+    }
 
     /**
      * Return project config for node cache delay
