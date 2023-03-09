@@ -88,7 +88,7 @@ class JobMetadataService {
      * @param project project
      */
     def removeProjectPluginMeta(final String project, final String type) {
-        pluginMetaDataProvider.deleteByProjectAndDataKey(project, type)
+        pluginMetaDataProvider.deleteAllByProjectAndKeyLike(project, "%/${type}")
     }
 
     /**

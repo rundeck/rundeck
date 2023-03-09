@@ -9,8 +9,7 @@ public interface PluginMetaDataProvider extends DataProvider{
     RdPluginMeta findByProjectAndKey(String project, String key);
     List<RdPluginMeta> findAllByProjectAndKeyLike(String project, String key);
     void deleteByProjectAndKey(String project, String key);
-    void deleteAllByProjectAndKeyLike(String project, String key);
+    void deleteAllByProjectAndKeyLike(String project, String keyLike);
     Integer deleteAllByProject(String project);
-    Integer deleteByProjectAndDataKey(String project, String key);
     void setJobPluginMeta(String project, String id, String type, Map key);
 }

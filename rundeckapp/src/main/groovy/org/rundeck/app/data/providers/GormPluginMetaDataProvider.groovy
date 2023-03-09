@@ -25,8 +25,8 @@ class GormPluginMetaDataProvider implements PluginMetaDataProvider{
     }
 
     @Override
-    void deleteAllByProjectAndKeyLike(String project, String key) {
-        def found = PluginMeta.findAllByProjectAndKeyLike(project, key)
+    void deleteAllByProjectAndKeyLike(String project, String keyLike) {
+        def found = PluginMeta.findAllByProjectAndKeyLike(project, keyLike)
         if (found) {
             found*.delete(flush: true)
         }
@@ -36,11 +36,6 @@ class GormPluginMetaDataProvider implements PluginMetaDataProvider{
     Integer deleteAllByProject(String project) {
         return PluginMeta.executeUpdate('delete PluginMeta where project=:project', [project: project], [flush: true])
 
-    }
-
-    @Override
-    Integer deleteByProjectAndDataKey(String project, String type) {
-        return PluginMeta.executeUpdate('delete PluginMeta where project=:project and data_key like :data_key' , [project: project, data_key: "%/${type}"], [flush: true])
     }
 
     @Override
