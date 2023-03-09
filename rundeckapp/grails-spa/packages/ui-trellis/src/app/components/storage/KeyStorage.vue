@@ -13,7 +13,7 @@
           <div class="col-xs-12">
             <div class="card">
               <div class="card-content">
-
+                <key-storage-selector></key-storage-selector>
               </div>
               <div class="card-footer">
                 <hr>
@@ -31,13 +31,12 @@
 
 <script>
 
-import KeyStorageSelector from "@/library/components/plugins/KeyStorageSelector";
-import KeyStorageSelector from "../../../../build/pack/src/library/components/plugins/KeyStorageSelector";
-export default {
+import KeyStorageBrowser from "@/app/components/storage/KeyStorageBrowser";
+import Vue from "vue";
+export default Vue.extend({
   name: "KeyStorage.vue",
-  components: {KeyStorageSelector},
-  modelData: any = {}
-}
+  components: {KeyStorageBrowser},
+})
 </script>
 
 <style scoped>
