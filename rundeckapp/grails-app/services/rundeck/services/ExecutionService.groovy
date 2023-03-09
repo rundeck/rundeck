@@ -721,6 +721,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @void clean non-completed jobs
      * */
     Consumer<List<Map<String, Object>>> cleanExecutionsOnDeadClusterMembers = (inactiveNodes) -> {
+        log.info("Beginning dead cluster member's executions cleanup.")
         // First we get the list of inactive nodes (from heartbeat service) to extract the UUID's
         def deadNodes = inactiveNodes as ArrayList
         if (null !== deadNodes && deadNodes.size() > 0) {
@@ -735,12 +736,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             'executionService.startup.cleanupStatus',
                             'incomplete'
                     ) as String
-                    cleanupRunningJobsAsync(UUID, status, new Date())
+                    cleanupRunningJobs_currentTransaction(UUID, status, new Date())
                 }}
             }else{
+                log.info("Dead cluster members found, but no executions bound.")
                 return
             }
         }else{
+            log.info("No dead cluster members found.")
             return
         }
     }

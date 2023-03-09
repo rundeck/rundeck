@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import grails.plugins.executor.PersistenceContextExecutorWrapper
 import groovy.time.TimeCategory
 import org.rundeck.app.auth.types.AuthorizingProject
 import org.rundeck.app.authorization.AppAuthContextProcessor
@@ -2957,6 +2958,69 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         status      | result
         'testvalue' | 'testvalue'
         null        | 'false'
+
+    }
+
+    def "cleaned executions by different UUID"() {
+
+        // This is to test the capability to clean executions of dead cluster members
+
+        given:
+        def serverNodeUUID = "49318ae1-e8c9-4897-bf24-01c826f01f39"
+        Execution e1 = new Execution(
+                serverNodeUUID: serverNodeUUID,
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false,
+                dateStarted: new Date(),
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ).save(),
+        ).save(flush: true)
+        Execution e2 = new Execution(
+                serverNodeUUID: serverNodeUUID,
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false,
+                dateStarted: new Date(),
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ).save(),
+        ).save(flush: true)
+        // Staged heartbeat report of dead server/cluster nodes
+        List<Map<String, Object>> inactiveNodes = Arrays.asList(
+                [sender: serverNodeUUID] as Map<String, Object>
+        )
+        service.executorService = Mock(PersistenceContextExecutorWrapper){
+
+        }
+        service.configurationService = Mock(ConfigurationService){
+            it.getString('executionService.startup.cleanupStatus', 'incomplete') >> 'incomplete'
+        }
+        service.frameworkService = Mock(FrameworkService)
+        service.rundeckAuthContextProcessor=Mock(AppAuthContextProcessor)
+        service.reportService = Mock(ReportService) {
+            2 * reportExecutionResult(_) >> [:]
+        }
+        service.notificationService = Mock(NotificationService) {
+            2 * asyncTriggerJobNotification(_, _, _)
+        }
+        service.metricService = Mock(MetricService)
+        service.workflowService = Mock(WorkflowService)
+
+        when:
+        service.cleanExecutionsOnDeadClusterMembers.accept(inactiveNodes)
+        def exec = Execution.findAllByServerNodeUUID(serverNodeUUID)
+
+        then:
+        exec[0].dateCompleted !== null
+        exec[1].dateCompleted !== null
 
     }
 
