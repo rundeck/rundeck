@@ -157,7 +157,7 @@
     <div class="col-sm-12">
       <div class="well">
         <div>
-          <g:message code="storage.path.prompt"/>
+          {{ $t('Storage path\:') }}
           <code class="text-success" data-bind="text: selectedPath()"></code>
           <a href="#" data-bind="attr: { href: selectedPathUrl() }">
             <i class="glyphicon glyphicon-link"></i>
@@ -166,11 +166,11 @@
 
         <div data-bind="if: selectedResource() && selectedResource().createdTime()">
           <div>
-            <g:message code="created.prompt"/>
+            {{ $t('created\:') }}
             <span class="timeabs text-strong" data-bind="text: selectedResource().createdTime(), attr: { title:  selectedResource().meta()['Rundeck-content-creation-time'] }"></span>
 
             <span data-bind="if: selectedResource().createdUsername()">
-            <g:message code="by.prompt"/>
+            {{ $t('by\:') }}
 
             <span class="text-strong" data-bind="text: selectedResource().createdUsername()"></span>
           </span>
@@ -179,22 +179,21 @@
         </div>
         <div data-bind="if: selectedResource() && selectedResource().wasModified()">
           <div>
-            <g:message code="modified.prompt"/>
+            {{ $t('Modified\:') }}
             <span class="timeago text-strong" data-bind="text: selectedResource().modifiedTimeAgo('ago'), attr: { title:  selectedResource().meta()['Rundeck-content-modify-time'] }"></span>
 
             <span data-bind="if: selectedResource().modifiedUsername()">
-            <g:message code="by.prompt"/>
-
+            {{ $t('by\:') }}
             <span class="text-strong" data-bind="text: selectedResource().modifiedUsername()"></span>
           </span>
           </div>
         </div>
 
         <div data-bind="if: selectedResource() && selectedResource().isPublicKey() && selectedIsDownloadable()">
-          <button data-bind="click: function(){$root.actionLoadContents('publicKeyContents',$element);}, visible: !selectedResource().wasDownloaded()" class="btn btn-sm btn-default" data-loading-text="${g.enc(code:"loading")}">
-          <g:message code="button.view.public.key.contents"/>
+          <button data-bind="click: function(){$root.actionLoadContents('publicKeyContents',$element);}, visible: !selectedResource().wasDownloaded()" class="btn btn-sm btn-default">
+          {{ $t('View Public Key Contents') }}
           (<span data-bind="text: selectedResource().contentSize()"></span>
-          <g:message code="bytes"/>)
+            {{ $t('Bytes') }}
           </button>
 
           <div class="pre-scrollable" data-bind="visible: selectedResource().downloadError()">
