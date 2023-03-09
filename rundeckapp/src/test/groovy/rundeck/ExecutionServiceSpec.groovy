@@ -2996,9 +2996,6 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         List<Map<String, Object>> inactiveNodes = Arrays.asList(
                 [sender: serverNodeUUID] as Map<String, Object>
         )
-        service.executorService = Mock(PersistenceContextExecutorWrapper){
-
-        }
         service.configurationService = Mock(ConfigurationService){
             it.getString('executionService.startup.cleanupStatus', 'incomplete') >> 'incomplete'
         }
