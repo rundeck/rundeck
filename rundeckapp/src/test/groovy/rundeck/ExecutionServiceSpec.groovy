@@ -2962,7 +2962,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     def "cleaned executions by different UUID"() {
 
-        // This is to test the capability to clean executions of dead cluster members
+        // This is to test the capability to clean dead cluster member's executions
 
         given:
         def serverNodeUUID = "49318ae1-e8c9-4897-bf24-01c826f01f39"
