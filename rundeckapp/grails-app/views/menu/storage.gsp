@@ -27,6 +27,14 @@ implied. - See the License for the specific language governing permissions and -
 
         ]"/>
         <asset:javascript src="menu/storage.js"/>
+        <g:javascript>
+          window._rundeck = Object.assign(window._rundeck || {}, {
+            data: {
+              storageData: loadJsonData("storageData")
+            }
+          })
+</g:javascript>
+
       </head>
 
       <body>
