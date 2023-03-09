@@ -97,7 +97,7 @@ class JobMetadataService {
      * @param id jobid
      */
     def removeJobPluginMetaAll(final String project, final String id) {
-        pluginMetaDataProvider.deleteAllByProjectAndKeyLike(project, id + '/%')
+        pluginMetaDataProvider.deleteAllByProjectAndKeyLike(project, id)
     }
 
     /**
