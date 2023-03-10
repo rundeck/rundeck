@@ -16,7 +16,10 @@
 
 package rundeck
 
+
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
 import com.dtolabs.rundeck.core.jobs.JobOption
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigRemoteUrl
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.util.StringNumericSort
@@ -96,12 +99,12 @@ public class Option implements Comparable, OptionData {
         return valuesFromPlugin
     }
 
-    public Map getConfigMap() {
         //de-serialize the json
+    public JobOptionConfigData getConfigMap() {
         if (null != configData) {
             final ObjectMapper mapper = new ObjectMapper()
             try {
-                return mapper.readValue(configData, Map.class)
+                return mapper.readValue(configData, JobOptionConfigData.class)
             } catch (JsonParseException e) {
                 return null
             }
@@ -110,7 +113,7 @@ public class Option implements Comparable, OptionData {
         }
     }
 
-    public void setConfigMap(Map obj) {
+    public void setConfigMap(JobOptionConfigData obj) {
         //serialize json and store into field
         if (null != obj) {
             final ObjectMapper mapper = new ObjectMapper()
@@ -170,6 +173,14 @@ public class Option implements Comparable, OptionData {
         }
         if(getRealValuesUrl()){
             map.valuesUrl=getRealValuesUrl().toExternalForm()
+
+            if(configData){
+                JobOptionConfigData jobOptionConfigData = getConfigMap()
+                JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = jobOptionConfigData.getJobOptionEntry(JobOptionConfigRemoteUrl)
+                if(jobOptionConfigRemoteUrl.getAuthenticationType()){
+                    map.configRemoteUrlAuth=jobOptionConfigRemoteUrl.getAuthenticationType().name()
+                }
+            }
         }
         if(regex){
             map.regex=regex
@@ -409,6 +420,10 @@ public class Option implements Comparable, OptionData {
             return valuesFromPlugin.collect{[name:it.name,value:it.value]}
         }
         return null
+    }
+
+    JobOptionConfigRemoteUrl getConfigRemoteUrl(){
+        return this.getConfigMap()?.getJobOptionEntry(JobOptionConfigRemoteUrl.class)
     }
 
     public String toString ( ) {

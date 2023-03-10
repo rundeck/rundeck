@@ -470,13 +470,15 @@
                                 <g:select
                                         data-bind="value: remoteUrlAuthenticationType"
                                         name="remoteUrlAuthenticationType"
-                                        class="form-control "
-                                        value=""
+                                        class="form-control"
+                                        value="${option?.configRemoteUrl?.authenticationType}"
                                         optionKey="key"
                                         optionValue="value"
                                         from="${[
-                                                [key:'',value:message(code:'form.option.optionType.text.label')],
-                                                [key:'file',value:message(code:'form.option.optionType.file.label')],
+                                                [key:'',value:message(code:'form.option.valuesType.url.authType.empty.label')],
+                                                [key:'BASIC',value:message(code:'form.option.valuesType.url.authType.basic.label')],
+                                                [key:'API_KEY',value:message(code:'form.option.valuesType.url.authType.apiKey.label')],
+                                                [key:'BEARER_TOKEN',value:message(code:'form.option.valuesType.url.authType.bearerToken.label')],
                                         ]
                                         }"
                                         id="vurl_auth_type_${rkey}">
@@ -487,24 +489,121 @@
 
                         <div class="col-md-8">
 
-                            <div class="">
-                                <div class="col-md-3">
-                                    <label class="control-label"><g:message code="form.option.valuesType.url.authentication.username.label" /></label>
-                                </div>
-                                <div class="col-md-8 input-group">
-                                    <g:textField type="text"
-                                                 class=" form-control"
-                                                 name="remoteUrlUsername"
-                                                 data-bind="value: remoteUrlUsername"
-                                                 size="30"
-                                                 id="vurl_auth_username_${rkey}"
-                                    />
-                                </div>
+                            <!--USER/PASSSWORD AUTH-->
+                            <div id="remoteUrlUserAuth" data-bind="visible: isRemoteUrlUserAuth()">
+                                <div>
+                                    <div class="col-md-3">
+                                        <label class="control-label"><g:message code="form.option.valuesType.url.authentication.username.label" /></label>
+                                    </div>
+                                    <div class="col-md-8 input-group">
+                                        <g:textField type="text"
+                                                     class=" form-control"
+                                                     name="remoteUrlUsername"
+                                                     value="${option?.configRemoteUrl?.username}"
+                                                     size="30"
+                                                     id="vurl_auth_username_${rkey}"
+                                        />
+                                    </div>
 
+                                </div>
+                                <div>
+                                    <div class="col-md-3">
+                                        <label class="control-label"><g:message code="form.option.valuesType.url.authentication.password.label" /></label>
+                                    </div>
+                                    <div class="col-md-8 input-group">
+                                        <span class="input-group-addon has_tooltip" title="${message(code:"form.option.defaultStoragePath.description")}">
+                                            <g:icon name="lock"/>
+                                        </span>
+
+                                        <input type="text"
+                                               class="form-control"
+                                               id="vurl_auth_password_${rkey}"
+                                               name="remoteUrlPassword"
+                                               value="${option?.configRemoteUrl?.passwordStoragePath}"
+                                               size="20"
+                                               placeholder=""
+                                        />
+
+                                        <span class="input-group-btn">
+                                            <g:set var="storageRoot" value="keys"/>
+                                            <g:set var="storageFilter" value="Rundeck-data-type=password"/>
+                                            <a class="btn btn-default obs-select-storage-path"
+                                               data-toggle="modal"
+                                               href="#storagebrowse"
+                                               data-storage-root="${enc(attr:storageRoot)}"
+                                               data-storage-filter="${enc(attr:storageFilter)}"
+                                               data-field="#vurl_auth_password_${rkey}"
+                                            >
+                                                <g:message code="select" /> <g:icon name="folder-open"/>
+                                            </a>
+                                        </span>
+
+
+                                    </div>
+                                </div>
                             </div>
-                            <div class="">
+                            <!--USER/PASSSWORD AUTH-->
+
+                            <!--TOKEN AUTH-->
+                            <div id="remoteUrlTokenAuth" data-bind="visible: isRemoteUrlTokenAuth()">
+
+                                <div>
+                                    <div class="col-md-3">
+                                        <label class="control-label"><g:message code="form.option.valuesType.url.authentication.key.label" /></label>
+                                    </div>
+                                    <div class="col-md-8 input-group">
+                                        <g:textField type="text"
+                                                     class=" form-control"
+                                                     name="remoteUrlKey"
+                                                     value="${option?.configRemoteUrl?.keyName}"
+                                                     size="30"
+                                                     id="vurl_auth_key_${rkey}"
+                                        />
+                                    </div>
+
+                                </div>
+                                <div>
+                                    <div class="col-md-3">
+                                        <label class="control-label"><g:message code="form.option.valuesType.url.authentication.token.label" /></label>
+                                    </div>
+                                    <div class="col-md-8 input-group">
+                                        <span class="input-group-addon has_tooltip" title="${message(code:"form.option.defaultStoragePath.description")}">
+                                            <g:icon name="lock"/>
+                                        </span>
+
+                                        <input type="text"
+                                               class="form-control"
+                                               id="vurl_auth_token_${rkey}"
+                                               name="remoteUrlToken"
+                                               value="${option?.configRemoteUrl?.tokenStoragePath}"
+                                               size="20"
+                                               placeholder=""
+                                        />
+
+                                        <span class="input-group-btn">
+                                            <g:set var="storageRoot" value="keys"/>
+                                            <g:set var="storageFilter" value="Rundeck-data-type=password"/>
+                                            <a class="btn btn-default obs-select-storage-path"
+                                               data-toggle="modal"
+                                               href="#storagebrowse"
+                                               data-storage-root="${enc(attr:storageRoot)}"
+                                               data-storage-filter="${enc(attr:storageFilter)}"
+                                               data-field="#vurl_auth_token_${rkey}"
+                                            >
+                                                <g:message code="select" /> <g:icon name="folder-open"/>
+                                            </a>
+                                        </span>
+
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!--TOKEN AUTH-->
+
+                            <!--bearerToken AUTH-->
+                            <div id="remoteUrlBearerTokenAuth" data-bind="visible: isRemoteUrlBearerTokenAuth()">
                                 <div class="col-md-3">
-                                    <label class="control-label"><g:message code="form.option.valuesType.url.authentication.password.label" /></label>
+                                    <label class="control-label"><g:message code="form.option.valuesType.url.authentication.token.label" /></label>
                                 </div>
                                 <div class="col-md-8 input-group">
                                     <span class="input-group-addon has_tooltip" title="${message(code:"form.option.defaultStoragePath.description")}">
@@ -513,8 +612,8 @@
 
                                     <input type="text"
                                            class="form-control"
-                                           id="vurl_auth_password_${rkey}"
-                                           name="remoteUrlPassword"
+                                           id="vurl_auth_bearer_token_${rkey}"
+                                           name="remoteUrlBearerToken"
                                            value=""
                                            size="20"
                                            placeholder=""
@@ -528,15 +627,15 @@
                                            href="#storagebrowse"
                                            data-storage-root="${enc(attr:storageRoot)}"
                                            data-storage-filter="${enc(attr:storageFilter)}"
-                                           data-field="#vurl_auth_password_${rkey}"
+                                           data-field="#vurl_auth_bearer_token_${rkey}"
                                         >
                                             <g:message code="select" /> <g:icon name="folder-open"/>
                                         </a>
                                     </span>
-
-
                                 </div>
                             </div>
+                            <!--bearerToken AUTH-->
+
 
                         </div>
 
@@ -880,7 +979,10 @@
           defaultValue:"${option?.defaultValue}",
           showDefaultValue:"${!option?.secureInput && !option?.isDate}",
           valuesList:"${listvalue ? listvalue : listjoin ? listjoin.join(',') : ''}",
-          valuesUrl:"${option?.getRealValuesUrl()?.toString()}"});
+          valuesUrl:"${option?.getRealValuesUrl()?.toString()}",
+          remoteUrlAuthenticationType:"${option?.configRemoteUrl?.authenticationType}"
+          });
+
           ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
       });
     </g:javascript>

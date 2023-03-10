@@ -17,6 +17,11 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigEntry
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigPluginAttributes
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigRemoteUrl
+import com.dtolabs.rundeck.core.jobs.options.RemoteUrlAuthenticationType
 import groovy.transform.PackageScope
 import org.rundeck.app.authorization.AppAuthContextProcessor
 import org.rundeck.app.data.providers.v1.UserDataProvider
@@ -722,6 +727,29 @@ class EditOptsController extends ControllerBase{
             params.values = null
             params.valuesList = null
             valuesUrl = params.valuesUrl
+
+            if(params.remoteUrlAuthenticationType){
+                JobOptionConfigRemoteUrl jobOptionConfigRemoteUrl = new JobOptionConfigRemoteUrl()
+                jobOptionConfigRemoteUrl.authenticationType = RemoteUrlAuthenticationType.valueOf(params.remoteUrlAuthenticationType)
+
+                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BASIC){
+                    jobOptionConfigRemoteUrl.username = params.remoteUrlUsername
+                    jobOptionConfigRemoteUrl.passwordStoragePath = params.remoteUrlPassword
+                }
+
+                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.API_KEY){
+                    jobOptionConfigRemoteUrl.keyName = params.remoteUrlKey
+                    jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlToken
+                }
+
+                if(jobOptionConfigRemoteUrl.authenticationType == RemoteUrlAuthenticationType.BEARER_TOKEN){
+                    jobOptionConfigRemoteUrl.tokenStoragePath = params.remoteUrlBearerToken
+                }
+
+                JobOptionConfigData jobOptionConfigData = new JobOptionConfigData()
+                jobOptionConfigData.addConfig(jobOptionConfigRemoteUrl)
+                opt.setConfigMap(jobOptionConfigData)
+            }
         }
 
         if (params.enforcedType == 'none') {
@@ -769,7 +797,12 @@ class EditOptsController extends ControllerBase{
         }
         opt.properties = params
         if (params.optionType && params.configMap) {
-            opt.configMap = params.configMap
+            //params.configMap
+            JobOptionConfigPluginAttributes attributes = new  JobOptionConfigPluginAttributes(params.configMap)
+            if(!opt.configMap){
+                opt.configMap = new JobOptionConfigData()
+            }
+            opt.configMap.addConfig(attributes)
         }
 
         opt.valuesList = params.valuesList?:null

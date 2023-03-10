@@ -1,8 +1,9 @@
 package com.dtolabs.rundeck.core.jobs;
 
+import com.dtolabs.rundeck.core.jobs.options.JobOptionConfigData;
+
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedSet;
 
 /**
@@ -88,7 +89,7 @@ public interface JobOption {
         return null;
     }
 
-    default String getConfigData() {
+    default JobOptionConfigData getConfigData() {
         return null;
     }
 
